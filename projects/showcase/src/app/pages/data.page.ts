@@ -5,7 +5,9 @@ import {
   StrctCheckbox,
   StrctColumn,
   StrctDatagrid,
+  StrctDatagridActionBar,
   StrctDatagridColumn,
+  StrctIcon,
   StrctRow,
   StrctRowDetailDef,
   StrctStack,
@@ -26,6 +28,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctTable,
     StrctDatagrid,
     StrctRowDetailDef,
+    StrctDatagridActionBar,
+    StrctIcon,
     StrctButton,
     StrctCheckbox,
     StrctTimeline,
@@ -64,6 +68,18 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [pageSize]="5"
           (selectionChange)="selected.set($event.length)"
         >
+          <div strctDatagridActionBar>
+            <button strct-button variant="primary" size="sm">
+              <strct-icon name="upload" [size]="14" /> Add host
+            </button>
+            <button strct-button size="sm">
+              <strct-icon name="sync" [size]="14" /> Refresh
+            </button>
+            <button strct-button iconOnly size="sm" aria-label="Export">
+              <strct-icon name="download" [size]="14" />
+            </button>
+          </div>
+
           <button strct-button strctDatagridActions variant="primary" size="sm">Migrate</button>
           <button strct-button strctDatagridActions variant="danger" size="sm">Decommission</button>
 

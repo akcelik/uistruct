@@ -37,6 +37,10 @@ export class StrctRowDetailDef {
   readonly template = inject(TemplateRef);
 }
 
+/** Marks the persistent action-bar (toolbar) content shown above the grid. */
+@Directive({ selector: '[strctDatagridActionBar]' })
+export class StrctDatagridActionBar {}
+
 /**
  * Interactive data table: sortable columns, row selection, expandable detail
  * rows, a batch action bar and built-in paging.
@@ -51,6 +55,10 @@ export class StrctRowDetailDef {
   encapsulation: ViewEncapsulation.None,
   imports: [StrctIcon, StrctPagination, NgTemplateOutlet],
   template: `
+    @if (actionBarDef()) {
+      <div class="strct-dg__toolbar"><ng-content select="[strctDatagridActionBar]" /></div>
+    }
+
     @if (selectable() && selectedCount() > 0) {
       <div class="strct-dg__actionbar">
         <span class="strct-dg__actionbar-count">{{ selectedCount() }} selected</span>
@@ -256,6 +264,12 @@ export class StrctRowDetailDef {
     @keyframes strct-dg-pane-in { from { opacity: 0; transform: translateX(8px); } }
 
     .strct-dg__empty { text-align: center; color: var(--t3); padding: 22px; }
+    /* Persistent action bar (toolbar) above the grid — always visible. */
+    .strct-dg__toolbar {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 8px 10px; margin-bottom: 10px;
+      background: var(--bg-2); border: 1px solid var(--b2); border-radius: 8px;
+    }
     .strct-dg__actionbar {
       display: flex; align-items: center; gap: 14px; padding: 8px 12px; margin-bottom: 10px;
       background: var(--acc-m); border: 1px solid var(--acc30); border-radius: 7px; font-size: 13px;
@@ -292,6 +306,7 @@ export class StrctDatagrid {
   readonly selectionChange = output<StrctRow[]>();
 
   protected readonly detailDef = contentChild(StrctRowDetailDef);
+  protected readonly actionBarDef = contentChild(StrctDatagridActionBar);
 
   readonly page = signal(1);
   private readonly sort = signal<{ key: string | null; dir: SortDir }>({ key: null, dir: 'asc' });
