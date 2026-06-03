@@ -1,0 +1,167 @@
+import { Component, ChangeDetectionStrategy, computed, input } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { inject } from '@angular/core';
+
+/**
+ * Inner markup (path/shape contents) for each icon, drawn on a 0 0 16 16
+ * viewBox with `currentColor` stroke. Keep strokes at 1.3–1.5 for crispness.
+ *
+ * The set is intentionally datacenter-flavoured (hosts, clusters, switches,
+ * storage, VMs …). Object state — running / stopped / maintenance — is layered
+ * on with the `badge` input rather than a separate icon per state.
+ */
+export const STRCT_ICONS: Record<string, string> = {
+  // ── General UI ───────────────────────────────────────────────
+  hexagon: '<path d="M8 1.6l5.5 3.2v6.4L8 14.4 2.5 11.2V4.8L8 1.6z"/>',
+  chevronRight: '<path d="M6 3.5L10.5 8 6 12.5"/>',
+  chevronLeft: '<path d="M10 3.5L5.5 8 10 12.5"/>',
+  chevronDown: '<path d="M3.5 6L8 10.5 12.5 6"/>',
+  ellipsis: '<circle cx="3.5" cy="8" r=".9" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r=".9" fill="currentColor" stroke="none"/><circle cx="12.5" cy="8" r=".9" fill="currentColor" stroke="none"/>',
+  compass: '<circle cx="8" cy="8" r="6"/><path d="M10.6 5.4l-1.5 3.7-3.7 1.5 1.5-3.7 3.7-1.5z"/>',
+  close: '<path d="M4 4l8 8M12 4l-8 8"/>',
+  check: '<path d="M3.5 8.5l3 3 6-7"/>',
+  menu: '<path d="M3 4.5h10M3 8h10M3 11.5h10"/>',
+  dots: '<circle cx="8" cy="3.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="8" cy="12.5" r="1.1" fill="currentColor" stroke="none"/>',
+  search: '<circle cx="7" cy="7" r="4"/><path d="M10 10l3.5 3.5"/>',
+  calendar: '<rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/>',
+  eye: '<path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/>',
+  eyeOff: '<path d="M6.3 6.3A2 2 0 009.7 9.7M4.8 4.9C2.8 6.1 1.5 8 1.5 8S4 12.5 8 12.5c1.1 0 2-.2 2.9-.6M13.1 11C14.1 9.9 14.5 8 14.5 8S12 3.5 8 3.5c-.5 0-1 .1-1.4.2M2.5 2.5l11 11"/>',
+  upload: '<path d="M8 10.5V3M5 5.8L8 2.8l3 3M3 12.8h10"/>',
+  download: '<path d="M8 2.5V10M5 7.2L8 10.2l3-3M3 12.8h10"/>',
+  droplet: '<path d="M8 2.4S12 6.6 12 9.4a4 4 0 01-8 0c0-2.8 4-7 4-7z"/>',
+  sortAsc: '<path d="M8 3.5v9M5 6.5L8 3.5l3 3"/>',
+  sortDesc: '<path d="M8 12.5v-9M5 9.5l3 3 3-3"/>',
+  sortNone: '<path d="M5.5 6.5L8 4l2.5 2.5M5.5 9.5L8 12l2.5-2.5"/>',
+  sun: '<circle cx="8" cy="8" r="3.2"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.8 3.8l1 1M11.2 11.2l1 1M3.8 12.2l1-1M11.2 4.8l1-1"/>',
+  moon: '<path d="M13 9a5 5 0 01-6-6 5.5 5.5 0 106 6z"/>',
+  info: '<circle cx="8" cy="8" r="6"/><path d="M8 7.2v3.6M8 5.2v.2"/>',
+  warning: '<path d="M8 2.5l6 11H2l6-11z"/><path d="M8 6.8v3M8 11.6v.2"/>',
+  danger: '<circle cx="8" cy="8" r="6"/><path d="M8 5v3.6M8 10.8v.2"/>',
+  success: '<circle cx="8" cy="8" r="6"/><path d="M5.2 8.2l2 2 3.6-4"/>',
+  bell: '<path d="M8 2.6a3.4 3.4 0 00-3.4 3.4c0 2.9-1.1 3.9-1.1 3.9h9s-1.1-1-1.1-3.9A3.4 3.4 0 008 2.6z"/><path d="M6.8 12.8a1.3 1.3 0 002.4 0"/>',
+  heart: '<path d="M8 13.3S2.7 10 2.7 6.3A2.6 2.6 0 018 4.9a2.6 2.6 0 015.3 1.4C13.3 10 8 13.3 8 13.3z"/>',
+  layers: '<path d="M8 2l5.5 3-5.5 3-5.5-3L8 2z"/><path d="M2.5 8L8 11l5.5-3"/><path d="M2.5 11L8 14l5.5-3"/>',
+  grid: '<rect x="2" y="2.5" width="5" height="5" rx="1"/><rect x="9" y="2.5" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/>',
+  form: '<rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M5 6h6M5 8.5h6M5 11h3.5"/>',
+  chart: '<path d="M2.5 13V3M2.5 13H13"/><path d="M5 10l2.3-2.3 2 1.4L12.5 5.5"/>',
+  bars: '<path d="M2.5 13V3M2.5 13H13"/><rect x="4.3" y="8.5" width="1.8" height="2.5"/><rect x="7.4" y="6.5" width="1.8" height="4.5"/><rect x="10.5" y="4.5" width="1.8" height="6.5"/>',
+  sidebar: '<rect x="2" y="3" width="12" height="10" rx="1.5"/><line x1="6.2" y1="3" x2="6.2" y2="13"/>',
+  palette: '<path d="M8 2.2a5.8 5.8 0 100 11.6c.9 0 1.4-.7 1.4-1.4 0-.9-.8-1.2-.8-1.9 0-.5.4-.9 1-.9h1A3.2 3.2 0 0013.8 6 5.9 5.9 0 008 2.2z"/><circle cx="5.4" cy="6.6" r=".7" fill="currentColor" stroke="none"/><circle cx="8" cy="5.2" r=".7" fill="currentColor" stroke="none"/><circle cx="10.4" cy="6.6" r=".7" fill="currentColor" stroke="none"/>',
+  gauge: '<path d="M2.6 11.5a6 6 0 1110.8 0"/><path d="M8 8.5l2.6-2.2"/><circle cx="8" cy="8.6" r=".7" fill="currentColor" stroke="none"/>',
+
+  // ── Datacenter / infrastructure ─────────────────────────────
+  datacenter: '<rect x="2.5" y="2.5" width="11" height="11" rx="1"/><path d="M5 5h6M5 7.3h6M5 9.6h3.5"/><circle cx="11" cy="9.7" r=".5" fill="currentColor" stroke="none"/>',
+  rack: '<rect x="3.5" y="2" width="9" height="12" rx="1"/><path d="M3.5 5.2h9M3.5 8.4h9M3.5 11.6h9"/><circle cx="5.4" cy="3.6" r=".4" fill="currentColor" stroke="none"/><circle cx="5.4" cy="6.8" r=".4" fill="currentColor" stroke="none"/><circle cx="5.4" cy="10" r=".4" fill="currentColor" stroke="none"/>',
+  cluster: '<rect x="2" y="2.5" width="5" height="5" rx="1"/><rect x="9" y="2.5" width="5" height="5" rx="1"/><rect x="5.5" y="9" width="5" height="5" rx="1"/><path d="M4.5 7.5l2.5 1.5M11.5 7.5L9 9"/>',
+  host: '<rect x="2.5" y="3" width="11" height="4.2" rx="1"/><rect x="2.5" y="8.8" width="11" height="4.2" rx="1"/><circle cx="4.7" cy="5.1" r=".55" fill="currentColor" stroke="none"/><circle cx="4.7" cy="10.9" r=".55" fill="currentColor" stroke="none"/><path d="M7 5.1h4M7 10.9h4"/>',
+  vm: '<rect x="2" y="3" width="12" height="8" rx="1"/><path d="M6 14h4M8 11v3"/>',
+  switch: '<rect x="2" y="5.5" width="12" height="5" rx="1"/><path d="M4.5 5.5V3.8M7 5.5V3.8M9 5.5V3.8M11.5 5.5V3.8M4.5 10.5v1.7M7 10.5v1.7M9 10.5v1.7M11.5 10.5v1.7"/>',
+  storage: '<ellipse cx="8" cy="3.6" rx="5" ry="2"/><path d="M3 3.6v8.8c0 1.1 2.2 2 5 2s5-.9 5-2V3.6"/><path d="M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>',
+  network: '<circle cx="8" cy="3.4" r="1.7"/><circle cx="3.6" cy="12.4" r="1.7"/><circle cx="12.4" cy="12.4" r="1.7"/><path d="M8 5.1v2.6M7 8.8l-2.4 2M9 8.8l2.4 2"/>',
+  cpu: '<rect x="4.5" y="4.5" width="7" height="7" rx="1"/><rect x="6.6" y="6.6" width="2.8" height="2.8" rx=".5"/><path d="M6.5 2.6v1.9M9.5 2.6v1.9M6.5 11.5v1.9M9.5 11.5v1.9M2.6 6.5h1.9M2.6 9.5h1.9M11.5 6.5h1.9M11.5 9.5h1.9"/>',
+  memory: '<rect x="2" y="5" width="12" height="6" rx="1"/><path d="M4.5 11v1.6M7 11v1.6M9 11v1.6M11.5 11v1.6M5 7.2h6"/>',
+  disk: '<circle cx="8" cy="8" r="5.6"/><circle cx="8" cy="8" r="1.3"/><path d="M8 2.4v2.3"/>',
+  port: '<rect x="3" y="5" width="10" height="6" rx="1"/><path d="M6.5 5V3.6h3V5M5 11v1.6M11 11v1.6"/>',
+  power: '<path d="M8 2.4v5"/><path d="M5.2 4.6a5 5 0 105.6 0"/>',
+
+  // ── State / action (also usable as badges via the icon `badge` input) ─
+  running: '<path d="M5.5 4l6 4-6 4z"/>',
+  stopped: '<rect x="5" y="5" width="6" height="6" rx="1"/>',
+  paused: '<rect x="5.2" y="4" width="2" height="8" rx=".5"/><rect x="8.8" y="4" width="2" height="8" rx=".5"/>',
+  maintenance: '<path d="M10.8 3.2a2.7 2.7 0 00-3.5 3.4l-4.2 4.2L4.6 12.7l4.2-4.2a2.7 2.7 0 003.4-3.5L10.5 6.7 9.3 6.4 9 5.2z"/>',
+  sync: '<path d="M12.5 7a4.5 4.5 0 00-8-2.5M3.5 9a4.5 4.5 0 008 2.5"/><path d="M12.5 3v2.5H10M3.5 13v-2.5H6"/>',
+  snapshot: '<rect x="2.5" y="4.5" width="11" height="8" rx="1.5"/><circle cx="8" cy="8.5" r="2.3"/><path d="M6 4.5l1-1.5h2l1 1.5"/>',
+  lock: '<rect x="3.5" y="7" width="9" height="6" rx="1.5"/><path d="M5.5 7V5.4a2.5 2.5 0 015 0V7"/>',
+
+  // ── Generic vendor marks (abstract glyphs, NOT real trademarked logos) ─
+  vendorVmware: '<rect x="2.5" y="6.5" width="3" height="3.4" rx=".5"/><rect x="6.5" y="6.5" width="3" height="3.4" rx=".5"/><rect x="10.5" y="6.5" width="3" height="3.4" rx=".5"/>',
+  vendorCisco: '<path d="M2.5 10.5V7.5M5.5 10.5V5M8 10.5V3.5M10.5 10.5V5M13.5 10.5V7.5"/>',
+  vendorHpe: '<rect x="2.5" y="5" width="11" height="6" rx="1"/><path d="M5.5 5v6"/>',
+  vendorDell: '<circle cx="8" cy="8" r="5.6"/><path d="M5.4 8h3.4M5.4 6.6h2.6M5.4 9.4h2.6"/>',
+  vendorKaytus: '<path d="M5 3v10M5 8l4.5-4.5M5 8l4.5 5"/>',
+};
+
+/** Icon names grouped for galleries / documentation. */
+export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
+  {
+    label: 'General',
+    names: [
+      'hexagon', 'search', 'menu', 'ellipsis', 'dots', 'close', 'check', 'calendar',
+      'eye', 'eyeOff', 'upload', 'download', 'sun', 'moon', 'bell', 'heart', 'layers',
+      'grid', 'form', 'chart', 'bars', 'gauge', 'palette', 'sidebar', 'compass',
+    ],
+  },
+  {
+    label: 'Status',
+    names: ['info', 'success', 'warning', 'danger', 'sync', 'lock', 'snapshot'],
+  },
+  {
+    label: 'Datacenter',
+    names: [
+      'datacenter', 'rack', 'cluster', 'host', 'vm', 'switch', 'storage',
+      'network', 'cpu', 'memory', 'disk', 'port', 'power',
+    ],
+  },
+  {
+    label: 'Object state',
+    names: ['running', 'stopped', 'paused', 'maintenance'],
+  },
+  {
+    label: 'Vendor (generic)',
+    names: ['vendorVmware', 'vendorCisco', 'vendorHpe', 'vendorDell', 'vendorKaytus'],
+  },
+];
+
+export type StrctIconBadge = 'none' | 'ok' | 'warn' | 'crit' | 'off' | 'info';
+
+/**
+ * Inline stroke icon. `<strct-icon name="host" badge="ok" />` renders the host
+ * glyph with a green status dot (a "running host"). Unknown names render
+ * nothing rather than throwing.
+ */
+@Component({
+  selector: 'strct-icon',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `<svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      [attr.stroke-width]="strokeWidth()"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      [style.width.px]="size()"
+      [style.height.px]="size()"
+      [innerHTML]="svg()"
+    ></svg>
+    @if (badge() !== 'none') {
+      <span class="strct-icon__badge strct-icon__badge--{{ badge() }}"></span>
+    }`,
+  styles: [
+    `
+    :host { position: relative; display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+    .strct-icon__badge {
+      position: absolute; right: -1px; bottom: -1px;
+      width: 38%; height: 38%; min-width: 6px; min-height: 6px; max-width: 9px; max-height: 9px;
+      border-radius: 50%; box-shadow: 0 0 0 1.5px var(--bg-1);
+    }
+    .strct-icon__badge--ok { background: var(--ok); }
+    .strct-icon__badge--warn { background: var(--wrn); }
+    .strct-icon__badge--crit { background: var(--crt); }
+    .strct-icon__badge--off { background: var(--t3); }
+    .strct-icon__badge--info { background: var(--acc); }
+    `,
+  ],
+})
+export class StrctIcon {
+  private readonly sanitizer = inject(DomSanitizer);
+
+  readonly name = input.required<string>();
+  readonly size = input(16);
+  readonly strokeWidth = input(1.4);
+  /** Optional status dot overlaid on the glyph (object state). */
+  readonly badge = input<StrctIconBadge>('none');
+
+  protected readonly svg = computed<SafeHtml>(() =>
+    this.sanitizer.bypassSecurityTrustHtml(STRCT_ICONS[this.name()] ?? ''),
+  );
+}

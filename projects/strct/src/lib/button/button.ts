@@ -1,0 +1,117 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewEncapsulation,
+  booleanAttribute,
+  input,
+} from '@angular/core';
+
+export type StrctButtonVariant = 'primary' | 'danger' | 'outline' | 'flat' | 'neutral';
+export type StrctButtonSize = 'md' | 'sm' | 'mini';
+
+/**
+ * Styles a native `<button>` / `<a>` so it stays fully accessible and form-aware.
+ *
+ * Buttons are restrained by default: outlined / ghost surfaces with color used
+ * only as a subtle border + text accent. Add `solid` for a rare filled call to
+ * action.
+ *   <button strct-button variant="primary">Save</button>
+ *   <button strct-button variant="primary" solid>Deploy</button>
+ *   <a strct-button variant="flat" size="sm" href="...">Cancel</a>
+ */
+@Component({
+  selector: 'button[strct-button], a[strct-button]',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
+  template: `<ng-content />`,
+  host: {
+    class: 'strct-btn',
+    '[class.strct-btn--primary]': "variant() === 'primary'",
+    '[class.strct-btn--danger]': "variant() === 'danger'",
+    '[class.strct-btn--outline]': "variant() === 'outline'",
+    '[class.strct-btn--flat]': "variant() === 'flat'",
+    '[class.strct-btn--solid]': 'solid()',
+    '[class.strct-btn--sm]': "size() === 'sm'",
+    '[class.strct-btn--mini]': "size() === 'mini'",
+    '[class.strct-btn--block]': 'block()',
+    '[class.strct-btn--icon]': 'iconOnly()',
+  },
+  styles: [
+    `
+    /* Base: neutral, outlined, no fill. */
+    .strct-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      font-family: var(--font); font-size: 13px; font-weight: 500; line-height: 1;
+      padding: 7px 14px; border-radius: 6px; cursor: pointer; user-select: none;
+      color: var(--t1); background: transparent;
+      border: 1px solid var(--b3);
+      transition: background .14s ease, border-color .14s ease, color .14s ease, opacity .14s ease;
+      text-decoration: none; white-space: nowrap;
+    }
+    .strct-btn:hover { background: var(--bg-3); text-decoration: none; }
+    .strct-btn:active { background: var(--bg-a); }
+    .strct-btn:disabled, .strct-btn[aria-disabled='true'] { opacity: .45; cursor: not-allowed; }
+
+    /* Emphasis via accent border + text only — not a colored fill. */
+    .strct-btn--primary { border-color: var(--acc50); color: var(--acc); }
+    .strct-btn--primary:hover { background: var(--acc-m); border-color: var(--acc); }
+
+    .strct-btn--danger { border-color: var(--crt); color: var(--crt); }
+    .strct-btn--danger:hover { background: var(--crt-bg); }
+
+    /* Neutral outline (explicit). */
+    .strct-btn--outline { border-color: var(--b3); color: var(--t1); }
+    .strct-btn--outline:hover { background: var(--bg-3); }
+
+    /* Borderless text button. */
+    .strct-btn--flat { border-color: transparent; color: var(--t2); }
+    .strct-btn--flat:hover { background: var(--bg-3); color: var(--t1); }
+
+    /* Opt-in filled call to action. */
+    .strct-btn--solid { background: var(--bg-3); border-color: transparent; color: var(--t1); }
+    .strct-btn--solid:hover { background: var(--bg-h); }
+    .strct-btn--solid.strct-btn--primary { background: var(--acc); color: #fff; }
+    .strct-btn--solid.strct-btn--primary:hover { background: var(--acc); filter: brightness(1.08); }
+    .strct-btn--solid.strct-btn--danger { background: var(--crt); color: #fff; }
+    .strct-btn--solid.strct-btn--danger:hover { background: var(--crt); filter: brightness(1.08); }
+
+    .strct-btn--sm { padding: 4px 10px; font-size: 12px; border-radius: 5px; }
+    .strct-btn--mini { padding: 2px 8px; font-size: 11px; border-radius: 4px; }
+    .strct-btn--block { display: flex; width: 100%; }
+
+    /* Square icon-only button. */
+    .strct-btn--icon { padding: 7px; }
+    .strct-btn--icon.strct-btn--sm { padding: 5px; }
+    .strct-btn--icon.strct-btn--mini { padding: 3px; }
+    `,
+  ],
+})
+export class StrctButton {
+  readonly variant = input<StrctButtonVariant>('neutral');
+  readonly size = input<StrctButtonSize>('md');
+  /** Opt in to a filled surface (use sparingly, for the primary action). */
+  readonly solid = input(false, { transform: booleanAttribute });
+  readonly block = input(false, { transform: booleanAttribute });
+  /** Square padding for a single-icon button. */
+  readonly iconOnly = input(false, { transform: booleanAttribute });
+}
+
+/** Segments adjacent buttons into a single joined control. */
+@Component({
+  selector: 'strct-button-group',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
+  template: `<ng-content />`,
+  host: { class: 'strct-btn-group', role: 'group' },
+  styles: [
+    `
+    .strct-btn-group { display: inline-flex; }
+    .strct-btn-group > .strct-btn { border-radius: 0; }
+    .strct-btn-group > .strct-btn:not(:first-child) { margin-left: -1px; }
+    .strct-btn-group > .strct-btn:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+    .strct-btn-group > .strct-btn:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+    .strct-btn-group > .strct-btn:hover, .strct-btn-group > .strct-btn:focus-visible { position: relative; z-index: 1; }
+    `,
+  ],
+})
+export class StrctButtonGroup {}

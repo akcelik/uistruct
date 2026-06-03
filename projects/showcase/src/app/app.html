@@ -1,0 +1,61 @@
+<strct-shell>
+  <strct-header>
+    <div class="brand">
+      <strct-icon name="hexagon" [size]="22" [strokeWidth]="1.4" />
+      <div class="brand__text">
+        <strong>UIStruct</strong>
+        <span>Component Library</span>
+      </div>
+    </div>
+
+    <span class="grow"></span>
+
+    <strct-theme-switcher />
+
+    <div class="conn">
+      <span class="conn__dot"></span>
+      <span>Ready</span>
+    </div>
+  </strct-header>
+
+  <strct-vertical-nav>
+    <strct-nav>
+      @for (cat of nav; track cat.id) {
+        <strct-nav-item
+          [active]="cat.id === activeCategory().id"
+          [label]="cat.label"
+          [routerLink]="['/', cat.route]"
+        >
+          <strct-icon [name]="cat.icon" [size]="17" [strokeWidth]="1.4" />
+        </strct-nav-item>
+      }
+    </strct-nav>
+
+    <div class="vnav-scroll">
+      <div class="vnav-title">{{ activeCategory().label }}</div>
+      <strct-tree>
+        @for (item of activeCategory().items; track item.id) {
+          <strct-tree-node
+            [label]="item.label"
+            [active]="item.id === activeFragment()"
+            (activated)="go(activeCategory().route, item.id)"
+          />
+        }
+      </strct-tree>
+    </div>
+  </strct-vertical-nav>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+
+  <strct-footer>
+    <span>UIStruct v0.1.0</span>
+    <span class="dot-sep"></span>
+    <span>{{ count }} components</span>
+    <span class="grow"></span>
+    <span>{{ themeLabel() }}</span>
+  </strct-footer>
+</strct-shell>
+
+<strct-toast-outlet />

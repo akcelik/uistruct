@@ -1,0 +1,10 @@
+// UIStruct theme entry point.
+// Import once in a consuming application's global stylesheet:
+//   @use 'strct/styles/theme';
+// then set `data-palette` ('arctic' | 'ember' | 'sage') and
+// `data-theme` ('dark' | 'light') on the <html> element (StrctThemeService
+// does this for you).
+
+@use 'tokens';
+@use 'base';
+@use 'forms';

@@ -1,0 +1,46 @@
+// Base reset + element defaults for UIStruct. Consumers get this for free by
+// importing `strct/styles/theme.scss`. Everything reads from the token layer.
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html,
+body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--t1);
+  background: var(--bg-2);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+// Roomy, themable scrollbars (WebKit) that fade into the surface.
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sb) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--sb);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--b3); background-clip: padding-box; }
+
+a { color: var(--acc); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+code,
+kbd,
+.strct-mono { font-family: var(--mono); }
+
+:focus-visible {
+  outline: 2px solid var(--acc50);
+  outline-offset: 2px;
+}

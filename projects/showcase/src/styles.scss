@@ -1,0 +1,3 @@
+// Pull in the library's theme (tokens + base reset + form-control styles).
+// Published consumers would instead use `@use 'strct/styles/theme';`.
+@use '../../strct/src/styles/theme';

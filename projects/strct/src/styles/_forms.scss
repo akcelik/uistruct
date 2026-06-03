@@ -1,0 +1,53 @@
+// Shared styling for native form controls wearing the `strctInput` directive
+// (which simply applies the `.strct-control` class). Kept in the theme layer so
+// inputs / selects / textareas share one definition.
+
+.strct-control {
+  display: block;
+  width: 100%;
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--t1);
+  background: var(--bg-2);
+  border: 1px solid var(--b2);
+  border-radius: 6px;
+  padding: 7px 10px;
+  transition: border-color .14s ease, box-shadow .14s ease, background .14s ease;
+}
+
+.strct-control::placeholder { color: var(--t3); }
+
+.strct-control:hover { border-color: var(--b3); }
+
+.strct-control:focus,
+.strct-control:focus-visible {
+  outline: none;
+  border-color: var(--acc50);
+  box-shadow: 0 0 0 3px var(--acc18);
+  background: var(--bg-1);
+}
+
+.strct-control:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  background: var(--bg-3);
+}
+
+.strct-control[aria-invalid='true'] {
+  border-color: var(--crt);
+}
+.strct-control[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 3px var(--crt-bg);
+}
+
+// Native <select> gets a custom chevron.
+select.strct-control {
+  appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+}
+
+textarea.strct-control { min-height: 76px; resize: vertical; }

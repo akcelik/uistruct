@@ -1,0 +1,18 @@
+{
+  "name": "strct",
+  "version": "0.1.0",
+  "description": "UIStruct — a standalone Angular component library with a tokenised, multi-palette theme system.",
+  "peerDependencies": {
+    "@angular/common": "^21.2.0",
+    "@angular/core": "^21.2.0",
+    "@angular/forms": "^21.2.0",
+    "@angular/platform-browser": "^21.2.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "exports": {
+    "./styles/*": "./styles/*"
+  },
+  "sideEffects": false
+}
