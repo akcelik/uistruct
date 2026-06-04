@@ -1,5 +1,7 @@
 # @akcelik/strct
 
+**[Live documentation & demo →](https://akcelik.github.io/uistruct/)**
+
 A standalone Angular component library built around a **tokenised, multi-palette
 theme system**. Everything is driven by CSS custom properties, so a single
 attribute swap re-skins the whole library.
