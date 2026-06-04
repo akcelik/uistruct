@@ -49,6 +49,10 @@ export const STRCT_ICONS: Record<string, string> = {
   sidebar: '<rect x="2" y="3" width="12" height="10" rx="1.5"/><line x1="6.2" y1="3" x2="6.2" y2="13"/>',
   palette: '<path d="M8 2.2a5.8 5.8 0 100 11.6c.9 0 1.4-.7 1.4-1.4 0-.9-.8-1.2-.8-1.9 0-.5.4-.9 1-.9h1A3.2 3.2 0 0013.8 6 5.9 5.9 0 008 2.2z"/><circle cx="5.4" cy="6.6" r=".7" fill="currentColor" stroke="none"/><circle cx="8" cy="5.2" r=".7" fill="currentColor" stroke="none"/><circle cx="10.4" cy="6.6" r=".7" fill="currentColor" stroke="none"/>',
   gauge: '<path d="M2.6 11.5a6 6 0 1110.8 0"/><path d="M8 8.5l2.6-2.2"/><circle cx="8" cy="8.6" r=".7" fill="currentColor" stroke="none"/>',
+  copy: '<rect x="5" y="5" width="8" height="8" rx="1.4"/><path d="M11 5V3.9A1.4 1.4 0 0 0 9.6 2.5H3.9A1.4 1.4 0 0 0 2.5 3.9v5.7A1.4 1.4 0 0 0 3.9 11H5"/>',
+  code: '<path d="M5.5 5L2.5 8l3 3M10.5 5l3 3-3 3M9 3.5l-2 9"/>',
+  book: '<path d="M3 3.2h6a1.5 1.5 0 0 1 1.5 1.5v8.1H4.5A1.5 1.5 0 0 1 3 11.3z"/><path d="M13 3.2H9.5A1.5 1.5 0 0 0 8 4.7v8.1h5z"/>',
+  terminal: '<rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M4.8 6.5L7 8.2 4.8 9.9M8.2 10.2h3"/>',
 
   // ── Datacenter / infrastructure ─────────────────────────────
   datacenter: '<rect x="2.5" y="2.5" width="11" height="11" rx="1"/><path d="M5 5h6M5 7.3h6M5 9.6h3.5"/><circle cx="11" cy="9.7" r=".5" fill="currentColor" stroke="none"/>',
@@ -112,6 +116,7 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
       'hexagon', 'search', 'menu', 'ellipsis', 'dots', 'close', 'check', 'calendar',
       'eye', 'eyeOff', 'upload', 'download', 'sun', 'moon', 'bell', 'heart', 'layers',
       'grid', 'form', 'chart', 'bars', 'gauge', 'palette', 'sidebar', 'compass',
+      'copy', 'code', 'book', 'terminal',
     ],
   },
   {

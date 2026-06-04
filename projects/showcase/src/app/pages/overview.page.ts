@@ -21,8 +21,8 @@ interface TokenGroup {
   ],
   template: `
     <app-page-header
-      title="UIStruct"
-      subtitle="A standalone Angular component library. One token system, three palettes — Arctic, Ember, Sage — each in light and dark. Every component below is driven entirely by CSS custom properties, so switching the palette or theme re-skins the whole library instantly."
+      title="Theming"
+      subtitle="One token system, three palettes — Arctic, Ember, Sage — each in light and dark. Every component is driven entirely by CSS custom properties, so switching the palette or theme re-skins the whole library instantly."
     />
 
     <app-demo

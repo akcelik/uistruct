@@ -1,51 +1,59 @@
 <strct-shell>
   <strct-header>
-    <div class="brand">
+    <a class="brand" routerLink="/">
       <strct-icon name="hexagon" [size]="22" [strokeWidth]="1.4" />
       <div class="brand__text">
         <strong>UIStruct</strong>
         <span>Component Library</span>
       </div>
-    </div>
+    </a>
 
     <span class="grow"></span>
 
+    <a class="hnav" routerLink="/get-started">Get started</a>
+    <a class="hnav" routerLink="/components/button">Components</a>
+
     <strct-theme-switcher />
 
-    <div class="conn">
-      <span class="conn__dot"></span>
-      <span>Ready</span>
-    </div>
+    <a class="ghbtn" href="https://github.com/akcelik/uistruct" target="_blank" rel="noreferrer" aria-label="GitHub">
+      <strct-icon name="code" [size]="16" />
+    </a>
   </strct-header>
 
-  <strct-vertical-nav>
-    <strct-nav>
-      @for (cat of nav; track cat.id) {
-        <strct-nav-item
-          [active]="cat.id === activeCategory().id"
-          [label]="cat.label"
-          [routerLink]="['/', cat.route]"
-        >
-          <strct-icon [name]="cat.icon" [size]="17" [strokeWidth]="1.4" />
-        </strct-nav-item>
-      }
-    </strct-nav>
+  @if (showSidebar()) {
+    <strct-vertical-nav>
+      <div class="side">
+        <div class="rail">
+          @for (group of groups; track group.id) {
+            <strct-nav-item
+              [active]="isActiveGroup(group.id)"
+              [label]="group.label"
+              [routerLink]="group.items[0].path"
+            >
+              <strct-icon [name]="group.icon" [size]="17" [strokeWidth]="1.4" />
+            </strct-nav-item>
+          }
+        </div>
 
-    <div class="vnav-scroll">
-      <div class="vnav-title">{{ activeCategory().label }}</div>
-      <strct-tree>
-        @for (item of activeCategory().items; track item.id) {
-          <strct-tree-node
-            [label]="item.label"
-            [active]="item.id === activeFragment()"
-            (activated)="go(activeCategory().route, item.id)"
-          />
-        }
-      </strct-tree>
-    </div>
-  </strct-vertical-nav>
+        <div class="panel">
+          <div class="panel__title">{{ activeGroup().label }}</div>
+          <nav class="panel__list">
+            @for (item of activeGroup().items; track item.path) {
+              <a
+                class="panel__item"
+                [class.is-active]="isActiveItem(item.path)"
+                [routerLink]="item.path"
+              >
+                {{ item.label }}
+              </a>
+            }
+          </nav>
+        </div>
+      </div>
+    </strct-vertical-nav>
+  }
 
-  <main class="content">
+  <main class="content" [class.content--wide]="!showSidebar()">
     <router-outlet />
   </main>
 

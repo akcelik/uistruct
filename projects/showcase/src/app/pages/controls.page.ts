@@ -49,6 +49,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 
     <app-demo
       anchor="button-solid"
+      owner="button"
       heading="Solid (opt-in)"
       description="Add the solid attribute for a rare filled call to action."
       code="<button strct-button variant=&quot;primary&quot; solid>Deploy</button>"
@@ -58,7 +59,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       <button strct-button variant="danger" solid>Delete</button>
     </app-demo>
 
-    <app-demo anchor="button-sizes" heading="Button sizes" description="md (default), sm, mini.">
+    <app-demo anchor="button-sizes" owner="button" heading="Button sizes" description="md (default), sm, mini.">
       <button strct-button variant="primary">Medium</button>
       <button strct-button variant="primary" size="sm">Small</button>
       <button strct-button variant="primary" size="mini">Mini</button>

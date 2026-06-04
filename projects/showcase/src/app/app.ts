@@ -12,11 +12,20 @@ import {
   StrctThemeService,
   StrctThemeSwitcher,
   StrctToastOutlet,
-  StrctTree,
-  StrctTreeNode,
   StrctVerticalNav,
 } from 'strct';
-import { COMPONENT_COUNT, NAV } from './ui/nav.model';
+import { COMPONENT_COUNT, DOCS, GUIDES } from './docs/registry';
+
+interface NavItem {
+  label: string;
+  path: string;
+}
+interface NavGroup {
+  id: string;
+  label: string;
+  icon: string;
+  items: NavItem[];
+}
 
 @Component({
   selector: 'app-root',
@@ -28,10 +37,7 @@ import { COMPONENT_COUNT, NAV } from './ui/nav.model';
     StrctHeader,
     StrctFooter,
     StrctVerticalNav,
-    StrctNav,
     StrctNavItem,
-    StrctTree,
-    StrctTreeNode,
     StrctThemeSwitcher,
     StrctToastOutlet,
     StrctIcon,
@@ -43,20 +49,40 @@ export class App {
   private readonly router = inject(Router);
   private readonly theme = inject(StrctThemeService);
 
-  protected readonly nav = NAV;
   protected readonly count = COMPONENT_COUNT;
 
-  private readonly url = signal(this.router.url);
+  /** Icon strip + secondary panel source. Foundations first, then component categories. */
+  protected readonly groups: NavGroup[] = [
+    { id: GUIDES.id, label: GUIDES.label, icon: GUIDES.icon, items: GUIDES.items },
+    ...DOCS.map((cat) => ({
+      id: cat.id,
+      label: cat.label,
+      icon: cat.icon,
+      items: cat.components.map((c) => ({ label: c.title, path: `/components/${c.id}` })),
+    })),
+  ];
 
-  protected readonly activeCategory = computed(() => {
-    const segment = this.url().split('#')[0].split('/').filter(Boolean)[0] ?? 'overview';
-    return NAV.find((c) => c.route === segment) ?? NAV[0];
+  private readonly url = signal(this.router.url);
+  private readonly path = computed(() => this.url().split('#')[0].split('?')[0]);
+
+  protected readonly showSidebar = computed(() => this.path() !== '/');
+
+  protected readonly activeGroup = computed<NavGroup>(() => {
+    const p = this.path();
+    if (p.startsWith('/components/')) {
+      const id = p.split('/')[2] ?? '';
+      const cat = DOCS.find((c) => c.components.some((x) => x.id === id));
+      if (cat) return this.groups.find((g) => g.id === cat.id)!;
+    }
+    if (p.startsWith('/foundations') || p.startsWith('/get-started')) {
+      return this.groups[0];
+    }
+    return this.groups[0];
   });
-  protected readonly activeFragment = computed(() => this.url().split('#')[1] ?? '');
 
   protected readonly themeLabel = computed(() => {
-    const p = this.theme.palettes.find((x) => x.id === this.theme.palette());
-    return `${p?.label ?? ''} · ${this.theme.isDark() ? 'Dark' : 'Light'}`;
+    const pal = this.theme.palettes.find((x) => x.id === this.theme.palette());
+    return `${pal?.label ?? ''} · ${this.theme.isDark() ? 'Dark' : 'Light'}`;
   });
 
   constructor() {
@@ -68,7 +94,11 @@ export class App {
       .subscribe((e) => this.url.set(e.urlAfterRedirects));
   }
 
-  protected go(route: string, fragment: string): void {
-    this.router.navigate(['/', route], { fragment });
+  protected isActiveGroup(id: string): boolean {
+    return this.activeGroup().id === id;
+  }
+
+  protected isActiveItem(path: string): boolean {
+    return this.path() === path;
   }
 }

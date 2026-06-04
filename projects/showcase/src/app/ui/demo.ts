@@ -1,16 +1,36 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Injectable,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 
-/** Page heading block shown at the top of each demo page. */
+/**
+ * Provided by the per-component documentation page through a child injector.
+ * When `only` is set, the hosted category page hides its own header and every
+ * demo whose `owner` does not match — leaving just that component's examples.
+ */
+@Injectable()
+export class DemoFilter {
+  readonly only = signal<string>('');
+}
+
+/** Page heading block shown at the top of each gallery / demo page. */
 @Component({
   selector: 'app-page-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="ph">
-      <h2 class="ph__title">{{ title() }}</h2>
-      @if (subtitle()) {
-        <p class="ph__sub">{{ subtitle() }}</p>
-      }
-    </header>
+    @if (!filtered()) {
+      <header class="ph">
+        <h2 class="ph__title">{{ title() }}</h2>
+        @if (subtitle()) {
+          <p class="ph__sub">{{ subtitle() }}</p>
+        }
+      </header>
+    }
   `,
   styles: [
     `
@@ -23,28 +43,38 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 export class PageHeader {
   readonly title = input.required<string>();
   readonly subtitle = input('');
+
+  private readonly filter = inject(DemoFilter, { optional: true });
+  protected readonly filtered = computed(() => !!this.filter?.only());
 }
 
 /**
  * One documented example: a titled stage that hosts a live component plus an
- * optional code snippet.
+ * optional code snippet. Hidden when a DemoFilter targets a different `owner`.
  */
 @Component({
   selector: 'app-demo',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="demo" [id]="anchor()">
-      <div class="demo__head">
-        <h3 class="demo__title">{{ heading() }}</h3>
-        @if (description()) {
-          <p class="demo__desc">{{ description() }}</p>
+    @if (!hidden()) {
+      <section
+        class="demo"
+        [id]="anchor()"
+        data-toc
+        [attr.data-toc-label]="heading()"
+      >
+        <div class="demo__head">
+          <h3 class="demo__title">{{ heading() }}</h3>
+          @if (description()) {
+            <p class="demo__desc">{{ description() }}</p>
+          }
+        </div>
+        <div class="demo__stage"><ng-content /></div>
+        @if (code()) {
+          <pre class="demo__code"><code>{{ code() }}</code></pre>
         }
-      </div>
-      <div class="demo__stage"><ng-content /></div>
-      @if (code()) {
-        <pre class="demo__code"><code>{{ code() }}</code></pre>
-      }
-    </section>
+      </section>
+    }
   `,
   styles: [
     `
@@ -77,4 +107,13 @@ export class DemoBlock {
   readonly description = input('');
   readonly anchor = input('');
   readonly code = input('');
+  /** Component this demo belongs to; defaults to the anchor. */
+  readonly owner = input('');
+
+  private readonly filter = inject(DemoFilter, { optional: true });
+  private readonly ownerId = computed(() => this.owner() || this.anchor());
+  protected readonly hidden = computed(() => {
+    const only = this.filter?.only();
+    return !!only && only !== this.ownerId();
+  });
 }
