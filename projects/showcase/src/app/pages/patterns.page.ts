@@ -145,7 +145,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         class="ctx-target"
         [strctContextMenu]="menuItems"
         [strctContextMenuData]="'host-01'"
-        (menuSelect)="lastAction.set($event.label)"
+        (menuSelect)="lastAction.set($event.label ?? '')"
       >
         <strct-icon name="host" [size]="18" />
         <span>Right-click this host — data-driven menu</span>
@@ -208,7 +208,7 @@ export class PatternsPage {
       ],
     },
     { label: 'Maintenance mode', icon: 'maintenance', disabled: true },
-    { divider: true, label: '' },
+    { divider: true },
     { label: 'Remove from inventory', icon: 'close', danger: true },
   ];
 }

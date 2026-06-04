@@ -24,7 +24,8 @@ import { StrctIcon } from '../icon/icon';
 
 /** A single entry in a data-driven menu. */
 export interface StrctMenuItem {
-  label: string;
+  /** Entry text. Optional — omit it for a `divider`, where a label is meaningless. */
+  label?: string;
   icon?: string;
   /** Destructive styling. */
   danger?: boolean;
