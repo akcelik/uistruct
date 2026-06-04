@@ -15,6 +15,7 @@ export const STRCT_ICONS: Record<string, string> = {
   hexagon: '<path d="M8 1.6l5.5 3.2v6.4L8 14.4 2.5 11.2V4.8L8 1.6z"/>',
   chevronRight: '<path d="M6 3.5L10.5 8 6 12.5"/>',
   chevronLeft: '<path d="M10 3.5L5.5 8 10 12.5"/>',
+  chevronDoubleRight: '<path d="M3.5 3.5L8 8l-4.5 4.5M8.5 3.5L13 8l-4.5 4.5"/>',
   chevronDown: '<path d="M3.5 6L8 10.5 12.5 6"/>',
   ellipsis: '<circle cx="3.5" cy="8" r=".9" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r=".9" fill="currentColor" stroke="none"/><circle cx="12.5" cy="8" r=".9" fill="currentColor" stroke="none"/>',
   compass: '<circle cx="8" cy="8" r="6"/><path d="M10.6 5.4l-1.5 3.7-3.7 1.5 1.5-3.7 3.7-1.5z"/>',

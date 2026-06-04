@@ -100,7 +100,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="detailpane"
       heading="Detail pane"
-      description="A different pattern from expandable rows: clicking a row collapses the grid to a single column and opens a side pane with that row's details. Click again or the × to return."
+      description="A different pattern from expandable rows: click the » button to collapse the grid to a single column and open a side pane with that row's details (the » keeps row cells free to select/copy). Click it again or the × to return."
       code="<strct-datagrid [columns]=&quot;cols&quot; [rows]=&quot;rows&quot; detailPane>…</strct-datagrid>"
     >
       <strct-datagrid

@@ -71,6 +71,9 @@ export class StrctDatagridActionBar {}
     <table class="strct-dg">
       <thead>
         <tr>
+          @if (canDetail()) {
+            <th class="strct-dg__expandcol"></th>
+          }
           @if (canExpand()) {
             <th class="strct-dg__expandcol"></th>
           }
@@ -111,9 +114,21 @@ export class StrctDatagridActionBar {}
           <tr
             [class.strct-dg__row--selected]="isSelected(row)"
             [class.strct-dg__row--active]="paneOpen() && row === activeRow()"
-            [class.strct-dg__row--clickable]="detailPane() && !!detailDef()"
-            (click)="onRowClick(row)"
           >
+            @if (canDetail()) {
+              <td class="strct-dg__expandcell">
+                <button
+                  type="button"
+                  class="strct-dg__detailbtn"
+                  [class.strct-dg__detailbtn--active]="row === activeRow()"
+                  [attr.aria-expanded]="row === activeRow()"
+                  aria-label="Open detail"
+                  (click)="openDetail(row)"
+                >
+                  <strct-icon name="chevronDoubleRight" [size]="13" [strokeWidth]="1.6" />
+                </button>
+              </td>
+            }
             @if (canExpand()) {
               <td class="strct-dg__expandcell">
                 <button
@@ -229,6 +244,13 @@ export class StrctDatagridActionBar {}
     }
     .strct-dg__expandbtn:hover { color: var(--t1); background: var(--bg-3); }
     .strct-dg__expandbtn--open { transform: rotate(90deg); color: var(--acc); }
+    .strct-dg__detailbtn {
+      display: inline-flex; padding: 3px; border: 0; border-radius: 4px;
+      background: transparent; color: var(--t3); cursor: pointer;
+      transition: color .14s ease, background .14s ease;
+    }
+    .strct-dg__detailbtn:hover { color: var(--acc); background: var(--bg-3); }
+    .strct-dg__detailbtn--active { color: var(--acc); background: var(--acc-m); }
     .strct-dg__detailrow td { background: var(--bg-2); padding: 0; }
     .strct-dg__detail { padding: 14px 16px; font-size: 13px; color: var(--t2); }
 
@@ -317,6 +339,7 @@ export class StrctDatagrid {
   protected readonly canExpand = computed(
     () => this.expandable() && !this.detailPane() && !!this.detailDef(),
   );
+  protected readonly canDetail = computed(() => this.detailPane() && !!this.detailDef());
   protected readonly paneOpen = computed(
     () => this.detailPane() && !!this.detailDef() && !!this.activeRow(),
   );
@@ -360,13 +383,18 @@ export class StrctDatagrid {
   }
 
   protected colspan(): number {
-    return this.visibleColumns().length + (this.selectable() ? 1 : 0) + (this.canExpand() ? 1 : 0);
+    return (
+      this.visibleColumns().length +
+      (this.selectable() ? 1 : 0) +
+      (this.canExpand() ? 1 : 0) +
+      (this.canDetail() ? 1 : 0)
+    );
   }
 
-  protected onRowClick(row: StrctRow): void {
-    if (this.detailPane() && this.detailDef()) {
-      this.activeRow.set(this.activeRow() === row ? null : row);
-    }
+  /** Toggle the detail pane for a row (triggered by its »  button, not the row,
+   *  so row cells remain selectable for copy). */
+  openDetail(row: StrctRow): void {
+    this.activeRow.set(this.activeRow() === row ? null : row);
   }
 
   closePane(): void {
