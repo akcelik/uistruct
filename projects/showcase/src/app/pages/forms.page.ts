@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   StrctCascadeOption,
@@ -8,6 +8,7 @@ import {
   StrctColorPicker,
   StrctCombobox,
   StrctDatepicker,
+  StrctField,
   StrctFile,
   StrctInput,
   StrctInputMask,
@@ -30,6 +31,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     PageHeader,
     DemoBlock,
     FormsModule,
+    StrctField,
     StrctInput,
     StrctCheckbox,
     StrctToggle,
@@ -53,6 +55,25 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       title="Forms"
       subtitle="Native controls styled by the strctInput directive, plus custom checkbox, toggle and radio components — all ControlValueAccessor-compatible."
     />
+
+    <app-demo
+      anchor="field"
+      heading="Form field"
+      description="Wrap any control for a consistent label, required marker, hint and error — aria-describedby and aria-invalid are wired automatically. Type an address without an @ to see the error state."
+      code="<strct-field label=&quot;Email&quot; required hint=&quot;…&quot; [error]=&quot;err()&quot;><input strctInput /></strct-field>"
+    >
+      <div class="field">
+        <strct-field label="Email" required hint="We'll never share it." [error]="emailError()">
+          <input
+            strctInput
+            type="email"
+            placeholder="you@example.com"
+            [ngModel]="fieldEmail()"
+            (ngModelChange)="fieldEmail.set($event)"
+          />
+        </strct-field>
+      </div>
+    </app-demo>
 
     <app-demo
       anchor="input"
@@ -281,6 +302,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class FormsPage {
+  protected readonly fieldEmail = signal('');
+  protected readonly emailError = computed(() => {
+    const v = this.fieldEmail();
+    return v && !v.includes('@') ? 'Enter a valid email address.' : '';
+  });
+
   protected readonly name = signal('');
   protected readonly region = signal('eu');
   protected readonly agree = signal(false);

@@ -214,6 +214,23 @@ export const DOCS: DocCategory[] = [
     loadExamples: () => import('../pages/forms.page').then((m) => m.FormsPage),
     components: [
       {
+        id: 'field',
+        title: 'Form field',
+        selector: 'strct-field',
+        importNames: ['StrctField'],
+        summary: 'Label / required / hint / error wrapper.',
+        lead: 'Wraps any form control with a label (and optional required marker), a hint and an error message. It auto-links the control via `aria-describedby` and toggles `aria-invalid`, so accessibility wiring is automatic.',
+        inputs: [
+          { name: 'label', type: 'string', default: `''`, description: 'Field label; rendered above the control.' },
+          { name: 'required', type: 'boolean', default: 'false', description: 'Show a required asterisk.' },
+          { name: 'hint', type: 'string', default: `''`, description: 'Helper text shown when there is no error.' },
+          { name: 'error', type: 'string | string[] | null', default: 'null', description: 'Error message (first of an array). Truthy puts the field in the invalid state.' },
+        ],
+        do: ['Wrap each form control in a field for consistent labels and messaging.', 'Bind `error` to your validation state.'],
+        dont: ['Do not also set aria-describedby / aria-invalid by hand — the field manages them.'],
+        a11y: ['Links the control to its hint/error via aria-describedby and sets aria-invalid when errored.'],
+      },
+      {
         id: 'input',
         title: 'Input',
         selector: 'input[strctInput], textarea[strctInput], select[strctInput]',

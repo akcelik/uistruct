@@ -5,6 +5,7 @@
 // `data-theme` ('dark' | 'light') on the <html> element (StrctThemeService
 // does this for you).
 
+@use 'fonts';
 @use 'tokens';
 @use 'base';
 @use 'forms';

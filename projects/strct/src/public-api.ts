@@ -43,6 +43,7 @@ export * from './lib/breadcrumb/breadcrumb';
 export * from './lib/pagination/pagination';
 
 // Forms
+export * from './lib/forms/field';
 export * from './lib/forms/input';
 export * from './lib/forms/checkbox';
 export * from './lib/forms/toggle';

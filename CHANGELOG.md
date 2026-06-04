@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-06-04
+
+Second feedback round (SHOULD-FIX) — all additions are **backward-compatible**.
+
+### Added
+- **`strct-field`** — a form-field wrapper with label, required marker, hint and error
+  message that auto-wires `aria-describedby` and `aria-invalid` on the projected control.
+- **Self-hosted fonts** — DM Sans and JetBrains Mono (OFL) now ship as `woff2` under
+  `styles/fonts/` and are referenced by `@font-face` in the theme, so the library renders
+  in its intended type with no external request.
+- **Icons** — added `folder`, `template`, `tag`, `resourcePool` and `portGroup` glyphs.
+
+### Changed
+- **Modal** now locks body scroll while open (reference-counted for nested modals) and
+  restores it on close / destroy.
+- **Overlay** flips horizontally (`left` / `right` placements) when it would overflow the
+  viewport edge, instead of only clamping.
+- **Submenu** flips to the left near the right edge and can be opened via click / tap and
+  the keyboard (Enter / Space / →, closed with ← / Esc), not hover only.
+
 ## [0.2.0] - 2026-06-04
 
 Feedback-driven release — all additions are **backward-compatible**.
@@ -52,6 +72,7 @@ _No component API changes in this release._
 - Overlay-safe dropdowns, tooltips and menus; accessible modal with focus trap.
 - Zoneless, `OnPush` change detection throughout. MIT licensed.
 
+[0.3.0]: https://github.com/akcelik/uistruct/releases/tag/v0.3.0
 [0.2.0]: https://github.com/akcelik/uistruct/releases/tag/v0.2.0
 [0.1.1]: https://github.com/akcelik/uistruct/releases/tag/v0.1.1
 [0.1.0]: https://github.com/akcelik/uistruct/releases/tag/v0.1.0

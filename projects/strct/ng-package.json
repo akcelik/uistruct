@@ -3,6 +3,7 @@
   "dest": "../../dist/strct",
   "assets": [
     { "input": "src/styles", "glob": "**/*.scss", "output": "styles" },
+    { "input": "src/styles", "glob": "**/*.woff2", "output": "styles" },
     "LICENSE"
   ],
   "lib": {

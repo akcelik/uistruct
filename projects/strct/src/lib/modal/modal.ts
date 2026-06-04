@@ -2,6 +2,7 @@ import {
   DOCUMENT,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   booleanAttribute,
   effect,
@@ -15,6 +16,21 @@ import { StrctIcon } from '../icon/icon';
 export type StrctModalSize = 'sm' | 'md' | 'lg';
 
 let modalCounter = 0;
+
+// Body scroll-lock shared across any number of simultaneously open modals.
+let scrollLockCount = 0;
+let savedBodyOverflow = '';
+function lockBodyScroll(doc: Document): void {
+  if (scrollLockCount === 0) {
+    savedBodyOverflow = doc.body.style.overflow;
+    doc.body.style.overflow = 'hidden';
+  }
+  scrollLockCount++;
+}
+function unlockBodyScroll(doc: Document): void {
+  scrollLockCount = Math.max(0, scrollLockCount - 1);
+  if (scrollLockCount === 0) doc.body.style.overflow = savedBodyOverflow;
+}
 
 /**
  * Overlay dialog with two-way `open`:
@@ -114,16 +130,33 @@ export class StrctModal {
   protected readonly titleId = `strct-modal-${++modalCounter}`;
   /** Element that had focus before the dialog opened, restored on close. */
   private previousActive: HTMLElement | null = null;
+  /** Whether this instance currently holds a scroll lock. */
+  private locked = false;
 
   constructor() {
     effect(() => {
-      if (this.open()) {
+      const open = this.open();
+      if (open && !this.locked) {
+        this.locked = true;
+        lockBodyScroll(this.doc);
         this.previousActive = this.doc.activeElement as HTMLElement | null;
         // Move focus into the dialog once it has rendered.
         setTimeout(() => this.focusInitial());
-      } else if (this.previousActive) {
-        this.previousActive.focus?.();
-        this.previousActive = null;
+      } else if (!open && this.locked) {
+        this.locked = false;
+        unlockBodyScroll(this.doc);
+        if (this.previousActive) {
+          this.previousActive.focus?.();
+          this.previousActive = null;
+        }
+      }
+    });
+
+    // Release the lock if the modal is destroyed while still open.
+    inject(DestroyRef).onDestroy(() => {
+      if (this.locked) {
+        this.locked = false;
+        unlockBodyScroll(this.doc);
       }
     });
   }

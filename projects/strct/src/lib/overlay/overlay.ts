@@ -84,9 +84,13 @@ export class StrctOverlay implements OnDestroy {
 
     if (p === 'right') {
       left = a.right + gap;
+      // Flip to the left of the anchor if it would overflow the right edge.
+      if (left + w > vw - margin && a.left - gap - w > margin) left = a.left - gap - w;
       top = a.top;
     } else if (p === 'left') {
       left = a.left - gap - w;
+      // Flip to the right of the anchor if it would overflow the left edge.
+      if (left < margin && a.right + gap + w < vw - margin) left = a.right + gap;
       top = a.top;
     } else {
       const below = p.startsWith('bottom');

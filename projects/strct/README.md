@@ -19,7 +19,13 @@ npm install @akcelik/strct
 ```
 
 `@angular/core`, `@angular/common`, `@angular/forms` and
-`@angular/platform-browser` are peer dependencies.
+`@angular/platform-browser` are peer dependencies (Angular 21.2+).
+
+> **Consuming a local build?** Install the packed tarball
+> (`ng build strct && npm pack dist/strct`, then `npm i ../akcelik-strct-x.y.z.tgz`)
+> rather than a `file:` symlink — a symlinked dependency resolves its own copy of
+> `@angular/core`, which can trip an `InputSignal` brand mismatch (TS2551) across
+> Angular patch versions.
 
 ## Theme setup
 
@@ -30,6 +36,10 @@ form-control styles):
 // styles.scss
 @use '@akcelik/strct/styles/theme';
 ```
+
+The theme **self-hosts its fonts** (DM Sans + JetBrains Mono, OFL) — they ship as
+`woff2` under `styles/fonts/` and are referenced by `@font-face`, so there is no
+external request and nothing else to load.
 
 Set the scheme on the document root (or let `StrctThemeService` manage it):
 

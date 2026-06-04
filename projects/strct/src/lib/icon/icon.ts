@@ -53,6 +53,9 @@ export const STRCT_ICONS: Record<string, string> = {
   code: '<path d="M5.5 5L2.5 8l3 3M10.5 5l3 3-3 3M9 3.5l-2 9"/>',
   book: '<path d="M3 3.2h6a1.5 1.5 0 0 1 1.5 1.5v8.1H4.5A1.5 1.5 0 0 1 3 11.3z"/><path d="M13 3.2H9.5A1.5 1.5 0 0 0 8 4.7v8.1h5z"/>',
   terminal: '<rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M4.8 6.5L7 8.2 4.8 9.9M8.2 10.2h3"/>',
+  folder: '<path d="M2 4.6a1 1 0 0 1 1-1h3.1l1.3 1.6H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/>',
+  template: '<path d="M4.3 2.5h4.6l3.1 3.1V13a.5.5 0 0 1-.5.5H4.3a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5z"/><path d="M8.7 2.6v3.1h3.1"/><path d="M5.8 9h4.2M5.8 11h2.6"/>',
+  tag: '<path d="M2.6 7.7V3.2a.6.6 0 0 1 .6-.6h4.5l5.6 5.6a1 1 0 0 1 0 1.4l-3.5 3.5a1 1 0 0 1-1.4 0z"/><circle cx="5.4" cy="5.4" r=".9" fill="currentColor" stroke="none"/>',
 
   // ── Datacenter / infrastructure ─────────────────────────────
   datacenter: '<rect x="2.5" y="2.5" width="11" height="11" rx="1"/><path d="M5 5h6M5 7.3h6M5 9.6h3.5"/><circle cx="11" cy="9.7" r=".5" fill="currentColor" stroke="none"/>',
@@ -74,6 +77,10 @@ export const STRCT_ICONS: Record<string, string> = {
   hba: '<rect x="2.3" y="3.4" width="11.4" height="6.4" rx="1"/><circle cx="5.1" cy="6.6" r="1.2"/><circle cx="8.1" cy="6.6" r="1.2"/><path d="M10.6 5.6h1.6M10.6 7.6h1.6M5 9.8v2.6M11 9.8v2.6"/>',
   // RJ45 ethernet port (switch / server) — keyed jack with contact pins.
   ethernet: '<rect x="2.5" y="4" width="11" height="7.4" rx="1"/><path d="M6 4V2.6h4V4"/><path d="M5.3 7.6v2M7.1 7.6v2M8.9 7.6v2M10.7 7.6v2"/>',
+  // Resource pool — a proportional allocation (pie with two radii).
+  resourcePool: '<circle cx="8" cy="8" r="5.6"/><path d="M8 8V2.4M8 8l4.9 2.7"/>',
+  // Port group — a grouped set of switch ports under a shared rail.
+  portGroup: '<path d="M1.8 4.4h12.4"/><rect x="2.2" y="6.2" width="3.4" height="4" rx=".5"/><rect x="6.3" y="6.2" width="3.4" height="4" rx=".5"/><rect x="10.4" y="6.2" width="3.4" height="4" rx=".5"/><path d="M3.9 10.2v1.6M8 10.2v1.6M12.1 10.2v1.6"/>',
 
   // ── Accessibility (original glyphs for generic concepts) ─────
   universalAccess: '<circle cx="8" cy="8" r="6"/><circle cx="8" cy="4.9" r=".9" fill="currentColor" stroke="none"/><path d="M4.9 6.3c2 .8 4.2 .8 6.2 0M8 6.4v3.1M6.3 11.9 8 9.4l1.7 2.5"/>',
@@ -116,7 +123,7 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
       'hexagon', 'search', 'menu', 'ellipsis', 'dots', 'close', 'check', 'calendar',
       'eye', 'eyeOff', 'upload', 'download', 'sun', 'moon', 'bell', 'heart', 'layers',
       'grid', 'form', 'chart', 'bars', 'gauge', 'palette', 'sidebar', 'compass',
-      'copy', 'code', 'book', 'terminal',
+      'copy', 'code', 'book', 'terminal', 'folder', 'template', 'tag',
     ],
   },
   {
@@ -136,6 +143,7 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
     names: [
       'datacenter', 'rack', 'cluster', 'host', 'vm', 'switch', 'storage',
       'network', 'cpu', 'memory', 'disk', 'port', 'nic', 'hba', 'ethernet', 'power',
+      'resourcePool', 'portGroup',
     ],
   },
   {
