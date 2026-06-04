@@ -49,10 +49,14 @@ export class PageHeader {
   styles: [
     `
     .demo {
+      /* No overflow:hidden — overlays (dropdowns, tooltips, menus) must be able
+         to escape the card. Rounded corners are kept by rounding the children. */
       margin-bottom: 26px; background: var(--bg-1);
-      border: 1px solid var(--b2); border-radius: 10px; overflow: hidden;
+      border: 1px solid var(--b2); border-radius: 10px;
       scroll-margin-top: 16px;
     }
+    .demo > :first-child { border-top-left-radius: 9px; border-top-right-radius: 9px; }
+    .demo > :last-child { border-bottom-left-radius: 9px; border-bottom-right-radius: 9px; }
     .demo__head { padding: 14px 18px; border-bottom: 1px solid var(--b1); }
     .demo__title { margin: 0; font-size: 14px; font-weight: 600; color: var(--t1); }
     .demo__desc { margin: 5px 0 0; font-size: 13px; color: var(--t2); }
