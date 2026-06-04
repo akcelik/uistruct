@@ -45,6 +45,7 @@ export const NAV: NavCategory[] = [
     items: [
       { id: 'button', label: 'Button' },
       { id: 'buttongroup', label: 'Button group' },
+      { id: 'speeddial', label: 'Speed dial' },
       { id: 'badge', label: 'Badge' },
       { id: 'tag', label: 'Tag' },
       { id: 'avatar', label: 'Avatar' },

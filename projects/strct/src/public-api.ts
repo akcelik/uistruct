@@ -22,6 +22,7 @@ export * from './lib/avatar/avatar';
 export * from './lib/progress/progress';
 export * from './lib/spinner/spinner';
 export * from './lib/skeleton/skeleton';
+export * from './lib/speed-dial/speed-dial';
 
 // Surfaces & disclosure
 export * from './lib/card/card';

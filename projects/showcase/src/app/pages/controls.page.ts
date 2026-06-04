@@ -6,8 +6,10 @@ import {
   StrctButtonGroup,
   StrctIcon,
   StrctProgress,
+  StrctSpeedDial,
   StrctSpinner,
   StrctTag,
+  StrctTooltip,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -25,6 +27,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctAvatar,
     StrctProgress,
     StrctSpinner,
+    StrctSpeedDial,
+    StrctTooltip,
   ],
   template: `
     <app-page-header title="Controls" subtitle="Buttons and at-a-glance status indicators." />
@@ -98,6 +102,32 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="speeddial"
+      heading="Speed dial"
+      description="A floating action button that fans out to reveal actions, each with an optional tooltip."
+      code="<strct-speed-dial icon=&quot;ellipsis&quot; direction=&quot;up&quot;>…</strct-speed-dial>"
+    >
+      <div class="sd-stage">
+        <strct-speed-dial icon="ellipsis" direction="up">
+          <button strct-button iconOnly variant="primary" solid strctTooltip="Snapshot" tooltipPosition="left">
+            <strct-icon name="snapshot" [size]="15" />
+          </button>
+          <button strct-button iconOnly variant="primary" solid strctTooltip="Restart" tooltipPosition="left">
+            <strct-icon name="sync" [size]="15" />
+          </button>
+          <button strct-button iconOnly variant="primary" solid strctTooltip="Migrate" tooltipPosition="left">
+            <strct-icon name="upload" [size]="15" />
+          </button>
+        </strct-speed-dial>
+
+        <strct-speed-dial icon="ellipsis" direction="right">
+          <button strct-button iconOnly><strct-icon name="search" [size]="15" /></button>
+          <button strct-button iconOnly><strct-icon name="bell" [size]="15" /></button>
+        </strct-speed-dial>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="tag"
       heading="Tag"
       description="Compact labels; add removable for a dismiss button."
@@ -143,7 +173,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       <strct-spinner size="lg" />
     </app-demo>
   `,
-  styles: [`.stack { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 420px; }`],
+  styles: [
+    `
+    .stack { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 420px; }
+    .sd-stage { display: flex; gap: 70px; align-items: flex-end; padding: 80px 16px 10px; }
+    `,
+  ],
 })
 export class ControlsPage {
   protected readonly tags = signal(['Frontend', 'Design', 'Infra']);
