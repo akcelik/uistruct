@@ -26,7 +26,7 @@ export const STRCT_ICONS: Record<string, string> = {
   search: '<circle cx="7" cy="7" r="4"/><path d="M10 10l3.5 3.5"/>',
   calendar: '<rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/>',
   eye: '<path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/>',
-  eyeOff: '<path d="M6.3 6.3A2 2 0 009.7 9.7M4.8 4.9C2.8 6.1 1.5 8 1.5 8S4 12.5 8 12.5c1.1 0 2-.2 2.9-.6M13.1 11C14.1 9.9 14.5 8 14.5 8S12 3.5 8 3.5c-.5 0-1 .1-1.4.2M2.5 2.5l11 11"/>',
+  eyeOff: '<path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/><path d="M2.5 2.5l11 11"/>',
   upload: '<path d="M8 10.5V3M5 5.8L8 2.8l3 3M3 12.8h10"/>',
   download: '<path d="M8 2.5V10M5 7.2L8 10.2l3-3M3 12.8h10"/>',
   droplet: '<path d="M8 2.4S12 6.6 12 9.4a4 4 0 01-8 0c0-2.8 4-7 4-7z"/>',
@@ -89,7 +89,7 @@ export const STRCT_ICONS: Record<string, string> = {
 
   // ── State / action (also usable as badges via the icon `badge` input) ─
   running: '<path d="M5.5 4l6 4-6 4z"/>',
-  stopped: '<rect x="5" y="5" width="6" height="6" rx="1"/>',
+  stopped: '<rect x="4.5" y="4.5" width="7" height="7" rx="1"/>',
   paused: '<rect x="5.2" y="4" width="2" height="8" rx=".5"/><rect x="8.8" y="4" width="2" height="8" rx=".5"/>',
   maintenance: '<path d="M10.8 3.2a2.7 2.7 0 00-3.5 3.4l-4.2 4.2L4.6 12.7l4.2-4.2a2.7 2.7 0 003.4-3.5L10.5 6.7 9.3 6.4 9 5.2z"/>',
   sync: '<path d="M12.5 7a4.5 4.5 0 00-8-2.5M3.5 9a4.5 4.5 0 008 2.5"/><path d="M12.5 3v2.5H10M3.5 13v-2.5H6"/>',
