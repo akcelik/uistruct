@@ -3,7 +3,6 @@ import {
   ElementRef,
   NgZone,
   OnDestroy,
-  Renderer2,
   afterNextRender,
   inject,
   input,
@@ -19,19 +18,20 @@ export type StrctOverlayPlacement =
 
 /**
  * Positions an overlay panel with `position: fixed` relative to an anchor
- * element, so it escapes any ancestor's `overflow: hidden/scroll` clipping.
+ * element, so it escapes ancestor `overflow: hidden/scroll` clipping.
  * Repositions on scroll/resize and flips vertically near the viewport edge.
  *
  *   <button #trigger>…</button>
  *   <div class="menu" [strctOverlay]="trigger" strctOverlayPlacement="bottom-end">…</div>
  *
- * Apply it to the panel element that lives inside an `@if (open())` block; it
- * cleans up its listeners when that block is torn down.
+ * Note: like any fixed-positioned element, the panel is positioned relative to
+ * a transformed/filtered ancestor if one exists (a CSS containing-block rule).
+ * Avoid wrapping a trigger in `transform`/`filter` if you need viewport-anchored
+ * overlays. (The tooltip sidesteps this by rendering into `<body>`.)
  */
 @Directive({ selector: '[strctOverlay]' })
 export class StrctOverlay implements OnDestroy {
   private readonly el = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
-  private readonly renderer = inject(Renderer2);
   private readonly zone = inject(NgZone);
 
   readonly anchor = input.required<HTMLElement>({ alias: 'strctOverlay' });
@@ -89,10 +89,8 @@ export class StrctOverlay implements OnDestroy {
       left = a.left - gap - w;
       top = a.top;
     } else {
-      // bottom-* / top-*
       const below = p.startsWith('bottom');
       top = below ? a.bottom + gap : a.top - gap - h;
-      // vertical flip when it would overflow the viewport
       if (below && top + h > vh - margin && a.top - gap - h > margin) {
         top = a.top - gap - h;
       } else if (!below && top < margin && a.bottom + gap + h < vh - margin) {

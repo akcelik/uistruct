@@ -1,7 +1,11 @@
 import {
+  DOCUMENT,
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   booleanAttribute,
+  effect,
+  inject,
   input,
   model,
   output,
@@ -9,6 +13,8 @@ import {
 import { StrctIcon } from '../icon/icon';
 
 export type StrctModalSize = 'sm' | 'md' | 'lg';
+
+let modalCounter = 0;
 
 /**
  * Overlay dialog with two-way `open`:
@@ -27,15 +33,20 @@ export type StrctModalSize = 'sm' | 'md' | 'lg';
     @if (open()) {
       <div class="strct-modal__overlay" (click)="onBackdrop()">
         <div
+          #dialog
           class="strct-modal__dialog"
           [class.strct-modal__dialog--sm]="size() === 'sm'"
           [class.strct-modal__dialog--lg]="size() === 'lg'"
           role="dialog"
           aria-modal="true"
+          [attr.aria-labelledby]="title() ? titleId : null"
+          tabindex="-1"
           (click)="$event.stopPropagation()"
+          (keydown.tab)="onTab($event)"
+          (keydown.shift.tab)="onTab($event)"
         >
           <div class="strct-modal__head">
-            <span class="strct-modal__title">{{ title() }}</span>
+            <span class="strct-modal__title" [id]="titleId">{{ title() }}</span>
             <button type="button" class="strct-modal__close" aria-label="Close" (click)="close()">
               <strct-icon name="close" [size]="14" />
             </button>
@@ -89,6 +100,9 @@ export type StrctModalSize = 'sm' | 'md' | 'lg';
   ],
 })
 export class StrctModal {
+  private readonly elementRef = inject(ElementRef<HTMLElement>);
+  private readonly doc = inject(DOCUMENT);
+
   readonly open = model(false);
   readonly title = input('');
   readonly size = input<StrctModalSize>('md');
@@ -96,6 +110,23 @@ export class StrctModal {
   /** Allow closing via backdrop click / Escape. */
   readonly dismissable = input(true, { transform: booleanAttribute });
   readonly closed = output<void>();
+
+  protected readonly titleId = `strct-modal-${++modalCounter}`;
+  /** Element that had focus before the dialog opened, restored on close. */
+  private previousActive: HTMLElement | null = null;
+
+  constructor() {
+    effect(() => {
+      if (this.open()) {
+        this.previousActive = this.doc.activeElement as HTMLElement | null;
+        // Move focus into the dialog once it has rendered.
+        setTimeout(() => this.focusInitial());
+      } else if (this.previousActive) {
+        this.previousActive.focus?.();
+        this.previousActive = null;
+      }
+    });
+  }
 
   close(): void {
     this.open.set(false);
@@ -108,5 +139,44 @@ export class StrctModal {
 
   protected onEscape(): void {
     if (this.open() && this.dismissable()) this.close();
+  }
+
+  /** Wrap Tab focus within the dialog. */
+  protected onTab(event: Event): void {
+    const e = event as KeyboardEvent;
+    const items = this.focusable();
+    if (!items.length) {
+      e.preventDefault();
+      return;
+    }
+    const first = items[0];
+    const last = items[items.length - 1];
+    const active = this.doc.activeElement;
+    if (e.shiftKey && (active === first || !this.dialog()?.contains(active))) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
+  private dialog(): HTMLElement | null {
+    return this.elementRef.nativeElement.querySelector('.strct-modal__dialog');
+  }
+
+  private focusable(): HTMLElement[] {
+    const dialog = this.dialog();
+    if (!dialog) return [];
+    return Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((el) => el.offsetParent !== null || el === this.doc.activeElement);
+  }
+
+  private focusInitial(): void {
+    const items = this.focusable();
+    (items[0] ?? this.dialog())?.focus();
   }
 }
