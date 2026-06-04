@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
+import { StrctOverlay } from '../overlay/overlay';
 
 export interface StrctCascadeOption {
   label: string;
@@ -104,13 +105,14 @@ export class StrctCascadeNode {
   selector: 'strct-cascade-select',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctCascadeNode, StrctIcon],
+  imports: [StrctCascadeNode, StrctIcon, StrctOverlay],
   providers: [
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => StrctCascadeSelect), multi: true },
     { provide: StrctCascadeHost, useExisting: forwardRef(() => StrctCascadeSelect) },
   ],
   template: `
     <button
+      #trigger
       type="button"
       class="strct-cs__trigger"
       [attr.aria-expanded]="open()"
@@ -123,7 +125,7 @@ export class StrctCascadeNode {
       <strct-icon class="strct-cs__caret" name="chevronDown" [size]="14" />
     </button>
     @if (open()) {
-      <div class="strct-cs__panel" role="menu">
+      <div class="strct-cs__panel" role="menu" [strctOverlay]="trigger" strctOverlayPlacement="bottom-start">
         @for (opt of options(); track opt) {
           <strct-cascade-node [option]="opt" />
         }

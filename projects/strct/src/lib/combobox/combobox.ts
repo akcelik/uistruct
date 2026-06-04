@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
+import { StrctOverlay } from '../overlay/overlay';
 
 export interface StrctOption {
   value: unknown;
@@ -29,12 +30,12 @@ let comboboxCounter = 0;
   selector: 'strct-combobox',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon],
+  imports: [StrctIcon, StrctOverlay],
   providers: [
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => StrctCombobox), multi: true },
   ],
   template: `
-    <div class="strct-cbx__field">
+    <div #field class="strct-cbx__field">
       <input
         #input
         type="text"
@@ -55,7 +56,14 @@ let comboboxCounter = 0;
       <strct-icon class="strct-cbx__caret" name="chevronDown" [size]="14" />
     </div>
     @if (open()) {
-      <div class="strct-cbx__menu" role="listbox" [id]="listId">
+      <div
+        class="strct-cbx__menu"
+        role="listbox"
+        [id]="listId"
+        [strctOverlay]="field"
+        strctOverlayPlacement="bottom-start"
+        [strctOverlayMatchWidth]="true"
+      >
         @for (opt of filtered(); track opt.value; let i = $index) {
           <div
             class="strct-cbx__opt"

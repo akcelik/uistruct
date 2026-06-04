@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
+import { StrctOverlay } from '../overlay/overlay';
 
 interface DayCell {
   day: number;
@@ -35,12 +36,12 @@ const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}
   selector: 'strct-datepicker',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon],
+  imports: [StrctIcon, StrctOverlay],
   providers: [
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => StrctDatepicker), multi: true },
   ],
   template: `
-    <div class="strct-dp__field">
+    <div #field class="strct-dp__field">
       <input
         type="text"
         class="strct-control strct-dp__input"
@@ -63,7 +64,7 @@ const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}
     </div>
 
     @if (open()) {
-      <div class="strct-dp__panel" role="dialog">
+      <div class="strct-dp__panel" role="dialog" [strctOverlay]="field" strctOverlayPlacement="bottom-start">
         <div class="strct-dp__head">
           <button type="button" class="strct-dp__nav" aria-label="Previous month" (click)="shiftMonth(-1)">
             <strct-icon name="chevronLeft" [size]="14" [strokeWidth]="1.7" />

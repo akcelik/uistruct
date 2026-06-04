@@ -9,6 +9,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { StrctOverlay } from '../overlay/overlay';
 
 /**
  * Click-to-open menu:
@@ -22,14 +23,16 @@ import {
   selector: 'strct-dropdown',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
+  imports: [StrctOverlay],
   template: `
-    <div class="strct-dd__trigger" (click)="toggle()">
+    <div #trigger class="strct-dd__trigger" (click)="toggle()">
       <ng-content select="[strctDropdownTrigger]" />
     </div>
     @if (open()) {
       <div
         class="strct-dd__menu"
-        [class.strct-dd__menu--end]="align() === 'end'"
+        [strctOverlay]="trigger"
+        [strctOverlayPlacement]="align() === 'end' ? 'bottom-end' : 'bottom-start'"
         role="menu"
         (click)="close()"
       >

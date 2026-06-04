@@ -8,6 +8,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { StrctOverlay, StrctOverlayPlacement } from '../overlay/overlay';
 
 export type StrctSignpostPosition = 'top' | 'bottom' | 'left' | 'right';
 
@@ -23,12 +24,19 @@ export type StrctSignpostPosition = 'top' | 'bottom' | 'left' | 'right';
   selector: 'strct-signpost',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
+  imports: [StrctOverlay],
   template: `
-    <div class="strct-sp__trigger" (click)="toggle()">
+    <div #trigger class="strct-sp__trigger" (click)="toggle()">
       <ng-content select="[strctSignpostTrigger]" />
     </div>
     @if (open()) {
-      <div class="strct-sp__panel" [class]="'strct-sp__panel--' + position()" role="dialog">
+      <div
+        class="strct-sp__panel"
+        [class]="'strct-sp__panel--' + position()"
+        role="dialog"
+        [strctOverlay]="trigger"
+        [strctOverlayPlacement]="overlayPlacement()"
+      >
         <ng-content />
       </div>
     }
@@ -74,6 +82,19 @@ export class StrctSignpost {
   }
   close(): void {
     this.open.set(false);
+  }
+
+  protected overlayPlacement(): StrctOverlayPlacement {
+    switch (this.position()) {
+      case 'top':
+        return 'top-start';
+      case 'right':
+        return 'right';
+      case 'left':
+        return 'left';
+      default:
+        return 'bottom-start';
+    }
   }
 
   @HostListener('document:click', ['$event'])

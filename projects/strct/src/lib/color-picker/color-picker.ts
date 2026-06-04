@@ -10,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { StrctOverlay } from '../overlay/overlay';
 
 const DEFAULT_SWATCHES = [
   '#7b9ec8', '#5a7ea3', '#7da87e', '#5e8a60', '#bfae6a', '#9a8a3e',
@@ -26,11 +27,13 @@ const HEX = /^#([0-9a-f]{6})$/i;
   selector: 'strct-color-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
+  imports: [StrctOverlay],
   providers: [
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => StrctColorPicker), multi: true },
   ],
   template: `
     <button
+      #trigger
       type="button"
       class="strct-cp__trigger"
       [disabled]="isDisabled()"
@@ -42,7 +45,7 @@ const HEX = /^#([0-9a-f]{6})$/i;
     </button>
 
     @if (open()) {
-      <div class="strct-cp__panel" role="dialog">
+      <div class="strct-cp__panel" role="dialog" [strctOverlay]="trigger" strctOverlayPlacement="bottom-start">
         <div class="strct-cp__grid">
           @for (color of swatches(); track color) {
             <button

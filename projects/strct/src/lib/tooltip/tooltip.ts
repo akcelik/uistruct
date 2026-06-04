@@ -3,14 +3,11 @@ import { Directive, ElementRef, HostListener, Renderer2, inject, input } from '@
 export type StrctTooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 
 /**
- * Lightweight hover/focus tooltip with no overlay dependency. Renders a small
- * bubble as a child of the host (which is made `position: relative`).
+ * Lightweight hover/focus tooltip. Renders a fixed-positioned bubble so it is
+ * never clipped by an ancestor's `overflow`.
  *   <button strct-button strctTooltip="More info">?</button>
  */
-@Directive({
-  selector: '[strctTooltip]',
-  host: { '[style.position]': '"relative"' },
-})
+@Directive({ selector: '[strctTooltip]' })
 export class StrctTooltip {
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly renderer = inject(Renderer2);
@@ -28,8 +25,8 @@ export class StrctTooltip {
     const el = this.renderer.createElement('span') as HTMLElement;
     this.renderer.appendChild(el, this.renderer.createText(text));
     const s = el.style;
-    s.position = 'absolute';
-    s.zIndex = '500';
+    s.position = 'fixed';
+    s.zIndex = '1300';
     s.pointerEvents = 'none';
     s.whiteSpace = 'nowrap';
     s.padding = '5px 8px';
@@ -41,10 +38,13 @@ export class StrctTooltip {
     s.border = '1px solid var(--b3)';
     s.borderRadius = '5px';
     s.boxShadow = 'var(--shh)';
-    this.position(s, this.tooltipPosition());
+    s.top = '0';
+    s.left = '0';
+    s.visibility = 'hidden';
 
     this.renderer.appendChild(this.host.nativeElement, el);
     this.bubble = el;
+    this.place(el);
   }
 
   @HostListener('mouseleave')
@@ -56,28 +56,37 @@ export class StrctTooltip {
     }
   }
 
-  private position(s: CSSStyleDeclaration, pos: StrctTooltipPosition): void {
-    const gap = '7px';
-    switch (pos) {
+  private place(el: HTMLElement): void {
+    const a = this.host.nativeElement.getBoundingClientRect();
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    const gap = 7;
+    let top: number;
+    let left: number;
+
+    switch (this.tooltipPosition()) {
       case 'bottom':
-        s.top = `calc(100% + ${gap})`;
-        s.left = '50%';
-        s.transform = 'translateX(-50%)';
+        top = a.bottom + gap;
+        left = a.left + a.width / 2 - w / 2;
         break;
       case 'left':
-        s.right = `calc(100% + ${gap})`;
-        s.top = '50%';
-        s.transform = 'translateY(-50%)';
+        left = a.left - gap - w;
+        top = a.top + a.height / 2 - h / 2;
         break;
       case 'right':
-        s.left = `calc(100% + ${gap})`;
-        s.top = '50%';
-        s.transform = 'translateY(-50%)';
+        left = a.right + gap;
+        top = a.top + a.height / 2 - h / 2;
         break;
       default:
-        s.bottom = `calc(100% + ${gap})`;
-        s.left = '50%';
-        s.transform = 'translateX(-50%)';
+        top = a.top - gap - h;
+        left = a.left + a.width / 2 - w / 2;
     }
+
+    const m = 4;
+    left = Math.max(m, Math.min(left, window.innerWidth - w - m));
+    top = Math.max(m, Math.min(top, window.innerHeight - h - m));
+    el.style.left = `${Math.round(left)}px`;
+    el.style.top = `${Math.round(top)}px`;
+    el.style.visibility = 'visible';
   }
 }
