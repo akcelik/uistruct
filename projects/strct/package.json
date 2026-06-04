@@ -1,7 +1,33 @@
 {
-  "name": "strct",
+  "name": "@akcelik/strct",
   "version": "0.1.0",
-  "description": "UIStruct — a standalone Angular component library with a tokenised, multi-palette theme system.",
+  "description": "UIStruct — a standalone Angular component library with a tokenised, multi-palette theme system, built for datacenter / infrastructure management UIs.",
+  "author": "Serkan Akcelik <serkan.akcelik@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/akcelik/uistruct#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akcelik/uistruct.git"
+  },
+  "bugs": {
+    "url": "https://github.com/akcelik/uistruct/issues"
+  },
+  "keywords": [
+    "angular",
+    "component-library",
+    "ui",
+    "ux",
+    "design-system",
+    "components",
+    "theme",
+    "tokens",
+    "standalone",
+    "signals",
+    "datacenter",
+    "infrastructure",
+    "strct",
+    "uistruct"
+  ],
   "peerDependencies": {
     "@angular/common": "^21.2.0",
     "@angular/core": "^21.2.0",

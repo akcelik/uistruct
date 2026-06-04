@@ -1,4 +1,4 @@
-# strct
+# @akcelik/strct
 
 A standalone Angular component library built around a **tokenised, multi-palette
 theme system**. Everything is driven by CSS custom properties, so a single
@@ -13,7 +13,7 @@ attribute swap re-skins the whole library.
 ## Install
 
 ```bash
-npm install strct
+npm install @akcelik/strct
 ```
 
 `@angular/core`, `@angular/common`, `@angular/forms` and
@@ -26,7 +26,7 @@ form-control styles):
 
 ```scss
 // styles.scss
-@use 'strct/styles/theme';
+@use '@akcelik/strct/styles/theme';
 ```
 
 Set the scheme on the document root (or let `StrctThemeService` manage it):
@@ -36,7 +36,7 @@ Set the scheme on the document root (or let `StrctThemeService` manage it):
 ```
 
 ```ts
-import { StrctThemeService } from 'strct';
+import { StrctThemeService } from '@akcelik/strct';
 
 const theme = inject(StrctThemeService);
 theme.setPalette('ember'); // 'arctic' | 'ember' | 'sage'
@@ -93,3 +93,7 @@ Components reference these CSS variables only — never hard-coded colors:
 `--bg-0..--bg-a` surfaces · `--hdr` header · `--b1/--b2/--b3` borders ·
 `--t1..--t4` text · `--inv` inverse · `--acc` (+ `--acc-m/-s/50/30/18`) accent ·
 `--ok / --wrn / --crt` semantic (+ `*-bg`) · `--sh / --shh` shadows · `--sb` scrollbar.
+
+## License
+
+[MIT](./LICENSE) © Serkan Akcelik
