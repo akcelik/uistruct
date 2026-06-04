@@ -64,6 +64,12 @@ export const STRCT_ICONS: Record<string, string> = {
   disk: '<circle cx="8" cy="8" r="5.6"/><circle cx="8" cy="8" r="1.3"/><path d="M8 2.4v2.3"/>',
   port: '<rect x="3" y="5" width="10" height="6" rx="1"/><path d="M6.5 5V3.6h3V5M5 11v1.6M11 11v1.6"/>',
   power: '<path d="M8 2.4v5"/><path d="M5.2 4.6a5 5 0 105.6 0"/>',
+  // Network Adapter Card (NIC) — PCIe card with an RJ45 (square) port.
+  nic: '<rect x="2.3" y="3.4" width="11.4" height="6.4" rx="1"/><rect x="3.9" y="5.1" width="3.2" height="3" rx=".4"/><path d="M8.6 6.1h3.4M8.6 7.9h3.4M5 9.8v2.6M11 9.8v2.6"/>',
+  // Host Bus Adapter (HBA) — PCIe card with optical/SFP (round) ports.
+  hba: '<rect x="2.3" y="3.4" width="11.4" height="6.4" rx="1"/><circle cx="5.1" cy="6.6" r="1.2"/><circle cx="8.1" cy="6.6" r="1.2"/><path d="M10.6 5.6h1.6M10.6 7.6h1.6M5 9.8v2.6M11 9.8v2.6"/>',
+  // RJ45 ethernet port (switch / server) — keyed jack with contact pins.
+  ethernet: '<rect x="2.5" y="4" width="11" height="7.4" rx="1"/><path d="M6 4V2.6h4V4"/><path d="M5.3 7.6v2M7.1 7.6v2M8.9 7.6v2M10.7 7.6v2"/>',
 
   // ── State / action (also usable as badges via the icon `badge` input) ─
   running: '<path d="M5.5 4l6 4-6 4z"/>',
@@ -100,7 +106,7 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
     label: 'Datacenter',
     names: [
       'datacenter', 'rack', 'cluster', 'host', 'vm', 'switch', 'storage',
-      'network', 'cpu', 'memory', 'disk', 'port', 'power',
+      'network', 'cpu', 'memory', 'disk', 'port', 'nic', 'hba', 'ethernet', 'power',
     ],
   },
   {
