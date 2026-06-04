@@ -555,11 +555,12 @@ export const DOCS: DocCategory[] = [
         id: 'tree',
         title: 'Tree',
         selector: 'strct-tree',
-        importNames: ['StrctTree', 'StrctTreeNode', 'StrctTreeNodeData'],
+        importNames: ['StrctTree', 'StrctTreeNode', 'StrctTreeNodeData', 'StrctTreeNodeMenuFn'],
         summary: 'Nested, expandable nodes with icons.',
-        lead: 'Nested, expandable nodes with optional icons, status badges and active state. Compose `strct-tree-node` manually, or pass `[nodes]` for a fully data-driven, self-recursing tree of any depth.',
+        lead: 'Nested, expandable nodes with optional icons, status badges and active state. Compose `strct-tree-node` manually, or pass `[nodes]` for a fully data-driven, self-recursing tree of any depth. Add `[nodeMenu]` for a per-node right-click menu.',
         inputs: [
           { name: 'nodes', type: 'StrctTreeNodeData[]', default: 'null', description: 'On `strct-tree`: data-driven node list (`{ label; icon?; badge?; active?; expanded?; children?; data? }`). When set, projected content is ignored and the tree recurses itself.' },
+          { name: 'nodeMenu', type: '(node) => StrctMenuItem[]', default: 'null', description: 'On `strct-tree`: resolver that returns the right-click menu items for a given node. The tree wires a `[strctContextMenu]` trigger on every node row; nodes whose result is empty open no menu.' },
           { name: 'label', type: 'string', default: `''`, description: 'On `strct-tree-node`: node text (content mode).' },
           { name: 'icon', type: 'string | undefined', default: 'undefined', description: 'On `strct-tree-node`: optional leading icon.' },
           { name: 'badge', type: 'StrctIconBadge', default: `'none'`, description: 'On `strct-tree-node`: status dot on the icon (ok / warn / crit / off …).' },
@@ -568,9 +569,10 @@ export const DOCS: DocCategory[] = [
         ],
         outputs: [
           { name: 'nodeActivated', type: 'StrctTreeNodeData', description: 'On `strct-tree`: fired when any data-driven node is clicked.' },
+          { name: 'nodeMenuSelect', type: 'StrctTreeMenuEvent', description: 'On `strct-tree`: fired with `{ node, item }` when a node\'s right-click menu item is chosen.' },
           { name: 'activated', type: 'void', description: 'On `strct-tree-node`: fired when a content-mode node is clicked.' },
         ],
-        do: ['Use `[nodes]` for dynamic / deep inventory trees.', 'Use node `badge` to show object state on the node.'],
+        do: ['Use `[nodes]` for dynamic / deep inventory trees.', 'Use node `badge` to show object state on the node.', 'Use `[nodeMenu]` for per-object right-click actions.'],
         dont: ['Do not use a tree for flat lists.'],
       },
       {

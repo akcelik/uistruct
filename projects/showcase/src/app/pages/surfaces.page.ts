@@ -19,6 +19,7 @@ import {
   StrctTree,
   StrctTreeNode,
   StrctTreeNodeData,
+  StrctTreeNodeMenuFn,
   StrctWizard,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
@@ -111,17 +112,19 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="tree-data"
       owner="tree"
       heading="Data-driven tree"
-      description="Pass [nodes] for a self-recursing tree of any depth; per-node badges surface object state (running / maintenance / off)."
-      code="<strct-tree [nodes]=&quot;roots&quot; (nodeActivated)=&quot;select($event)&quot; />"
+      description="Pass [nodes] for a self-recursing tree of any depth; per-node badges surface object state. Provide [nodeMenu] to attach a per-node right-click menu — right-click any node below."
+      code="<strct-tree [nodes]=&quot;roots&quot; [nodeMenu]=&quot;menuFor&quot; (nodeActivated)=&quot;select($event)&quot; (nodeMenuSelect)=&quot;onPick($event)&quot; />"
     >
       <div class="stack">
         <strct-tree
           style="width: 100%; max-width: 340px;"
           [nodes]="inventory"
-          (nodeActivated)="treePick.set($event.label)"
+          [nodeMenu]="treeMenu"
+          (nodeActivated)="treePick.set('selected: ' + $event.label)"
+          (nodeMenuSelect)="treePick.set($event.item.label + ' → ' + $event.node.label)"
         />
         @if (treePick()) {
-          <span class="echo">selected: {{ treePick() }}</span>
+          <span class="echo">{{ treePick() }}</span>
         }
       </div>
     </app-demo>
@@ -243,6 +246,22 @@ export class SurfacesPage {
           ],
         },
       ],
+    },
+  ];
+
+  protected readonly treeMenu: StrctTreeNodeMenuFn = (node) => [
+    { label: 'Open', icon: 'compass' },
+    {
+      label: node.badge === 'warn' ? 'Exit maintenance' : 'Enter maintenance',
+      icon: 'maintenance',
+    },
+    { label: 'Snapshot', icon: 'snapshot' },
+    { divider: true },
+    {
+      label: 'Remove from inventory',
+      icon: 'close',
+      danger: true,
+      disabled: (node.children?.length ?? 0) > 0,
     },
   ];
 

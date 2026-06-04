@@ -5,7 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.1] - 2026-06-04
+## [0.4.0] - 2026-06-04
+
+Third feedback round. All additions are **backward-compatible**.
+
+### Added
+- **Per-node tree context menu** — `<strct-tree [nodeMenu]="fn">` takes a resolver
+  `(node) => StrctMenuItem[]` and wires a `[strctContextMenu]` trigger on every node
+  row; a new `(nodeMenuSelect)` output emits `{ node, item }`. Nodes whose resolver
+  returns an empty array open no menu.
+
+### Changed
+- **Combobox** no longer caps its width at 280px (fills its container) and drops the
+  dead absolute-position menu CSS that `StrctOverlay` already overrode.
 
 ### Fixed
 - `StrctMenuItem.label` is now optional — a `divider` entry no longer needs a
@@ -78,7 +90,7 @@ _No component API changes in this release._
 - Overlay-safe dropdowns, tooltips and menus; accessible modal with focus trap.
 - Zoneless, `OnPush` change detection throughout. MIT licensed.
 
-[0.3.1]: https://github.com/akcelik/uistruct/releases/tag/v0.3.1
+[0.4.0]: https://github.com/akcelik/uistruct/releases/tag/v0.4.0
 [0.3.0]: https://github.com/akcelik/uistruct/releases/tag/v0.3.0
 [0.2.0]: https://github.com/akcelik/uistruct/releases/tag/v0.2.0
 [0.1.1]: https://github.com/akcelik/uistruct/releases/tag/v0.1.1

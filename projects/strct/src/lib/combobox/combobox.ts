@@ -86,16 +86,18 @@ let comboboxCounter = 0;
   host: { class: 'strct-cbx' },
   styles: [
     `
-    .strct-cbx { position: relative; display: inline-block; width: 100%; max-width: 280px; }
+    /* Full width of its container by default — no artificial cap. */
+    .strct-cbx { position: relative; display: block; width: 100%; }
     .strct-cbx__field { position: relative; }
     .strct-cbx__input { padding-right: 30px; }
     .strct-cbx__caret {
       position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
       color: var(--t3); pointer-events: none;
     }
+    /* Positioned by StrctOverlay (position: fixed, set inline) — only the
+       surface styling lives here. */
     .strct-cbx__menu {
-      position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 200;
-      max-height: 220px; overflow-y: auto; padding: 4px;
+      z-index: 200; max-height: 220px; overflow-y: auto; padding: 4px;
       background: var(--bg-1); border: 1px solid var(--b2);
       border-radius: 7px; box-shadow: var(--shh);
     }
