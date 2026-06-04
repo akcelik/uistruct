@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, computed, input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ViewEncapsulation, computed, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { inject } from '@angular/core';
 
@@ -119,6 +119,30 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
   },
 ];
 
+/**
+ * Full-SVG icons that keep their own viewBox and colors (no stroke wrapper).
+ * Use this for brand / vendor logos you have the rights to ship — register the
+ * official asset's markup yourself; the library does not bundle any logos.
+ */
+export const STRCT_RAW_ICONS: Record<string, string> = {};
+
+/**
+ * Register an icon at runtime.
+ *   registerStrctIcon('mything', '<path d="…"/>');                 // stroke glyph
+ *   registerStrctIcon('vendorDell', '<svg viewBox="…">…</svg>', { raw: true });
+ */
+export function registerStrctIcon(
+  name: string,
+  content: string,
+  options: { raw?: boolean } = {},
+): void {
+  if (options.raw) {
+    STRCT_RAW_ICONS[name] = content;
+  } else {
+    STRCT_ICONS[name] = content;
+  }
+}
+
 export type StrctIconBadge = 'none' | 'ok' | 'warn' | 'crit' | 'off' | 'info';
 
 /**
@@ -129,23 +153,31 @@ export type StrctIconBadge = 'none' | 'ok' | 'warn' | 'crit' | 'off' | 'info';
 @Component({
   selector: 'strct-icon',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<svg
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      [attr.stroke-width]="strokeWidth()"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      [style.width.px]="size()"
-      [style.height.px]="size()"
-      [innerHTML]="svg()"
-    ></svg>
+  encapsulation: ViewEncapsulation.None,
+  template: `@if (isRaw()) {
+      <span class="strct-icon__raw" [style.width.px]="size()" [style.height.px]="size()" [innerHTML]="rawSvg()"></span>
+    } @else {
+      <svg
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        [attr.stroke-width]="strokeWidth()"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        [style.width.px]="size()"
+        [style.height.px]="size()"
+        [innerHTML]="svg()"
+      ></svg>
+    }
     @if (badge() !== 'none') {
       <span class="strct-icon__badge strct-icon__badge--{{ badge() }}"></span>
     }`,
+  host: { class: 'strct-icon' },
   styles: [
     `
-    :host { position: relative; display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+    .strct-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+    .strct-icon__raw { display: inline-flex; }
+    .strct-icon__raw > svg { width: 100%; height: 100%; display: block; }
     .strct-icon__badge {
       position: absolute; right: -1px; bottom: -1px;
       width: 38%; height: 38%; min-width: 6px; min-height: 6px; max-width: 9px; max-height: 9px;
@@ -168,7 +200,15 @@ export class StrctIcon {
   /** Optional status dot overlaid on the glyph (object state). */
   readonly badge = input<StrctIconBadge>('none');
 
+  /** True when the named icon is a full-SVG (raw) icon registered by the app. */
+  protected readonly isRaw = computed(() =>
+    Object.prototype.hasOwnProperty.call(STRCT_RAW_ICONS, this.name()),
+  );
+
   protected readonly svg = computed<SafeHtml>(() =>
     this.sanitizer.bypassSecurityTrustHtml(STRCT_ICONS[this.name()] ?? ''),
+  );
+  protected readonly rawSvg = computed<SafeHtml>(() =>
+    this.sanitizer.bypassSecurityTrustHtml(STRCT_RAW_ICONS[this.name()] ?? ''),
   );
 }

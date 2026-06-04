@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { STRCT_ICON_GROUPS, StrctIcon, StrctIconBadge } from 'strct';
+import { STRCT_ICON_GROUPS, StrctIcon, StrctIconBadge, registerStrctIcon } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
 interface StateExample {
@@ -65,6 +65,17 @@ interface StateExample {
         }
       </div>
     </app-demo>
+
+    <app-demo
+      anchor="raw"
+      heading="Custom / brand icons (raw SVG)"
+      description="Register your own full-SVG icons that keep their viewBox and colors — drop in licensed brand logos. Below is a generic example; size and status badges still apply."
+      code="registerStrctIcon('myLogo', '<svg viewBox=&quot;0 0 24 24&quot;>…</svg>', { raw: true });"
+    >
+      <strct-icon name="demoRaw" [size]="22" />
+      <strct-icon name="demoRaw" [size]="34" />
+      <strct-icon name="demoRaw" [size]="44" badge="ok" />
+    </app-demo>
   `,
   styles: [
     `
@@ -100,6 +111,21 @@ interface StateExample {
   ],
 })
 export class IconsPage {
+  constructor() {
+    // A generic, original example of a registered full-SVG (raw) icon — this is
+    // the same mechanism you use to register licensed brand logos.
+    registerStrctIcon(
+      'demoRaw',
+      `<svg viewBox="0 0 24 24">
+         <rect x="3" y="3" width="8" height="8" rx="2" fill="#7b9ec8"/>
+         <rect x="13" y="3" width="8" height="8" rx="2" fill="#7da87e"/>
+         <rect x="3" y="13" width="8" height="8" rx="2" fill="#bfae6a"/>
+         <rect x="13" y="13" width="8" height="8" rx="2" fill="#b87872"/>
+       </svg>`,
+      { raw: true },
+    );
+  }
+
   protected readonly groups = STRCT_ICON_GROUPS;
   protected readonly vendorNames =
     STRCT_ICON_GROUPS.find((g) => g.label.startsWith('Vendor'))?.names ?? [];
