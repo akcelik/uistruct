@@ -71,6 +71,22 @@ export const STRCT_ICONS: Record<string, string> = {
   // RJ45 ethernet port (switch / server) — keyed jack with contact pins.
   ethernet: '<rect x="2.5" y="4" width="11" height="7.4" rx="1"/><path d="M6 4V2.6h4V4"/><path d="M5.3 7.6v2M7.1 7.6v2M8.9 7.6v2M10.7 7.6v2"/>',
 
+  // ── Accessibility (original glyphs for generic concepts) ─────
+  universalAccess: '<circle cx="8" cy="8" r="6"/><circle cx="8" cy="4.9" r=".9" fill="currentColor" stroke="none"/><path d="M4.9 6.3c2 .8 4.2 .8 6.2 0M8 6.4v3.1M6.3 11.9 8 9.4l1.7 2.5"/>',
+  wheelchair: '<circle cx="6.5" cy="3.1" r="1.3"/><path d="M6.5 4.5v3.3h3.1l1.7 3.4"/><circle cx="6.7" cy="11.3" r="2.6"/><path d="M9.3 11.3h2.1l-.5 1.6"/>',
+  hearing: '<path d="M5 6.2a3 3 0 0 1 6 0c0 2.2-2.2 2.6-2.2 4.7A1.8 1.8 0 0 1 5 10.8"/><path d="M8.6 13.1a2.2 2.2 0 0 0 2.1-2.2"/>',
+  lowVision: '<path d="M1.8 8S4.2 4 8 4s6.2 4 6.2 4"/><circle cx="8" cy="8.3" r="2.1"/><path d="M2.6 10.8 4 9.4M13.4 10.8 12 9.4"/>',
+  braille: '<circle cx="5" cy="4.5" r=".85" fill="currentColor" stroke="none"/><circle cx="5" cy="8" r=".85" fill="currentColor" stroke="none"/><circle cx="5" cy="11.5" r=".85" fill="currentColor" stroke="none"/><circle cx="9" cy="4.5" r=".85" fill="currentColor" stroke="none"/><circle cx="9" cy="8" r=".85" fill="currentColor" stroke="none"/><circle cx="11.2" cy="6" r=".85" fill="currentColor" stroke="none"/>',
+  signLanguage: '<path d="M5.6 9.4V5a1 1 0 0 1 2 0M7.6 8V4.3a1 1 0 0 1 2 0V8M9.6 8V5.3a1 1 0 0 1 2 0v4.2c0 2.1-1.7 3.7-3.8 3.7-1.2 0-2.3-.5-3.1-1.5L4.1 11.5a1 1 0 0 1 1.5-1.3z"/>',
+
+  // ── Alert (original glyphs) ─────────────────────────────────
+  siren: '<path d="M3.5 13h9M5 13V8a3 3 0 0 1 6 0v5M8 2.4V4M3.6 4.6l1 .9M12.4 4.6l-1 .9"/>',
+  alarm: '<circle cx="8" cy="9" r="4.4"/><path d="M8 6.6V9l1.7 1M5 2.6 3.1 4.3M11 2.6l1.9 1.7M8 4.6V3"/>',
+  bellOff: '<path d="M5.5 6.5A2.6 2.6 0 0 1 8 3.7c.4 0 .8.1 1.1.3M10.6 7.1c.1 2.4 1 3.3 1 3.3H5.2M6.8 12.7a1.3 1.3 0 0 0 2.4 0M2.6 2.6l10.8 10.8"/>',
+  megaphone: '<path d="M3 7.3v1.6l7 3V4.3zM10 5.7 12.5 4.2v7.6L10 10.3M4 9.6l.9 3.1h1.6l-.7-2.9"/>',
+  flag: '<path d="M4 13.5V3M4 3.6h7.4L9.8 6.2l1.6 2.6H4"/>',
+  shieldAlert: '<path d="M8 2.3l5.2 1.9v3.3c0 3.1-2.3 5.1-5.2 6.4C5.1 12.6 2.8 10.6 2.8 7.5V4.2z"/><path d="M8 5.5v3.1M8 10.6v.2"/>',
+
   // ── State / action (also usable as badges via the icon `badge` input) ─
   running: '<path d="M5.5 4l6 4-6 4z"/>',
   stopped: '<rect x="5" y="5" width="6" height="6" rx="1"/>',
@@ -101,6 +117,14 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
   {
     label: 'Status',
     names: ['info', 'success', 'warning', 'danger', 'sync', 'lock', 'snapshot'],
+  },
+  {
+    label: 'Alert',
+    names: ['bell', 'bellOff', 'siren', 'alarm', 'megaphone', 'flag', 'shieldAlert', 'warning'],
+  },
+  {
+    label: 'Accessibility',
+    names: ['universalAccess', 'wheelchair', 'hearing', 'lowVision', 'braille', 'signLanguage'],
   },
   {
     label: 'Datacenter',
