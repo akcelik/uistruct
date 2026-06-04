@@ -2,17 +2,30 @@ import {
   ChangeDetectionStrategy,
   Component,
   ViewEncapsulation,
+  booleanAttribute,
   forwardRef,
   input,
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
+/** Ready-made masks for common datacenter / form fields. */
+export const STRCT_MASKS = {
+  phoneTr: '(999) 999 99 99',
+  nationalIdTr: '99999999999',
+  creditCard: '9999 9999 9999 9999',
+  /** MAC address — 6 hex octets, e.g. 00:1B:44:11:3A:B7 */
+  mac: 'HH:HH:HH:HH:HH:HH',
+  /** Fibre-channel WWPN — 8 hex octets, e.g. 20:00:00:25:B5:1A:00:0F */
+  wwpn: 'HH:HH:HH:HH:HH:HH:HH:HH',
+} as const;
+
 /**
- * Masked text input. Mask tokens: `9` = digit, `A` = letter, `*` = alphanumeric;
- * every other character is a literal. CVA value is the formatted string.
+ * Masked text input. Mask tokens: `9` = digit, `A` = letter, `H` = hex digit,
+ * `*` = alphanumeric; every other character is a literal. CVA value is the
+ * formatted string.
  *   <strct-input-mask mask="(999) 999 99 99" [(ngModel)]="phone" />
- *   <strct-input-mask mask="9999 9999 9999 9999" [(ngModel)]="card" />
+ *   <strct-input-mask mask="HH:HH:HH:HH:HH:HH" uppercase [(ngModel)]="mac" />
  */
 @Component({
   selector: 'strct-input-mask',
@@ -38,6 +51,8 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 export class StrctInputMask implements ControlValueAccessor {
   readonly mask = input.required<string>();
   readonly placeholder = input('');
+  /** Upper-case entered letters (handy for hex MAC / WWPN). */
+  readonly uppercase = input(false, { transform: booleanAttribute });
 
   readonly display = signal('');
   readonly isDisabled = signal(false);
@@ -55,12 +70,13 @@ export class StrctInputMask implements ControlValueAccessor {
   }
 
   private isToken(c: string): boolean {
-    return c === '9' || c === 'A' || c === '*';
+    return c === '9' || c === 'A' || c === 'H' || c === '*';
   }
 
   private matches(ch: string, token: string): boolean {
     if (token === '9') return /[0-9]/.test(ch);
     if (token === 'A') return /[a-zA-Z]/.test(ch);
+    if (token === 'H') return /[0-9a-fA-F]/.test(ch);
     return /[0-9a-zA-Z]/.test(ch); // '*'
   }
 
@@ -77,7 +93,7 @@ export class StrctInputMask implements ControlValueAccessor {
       const m = mask[mi];
       if (this.isToken(m)) {
         if (this.matches(data[di], m)) {
-          out += data[di];
+          out += this.uppercase() ? data[di].toUpperCase() : data[di];
           mi++;
           di++;
         } else {

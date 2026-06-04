@@ -1,4 +1,4 @@
-import { Directive, ElementRef, HostListener, Renderer2, inject, input } from '@angular/core';
+import { DOCUMENT, Directive, ElementRef, HostListener, Renderer2, inject, input } from '@angular/core';
 
 export type StrctTooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 
@@ -11,6 +11,7 @@ export type StrctTooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 export class StrctTooltip {
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly renderer = inject(Renderer2);
+  private readonly doc = inject(DOCUMENT);
   private bubble: HTMLElement | null = null;
 
   readonly strctTooltip = input.required<string>();
@@ -42,7 +43,9 @@ export class StrctTooltip {
     s.left = '0';
     s.visibility = 'hidden';
 
-    this.renderer.appendChild(this.host.nativeElement, el);
+    // Append to <body> so the fixed bubble can't be trapped by a transformed
+    // ancestor's containing block (e.g. a translated speed-dial / animation).
+    this.renderer.appendChild(this.doc.body, el);
     this.bubble = el;
     this.place(el);
   }
@@ -51,7 +54,7 @@ export class StrctTooltip {
   @HostListener('blur')
   protected hide(): void {
     if (this.bubble) {
-      this.renderer.removeChild(this.host.nativeElement, this.bubble);
+      this.renderer.removeChild(this.doc.body, this.bubble);
       this.bubble = null;
     }
   }

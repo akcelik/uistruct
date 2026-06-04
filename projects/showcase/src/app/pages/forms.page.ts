@@ -261,6 +261,14 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <span class="echo">Card</span>
         <strct-input-mask mask="9999 9999 9999 9999" [ngModel]="card()" (ngModelChange)="card.set($event)" />
       </div>
+      <div class="field">
+        <span class="echo">MAC address</span>
+        <strct-input-mask mask="HH:HH:HH:HH:HH:HH" uppercase [ngModel]="mac()" (ngModelChange)="mac.set($event)" />
+      </div>
+      <div class="field">
+        <span class="echo">WWPN</span>
+        <strct-input-mask mask="HH:HH:HH:HH:HH:HH:HH:HH" uppercase [ngModel]="wwpn()" (ngModelChange)="wwpn.set($event)" />
+      </div>
     </app-demo>
   `,
   styles: [
@@ -293,6 +301,8 @@ export class FormsPage {
   protected readonly phone = signal('');
   protected readonly tckn = signal('');
   protected readonly card = signal('');
+  protected readonly mac = signal('');
+  protected readonly wwpn = signal('');
 
   protected readonly switches: StrctCascadeOption[] = [
     {
