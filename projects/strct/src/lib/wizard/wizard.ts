@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ViewEncapsulation,
+  booleanAttribute,
   computed,
   contentChildren,
   effect,
@@ -22,6 +23,8 @@ import { StrctButton } from '../button/button';
 })
 export class StrctStep {
   readonly label = input.required<string>();
+  /** When false, the wizard's Next / Finish is disabled on this step. */
+  readonly canAdvance = input(true, { transform: booleanAttribute });
   private readonly _active = signal(false);
   readonly active = this._active.asReadonly();
 
@@ -57,11 +60,23 @@ export class StrctStep {
     <div class="strct-wiz__content"><ng-content /></div>
 
     <div class="strct-wiz__foot">
+      @if (cancelable()) {
+        <button strct-button variant="flat" class="strct-wiz__cancel" (click)="cancelled.emit()">
+          Cancel
+        </button>
+      }
       <button strct-button variant="flat" [disabled]="current() === 0" (click)="back()">Back</button>
       @if (isLast()) {
-        <button strct-button variant="primary" (click)="finish()">Finish</button>
+        <button
+          strct-button
+          variant="primary"
+          [disabled]="submitting() || !canAdvance()"
+          (click)="finish()"
+        >
+          {{ submitting() ? 'Submitting…' : finishLabel() }}
+        </button>
       } @else {
-        <button strct-button variant="primary" (click)="next()">Next</button>
+        <button strct-button variant="primary" [disabled]="!canAdvance()" (click)="next()">Next</button>
       }
     </div>
   `,
@@ -87,15 +102,27 @@ export class StrctStep {
       color: var(--t2); font-size: 13px;
     }
     .strct-wiz__foot { display: flex; justify-content: flex-end; gap: 8px; }
+    .strct-wiz__cancel { margin-right: auto; }
     `,
   ],
 })
 export class StrctWizard {
   readonly steps = contentChildren(StrctStep);
   readonly current = signal(0);
+  /** Label for the final-step button (default "Finish"). */
+  readonly finishLabel = input('Finish');
+  /** Disable Finish and show a busy label while an async submit is in flight. */
+  readonly submitting = input(false, { transform: booleanAttribute });
+  /** Show a Cancel button on the left. */
+  readonly cancelable = input(false, { transform: booleanAttribute });
   readonly finished = output<void>();
+  readonly cancelled = output<void>();
+  /** Emits the new step index after a Back / Next move. */
+  readonly stepChange = output<number>();
 
   protected readonly isLast = computed(() => this.current() >= this.steps().length - 1);
+  /** Whether the current step permits advancing (its `canAdvance`). */
+  protected readonly canAdvance = computed(() => this.steps()[this.current()]?.canAdvance() ?? true);
 
   constructor() {
     effect(() => {
@@ -105,14 +132,20 @@ export class StrctWizard {
   }
 
   next(): void {
-    if (!this.isLast()) this.current.update((i) => i + 1);
+    if (!this.isLast() && this.canAdvance()) {
+      this.current.update((i) => i + 1);
+      this.stepChange.emit(this.current());
+    }
   }
 
   back(): void {
-    if (this.current() > 0) this.current.update((i) => i - 1);
+    if (this.current() > 0) {
+      this.current.update((i) => i - 1);
+      this.stepChange.emit(this.current());
+    }
   }
 
   finish(): void {
-    this.finished.emit();
+    if (this.canAdvance() && !this.submitting()) this.finished.emit();
   }
 }

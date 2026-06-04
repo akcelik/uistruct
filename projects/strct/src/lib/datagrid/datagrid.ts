@@ -8,6 +8,7 @@ import {
   booleanAttribute,
   computed,
   contentChild,
+  contentChildren,
   effect,
   inject,
   input,
@@ -16,7 +17,10 @@ import {
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 import { StrctPagination } from '../pagination/pagination';
-import { StrctRow } from '../table/table';
+import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
+
+/** Resolves a stable identity for a row: a property key, or a function. */
+export type StrctRowId = string | ((row: StrctRow) => unknown);
 
 export interface StrctDatagridColumn {
   key: string;
@@ -110,7 +114,7 @@ export class StrctDatagridActionBar {}
         </tr>
       </thead>
       <tbody>
-        @for (row of paged(); track $index) {
+        @for (row of paged(); track rowKey(row)) {
           <tr
             [class.strct-dg__row--selected]="isSelected(row)"
             [class.strct-dg__row--active]="paneOpen() && row === activeRow()"
@@ -154,7 +158,16 @@ export class StrctDatagridActionBar {}
               </td>
             }
             @for (col of visibleColumns(); track col.key) {
-              <td [style.text-align]="col.align ?? 'start'">{{ row[col.key] }}</td>
+              <td [style.text-align]="col.align ?? 'start'">
+                @if (cellTemplate(col.key); as tpl) {
+                  <ng-container
+                    [ngTemplateOutlet]="tpl"
+                    [ngTemplateOutletContext]="{ $implicit: row, value: row[col.key], column: col }"
+                  />
+                } @else {
+                  {{ row[col.key] }}
+                }
+              </td>
             }
           </tr>
           @if (canExpand() && isExpanded(row)) {
@@ -325,16 +338,34 @@ export class StrctDatagrid {
   readonly detailPane = input(false, { transform: booleanAttribute });
   readonly compact = input(false, { transform: booleanAttribute });
   readonly emptyText = input('No data');
+  /**
+   * Stable row identity (property key or function). Set this for live-refreshing
+   * data so selection, expansion and the active detail row survive re-fetches
+   * that replace the row objects. Defaults to object identity.
+   */
+  readonly rowId = input<StrctRowId | null>(null);
   readonly selectionChange = output<StrctRow[]>();
 
   protected readonly detailDef = contentChild(StrctRowDetailDef);
   protected readonly actionBarDef = contentChild(StrctDatagridActionBar);
+  private readonly cellDefs = contentChildren(StrctCellDef);
+  private readonly cellMap = computed(() => {
+    const m = new Map<string, TemplateRef<StrctCellContext>>();
+    for (const d of this.cellDefs()) m.set(d.key(), d.template);
+    return m;
+  });
 
   readonly page = signal(1);
   private readonly sort = signal<{ key: string | null; dir: SortDir }>({ key: null, dir: 'asc' });
-  private readonly selected = signal<Set<StrctRow>>(new Set());
-  private readonly expandedRows = signal<Set<StrctRow>>(new Set());
-  protected readonly activeRow = signal<StrctRow | null>(null);
+  /** Selection / expansion are tracked by row id (see {@link rowId}). */
+  private readonly selected = signal<Set<unknown>>(new Set());
+  private readonly expandedRows = signal<Set<unknown>>(new Set());
+  private readonly activeId = signal<unknown>(null);
+  protected readonly activeRow = computed(() => {
+    const id = this.activeId();
+    if (id == null) return null;
+    return this.rows().find((r) => this.idOf(r) === id) ?? null;
+  });
 
   protected readonly canExpand = computed(
     () => this.expandable() && !this.detailPane() && !!this.detailDef(),
@@ -366,11 +397,26 @@ export class StrctDatagrid {
   protected readonly selectedCount = computed(() => this.selected().size);
   protected readonly allPageSelected = computed(() => {
     const rows = this.paged();
-    return rows.length > 0 && rows.every((r) => this.selected().has(r));
+    return rows.length > 0 && rows.every((r) => this.selected().has(this.idOf(r)));
   });
   protected readonly somePageSelected = computed(
-    () => !this.allPageSelected() && this.paged().some((r) => this.selected().has(r)),
+    () => !this.allPageSelected() && this.paged().some((r) => this.selected().has(this.idOf(r))),
   );
+
+  /** Resolve a row's stable identity (defaults to the row object itself). */
+  private idOf(row: StrctRow): unknown {
+    const id = this.rowId();
+    if (id == null) return row;
+    return typeof id === 'function' ? id(row) : row[id];
+  }
+
+  protected rowKey(row: StrctRow): unknown {
+    return this.idOf(row);
+  }
+
+  protected cellTemplate(key: string): TemplateRef<StrctCellContext> | null {
+    return this.cellMap().get(key) ?? null;
+  }
 
   constructor() {
     // Keep the page in range when the data set shrinks.
@@ -394,11 +440,12 @@ export class StrctDatagrid {
   /** Toggle the detail pane for a row (triggered by its »  button, not the row,
    *  so row cells remain selectable for copy). */
   openDetail(row: StrctRow): void {
-    this.activeRow.set(this.activeRow() === row ? null : row);
+    const id = this.idOf(row);
+    this.activeId.set(this.activeId() === id ? null : id);
   }
 
   closePane(): void {
-    this.activeRow.set(null);
+    this.activeId.set(null);
   }
 
   sortBy(key: string): void {
@@ -430,22 +477,24 @@ export class StrctDatagrid {
   }
 
   protected isSelected(row: StrctRow): boolean {
-    return this.selected().has(row);
+    return this.selected().has(this.idOf(row));
   }
 
   protected isExpanded(row: StrctRow): boolean {
-    return this.expandedRows().has(row);
+    return this.expandedRows().has(this.idOf(row));
   }
 
   toggleExpand(row: StrctRow): void {
+    const id = this.idOf(row);
     const next = new Set(this.expandedRows());
-    next.has(row) ? next.delete(row) : next.add(row);
+    next.has(id) ? next.delete(id) : next.add(id);
     this.expandedRows.set(next);
   }
 
   toggleRow(row: StrctRow): void {
+    const id = this.idOf(row);
     const next = new Set(this.selected());
-    next.has(row) ? next.delete(row) : next.add(row);
+    next.has(id) ? next.delete(id) : next.add(id);
     this.commitSelection(next);
   }
 
@@ -453,9 +502,9 @@ export class StrctDatagrid {
     const next = new Set(this.selected());
     const rows = this.paged();
     if (this.allPageSelected()) {
-      rows.forEach((r) => next.delete(r));
+      rows.forEach((r) => next.delete(this.idOf(r)));
     } else {
-      rows.forEach((r) => next.add(r));
+      rows.forEach((r) => next.add(this.idOf(r)));
     }
     this.commitSelection(next);
   }
@@ -464,9 +513,11 @@ export class StrctDatagrid {
     this.commitSelection(new Set());
   }
 
-  private commitSelection(next: Set<StrctRow>): void {
+  /** Emit the current row objects whose id is selected (resolved against the
+   *  latest data, so consumers always get fresh references). */
+  private commitSelection(next: Set<unknown>): void {
     this.selected.set(next);
-    this.selectionChange.emit([...next]);
+    this.selectionChange.emit(this.rows().filter((r) => next.has(this.idOf(r))));
   }
 
   private compare(a: unknown, b: unknown): number {

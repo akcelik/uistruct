@@ -34,6 +34,7 @@ export * from './lib/modal/modal';
 export * from './lib/dropdown/dropdown';
 export * from './lib/context-menu/context-menu';
 export * from './lib/context-menu/submenu';
+export * from './lib/context-menu/menu';
 export * from './lib/wizard/wizard';
 export * from './lib/divider/divider';
 

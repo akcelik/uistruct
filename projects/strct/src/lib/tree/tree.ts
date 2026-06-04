@@ -7,24 +7,34 @@ import {
   input,
   model,
   output,
+  signal,
 } from '@angular/core';
-import { StrctIcon } from '../icon/icon';
+import { StrctIcon, StrctIconBadge } from '../icon/icon';
 
-/** Root container for a tree of `<strct-tree-node>` items. */
-@Component({
-  selector: 'strct-tree',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None,
-  template: `<ng-content />`,
-  host: { class: 'strct-tree', role: 'tree' },
-  styles: [`.strct-tree { display: block; }`],
-})
-export class StrctTree {}
+/** A node in the data-driven tree (`<strct-tree [nodes]="...">`). */
+export interface StrctTreeNodeData {
+  label: string;
+  /** Optional leading icon name. */
+  icon?: string;
+  /** Status dot on the icon (running / maintenance / off …). */
+  badge?: StrctIconBadge;
+  /** Highlight as the selected node. */
+  active?: boolean;
+  /** Initial expanded state. */
+  expanded?: boolean;
+  children?: StrctTreeNodeData[];
+  /** Arbitrary payload returned with (nodeActivated). */
+  data?: unknown;
+}
 
 /**
- * Tree node. Nest `<strct-tree-node>` children to build hierarchy:
- *   <strct-tree-node label="Group" [(expanded)]="open">
- *     <strct-tree-node label="Leaf" icon="grid" [active]="true" />
+ * Tree node. Two modes:
+ *  - **Content:** nest `<strct-tree-node>` children manually.
+ *  - **Data:** pass a `[node]` object that recurses over its `children` —
+ *    used internally by `<strct-tree [nodes]>`.
+ *
+ *   <strct-tree-node label="Group" icon="layers" badge="ok" [(expanded)]="open">
+ *     <strct-tree-node label="Leaf" icon="vm" [active]="true" />
  *   </strct-tree-node>
  */
 @Component({
@@ -35,15 +45,15 @@ export class StrctTree {}
   template: `
     <div
       class="strct-tnode__row"
-      [class.strct-tnode__row--active]="active()"
+      [class.strct-tnode__row--active]="displayActive()"
       role="treeitem"
-      [attr.aria-expanded]="hasChildren() ? expanded() : null"
-      (click)="activated.emit()"
+      [attr.aria-expanded]="hasChildren() ? isOpen() : null"
+      (click)="onActivate()"
     >
       @if (hasChildren()) {
         <span
           class="strct-tnode__chevron"
-          [class.strct-tnode__chevron--open]="expanded()"
+          [class.strct-tnode__chevron--open]="isOpen()"
           (click)="$event.stopPropagation(); toggle()"
         >
           <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
@@ -51,15 +61,27 @@ export class StrctTree {}
       } @else {
         <span class="strct-tnode__spacer"></span>
       }
-      @if (icon()) {
-        <strct-icon class="strct-tnode__icon" [name]="icon()!" [size]="14" [strokeWidth]="1.3" />
+      @if (displayIcon()) {
+        <strct-icon
+          class="strct-tnode__icon"
+          [name]="displayIcon()!"
+          [size]="14"
+          [strokeWidth]="1.3"
+          [badge]="displayBadge()"
+        />
       }
-      <span class="strct-tnode__label">{{ label() }}</span>
+      <span class="strct-tnode__label">{{ displayLabel() }}</span>
       <ng-content select="[strctTreeTrailing]" />
     </div>
-    @if (hasChildren() && expanded()) {
+    @if (hasChildren() && isOpen()) {
       <div class="strct-tnode__children" role="group">
-        <ng-content />
+        @if (node()) {
+          @for (child of node()!.children ?? []; track $index) {
+            <strct-tree-node [node]="child" (nodeActivated)="nodeActivated.emit($event)" />
+          }
+        } @else {
+          <ng-content />
+        }
       </div>
     }
   `,
@@ -89,16 +111,79 @@ export class StrctTree {}
   ],
 })
 export class StrctTreeNode {
-  readonly label = input.required<string>();
+  /** Data-driven node; when set, label/icon/children come from it. */
+  readonly node = input<StrctTreeNodeData | null>(null);
+  readonly label = input('');
   readonly icon = input<string | undefined>(undefined);
+  readonly badge = input<StrctIconBadge>('none');
   readonly active = input(false);
   readonly expanded = model(false);
+  /** Content-mode click. */
   readonly activated = output<void>();
+  /** Data-mode click — carries the activated node (bubbles to the tree). */
+  readonly nodeActivated = output<StrctTreeNodeData>();
 
   private readonly childNodes = contentChildren(StrctTreeNode);
-  protected readonly hasChildren = computed(() => this.childNodes().length > 0);
+  /** Data-mode expansion (seeded from node.expanded on first toggle). */
+  private readonly dataExpanded = signal<boolean | null>(null);
+
+  protected readonly displayLabel = computed(() => this.node()?.label ?? this.label());
+  protected readonly displayIcon = computed(() => this.node()?.icon ?? this.icon());
+  protected readonly displayBadge = computed<StrctIconBadge>(
+    () => this.node()?.badge ?? this.badge(),
+  );
+  protected readonly displayActive = computed(() => this.node()?.active ?? this.active());
+
+  protected readonly hasChildren = computed(() => {
+    const n = this.node();
+    return n ? (n.children?.length ?? 0) > 0 : this.childNodes().length > 0;
+  });
+
+  protected readonly isOpen = computed(() => {
+    if (this.node()) return this.dataExpanded() ?? this.node()!.expanded ?? false;
+    return this.expanded();
+  });
 
   toggle(): void {
-    this.expanded.update((v) => !v);
+    if (this.node()) {
+      this.dataExpanded.set(!this.isOpen());
+    } else {
+      this.expanded.update((v) => !v);
+    }
   }
+
+  protected onActivate(): void {
+    const n = this.node();
+    if (n) this.nodeActivated.emit(n);
+    else this.activated.emit();
+  }
+}
+
+/**
+ * Root container for a tree. Either project `<strct-tree-node>` children, or
+ * pass `[nodes]` for a fully data-driven, self-recursing tree:
+ *   <strct-tree [nodes]="roots" (nodeActivated)="select($event)" />
+ */
+@Component({
+  selector: 'strct-tree',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
+  imports: [StrctTreeNode],
+  template: `
+    @if (nodes(); as ns) {
+      @for (n of ns; track $index) {
+        <strct-tree-node [node]="n" (nodeActivated)="nodeActivated.emit($event)" />
+      }
+    } @else {
+      <ng-content />
+    }
+  `,
+  host: { class: 'strct-tree', role: 'tree' },
+  styles: [`.strct-tree { display: block; }`],
+})
+export class StrctTree {
+  /** Data-driven node list; when set, projected content is ignored. */
+  readonly nodes = input<StrctTreeNodeData[] | null>(null);
+  /** Emitted when any data-driven node is clicked. */
+  readonly nodeActivated = output<StrctTreeNodeData>();
 }

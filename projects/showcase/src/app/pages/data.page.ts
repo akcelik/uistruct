@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+  StrctBadge,
+  StrctBadgeStatus,
   StrctButton,
+  StrctCellDef,
   StrctCheckbox,
   StrctColumn,
   StrctDatagrid,
@@ -29,6 +32,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctDatagrid,
     StrctRowDetailDef,
     StrctDatagridActionBar,
+    StrctCellDef,
+    StrctBadge,
     StrctIcon,
     StrctButton,
     StrctCheckbox,
@@ -52,8 +57,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="datagrid"
       heading="Datagrid"
-      description="Sortable columns, row selection, expandable detail rows, a batch action bar and paging. Sort by a header, tick rows for the action bar, or expand a row with the chevron."
-      code="<strct-datagrid [columns]=&quot;cols&quot; [rows]=&quot;rows&quot; selectable expandable [pageSize]=&quot;5&quot;>…</strct-datagrid>"
+      description="Sortable columns, row selection, expandable detail rows, a batch action bar and paging. A *strctCell template renders the Status column as a badge, and rowId keeps selection / expansion stable across live data refreshes."
+      code="<strct-datagrid [columns]=&quot;cols&quot; [rows]=&quot;rows&quot; rowId=&quot;name&quot; selectable expandable>&#10;  <ng-template strctCell=&quot;status&quot; let-value=&quot;value&quot;>…</ng-template>&#10;</strct-datagrid>"
     >
       <div class="dg-wrap">
         <strct-checkbox [ngModel]="dense()" (ngModelChange)="dense.set($event)">Compact</strct-checkbox>
@@ -62,12 +67,16 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           style="width: 100%;"
           [columns]="dgCols"
           [rows]="dgRows"
+          rowId="name"
           selectable
           expandable
           [compact]="dense()"
           [pageSize]="5"
           (selectionChange)="selected.set($event.length)"
         >
+          <ng-template strctCell="status" let-value="value">
+            <strct-badge [status]="badgeFor(value)">{{ value }}</strct-badge>
+          </ng-template>
           <div strctDatagridActionBar>
             <button strct-button variant="primary" size="sm">
               <strct-icon name="upload" [size]="14" /> Add host
@@ -166,6 +175,17 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 export class DataPage {
   protected readonly selected = signal(0);
   protected readonly dense = signal(false);
+
+  protected badgeFor(status: unknown): StrctBadgeStatus {
+    switch (status) {
+      case 'Running':
+        return 'success';
+      case 'Degraded':
+        return 'warning';
+      default:
+        return 'neutral';
+    }
+  }
 
   protected readonly cols: StrctColumn[] = [
     { key: 'name', label: 'Service' },

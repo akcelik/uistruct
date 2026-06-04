@@ -1,4 +1,15 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Directive,
+  TemplateRef,
+  booleanAttribute,
+  computed,
+  contentChildren,
+  inject,
+  input,
+} from '@angular/core';
 
 export interface StrctColumn {
   key: string;
@@ -9,13 +20,39 @@ export interface StrctColumn {
 
 export type StrctRow = Record<string, unknown>;
 
+/** Context passed to a per-column cell template. */
+export interface StrctCellContext {
+  /** The row object. */
+  $implicit: StrctRow;
+  /** The raw value for this column (`row[column.key]`). */
+  value: unknown;
+  /** The column definition. */
+  column: StrctColumn;
+}
+
 /**
- * Declarative data table.
+ * Per-column cell template for `strct-table` / `strct-datagrid`. The column key
+ * is the directive value; the row, value and column are the template context:
+ *
+ *   <ng-template strctCell="status" let-row let-value="value">
+ *     <strct-badge [status]="row['ok'] ? 'success' : 'danger'">{{ value }}</strct-badge>
+ *   </ng-template>
+ */
+@Directive({ selector: '[strctCell]' })
+export class StrctCellDef {
+  readonly key = input.required<string>({ alias: 'strctCell' });
+  readonly template = inject<TemplateRef<StrctCellContext>>(TemplateRef);
+}
+
+/**
+ * Declarative data table. Cells render `row[col.key]` as text by default; supply
+ * a `*strctCell` template per column for custom content.
  *   <strct-table [columns]="cols" [rows]="data" hover />
  */
 @Component({
   selector: 'strct-table',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [NgTemplateOutlet],
   template: `
     <table class="strct-table">
       <thead>
@@ -29,7 +66,16 @@ export type StrctRow = Record<string, unknown>;
         @for (row of rows(); track $index) {
           <tr>
             @for (col of columns(); track col.key) {
-              <td [style.text-align]="col.align ?? 'start'">{{ row[col.key] }}</td>
+              <td [style.text-align]="col.align ?? 'start'">
+                @if (cellTemplate(col.key); as tpl) {
+                  <ng-container
+                    [ngTemplateOutlet]="tpl"
+                    [ngTemplateOutletContext]="{ $implicit: row, value: row[col.key], column: col }"
+                  />
+                } @else {
+                  {{ row[col.key] }}
+                }
+              </td>
             }
           </tr>
         } @empty {
@@ -74,4 +120,15 @@ export class StrctTable {
   readonly striped = input(false, { transform: booleanAttribute });
   readonly hover = input(false, { transform: booleanAttribute });
   readonly emptyText = input('No data');
+
+  private readonly cellDefs = contentChildren(StrctCellDef);
+  private readonly cellMap = computed(() => {
+    const m = new Map<string, TemplateRef<StrctCellContext>>();
+    for (const d of this.cellDefs()) m.set(d.key(), d.template);
+    return m;
+  });
+
+  protected cellTemplate(key: string): TemplateRef<StrctCellContext> | null {
+    return this.cellMap().get(key) ?? null;
+  }
 }

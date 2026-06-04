@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-06-04
+
+Feedback-driven release — all additions are **backward-compatible**.
+
+### Added
+- **Datagrid / Table cell templates** — a `*strctCell="key"` template per column for
+  custom cell content (status pills, links, action buttons). Context exposes
+  `let-row`, `let-value="value"` and `let-column="column"`.
+- **Datagrid `rowId`** — a stable row identity (property key or function) so selection,
+  expansion and the active detail row survive live data re-fetches that replace the row
+  objects. `selectionChange` now emits fresh row objects resolved by id.
+- **Data-driven tree** — `<strct-tree [nodes]>` self-recurses over a `StrctTreeNodeData[]`
+  of any depth, with a new `(nodeActivated)` output and a per-node `badge` input for object
+  state on the node.
+- **Data-driven context menu** — a new `[strctContextMenu]="items"` directive that portals
+  into `<body>` (no overflow / transform clipping), positions by its real measured size,
+  supports full keyboard navigation (↑/↓/→/←/Enter/Esc with roving tabindex) and nested
+  submenus, and runs each item's `action`.
+- **Wizard step validation** — a per-step `[canAdvance]` gate for Next / Finish, plus wizard
+  `[submitting]`, `[cancelable]`, `[finishLabel]` inputs and `(cancelled)`, `(stepChange)`
+  outputs.
+
 ## [0.1.1] - 2026-06-04
 
 ### Added
@@ -30,5 +52,6 @@ _No component API changes in this release._
 - Overlay-safe dropdowns, tooltips and menus; accessible modal with focus trap.
 - Zoneless, `OnPush` change detection throughout. MIT licensed.
 
+[0.2.0]: https://github.com/akcelik/uistruct/releases/tag/v0.2.0
 [0.1.1]: https://github.com/akcelik/uistruct/releases/tag/v0.1.1
 [0.1.0]: https://github.com/akcelik/uistruct/releases/tag/v0.1.0

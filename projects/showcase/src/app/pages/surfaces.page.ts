@@ -18,6 +18,7 @@ import {
   StrctTabs,
   StrctTree,
   StrctTreeNode,
+  StrctTreeNodeData,
   StrctWizard,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
@@ -106,6 +107,25 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       </strct-tree>
     </app-demo>
 
+    <app-demo
+      anchor="tree-data"
+      owner="tree"
+      heading="Data-driven tree"
+      description="Pass [nodes] for a self-recursing tree of any depth; per-node badges surface object state (running / maintenance / off)."
+      code="<strct-tree [nodes]=&quot;roots&quot; (nodeActivated)=&quot;select($event)&quot; />"
+    >
+      <div class="stack">
+        <strct-tree
+          style="width: 100%; max-width: 340px;"
+          [nodes]="inventory"
+          (nodeActivated)="treePick.set($event.label)"
+        />
+        @if (treePick()) {
+          <span class="echo">selected: {{ treePick() }}</span>
+        }
+      </div>
+    </app-demo>
+
     <app-demo anchor="modal" heading="Modal" description="Overlay dialog with two-way open, backdrop & Escape dismiss.">
       <button strct-button variant="primary" (click)="modalOpen.set(true)">Open modal</button>
       <strct-modal [(open)]="modalOpen" title="Confirm action">
@@ -140,6 +160,35 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       }
     </app-demo>
 
+    <app-demo
+      anchor="wizard-guard"
+      owner="wizard"
+      heading="Step validation & cancel"
+      description="Gate Next per step with [canAdvance]; show a busy Finish via [submitting] and an optional Cancel."
+      code="<strct-step label=&quot;Account&quot; [canAdvance]=&quot;form.valid&quot;>…</strct-step>"
+    >
+      <div class="stack">
+        <button strct-button size="sm" (click)="step1Valid.set(!step1Valid())">
+          Toggle step 1 validity — now {{ step1Valid() ? 'valid' : 'invalid' }}
+        </button>
+        <strct-wizard
+          style="width: 100%; max-width: 560px;"
+          cancelable
+          [submitting]="submitting()"
+          (cancelled)="wizMsg.set('cancelled')"
+          (finished)="onFinish()"
+        >
+          <strct-step label="Account" [canAdvance]="step1Valid()">
+            Step 1 — “Next” stays disabled until this step is valid.
+          </strct-step>
+          <strct-step label="Review">Step 2 — review, then Finish (shows a busy state).</strct-step>
+        </strct-wizard>
+        @if (wizMsg()) {
+          <strct-badge [status]="wizMsg() === 'finished' ? 'success' : 'neutral'">{{ wizMsg() }}</strct-badge>
+        }
+      </div>
+    </app-demo>
+
     <app-demo anchor="divider" heading="Divider" description="A separator rule, optionally with a centered label.">
       <div style="width: 100%; max-width: 360px;">
         <p style="margin: 0 0 4px; color: var(--t2); font-size: 13px;">Section one</p>
@@ -151,8 +200,58 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       </div>
     </app-demo>
   `,
+  styles: [
+    `
+    .stack { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; width: 100%; }
+    .echo { font-size: 12px; color: var(--t2); font-family: var(--mono); }
+    `,
+  ],
 })
 export class SurfacesPage {
   protected readonly modalOpen = signal(false);
   protected readonly wizardDone = signal(false);
+
+  protected readonly treePick = signal('');
+  protected readonly step1Valid = signal(false);
+  protected readonly submitting = signal(false);
+  protected readonly wizMsg = signal('');
+
+  protected readonly inventory: StrctTreeNodeData[] = [
+    {
+      label: 'Datacenter-01',
+      icon: 'datacenter',
+      expanded: true,
+      children: [
+        {
+          label: 'Cluster-A',
+          icon: 'cluster',
+          badge: 'ok',
+          expanded: true,
+          children: [
+            { label: 'esx-01 · running', icon: 'host', badge: 'ok' },
+            { label: 'esx-02 · maintenance', icon: 'host', badge: 'warn' },
+            { label: 'esx-03 · powered off', icon: 'host', badge: 'off' },
+          ],
+        },
+        {
+          label: 'Cluster-B',
+          icon: 'cluster',
+          badge: 'crit',
+          children: [
+            { label: 'esx-04 · critical', icon: 'host', badge: 'crit' },
+            { label: 'web-vm-01', icon: 'vm', badge: 'ok' },
+          ],
+        },
+      ],
+    },
+  ];
+
+  protected onFinish(): void {
+    this.submitting.set(true);
+    // Simulate an async submit, then resolve.
+    setTimeout(() => {
+      this.submitting.set(false);
+      this.wizMsg.set('finished');
+    }, 900);
+  }
 }

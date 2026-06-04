@@ -4,11 +4,13 @@ import {
   StrctButton,
   StrctCheckbox,
   StrctContextMenu,
+  StrctContextMenuTrigger,
   StrctDropdownDivider,
   StrctDropdownItem,
   StrctIcon,
   StrctInput,
   StrctLogin,
+  StrctMenuItem,
   StrctPassword,
   StrctSubmenu,
 } from 'strct';
@@ -28,6 +30,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctButton,
     StrctIcon,
     StrctContextMenu,
+    StrctContextMenuTrigger,
     StrctDropdownItem,
     StrctDropdownDivider,
     StrctSubmenu,
@@ -130,6 +133,27 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         </ng-container>
       </strct-context-menu>
     </app-demo>
+
+    <app-demo
+      anchor="contextmenu-data"
+      owner="contextmenu"
+      heading="Data-driven context menu (directive)"
+      description="Attach [strctContextMenu]=&quot;items&quot; to any element. The menu portals into the body (no clipping), positions by its real size, supports keyboard (↑/↓/→/←/Enter/Esc) and nested submenus, and runs each item's action."
+      code="<div [strctContextMenu]=&quot;items&quot; [strctContextMenuData]=&quot;row&quot; (menuSelect)=&quot;on($event)&quot;>…</div>"
+    >
+      <div
+        class="ctx-target"
+        [strctContextMenu]="menuItems"
+        [strctContextMenuData]="'host-01'"
+        (menuSelect)="lastAction.set($event.label)"
+      >
+        <strct-icon name="host" [size]="18" />
+        <span>Right-click this host — data-driven menu</span>
+        @if (lastAction()) {
+          <span class="ctx-echo">last action: {{ lastAction() }}</span>
+        }
+      </div>
+    </app-demo>
   `,
   styles: [
     `
@@ -170,4 +194,21 @@ export class PatternsPage {
   protected password = '';
   protected remember = false;
   protected readonly lastAction = signal('');
+
+  protected readonly menuItems: StrctMenuItem[] = [
+    { label: 'Open console', icon: 'search' },
+    { label: 'Rename', icon: 'form' },
+    {
+      label: 'Power',
+      icon: 'power',
+      children: [
+        { label: 'Power on', icon: 'power' },
+        { label: 'Power off', icon: 'stopped' },
+        { label: 'Restart', icon: 'sync' },
+      ],
+    },
+    { label: 'Maintenance mode', icon: 'maintenance', disabled: true },
+    { divider: true, label: '' },
+    { label: 'Remove from inventory', icon: 'close', danger: true },
+  ];
 }
