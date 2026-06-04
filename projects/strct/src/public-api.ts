@@ -52,6 +52,8 @@ export * from './lib/forms/file';
 export * from './lib/rating/rating';
 export * from './lib/chips/chips';
 export * from './lib/input-otp/input-otp';
+export * from './lib/knob/knob';
+export * from './lib/input-mask/input-mask';
 export * from './lib/combobox/combobox';
 export * from './lib/datepicker/datepicker';
 export * from './lib/color-picker/color-picker';

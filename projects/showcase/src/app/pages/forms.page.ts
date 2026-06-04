@@ -10,7 +10,9 @@ import {
   StrctDatepicker,
   StrctFile,
   StrctInput,
+  StrctInputMask,
   StrctInputOtp,
+  StrctKnob,
   StrctOption,
   StrctPassword,
   StrctRadio,
@@ -43,6 +45,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctRating,
     StrctChips,
     StrctInputOtp,
+    StrctKnob,
+    StrctInputMask,
   ],
   template: `
     <app-page-header
@@ -228,6 +232,36 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       <strct-input-otp [length]="6" [ngModel]="code()" (ngModelChange)="code.set($event)" />
       <span class="echo">value: {{ code() || '—' }}</span>
     </app-demo>
+
+    <app-demo
+      anchor="knob"
+      heading="Knob"
+      description="Rotary dial — drag, use the arrow keys, or scroll. CVA-compatible."
+      code="<strct-knob [min]=&quot;0&quot; [max]=&quot;100&quot; [(ngModel)]=&quot;fan&quot; label=&quot;Fan&quot; />"
+    >
+      <strct-knob [ngModel]="fan()" (ngModelChange)="fan.set($event)" label="Fan %" status="accent" />
+      <strct-knob [ngModel]="temp()" (ngModelChange)="temp.set($event)" [min]="0" [max]="120" label="°C" status="warning" />
+    </app-demo>
+
+    <app-demo
+      anchor="inputmask"
+      heading="Input mask"
+      description="Formatted entry. Tokens: 9 = digit, A = letter, * = alphanumeric; the rest are literals."
+      code="<strct-input-mask mask=&quot;(999) 999 99 99&quot; [(ngModel)]=&quot;phone&quot; />"
+    >
+      <div class="field">
+        <span class="echo">Phone</span>
+        <strct-input-mask mask="(999) 999 99 99" [ngModel]="phone()" (ngModelChange)="phone.set($event)" />
+      </div>
+      <div class="field">
+        <span class="echo">National ID (TR)</span>
+        <strct-input-mask mask="99999999999" [ngModel]="tckn()" (ngModelChange)="tckn.set($event)" />
+      </div>
+      <div class="field">
+        <span class="echo">Card</span>
+        <strct-input-mask mask="9999 9999 9999 9999" [ngModel]="card()" (ngModelChange)="card.set($event)" />
+      </div>
+    </app-demo>
   `,
   styles: [
     `
@@ -254,6 +288,11 @@ export class FormsPage {
   protected readonly score = signal(3);
   protected readonly labels = signal<string[]>(['production', 'eu-west']);
   protected readonly code = signal('');
+  protected readonly fan = signal(45);
+  protected readonly temp = signal(60);
+  protected readonly phone = signal('');
+  protected readonly tckn = signal('');
+  protected readonly card = signal('');
 
   protected readonly switches: StrctCascadeOption[] = [
     {

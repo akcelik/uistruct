@@ -75,6 +75,8 @@ export const NAV: NavCategory[] = [
       { id: 'rating', label: 'Rating' },
       { id: 'chips', label: 'Chips' },
       { id: 'otp', label: 'Input OTP' },
+      { id: 'knob', label: 'Knob' },
+      { id: 'inputmask', label: 'Input mask' },
     ],
   },
   {
