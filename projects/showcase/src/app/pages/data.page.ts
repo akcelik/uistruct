@@ -72,9 +72,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           rowId="name"
           selectable
           expandable
+          resizable
           [compact]="dense()"
           [pageSize]="5"
-          (selectionChange)="selected.set($event.length)"
         >
           <ng-template strctCell="status" let-value="value">
             <strct-badge [status]="badgeFor(value)">{{ value }}</strct-badge>
@@ -89,11 +89,6 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             </button>
           </div>
 
-          <button strct-button strctDatagridActions variant="primary" size="sm">Migrate</button>
-          <button strct-button strctDatagridActions variant="critical" size="sm">
-            Decommission
-          </button>
-
           <ng-template strctRowDetail let-row>
             <strct-stack style="max-width: 380px;">
               <strct-stack-item label="Service">{{ row['name'] }}</strct-stack-item>
@@ -103,8 +98,6 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             </strct-stack>
           </ng-template>
         </strct-datagrid>
-
-        <span class="echo">{{ selected() }} row(s) selected</span>
       </div>
     </app-demo>
 
@@ -185,7 +178,6 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class DataPage {
-  protected readonly selected = signal(0);
   protected readonly dense = signal(false);
 
   protected badgeFor(status: unknown): StrctBadgeStatus {

@@ -29,6 +29,9 @@ export interface StrctDatagridColumn {
   sortable?: boolean;
   align?: 'start' | 'center' | 'end';
   width?: string;
+  /** Allow the user to resize this column by dragging its right edge.
+   *  Defaults to the global {@link StrctDatagrid#resizable} setting. */
+  resizable?: boolean;
 }
 
 type SortDir = 'asc' | 'desc';
@@ -89,7 +92,7 @@ export class StrctDatagridActionBar {}
               @for (col of visibleColumns(); track col.key) {
                 <th
                   [style.text-align]="col.align ?? 'start'"
-                  [style.width]="col.width"
+                  [style.width]="colWidth(col.key) ?? col.width ?? null"
                   [class.strct-dg__th--sortable]="col.sortable"
                   [attr.tabindex]="col.sortable ? 0 : null"
                   [attr.aria-sort]="col.sortable ? ariaSort(col.key) : null"
@@ -107,6 +110,12 @@ export class StrctDatagridActionBar {}
                       />
                     }
                   </span>
+                  @if (resizable() && col.resizable !== false) {
+                    <div
+                      class="strct-dg__resize"
+                      (mousedown)="onResizeStart($event, col.key)"
+                    ></div>
+                  }
                 </th>
               }
             </tr>
@@ -242,7 +251,8 @@ export class StrctDatagridActionBar {}
         <span class="strct-dg__count">
           {{ sorted().length }} {{ sorted().length === 1 ? 'row' : 'rows' }}
           @if (selectedCount()) {
-            · {{ selectedCount() }} selected
+            <span class="strct-dg__count-sep">|</span>
+            <span class="strct-dg__count-sel">{{ selectedCount() }} selected</span>
           }
         </span>
         <strct-pagination [total]="sorted().length" [pageSize]="pageSize()" [(page)]="page" />
@@ -259,11 +269,14 @@ export class StrctDatagridActionBar {}
         display: block;
       }
       .strct-dg__scroll {
+        flex: 1 1 auto;
+        min-width: 0;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
       }
       .strct-dg {
         width: 100%;
+        table-layout: fixed;
         border-collapse: collapse;
         font-size: 13px;
         border: 1px solid var(--b2);
@@ -281,6 +294,7 @@ export class StrctDatagridActionBar {}
         padding: 5px 11px;
       }
       .strct-dg th {
+        position: relative;
         font-size: 11px;
         font-weight: 600;
         text-transform: uppercase;
@@ -310,6 +324,19 @@ export class StrctDatagridActionBar {}
       }
       .strct-dg__th--sortable:hover .strct-dg__sorticon {
         color: var(--acc);
+      }
+      .strct-dg__resize {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        cursor: col-resize;
+        background: transparent;
+        z-index: 2;
+      }
+      .strct-dg__resize:hover {
+        background: var(--acc);
       }
       .strct-dg td {
         color: var(--t1);
@@ -394,6 +421,7 @@ export class StrctDatagridActionBar {}
         display: flex;
         gap: 14px;
         align-items: flex-start;
+        min-width: 0;
       }
       .strct-dg__layout--paned .strct-dg {
         width: auto;
@@ -516,6 +544,13 @@ export class StrctDatagridActionBar {}
         font-size: 12px;
         color: var(--t2);
       }
+      .strct-dg__count-sep {
+        margin: 0 8px;
+        color: var(--b2);
+      }
+      .strct-dg__count-sel {
+        color: var(--acc);
+      }
     `,
   ],
 })
@@ -539,6 +574,8 @@ export class StrctDatagrid {
   readonly emptyText = input('No data');
   /** Show skeleton rows while data is loading. */
   readonly loading = input(false, { transform: booleanAttribute });
+  /** Enable column resizing by dragging column headers. */
+  readonly resizable = input(false, { transform: booleanAttribute });
   /**
    * Stable row identity (property key or function). Set this for live-refreshing
    * data so selection, expansion and the active detail row survive re-fetches
@@ -561,7 +598,44 @@ export class StrctDatagrid {
   private readonly sort = signal<{ key: string | null; dir: SortDir }>({ key: null, dir: 'asc' });
   /** Selection / expansion are tracked by row id (see {@link rowId}). */
   private readonly selected = signal<Set<unknown>>(new Set());
+  protected readonly selectedCount = computed(() => this.selected().size);
   private readonly expandedRows = signal<Set<unknown>>(new Set());
+  private readonly columnWidths = signal<Map<string, number>>(new Map());
+  private resizeState: { key: string; startX: number; startWidth: number } | null = null;
+  private readonly onMove = (e: MouseEvent) => this.onResizeMove(e);
+  private readonly onUp = () => this.onResizeEnd();
+
+  colWidth(key: string): string | null {
+    const px = this.columnWidths().get(key);
+    return px != null ? `${px}px` : null;
+  }
+
+  onResizeStart(e: MouseEvent, key: string) {
+    e.preventDefault();
+    const th = (e.target as HTMLElement).closest('th');
+    if (!th) return;
+    this.resizeState = { key, startX: e.clientX, startWidth: th.offsetWidth };
+    document.addEventListener('mousemove', this.onMove);
+    document.addEventListener('mouseup', this.onUp);
+  }
+
+  private onResizeMove(e: MouseEvent) {
+    if (!this.resizeState) return;
+    const diff = e.clientX - this.resizeState.startX;
+    const newWidth = Math.max(40, this.resizeState.startWidth + diff);
+    this.columnWidths.update((m) => {
+      const next = new Map(m);
+      next.set(this.resizeState!.key, newWidth);
+      return next;
+    });
+  }
+
+  private onResizeEnd() {
+    this.resizeState = null;
+    document.removeEventListener('mousemove', this.onMove);
+    document.removeEventListener('mouseup', this.onUp);
+  }
+
   private readonly activeId = signal<unknown>(null);
   protected readonly activeRow = computed(() => {
     const id = this.activeId();
@@ -596,7 +670,6 @@ export class StrctDatagrid {
     return this.sorted().slice(start, start + size);
   });
 
-  protected readonly selectedCount = computed(() => this.selected().size);
   protected readonly allPageSelected = computed(() => {
     const rows = this.paged();
     return rows.length > 0 && rows.every((r) => this.selected().has(this.idOf(r)));
