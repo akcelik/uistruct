@@ -292,6 +292,11 @@ export class StrctDatagridActionBar {}
       .strct-dg tbody td {
         background: var(--bg-1);
       }
+      /* In dark mode, body cells should read slightly lighter than the header
+       * so the grid feels like a raised surface rather than a recessed pit. */
+      [data-theme='dark'] .strct-dg tbody td {
+        background: var(--bg-3);
+      }
       .strct-dg-host--compact .strct-dg th,
       .strct-dg-host--compact .strct-dg td {
         padding: 5px 11px;

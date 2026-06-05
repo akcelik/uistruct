@@ -63,6 +63,8 @@ type PageToken = number | 'dots';
         display: inline-flex;
         align-items: center;
         gap: 4px;
+        font-size: 12px;
+        color: var(--t2);
       }
       .strct-pg__btn {
         display: inline-flex;
@@ -73,9 +75,9 @@ type PageToken = number | 'dots';
         padding: 0 7px;
         border-radius: 6px;
         font-family: var(--font);
-        font-size: 13px;
+        font-size: 12px;
         cursor: pointer;
-        color: var(--t1);
+        color: var(--t2);
         background: transparent;
         border: 1px solid transparent;
         transition:
