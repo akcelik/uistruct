@@ -276,7 +276,6 @@ export class StrctDatagridActionBar {}
       }
       .strct-dg {
         width: 100%;
-        table-layout: fixed;
         border-collapse: collapse;
         font-size: 13px;
         border: 1px solid var(--b2);
