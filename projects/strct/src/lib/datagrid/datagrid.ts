@@ -281,12 +281,16 @@ export class StrctDatagridActionBar {}
         border-radius: 8px;
         overflow: hidden;
         box-shadow: var(--shadow-rest);
+        background: var(--bg-2);
       }
       .strct-dg th,
       .strct-dg td {
         padding: 9px 13px;
         text-align: left;
         border-bottom: 1px solid var(--b1);
+      }
+      .strct-dg tbody td {
+        background: var(--bg-1);
       }
       .strct-dg-host--compact .strct-dg th,
       .strct-dg-host--compact .strct-dg td {
