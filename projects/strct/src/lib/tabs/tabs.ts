@@ -78,8 +78,8 @@ export class StrctTab {
       }
       .strct-tabs__btn {
         appearance: none;
-        border: 0;
         background: transparent;
+        border: 0;
         cursor: pointer;
         font-family: var(--font);
         font-size: 13px;
