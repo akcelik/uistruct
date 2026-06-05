@@ -7,6 +7,11 @@ import {
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 
+/** Shared layout state between shell parts. */
+export class StrctShellService {
+  readonly mobileNavOpen = signal(false);
+}
+
 /**
  * Application frame: a full-viewport grid of header / body / footer rows.
  *   <strct-shell>
@@ -19,6 +24,7 @@ import { StrctIcon } from '../icon/icon';
   selector: 'strct-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
+  providers: [StrctShellService],
   template: `
     <ng-content select="strct-header" />
     <div class="strct-shell__main"><ng-content /></div>
@@ -43,11 +49,6 @@ import { StrctIcon } from '../icon/icon';
   ],
 })
 export class StrctShell {}
-
-/** Shared layout state between shell parts. */
-export class StrctShellService {
-  readonly mobileNavOpen = signal(false);
-}
 
 /** Top application bar. Holds brand on the left and actions on the right. */
 @Component({

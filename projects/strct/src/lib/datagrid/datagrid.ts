@@ -64,18 +64,6 @@ export class StrctDatagridActionBar {}
       <div class="strct-dg__toolbar"><ng-content select="[strctDatagridActionBar]" /></div>
     }
 
-    @if (selectable() && selectedCount() > 0) {
-      <div class="strct-dg__actionbar">
-        <span class="strct-dg__actionbar-count">{{ selectedCount() }} selected</span>
-        <button type="button" class="strct-dg__actionbar-clear" (click)="clearSelection()">
-          Clear
-        </button>
-        <span class="strct-dg__actionbar-actions"
-          ><ng-content select="[strctDatagridActions]"
-        /></span>
-      </div>
-    }
-
     <div class="strct-dg__layout" [class.strct-dg__layout--paned]="paneOpen()">
       <div class="strct-dg__scroll">
         <table class="strct-dg">
@@ -511,49 +499,9 @@ export class StrctDatagridActionBar {}
         align-items: center;
         gap: 8px;
         flex-wrap: wrap;
-        padding: 8px 10px;
-        margin-bottom: 10px;
-        background: var(--bg-2);
-        border: 1px solid var(--b2);
-        border-radius: 8px;
-      }
-      .strct-dg__actionbar {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 8px 12px;
-        margin-bottom: 10px;
-        background: var(--acc-m);
-        border: 1px solid var(--acc30);
-        border-radius: 7px;
-        font-size: 13px;
-        animation: strct-dg-bar-in 0.12s ease;
-      }
-      .strct-dg__actionbar-count {
-        color: var(--acc);
-        font-weight: 600;
-      }
-      .strct-dg__actionbar-clear {
-        border: 0;
-        background: transparent;
-        color: var(--t2);
-        cursor: pointer;
-        font-size: 12px;
-        padding: 2px 4px;
-      }
-      .strct-dg__actionbar-clear:hover {
-        color: var(--t1);
-      }
-      .strct-dg__actionbar-actions {
-        display: flex;
-        gap: 8px;
-        margin-left: auto;
-      }
-      @keyframes strct-dg-bar-in {
-        from {
-          opacity: 0;
-          transform: translateY(-4px);
-        }
+        padding: 8px 0;
+        margin-bottom: 8px;
+        border-bottom: 1px solid var(--b1);
       }
 
       .strct-dg__foot {
