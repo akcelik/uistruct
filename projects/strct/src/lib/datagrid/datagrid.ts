@@ -17,6 +17,7 @@ import {
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 import { StrctPagination } from '../pagination/pagination';
+import { StrctCheckbox } from '../forms/checkbox';
 import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
 
 /** Resolves a stable identity for a row: a property key, or a function. */
@@ -61,7 +62,7 @@ export class StrctDatagridActionBar {}
   selector: 'strct-datagrid',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon, StrctPagination, NgTemplateOutlet],
+  imports: [StrctIcon, StrctPagination, NgTemplateOutlet, StrctCheckbox],
   template: `
     @if (actionBarDef()) {
       <div class="strct-dg__toolbar"><ng-content select="[strctDatagridActionBar]" /></div>
@@ -80,12 +81,11 @@ export class StrctDatagridActionBar {}
               }
               @if (selectable()) {
                 <th class="strct-dg__sel">
-                  <input
-                    type="checkbox"
-                    aria-label="Select all rows on this page"
+                  <strct-checkbox
+                    ariaLabel="Select all rows on this page"
                     [checked]="allPageSelected()"
                     [indeterminate]="somePageSelected()"
-                    (change)="toggleAll()"
+                    (checkedChange)="toggleAll()"
                   />
                 </th>
               }
@@ -176,11 +176,10 @@ export class StrctDatagridActionBar {}
                   }
                   @if (selectable()) {
                     <td class="strct-dg__sel">
-                      <input
-                        type="checkbox"
-                        aria-label="Select row"
+                      <strct-checkbox
+                        ariaLabel="Select row"
                         [checked]="isSelected(row)"
-                        (change)="toggleRow(row)"
+                        (checkedChange)="toggleRow(row)"
                       />
                     </td>
                   }
@@ -281,6 +280,7 @@ export class StrctDatagridActionBar {}
         border: 1px solid var(--b2);
         border-radius: 8px;
         overflow: hidden;
+        box-shadow: var(--shadow-rest);
       }
       .strct-dg th,
       .strct-dg td {
@@ -418,15 +418,25 @@ export class StrctDatagridActionBar {}
       /* Detail pane: grid collapses to one column, content opens beside it. */
       .strct-dg__layout {
         display: flex;
-        gap: 14px;
         align-items: flex-start;
         min-width: 0;
       }
+      .strct-dg__layout--paned {
+        gap: 0;
+      }
+      .strct-dg__layout--paned .strct-dg__scroll {
+        flex: 0 0 auto;
+        width: 260px;
+        min-width: 260px;
+        max-width: 260px;
+      }
       .strct-dg__layout--paned .strct-dg {
-        width: auto;
-        min-width: 180px;
+        width: 260px;
+        min-width: 260px;
         max-width: 260px;
         flex-shrink: 0;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
       }
       .strct-dg__row--clickable {
         cursor: pointer;
@@ -458,6 +468,8 @@ export class StrctDatagridActionBar {}
         border: 1px solid var(--b2);
         border-left: 2px solid var(--acc);
         border-radius: 8px;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
         overflow: hidden;
         animation: strct-dg-pane-in 0.14s ease;
       }

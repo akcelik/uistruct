@@ -5,7 +5,7 @@ import {
   effect,
   forwardRef,
   input,
-  signal,
+  model,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
@@ -25,6 +25,8 @@ import { StrctIcon } from '../icon/icon';
         class="strct-cb__native"
         [checked]="checked()"
         [disabled]="isDisabled()"
+        [indeterminate]="indeterminate()"
+        [attr.aria-label]="ariaLabel()"
         (change)="onToggle($event)"
         (blur)="onTouched()"
       />
@@ -36,32 +38,60 @@ import { StrctIcon } from '../icon/icon';
   `,
   styles: [
     `
-    .strct-cb {
-      display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
-      font-size: 13px; color: var(--t1); user-select: none;
-    }
-    .strct-cb--disabled { opacity: .5; cursor: not-allowed; }
-    .strct-cb__native { position: absolute; opacity: 0; width: 0; height: 0; }
-    .strct-cb__box {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 17px; height: 17px; border-radius: 4px; flex-shrink: 0;
-      background: var(--bg-2); border: 1px solid var(--b3);
-      color: transparent; transition: background .14s ease, border-color .14s ease;
-    }
-    .strct-cb__native:checked + .strct-cb__box {
-      background: var(--acc); border-color: transparent; color: #fff;
-    }
-    .strct-cb__native:focus-visible + .strct-cb__box {
-      box-shadow: 0 0 0 3px var(--acc18);
-    }
+      .strct-cb {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--t1);
+        user-select: none;
+      }
+      .strct-cb--disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .strct-cb__native {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .strct-cb__box {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 17px;
+        height: 17px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        background: var(--bg-2);
+        border: 1px solid var(--b3);
+        color: transparent;
+        transition:
+          background 0.14s ease,
+          border-color 0.14s ease;
+      }
+      .strct-cb__native:checked + .strct-cb__box {
+        background: var(--acc);
+        border-color: transparent;
+        color: #fff;
+      }
+      .strct-cb__native:focus-visible + .strct-cb__box {
+        box-shadow: 0 0 0 3px var(--acc18);
+      }
     `,
   ],
 })
 export class StrctCheckbox implements ControlValueAccessor {
-  readonly checked = signal(false);
-  readonly isDisabled = signal(false);
+  readonly checked = model(false);
+  readonly isDisabled = model(false);
   /** Static disable; forms' setDisabledState also drives the disabled state. */
   readonly disabled = input(false, { transform: booleanAttribute });
+  /** Tri-state visual indicator for a parent / intermediate state. */
+  readonly indeterminate = input(false, { transform: booleanAttribute });
+  /** Accessible label for the checkbox (used when no text label is present). */
+  readonly ariaLabel = input<string | null>(null);
 
   private onChange: (value: boolean) => void = () => {};
   protected onTouched: () => void = () => {};
