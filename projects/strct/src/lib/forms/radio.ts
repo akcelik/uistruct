@@ -28,7 +28,15 @@ let groupCounter = 0;
   ],
   template: `<ng-content />`,
   host: { class: 'strct-radio-group', role: 'radiogroup' },
-  styles: [`.strct-radio-group { display: flex; flex-direction: column; gap: 9px; }`],
+  styles: [
+    `
+      .strct-radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+    `,
+  ],
 })
 export class StrctRadioGroup implements ControlValueAccessor {
   readonly name = `strct-radio-${++groupCounter}`;
@@ -78,30 +86,63 @@ export class StrctRadioGroup implements ControlValueAccessor {
   `,
   styles: [
     `
-    .strct-rb {
-      display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
-      font-size: 13px; color: var(--t1); user-select: none;
-    }
-    .strct-rb--disabled { opacity: .5; cursor: not-allowed; }
-    .strct-rb__native { position: absolute; opacity: 0; width: 0; height: 0; }
-    .strct-rb__dot {
-      position: relative; width: 17px; height: 17px; border-radius: 50%; flex-shrink: 0;
-      background: var(--bg-2); border: 1px solid var(--b3);
-      transition: border-color .14s ease;
-    }
-    .strct-rb__dot::after {
-      content: ''; position: absolute; inset: 0; margin: auto;
-      width: 7px; height: 7px; border-radius: 50%; background: var(--acc);
-      transform: scale(0); transition: transform .14s ease;
-    }
-    .strct-rb__native:checked + .strct-rb__dot { border-color: var(--acc); }
-    .strct-rb__native:checked + .strct-rb__dot::after { transform: scale(1); }
-    .strct-rb__native:focus-visible + .strct-rb__dot { box-shadow: 0 0 0 3px var(--acc18); }
+      .strct-rb {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--t1);
+        user-select: none;
+      }
+      .strct-rb--disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .strct-rb__native {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .strct-rb__dot {
+        position: relative;
+        width: 17px;
+        height: 17px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: var(--bg-2);
+        border: 1px solid var(--b3);
+        transition: border-color 0.14s ease;
+      }
+      .strct-rb__dot::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--acc);
+        transform: scale(0);
+        transition: transform 0.14s ease;
+      }
+      .strct-rb__native:checked + .strct-rb__dot {
+        border-color: var(--acc);
+      }
+      .strct-rb__native:checked + .strct-rb__dot::after {
+        transform: scale(1);
+      }
+      .strct-rb__native:focus-visible + .strct-rb__dot {
+        box-shadow: 0 0 0 3px var(--acc18);
+      }
     `,
   ],
 })
 export class StrctRadio {
+  /** Current value. */
   readonly value = input.required<unknown>();
+  /** Static disable flag. */
   readonly disabled = input(false, { transform: booleanAttribute });
   protected readonly group = inject(StrctRadioGroup);
 }

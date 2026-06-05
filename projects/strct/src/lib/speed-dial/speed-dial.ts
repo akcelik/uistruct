@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 
+/** Direction the speed-dial actions expand. */
 export type StrctSpeedDialDirection = 'up' | 'down' | 'left' | 'right';
 
 /**
@@ -45,33 +46,85 @@ export type StrctSpeedDialDirection = 'up' | 'down' | 'left' | 'right';
   host: { class: 'strct-sd-host' },
   styles: [
     `
-    .strct-sd-host { display: inline-block; }
-    .strct-sd { position: relative; display: inline-flex; }
-    .strct-sd__fab {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
-      color: #fff; background: var(--acc); border: 0; box-shadow: var(--shh);
-      transition: filter .14s ease, transform .16s ease;
-    }
-    .strct-sd__fab:hover { filter: brightness(1.08); }
-    .strct-sd__fab--open { transform: rotate(45deg); }
-    .strct-sd__actions {
-      position: absolute; display: flex; gap: 10px; z-index: 10;
-      animation: strct-sd-in .14s ease;
-    }
-    /* The projected icon buttons get a round, raised look. */
-    .strct-sd__actions .strct-btn { border-radius: 50%; box-shadow: var(--sh); background: var(--bg-1); }
-    .strct-sd--up .strct-sd__actions { flex-direction: column; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%); }
-    .strct-sd--down .strct-sd__actions { flex-direction: column; top: calc(100% + 12px); left: 50%; transform: translateX(-50%); }
-    .strct-sd--left .strct-sd__actions { flex-direction: row; right: calc(100% + 12px); top: 50%; transform: translateY(-50%); }
-    .strct-sd--right .strct-sd__actions { flex-direction: row; left: calc(100% + 12px); top: 50%; transform: translateY(-50%); }
-    @keyframes strct-sd-in { from { opacity: 0; } }
+      .strct-sd-host {
+        display: inline-block;
+      }
+      .strct-sd {
+        position: relative;
+        display: inline-flex;
+      }
+      .strct-sd__fab {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        cursor: pointer;
+        color: #fff;
+        background: var(--acc);
+        border: 0;
+        box-shadow: var(--shh);
+        transition:
+          filter 0.14s ease,
+          transform 0.16s ease;
+      }
+      .strct-sd__fab:hover {
+        filter: brightness(1.08);
+      }
+      .strct-sd__fab--open {
+        transform: rotate(45deg);
+      }
+      .strct-sd__actions {
+        position: absolute;
+        display: flex;
+        gap: 10px;
+        z-index: 10;
+        animation: strct-sd-in 0.14s ease;
+      }
+      /* The projected icon buttons get a round, raised look. */
+      .strct-sd__actions .strct-btn {
+        border-radius: 50%;
+        box-shadow: var(--sh);
+        background: var(--bg-1);
+      }
+      .strct-sd--up .strct-sd__actions {
+        flex-direction: column;
+        bottom: calc(100% + 12px);
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .strct-sd--down .strct-sd__actions {
+        flex-direction: column;
+        top: calc(100% + 12px);
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .strct-sd--left .strct-sd__actions {
+        flex-direction: row;
+        right: calc(100% + 12px);
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .strct-sd--right .strct-sd__actions {
+        flex-direction: row;
+        left: calc(100% + 12px);
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      @keyframes strct-sd-in {
+        from {
+          opacity: 0;
+        }
+      }
     `,
   ],
 })
 export class StrctSpeedDial {
   private readonly host = inject(ElementRef<HTMLElement>);
+  /** Icon name. */
   readonly icon = input('ellipsis');
+  /** Direction the actions fan out. */
   readonly direction = input<StrctSpeedDialDirection>('up');
   readonly open = signal(false);
 

@@ -11,6 +11,7 @@ import {
   input,
 } from '@angular/core';
 
+/** Column definition for the table. */
 export interface StrctColumn {
   key: string;
   label: string;
@@ -18,6 +19,7 @@ export interface StrctColumn {
   width?: string;
 }
 
+/** Shorthand for a record-shaped table/datagrid row. */
 export type StrctRow = Record<string, unknown>;
 
 /** Context passed to a per-column cell template. */
@@ -35,11 +37,12 @@ export interface StrctCellContext {
  * is the directive value; the row, value and column are the template context:
  *
  *   <ng-template strctCell="status" let-row let-value="value">
- *     <strct-badge [status]="row['ok'] ? 'success' : 'danger'">{{ value }}</strct-badge>
+ *     <strct-badge [status]="row['success'] ? 'success' : 'critical'">{{ value }}</strct-badge>
  *   </ng-template>
  */
 @Directive({ selector: '[strctCell]' })
 export class StrctCellDef {
+  /** Key. */
   readonly key = input.required<string>({ alias: 'strctCell' });
   readonly template = inject<TemplateRef<StrctCellContext>>(TemplateRef);
 }
@@ -58,30 +61,50 @@ export class StrctCellDef {
       <thead>
         <tr>
           @for (col of columns(); track col.key) {
-            <th [style.text-align]="col.align ?? 'start'" [style.width]="col.width">{{ col.label }}</th>
+            <th [style.text-align]="col.align ?? 'start'" [style.width]="col.width">
+              {{ col.label }}
+            </th>
           }
         </tr>
       </thead>
       <tbody>
-        @for (row of rows(); track $index) {
-          <tr>
-            @for (col of columns(); track col.key) {
-              <td [style.text-align]="col.align ?? 'start'">
-                @if (cellTemplate(col.key); as tpl) {
-                  <ng-container
-                    [ngTemplateOutlet]="tpl"
-                    [ngTemplateOutletContext]="{ $implicit: row, value: row[col.key], column: col }"
-                  />
-                } @else {
-                  {{ row[col.key] }}
-                }
+        @if (loading()) {
+          @for (_ of [1, 2, 3]; track $index) {
+            <tr class="strct-table__skeleton-row">
+              @for (col of columns(); track col.key) {
+                <td [style.text-align]="col.align ?? 'start'">
+                  <div class="strct-table__skeleton-block"></div>
+                </td>
+              }
+            </tr>
+          }
+        } @else {
+          @for (row of rows(); track $index) {
+            <tr>
+              @for (col of columns(); track col.key) {
+                <td [style.text-align]="col.align ?? 'start'">
+                  @if (cellTemplate(col.key); as tpl) {
+                    <ng-container
+                      [ngTemplateOutlet]="tpl"
+                      [ngTemplateOutletContext]="{
+                        $implicit: row,
+                        value: row[col.key],
+                        column: col,
+                      }"
+                    />
+                  } @else {
+                    {{ row[col.key] }}
+                  }
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td class="strct-table__empty" [attr.colspan]="columns().length">
+                {{ emptyText() }}
               </td>
-            }
-          </tr>
-        } @empty {
-          <tr>
-            <td class="strct-table__empty" [attr.colspan]="columns().length">{{ emptyText() }}</td>
-          </tr>
+            </tr>
+          }
         }
       </tbody>
     </table>
@@ -93,33 +116,83 @@ export class StrctCellDef {
   },
   styles: [
     `
-    .strct-table-host { display: block; overflow-x: auto; }
-    .strct-table {
-      width: 100%; border-collapse: collapse; font-size: 13px;
-      border: 1px solid var(--b2); border-radius: 8px; overflow: hidden;
-    }
-    .strct-table th, .strct-table td {
-      padding: 9px 13px; text-align: left;
-      border-bottom: 1px solid var(--b1);
-    }
-    .strct-table th {
-      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px;
-      color: var(--t2); background: var(--bg-2);
-    }
-    .strct-table td { color: var(--t1); }
-    .strct-table tbody tr:last-child td { border-bottom: 0; }
-    .strct-table-host--striped tbody tr:nth-child(even) td { background: var(--bg-2); }
-    .strct-table-host--hover tbody tr:hover td { background: var(--acc-s); }
-    .strct-table__empty { text-align: center; color: var(--t3); padding: 22px; }
+      .strct-table-host {
+        display: block;
+        overflow-x: auto;
+      }
+      .strct-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        border: 1px solid var(--b2);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .strct-table th,
+      .strct-table td {
+        padding: 9px 13px;
+        text-align: left;
+        border-bottom: 1px solid var(--b1);
+      }
+      .strct-table th {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--t2);
+        background: var(--bg-2);
+      }
+      .strct-table td {
+        color: var(--t1);
+      }
+      .strct-table tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      .strct-table-host--striped tbody tr:nth-child(even) td {
+        background: var(--bg-2);
+      }
+      .strct-table-host--hover tbody tr:hover td {
+        background: var(--acc-s);
+      }
+      @keyframes strct-skeleton-pulse {
+        0%,
+        100% {
+          opacity: 0.4;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+      .strct-table__skeleton-block {
+        height: 12px;
+        background: var(--bg-3);
+        border-radius: var(--radius-sm);
+        animation: strct-skeleton-pulse 1.4s ease infinite;
+      }
+      .strct-table__skeleton-row td {
+        border-bottom: 1px solid var(--b1);
+      }
+      .strct-table__empty {
+        text-align: center;
+        color: var(--t3);
+        padding: 22px;
+      }
     `,
   ],
 })
 export class StrctTable {
+  /** Column definitions. */
   readonly columns = input.required<StrctColumn[]>();
+  /** Data rows. */
   readonly rows = input.required<StrctRow[]>();
+  /** Enable zebra-striping. */
   readonly striped = input(false, { transform: booleanAttribute });
+  /** Highlight rows on hover. */
   readonly hover = input(false, { transform: booleanAttribute });
+  /** Message shown when there are no rows. */
   readonly emptyText = input('No data');
+  /** Show skeleton rows while data is loading. */
+  readonly loading = input(false, { transform: booleanAttribute });
 
   private readonly cellDefs = contentChildren(StrctCellDef);
   private readonly cellMap = computed(() => {

@@ -1,5 +1,14 @@
-import { DOCUMENT, Directive, ElementRef, HostListener, Renderer2, inject, input } from '@angular/core';
+import {
+  DOCUMENT,
+  Directive,
+  ElementRef,
+  HostListener,
+  Renderer2,
+  inject,
+  input,
+} from '@angular/core';
 
+/** Tooltip placement relative to the host element. */
 export type StrctTooltipPosition = 'top' | 'bottom' | 'left' | 'right';
 
 /**
@@ -14,7 +23,9 @@ export class StrctTooltip {
   private readonly doc = inject(DOCUMENT);
   private bubble: HTMLElement | null = null;
 
+  /** Tooltip text. */
   readonly strctTooltip = input.required<string>();
+  /** Tooltip placement relative to the host. */
   readonly tooltipPosition = input<StrctTooltipPosition>('top');
 
   @HostListener('mouseenter')

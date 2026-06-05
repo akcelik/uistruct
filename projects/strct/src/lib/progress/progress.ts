@@ -6,7 +6,8 @@ import {
   input,
 } from '@angular/core';
 
-export type StrctProgressStatus = 'accent' | 'success' | 'warning' | 'danger';
+/** Progress bar color variants. */
+export type StrctProgressStatus = 'accent' | 'success' | 'warning' | 'critical';
 
 /** Horizontal value/usage bar. `<strct-progress [value]="72" status="warning" />`. */
 @Component({
@@ -28,26 +29,41 @@ export type StrctProgressStatus = 'accent' | 'success' | 'warning' | 'danger';
     class: 'strct-progress',
     '[class.strct-progress--success]': "status() === 'success'",
     '[class.strct-progress--warning]': "status() === 'warning'",
-    '[class.strct-progress--danger]': "status() === 'danger'",
+    '[class.strct-progress--critical]': "status() === 'critical'",
   },
   styles: [
     `
-    .strct-progress { display: block; }
-    .strct-progress__track {
-      height: 6px; border-radius: 4px; background: var(--bg-3); overflow: hidden;
-    }
-    .strct-progress__fill {
-      height: 100%; border-radius: 4px; background: var(--acc);
-      transition: width .3s ease;
-    }
-    .strct-progress--success .strct-progress__fill { background: var(--ok); }
-    .strct-progress--warning .strct-progress__fill { background: var(--wrn); }
-    .strct-progress--danger .strct-progress__fill { background: var(--crt); }
+      .strct-progress {
+        display: block;
+      }
+      .strct-progress__track {
+        height: 6px;
+        border-radius: 4px;
+        background: var(--bg-3);
+        overflow: hidden;
+      }
+      .strct-progress__fill {
+        height: 100%;
+        border-radius: 4px;
+        background: var(--acc);
+        transition: width 0.3s ease;
+      }
+      .strct-progress--success .strct-progress__fill {
+        background: var(--success);
+      }
+      .strct-progress--warning .strct-progress__fill {
+        background: var(--warning);
+      }
+      .strct-progress--critical .strct-progress__fill {
+        background: var(--critical);
+      }
     `,
   ],
 })
 export class StrctProgress {
+  /** Current value. */
   readonly value = input(0);
+  /** Visual status color. */
   readonly status = input<StrctProgressStatus>('accent');
 
   protected readonly clamped = computed(() => Math.max(0, Math.min(100, this.value())));

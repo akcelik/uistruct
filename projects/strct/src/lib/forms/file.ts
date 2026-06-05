@@ -57,7 +57,12 @@ import { StrctIcon } from '../icon/icon';
           <li class="strct-file__file">
             <span class="strct-file__name">{{ file.name }}</span>
             <span class="strct-file__size">{{ humanSize(file.size) }}</span>
-            <button type="button" class="strct-file__remove" aria-label="Remove" (click)="remove(file)">
+            <button
+              type="button"
+              class="strct-file__remove"
+              aria-label="Remove"
+              (click)="remove(file)"
+            >
               <strct-icon name="close" [size]="12" />
             </button>
           </li>
@@ -68,41 +73,108 @@ import { StrctIcon } from '../icon/icon';
   host: { class: 'strct-file' },
   styles: [
     `
-    .strct-file { display: block; width: 100%; max-width: 360px; }
-    .strct-file__zone {
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      padding: 22px 16px; text-align: center; cursor: pointer;
-      color: var(--t2); background: var(--bg-2);
-      border: 1px dashed var(--b3); border-radius: 8px;
-      transition: border-color .14s ease, background .14s ease, color .14s ease;
-    }
-    .strct-file__zone:hover { border-color: var(--acc30); color: var(--t1); }
-    .strct-file__zone strct-icon { color: var(--t3); }
-    .strct-file__zone--drag { border-color: var(--acc); background: var(--acc-m); color: var(--t1); }
-    .strct-file__zone--drag strct-icon { color: var(--acc); }
-    .strct-file__zone--disabled { opacity: .5; cursor: not-allowed; }
-    .strct-file__prompt { font-size: 13px; }
-    .strct-file__browse { color: var(--acc); }
-    .strct-file__native { display: none; }
-    .strct-file__list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-    .strct-file__file {
-      display: flex; align-items: center; gap: 10px;
-      padding: 7px 10px; font-size: 13px;
-      background: var(--bg-1); border: 1px solid var(--b2); border-radius: 6px;
-    }
-    .strct-file__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--t1); }
-    .strct-file__size { font-size: 11px; color: var(--t3); font-family: var(--mono); }
-    .strct-file__remove {
-      display: inline-flex; padding: 3px; border: 0; border-radius: 4px;
-      background: transparent; color: var(--t3); cursor: pointer;
-    }
-    .strct-file__remove:hover { color: var(--crt); background: var(--crt-bg); }
+      .strct-file {
+        display: block;
+        width: 100%;
+        max-width: 360px;
+      }
+      .strct-file__zone {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 22px 16px;
+        text-align: center;
+        cursor: pointer;
+        color: var(--t2);
+        background: var(--bg-2);
+        border: 1px dashed var(--b3);
+        border-radius: 8px;
+        transition:
+          border-color 0.14s ease,
+          background 0.14s ease,
+          color 0.14s ease;
+      }
+      .strct-file__zone:hover {
+        border-color: var(--acc30);
+        color: var(--t1);
+      }
+      .strct-file__zone strct-icon {
+        color: var(--t3);
+      }
+      .strct-file__zone--drag {
+        border-color: var(--acc);
+        background: var(--acc-m);
+        color: var(--t1);
+      }
+      .strct-file__zone--drag strct-icon {
+        color: var(--acc);
+      }
+      .strct-file__zone--disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .strct-file__prompt {
+        font-size: 13px;
+      }
+      .strct-file__browse {
+        color: var(--acc);
+      }
+      .strct-file__native {
+        display: none;
+      }
+      .strct-file__list {
+        list-style: none;
+        margin: 10px 0 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .strct-file__file {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 10px;
+        font-size: 13px;
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: 6px;
+      }
+      .strct-file__name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--t1);
+      }
+      .strct-file__size {
+        font-size: 11px;
+        color: var(--t3);
+        font-family: var(--mono);
+      }
+      .strct-file__remove {
+        display: inline-flex;
+        padding: 3px;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--t3);
+        cursor: pointer;
+      }
+      .strct-file__remove:hover {
+        color: var(--critical);
+        background: var(--critical-bg);
+      }
     `,
   ],
 })
 export class StrctFile implements ControlValueAccessor {
+  /** Multiple. */
   readonly multiple = input(false, { transform: booleanAttribute });
+  /** Accept. */
   readonly accept = input('');
+  /** Static disable flag. */
   readonly disabled = input(false, { transform: booleanAttribute });
 
   readonly files = signal<File[]>([]);

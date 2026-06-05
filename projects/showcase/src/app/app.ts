@@ -6,7 +6,6 @@ import {
   StrctFooter,
   StrctHeader,
   StrctIcon,
-  StrctNav,
   StrctNavItem,
   StrctShell,
   StrctThemeService,

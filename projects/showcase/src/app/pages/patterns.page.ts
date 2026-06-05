@@ -7,6 +7,7 @@ import {
   StrctContextMenuTrigger,
   StrctDropdownDivider,
   StrctDropdownItem,
+  StrctField,
   StrctIcon,
   StrctInput,
   StrctLogin,
@@ -25,6 +26,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     FormsModule,
     StrctLogin,
     StrctInput,
+    StrctField,
     StrctPassword,
     StrctCheckbox,
     StrctButton,
@@ -59,8 +61,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
               <h2 class="auth-welcome">Welcome back</h2>
               <span class="auth-rule"></span>
               <p class="auth-lead">
-                Sign in to pick up right where you left off. Your workspace, dashboards and
-                recent activity are waiting.
+                Sign in to pick up right where you left off. Your workspace, dashboards and recent
+                activity are waiting.
               </p>
             </div>
           </div>
@@ -69,18 +71,24 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             <h3 class="auth-title">Login Account</h3>
             <p class="auth-sub">Enter your credentials to access your account.</p>
 
-            <label class="auth-field">
-              <span>Email</span>
-              <input strctInput type="email" placeholder="you@example.com" [(ngModel)]="email" name="email" />
-            </label>
+            <strct-field class="auth-field" label="Email">
+              <input
+                strctInput
+                type="email"
+                placeholder="you@example.com"
+                [(ngModel)]="email"
+                name="email"
+              />
+            </strct-field>
 
-            <label class="auth-field">
-              <span>Password</span>
+            <strct-field class="auth-field" label="Password">
               <strct-password [(ngModel)]="password" name="password" placeholder="••••••••" />
-            </label>
+            </strct-field>
 
             <div class="auth-row">
-              <strct-checkbox [(ngModel)]="remember" name="remember">Keep me signed in</strct-checkbox>
+              <strct-checkbox [(ngModel)]="remember" name="remember"
+                >Keep me signed in</strct-checkbox
+              >
               <a href="javascript:void(0)" class="auth-link">Forgot password?</a>
             </div>
 
@@ -127,7 +135,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             </strct-dropdown-item>
           </strct-submenu>
           <strct-dropdown-divider />
-          <strct-dropdown-item danger (click)="lastAction.set('Delete')">
+          <strct-dropdown-item critical (click)="lastAction.set('Delete')">
             <strct-icon name="close" [size]="14" /> Delete
           </strct-dropdown-item>
         </ng-container>
@@ -138,8 +146,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="contextmenu-data"
       owner="contextmenu"
       heading="Data-driven context menu (directive)"
-      description="Attach [strctContextMenu]=&quot;items&quot; to any element. The menu portals into the body (no clipping), positions by its real size, supports keyboard (↑/↓/→/←/Enter/Esc) and nested submenus, and runs each item's action."
-      code="<div [strctContextMenu]=&quot;items&quot; [strctContextMenuData]=&quot;row&quot; (menuSelect)=&quot;on($event)&quot;>…</div>"
+      description='Attach [strctContextMenu]="items" to any element. The menu portals into the body (no clipping), positions by its real size, supports keyboard (↑/↓/→/←/Enter/Esc) and nested submenus, and runs each item&apos;s action.'
+      code='<div [strctContextMenu]="items" [strctContextMenuData]="row" (menuSelect)="on($event)">…</div>'
     >
       <div
         class="ctx-target"
@@ -157,35 +165,107 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
-    .login-stage { width: 100%; }
+      .login-stage {
+        width: 100%;
+      }
 
-    .auth-hero { height: 100%; display: flex; flex-direction: column; justify-content: space-between; gap: 40px; }
-    .auth-brand {
-      display: flex; align-items: center; gap: 9px;
-      font-size: 12px; font-weight: 600; letter-spacing: 1px;
-      color: rgba(255, 255, 255, 0.9);
-    }
-    .auth-kicker { font-size: 13px; color: rgba(255, 255, 255, 0.82); margin-bottom: 8px; }
-    .auth-welcome { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff; }
-    .auth-rule { display: block; width: 40px; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.85); margin: 14px 0; }
-    .auth-lead { margin: 0; font-size: 13px; line-height: 1.6; color: rgba(255, 255, 255, 0.78); max-width: 34ch; }
+      .auth-hero {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 40px;
+      }
+      .auth-brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        color: rgba(255, 255, 255, 0.9);
+      }
+      .auth-kicker {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.82);
+        margin-bottom: 8px;
+      }
+      .auth-welcome {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #fff;
+      }
+      .auth-rule {
+        display: block;
+        width: 40px;
+        height: 3px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.85);
+        margin: 14px 0;
+      }
+      .auth-lead {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.78);
+        max-width: 34ch;
+      }
 
-    .auth-form { display: flex; flex-direction: column; }
-    .auth-title { margin: 0; font-size: 20px; font-weight: 600; color: var(--acc); }
-    .auth-sub { margin: 6px 0 22px; font-size: 13px; color: var(--t2); }
-    .auth-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-    .auth-field > span { font-size: 12px; font-weight: 600; color: var(--t2); }
-    .auth-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 20px; }
-    .auth-link { font-size: 12px; color: var(--acc); }
+      .auth-form {
+        display: flex;
+        flex-direction: column;
+      }
+      .auth-title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--acc);
+      }
+      .auth-sub {
+        margin: 6px 0 22px;
+        font-size: 13px;
+        color: var(--t2);
+      }
+      .auth-field {
+        margin-bottom: 14px;
+      }
+      .auth-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 4px 0 20px;
+      }
+      .auth-link {
+        font-size: 12px;
+        color: var(--acc);
+      }
 
-    .ctx-target {
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      width: 100%; padding: 36px; text-align: center;
-      color: var(--t2); font-size: 13px;
-      background: var(--bg-1); border: 1px dashed var(--b3); border-radius: 10px;
-    }
-    .ctx-target strct-icon { color: var(--t3); }
-    .ctx-echo { font-family: var(--mono); font-size: 12px; color: var(--acc); }
+      .ctx-target {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 36px;
+        text-align: center;
+        color: var(--t2);
+        font-size: 13px;
+        background: var(--bg-1);
+        border: 1px dashed var(--b3);
+        border-radius: 10px;
+      }
+      .ctx-target strct-icon {
+        color: var(--t3);
+      }
+      .ctx-echo {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--acc);
+      }
     `,
   ],
 })
@@ -209,6 +289,6 @@ export class PatternsPage {
     },
     { label: 'Maintenance mode', icon: 'maintenance', disabled: true },
     { divider: true },
-    { label: 'Remove from inventory', icon: 'close', danger: true },
+    { label: 'Remove from inventory', icon: 'close', critical: true },
   ];
 }

@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, booleanAttribute, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewEncapsulation,
+  booleanAttribute,
+  input,
+} from '@angular/core';
 
 /**
  * Shimmering loading placeholder.
@@ -20,23 +26,37 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation, booleanAttribute
   },
   styles: [
     `
-    .strct-skel {
-      display: block; border-radius: 5px;
-      background: linear-gradient(90deg, var(--bg-3) 25%, var(--bg-h) 37%, var(--bg-3) 63%);
-      background-size: 400% 100%;
-      animation: strct-skel-shimmer 1.4s ease infinite;
-    }
-    .strct-skel--circle { border-radius: 50%; }
-    @keyframes strct-skel-shimmer {
-      0% { background-position: 100% 50%; }
-      100% { background-position: 0 50%; }
-    }
-    @media (prefers-reduced-motion: reduce) { .strct-skel { animation: none; } }
+      .strct-skel {
+        display: block;
+        border-radius: 5px;
+        background: linear-gradient(90deg, var(--bg-3) 25%, var(--bg-h) 37%, var(--bg-3) 63%);
+        background-size: 400% 100%;
+        animation: strct-skel-shimmer 1.4s ease infinite;
+      }
+      .strct-skel--circle {
+        border-radius: 50%;
+      }
+      @keyframes strct-skel-shimmer {
+        0% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0 50%;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .strct-skel {
+          animation: none;
+        }
+      }
     `,
   ],
 })
 export class StrctSkeleton {
+  /** Width (CSS length). */
   readonly width = input('100%');
+  /** Height in pixels. */
   readonly height = input('14px');
+  /** Circle. */
   readonly circle = input(false, { transform: booleanAttribute });
 }

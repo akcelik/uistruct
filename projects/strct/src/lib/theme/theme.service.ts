@@ -1,8 +1,11 @@
 import { DOCUMENT, Injectable, computed, inject, signal } from '@angular/core';
 
+/** Available color palettes. */
 export type StrctPalette = 'arctic' | 'ember' | 'sage';
+/** Light or dark mode. */
 export type StrctMode = 'dark' | 'light';
 
+/** Metadata for a color palette. */
 export interface StrctPaletteInfo {
   id: StrctPalette;
   /** Human label, shown in switchers. */

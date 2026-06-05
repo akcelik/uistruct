@@ -12,13 +12,14 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
-export type StrctKnobStatus = 'accent' | 'success' | 'warning' | 'danger';
+/** Knob accent color variants. */
+export type StrctKnobStatus = 'accent' | 'success' | 'warning' | 'critical';
 
 const COLOR: Record<StrctKnobStatus, string> = {
   accent: 'var(--acc)',
-  success: 'var(--ok)',
-  warning: 'var(--wrn)',
-  danger: 'var(--crt)',
+  success: 'var(--success)',
+  warning: 'var(--warning)',
+  critical: 'var(--critical)',
 };
 
 /**
@@ -50,23 +51,36 @@ const COLOR: Record<StrctKnobStatus, string> = {
         <g [attr.transform]="'rotate(135 ' + half() + ' ' + half() + ')'">
           <circle
             class="strct-knob__track"
-            [attr.cx]="half()" [attr.cy]="half()" [attr.r]="radius()"
-            fill="none" [attr.stroke-width]="thickness()" stroke-linecap="round"
+            [attr.cx]="half()"
+            [attr.cy]="half()"
+            [attr.r]="radius()"
+            fill="none"
+            [attr.stroke-width]="thickness()"
+            stroke-linecap="round"
             [attr.stroke-dasharray]="trackDash()"
           />
           <circle
             class="strct-knob__value"
-            [attr.cx]="half()" [attr.cy]="half()" [attr.r]="radius()"
-            fill="none" [attr.stroke]="color()" [attr.stroke-width]="thickness()" stroke-linecap="round"
+            [attr.cx]="half()"
+            [attr.cy]="half()"
+            [attr.r]="radius()"
+            fill="none"
+            [attr.stroke]="color()"
+            [attr.stroke-width]="thickness()"
+            stroke-linecap="round"
             [attr.stroke-dasharray]="valueDash()"
           />
         </g>
         <g [attr.transform]="'rotate(' + pointerAngle() + ' ' + half() + ' ' + half() + ')'">
           <line
             class="strct-knob__pointer"
-            [attr.x1]="half()" [attr.y1]="half()"
-            [attr.x2]="half()" [attr.y2]="thickness() + 3"
-            [attr.stroke]="color()" stroke-width="2.5" stroke-linecap="round"
+            [attr.x1]="half()"
+            [attr.y1]="half()"
+            [attr.x2]="half()"
+            [attr.y2]="thickness() + 3"
+            [attr.stroke]="color()"
+            stroke-width="2.5"
+            stroke-linecap="round"
           />
         </g>
       </svg>
@@ -80,32 +94,67 @@ const COLOR: Record<StrctKnobStatus, string> = {
   `,
   styles: [
     `
-    .strct-knob {
-      position: relative; display: inline-flex; cursor: ns-resize; user-select: none;
-      touch-action: none; outline: none;
-    }
-    .strct-knob:focus-visible { border-radius: 50%; box-shadow: 0 0 0 3px var(--acc18); }
-    .strct-knob[aria-disabled='true'] { opacity: .5; cursor: not-allowed; }
-    .strct-knob__track { stroke: var(--bg-3); }
-    .strct-knob__value { transition: stroke-dasharray .05s linear; }
-    .strct-knob__center {
-      position: absolute; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; pointer-events: none;
-    }
-    .strct-knob__num { font-size: 18px; font-weight: 600; color: var(--t1); line-height: 1; }
-    .strct-knob__label { font-size: 11px; color: var(--t2); margin-top: 3px; }
+      .strct-knob {
+        position: relative;
+        display: inline-flex;
+        cursor: ns-resize;
+        user-select: none;
+        touch-action: none;
+        outline: none;
+      }
+      .strct-knob:focus-visible {
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px var(--acc18);
+      }
+      .strct-knob[aria-disabled='true'] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .strct-knob__track {
+        stroke: var(--bg-3);
+      }
+      .strct-knob__value {
+        transition: stroke-dasharray 0.05s linear;
+      }
+      .strct-knob__center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+      .strct-knob__num {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--t1);
+        line-height: 1;
+      }
+      .strct-knob__label {
+        font-size: 11px;
+        color: var(--t2);
+        margin-top: 3px;
+      }
     `,
   ],
 })
 export class StrctKnob implements ControlValueAccessor {
   private readonly elementRef = inject(ElementRef<HTMLElement>);
 
+  /** Minimum allowed value. */
   readonly min = input(0);
+  /** Maximum allowed value or top of the value axis. */
   readonly max = input(100);
+  /** Step increment. */
   readonly step = input(1);
+  /** Size variant. */
   readonly size = input(96);
+  /** Stroke thickness in pixels. */
   readonly thickness = input(9);
+  /** Visual status color. */
   readonly status = input<StrctKnobStatus>('accent');
+  /** Label text. */
   readonly label = input('');
 
   readonly value = signal(0);
@@ -165,14 +214,26 @@ export class StrctKnob implements ControlValueAccessor {
     let handled = true;
     switch (event.key) {
       case 'ArrowUp':
-      case 'ArrowRight': this.setValue(this.value() + s); break;
+      case 'ArrowRight':
+        this.setValue(this.value() + s);
+        break;
       case 'ArrowDown':
-      case 'ArrowLeft': this.setValue(this.value() - s); break;
-      case 'Home': this.setValue(this.min()); break;
-      case 'End': this.setValue(this.max()); break;
-      default: handled = false;
+      case 'ArrowLeft':
+        this.setValue(this.value() - s);
+        break;
+      case 'Home':
+        this.setValue(this.min());
+        break;
+      case 'End':
+        this.setValue(this.max());
+        break;
+      default:
+        handled = false;
     }
-    if (handled) { event.preventDefault(); this.onTouched(); }
+    if (handled) {
+      event.preventDefault();
+      this.onTouched();
+    }
   }
 
   @HostListener('wheel', ['$event'])

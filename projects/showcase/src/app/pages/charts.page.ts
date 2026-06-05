@@ -1,11 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import {
-  StrctChart,
-  StrctDonut,
-  StrctDonutSegment,
-  StrctGauge,
-  StrctSparkline,
-} from 'strct';
+import { StrctChart, StrctDonut, StrctDonutSegment, StrctGauge, StrctSparkline } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
 @Component({
@@ -22,7 +16,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="sparkline"
       heading="Sparkline"
       description="Inline trend lines for tables and cards."
-      code="<strct-sparkline [data]=&quot;cpu&quot; area />"
+      code='<strct-sparkline [data]="cpu" area />'
     >
       <div class="spark-row">
         <span class="spark-lbl">CPU</span>
@@ -45,10 +39,17 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="line"
       heading="Line & area"
       description="Single-series time chart. Switch type between line and area."
-      code="<strct-chart [data]=&quot;cpu&quot; type=&quot;area&quot; [labels]=&quot;hours&quot; />"
+      code='<strct-chart [data]="cpu" type="area" [labels]="hours" />'
     >
       <div class="chart-box">
-        <strct-chart [data]="dayCpu" type="area" [labels]="hours" status="accent" [height]="170" [max]="100" />
+        <strct-chart
+          [data]="dayCpu"
+          type="area"
+          [labels]="hours"
+          status="accent"
+          [height]="170"
+          [max]="100"
+        />
       </div>
     </app-demo>
 
@@ -56,10 +57,16 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="bar"
       heading="Bar"
       description="Categorical comparison, e.g. VMs per host."
-      code="<strct-chart [data]=&quot;perHost&quot; type=&quot;bar&quot; [labels]=&quot;hosts&quot; />"
+      code='<strct-chart [data]="perHost" type="bar" [labels]="hosts" />'
     >
       <div class="chart-box">
-        <strct-chart [data]="perHost" type="bar" [labels]="hostNames" status="accent" [height]="170" />
+        <strct-chart
+          [data]="perHost"
+          type="bar"
+          [labels]="hostNames"
+          status="accent"
+          [height]="170"
+        />
       </div>
     </app-demo>
 
@@ -67,7 +74,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="donut"
       heading="Donut"
       description="Composition of a whole, e.g. VM power states."
-      code="<strct-donut [segments]=&quot;states&quot; centerValue=&quot;48&quot; centerLabel=&quot;VMs&quot; />"
+      code='<strct-donut [segments]="states" centerValue="48" centerLabel="VMs" />'
     >
       <div class="donut-row">
         <strct-donut [segments]="vmStates" [centerValue]="48" centerLabel="VMs" [size]="140" />
@@ -87,27 +94,74 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="gauge"
       heading="Gauge"
       description="A 0–100 radial dial for utilisation."
-      code="<strct-gauge [value]=&quot;72&quot; status=&quot;warning&quot; label=&quot;CPU&quot; />"
+      code='<strct-gauge [value]="72" status="warning" label="CPU" />'
     >
       <div class="gauge-row">
         <strct-gauge [value]="41" status="success" label="CPU" />
         <strct-gauge [value]="78" status="warning" label="Memory" />
-        <strct-gauge [value]="93" status="danger" label="Storage" />
+        <strct-gauge [value]="93" status="critical" label="Storage" />
       </div>
     </app-demo>
   `,
   styles: [
     `
-    .spark-row { display: flex; align-items: center; gap: 14px; width: 100%; max-width: 320px; margin-bottom: 6px; }
-    .spark-lbl { width: 70px; font-size: 12px; color: var(--t2); }
-    .spark-val { margin-left: auto; font-size: 12px; font-family: var(--mono); color: var(--t1); }
-    .chart-box { width: 100%; max-width: 520px; }
-    .donut-row { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
-    .legend { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--t1); }
-    .legend__item { display: flex; align-items: center; gap: 8px; min-width: 150px; }
-    .legend__dot { width: 10px; height: 10px; border-radius: 3px; }
-    .legend__val { margin-left: auto; font-family: var(--mono); color: var(--t2); }
-    .gauge-row { display: flex; gap: 22px; flex-wrap: wrap; }
+      .spark-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        max-width: 320px;
+        margin-bottom: 6px;
+      }
+      .spark-lbl {
+        width: 70px;
+        font-size: 12px;
+        color: var(--t2);
+      }
+      .spark-val {
+        margin-left: auto;
+        font-size: 12px;
+        font-family: var(--mono);
+        color: var(--t1);
+      }
+      .chart-box {
+        width: 100%;
+        max-width: 520px;
+      }
+      .donut-row {
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        flex-wrap: wrap;
+      }
+      .legend {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--t1);
+      }
+      .legend__item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 150px;
+      }
+      .legend__dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+      }
+      .legend__val {
+        margin-left: auto;
+        font-family: var(--mono);
+        color: var(--t2);
+      }
+      .gauge-row {
+        display: flex;
+        gap: 22px;
+        flex-wrap: wrap;
+      }
     `,
   ],
 })

@@ -8,6 +8,7 @@ import {
   input,
 } from '@angular/core';
 
+/** Overlay positioning strategies. */
 export type StrctOverlayPlacement =
   | 'bottom-start'
   | 'bottom-end'
@@ -34,12 +35,15 @@ export class StrctOverlay implements OnDestroy {
   private readonly el = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
   private readonly zone = inject(NgZone);
 
+  /** Anchor element for positioning. */
   readonly anchor = input.required<HTMLElement>({ alias: 'strctOverlay' });
+  /** Preferred placement relative to the anchor. */
   readonly placement = input<StrctOverlayPlacement>('bottom-start', {
     alias: 'strctOverlayPlacement',
   });
   /** Match the panel width to the anchor (combobox / date / cascade fields). */
   readonly matchWidth = input(false, { alias: 'strctOverlayMatchWidth' });
+  /** Gap between anchor and panel in pixels. */
   readonly gap = input(5, { alias: 'strctOverlayGap' });
 
   private readonly onScrollResize = () => this.position();

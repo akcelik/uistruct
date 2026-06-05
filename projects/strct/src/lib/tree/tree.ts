@@ -43,7 +43,7 @@ export interface StrctTreeMenuEvent {
  *  - **Data:** pass a `[node]` object that recurses over its `children` —
  *    used internally by `<strct-tree [nodes]>`.
  *
- *   <strct-tree-node label="Group" icon="layers" badge="ok" [(expanded)]="open">
+ *   <strct-tree-node label="Group" icon="layers" badge="success" [(expanded)]="open">
  *     <strct-tree-node label="Leaf" icon="vm" [active]="true" />
  *   </strct-tree-node>
  */
@@ -57,17 +57,25 @@ export interface StrctTreeMenuEvent {
       class="strct-tnode__row"
       [class.strct-tnode__row--active]="displayActive()"
       role="treeitem"
+      tabindex="0"
+      [attr.aria-selected]="displayActive()"
       [attr.aria-expanded]="hasChildren() ? isOpen() : null"
       [strctContextMenu]="menuItems()"
       [strctContextMenuData]="node()"
       (menuSelect)="onMenuSelect($event)"
       (click)="onActivate()"
+      (keydown.enter)="onActivate()"
+      (keydown.space)="onActivate()"
     >
       @if (hasChildren()) {
         <span
           class="strct-tnode__chevron"
           [class.strct-tnode__chevron--open]="isOpen()"
+          role="button"
+          tabindex="0"
           (click)="$event.stopPropagation(); toggle()"
+          (keydown.enter)="$event.stopPropagation(); toggle()"
+          (keydown.space)="$event.stopPropagation(); toggle()"
         >
           <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
         </span>
@@ -106,35 +114,74 @@ export interface StrctTreeMenuEvent {
   host: { class: 'strct-tnode' },
   styles: [
     `
-    .strct-tnode { display: block; }
-    .strct-tnode__row {
-      display: flex; align-items: center; gap: 7px;
-      padding: 7px 10px; border-radius: 5px; cursor: pointer;
-      font-size: 13px; color: var(--t1); user-select: none;
-    }
-    .strct-tnode__row:hover { background: var(--bg-3); }
-    .strct-tnode__row--active { background: var(--acc-m); color: var(--acc); font-weight: 500; }
-    .strct-tnode__row--active .strct-tnode__icon,
-    .strct-tnode__row--active .strct-tnode__chevron { color: var(--acc); }
-    .strct-tnode__chevron {
-      display: inline-flex; color: var(--t3); transition: transform .15s ease;
-      width: 14px; justify-content: center;
-    }
-    .strct-tnode__chevron--open { transform: rotate(90deg); }
-    .strct-tnode__spacer { width: 14px; flex-shrink: 0; }
-    .strct-tnode__icon { color: var(--t2); flex-shrink: 0; }
-    .strct-tnode__label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .strct-tnode__children { margin-left: 16px; }
+      .strct-tnode {
+        display: block;
+      }
+      .strct-tnode__row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--t1);
+        user-select: none;
+      }
+      .strct-tnode__row:hover {
+        background: var(--bg-3);
+      }
+      .strct-tnode__row--active {
+        background: var(--acc-m);
+        color: var(--acc);
+        font-weight: 500;
+      }
+      .strct-tnode__row--active .strct-tnode__icon,
+      .strct-tnode__row--active .strct-tnode__chevron {
+        color: var(--acc);
+      }
+      .strct-tnode__chevron {
+        display: inline-flex;
+        color: var(--t3);
+        transition: transform 0.15s ease;
+        width: 14px;
+        justify-content: center;
+      }
+      .strct-tnode__chevron--open {
+        transform: rotate(90deg);
+      }
+      .strct-tnode__spacer {
+        width: 14px;
+        flex-shrink: 0;
+      }
+      .strct-tnode__icon {
+        color: var(--t2);
+        flex-shrink: 0;
+      }
+      .strct-tnode__label {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .strct-tnode__children {
+        margin-left: 16px;
+      }
     `,
   ],
 })
 export class StrctTreeNode {
   /** Data-driven node; when set, label/icon/children come from it. */
   readonly node = input<StrctTreeNodeData | null>(null);
+  /** Label text. */
   readonly label = input('');
+  /** Icon name. */
   readonly icon = input<string | undefined>(undefined);
+  /** Status dot variant. */
   readonly badge = input<StrctIconBadge>('none');
+  /** Whether the item is active / selected. */
   readonly active = input(false);
+  /** Whether the panel is open (two-way). */
   readonly expanded = model(false);
   /** Per-node menu resolver (data mode); bubbles down the recursion. */
   readonly nodeMenu = input<StrctTreeNodeMenuFn | null>(null);
@@ -218,7 +265,13 @@ export class StrctTreeNode {
     }
   `,
   host: { class: 'strct-tree', role: 'tree' },
-  styles: [`.strct-tree { display: block; }`],
+  styles: [
+    `
+      .strct-tree {
+        display: block;
+      }
+    `,
+  ],
 })
 export class StrctTree {
   /** Data-driven node list; when set, projected content is ignored. */

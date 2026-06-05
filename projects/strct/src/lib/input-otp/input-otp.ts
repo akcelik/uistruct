@@ -44,23 +44,42 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   `,
   styles: [
     `
-    .strct-otp { display: inline-flex; gap: 8px; }
-    .strct-otp__box {
-      width: 40px; height: 46px; text-align: center;
-      font-family: var(--mono); font-size: 18px; color: var(--t1);
-      background: var(--bg-2); border: 1px solid var(--b2); border-radius: 8px;
-      transition: border-color .14s ease, box-shadow .14s ease, background .14s ease;
-    }
-    .strct-otp__box:focus {
-      outline: none; border-color: var(--acc50); box-shadow: 0 0 0 3px var(--acc18); background: var(--bg-1);
-    }
-    .strct-otp__box:disabled { opacity: .5; }
+      .strct-otp {
+        display: inline-flex;
+        gap: 8px;
+      }
+      .strct-otp__box {
+        width: 40px;
+        height: 46px;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 18px;
+        color: var(--t1);
+        background: var(--bg-2);
+        border: 1px solid var(--b2);
+        border-radius: 8px;
+        transition:
+          border-color 0.14s ease,
+          box-shadow 0.14s ease,
+          background 0.14s ease;
+      }
+      .strct-otp__box:focus {
+        outline: none;
+        border-color: var(--acc50);
+        box-shadow: 0 0 0 3px var(--acc18);
+        background: var(--bg-1);
+      }
+      .strct-otp__box:disabled {
+        opacity: 0.5;
+      }
     `,
   ],
 })
 export class StrctInputOtp implements ControlValueAccessor {
   private readonly host = inject(ElementRef<HTMLElement>);
+  /** Number of OTP boxes. */
   readonly length = input(6);
+  /** Mask each box as a password dot. */
   readonly masked = input(false);
 
   readonly slots = signal<string[]>([]);

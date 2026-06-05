@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 
+/** Modal width presets. */
 export type StrctModalSize = 'sm' | 'md' | 'lg';
 
 let modalCounter = 0;
@@ -47,7 +48,14 @@ function unlockBodyScroll(doc: Document): void {
   imports: [StrctIcon],
   template: `
     @if (open()) {
-      <div class="strct-modal__overlay" (click)="onBackdrop()">
+      <div
+        class="strct-modal__overlay"
+        role="button"
+        tabindex="0"
+        (click)="onBackdrop()"
+        (keydown.enter)="onBackdrop()"
+        (keydown.space)="onBackdrop()"
+      >
         <div
           #dialog
           class="strct-modal__dialog"
@@ -80,38 +88,94 @@ function unlockBodyScroll(doc: Document): void {
   },
   styles: [
     `
-    .strct-modal__overlay {
-      position: fixed; inset: 0; z-index: 1000;
-      display: flex; align-items: center; justify-content: center; padding: 24px;
-      background: rgba(0,0,0,.5); backdrop-filter: blur(2px);
-      animation: strct-modal-fade .12s ease;
-    }
-    .strct-modal__dialog {
-      width: 100%; max-width: 460px; max-height: calc(100vh - 48px);
-      display: flex; flex-direction: column;
-      background: var(--bg-1); border: 1px solid var(--b2);
-      border-radius: 10px; box-shadow: var(--shh); overflow: hidden;
-      animation: strct-modal-rise .14s ease;
-    }
-    .strct-modal__dialog--sm { max-width: 360px; }
-    .strct-modal__dialog--lg { max-width: 720px; }
-    .strct-modal__head {
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      padding: 14px 18px; border-bottom: 1px solid var(--b1);
-    }
-    .strct-modal__title { font-size: 14px; font-weight: 600; color: var(--t1); }
-    .strct-modal__close {
-      display: inline-flex; padding: 4px; border: 0; border-radius: 5px;
-      background: transparent; color: var(--t3); cursor: pointer;
-    }
-    .strct-modal__close:hover { color: var(--t1); background: var(--bg-3); }
-    .strct-modal__body { padding: 18px; overflow-y: auto; color: var(--t2); font-size: 13px; }
-    .strct-modal__foot {
-      display: flex; align-items: center; justify-content: flex-end; gap: 8px;
-      padding: 13px 18px; border-top: 1px solid var(--b1); background: var(--bg-2);
-    }
-    @keyframes strct-modal-fade { from { opacity: 0; } }
-    @keyframes strct-modal-rise { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+      .strct-modal__overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--space-5);
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(2px);
+        animation: strct-modal-fade 0.12s ease;
+      }
+      @media (max-width: 768px) {
+        .strct-modal__overlay {
+          padding: var(--space-3);
+        }
+      }
+      .strct-modal__dialog {
+        width: 100%;
+        max-width: min(460px, calc(100vw - 32px));
+        max-height: calc(100vh - 48px);
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-elevated);
+        overflow: hidden;
+        animation: strct-modal-rise 0.14s ease;
+      }
+      .strct-modal__dialog--sm {
+        max-width: min(360px, calc(100vw - 32px));
+      }
+      .strct-modal__dialog--lg {
+        max-width: min(720px, calc(100vw - 32px));
+      }
+      .strct-modal__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        border-bottom: 1px solid var(--b1);
+      }
+      .strct-modal__title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--t1);
+      }
+      .strct-modal__close {
+        display: inline-flex;
+        padding: 4px;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--t3);
+        cursor: pointer;
+      }
+      .strct-modal__close:hover {
+        color: var(--t1);
+        background: var(--bg-3);
+      }
+      .strct-modal__body {
+        padding: var(--space-4);
+        overflow-y: auto;
+        color: var(--t2);
+        font-size: 13px;
+      }
+      .strct-modal__foot {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--space-2);
+        padding: var(--space-3) var(--space-4);
+        border-top: 1px solid var(--b1);
+        background: var(--bg-2);
+      }
+      @keyframes strct-modal-fade {
+        from {
+          opacity: 0;
+        }
+      }
+      @keyframes strct-modal-rise {
+        from {
+          opacity: 0;
+          transform: translateY(8px) scale(0.98);
+        }
+      }
     `,
   ],
 })
@@ -119,12 +183,17 @@ export class StrctModal {
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly doc = inject(DOCUMENT);
 
+  /** Whether the panel is open (two-way). */
   readonly open = model(false);
+  /** Dialog title. */
   readonly title = input('');
+  /** Size variant. */
   readonly size = input<StrctModalSize>('md');
+  /** Hide the footer slot. */
   readonly hideFooter = input(false, { transform: booleanAttribute });
   /** Allow closing via backdrop click / Escape. */
-  readonly dismissable = input(true, { transform: booleanAttribute });
+  readonly dismissible = input(true, { transform: booleanAttribute });
+  /** Emitted when the alert is dismissed. */
   readonly closed = output<void>();
 
   protected readonly titleId = `strct-modal-${++modalCounter}`;
@@ -167,11 +236,11 @@ export class StrctModal {
   }
 
   protected onBackdrop(): void {
-    if (this.dismissable()) this.close();
+    if (this.dismissible()) this.close();
   }
 
   protected onEscape(): void {
-    if (this.open() && this.dismissable()) this.close();
+    if (this.open() && this.dismissible()) this.close();
   }
 
   /** Wrap Tab focus within the dialog. */

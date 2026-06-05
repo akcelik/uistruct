@@ -23,7 +23,14 @@ import { StrctTag } from '../tag/tag';
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => StrctChips), multi: true },
   ],
   template: `
-    <div class="strct-chips" (click)="input.focus()">
+    <div
+      class="strct-chips"
+      role="button"
+      tabindex="0"
+      (click)="input.focus()"
+      (keydown.enter)="input.focus()"
+      (keydown.space)="input.focus()"
+    >
       @for (chip of value(); track chip) {
         <strct-tag status="accent" removable (removed)="remove(chip)">{{ chip }}</strct-tag>
       }
@@ -42,23 +49,49 @@ import { StrctTag } from '../tag/tag';
   `,
   styles: [
     `
-    .strct-chips {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
-      width: 100%; max-width: 360px; min-height: 38px; padding: 5px 8px;
-      background: var(--bg-2); border: 1px solid var(--b2); border-radius: 6px;
-      cursor: text; transition: border-color .14s ease, box-shadow .14s ease;
-    }
-    .strct-chips:focus-within { border-color: var(--acc50); box-shadow: 0 0 0 3px var(--acc18); background: var(--bg-1); }
-    .strct-chips__input {
-      flex: 1; min-width: 80px; border: 0; outline: none; background: transparent;
-      font-family: var(--font); font-size: 13px; color: var(--t1); padding: 3px 2px;
-    }
-    .strct-chips__input::placeholder { color: var(--t3); }
+      .strct-chips {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        max-width: 360px;
+        min-height: 38px;
+        padding: 5px 8px;
+        background: var(--bg-2);
+        border: 1px solid var(--b2);
+        border-radius: 6px;
+        cursor: text;
+        transition:
+          border-color 0.14s ease,
+          box-shadow 0.14s ease;
+      }
+      .strct-chips:focus-within {
+        border-color: var(--acc50);
+        box-shadow: 0 0 0 3px var(--acc18);
+        background: var(--bg-1);
+      }
+      .strct-chips__input {
+        flex: 1;
+        min-width: 80px;
+        border: 0;
+        outline: none;
+        background: transparent;
+        font-family: var(--font);
+        font-size: 13px;
+        color: var(--t1);
+        padding: 3px 2px;
+      }
+      .strct-chips__input::placeholder {
+        color: var(--t3);
+      }
     `,
   ],
 })
 export class StrctChips implements ControlValueAccessor {
+  /** Placeholder text when empty. */
   readonly placeholder = input('');
+  /** Allow duplicate tags. */
   readonly allowDuplicates = input(false);
 
   readonly value = signal<string[]>([]);

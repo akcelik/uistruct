@@ -18,7 +18,13 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => StrctRating), multi: true },
   ],
   template: `
-    <div class="strct-rating" role="slider" [attr.aria-valuemin]="0" [attr.aria-valuemax]="max()" [attr.aria-valuenow]="value()">
+    <div
+      class="strct-rating"
+      role="slider"
+      [attr.aria-valuemin]="0"
+      [attr.aria-valuemax]="max()"
+      [attr.aria-valuenow]="value()"
+    >
       @for (star of stars(); track star) {
         <button
           type="button"
@@ -45,20 +51,39 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   `,
   styles: [
     `
-    .strct-rating { display: inline-flex; gap: 3px; }
-    .strct-rating__star {
-      display: inline-flex; padding: 1px; border: 0; background: transparent; cursor: pointer;
-      color: var(--t4); transition: color .12s ease, transform .1s ease;
-    }
-    .strct-rating__star:hover:not(:disabled) { transform: scale(1.12); }
-    .strct-rating__star--on { color: var(--wrn); }
-    .strct-rating__star:disabled { cursor: default; }
+      .strct-rating {
+        display: inline-flex;
+        gap: 3px;
+      }
+      .strct-rating__star {
+        display: inline-flex;
+        padding: 1px;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        color: var(--t4);
+        transition:
+          color 0.12s ease,
+          transform 0.1s ease;
+      }
+      .strct-rating__star:hover:not(:disabled) {
+        transform: scale(1.12);
+      }
+      .strct-rating__star--on {
+        color: var(--warning);
+      }
+      .strct-rating__star:disabled {
+        cursor: default;
+      }
     `,
   ],
 })
 export class StrctRating implements ControlValueAccessor {
+  /** Maximum allowed value or top of the value axis. */
   readonly max = input(5);
+  /** Size variant. */
   readonly size = input(18);
+  /** Prevent user interaction. */
   readonly readonly = input(false, { transform: booleanAttribute });
 
   readonly value = signal(0);

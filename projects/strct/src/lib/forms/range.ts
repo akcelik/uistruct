@@ -41,37 +41,72 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   `,
   styles: [
     `
-    .strct-range { display: inline-flex; align-items: center; gap: 10px; width: 100%; max-width: 280px; }
-    .strct-range__input {
-      flex: 1; appearance: none; height: 5px; border-radius: 3px; cursor: pointer;
-      background: linear-gradient(
-        to right,
-        var(--acc) 0 var(--strct-range-fill, 0%),
-        var(--bg-3) var(--strct-range-fill, 0%) 100%
-      );
-    }
-    .strct-range__input:disabled { opacity: .5; cursor: not-allowed; }
-    .strct-range__input::-webkit-slider-thumb {
-      appearance: none; width: 15px; height: 15px; border-radius: 50%;
-      background: var(--acc); border: 2px solid var(--bg-1); box-shadow: var(--sh);
-    }
-    .strct-range__input::-moz-range-thumb {
-      width: 15px; height: 15px; border-radius: 50%;
-      background: var(--acc); border: 2px solid var(--bg-1); box-shadow: var(--sh);
-    }
-    .strct-range__input:focus-visible { outline: none; }
-    .strct-range__input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--acc18); }
-    .strct-range__value {
-      min-width: 30px; text-align: right; font-size: 12px; font-family: var(--mono); color: var(--t2);
-    }
+      .strct-range {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        max-width: 280px;
+      }
+      .strct-range__input {
+        flex: 1;
+        appearance: none;
+        height: 5px;
+        border-radius: 3px;
+        cursor: pointer;
+        background: linear-gradient(
+          to right,
+          var(--acc) 0 var(--strct-range-fill, 0%),
+          var(--bg-3) var(--strct-range-fill, 0%) 100%
+        );
+      }
+      .strct-range__input:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .strct-range__input::-webkit-slider-thumb {
+        appearance: none;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: var(--acc);
+        border: 2px solid var(--bg-1);
+        box-shadow: var(--sh);
+      }
+      .strct-range__input::-moz-range-thumb {
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: var(--acc);
+        border: 2px solid var(--bg-1);
+        box-shadow: var(--sh);
+      }
+      .strct-range__input:focus-visible {
+        outline: none;
+      }
+      .strct-range__input:focus-visible::-webkit-slider-thumb {
+        box-shadow: 0 0 0 3px var(--acc18);
+      }
+      .strct-range__value {
+        min-width: 30px;
+        text-align: right;
+        font-size: 12px;
+        font-family: var(--mono);
+        color: var(--t2);
+      }
     `,
   ],
 })
 export class StrctRange implements ControlValueAccessor {
+  /** Minimum allowed value. */
   readonly min = input(0);
+  /** Maximum allowed value or top of the value axis. */
   readonly max = input(100);
+  /** Step increment. */
   readonly step = input(1);
+  /** Display the current numeric value. */
   readonly showValue = input(false, { transform: booleanAttribute });
+  /** Static disable flag. */
   readonly disabled = input(false, { transform: booleanAttribute });
 
   readonly value = signal(0);

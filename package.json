@@ -1,12 +1,16 @@
 {
   "name": "uistruct",
-  "version": "0.0.0",
+  "version": "0.5.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test --watch=false",
+    "lint": "ng lint strct && ng lint showcase",
+    "lint:fix": "ng lint strct --fix && ng lint showcase --fix",
+    "bundle:analyze": "ng build showcase --configuration production --stats-json && npx source-map-explorer dist/showcase/browser/**/*.js",
+    "prepare": "husky"
   },
   "private": true,
   "packageManager": "npm@11.16.0",
@@ -24,10 +28,17 @@
     "@angular/build": "^21.2.14",
     "@angular/cli": "^21.2.13",
     "@angular/compiler-cli": "^21.2.0",
+    "@eslint/js": "^10.0.1",
+    "angular-eslint": "21.4.0",
+    "eslint": "^10.3.0",
+    "husky": "^9.1.7",
     "jsdom": "^28.0.0",
+    "lint-staged": "^17.0.7",
     "ng-packagr": "^21.2.0",
     "prettier": "^3.8.1",
+    "source-map-explorer": "^2.5.3",
     "typescript": "~5.9.2",
-    "vitest": "^4.0.8"
+    "typescript-eslint": "8.59.2",
+    "vitest": "^3.2.6"
   }
 }

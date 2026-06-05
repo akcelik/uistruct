@@ -46,10 +46,21 @@ export const STRCT_MASKS = {
       (blur)="onTouched()"
     />
   `,
-  styles: [`.strct-input-mask, .strct-mask__input { display: block; width: 100%; max-width: 280px; }`],
+  styles: [
+    `
+      .strct-input-mask,
+      .strct-mask__input {
+        display: block;
+        width: 100%;
+        max-width: 280px;
+      }
+    `,
+  ],
 })
 export class StrctInputMask implements ControlValueAccessor {
+  /** Mask pattern (9=digit, A=letter, H=hex, *=alnum). */
   readonly mask = input.required<string>();
+  /** Placeholder text when empty. */
   readonly placeholder = input('');
   /** Upper-case entered letters (handy for hex MAC / WWPN). */
   readonly uppercase = input(false, { transform: booleanAttribute });

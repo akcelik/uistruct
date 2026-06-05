@@ -3,7 +3,8 @@ import { StrctProgress } from './progress';
 
 describe('StrctProgress', () => {
   function fillWidth(fixture: ReturnType<typeof TestBed.createComponent<StrctProgress>>): string {
-    return (fixture.nativeElement.querySelector('.strct-progress__fill') as HTMLElement).style.width;
+    return (fixture.nativeElement.querySelector('.strct-progress__fill') as HTMLElement).style
+      .width;
   }
 
   it('clamps the value between 0 and 100', () => {
@@ -23,8 +24,8 @@ describe('StrctProgress', () => {
 
   it('reflects the status on the host', () => {
     const fixture = TestBed.createComponent(StrctProgress);
-    fixture.componentRef.setInput('status', 'danger');
+    fixture.componentRef.setInput('status', 'critical');
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).classList).toContain('strct-progress--danger');
+    expect((fixture.nativeElement as HTMLElement).classList).toContain('strct-progress--critical');
   });
 });

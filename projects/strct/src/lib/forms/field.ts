@@ -30,7 +30,10 @@ let fieldCounter = 0;
   template: `
     @if (label()) {
       <label class="strct-field__label" [attr.for]="controlId() || null">
-        {{ label() }}@if (required()) {<span class="strct-field__req" aria-hidden="true">*</span>}
+        {{ label() }}
+        @if (required()) {
+          <span class="strct-field__req" aria-hidden="true">*</span>
+        }
       </label>
     }
     <div class="strct-field__control"><ng-content /></div>
@@ -48,19 +51,43 @@ let fieldCounter = 0;
   },
   styles: [
     `
-    .strct-field { display: flex; flex-direction: column; gap: 6px; }
-    .strct-field__label { font-size: 12px; font-weight: 600; color: var(--t2); }
-    .strct-field__req { color: var(--crt); margin-left: 2px; }
-    .strct-field__control { display: flex; flex-direction: column; }
-    .strct-field__msg { font-size: 12px; line-height: 1.4; }
-    .strct-field__msg--hint { color: var(--t3); }
-    .strct-field__msg--error { color: var(--crt); }
+      .strct-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .strct-field__label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--t2);
+      }
+      .strct-field__req {
+        color: var(--critical);
+        margin-left: 2px;
+      }
+      .strct-field__control {
+        display: flex;
+        flex-direction: column;
+      }
+      .strct-field__msg {
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .strct-field__msg--hint {
+        color: var(--t3);
+      }
+      .strct-field__msg--error {
+        color: var(--critical);
+      }
     `,
   ],
 })
 export class StrctField {
+  /** Label text. */
   readonly label = input('');
+  /** Show a required marker on the label. */
   readonly required = input(false, { transform: booleanAttribute });
+  /** Helper text shown below the field. */
   readonly hint = input('');
   /** Error message (string or first-of array); falsy clears the error state. */
   readonly error = input<string | string[] | null | undefined>(null);

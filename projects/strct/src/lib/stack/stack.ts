@@ -9,9 +9,12 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation, input } from '@a
   host: { class: 'strct-stack' },
   styles: [
     `
-    .strct-stack {
-      display: block; border: 1px solid var(--b2); border-radius: 8px; overflow: hidden;
-    }
+      .strct-stack {
+        display: block;
+        border: 1px solid var(--b2);
+        border-radius: 8px;
+        overflow: hidden;
+      }
     `,
   ],
 })
@@ -29,17 +32,30 @@ export class StrctStack {}
   host: { class: 'strct-stack__item' },
   styles: [
     `
-    .strct-stack__item {
-      display: grid; grid-template-columns: minmax(120px, 34%) 1fr; gap: 12px;
-      padding: 10px 14px; border-bottom: 1px solid var(--b1); font-size: 13px;
-    }
-    .strct-stack__item:last-child { border-bottom: 0; }
-    .strct-stack__item:nth-child(even) { background: var(--bg-2); }
-    .strct-stack__label { color: var(--t2); }
-    .strct-stack__value { color: var(--t1); }
+      .strct-stack__item {
+        display: grid;
+        grid-template-columns: minmax(120px, 34%) 1fr;
+        gap: 12px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--b1);
+        font-size: 13px;
+      }
+      .strct-stack__item:last-child {
+        border-bottom: 0;
+      }
+      .strct-stack__item:nth-child(even) {
+        background: var(--bg-2);
+      }
+      .strct-stack__label {
+        color: var(--t2);
+      }
+      .strct-stack__value {
+        color: var(--t1);
+      }
     `,
   ],
 })
 export class StrctStackItem {
+  /** Label text. */
   readonly label = input.required<string>();
 }

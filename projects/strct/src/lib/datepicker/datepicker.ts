@@ -21,8 +21,18 @@ interface DayCell {
 }
 
 const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -64,13 +74,28 @@ const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}
     </div>
 
     @if (open()) {
-      <div class="strct-dp__panel" role="dialog" [strctOverlay]="field" strctOverlayPlacement="bottom-start">
+      <div
+        class="strct-dp__panel"
+        role="dialog"
+        [strctOverlay]="field"
+        strctOverlayPlacement="bottom-start"
+      >
         <div class="strct-dp__head">
-          <button type="button" class="strct-dp__nav" aria-label="Previous month" (click)="shiftMonth(-1)">
+          <button
+            type="button"
+            class="strct-dp__nav"
+            aria-label="Previous month"
+            (click)="shiftMonth(-1)"
+          >
             <strct-icon name="chevronLeft" [size]="14" [strokeWidth]="1.7" />
           </button>
           <span class="strct-dp__title">{{ monthLabel() }}</span>
-          <button type="button" class="strct-dp__nav" aria-label="Next month" (click)="shiftMonth(1)">
+          <button
+            type="button"
+            class="strct-dp__nav"
+            aria-label="Next month"
+            (click)="shiftMonth(1)"
+          >
             <strct-icon name="chevronRight" [size]="14" [strokeWidth]="1.7" />
           </button>
         </div>
@@ -100,48 +125,128 @@ const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}
   host: { class: 'strct-dp' },
   styles: [
     `
-    .strct-dp { position: relative; display: inline-block; width: 100%; max-width: 240px; }
-    .strct-dp__field { position: relative; }
-    .strct-dp__input { padding-right: 36px; cursor: pointer; }
-    .strct-dp__icon {
-      position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
-      display: inline-flex; padding: 5px; border: 0; border-radius: 5px;
-      background: transparent; color: var(--t2); cursor: pointer;
-    }
-    .strct-dp__icon:hover { color: var(--acc); background: var(--bg-3); }
-    .strct-dp__panel {
-      position: absolute; top: calc(100% + 5px); left: 0; z-index: 250;
-      width: 250px; padding: 10px;
-      background: var(--bg-1); border: 1px solid var(--b2);
-      border-radius: 9px; box-shadow: var(--shh);
-    }
-    .strct-dp__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-    .strct-dp__title { font-size: 13px; font-weight: 600; color: var(--t1); }
-    .strct-dp__nav {
-      display: inline-flex; padding: 5px; border: 0; border-radius: 5px;
-      background: transparent; color: var(--t2); cursor: pointer;
-    }
-    .strct-dp__nav:hover { color: var(--t1); background: var(--bg-3); }
-    .strct-dp__dow { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 4px; }
-    .strct-dp__dow span { text-align: center; font-size: 10px; font-weight: 600; color: var(--t3); padding: 4px 0; }
-    .strct-dp__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-    .strct-dp__day {
-      aspect-ratio: 1; display: inline-flex; align-items: center; justify-content: center;
-      border: 0; border-radius: 6px; background: transparent; cursor: pointer;
-      font-family: var(--font); font-size: 12px; color: var(--t1);
-    }
-    .strct-dp__day:hover { background: var(--bg-3); }
-    .strct-dp__day--muted { color: var(--t3); }
-    .strct-dp__day--today { box-shadow: inset 0 0 0 1px var(--acc30); }
-    .strct-dp__day--focused { box-shadow: inset 0 0 0 2px var(--acc); }
-    .strct-dp__day--selected { background: var(--acc); color: #fff; }
-    .strct-dp__day--selected:hover { background: var(--acc); }
+      .strct-dp {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+        max-width: 240px;
+      }
+      .strct-dp__field {
+        position: relative;
+      }
+      .strct-dp__input {
+        padding-right: 36px;
+        cursor: pointer;
+      }
+      .strct-dp__icon {
+        position: absolute;
+        right: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: inline-flex;
+        padding: 5px;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--t2);
+        cursor: pointer;
+      }
+      .strct-dp__icon:hover {
+        color: var(--acc);
+        background: var(--bg-3);
+      }
+      .strct-dp__panel {
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        z-index: 250;
+        width: 250px;
+        padding: 10px;
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: 9px;
+        box-shadow: var(--shh);
+      }
+      .strct-dp__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .strct-dp__title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--t1);
+      }
+      .strct-dp__nav {
+        display: inline-flex;
+        padding: 5px;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--t2);
+        cursor: pointer;
+      }
+      .strct-dp__nav:hover {
+        color: var(--t1);
+        background: var(--bg-3);
+      }
+      .strct-dp__dow {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        margin-bottom: 4px;
+      }
+      .strct-dp__dow span {
+        text-align: center;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--t3);
+        padding: 4px 0;
+      }
+      .strct-dp__grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+      }
+      .strct-dp__day {
+        aspect-ratio: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        cursor: pointer;
+        font-family: var(--font);
+        font-size: 12px;
+        color: var(--t1);
+      }
+      .strct-dp__day:hover {
+        background: var(--bg-3);
+      }
+      .strct-dp__day--muted {
+        color: var(--t3);
+      }
+      .strct-dp__day--today {
+        box-shadow: inset 0 0 0 1px var(--acc30);
+      }
+      .strct-dp__day--focused {
+        box-shadow: inset 0 0 0 2px var(--acc);
+      }
+      .strct-dp__day--selected {
+        background: var(--acc);
+        color: #fff;
+      }
+      .strct-dp__day--selected:hover {
+        background: var(--acc);
+      }
     `,
   ],
 })
 export class StrctDatepicker implements ControlValueAccessor {
   private readonly host = inject(ElementRef<HTMLElement>);
 
+  /** Placeholder text when empty. */
   readonly placeholder = input('Select a date');
   protected readonly dow = DOW;
 
@@ -218,18 +323,39 @@ export class StrctDatepicker implements ControlValueAccessor {
       return;
     }
     switch (event.key) {
-      case 'ArrowLeft': event.preventDefault(); this.shiftFocus(-1); break;
-      case 'ArrowRight': event.preventDefault(); this.shiftFocus(1); break;
-      case 'ArrowUp': event.preventDefault(); this.shiftFocus(-7); break;
-      case 'ArrowDown': event.preventDefault(); this.shiftFocus(7); break;
-      case 'PageUp': event.preventDefault(); this.shiftFocus(0, -1); break;
-      case 'PageDown': event.preventDefault(); this.shiftFocus(0, 1); break;
+      case 'ArrowLeft':
+        event.preventDefault();
+        this.shiftFocus(-1);
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        this.shiftFocus(1);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.shiftFocus(-7);
+        break;
+      case 'ArrowDown':
+        event.preventDefault();
+        this.shiftFocus(7);
+        break;
+      case 'PageUp':
+        event.preventDefault();
+        this.shiftFocus(0, -1);
+        break;
+      case 'PageDown':
+        event.preventDefault();
+        this.shiftFocus(0, 1);
+        break;
       case 'Enter':
       case ' ':
         event.preventDefault();
         if (this.focusedIso()) this.pick(this.focusedIso());
         break;
-      case 'Escape': event.preventDefault(); this.open.set(false); break;
+      case 'Escape':
+        event.preventDefault();
+        this.open.set(false);
+        break;
     }
   }
 

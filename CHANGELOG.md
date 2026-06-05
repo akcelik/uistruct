@@ -5,21 +5,55 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-06-05
+
+Major framework-quality release. Consolidates semantics, expands the icon set, introduces a scalable token system, loading states, responsive behaviours and accessibility improvements.
+
+### Added
+
+- **Expanded icon set** — 17 foundational action icons (`plus`, `minus`, `pencil`, `trash`, `refresh`, `filter`, `settings`, `user`, `logout`, `undo`, `redo`, `arrowUp`, `arrowDown`, `arrowLeft`, `arrowRight`, `externalLink`) plus 14 modern infrastructure icons (`pod`, `deployment`, `service`, `node`, `ingress`, `cloud`, `container`, `firewall`, `shield`, `certificate`, `key`, `metrics`, `logs`, `trace`).
+- **Composite off icons** — `eyeOff` and `bellOff` now reuse their base glyph plus a slash overlay, eliminating duplicated SVG paths.
+- **Design token expansion** — new `--space-*`, `--radius-*`, `--shadow-*`, `--text-*`, `--leading-*` and `--disabled-opacity` tokens across all six palettes/modes.
+- **Loading states** — `StrctDatagrid`, `StrctTable` and `StrctCombobox` now accept a `[loading]` input and render skeleton placeholders.
+- **Responsive breakpoint system** — new `--bp-sm/md/lg/xl` tokens plus mobile drawer for `StrctShell`, horizontal scroll for `StrctDatagrid`, scrollable tabs, responsive modal sizing and viewport-safe dropdowns.
+- ** prefers-reduced-motion support** — global CSS reset disables animations and transitions when the user prefers reduced motion.
+- **Icon accessibility** — `<strct-icon>` now accepts an `ariaLabel` input and exposes `role="img"` / `aria-hidden` accordingly.
+- **Toast assertive announcements** — `critical` toasts now use `aria-live="assertive"` by default; other types remain `polite`.
+- **CI pipeline** — GitHub Actions workflow runs lint, test and build on every push/PR.
+- **Pre-commit hooks** — Husky + lint-staged run ESLint --fix and Prettier on staged files.
+- **Bundle analysis** — `npm run bundle:analyze` generates a production build with source-map-explorer output.
+
+### Changed
+
+- **Unified semantic naming** — `danger` → `critical`, `ok` → `success`, `warn` → `warning`, `crt` → `critical` throughout types, CSS tokens, component APIs and documentation.
+- `StrctModal.dismissable` renamed to `dismissible`.
+- `ellipsis` icon removed (duplicate of `dots`).
+- Production component-style budgets raised to 8 kB warning / 12 kB error.
+
+### Added (tooling)
+
+- ESLint with `@angular-eslint`, including template accessibility rules.
+- 127 unit tests across 56 spec files (up from 9 spec files / 17 tests).
+- JSDoc/TSDoc comments on all public APIs.
+
 ## [0.4.0] - 2026-06-04
 
 Third feedback round. All additions are **backward-compatible**.
 
 ### Added
+
 - **Per-node tree context menu** — `<strct-tree [nodeMenu]="fn">` takes a resolver
   `(node) => StrctMenuItem[]` and wires a `[strctContextMenu]` trigger on every node
   row; a new `(nodeMenuSelect)` output emits `{ node, item }`. Nodes whose resolver
   returns an empty array open no menu.
 
 ### Changed
+
 - **Combobox** no longer caps its width at 280px (fills its container) and drops the
   dead absolute-position menu CSS that `StrctOverlay` already overrode.
 
 ### Fixed
+
 - `StrctMenuItem.label` is now optional — a `divider` entry no longer needs a
   meaningless placeholder label.
 
@@ -28,6 +62,7 @@ Third feedback round. All additions are **backward-compatible**.
 Second feedback round (SHOULD-FIX) — all additions are **backward-compatible**.
 
 ### Added
+
 - **`strct-field`** — a form-field wrapper with label, required marker, hint and error
   message that auto-wires `aria-describedby` and `aria-invalid` on the projected control.
 - **Self-hosted fonts** — DM Sans and JetBrains Mono (OFL) now ship as `woff2` under
@@ -36,6 +71,7 @@ Second feedback round (SHOULD-FIX) — all additions are **backward-compatible**
 - **Icons** — added `folder`, `template`, `tag`, `resourcePool` and `portGroup` glyphs.
 
 ### Changed
+
 - **Modal** now locks body scroll while open (reference-counted for nested modals) and
   restores it on close / destroy.
 - **Overlay** flips horizontally (`left` / `right` placements) when it would overflow the
@@ -48,6 +84,7 @@ Second feedback round (SHOULD-FIX) — all additions are **backward-compatible**
 Feedback-driven release — all additions are **backward-compatible**.
 
 ### Added
+
 - **Datagrid / Table cell templates** — a `*strctCell="key"` template per column for
   custom cell content (status pills, links, action buttons). Context exposes
   `let-row`, `let-value="value"` and `let-column="column"`.
@@ -68,6 +105,7 @@ Feedback-driven release — all additions are **backward-compatible**.
 ## [0.1.1] - 2026-06-04
 
 ### Added
+
 - Published documentation & demo site on GitHub Pages: <https://akcelik.github.io/uistruct/>.
 - Link to the live documentation site in the package README.
 
@@ -76,6 +114,7 @@ _No component API changes in this release._
 ## [0.1.0] - 2026-06-04
 
 ### Added
+
 - Initial public release of `@akcelik/strct`.
 - **53 standalone, signal-based Angular components** across eight categories — Controls,
   Forms, Surfaces, Navigation, Data, Charts, Feedback and Patterns.

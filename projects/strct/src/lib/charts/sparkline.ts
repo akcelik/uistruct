@@ -7,13 +7,14 @@ import {
   input,
 } from '@angular/core';
 
-export type StrctChartStatus = 'accent' | 'success' | 'warning' | 'danger';
+/** Chart / gauge / sparkline status colors. */
+export type StrctChartStatus = 'accent' | 'success' | 'warning' | 'critical';
 
 const STROKE: Record<StrctChartStatus, string> = {
   accent: 'var(--acc)',
-  success: 'var(--ok)',
-  warning: 'var(--wrn)',
-  danger: 'var(--crt)',
+  success: 'var(--success)',
+  warning: 'var(--warning)',
+  critical: 'var(--critical)',
 };
 
 /**
@@ -45,17 +46,32 @@ const STROKE: Record<StrctChartStatus, string> = {
   host: { class: 'strct-spark' },
   styles: [
     `
-    .strct-spark { display: inline-block; line-height: 0; }
-    .strct-spark__line { stroke-width: 1.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
-    .strct-spark__area { opacity: .14; }
+      .strct-spark {
+        display: inline-block;
+        line-height: 0;
+      }
+      .strct-spark__line {
+        stroke-width: 1.6;
+        vector-effect: non-scaling-stroke;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+      }
+      .strct-spark__area {
+        opacity: 0.14;
+      }
     `,
   ],
 })
 export class StrctSparkline {
+  /** Data array. */
   readonly data = input.required<number[]>();
+  /** Visual status color. */
   readonly status = input<StrctChartStatus>('accent');
+  /** Fill the area under the line. */
   readonly area = input(false, { transform: booleanAttribute });
+  /** Width (CSS length). */
   readonly width = input(100);
+  /** Height in pixels. */
   readonly height = input(30);
 
   protected readonly color = computed(() => STROKE[this.status()]);
@@ -71,7 +87,9 @@ export class StrctSparkline {
   });
 
   protected readonly linePoints = computed(() =>
-    this.points().map((p) => `${p.x},${p.y}`).join(' '),
+    this.points()
+      .map((p) => `${p.x},${p.y}`)
+      .join(' '),
   );
 
   protected readonly areaPoints = computed(() => {

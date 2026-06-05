@@ -12,11 +12,11 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
 
 const LEVELS = [
-  { label: 'Weak', color: 'var(--crt)' },
-  { label: 'Weak', color: 'var(--crt)' },
-  { label: 'Fair', color: 'var(--wrn)' },
+  { label: 'Weak', color: 'var(--critical)' },
+  { label: 'Weak', color: 'var(--critical)' },
+  { label: 'Fair', color: 'var(--warning)' },
   { label: 'Good', color: 'var(--acc)' },
-  { label: 'Strong', color: 'var(--ok)' },
+  { label: 'Strong', color: 'var(--success)' },
 ];
 
 /**
@@ -70,25 +70,66 @@ const LEVELS = [
   host: { class: 'strct-pw' },
   styles: [
     `
-    .strct-pw { display: block; width: 100%; max-width: 280px; }
-    .strct-pw__field { position: relative; }
-    .strct-pw__input { padding-right: 38px; }
-    .strct-pw__toggle {
-      position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
-      display: inline-flex; padding: 5px; border: 0; border-radius: 5px;
-      background: transparent; color: var(--t2); cursor: pointer;
-    }
-    .strct-pw__toggle:hover { color: var(--acc); background: var(--bg-3); }
-    .strct-pw__meter { display: flex; align-items: center; gap: 9px; margin-top: 7px; }
-    .strct-pw__bars { display: flex; gap: 3px; flex: 1; }
-    .strct-pw__bar { flex: 1; height: 3px; border-radius: 2px; transition: background .2s ease; }
-    .strct-pw__label { font-size: 11px; font-weight: 600; min-width: 42px; text-align: right; }
+      .strct-pw {
+        display: block;
+        width: 100%;
+        max-width: 280px;
+      }
+      .strct-pw__field {
+        position: relative;
+      }
+      .strct-pw__input {
+        padding-right: 38px;
+      }
+      .strct-pw__toggle {
+        position: absolute;
+        right: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: inline-flex;
+        padding: 5px;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--t2);
+        cursor: pointer;
+      }
+      .strct-pw__toggle:hover {
+        color: var(--acc);
+        background: var(--bg-3);
+      }
+      .strct-pw__meter {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 7px;
+      }
+      .strct-pw__bars {
+        display: flex;
+        gap: 3px;
+        flex: 1;
+      }
+      .strct-pw__bar {
+        flex: 1;
+        height: 3px;
+        border-radius: 2px;
+        transition: background 0.2s ease;
+      }
+      .strct-pw__label {
+        font-size: 11px;
+        font-weight: 600;
+        min-width: 42px;
+        text-align: right;
+      }
     `,
   ],
 })
 export class StrctPassword implements ControlValueAccessor {
+  /** Placeholder text when empty. */
   readonly placeholder = input('');
+  /** Show a strength meter. */
   readonly meter = input(false, { transform: booleanAttribute });
+  /** Static disable flag. */
   readonly disabled = input(false, { transform: booleanAttribute });
 
   readonly value = signal('');

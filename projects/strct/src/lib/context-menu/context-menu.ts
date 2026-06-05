@@ -13,7 +13,7 @@ import {
  *     <div>Right-click here</div>
  *     <ng-container strctContextMenuItems>
  *       <strct-dropdown-item>Open</strct-dropdown-item>
- *       <strct-dropdown-item danger>Delete</strct-dropdown-item>
+ *       <strct-dropdown-item critical>Delete</strct-dropdown-item>
  *     </ng-container>
  *   </strct-context-menu>
  */
@@ -29,10 +29,13 @@ import {
       <div
         class="strct-ctx__menu"
         role="menu"
+        tabindex="0"
         [style.left.px]="x()"
         [style.top.px]="y()"
         (click)="close()"
         (contextmenu)="$event.preventDefault(); close()"
+        (keydown.enter)="close()"
+        (keydown.space)="close()"
       >
         <ng-content select="[strctContextMenuItems]" />
       </div>
@@ -41,14 +44,26 @@ import {
   host: { class: 'strct-ctx' },
   styles: [
     `
-    .strct-ctx { display: block; }
-    .strct-ctx__menu {
-      position: fixed; z-index: 1100; min-width: 180px; padding: 4px;
-      background: var(--bg-1); border: 1px solid var(--b2);
-      border-radius: 7px; box-shadow: var(--shh);
-      animation: strct-ctx-in .1s ease;
-    }
-    @keyframes strct-ctx-in { from { opacity: 0; transform: scale(.97); } }
+      .strct-ctx {
+        display: block;
+      }
+      .strct-ctx__menu {
+        position: fixed;
+        z-index: 1100;
+        min-width: 180px;
+        padding: 4px;
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: 7px;
+        box-shadow: var(--shh);
+        animation: strct-ctx-in 0.1s ease;
+      }
+      @keyframes strct-ctx-in {
+        from {
+          opacity: 0;
+          transform: scale(0.97);
+        }
+      }
     `,
   ],
 })

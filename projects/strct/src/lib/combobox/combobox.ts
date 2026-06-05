@@ -4,6 +4,7 @@ import {
   ViewEncapsulation,
   ElementRef,
   HostListener,
+  booleanAttribute,
   computed,
   forwardRef,
   inject,
@@ -14,6 +15,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
 import { StrctOverlay } from '../overlay/overlay';
 
+/** One option in a combobox or similar list. */
 export interface StrctOption {
   value: unknown;
   label: string;
@@ -44,7 +46,9 @@ let comboboxCounter = 0;
         autocomplete="off"
         [attr.aria-expanded]="open()"
         [attr.aria-controls]="listId"
-        [attr.aria-activedescendant]="open() && filtered().length ? listId + '-' + activeIndex() : null"
+        [attr.aria-activedescendant]="
+          open() && filtered().length ? listId + '-' + activeIndex() : null
+        "
         [placeholder]="placeholder()"
         [value]="query()"
         [disabled]="isDisabled()"
@@ -64,21 +68,27 @@ let comboboxCounter = 0;
         strctOverlayPlacement="bottom-start"
         [strctOverlayMatchWidth]="true"
       >
-        @for (opt of filtered(); track opt.value; let i = $index) {
-          <div
-            class="strct-cbx__opt"
-            [id]="listId + '-' + i"
-            [class.strct-cbx__opt--active]="opt.value === value()"
-            [class.strct-cbx__opt--highlight]="i === activeIndex()"
-            role="option"
-            [attr.aria-selected]="opt.value === value()"
-            (mousedown)="select(opt, $event)"
-            (mousemove)="activeIndex.set(i)"
-          >
-            {{ opt.label }}
+        @if (loading()) {
+          <div class="strct-cbx__skeleton">
+            <div class="strct-cbx__skeleton-block"></div>
           </div>
-        } @empty {
-          <div class="strct-cbx__empty">No matches</div>
+        } @else {
+          @for (opt of filtered(); track opt.value; let i = $index) {
+            <div
+              class="strct-cbx__opt"
+              [id]="listId + '-' + i"
+              [class.strct-cbx__opt--active]="opt.value === value()"
+              [class.strct-cbx__opt--highlight]="i === activeIndex()"
+              role="option"
+              [attr.aria-selected]="opt.value === value()"
+              (mousedown)="select(opt, $event)"
+              (mousemove)="activeIndex.set(i)"
+            >
+              {{ opt.label }}
+            </div>
+          } @empty {
+            <div class="strct-cbx__empty">No matches</div>
+          }
         }
       </div>
     }
@@ -86,28 +96,77 @@ let comboboxCounter = 0;
   host: { class: 'strct-cbx' },
   styles: [
     `
-    /* Full width of its container by default — no artificial cap. */
-    .strct-cbx { position: relative; display: block; width: 100%; }
-    .strct-cbx__field { position: relative; }
-    .strct-cbx__input { padding-right: 30px; }
-    .strct-cbx__caret {
-      position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
-      color: var(--t3); pointer-events: none;
-    }
-    /* Positioned by StrctOverlay (position: fixed, set inline) — only the
+      /* Full width of its container by default — no artificial cap. */
+      .strct-cbx {
+        position: relative;
+        display: block;
+        width: 100%;
+      }
+      .strct-cbx__field {
+        position: relative;
+      }
+      .strct-cbx__input {
+        padding-right: 30px;
+      }
+      .strct-cbx__caret {
+        position: absolute;
+        right: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--t3);
+        pointer-events: none;
+      }
+      /* Positioned by StrctOverlay (position: fixed, set inline) — only the
        surface styling lives here. */
-    .strct-cbx__menu {
-      z-index: 200; max-height: 220px; overflow-y: auto; padding: 4px;
-      background: var(--bg-1); border: 1px solid var(--b2);
-      border-radius: 7px; box-shadow: var(--shh);
-    }
-    .strct-cbx__opt {
-      padding: 7px 10px; border-radius: 5px; cursor: pointer; font-size: 13px; color: var(--t1);
-    }
-    .strct-cbx__opt--highlight { background: var(--bg-3); }
-    .strct-cbx__opt--active { color: var(--acc); }
-    .strct-cbx__opt--active.strct-cbx__opt--highlight { background: var(--acc-m); }
-    .strct-cbx__empty { padding: 9px 10px; font-size: 13px; color: var(--t3); }
+      .strct-cbx__menu {
+        z-index: 200;
+        max-height: 220px;
+        overflow-y: auto;
+        padding: 4px;
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: 7px;
+        box-shadow: var(--shh);
+      }
+      .strct-cbx__opt {
+        padding: 7px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--t1);
+      }
+      .strct-cbx__opt--highlight {
+        background: var(--bg-3);
+      }
+      .strct-cbx__opt--active {
+        color: var(--acc);
+      }
+      .strct-cbx__opt--active.strct-cbx__opt--highlight {
+        background: var(--acc-m);
+      }
+      @keyframes strct-skeleton-pulse {
+        0%,
+        100% {
+          opacity: 0.4;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+      .strct-cbx__skeleton {
+        padding: 9px 10px;
+      }
+      .strct-cbx__skeleton-block {
+        height: 12px;
+        background: var(--bg-3);
+        border-radius: var(--radius-sm);
+        animation: strct-skeleton-pulse 1.4s ease infinite;
+      }
+      .strct-cbx__empty {
+        padding: 9px 10px;
+        font-size: 13px;
+        color: var(--t3);
+      }
     `,
   ],
 })
@@ -115,8 +174,12 @@ export class StrctCombobox implements ControlValueAccessor {
   private readonly host = inject(ElementRef<HTMLElement>);
   protected readonly listId = `strct-cbx-${++comboboxCounter}`;
 
+  /** Available options. */
   readonly options = input<StrctOption[]>([]);
+  /** Placeholder text when empty. */
   readonly placeholder = input('');
+  /** Show a skeleton placeholder while options are loading. */
+  readonly loading = input(false, { transform: booleanAttribute });
 
   readonly query = signal('');
   readonly value = signal<unknown>(null);

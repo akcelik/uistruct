@@ -8,8 +8,10 @@ import {
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 
-export type StrctToastType = 'info' | 'success' | 'warning' | 'danger';
+/** Toast visual types. */
+export type StrctToastType = 'info' | 'success' | 'warning' | 'critical';
 
+/** A single toast notification. */
 export interface StrctToast {
   id: number;
   type: StrctToastType;
@@ -18,6 +20,7 @@ export interface StrctToast {
   duration: number;
 }
 
+/** Options passed when creating a toast. */
 export interface StrctToastOptions {
   type?: StrctToastType;
   duration?: number;
@@ -37,7 +40,10 @@ export class StrctToastService {
   show(message: string, options: StrctToastOptions = {}): number {
     const id = ++this.counter;
     const duration = options.duration ?? 4000;
-    this._toasts.update((list) => [...list, { id, type: options.type ?? 'info', message, duration }]);
+    this._toasts.update((list) => [
+      ...list,
+      { id, type: options.type ?? 'info', message, duration },
+    ]);
     if (duration > 0) {
       setTimeout(() => this.dismiss(id), duration);
     }
@@ -53,8 +59,8 @@ export class StrctToastService {
   warning(message: string, duration?: number) {
     return this.show(message, { type: 'warning', duration });
   }
-  danger(message: string, duration?: number) {
-    return this.show(message, { type: 'danger', duration });
+  critical(message: string, duration?: number) {
+    return this.show(message, { type: 'critical', duration });
   }
 
   dismiss(id: number): void {
@@ -70,7 +76,7 @@ const TOAST_ICON: Record<StrctToastType, string> = {
   info: 'info',
   success: 'success',
   warning: 'warning',
-  danger: 'danger',
+  critical: 'critical',
 };
 
 /** Renders the toast stack. Place once, typically just inside the app shell. */
@@ -86,7 +92,7 @@ const TOAST_ICON: Record<StrctToastType, string> = {
           class="strct-toast"
           [class.strct-toast--success]="toast.type === 'success'"
           [class.strct-toast--warning]="toast.type === 'warning'"
-          [class.strct-toast--danger]="toast.type === 'danger'"
+          [class.strct-toast--critical]="toast.type === 'critical'"
         >
           <strct-icon [name]="icon(toast.type)" [size]="15" />
           <span class="strct-toast__msg">{{ toast.message }}</span>
@@ -104,33 +110,79 @@ const TOAST_ICON: Record<StrctToastType, string> = {
   `,
   styles: [
     `
-    .strct-toasts {
-      position: fixed; top: 16px; right: 16px; z-index: 1200;
-      display: flex; flex-direction: column; gap: 10px; max-width: 360px;
-      pointer-events: none;
-    }
-    .strct-toast {
-      pointer-events: auto;
-      display: flex; align-items: flex-start; gap: 10px;
-      padding: 11px 12px; font-size: 13px; color: var(--t1);
-      background: var(--bg-1); border: 1px solid var(--b2);
-      border-left: 3px solid var(--acc); border-radius: 7px; box-shadow: var(--shh);
-      animation: strct-toast-in .16s ease;
-    }
-    .strct-toast strct-icon { color: var(--acc); margin-top: 1px; flex-shrink: 0; }
-    .strct-toast__msg { flex: 1; }
-    .strct-toast__close {
-      flex-shrink: 0; display: inline-flex; padding: 2px; margin: -2px -2px 0 0;
-      border: 0; background: transparent; color: var(--t3); cursor: pointer; border-radius: 4px;
-    }
-    .strct-toast__close:hover { color: var(--t1); background: var(--bg-3); }
-    .strct-toast--success { border-left-color: var(--ok); }
-    .strct-toast--success strct-icon { color: var(--ok); }
-    .strct-toast--warning { border-left-color: var(--wrn); }
-    .strct-toast--warning strct-icon { color: var(--wrn); }
-    .strct-toast--danger { border-left-color: var(--crt); }
-    .strct-toast--danger strct-icon { color: var(--crt); }
-    @keyframes strct-toast-in { from { opacity: 0; transform: translateX(16px); } }
+      .strct-toasts {
+        position: fixed;
+        top: var(--space-4);
+        right: var(--space-4);
+        z-index: 1200;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        max-width: 360px;
+        pointer-events: none;
+      }
+      .strct-toast {
+        pointer-events: auto;
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-2);
+        padding: var(--space-3);
+        font-size: 13px;
+        color: var(--t1);
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-left: 3px solid var(--acc);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-floating);
+        animation: strct-toast-in 0.16s ease;
+      }
+      .strct-toast strct-icon {
+        color: var(--acc);
+        margin-top: 1px;
+        flex-shrink: 0;
+      }
+      .strct-toast__msg {
+        flex: 1;
+      }
+      .strct-toast__close {
+        flex-shrink: 0;
+        display: inline-flex;
+        padding: 2px;
+        margin: -2px -2px 0 0;
+        border: 0;
+        background: transparent;
+        color: var(--t3);
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      .strct-toast__close:hover {
+        color: var(--t1);
+        background: var(--bg-3);
+      }
+      .strct-toast--success {
+        border-left-color: var(--success);
+      }
+      .strct-toast--success strct-icon {
+        color: var(--success);
+      }
+      .strct-toast--warning {
+        border-left-color: var(--warning);
+      }
+      .strct-toast--warning strct-icon {
+        color: var(--warning);
+      }
+      .strct-toast--critical {
+        border-left-color: var(--critical);
+      }
+      .strct-toast--critical strct-icon {
+        color: var(--critical);
+      }
+      @keyframes strct-toast-in {
+        from {
+          opacity: 0;
+          transform: translateX(16px);
+        }
+      }
     `,
   ],
 })

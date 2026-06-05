@@ -28,7 +28,7 @@ export interface StrctMenuItem {
   label?: string;
   icon?: string;
   /** Destructive styling. */
-  danger?: boolean;
+  critical?: boolean;
   disabled?: boolean;
   /** Render a separator instead of an entry (label is ignored). */
   divider?: boolean;
@@ -62,7 +62,7 @@ export interface StrctMenuItem {
               type="button"
               class="strct-menu__item"
               [attr.data-idx]="i"
-              [class.strct-menu__item--danger]="item.danger"
+              [class.strct-menu__item--critical]="item.critical"
               [class.strct-menu__item--active]="i === activeIndex()"
               [disabled]="item.disabled"
               role="menuitem"
@@ -72,13 +72,23 @@ export interface StrctMenuItem {
               (click)="onItemClick(item, i, $event)"
             >
               @if (item.icon) {
-                <strct-icon class="strct-menu__icon" [name]="item.icon" [size]="14" [strokeWidth]="1.3" />
+                <strct-icon
+                  class="strct-menu__icon"
+                  [name]="item.icon"
+                  [size]="14"
+                  [strokeWidth]="1.3"
+                />
               } @else {
                 <span class="strct-menu__icon-spacer" aria-hidden="true"></span>
               }
               <span class="strct-menu__label">{{ item.label }}</span>
               @if (item.children?.length) {
-                <strct-icon class="strct-menu__arrow" name="chevronRight" [size]="12" [strokeWidth]="1.6" />
+                <strct-icon
+                  class="strct-menu__arrow"
+                  name="chevronRight"
+                  [size]="12"
+                  [strokeWidth]="1.6"
+                />
               }
             </button>
             @if (openSubIndex() === i && item.children?.length) {
@@ -107,51 +117,122 @@ export interface StrctMenuItem {
   },
   styles: [
     `
-    .strct-menu-host { display: block; }
-    .strct-menu {
-      min-width: 180px; padding: 4px;
-      background: var(--bg-1); border: 1px solid var(--b2);
-      border-radius: 7px; box-shadow: var(--shh);
-      animation: strct-menu-in .1s ease;
-    }
-    .strct-menu:focus { outline: none; }
-    .strct-menu__wrap { position: relative; }
-    .strct-menu__item {
-      display: flex; align-items: center; gap: 8px; width: 100%;
-      padding: 7px 8px 7px 10px; border: 0; border-radius: 5px; cursor: pointer;
-      background: transparent; color: var(--t1); font-size: 13px; font-family: var(--font);
-      text-align: left;
-    }
-    .strct-menu__item:hover:not(:disabled),
-    .strct-menu__item--active:not(:disabled) { background: var(--bg-3); }
-    .strct-menu__item:focus-visible { outline: none; background: var(--bg-3); }
-    .strct-menu__item--danger { color: var(--crt); }
-    .strct-menu__item--danger:hover:not(:disabled),
-    .strct-menu__item--danger.strct-menu__item--active:not(:disabled) { background: var(--crt-bg); }
-    .strct-menu__item:disabled { opacity: .45; cursor: not-allowed; }
-    .strct-menu__icon { color: var(--t2); flex-shrink: 0; }
-    .strct-menu__item--danger .strct-menu__icon { color: var(--crt); }
-    .strct-menu__icon-spacer { width: 14px; flex-shrink: 0; }
-    .strct-menu__label { flex: 1; white-space: nowrap; }
-    .strct-menu__arrow { color: var(--t3); flex-shrink: 0; }
-    .strct-menu__sep { height: 1px; margin: 4px 6px; background: var(--b1); }
+      .strct-menu-host {
+        display: block;
+      }
+      .strct-menu {
+        min-width: 180px;
+        padding: 4px;
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: 7px;
+        box-shadow: var(--shh);
+        animation: strct-menu-in 0.1s ease;
+      }
+      .strct-menu:focus {
+        outline: none;
+      }
+      .strct-menu__wrap {
+        position: relative;
+      }
+      .strct-menu__item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 7px 8px 7px 10px;
+        border: 0;
+        border-radius: 5px;
+        cursor: pointer;
+        background: transparent;
+        color: var(--t1);
+        font-size: 13px;
+        font-family: var(--font);
+        text-align: left;
+      }
+      .strct-menu__item:hover:not(:disabled),
+      .strct-menu__item--active:not(:disabled) {
+        background: var(--bg-3);
+      }
+      .strct-menu__item:focus-visible {
+        outline: none;
+        background: var(--bg-3);
+      }
+      .strct-menu__item--critical {
+        color: var(--critical);
+      }
+      .strct-menu__item--critical:hover:not(:disabled),
+      .strct-menu__item--critical.strct-menu__item--active:not(:disabled) {
+        background: var(--critical-bg);
+      }
+      .strct-menu__item:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .strct-menu__icon {
+        color: var(--t2);
+        flex-shrink: 0;
+      }
+      .strct-menu__item--critical .strct-menu__icon {
+        color: var(--critical);
+      }
+      .strct-menu__icon-spacer {
+        width: 14px;
+        flex-shrink: 0;
+      }
+      .strct-menu__label {
+        flex: 1;
+        white-space: nowrap;
+      }
+      .strct-menu__arrow {
+        color: var(--t3);
+        flex-shrink: 0;
+      }
+      .strct-menu__sep {
+        height: 1px;
+        margin: 4px 6px;
+        background: var(--b1);
+      }
 
-    .strct-menu__subpanel { position: absolute; top: -5px; left: 100%; margin-left: 2px; z-index: 1; }
-    .strct-menu__subpanel--flip { left: auto; right: 100%; margin-left: 0; margin-right: 2px; }
-    @keyframes strct-menu-in { from { opacity: 0; transform: scale(.97); } }
+      .strct-menu__subpanel {
+        position: absolute;
+        top: -5px;
+        left: 100%;
+        margin-left: 2px;
+        z-index: 1;
+      }
+      .strct-menu__subpanel--flip {
+        left: auto;
+        right: 100%;
+        margin-left: 0;
+        margin-right: 2px;
+      }
+      @keyframes strct-menu-in {
+        from {
+          opacity: 0;
+          transform: scale(0.97);
+        }
+      }
     `,
   ],
 })
 export class StrctMenuPanel {
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
 
+  /** Menu items to display. */
   readonly items = input.required<StrctMenuItem[]>();
+  /** Arbitrary payload passed to item actions. */
   readonly data = input<unknown>(undefined);
+  /** Horizontal position in pixels. */
   readonly x = input(0);
+  /** Vertical position in pixels. */
   readonly y = input(0);
+  /** Render as a nested submenu panel. */
   readonly submenu = input(false, { transform: booleanAttribute });
 
+  /** Emitted when an item is selected. */
   readonly select = output<StrctMenuItem>();
+  /** Emitted when the menu requests closing. */
   readonly close = output<void>();
   /** ArrowLeft inside a submenu — asks the parent to close it. */
   readonly back = output<void>();
@@ -304,8 +385,11 @@ export class StrctContextMenuTrigger implements OnDestroy {
   private readonly zone = inject(NgZone);
   private readonly doc = inject(DOCUMENT);
 
+  /** Menu items to display. */
   readonly items = input.required<StrctMenuItem[]>({ alias: 'strctContextMenu' });
+  /** Arbitrary payload passed to item actions. */
   readonly data = input<unknown>(undefined, { alias: 'strctContextMenuData' });
+  /** Emitted when a menu item is selected. */
   readonly menuSelect = output<StrctMenuItem>();
 
   private ref: ComponentRef<StrctMenuPanel> | null = null;

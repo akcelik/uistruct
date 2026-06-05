@@ -14,6 +14,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
 import { StrctOverlay } from '../overlay/overlay';
 
+/** One option in a cascade select. */
 export interface StrctCascadeOption {
   label: string;
   value?: unknown;
@@ -40,9 +41,12 @@ export abstract class StrctCascadeHost {
       class="strct-csn"
       [class.strct-csn--selected]="isLeafSelected()"
       role="menuitem"
+      tabindex="0"
       (mouseenter)="hasChildren() && open.set(true)"
       (mouseleave)="open.set(false)"
       (click)="onClick($event)"
+      (keydown.enter)="onClick($event)"
+      (keydown.space)="onClick($event)"
     >
       <span class="strct-csn__label">{{ option().label }}</span>
       @if (hasChildren()) {
@@ -59,26 +63,50 @@ export abstract class StrctCascadeHost {
   `,
   styles: [
     `
-    .strct-csn {
-      position: relative; display: flex; align-items: center; gap: 8px;
-      padding: 7px 8px 7px 10px; border-radius: 5px; cursor: pointer;
-      font-size: 13px; color: var(--t1);
-    }
-    .strct-csn:hover { background: var(--bg-3); }
-    .strct-csn--selected { color: var(--acc); background: var(--acc-m); }
-    .strct-csn__label { flex: 1; white-space: nowrap; }
-    .strct-csn__arrow { color: var(--t3); }
-    .strct-csn__flyout {
-      position: absolute; top: -5px; left: 100%; z-index: 1; min-width: 160px;
-      margin-left: 2px; padding: 4px;
-      background: var(--bg-1); border: 1px solid var(--b2);
-      border-radius: 7px; box-shadow: var(--shh);
-    }
+      .strct-csn {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 8px 7px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--t1);
+      }
+      .strct-csn:hover {
+        background: var(--bg-3);
+      }
+      .strct-csn--selected {
+        color: var(--acc);
+        background: var(--acc-m);
+      }
+      .strct-csn__label {
+        flex: 1;
+        white-space: nowrap;
+      }
+      .strct-csn__arrow {
+        color: var(--t3);
+      }
+      .strct-csn__flyout {
+        position: absolute;
+        top: -5px;
+        left: 100%;
+        z-index: 1;
+        min-width: 160px;
+        margin-left: 2px;
+        padding: 4px;
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: 7px;
+        box-shadow: var(--shh);
+      }
     `,
   ],
 })
 export class StrctCascadeNode {
   private readonly host = inject(StrctCascadeHost);
+  /** Option. */
   readonly option = input.required<StrctCascadeOption>();
   readonly open = signal(false);
 
@@ -125,7 +153,12 @@ export class StrctCascadeNode {
       <strct-icon class="strct-cs__caret" name="chevronDown" [size]="14" />
     </button>
     @if (open()) {
-      <div class="strct-cs__panel" role="menu" [strctOverlay]="trigger" strctOverlayPlacement="bottom-start">
+      <div
+        class="strct-cs__panel"
+        role="menu"
+        [strctOverlay]="trigger"
+        strctOverlayPlacement="bottom-start"
+      >
         @for (opt of options(); track opt) {
           <strct-cascade-node [option]="opt" />
         }
@@ -135,29 +168,63 @@ export class StrctCascadeNode {
   host: { class: 'strct-cs' },
   styles: [
     `
-    .strct-cs { position: relative; display: inline-block; width: 100%; max-width: 280px; }
-    .strct-cs__trigger {
-      display: flex; align-items: center; gap: 8px; width: 100%;
-      padding: 7px 10px; border-radius: 6px; cursor: pointer;
-      font-family: var(--font); font-size: 13px; color: var(--t1);
-      background: var(--bg-2); border: 1px solid var(--b2); text-align: left;
-    }
-    .strct-cs__trigger:hover { border-color: var(--b3); }
-    .strct-cs__value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .strct-cs__value--empty { color: var(--t3); }
-    .strct-cs__caret { color: var(--t3); }
-    .strct-cs__panel {
-      position: absolute; top: calc(100% + 4px); left: 0; z-index: 200; min-width: 180px;
-      padding: 4px; background: var(--bg-1); border: 1px solid var(--b2);
-      border-radius: 7px; box-shadow: var(--shh);
-    }
+      .strct-cs {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+        max-width: 280px;
+      }
+      .strct-cs__trigger {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 7px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: var(--font);
+        font-size: 13px;
+        color: var(--t1);
+        background: var(--bg-2);
+        border: 1px solid var(--b2);
+        text-align: left;
+      }
+      .strct-cs__trigger:hover {
+        border-color: var(--b3);
+      }
+      .strct-cs__value {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .strct-cs__value--empty {
+        color: var(--t3);
+      }
+      .strct-cs__caret {
+        color: var(--t3);
+      }
+      .strct-cs__panel {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        z-index: 200;
+        min-width: 180px;
+        padding: 4px;
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: 7px;
+        box-shadow: var(--shh);
+      }
     `,
   ],
 })
 export class StrctCascadeSelect extends StrctCascadeHost implements ControlValueAccessor {
   private readonly elementRef = inject(ElementRef<HTMLElement>);
 
+  /** Available options. */
   readonly options = input<StrctCascadeOption[]>([]);
+  /** Placeholder text when empty. */
   readonly placeholder = input('Select…');
 
   readonly value = signal<unknown>(null);

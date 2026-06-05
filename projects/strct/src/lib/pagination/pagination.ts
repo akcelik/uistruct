@@ -59,28 +59,63 @@ type PageToken = number | 'dots';
   host: { class: 'strct-pg', role: 'navigation', 'aria-label': 'Pagination' },
   styles: [
     `
-    .strct-pg { display: inline-flex; align-items: center; gap: 4px; }
-    .strct-pg__btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      min-width: 30px; height: 30px; padding: 0 7px; border-radius: 6px;
-      font-family: var(--font); font-size: 13px; cursor: pointer;
-      color: var(--t1); background: transparent; border: 1px solid transparent;
-      transition: background .14s ease, border-color .14s ease, color .14s ease;
-    }
-    .strct-pg__btn:hover { background: var(--bg-3); }
-    .strct-pg__btn--active { color: var(--acc); border-color: var(--acc30); background: var(--acc-m); }
-    .strct-pg__btn:disabled { color: var(--t4); cursor: not-allowed; background: transparent; }
-    .strct-pg__nav { color: var(--t2); }
-    .strct-pg__dots {
-      display: inline-flex; align-items: center; justify-content: center;
-      min-width: 24px; height: 30px; color: var(--t3);
-    }
+      .strct-pg {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .strct-pg__btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 30px;
+        height: 30px;
+        padding: 0 7px;
+        border-radius: 6px;
+        font-family: var(--font);
+        font-size: 13px;
+        cursor: pointer;
+        color: var(--t1);
+        background: transparent;
+        border: 1px solid transparent;
+        transition:
+          background 0.14s ease,
+          border-color 0.14s ease,
+          color 0.14s ease;
+      }
+      .strct-pg__btn:hover {
+        background: var(--bg-3);
+      }
+      .strct-pg__btn--active {
+        color: var(--acc);
+        border-color: var(--acc30);
+        background: var(--acc-m);
+      }
+      .strct-pg__btn:disabled {
+        color: var(--t4);
+        cursor: not-allowed;
+        background: transparent;
+      }
+      .strct-pg__nav {
+        color: var(--t2);
+      }
+      .strct-pg__dots {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+        height: 30px;
+        color: var(--t3);
+      }
     `,
   ],
 })
 export class StrctPagination {
+  /** Total number of items. */
   readonly total = input.required<number>();
+  /** Rows per page (0 disables paging). */
   readonly pageSize = input(10);
+  /** Current page (two-way). */
   readonly page = model(1);
 
   readonly pageCount = computed(() =>

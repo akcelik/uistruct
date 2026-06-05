@@ -13,8 +13,18 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctOverlay } from '../overlay/overlay';
 
 const DEFAULT_SWATCHES = [
-  '#7b9ec8', '#5a7ea3', '#7da87e', '#5e8a60', '#bfae6a', '#9a8a3e',
-  '#b87872', '#a0635c', '#96724e', '#c49a6c', '#8d7bc8', '#5a5a64',
+  '#7b9ec8',
+  '#5a7ea3',
+  '#7da87e',
+  '#5e8a60',
+  '#bfae6a',
+  '#9a8a3e',
+  '#b87872',
+  '#a0635c',
+  '#96724e',
+  '#c49a6c',
+  '#8d7bc8',
+  '#5a5a64',
 ];
 
 const HEX = /^#([0-9a-f]{6})$/i;
@@ -45,7 +55,12 @@ const HEX = /^#([0-9a-f]{6})$/i;
     </button>
 
     @if (open()) {
-      <div class="strct-cp__panel" role="dialog" [strctOverlay]="trigger" strctOverlayPlacement="bottom-start">
+      <div
+        class="strct-cp__panel"
+        role="dialog"
+        [strctOverlay]="trigger"
+        strctOverlayPlacement="bottom-start"
+      >
         <div class="strct-cp__grid">
           @for (color of swatches(); track color) {
             <button
@@ -71,37 +86,84 @@ const HEX = /^#([0-9a-f]{6})$/i;
   host: { class: 'strct-cp' },
   styles: [
     `
-    .strct-cp { position: relative; display: inline-block; }
-    .strct-cp__trigger {
-      display: inline-flex; align-items: center; gap: 9px;
-      padding: 6px 11px 6px 7px; border-radius: 6px; cursor: pointer;
-      font-family: var(--font); font-size: 13px; color: var(--t1);
-      background: var(--bg-2); border: 1px solid var(--b2);
-    }
-    .strct-cp__trigger:hover { border-color: var(--b3); }
-    .strct-cp__swatch {
-      width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0;
-      border: 1px solid var(--b3); background-clip: padding-box;
-    }
-    .strct-cp__value { font-family: var(--mono); font-size: 12px; }
-    .strct-cp__panel {
-      position: absolute; top: calc(100% + 5px); left: 0; z-index: 250; width: 196px; padding: 10px;
-      background: var(--bg-1); border: 1px solid var(--b2); border-radius: 9px; box-shadow: var(--shh);
-    }
-    .strct-cp__grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 9px; }
-    .strct-cp__chip {
-      aspect-ratio: 1; border-radius: 5px; cursor: pointer; padding: 0;
-      border: 1px solid var(--b2); background-clip: padding-box;
-      transition: transform .12s ease;
-    }
-    .strct-cp__chip:hover { transform: scale(1.1); }
-    .strct-cp__chip--active { box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--acc); }
-    .strct-cp__hex { font-family: var(--mono); font-size: 12px; text-transform: lowercase; }
+      .strct-cp {
+        position: relative;
+        display: inline-block;
+      }
+      .strct-cp__trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 6px 11px 6px 7px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: var(--font);
+        font-size: 13px;
+        color: var(--t1);
+        background: var(--bg-2);
+        border: 1px solid var(--b2);
+      }
+      .strct-cp__trigger:hover {
+        border-color: var(--b3);
+      }
+      .strct-cp__swatch {
+        width: 20px;
+        height: 20px;
+        border-radius: 5px;
+        flex-shrink: 0;
+        border: 1px solid var(--b3);
+        background-clip: padding-box;
+      }
+      .strct-cp__value {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .strct-cp__panel {
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 0;
+        z-index: 250;
+        width: 196px;
+        padding: 10px;
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: 9px;
+        box-shadow: var(--shh);
+      }
+      .strct-cp__grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 6px;
+        margin-bottom: 9px;
+      }
+      .strct-cp__chip {
+        aspect-ratio: 1;
+        border-radius: 5px;
+        cursor: pointer;
+        padding: 0;
+        border: 1px solid var(--b2);
+        background-clip: padding-box;
+        transition: transform 0.12s ease;
+      }
+      .strct-cp__chip:hover {
+        transform: scale(1.1);
+      }
+      .strct-cp__chip--active {
+        box-shadow:
+          0 0 0 2px var(--bg-1),
+          0 0 0 4px var(--acc);
+      }
+      .strct-cp__hex {
+        font-family: var(--mono);
+        font-size: 12px;
+        text-transform: lowercase;
+      }
     `,
   ],
 })
 export class StrctColorPicker implements ControlValueAccessor {
   private readonly host = inject(ElementRef<HTMLElement>);
+  /** Custom palette swatches. */
   readonly swatches = input<string[]>(DEFAULT_SWATCHES);
 
   readonly value = signal('');

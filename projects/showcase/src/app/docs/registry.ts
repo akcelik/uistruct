@@ -45,8 +45,8 @@ const PKG = '@akcelik/strct';
 
 export const PACKAGE_NAME = PKG;
 
-const STATUS_VALUES = `'neutral' | 'accent' | 'success' | 'warning' | 'danger'`;
-const CHART_STATUS = `'accent' | 'success' | 'warning' | 'danger'`;
+const STATUS_VALUES = `'neutral' | 'accent' | 'success' | 'warning' | 'critical'`;
+const CHART_STATUS = `'accent' | 'success' | 'warning' | 'critical'`;
 
 /** Common row: the two-way value of a ControlValueAccessor control. */
 const model = (type: string, desc: string): ApiRow => ({
@@ -60,7 +60,8 @@ const disabledRow: ApiRow = {
   default: 'false',
   description: 'Disables interaction and dims the control.',
 };
-const cvaA11y = 'Implements ControlValueAccessor, so it participates in form validation, dirty/touched state and disabled handling.';
+const cvaA11y =
+  'Implements ControlValueAccessor, so it participates in form validation, dirty/touched state and disabled handling.';
 
 export const DOCS: DocCategory[] = [
   {
@@ -77,16 +78,43 @@ export const DOCS: DocCategory[] = [
         summary: 'Restrained, token-driven buttons in five variants and three sizes.',
         lead: 'Applies button styling to a native `<button>` or `<a>`, so it stays fully accessible and form-aware. Restrained by default — outlined / ghost surfaces with color carried by a subtle border and text accent, never a loud fill. Add `solid` for a rare filled call to action.',
         inputs: [
-          { name: 'variant', type: `'primary' | 'danger' | 'outline' | 'flat' | 'neutral'`, default: `'neutral'`, description: 'Emphasis level. Primary/danger tint the border and text; outline/flat are neutral.' },
-          { name: 'size', type: `'md' | 'sm' | 'mini'`, default: `'md'`, description: 'Control height and padding.' },
-          { name: 'solid', type: 'boolean', default: 'false', description: 'Opt in to a filled surface. Use sparingly, for the single primary action.' },
-          { name: 'block', type: 'boolean', default: 'false', description: 'Stretch to the full width of the container.' },
-          { name: 'iconOnly', type: 'boolean', default: 'false', description: 'Square padding for a single-icon button. Pair with aria-label.' },
+          {
+            name: 'variant',
+            type: `'primary' | 'critical' | 'outline' | 'flat' | 'neutral'`,
+            default: `'neutral'`,
+            description:
+              'Emphasis level. Primary/critical tint the border and text; outline/flat are neutral.',
+          },
+          {
+            name: 'size',
+            type: `'md' | 'sm' | 'mini'`,
+            default: `'md'`,
+            description: 'Control height and padding.',
+          },
+          {
+            name: 'solid',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Opt in to a filled surface. Use sparingly, for the single primary action.',
+          },
+          {
+            name: 'block',
+            type: 'boolean',
+            default: 'false',
+            description: 'Stretch to the full width of the container.',
+          },
+          {
+            name: 'iconOnly',
+            type: 'boolean',
+            default: 'false',
+            description: 'Square padding for a single-icon button. Pair with aria-label.',
+          },
         ],
         do: [
           'Use exactly one primary (or solid) button per view to signal the main action.',
           'Give icon-only buttons an aria-label so they are announced.',
-          'Reach for danger only on destructive actions.',
+          'Reach for critical only on destructive actions.',
         ],
         dont: [
           'Avoid stacking several solid buttons side by side — emphasis is lost.',
@@ -109,7 +137,9 @@ export const DOCS: DocCategory[] = [
           'Use for mutually related choices or a tight cluster of actions.',
         ],
         dont: ['Do not mix solid and outline buttons in one group.'],
-        a11y: ['The host carries role="group"; label it with aria-label when the grouping is not obvious.'],
+        a11y: [
+          'The host carries role="group"; label it with aria-label when the grouping is not obvious.',
+        ],
       },
       {
         id: 'speeddial',
@@ -119,13 +149,30 @@ export const DOCS: DocCategory[] = [
         summary: 'Floating action button that fans out to reveal actions.',
         lead: 'A floating action button that expands to reveal a set of actions in one of four directions. Project icon buttons (optionally with `strctTooltip`) as the actions. Closes on outside click or Escape.',
         inputs: [
-          { name: 'icon', type: 'string', default: `'ellipsis'`, description: 'Glyph shown on the trigger; rotates 45° when open.' },
-          { name: 'direction', type: `'up' | 'down' | 'left' | 'right'`, default: `'up'`, description: 'Direction the actions fan out.' },
+          {
+            name: 'icon',
+            type: 'string',
+            default: `'ellipsis'`,
+            description: 'Glyph shown on the trigger; rotates 45° when open.',
+          },
+          {
+            name: 'direction',
+            type: `'up' | 'down' | 'left' | 'right'`,
+            default: `'up'`,
+            description: 'Direction the actions fan out.',
+          },
         ],
         methods: [
-          { name: 'toggle()', type: '() => void', description: 'Programmatically open or close the dial.' },
+          {
+            name: 'toggle()',
+            type: '() => void',
+            description: 'Programmatically open or close the dial.',
+          },
         ],
-        do: ['Keep the action count small (2–5).', 'Add a tooltip to each action so its purpose is clear.'],
+        do: [
+          'Keep the action count small (2–5).',
+          'Add a tooltip to each action so its purpose is clear.',
+        ],
         dont: ['Do not hide critical primary actions behind a speed dial.'],
         a11y: ['The trigger exposes aria-haspopup="menu" and aria-expanded.'],
       },
@@ -137,10 +184,23 @@ export const DOCS: DocCategory[] = [
         summary: 'Small inline status pill with a distinctive left rail.',
         lead: 'A compact status pill. Outlined by default, with the color carried by the text and a thicker left rail that distinguishes badges from buttons at a glance. Add `solid` for a filled badge.',
         inputs: [
-          { name: 'status', type: STATUS_VALUES, default: `'neutral'`, description: 'Semantic color.' },
-          { name: 'solid', type: 'boolean', default: 'false', description: 'Filled style with uniform edges (no left rail).' },
+          {
+            name: 'status',
+            type: STATUS_VALUES,
+            default: `'neutral'`,
+            description: 'Semantic color.',
+          },
+          {
+            name: 'solid',
+            type: 'boolean',
+            default: 'false',
+            description: 'Filled style with uniform edges (no left rail).',
+          },
         ],
-        do: ['Use semantic status to mirror real state (success = healthy, danger = failed).', 'Keep the label to a single short word.'],
+        do: [
+          'Use semantic status to mirror real state (success = healthy, critical = failed).',
+          'Keep the label to a single short word.',
+        ],
         dont: ['Do not use a badge as a button — it is not interactive.'],
       },
       {
@@ -151,11 +211,25 @@ export const DOCS: DocCategory[] = [
         summary: 'Compact, optionally removable chip.',
         lead: 'A compact label chip for categories, filters or applied facets. Add `removable` to show a dismiss button that emits `removed`.',
         inputs: [
-          { name: 'status', type: STATUS_VALUES, default: `'neutral'`, description: 'Semantic color.' },
-          { name: 'removable', type: 'boolean', default: 'false', description: 'Show a trailing remove button.' },
+          {
+            name: 'status',
+            type: STATUS_VALUES,
+            default: `'neutral'`,
+            description: 'Semantic color.',
+          },
+          {
+            name: 'removable',
+            type: 'boolean',
+            default: 'false',
+            description: 'Show a trailing remove button.',
+          },
         ],
         outputs: [
-          { name: 'removed', type: 'void', description: 'Fired when the remove button is clicked.' },
+          {
+            name: 'removed',
+            type: 'void',
+            description: 'Fired when the remove button is clicked.',
+          },
         ],
         do: ['Use for user-applied, removable labels.', 'Handle (removed) to update your model.'],
         dont: ['Do not use tags to convey one-off status — prefer a badge.'],
@@ -168,10 +242,30 @@ export const DOCS: DocCategory[] = [
         summary: 'Circular image or initials with an optional status dot.',
         lead: 'Shows a circular image when `src` is set, otherwise derives initials from `name`. An optional status dot marks presence.',
         inputs: [
-          { name: 'src', type: 'string', default: `''`, description: 'Image URL. Falls back to initials when empty.' },
-          { name: 'name', type: 'string', default: `''`, description: 'Full name; used for initials and the title tooltip.' },
-          { name: 'size', type: `'sm' | 'md' | 'lg'`, default: `'md'`, description: 'Avatar diameter.' },
-          { name: 'status', type: `'none' | 'online' | 'busy' | 'offline'`, default: `'none'`, description: 'Presence dot.' },
+          {
+            name: 'src',
+            type: 'string',
+            default: `''`,
+            description: 'Image URL. Falls back to initials when empty.',
+          },
+          {
+            name: 'name',
+            type: 'string',
+            default: `''`,
+            description: 'Full name; used for initials and the title tooltip.',
+          },
+          {
+            name: 'size',
+            type: `'sm' | 'md' | 'lg'`,
+            default: `'md'`,
+            description: 'Avatar diameter.',
+          },
+          {
+            name: 'status',
+            type: `'none' | 'online' | 'busy' | 'offline'`,
+            default: `'none'`,
+            description: 'Presence dot.',
+          },
         ],
         do: ['Always pass name, even with an image, for the alt text and tooltip.'],
         dont: ['Do not rely on the status dot alone to convey critical state.'],
@@ -184,10 +278,15 @@ export const DOCS: DocCategory[] = [
         summary: 'Horizontal value / usage bar with semantic color.',
         lead: 'A horizontal value bar for completion or resource usage. The value is clamped to 0–100 and the fill takes a semantic color.',
         inputs: [
-          { name: 'value', type: 'number', default: '0', description: 'Percentage 0–100 (clamped).' },
+          {
+            name: 'value',
+            type: 'number',
+            default: '0',
+            description: 'Percentage 0–100 (clamped).',
+          },
           { name: 'status', type: CHART_STATUS, default: `'accent'`, description: 'Fill color.' },
         ],
-        do: ['Switch to warning / danger as usage crosses your thresholds.'],
+        do: ['Switch to warning / critical as usage crosses your thresholds.'],
         dont: ['Do not use a determinate bar for unknown-duration work — use the spinner.'],
         a11y: ['Exposes role="progressbar" with aria-valuenow / min / max.'],
       },
@@ -199,7 +298,12 @@ export const DOCS: DocCategory[] = [
         summary: 'Indeterminate loading ring in three sizes.',
         lead: 'An indeterminate loading ring for work of unknown duration. Honors prefers-reduced-motion by slowing the animation.',
         inputs: [
-          { name: 'size', type: `'sm' | 'md' | 'lg'`, default: `'md'`, description: 'Ring diameter.' },
+          {
+            name: 'size',
+            type: `'sm' | 'md' | 'lg'`,
+            default: `'md'`,
+            description: 'Ring diameter.',
+          },
         ],
         do: ['Pair with a short label for screen readers when used as a page loader.'],
         dont: ['Do not use a spinner when you can show determinate progress.'],
@@ -221,14 +325,40 @@ export const DOCS: DocCategory[] = [
         summary: 'Label / required / hint / error wrapper.',
         lead: 'Wraps any form control with a label (and optional required marker), a hint and an error message. It auto-links the control via `aria-describedby` and toggles `aria-invalid`, so accessibility wiring is automatic.',
         inputs: [
-          { name: 'label', type: 'string', default: `''`, description: 'Field label; rendered above the control.' },
-          { name: 'required', type: 'boolean', default: 'false', description: 'Show a required asterisk.' },
-          { name: 'hint', type: 'string', default: `''`, description: 'Helper text shown when there is no error.' },
-          { name: 'error', type: 'string | string[] | null', default: 'null', description: 'Error message (first of an array). Truthy puts the field in the invalid state.' },
+          {
+            name: 'label',
+            type: 'string',
+            default: `''`,
+            description: 'Field label; rendered above the control.',
+          },
+          {
+            name: 'required',
+            type: 'boolean',
+            default: 'false',
+            description: 'Show a required asterisk.',
+          },
+          {
+            name: 'hint',
+            type: 'string',
+            default: `''`,
+            description: 'Helper text shown when there is no error.',
+          },
+          {
+            name: 'error',
+            type: 'string | string[] | null',
+            default: 'null',
+            description:
+              'Error message (first of an array). Truthy puts the field in the invalid state.',
+          },
         ],
-        do: ['Wrap each form control in a field for consistent labels and messaging.', 'Bind `error` to your validation state.'],
+        do: [
+          'Wrap each form control in a field for consistent labels and messaging.',
+          'Bind `error` to your validation state.',
+        ],
         dont: ['Do not also set aria-describedby / aria-invalid by hand — the field manages them.'],
-        a11y: ['Links the control to its hint/error via aria-describedby and sets aria-invalid when errored.'],
+        a11y: [
+          'Links the control to its hint/error via aria-describedby and sets aria-invalid when errored.',
+        ],
       },
       {
         id: 'input',
@@ -237,9 +367,14 @@ export const DOCS: DocCategory[] = [
         importNames: ['StrctInput'],
         summary: 'Shared field style for native inputs.',
         lead: 'A directive that applies the shared control style to native input, textarea and select elements — no wrapper component, full native behaviour and form integration. It has no inputs of its own; use the native element’s attributes and `ngModel` / `formControl`.',
-        do: ['Pair every field with a <label> (or aria-label).', 'Use native attributes (type, placeholder, required) as usual.'],
+        do: [
+          'Pair every field with a <label> (or aria-label).',
+          'Use native attributes (type, placeholder, required) as usual.',
+        ],
         dont: ['Do not wrap it in a custom component just to restyle — the directive is enough.'],
-        a11y: ['Keeps the native element, so labels, validation and keyboard behaviour are unchanged.'],
+        a11y: [
+          'Keeps the native element, so labels, validation and keyboard behaviour are unchanged.',
+        ],
       },
       {
         id: 'textarea',
@@ -294,7 +429,11 @@ export const DOCS: DocCategory[] = [
         lead: 'A radio group for a single choice from a small set. Bind the group with ngModel; each `strct-radio` carries its own `value`.',
         inputs: [
           model('unknown', 'Selected value (set on `strct-radio-group`).'),
-          { name: 'value', type: 'unknown', description: 'On `strct-radio`: the value contributed when selected. Required.' },
+          {
+            name: 'value',
+            type: 'unknown',
+            description: 'On `strct-radio`: the value contributed when selected. Required.',
+          },
           disabledRow,
         ],
         do: ['Use for 2–5 mutually exclusive options that should all be visible.'],
@@ -313,7 +452,12 @@ export const DOCS: DocCategory[] = [
           { name: 'min', type: 'number', default: '0', description: 'Lower bound.' },
           { name: 'max', type: 'number', default: '100', description: 'Upper bound.' },
           { name: 'step', type: 'number', default: '1', description: 'Increment.' },
-          { name: 'showValue', type: 'boolean', default: 'false', description: 'Render the current value beside the track.' },
+          {
+            name: 'showValue',
+            type: 'boolean',
+            default: 'false',
+            description: 'Render the current value beside the track.',
+          },
           disabledRow,
         ],
         do: ['Use for approximate, continuous values where exactness is not critical.'],
@@ -329,12 +473,20 @@ export const DOCS: DocCategory[] = [
         lead: 'A filterable single-select: type to narrow the list, click or press Enter to choose. ControlValueAccessor-compatible.',
         inputs: [
           model('unknown', 'Selected option value.'),
-          { name: 'options', type: 'StrctOption[]', default: '[]', description: 'Items to choose from. `StrctOption = { value: unknown; label: string }`.' },
+          {
+            name: 'options',
+            type: 'StrctOption[]',
+            default: '[]',
+            description: 'Items to choose from. `StrctOption = { value: unknown; label: string }`.',
+          },
           { name: 'placeholder', type: 'string', default: `''`, description: 'Empty-state hint.' },
         ],
         do: ['Use for medium-to-large option lists where typing speeds selection.'],
         dont: ['Do not use for a handful of options — a select is simpler.'],
-        a11y: [cvaA11y, 'Full keyboard support: ↑/↓ move, Enter selects, Esc closes, with aria-activedescendant.'],
+        a11y: [
+          cvaA11y,
+          'Full keyboard support: ↑/↓ move, Enter selects, Esc closes, with aria-activedescendant.',
+        ],
       },
       {
         id: 'datepicker',
@@ -345,7 +497,12 @@ export const DOCS: DocCategory[] = [
         lead: 'A calendar popover whose value is an ISO date string (`YYYY-MM-DD`). ControlValueAccessor-compatible.',
         inputs: [
           model('string', 'Selected date as an ISO string.'),
-          { name: 'placeholder', type: 'string', default: `'Select a date'`, description: 'Empty-state hint.' },
+          {
+            name: 'placeholder',
+            type: 'string',
+            default: `'Select a date'`,
+            description: 'Empty-state hint.',
+          },
         ],
         do: ['Use ISO strings end-to-end to avoid timezone surprises.'],
         dont: ['Do not use for free-form approximate dates — use a text input.'],
@@ -361,7 +518,12 @@ export const DOCS: DocCategory[] = [
         inputs: [
           model('string', 'Password value.'),
           { name: 'placeholder', type: 'string', default: `''`, description: 'Empty-state hint.' },
-          { name: 'meter', type: 'boolean', default: 'false', description: 'Show a strength meter under the field.' },
+          {
+            name: 'meter',
+            type: 'boolean',
+            default: 'false',
+            description: 'Show a strength meter under the field.',
+          },
           disabledRow,
         ],
         do: ['Enable the meter on sign-up / change-password flows.'],
@@ -377,8 +539,18 @@ export const DOCS: DocCategory[] = [
         lead: 'A drag-and-drop or browse file field whose value is a `File[]`. ControlValueAccessor-compatible.',
         inputs: [
           model('File[]', 'Selected files.'),
-          { name: 'multiple', type: 'boolean', default: 'false', description: 'Allow selecting more than one file.' },
-          { name: 'accept', type: 'string', default: `''`, description: 'Native accept filter (e.g. "image/*").' },
+          {
+            name: 'multiple',
+            type: 'boolean',
+            default: 'false',
+            description: 'Allow selecting more than one file.',
+          },
+          {
+            name: 'accept',
+            type: 'string',
+            default: `''`,
+            description: 'Native accept filter (e.g. "image/*").',
+          },
           disabledRow,
         ],
         do: ['Set accept to guide users to valid file types.'],
@@ -394,10 +566,17 @@ export const DOCS: DocCategory[] = [
         lead: 'A color picker with preset swatches and a hex input; value is a `#rrggbb` string. ControlValueAccessor-compatible.',
         inputs: [
           model('string', 'Selected color as #rrggbb.'),
-          { name: 'swatches', type: 'string[]', default: 'DEFAULT_SWATCHES', description: 'Preset colors offered above the hex field.' },
+          {
+            name: 'swatches',
+            type: 'string[]',
+            default: 'DEFAULT_SWATCHES',
+            description: 'Preset colors offered above the hex field.',
+          },
         ],
         do: ['Provide a brand-aligned swatches list for quick picks.'],
-        dont: ['Do not use for picking from a continuous spectrum where a native input fits better.'],
+        dont: [
+          'Do not use for picking from a continuous spectrum where a native input fits better.',
+        ],
         a11y: [cvaA11y],
       },
       {
@@ -409,8 +588,18 @@ export const DOCS: DocCategory[] = [
         lead: 'Selects a leaf value from nested groups — e.g. a port group under a virtual switch. ControlValueAccessor-compatible.',
         inputs: [
           model('unknown', 'Selected leaf value.'),
-          { name: 'options', type: 'StrctCascadeOption[]', default: '[]', description: 'Tree of `{ label; value?; children? }` nodes.' },
-          { name: 'placeholder', type: 'string', default: `'Select…'`, description: 'Empty-state hint.' },
+          {
+            name: 'options',
+            type: 'StrctCascadeOption[]',
+            default: '[]',
+            description: 'Tree of `{ label; value?; children? }` nodes.',
+          },
+          {
+            name: 'placeholder',
+            type: 'string',
+            default: `'Select…'`,
+            description: 'Empty-state hint.',
+          },
         ],
         do: ['Use when options have a natural one-to-two-level hierarchy.'],
         dont: ['Do not nest more than a couple of levels — it gets hard to scan.'],
@@ -427,7 +616,12 @@ export const DOCS: DocCategory[] = [
           model('number', 'Number of selected stars.'),
           { name: 'max', type: 'number', default: '5', description: 'Total number of stars.' },
           { name: 'size', type: 'number', default: '18', description: 'Star size in pixels.' },
-          { name: 'readonly', type: 'boolean', default: 'false', description: 'Display-only mode.' },
+          {
+            name: 'readonly',
+            type: 'boolean',
+            default: 'false',
+            description: 'Display-only mode.',
+          },
         ],
         do: ['Use readonly to display an aggregate score.'],
         dont: ['Do not use stars for non-subjective data — prefer a number.'],
@@ -443,7 +637,12 @@ export const DOCS: DocCategory[] = [
         inputs: [
           model('string[]', 'Current tags.'),
           { name: 'placeholder', type: 'string', default: `''`, description: 'Empty-state hint.' },
-          { name: 'allowDuplicates', type: 'boolean', default: 'false', description: 'Permit repeated tag values.' },
+          {
+            name: 'allowDuplicates',
+            type: 'boolean',
+            default: 'false',
+            description: 'Permit repeated tag values.',
+          },
         ],
         do: ['Use for open-ended labels like tags or recipients.'],
         dont: ['Do not use when values must come from a fixed list — use a multi-select.'],
@@ -459,7 +658,12 @@ export const DOCS: DocCategory[] = [
         inputs: [
           model('string', 'Entered code.'),
           { name: 'length', type: 'number', default: '6', description: 'Number of boxes.' },
-          { name: 'masked', type: 'boolean', default: 'false', description: 'Obscure entered characters.' },
+          {
+            name: 'masked',
+            type: 'boolean',
+            default: 'false',
+            description: 'Obscure entered characters.',
+          },
         ],
         do: ['Match length to the code your backend issues.', 'Allow pasting a full code.'],
         dont: ['Do not use for secrets longer than a short code — use a password field.'],
@@ -495,9 +699,18 @@ export const DOCS: DocCategory[] = [
         lead: 'Formatted text entry. Mask tokens: `9` = digit, `A` = letter, `*` = alphanumeric, `H` = hex; everything else is a literal. ControlValueAccessor-compatible.',
         inputs: [
           model('string', 'Raw or formatted value.'),
-          { name: 'mask', type: 'string', description: 'Mask pattern. Required, e.g. "(999) 999 99 99".' },
+          {
+            name: 'mask',
+            type: 'string',
+            description: 'Mask pattern. Required, e.g. "(999) 999 99 99".',
+          },
           { name: 'placeholder', type: 'string', default: `''`, description: 'Empty-state hint.' },
-          { name: 'uppercase', type: 'boolean', default: 'false', description: 'Force entered letters to uppercase (e.g. MAC / WWPN).' },
+          {
+            name: 'uppercase',
+            type: 'boolean',
+            default: 'false',
+            description: 'Force entered letters to uppercase (e.g. MAC / WWPN).',
+          },
         ],
         do: ['Use for fixed-format fields: phone, IDs, MAC / WWPN, cards.'],
         dont: ['Do not use a mask for variable-length free text.'],
@@ -529,8 +742,17 @@ export const DOCS: DocCategory[] = [
         summary: 'Independently collapsible panels.',
         lead: 'A stack of independently collapsible panels. Each `strct-accordion-panel` manages its own expanded state.',
         inputs: [
-          { name: 'heading', type: 'string', description: 'On `strct-accordion-panel`: the panel title. Required.' },
-          { name: 'expanded', type: 'boolean', default: 'false', description: 'On `strct-accordion-panel`: two-way open state (`[(expanded)]`).' },
+          {
+            name: 'heading',
+            type: 'string',
+            description: 'On `strct-accordion-panel`: the panel title. Required.',
+          },
+          {
+            name: 'expanded',
+            type: 'boolean',
+            default: 'false',
+            description: 'On `strct-accordion-panel`: two-way open state (`[(expanded)]`).',
+          },
         ],
         do: ['Use for optional or secondary detail that benefits from progressive disclosure.'],
         dont: ['Do not hide critical, always-needed information inside a collapsed panel.'],
@@ -544,8 +766,17 @@ export const DOCS: DocCategory[] = [
         summary: 'Tabbed content from projected children.',
         lead: 'A tab group built from projected `strct-tab` children. Each tab carries a `label` and may be disabled.',
         inputs: [
-          { name: 'label', type: 'string', description: 'On `strct-tab`: the tab title. Required.' },
-          { name: 'disabled', type: 'boolean', default: 'false', description: 'On `strct-tab`: disable selection.' },
+          {
+            name: 'label',
+            type: 'string',
+            description: 'On `strct-tab`: the tab title. Required.',
+          },
+          {
+            name: 'disabled',
+            type: 'boolean',
+            default: 'false',
+            description: 'On `strct-tab`: disable selection.',
+          },
         ],
         do: ['Use for peer views of the same object (Summary / Activity / Settings).'],
         dont: ['Do not use tabs for a sequential flow — use a wizard.'],
@@ -559,20 +790,74 @@ export const DOCS: DocCategory[] = [
         summary: 'Nested, expandable nodes with icons.',
         lead: 'Nested, expandable nodes with optional icons, status badges and active state. Compose `strct-tree-node` manually, or pass `[nodes]` for a fully data-driven, self-recursing tree of any depth. Add `[nodeMenu]` for a per-node right-click menu.',
         inputs: [
-          { name: 'nodes', type: 'StrctTreeNodeData[]', default: 'null', description: 'On `strct-tree`: data-driven node list (`{ label; icon?; badge?; active?; expanded?; children?; data? }`). When set, projected content is ignored and the tree recurses itself.' },
-          { name: 'nodeMenu', type: '(node) => StrctMenuItem[]', default: 'null', description: 'On `strct-tree`: resolver that returns the right-click menu items for a given node. The tree wires a `[strctContextMenu]` trigger on every node row; nodes whose result is empty open no menu.' },
-          { name: 'label', type: 'string', default: `''`, description: 'On `strct-tree-node`: node text (content mode).' },
-          { name: 'icon', type: 'string | undefined', default: 'undefined', description: 'On `strct-tree-node`: optional leading icon.' },
-          { name: 'badge', type: 'StrctIconBadge', default: `'none'`, description: 'On `strct-tree-node`: status dot on the icon (ok / warn / crit / off …).' },
-          { name: 'active', type: 'boolean', default: 'false', description: 'On `strct-tree-node`: highlight as selected.' },
-          { name: 'expanded', type: 'boolean', default: 'false', description: 'On `strct-tree-node`: two-way open state (`[(expanded)]`).' },
+          {
+            name: 'nodes',
+            type: 'StrctTreeNodeData[]',
+            default: 'null',
+            description:
+              'On `strct-tree`: data-driven node list (`{ label; icon?; badge?; active?; expanded?; children?; data? }`). When set, projected content is ignored and the tree recurses itself.',
+          },
+          {
+            name: 'nodeMenu',
+            type: '(node) => StrctMenuItem[]',
+            default: 'null',
+            description:
+              'On `strct-tree`: resolver that returns the right-click menu items for a given node. The tree wires a `[strctContextMenu]` trigger on every node row; nodes whose result is empty open no menu.',
+          },
+          {
+            name: 'label',
+            type: 'string',
+            default: `''`,
+            description: 'On `strct-tree-node`: node text (content mode).',
+          },
+          {
+            name: 'icon',
+            type: 'string | undefined',
+            default: 'undefined',
+            description: 'On `strct-tree-node`: optional leading icon.',
+          },
+          {
+            name: 'badge',
+            type: 'StrctIconBadge',
+            default: `'none'`,
+            description: 'On `strct-tree-node`: status dot on the icon (ok / warn / crit / off …).',
+          },
+          {
+            name: 'active',
+            type: 'boolean',
+            default: 'false',
+            description: 'On `strct-tree-node`: highlight as selected.',
+          },
+          {
+            name: 'expanded',
+            type: 'boolean',
+            default: 'false',
+            description: 'On `strct-tree-node`: two-way open state (`[(expanded)]`).',
+          },
         ],
         outputs: [
-          { name: 'nodeActivated', type: 'StrctTreeNodeData', description: 'On `strct-tree`: fired when any data-driven node is clicked.' },
-          { name: 'nodeMenuSelect', type: 'StrctTreeMenuEvent', description: 'On `strct-tree`: fired with `{ node, item }` when a node\'s right-click menu item is chosen.' },
-          { name: 'activated', type: 'void', description: 'On `strct-tree-node`: fired when a content-mode node is clicked.' },
+          {
+            name: 'nodeActivated',
+            type: 'StrctTreeNodeData',
+            description: 'On `strct-tree`: fired when any data-driven node is clicked.',
+          },
+          {
+            name: 'nodeMenuSelect',
+            type: 'StrctTreeMenuEvent',
+            description:
+              "On `strct-tree`: fired with `{ node, item }` when a node's right-click menu item is chosen.",
+          },
+          {
+            name: 'activated',
+            type: 'void',
+            description: 'On `strct-tree-node`: fired when a content-mode node is clicked.',
+          },
         ],
-        do: ['Use `[nodes]` for dynamic / deep inventory trees.', 'Use node `badge` to show object state on the node.', 'Use `[nodeMenu]` for per-object right-click actions.'],
+        do: [
+          'Use `[nodes]` for dynamic / deep inventory trees.',
+          'Use node `badge` to show object state on the node.',
+          'Use `[nodeMenu]` for per-object right-click actions.',
+        ],
         dont: ['Do not use a tree for flat lists.'],
       },
       {
@@ -583,21 +868,50 @@ export const DOCS: DocCategory[] = [
         summary: 'Overlay dialog with focus trap.',
         lead: 'An overlay dialog with two-way `open`, backdrop and Escape dismiss, and a focus trap that restores focus on close. Project the footer through `strctModalFooter`.',
         inputs: [
-          { name: 'open', type: 'boolean', default: 'false', description: 'Two-way open state (`[(open)]`).' },
-          { name: 'title', type: 'string', default: `''`, description: 'Header title (also the aria-labelledby target).' },
-          { name: 'size', type: `'sm' | 'md' | 'lg'`, default: `'md'`, description: 'Dialog width.' },
-          { name: 'hideFooter', type: 'boolean', default: 'false', description: 'Hide the footer region.' },
-          { name: 'dismissable', type: 'boolean', default: 'true', description: 'Allow closing via backdrop click / Escape.' },
+          {
+            name: 'open',
+            type: 'boolean',
+            default: 'false',
+            description: 'Two-way open state (`[(open)]`).',
+          },
+          {
+            name: 'title',
+            type: 'string',
+            default: `''`,
+            description: 'Header title (also the aria-labelledby target).',
+          },
+          {
+            name: 'size',
+            type: `'sm' | 'md' | 'lg'`,
+            default: `'md'`,
+            description: 'Dialog width.',
+          },
+          {
+            name: 'hideFooter',
+            type: 'boolean',
+            default: 'false',
+            description: 'Hide the footer region.',
+          },
+          {
+            name: 'dismissible',
+            type: 'boolean',
+            default: 'true',
+            description: 'Allow closing via backdrop click / Escape.',
+          },
         ],
-        outputs: [
-          { name: 'closed', type: 'void', description: 'Fired when the dialog closes.' },
-        ],
+        outputs: [{ name: 'closed', type: 'void', description: 'Fired when the dialog closes.' }],
         methods: [
-          { name: 'close()', type: '() => void', description: 'Close the dialog programmatically.' },
+          {
+            name: 'close()',
+            type: '() => void',
+            description: 'Close the dialog programmatically.',
+          },
         ],
         do: ['Reserve modals for focused, must-answer interactions.', 'Give the dialog a title.'],
         dont: ['Do not stack modals on top of each other.'],
-        a11y: ['role="dialog", aria-modal, aria-labelledby; focus is trapped and restored on close; Escape closes when dismissable.'],
+        a11y: [
+          'role="dialog", aria-modal, aria-labelledby; focus is trapped and restored on close; Escape closes when dismissible.',
+        ],
       },
       {
         id: 'dropdown',
@@ -605,11 +919,26 @@ export const DOCS: DocCategory[] = [
         selector: 'strct-dropdown',
         importNames: ['StrctDropdown', 'StrctDropdownItem'],
         summary: 'Click-to-open menu.',
-        lead: 'A click-to-open menu that closes on outside click. Mark the trigger with `strctDropdownTrigger`; project `strct-dropdown-item` entries (which can be `danger` or `disabled`).',
+        lead: 'A click-to-open menu that closes on outside click. Mark the trigger with `strctDropdownTrigger`; project `strct-dropdown-item` entries (which can be `critical` or `disabled`).',
         inputs: [
-          { name: 'align', type: `'start' | 'end'`, default: `'start'`, description: 'Which edge the menu aligns to.' },
-          { name: 'danger', type: 'boolean', default: 'false', description: 'On `strct-dropdown-item`: destructive styling.' },
-          { name: 'disabled', type: 'boolean', default: 'false', description: 'On `strct-dropdown-item`: disable the entry.' },
+          {
+            name: 'align',
+            type: `'start' | 'end'`,
+            default: `'start'`,
+            description: 'Which edge the menu aligns to.',
+          },
+          {
+            name: 'critical',
+            type: 'boolean',
+            default: 'false',
+            description: 'On `strct-dropdown-item`: destructive styling.',
+          },
+          {
+            name: 'disabled',
+            type: 'boolean',
+            default: 'false',
+            description: 'On `strct-dropdown-item`: disable the entry.',
+          },
         ],
         do: ['Use for a short list of actions tied to a trigger.'],
         dont: ['Do not use a dropdown for primary navigation.'],
@@ -623,18 +952,54 @@ export const DOCS: DocCategory[] = [
         summary: 'Multi-step flow with Back / Next / Finish.',
         lead: 'A multi-step flow with built-in Back / Next / Finish controls. Each `strct-step` carries a `label` and can gate progress with `[canAdvance]`; the wizard emits `finished` on completion and supports a busy submit state and an optional Cancel.',
         inputs: [
-          { name: 'label', type: 'string', description: 'On `strct-step`: the step title. Required.' },
-          { name: 'canAdvance', type: 'boolean', default: 'true', description: 'On `strct-step`: when false, Next / Finish is disabled on this step.' },
-          { name: 'submitting', type: 'boolean', default: 'false', description: 'On `strct-wizard`: disable Finish and show a busy label during an async submit.' },
-          { name: 'cancelable', type: 'boolean', default: 'false', description: 'On `strct-wizard`: show a Cancel button.' },
-          { name: 'finishLabel', type: 'string', default: `'Finish'`, description: 'On `strct-wizard`: label for the final-step button.' },
+          {
+            name: 'label',
+            type: 'string',
+            description: 'On `strct-step`: the step title. Required.',
+          },
+          {
+            name: 'canAdvance',
+            type: 'boolean',
+            default: 'true',
+            description: 'On `strct-step`: when false, Next / Finish is disabled on this step.',
+          },
+          {
+            name: 'submitting',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'On `strct-wizard`: disable Finish and show a busy label during an async submit.',
+          },
+          {
+            name: 'cancelable',
+            type: 'boolean',
+            default: 'false',
+            description: 'On `strct-wizard`: show a Cancel button.',
+          },
+          {
+            name: 'finishLabel',
+            type: 'string',
+            default: `'Finish'`,
+            description: 'On `strct-wizard`: label for the final-step button.',
+          },
         ],
         outputs: [
-          { name: 'finished', type: 'void', description: 'Fired when the final step is completed.' },
+          {
+            name: 'finished',
+            type: 'void',
+            description: 'Fired when the final step is completed.',
+          },
           { name: 'cancelled', type: 'void', description: 'Fired when Cancel is clicked.' },
-          { name: 'stepChange', type: 'number', description: 'Emits the new step index after a Back / Next move.' },
+          {
+            name: 'stepChange',
+            type: 'number',
+            description: 'Emits the new step index after a Back / Next move.',
+          },
         ],
-        do: ['Use for a linear, sequential task with a clear end.', 'Gate each step with [canAdvance] tied to its form validity.'],
+        do: [
+          'Use for a linear, sequential task with a clear end.',
+          'Gate each step with [canAdvance] tied to its form validity.',
+        ],
         dont: ['Do not use a wizard for non-sequential, browsable sections — use tabs.'],
       },
       {
@@ -645,7 +1010,12 @@ export const DOCS: DocCategory[] = [
         summary: 'Separator rule, optional label, vertical mode.',
         lead: 'A separator rule, optionally with a centered label (projected content) or in vertical inline mode.',
         inputs: [
-          { name: 'vertical', type: 'boolean', default: 'false', description: 'Render as a vertical rule for inline separation.' },
+          {
+            name: 'vertical',
+            type: 'boolean',
+            default: 'false',
+            description: 'Render as a vertical rule for inline separation.',
+          },
         ],
         do: ['Use a labelled divider to introduce an alternative ("or").'],
         dont: ['Do not overuse dividers — whitespace often separates content well enough.'],
@@ -666,7 +1036,12 @@ export const DOCS: DocCategory[] = [
         summary: 'Hierarchical location trail.',
         lead: 'A trail of links showing the current location within a hierarchy. Project `strct-breadcrumb-item` entries; mark the last one `current`.',
         inputs: [
-          { name: 'current', type: 'boolean', default: 'false', description: 'On `strct-breadcrumb-item`: render as the non-link current page.' },
+          {
+            name: 'current',
+            type: 'boolean',
+            default: 'false',
+            description: 'On `strct-breadcrumb-item`: render as the non-link current page.',
+          },
         ],
         do: ['Mark the final item current so it is not a link.'],
         dont: ['Do not use a breadcrumb when the hierarchy is only one level deep.'],
@@ -682,7 +1057,12 @@ export const DOCS: DocCategory[] = [
         inputs: [
           { name: 'total', type: 'number', description: 'Total item count. Required.' },
           { name: 'pageSize', type: 'number', default: '10', description: 'Items per page.' },
-          { name: 'page', type: 'number', default: '1', description: 'Current page (1-based), two-way (`[(page)]`).' },
+          {
+            name: 'page',
+            type: 'number',
+            default: '1',
+            description: 'Current page (1-based), two-way (`[(page)]`).',
+          },
         ],
         do: ['Keep pageSize consistent with what your data source returns.'],
         dont: ['Do not paginate very short lists.'],
@@ -704,11 +1084,34 @@ export const DOCS: DocCategory[] = [
         summary: 'Lightweight styled table.',
         lead: 'A lightweight, token-styled table for simple tabular data. Pass `columns` and `rows`; values are looked up by column `key`. Cells render as text by default — supply a `*strctCell="key"` template (context: `let-row`, `let-value="value"`, `let-column="column"`) for custom content.',
         inputs: [
-          { name: 'columns', type: 'StrctColumn[]', description: '`{ key; label; align? }[]`. Required.' },
-          { name: 'rows', type: 'StrctRow[]', description: 'Array of `Record<string, unknown>`. Required.' },
-          { name: 'striped', type: 'boolean', default: 'false', description: 'Alternating row backgrounds.' },
-          { name: 'hover', type: 'boolean', default: 'false', description: 'Highlight rows on hover.' },
-          { name: 'emptyText', type: 'string', default: `'No data'`, description: 'Shown when rows is empty.' },
+          {
+            name: 'columns',
+            type: 'StrctColumn[]',
+            description: '`{ key; label; align? }[]`. Required.',
+          },
+          {
+            name: 'rows',
+            type: 'StrctRow[]',
+            description: 'Array of `Record<string, unknown>`. Required.',
+          },
+          {
+            name: 'striped',
+            type: 'boolean',
+            default: 'false',
+            description: 'Alternating row backgrounds.',
+          },
+          {
+            name: 'hover',
+            type: 'boolean',
+            default: 'false',
+            description: 'Highlight rows on hover.',
+          },
+          {
+            name: 'emptyText',
+            type: 'string',
+            default: `'No data'`,
+            description: 'Shown when rows is empty.',
+          },
         ],
         do: ['Use for read-only, lightweight tabular data.'],
         dont: ['Do not use the simple table when you need sorting / selection — use the datagrid.'],
@@ -721,24 +1124,76 @@ export const DOCS: DocCategory[] = [
         summary: 'Selectable, expandable data grid.',
         lead: 'A richer grid with sorting, selection, batch actions, pagination and expandable rows. Columns can be `sortable` and aligned. Use `*strctCell="key"` templates for custom cells (status pills, links, action buttons), and set `rowId` so selection / expansion survive live data refreshes.',
         inputs: [
-          { name: 'columns', type: 'StrctDatagridColumn[]', description: '`{ key; label; sortable?; align? }[]`. Required.' },
-          { name: 'rows', type: 'StrctRow[]', description: 'Array of `Record<string, unknown>`. Required.' },
-          { name: 'rowId', type: 'string | ((row) => unknown)', default: 'null', description: 'Stable row identity (property key or function). Set it for live-refreshing data so selection, expansion and the active detail row survive re-fetches. Defaults to object identity.' },
-          { name: 'pageSize', type: 'number', default: '0', description: 'Rows per page; 0 disables pagination.' },
-          { name: 'selectable', type: 'boolean', default: 'false', description: 'Show selection checkboxes + batch action bar.' },
-          { name: 'expandable', type: 'boolean', default: 'false', description: 'Allow rows to expand an inline detail (with `strctRowDetail`).' },
-          { name: 'detailPane', type: 'boolean', default: 'false', description: 'Master/detail mode — see the Detail pane page.' },
+          {
+            name: 'columns',
+            type: 'StrctDatagridColumn[]',
+            description: '`{ key; label; sortable?; align? }[]`. Required.',
+          },
+          {
+            name: 'rows',
+            type: 'StrctRow[]',
+            description: 'Array of `Record<string, unknown>`. Required.',
+          },
+          {
+            name: 'rowId',
+            type: 'string | ((row) => unknown)',
+            default: 'null',
+            description:
+              'Stable row identity (property key or function). Set it for live-refreshing data so selection, expansion and the active detail row survive re-fetches. Defaults to object identity.',
+          },
+          {
+            name: 'pageSize',
+            type: 'number',
+            default: '0',
+            description: 'Rows per page; 0 disables pagination.',
+          },
+          {
+            name: 'selectable',
+            type: 'boolean',
+            default: 'false',
+            description: 'Show selection checkboxes + batch action bar.',
+          },
+          {
+            name: 'expandable',
+            type: 'boolean',
+            default: 'false',
+            description: 'Allow rows to expand an inline detail (with `strctRowDetail`).',
+          },
+          {
+            name: 'detailPane',
+            type: 'boolean',
+            default: 'false',
+            description: 'Master/detail mode — see the Detail pane page.',
+          },
           { name: 'compact', type: 'boolean', default: 'false', description: 'Denser row height.' },
-          { name: 'emptyText', type: 'string', default: `'No data'`, description: 'Shown when rows is empty.' },
+          {
+            name: 'emptyText',
+            type: 'string',
+            default: `'No data'`,
+            description: 'Shown when rows is empty.',
+          },
         ],
         outputs: [
-          { name: 'selectionChange', type: 'StrctRow[]', description: 'Emits the selected rows when selection changes.' },
+          {
+            name: 'selectionChange',
+            type: 'StrctRow[]',
+            description: 'Emits the selected rows when selection changes.',
+          },
         ],
         methods: [
-          { name: 'sortBy(key)', type: '(key: string) => void', description: 'Toggle sort on a column (asc → desc → none).' },
+          {
+            name: 'sortBy(key)',
+            type: '(key: string) => void',
+            description: 'Toggle sort on a column (asc → desc → none).',
+          },
         ],
-        do: ['Provide an inline detail template via `<ng-template strctRowDetail let-row>` when expandable.', 'Use the action bar slot for batch operations.'],
-        dont: ['Do not enable both expandable rows and detailPane at once — they are distinct patterns.'],
+        do: [
+          'Provide an inline detail template via `<ng-template strctRowDetail let-row>` when expandable.',
+          'Use the action bar slot for batch operations.',
+        ],
+        dont: [
+          'Do not enable both expandable rows and detailPane at once — they are distinct patterns.',
+        ],
         a11y: ['Sortable headers are focusable, toggle on Enter/Space and expose aria-sort.'],
       },
       {
@@ -749,8 +1204,17 @@ export const DOCS: DocCategory[] = [
         summary: 'Collapse the grid to a master / detail view.',
         lead: 'A datagrid mode (`detailPane`) that collapses the table to its first column and opens a side pane for the active row. Distinct from expandable rows: this is a master/detail layout, not an inline expansion.',
         inputs: [
-          { name: 'detailPane', type: 'boolean', default: 'false', description: 'Enable master/detail mode.' },
-          { name: 'columns / rows', type: 'StrctDatagridColumn[] / StrctRow[]', description: 'Same as the datagrid.' },
+          {
+            name: 'detailPane',
+            type: 'boolean',
+            default: 'false',
+            description: 'Enable master/detail mode.',
+          },
+          {
+            name: 'columns / rows',
+            type: 'StrctDatagridColumn[] / StrctRow[]',
+            description: 'Same as the datagrid.',
+          },
         ],
         do: ['Render the pane body via `<ng-template strctRowDetail let-row>`.'],
         dont: ['Do not combine with inline expandable rows.'],
@@ -764,8 +1228,17 @@ export const DOCS: DocCategory[] = [
         summary: 'Vertical sequence of events.',
         lead: 'A vertical sequence of events. Each `strct-timeline-item` has a `title` and a semantic `state` marker.',
         inputs: [
-          { name: 'title', type: 'string', description: 'On `strct-timeline-item`: the event title. Required.' },
-          { name: 'state', type: `'default' | 'current' | 'success' | 'warning' | 'danger'`, default: `'default'`, description: 'On `strct-timeline-item`: marker color/emphasis.' },
+          {
+            name: 'title',
+            type: 'string',
+            description: 'On `strct-timeline-item`: the event title. Required.',
+          },
+          {
+            name: 'state',
+            type: `'default' | 'current' | 'success' | 'warning' | 'critical'`,
+            default: `'default'`,
+            description: 'On `strct-timeline-item`: marker color/emphasis.',
+          },
         ],
         do: ['Use current to mark the in-progress step.'],
         dont: ['Do not use a timeline for non-sequential data.'],
@@ -778,7 +1251,11 @@ export const DOCS: DocCategory[] = [
         summary: 'Key / value detail list.',
         lead: 'A label / value list for read-only object details. Each `strct-stack-item` has a `label`; the value is projected content.',
         inputs: [
-          { name: 'label', type: 'string', description: 'On `strct-stack-item`: the field label. Required.' },
+          {
+            name: 'label',
+            type: 'string',
+            description: 'On `strct-stack-item`: the field label. Required.',
+          },
         ],
         do: ['Use for compact read-only property lists (an object’s summary).'],
         dont: ['Do not use a stack view for editable forms.'],
@@ -801,7 +1278,12 @@ export const DOCS: DocCategory[] = [
         inputs: [
           { name: 'data', type: 'number[]', description: 'Series values. Required.' },
           { name: 'status', type: CHART_STATUS, default: `'accent'`, description: 'Line color.' },
-          { name: 'area', type: 'boolean', default: 'false', description: 'Fill the area under the line.' },
+          {
+            name: 'area',
+            type: 'boolean',
+            default: 'false',
+            description: 'Fill the area under the line.',
+          },
           { name: 'width', type: 'number', default: '100', description: 'SVG width in pixels.' },
           { name: 'height', type: 'number', default: '30', description: 'SVG height in pixels.' },
         ],
@@ -817,11 +1299,26 @@ export const DOCS: DocCategory[] = [
         lead: 'A line or filled area chart for time series, driven by plain data arrays. Set `type` to `line` or `area`.',
         inputs: [
           { name: 'data', type: 'number[]', description: 'Series values. Required.' },
-          { name: 'type', type: `'line' | 'area' | 'bar'`, default: `'line'`, description: 'Chart style.' },
+          {
+            name: 'type',
+            type: `'line' | 'area' | 'bar'`,
+            default: `'line'`,
+            description: 'Chart style.',
+          },
           { name: 'labels', type: 'string[]', default: '[]', description: 'X-axis labels.' },
           { name: 'status', type: CHART_STATUS, default: `'accent'`, description: 'Series color.' },
-          { name: 'height', type: 'number', default: '160', description: 'Chart height in pixels.' },
-          { name: 'max', type: 'number | null', default: 'null', description: 'Fixed Y maximum; null auto-scales.' },
+          {
+            name: 'height',
+            type: 'number',
+            default: '160',
+            description: 'Chart height in pixels.',
+          },
+          {
+            name: 'max',
+            type: 'number | null',
+            default: 'null',
+            description: 'Fixed Y maximum; null auto-scales.',
+          },
         ],
         do: ['Use for continuous time-series data.'],
         dont: ['Do not use a line chart for unordered categories — use bars.'],
@@ -835,11 +1332,26 @@ export const DOCS: DocCategory[] = [
         lead: 'The same `strct-chart` with `type="bar"`, for categorical comparisons.',
         inputs: [
           { name: 'data', type: 'number[]', description: 'Bar values. Required.' },
-          { name: 'type', type: `'line' | 'area' | 'bar'`, default: `'line'`, description: 'Set to "bar".' },
+          {
+            name: 'type',
+            type: `'line' | 'area' | 'bar'`,
+            default: `'line'`,
+            description: 'Set to "bar".',
+          },
           { name: 'labels', type: 'string[]', default: '[]', description: 'Category labels.' },
           { name: 'status', type: CHART_STATUS, default: `'accent'`, description: 'Bar color.' },
-          { name: 'height', type: 'number', default: '160', description: 'Chart height in pixels.' },
-          { name: 'max', type: 'number | null', default: 'null', description: 'Fixed Y maximum; null auto-scales.' },
+          {
+            name: 'height',
+            type: 'number',
+            default: '160',
+            description: 'Chart height in pixels.',
+          },
+          {
+            name: 'max',
+            type: 'number | null',
+            default: 'null',
+            description: 'Fixed Y maximum; null auto-scales.',
+          },
         ],
         do: ['Use for comparing discrete categories.'],
         dont: ['Do not use bars for continuous time data — use a line.'],
@@ -852,11 +1364,25 @@ export const DOCS: DocCategory[] = [
         summary: 'Proportional ring chart.',
         lead: 'A donut chart for parts of a whole, with an optional center label/value. Segments are `{ value; label }`.',
         inputs: [
-          { name: 'segments', type: 'StrctDonutSegment[]', description: '`{ value; label; ... }[]`. Required.' },
+          {
+            name: 'segments',
+            type: 'StrctDonutSegment[]',
+            description: '`{ value; label; ... }[]`. Required.',
+          },
           { name: 'size', type: 'number', default: '120', description: 'Diameter in pixels.' },
           { name: 'thickness', type: 'number', default: '14', description: 'Ring stroke width.' },
-          { name: 'centerValue', type: 'string | number', default: `''`, description: 'Big value in the middle.' },
-          { name: 'centerLabel', type: 'string', default: `''`, description: 'Caption under the center value.' },
+          {
+            name: 'centerValue',
+            type: 'string | number',
+            default: `''`,
+            description: 'Big value in the middle.',
+          },
+          {
+            name: 'centerLabel',
+            type: 'string',
+            default: `''`,
+            description: 'Caption under the center value.',
+          },
         ],
         do: ['Use for a small number of segments (2–5).'],
         dont: ['Do not use a donut for many slivers — a bar chart reads better.'],
@@ -894,12 +1420,20 @@ export const DOCS: DocCategory[] = [
         summary: 'Inline semantic banner.',
         lead: 'An inline banner for contextual messages, in four semantic tones. Uses a neutral surface with a colored left rail; add `closable` for a dismiss button.',
         inputs: [
-          { name: 'type', type: `'info' | 'success' | 'warning' | 'danger'`, default: `'info'`, description: 'Semantic tone.' },
-          { name: 'closable', type: 'boolean', default: 'false', description: 'Show a dismiss button.' },
+          {
+            name: 'type',
+            type: `'info' | 'success' | 'warning' | 'critical'`,
+            default: `'info'`,
+            description: 'Semantic tone.',
+          },
+          {
+            name: 'closable',
+            type: 'boolean',
+            default: 'false',
+            description: 'Show a dismiss button.',
+          },
         ],
-        outputs: [
-          { name: 'closed', type: 'void', description: 'Fired when dismissed.' },
-        ],
+        outputs: [{ name: 'closed', type: 'void', description: 'Fired when dismissed.' }],
         do: ['Use inline, near the content the message is about.'],
         dont: ['Do not use an alert for transient confirmations — use a toast.'],
       },
@@ -912,10 +1446,17 @@ export const DOCS: DocCategory[] = [
         lead: 'A directive that shows a small hint on hover or focus. It renders into the document body, so it escapes overflow and transform clipping.',
         inputs: [
           { name: 'strctTooltip', type: 'string', description: 'Tooltip text. Required.' },
-          { name: 'tooltipPosition', type: `'top' | 'bottom' | 'left' | 'right'`, default: `'top'`, description: 'Preferred side.' },
+          {
+            name: 'tooltipPosition',
+            type: `'top' | 'bottom' | 'left' | 'right'`,
+            default: `'top'`,
+            description: 'Preferred side.',
+          },
         ],
         do: ['Use for short, supplementary hints.'],
-        dont: ['Do not put essential information only in a tooltip — it is not reachable on touch.'],
+        dont: [
+          'Do not put essential information only in a tooltip — it is not reachable on touch.',
+        ],
         a11y: ['Shows on focus as well as hover.'],
       },
       {
@@ -926,7 +1467,12 @@ export const DOCS: DocCategory[] = [
         summary: 'Click-triggered explanatory popover.',
         lead: 'A click-triggered popover for richer inline help than a tooltip. Project the trigger and the content.',
         inputs: [
-          { name: 'position', type: `'top' | 'bottom' | 'left' | 'right'`, default: `'bottom'`, description: 'Popover side relative to the trigger.' },
+          {
+            name: 'position',
+            type: `'top' | 'bottom' | 'left' | 'right'`,
+            default: `'bottom'`,
+            description: 'Popover side relative to the trigger.',
+          },
         ],
         do: ['Use for a paragraph of help or a small set of details.'],
         dont: ['Do not use a signpost where a one-line tooltip suffices.'],
@@ -939,13 +1485,30 @@ export const DOCS: DocCategory[] = [
         summary: 'Transient notifications via a service.',
         lead: 'Transient notifications raised from `StrctToastService` and rendered by a single `strct-toast-outlet` placed near the app root. Call from anywhere via dependency injection.',
         methods: [
-          { name: 'show(message, options?)', type: '(string, { type?; duration? }) => number', description: 'Queue a toast; returns its id.' },
-          { name: 'info / success / warning / danger', type: '(message, duration?) => number', description: 'Convenience helpers per type.' },
-          { name: 'dismiss(id)', type: '(id: number) => void', description: 'Remove a specific toast.' },
+          {
+            name: 'show(message, options?)',
+            type: '(string, { type?; duration? }) => number',
+            description: 'Queue a toast; returns its id.',
+          },
+          {
+            name: 'info / success / warning / critical',
+            type: '(message, duration?) => number',
+            description: 'Convenience helpers per type.',
+          },
+          {
+            name: 'dismiss(id)',
+            type: '(id: number) => void',
+            description: 'Remove a specific toast.',
+          },
           { name: 'clear()', type: '() => void', description: 'Remove all toasts.' },
         ],
-        do: ['Render the outlet once near the app root.', 'Use a duration of 0 for messages that must be acknowledged.'],
-        dont: ['Do not use toasts for critical errors that need a decision — use a modal or alert.'],
+        do: [
+          'Render the outlet once near the app root.',
+          'Use a duration of 0 for messages that must be acknowledged.',
+        ],
+        dont: [
+          'Do not use toasts for critical errors that need a decision — use a modal or alert.',
+        ],
       },
       {
         id: 'skeleton',
@@ -957,7 +1520,12 @@ export const DOCS: DocCategory[] = [
         inputs: [
           { name: 'width', type: 'string', default: `'100%'`, description: 'CSS width.' },
           { name: 'height', type: 'string', default: `'14px'`, description: 'CSS height.' },
-          { name: 'circle', type: 'boolean', default: 'false', description: 'Render as a circle (e.g. an avatar placeholder).' },
+          {
+            name: 'circle',
+            type: 'boolean',
+            default: 'false',
+            description: 'Render as a circle (e.g. an avatar placeholder).',
+          },
         ],
         do: ['Match skeleton shapes to the real content’s layout.'],
         dont: ['Do not show skeletons for very fast loads — a flash is worse than nothing.'],
@@ -979,29 +1547,65 @@ export const DOCS: DocCategory[] = [
         summary: 'Centered or split login scaffold.',
         lead: 'A login page scaffold in centered or split layouts. In split mode, project a decorative aside via `strctLoginAside` and the form via `strctLoginMain`.',
         inputs: [
-          { name: 'maxWidth', type: 'number', default: '880', description: 'Max width of the card in pixels.' },
-          { name: 'split', type: 'boolean', default: 'false', description: 'Two-panel layout with a decorative aside.' },
+          {
+            name: 'maxWidth',
+            type: 'number',
+            default: '880',
+            description: 'Max width of the card in pixels.',
+          },
+          {
+            name: 'split',
+            type: 'boolean',
+            default: 'false',
+            description: 'Two-panel layout with a decorative aside.',
+          },
         ],
         do: ['Use `strctLoginMain` for the form content in split mode.'],
-        dont: ['Do not place two default ng-content slots in separate branches when extending — Angular routes default content to one slot only.'],
+        dont: [
+          'Do not place two default ng-content slots in separate branches when extending — Angular routes default content to one slot only.',
+        ],
       },
       {
         id: 'contextmenu',
         title: 'Context menu',
         selector: '[strctContextMenu], strct-context-menu',
-        importNames: ['StrctContextMenuTrigger', 'StrctMenuItem', 'StrctContextMenu', 'StrctSubmenu'],
+        importNames: [
+          'StrctContextMenuTrigger',
+          'StrctMenuItem',
+          'StrctContextMenu',
+          'StrctSubmenu',
+        ],
         summary: 'Data-driven right-click menu with submenus.',
         lead: 'Two flavours. **Recommended:** the `[strctContextMenu]="items"` directive — attach a `StrctMenuItem[]` to any element; the menu portals into the body (no clipping), positions by its real size, supports full keyboard navigation and nested submenus, and runs each item\'s `action`. A content-projection `strct-context-menu` element (with `strct-submenu` fly-outs) also remains for static menus.',
         inputs: [
-          { name: 'strctContextMenu', type: 'StrctMenuItem[]', description: 'Menu data: `{ label; icon?; danger?; disabled?; divider?; children?; action? }[]`. Required (directive).' },
-          { name: 'strctContextMenuData', type: 'unknown', default: 'undefined', description: 'Payload passed to each item\'s `action`.' },
+          {
+            name: 'strctContextMenu',
+            type: 'StrctMenuItem[]',
+            description:
+              'Menu data: `{ label; icon?; critical?; disabled?; divider?; children?; action? }[]`. Required (directive).',
+          },
+          {
+            name: 'strctContextMenuData',
+            type: 'unknown',
+            default: 'undefined',
+            description: "Payload passed to each item's `action`.",
+          },
         ],
         outputs: [
-          { name: 'menuSelect', type: 'StrctMenuItem', description: 'Fired with the chosen item (directive).' },
+          {
+            name: 'menuSelect',
+            type: 'StrctMenuItem',
+            description: 'Fired with the chosen item (directive).',
+          },
         ],
-        do: ['Prefer the directive for per-object, data-driven menus (e.g. one menu per tree node).', 'Add submenus via item `children`.'],
+        do: [
+          'Prefer the directive for per-object, data-driven menus (e.g. one menu per tree node).',
+          'Add submenus via item `children`.',
+        ],
         dont: ['Do not hide the only way to perform an action behind a right-click menu.'],
-        a11y: ['Portaled to the body; positioned by real size; full keyboard support (↑/↓/→/←/Enter/Esc, roving tabindex); closes on outside click / Escape / scroll / resize.'],
+        a11y: [
+          'Portaled to the body; positioned by real size; full keyboard support (↑/↓/→/←/Enter/Esc, roving tabindex); closes on outside click / Escape / scroll / resize.',
+        ],
       },
     ],
   },

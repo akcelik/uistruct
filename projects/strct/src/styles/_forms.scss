@@ -11,14 +11,21 @@
   color: var(--t1);
   background: var(--bg-2);
   border: 1px solid var(--b2);
-  border-radius: 6px;
-  padding: 7px 10px;
-  transition: border-color .14s ease, box-shadow .14s ease, background .14s ease;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  transition:
+    border-color 0.14s ease,
+    box-shadow 0.14s ease,
+    background 0.14s ease;
 }
 
-.strct-control::placeholder { color: var(--t3); }
+.strct-control::placeholder {
+  color: var(--t3);
+}
 
-.strct-control:hover { border-color: var(--b3); }
+.strct-control:hover {
+  border-color: var(--b3);
+}
 
 .strct-control:focus,
 .strct-control:focus-visible {
@@ -29,16 +36,16 @@
 }
 
 .strct-control:disabled {
-  opacity: .5;
+  opacity: var(--disabled-opacity);
   cursor: not-allowed;
   background: var(--bg-3);
 }
 
 .strct-control[aria-invalid='true'] {
-  border-color: var(--crt);
+  border-color: var(--critical);
 }
 .strct-control[aria-invalid='true']:focus {
-  box-shadow: 0 0 0 3px var(--crt-bg);
+  box-shadow: 0 0 0 3px var(--critical-bg);
 }
 
 // Native <select> gets a custom chevron.
@@ -50,4 +57,7 @@ select.strct-control {
   background-position: right 9px center;
 }
 
-textarea.strct-control { min-height: 76px; resize: vertical; }
+textarea.strct-control {
+  min-height: 76px;
+  resize: vertical;
+}

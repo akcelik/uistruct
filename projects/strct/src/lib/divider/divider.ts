@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, booleanAttribute, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewEncapsulation,
+  booleanAttribute,
+  input,
+} from '@angular/core';
 
 /**
  * Separator rule. Horizontal by default; pass `vertical` for an inline rule.
@@ -19,26 +25,50 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation, booleanAttribute
   },
   styles: [
     `
-    .strct-divider {
-      display: flex; align-items: center; gap: 12px;
-      width: 100%; color: var(--t3); font-size: 11px;
-      text-transform: uppercase; letter-spacing: .5px;
-    }
-    .strct-divider::before, .strct-divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--b2);
-    }
-    .strct-divider__label:empty { display: none; }
-    .strct-divider:has(.strct-divider__label:empty) { gap: 0; }
+      .strct-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        color: var(--t3);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .strct-divider::before,
+      .strct-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--b2);
+      }
+      .strct-divider__label:empty {
+        display: none;
+      }
+      .strct-divider:has(.strct-divider__label:empty) {
+        gap: 0;
+      }
 
-    .strct-divider--vertical {
-      display: inline-block; width: 1px; min-height: 1em; height: auto; align-self: stretch;
-      background: var(--b2); margin: 0 2px;
-    }
-    .strct-divider--vertical::before, .strct-divider--vertical::after { content: none; }
-    .strct-divider--vertical .strct-divider__label { display: none; }
+      .strct-divider--vertical {
+        display: inline-block;
+        width: 1px;
+        min-height: 1em;
+        height: auto;
+        align-self: stretch;
+        background: var(--b2);
+        margin: 0 2px;
+      }
+      .strct-divider--vertical::before,
+      .strct-divider--vertical::after {
+        content: none;
+      }
+      .strct-divider--vertical .strct-divider__label {
+        display: none;
+      }
     `,
   ],
 })
 export class StrctDivider {
+  /** Render as a vertical rule. */
   readonly vertical = input(false, { transform: booleanAttribute });
 }

@@ -1,6 +1,14 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewEncapsulation,
+  computed,
+  input,
+} from '@angular/core';
 
+/** Avatar size variants. */
 export type StrctAvatarSize = 'sm' | 'md' | 'lg';
+/** Avatar presence status variants. */
 export type StrctAvatarStatus = 'none' | 'online' | 'busy' | 'offline';
 
 /**
@@ -32,32 +40,74 @@ export type StrctAvatarStatus = 'none' | 'online' | 'busy' | 'offline';
   },
   styles: [
     `
-    .strct-av {
-      position: relative; display: inline-flex; align-items: center; justify-content: center;
-      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-      background: var(--bg-3); color: var(--t1); overflow: visible;
-      font-size: 13px; font-weight: 600; user-select: none;
-      border: 1px solid var(--b2);
-    }
-    .strct-av--sm { width: 26px; height: 26px; font-size: 11px; }
-    .strct-av--lg { width: 48px; height: 48px; font-size: 17px; }
-    .strct-av__img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-    .strct-av__initials { line-height: 1; }
-    .strct-av__status {
-      position: absolute; right: -1px; bottom: -1px;
-      width: 30%; height: 30%; min-width: 8px; min-height: 8px; border-radius: 50%;
-      border: 2px solid var(--bg-1); background: var(--t3);
-    }
-    .strct-av--online .strct-av__status { background: var(--ok); }
-    .strct-av--busy .strct-av__status { background: var(--crt); }
-    .strct-av--offline .strct-av__status { background: var(--t3); }
+      .strct-av {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: var(--bg-3);
+        color: var(--t1);
+        overflow: visible;
+        font-size: 13px;
+        font-weight: 600;
+        user-select: none;
+        border: 1px solid var(--b2);
+      }
+      .strct-av--sm {
+        width: 26px;
+        height: 26px;
+        font-size: 11px;
+      }
+      .strct-av--lg {
+        width: 48px;
+        height: 48px;
+        font-size: 17px;
+      }
+      .strct-av__img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      .strct-av__initials {
+        line-height: 1;
+      }
+      .strct-av__status {
+        position: absolute;
+        right: -1px;
+        bottom: -1px;
+        width: 30%;
+        height: 30%;
+        min-width: 8px;
+        min-height: 8px;
+        border-radius: 50%;
+        border: 2px solid var(--bg-1);
+        background: var(--t3);
+      }
+      .strct-av--online .strct-av__status {
+        background: var(--success);
+      }
+      .strct-av--busy .strct-av__status {
+        background: var(--critical);
+      }
+      .strct-av--offline .strct-av__status {
+        background: var(--t3);
+      }
     `,
   ],
 })
 export class StrctAvatar {
+  /** Image URL. */
   readonly src = input('');
+  /** Display name (used for initials when src is absent). */
   readonly name = input('');
+  /** Size variant. */
   readonly size = input<StrctAvatarSize>('md');
+  /** Visual status color. */
   readonly status = input<StrctAvatarStatus>('none');
 
   protected readonly initials = computed(() => {

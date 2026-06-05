@@ -43,8 +43,15 @@ import { StrctIcon } from '../icon/icon';
         } @else {
           <span class="strct-submenu__icon-spacer" aria-hidden="true"></span>
         }
-        <span class="strct-submenu__label">{{ label() }}<ng-content select="[strctSubmenuLabel]" /></span>
-        <strct-icon class="strct-submenu__arrow" name="chevronRight" [size]="12" [strokeWidth]="1.6" />
+        <span class="strct-submenu__label"
+          >{{ label() }}<ng-content select="[strctSubmenuLabel]"
+        /></span>
+        <strct-icon
+          class="strct-submenu__arrow"
+          name="chevronRight"
+          [size]="12"
+          [strokeWidth]="1.6"
+        />
       </div>
       @if (open()) {
         <div class="strct-submenu__panel" [class.strct-submenu__panel--flip]="flip()" role="menu">
@@ -56,33 +63,76 @@ import { StrctIcon } from '../icon/icon';
   host: { class: 'strct-submenu-host' },
   styles: [
     `
-    .strct-submenu { position: relative; }
-    .strct-submenu__trigger {
-      display: flex; align-items: center; gap: 8px;
-      padding: 7px 8px 7px 10px; border-radius: 5px; cursor: default;
-      font-size: 13px; color: var(--t1);
-    }
-    .strct-submenu__trigger:hover { background: var(--bg-3); }
-    .strct-submenu__trigger:focus-visible { outline: none; background: var(--bg-3); }
-    .strct-submenu__icon { color: var(--t2); flex-shrink: 0; }
-    .strct-submenu__icon-spacer { width: 14px; flex-shrink: 0; }
-    .strct-submenu__label { flex: 1; display: inline-flex; align-items: center; gap: 8px; }
-    .strct-submenu__arrow { color: var(--t3); }
-    .strct-submenu__panel {
-      position: absolute; top: -5px; left: 100%; z-index: 1; min-width: 170px;
-      margin-left: 2px; padding: 4px;
-      background: var(--bg-1); border: 1px solid var(--b2);
-      border-radius: 7px; box-shadow: var(--shh);
-      animation: strct-submenu-in .1s ease;
-    }
-    .strct-submenu__panel--flip { left: auto; right: 100%; margin-left: 0; margin-right: 2px; }
-    @keyframes strct-submenu-in { from { opacity: 0; transform: translateX(-4px); } }
+      .strct-submenu {
+        position: relative;
+      }
+      .strct-submenu__trigger {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 8px 7px 10px;
+        border-radius: 5px;
+        cursor: default;
+        font-size: 13px;
+        color: var(--t1);
+      }
+      .strct-submenu__trigger:hover {
+        background: var(--bg-3);
+      }
+      .strct-submenu__trigger:focus-visible {
+        outline: none;
+        background: var(--bg-3);
+      }
+      .strct-submenu__icon {
+        color: var(--t2);
+        flex-shrink: 0;
+      }
+      .strct-submenu__icon-spacer {
+        width: 14px;
+        flex-shrink: 0;
+      }
+      .strct-submenu__label {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .strct-submenu__arrow {
+        color: var(--t3);
+      }
+      .strct-submenu__panel {
+        position: absolute;
+        top: -5px;
+        left: 100%;
+        z-index: 1;
+        min-width: 170px;
+        margin-left: 2px;
+        padding: 4px;
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: 7px;
+        box-shadow: var(--shh);
+        animation: strct-submenu-in 0.1s ease;
+      }
+      .strct-submenu__panel--flip {
+        left: auto;
+        right: 100%;
+        margin-left: 0;
+        margin-right: 2px;
+      }
+      @keyframes strct-submenu-in {
+        from {
+          opacity: 0;
+          transform: translateX(-4px);
+        }
+      }
     `,
   ],
 })
 export class StrctSubmenu {
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
 
+  /** Label text. */
   readonly label = input('');
   /** Optional leading icon; when omitted the icon column is still reserved so
    *  the label stays aligned with sibling items that do have icons. */

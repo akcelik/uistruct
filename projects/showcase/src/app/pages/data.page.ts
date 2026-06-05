@@ -49,7 +49,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="table"
       heading="Table"
       description="Driven by columns and rows inputs, with optional striped and hover styling."
-      code="<strct-table [columns]=&quot;cols&quot; [rows]=&quot;rows&quot; striped hover />"
+      code='<strct-table [columns]="cols" [rows]="rows" striped hover />'
     >
       <strct-table style="width: 100%;" [columns]="cols" [rows]="rows" striped hover />
     </app-demo>
@@ -58,10 +58,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="datagrid"
       heading="Datagrid"
       description="Sortable columns, row selection, expandable detail rows, a batch action bar and paging. A *strctCell template renders the Status column as a badge, and rowId keeps selection / expansion stable across live data refreshes."
-      code="<strct-datagrid [columns]=&quot;cols&quot; [rows]=&quot;rows&quot; rowId=&quot;name&quot; selectable expandable>&#10;  <ng-template strctCell=&quot;status&quot; let-value=&quot;value&quot;>…</ng-template>&#10;</strct-datagrid>"
+      code='<strct-datagrid [columns]="cols" [rows]="rows" rowId="name" selectable expandable>&#10;  <ng-template strctCell="status" let-value="value">…</ng-template>&#10;</strct-datagrid>'
     >
       <div class="dg-wrap">
-        <strct-checkbox [ngModel]="dense()" (ngModelChange)="dense.set($event)">Compact</strct-checkbox>
+        <strct-checkbox [ngModel]="dense()" (ngModelChange)="dense.set($event)"
+          >Compact</strct-checkbox
+        >
 
         <strct-datagrid
           style="width: 100%;"
@@ -81,16 +83,16 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             <button strct-button variant="primary" size="sm">
               <strct-icon name="upload" [size]="14" /> Add host
             </button>
-            <button strct-button size="sm">
-              <strct-icon name="sync" [size]="14" /> Refresh
-            </button>
+            <button strct-button size="sm"><strct-icon name="sync" [size]="14" /> Refresh</button>
             <button strct-button iconOnly size="sm" aria-label="Export">
               <strct-icon name="download" [size]="14" />
             </button>
           </div>
 
           <button strct-button strctDatagridActions variant="primary" size="sm">Migrate</button>
-          <button strct-button strctDatagridActions variant="danger" size="sm">Decommission</button>
+          <button strct-button strctDatagridActions variant="critical" size="sm">
+            Decommission
+          </button>
 
           <ng-template strctRowDetail let-row>
             <strct-stack style="max-width: 380px;">
@@ -110,7 +112,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="detailpane"
       heading="Detail pane"
       description="A different pattern from expandable rows: click the » button to collapse the grid to a single column and open a side pane with that row's details (the » keeps row cells free to select/copy). Click it again or the × to return."
-      code="<strct-datagrid [columns]=&quot;cols&quot; [rows]=&quot;rows&quot; detailPane>…</strct-datagrid>"
+      code='<strct-datagrid [columns]="cols" [rows]="rows" detailPane>…</strct-datagrid>'
     >
       <strct-datagrid
         style="width: 100%;"
@@ -167,8 +169,18 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
-    .echo { font-size: 12px; color: var(--t2); font-family: var(--mono); }
-    .dg-wrap { display: flex; flex-direction: column; gap: 12px; width: 100%; align-items: flex-start; }
+      .echo {
+        font-size: 12px;
+        color: var(--t2);
+        font-family: var(--mono);
+      }
+      .dg-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        align-items: flex-start;
+      }
     `,
   ],
 })

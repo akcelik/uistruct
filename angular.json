@@ -29,6 +29,12 @@
           "options": {
             "tsConfig": "projects/strct/tsconfig.spec.json"
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": ["projects/strct/**/*.ts", "projects/strct/**/*.html"]
+          }
         }
       }
     },
@@ -67,11 +73,12 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "8kB",
+                  "maximumError": "12kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "statsJson": true
             },
             "development": {
               "optimization": false,
@@ -95,6 +102,12 @@
         },
         "test": {
           "builder": "@angular/build:unit-test"
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": ["projects/showcase/**/*.ts", "projects/showcase/**/*.html"]
+          }
         }
       }
     }

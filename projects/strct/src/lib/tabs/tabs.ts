@@ -19,7 +19,9 @@ import {
   host: { class: 'strct-tab', role: 'tabpanel', '[hidden]': '!active()' },
 })
 export class StrctTab {
+  /** Label text. */
   readonly label = input.required<string>();
+  /** Static disable flag. */
   readonly disabled = input(false, { transform: booleanAttribute });
   private readonly _active = signal(false);
   readonly active = this._active.asReadonly();
@@ -36,7 +38,13 @@ export class StrctTab {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
-    <div class="strct-tabs__bar" role="tablist" #bar (keydown)="onKeydown($event, bar)">
+    <div
+      class="strct-tabs__bar"
+      role="tablist"
+      tabindex="0"
+      #bar
+      (keydown)="onKeydown($event, bar)"
+    >
       @for (tab of tabs(); track tab; let i = $index) {
         <button
           type="button"
@@ -57,20 +65,47 @@ export class StrctTab {
   host: { class: 'strct-tabs' },
   styles: [
     `
-    .strct-tabs { display: block; }
-    .strct-tabs__bar {
-      display: flex; gap: 2px; border-bottom: 1px solid var(--b2);
-    }
-    .strct-tabs__btn {
-      appearance: none; border: 0; background: transparent; cursor: pointer;
-      font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--t2);
-      padding: 9px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px;
-      transition: color .14s ease, border-color .14s ease;
-    }
-    .strct-tabs__btn:hover { color: var(--t1); }
-    .strct-tabs__btn--active { color: var(--acc); border-bottom-color: var(--acc); }
-    .strct-tabs__btn:disabled { color: var(--t4); cursor: not-allowed; }
-    .strct-tabs__panels { padding-top: 16px; }
+      .strct-tabs {
+        display: block;
+      }
+      .strct-tabs__bar {
+        display: flex;
+        gap: 2px;
+        border-bottom: 1px solid var(--b2);
+        overflow-x: auto;
+        white-space: nowrap;
+        scrollbar-width: none;
+      }
+      .strct-tabs__btn {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        font-family: var(--font);
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--t2);
+        padding: 9px 14px;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        transition:
+          color 0.14s ease,
+          border-color 0.14s ease;
+      }
+      .strct-tabs__btn:hover {
+        color: var(--t1);
+      }
+      .strct-tabs__btn--active {
+        color: var(--acc);
+        border-bottom-color: var(--acc);
+      }
+      .strct-tabs__btn:disabled {
+        color: var(--t4);
+        cursor: not-allowed;
+      }
+      .strct-tabs__panels {
+        padding-top: 16px;
+      }
     `,
   ],
 })

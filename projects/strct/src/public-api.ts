@@ -1,4 +1,4 @@
-/*
+/**
  * Public API surface of the strct UI library.
  */
 
