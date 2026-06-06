@@ -57,7 +57,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="datagrid"
       heading="Datagrid"
-      description="Sortable columns, row selection, expandable detail rows, a batch action bar and paging. A *strctCell template renders the Status column as a badge, and rowId keeps selection / expansion stable across live data refreshes."
+      description="Sortable columns, row selection, expandable detail rows, a batch action bar, paging, resizable columns and a column chooser. A *strctCell template renders the Status column as a badge, and rowId keeps selection / expansion stable across live data refreshes."
       code='<strct-datagrid [columns]="cols" [rows]="rows" rowId="name" selectable expandable>&#10;  <ng-template strctCell="status" let-value="value">…</ng-template>&#10;</strct-datagrid>'
     >
       <div class="dg-wrap">

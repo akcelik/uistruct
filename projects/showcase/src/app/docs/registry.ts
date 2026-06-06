@@ -1172,6 +1172,24 @@ export const DOCS: DocCategory[] = [
             default: `'No data'`,
             description: 'Shown when rows is empty.',
           },
+          {
+            name: 'resizable',
+            type: 'boolean',
+            default: 'false',
+            description: 'Enable column resizing by dragging column headers.',
+          },
+          {
+            name: 'columnChooser',
+            type: 'boolean',
+            default: 'false',
+            description: 'Show a column visibility toggle button in the footer.',
+          },
+          {
+            name: 'loading',
+            type: 'boolean',
+            default: 'false',
+            description: 'Show skeleton rows while data is loading.',
+          },
         ],
         outputs: [
           {

@@ -48,7 +48,7 @@ list, theming setup and usage examples. In short:
 - **Surfaces** — card, accordion, tabs, tree, modal, dropdown, context menu (+ submenu), wizard, divider
 - **Navigation** — breadcrumb, pagination
 - **Forms** — input directive, checkbox, toggle, radio group, slider, combobox, cascade select, date picker, password, file upload, color picker (all CVA-compatible)
-- **Data** — table, datagrid (sort / select / expandable detail rows / batch action bar / compact / paginate), timeline, stack view
+- **Data** — table, datagrid (sort / select / expandable detail rows / batch action bar / compact / paginate / resizable / column chooser), timeline, stack view
 - **Charts** — sparkline, line/area/bar chart, donut, gauge (dependency-free SVG)
 - **Feedback** — alert, tooltip, signpost, toast service + outlet
 - **Foundations** — icon (datacenter icon set with status badges + generic vendor marks), theme service + switcher

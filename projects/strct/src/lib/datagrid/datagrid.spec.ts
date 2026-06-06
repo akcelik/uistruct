@@ -47,4 +47,38 @@ describe('StrctDatagrid', () => {
     cmp.toggleRow(ROWS[0]);
     expect(emitted).toEqual([]);
   });
+
+  it('toggles column visibility via the column chooser', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [
+      { key: 'a', label: 'A' },
+      { key: 'b', label: 'B' },
+    ]);
+    fixture.componentRef.setInput('rows', [{ a: '1', b: '2' }]);
+    fixture.componentRef.setInput('columnChooser', true);
+    fixture.componentRef.setInput('pageSize', 10);
+    fixture.detectChanges();
+
+    const btn = fixture.nativeElement.querySelector('.strct-dg__chooser button');
+    expect(btn).toBeTruthy();
+
+    btn.click();
+    fixture.detectChanges();
+
+    const menu = fixture.nativeElement.querySelector('.strct-dg__chooser-menu');
+    expect(menu).toBeTruthy();
+
+    const checkboxes = fixture.nativeElement.querySelectorAll(
+      '.strct-dg__chooser-item strct-checkbox',
+    );
+    expect(checkboxes.length).toBe(2);
+
+    // Hide column 'b'
+    fixture.componentInstance.toggleColumn('b', false);
+    fixture.detectChanges();
+
+    const ths = fixture.nativeElement.querySelectorAll('thead th');
+    expect(ths.length).toBe(1);
+    expect(ths[0].textContent!.trim()).toBe('A');
+  });
 });

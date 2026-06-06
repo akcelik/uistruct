@@ -18,6 +18,7 @@ import {
 import { StrctIcon } from '../icon/icon';
 import { StrctPagination } from '../pagination/pagination';
 import { StrctCheckbox } from '../forms/checkbox';
+import { StrctButton } from '../button/button';
 import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
 
 /** Resolves a stable identity for a row: a property key, or a function. */
@@ -62,7 +63,7 @@ export class StrctDatagridActionBar {}
   selector: 'strct-datagrid',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon, StrctPagination, NgTemplateOutlet, StrctCheckbox],
+  imports: [StrctIcon, StrctPagination, NgTemplateOutlet, StrctCheckbox, StrctButton],
   template: `
     @if (actionBarDef()) {
       <div class="strct-dg__toolbar"><ng-content select="[strctDatagridActionBar]" /></div>
@@ -248,32 +249,6 @@ export class StrctDatagridActionBar {}
     @if (pageSize() > 0 && !loading()) {
       <div class="strct-dg__foot">
         <div class="strct-dg__foot-left">
-          @if (columnChooser()) {
-            <div class="strct-dg__chooser">
-              <button
-                type="button"
-                class="strct-dg__chooser-btn"
-                [class.is-open]="chooserOpen()"
-                aria-label="Choose columns"
-                (click)="chooserOpen.set(!chooserOpen())"
-              >
-                <strct-icon name="settings" [size]="14" />
-              </button>
-              @if (chooserOpen()) {
-                <div class="strct-dg__chooser-menu">
-                  @for (col of columns(); track col.key) {
-                    <label class="strct-dg__chooser-item">
-                      <strct-checkbox
-                        [checked]="!hiddenColumns().has(col.key)"
-                        (checkedChange)="toggleColumn(col.key, $event)"
-                      />
-                      <span>{{ col.label }}</span>
-                    </label>
-                  }
-                </div>
-              }
-            </div>
-          }
           <span class="strct-dg__count">
             {{ sorted().length }} {{ sorted().length === 1 ? 'row' : 'rows' }}
             @if (selectedCount()) {
@@ -282,7 +257,35 @@ export class StrctDatagridActionBar {}
             }
           </span>
         </div>
-        <strct-pagination [total]="sorted().length" [pageSize]="pageSize()" [(page)]="page" />
+        <div class="strct-dg__foot-right">
+          <strct-pagination [total]="sorted().length" [pageSize]="pageSize()" [(page)]="page" />
+          @if (columnChooser()) {
+            <div class="strct-dg__chooser">
+              <button
+                strct-button
+                size="sm"
+                [class.is-open]="chooserOpen()"
+                aria-label="Choose columns"
+                (click)="chooserOpen.set(!chooserOpen())"
+              >
+                <strct-icon name="settings" [size]="14" />
+              </button>
+              @if (chooserOpen()) {
+                <div class="strct-dg__chooser-menu strct-dg__chooser-menu--right">
+                  @for (col of columns(); track col.key) {
+                    <div class="strct-dg__chooser-item">
+                      <strct-checkbox
+                        [checked]="!hiddenColumns().has(col.key)"
+                        (checkedChange)="toggleColumn(col.key, $event)"
+                      />
+                      <span>{{ col.label }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
       </div>
     }
   `,
@@ -593,29 +596,13 @@ export class StrctDatagridActionBar {}
         align-items: center;
         gap: 12px;
       }
+      .strct-dg__foot-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
       .strct-dg__chooser {
         position: relative;
-      }
-      .strct-dg__chooser-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 5px;
-        border: 1px solid var(--b2);
-        border-radius: 6px;
-        background: var(--bg-2);
-        color: var(--t2);
-        cursor: pointer;
-        transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
-      }
-      .strct-dg__chooser-btn:hover {
-        background: var(--bg-3);
-        color: var(--t1);
-      }
-      .strct-dg__chooser-btn.is-open {
-        border-color: var(--acc);
-        color: var(--acc);
-        background: var(--acc-m);
       }
       .strct-dg__chooser-menu {
         position: absolute;
@@ -631,6 +618,10 @@ export class StrctDatagridActionBar {}
         display: flex;
         flex-direction: column;
         gap: 2px;
+      }
+      .strct-dg__chooser-menu--right {
+        left: auto;
+        right: 0;
       }
       .strct-dg__chooser-item {
         display: flex;
