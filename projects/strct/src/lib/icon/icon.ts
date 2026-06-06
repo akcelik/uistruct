@@ -392,7 +392,7 @@ export type StrctIconBadge =
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path d="M4 12L7 9M7 9L10 6M10 6a2 2 0 1 1 2.5-2.5" />
+            <path d="M3.5 3.5c-.5 1.5.5 2.5 2 3l5 5M5 3c-1 0-2 1-1.5 2.5L10 12M12.5 3.5L6 10" />
           </svg>
         }
       </span>
@@ -417,14 +417,14 @@ export type StrctIconBadge =
       }
       .strct-icon__badge {
         position: absolute;
-        right: -1px;
-        bottom: -1px;
-        width: 38%;
-        height: 38%;
-        min-width: 6px;
-        min-height: 6px;
-        max-width: 9px;
-        max-height: 9px;
+        right: -2px;
+        bottom: -2px;
+        width: 45%;
+        height: 45%;
+        min-width: 7px;
+        min-height: 7px;
+        max-width: 11px;
+        max-height: 11px;
         border-radius: 50%;
         box-shadow: 0 0 0 1.5px var(--bg-1);
       }
@@ -439,12 +439,12 @@ export type StrctIconBadge =
         filter: drop-shadow(0 0 1.5px var(--bg-1));
         right: -2px;
         bottom: -2px;
-        width: 52%;
-        height: 52%;
-        min-width: 9px;
-        min-height: 9px;
-        max-width: 14px;
-        max-height: 14px;
+        width: 56%;
+        height: 56%;
+        min-width: 10px;
+        min-height: 10px;
+        max-width: 16px;
+        max-height: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -467,6 +467,14 @@ export type StrctIconBadge =
       }
       .strct-icon__badge--maintenance {
         background: var(--warning);
+        right: -2px;
+        bottom: -2px;
+        width: 50%;
+        height: 50%;
+        min-width: 8px;
+        min-height: 8px;
+        max-width: 13px;
+        max-height: 13px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -474,8 +482,8 @@ export type StrctIconBadge =
         box-shadow: 0 0 0 1.5px var(--bg-1);
       }
       .strct-icon__badge--maintenance svg {
-        width: 78%;
-        height: 78%;
+        width: 84%;
+        height: 84%;
         color: rgba(0, 0, 0, 0.85);
       }
     `,
