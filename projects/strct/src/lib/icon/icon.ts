@@ -392,7 +392,7 @@ export type StrctIconBadge =
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path d="M3.5 3.5c-.5 1.5.5 2.5 2 3l5 5M5 3c-1 0-2 1-1.5 2.5L10 12M12.5 3.5L6 10" />
+            <path d="M3 3c0-1 1-2 2-1.5l6 6c.5.5.5 1.5 0 2l-1 1M6 9l3 3c1 1 2.5 1 3.5 0" />
           </svg>
         }
       </span>
@@ -469,12 +469,12 @@ export type StrctIconBadge =
         background: var(--warning);
         right: -2px;
         bottom: -2px;
-        width: 50%;
-        height: 50%;
-        min-width: 8px;
-        min-height: 8px;
-        max-width: 13px;
-        max-height: 13px;
+        width: 54%;
+        height: 54%;
+        min-width: 9px;
+        min-height: 9px;
+        max-width: 15px;
+        max-height: 15px;
         display: flex;
         align-items: center;
         justify-content: center;
