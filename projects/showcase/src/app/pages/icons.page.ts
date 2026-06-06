@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import {
   STRCT_ICON_GROUPS,
   StrctButton,
@@ -65,57 +65,46 @@ interface StateExample {
     <app-demo
       anchor="interactive-states"
       heading="Interactive object states"
-      description="Click a state button to update the badge on each object icon. Cluster, Host and VM support every state."
-      code='<strct-icon name="cluster" [badge]="clusterState()" />'
+      description="Pick an object and click a state to see how the badge overlays the icon."
+      code='<strct-icon [name]="activeObjectData().icon" [badge]="activeState()" />'
     >
       <div class="ig-interactive">
-        <!-- Cluster -->
-        <div class="ig-interactive__col">
-          <strct-icon name="cluster" [size]="48" [strokeWidth]="1.2" [badge]="clusterState()" />
-          <span class="ig-interactive__label">Cluster</span>
-          <strct-button-group>
-            @for (opt of stateOptions; track opt.badge) {
-              <button
-                strct-button
-                size="sm"
-                [variant]="clusterState() === opt.badge ? 'primary' : 'neutral'"
-                (click)="clusterState.set(opt.badge)"
-              >
-                {{ opt.label }}
-              </button>
-            }
-          </strct-button-group>
+        <!-- Object selector tabs -->
+        <div class="ig-interactive__tabs">
+          @for (obj of interactiveObjects; track obj.name) {
+            <button
+              class="ig-interactive__tab"
+              [class.is-active]="activeObject() === obj.name"
+              (click)="activeObject.set(obj.name)"
+            >
+              <strct-icon [name]="obj.icon" [size]="18" [strokeWidth]="1.4" />
+              <span>{{ obj.label }}</span>
+            </button>
+          }
         </div>
 
-        <!-- Host -->
-        <div class="ig-interactive__col">
-          <strct-icon name="host" [size]="48" [strokeWidth]="1.2" [badge]="hostState()" />
-          <span class="ig-interactive__label">Host</span>
-          <strct-button-group>
-            @for (opt of stateOptions; track opt.badge) {
-              <button
-                strct-button
-                size="sm"
-                [variant]="hostState() === opt.badge ? 'primary' : 'neutral'"
-                (click)="hostState.set(opt.badge)"
-              >
-                {{ opt.label }}
-              </button>
-            }
-          </strct-button-group>
+        <!-- Large icon stage -->
+        <div class="ig-interactive__stage">
+          <strct-icon
+            [name]="activeObjectData().icon"
+            [size]="56"
+            [strokeWidth]="1.2"
+            [badge]="activeState()"
+          />
+          <span class="ig-interactive__state"
+            >{{ activeObjectData().label }} · {{ activeStateLabel() }}</span
+          >
         </div>
 
-        <!-- VM -->
-        <div class="ig-interactive__col">
-          <strct-icon name="vm" [size]="48" [strokeWidth]="1.2" [badge]="vmState()" />
-          <span class="ig-interactive__label">VM</span>
+        <!-- State selector -->
+        <div class="ig-interactive__controls">
           <strct-button-group>
             @for (opt of stateOptions; track opt.badge) {
               <button
                 strct-button
                 size="sm"
-                [variant]="vmState() === opt.badge ? 'primary' : 'neutral'"
-                (click)="vmState.set(opt.badge)"
+                [variant]="activeState() === opt.badge ? 'primary' : 'neutral'"
+                (click)="activeState.set(opt.badge)"
               >
                 {{ opt.label }}
               </button>
@@ -220,29 +209,67 @@ interface StateExample {
 
       .ig-interactive {
         display: flex;
-        flex-wrap: wrap;
-        gap: 18px;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        padding: 22px;
+        border: 1px solid var(--b2);
+        border-radius: 12px;
+        background: var(--bg-1);
       }
-      .ig-interactive__col {
+      .ig-interactive__tabs {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+      }
+      .ig-interactive__tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border: 1px solid var(--b2);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--t2);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+          background 0.15s ease,
+          border-color 0.15s ease,
+          color 0.15s ease;
+      }
+      .ig-interactive__tab:hover {
+        background: var(--bg-2);
+      }
+      .ig-interactive__tab.is-active {
+        background: var(--acc);
+        border-color: var(--acc);
+        color: var(--bg-1);
+      }
+      .ig-interactive__stage {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 14px;
-        flex: 1 1 160px;
-        min-width: 160px;
-        max-width: 220px;
-        padding: 24px 16px;
-        border: 1px solid var(--b2);
-        border-radius: 10px;
-        background: var(--bg-1);
+        gap: 12px;
+        padding: 28px 36px;
+        border: 1px dashed var(--b2);
+        border-radius: 12px;
       }
-      .ig-interactive__col strct-icon {
+      .ig-interactive__stage strct-icon {
         color: var(--t1);
       }
-      .ig-interactive__label {
-        font-size: 13px;
+      .ig-interactive__state {
+        font-size: 12px;
         font-weight: 600;
         color: var(--t2);
+        text-align: center;
+      }
+      .ig-interactive__controls {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
       }
 
       .ig-vendors {
@@ -287,9 +314,22 @@ export class IconsPage {
     );
   }
 
-  protected readonly clusterState = signal<StrctIconBadge>('success');
-  protected readonly hostState = signal<StrctIconBadge>('success');
-  protected readonly vmState = signal<StrctIconBadge>('success');
+  protected readonly activeObject = signal<'cluster' | 'host' | 'vm'>('cluster');
+  protected readonly activeState = signal<StrctIconBadge>('success');
+
+  protected readonly interactiveObjects = [
+    { name: 'cluster' as const, label: 'Cluster', icon: 'cluster' },
+    { name: 'host' as const, label: 'Host', icon: 'host' },
+    { name: 'vm' as const, label: 'VM', icon: 'vm' },
+  ];
+
+  protected readonly activeObjectData = computed(
+    () => this.interactiveObjects.find((o) => o.name === this.activeObject())!,
+  );
+
+  protected readonly activeStateLabel = computed(
+    () => this.stateOptions.find((s) => s.badge === this.activeState())?.label ?? '',
+  );
 
   protected readonly stateOptions: { badge: StrctIconBadge; label: string }[] = [
     { badge: 'success', label: 'Running' },

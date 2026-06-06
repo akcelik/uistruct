@@ -419,14 +419,14 @@ export type StrctIconBadge =
       }
       .strct-icon__badge {
         position: absolute;
-        right: -2px;
-        bottom: -2px;
-        width: 45%;
-        height: 45%;
-        min-width: 7px;
-        min-height: 7px;
-        max-width: 11px;
-        max-height: 11px;
+        right: -3px;
+        bottom: -3px;
+        width: 50%;
+        height: 50%;
+        min-width: 8px;
+        min-height: 8px;
+        max-width: 12px;
+        max-height: 12px;
         border-radius: 50%;
         box-shadow: 0 0 0 1.5px var(--bg-1);
       }
@@ -441,12 +441,12 @@ export type StrctIconBadge =
         filter: drop-shadow(0 0 1.5px var(--bg-1));
         right: -2px;
         bottom: -2px;
-        width: 56%;
-        height: 56%;
-        min-width: 10px;
-        min-height: 10px;
-        max-width: 16px;
-        max-height: 16px;
+        width: 60%;
+        height: 60%;
+        min-width: 11px;
+        min-height: 11px;
+        max-width: 18px;
+        max-height: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -471,12 +471,12 @@ export type StrctIconBadge =
         background: var(--warning);
         right: -2px;
         bottom: -2px;
-        width: 54%;
-        height: 54%;
-        min-width: 9px;
-        min-height: 9px;
-        max-width: 15px;
-        max-height: 15px;
+        width: 58%;
+        height: 58%;
+        min-width: 10px;
+        min-height: 10px;
+        max-width: 16px;
+        max-height: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
