@@ -1,5 +1,12 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { STRCT_ICON_GROUPS, StrctIcon, StrctIconBadge, registerStrctIcon } from 'strct';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import {
+  STRCT_ICON_GROUPS,
+  StrctButton,
+  StrctButtonGroup,
+  StrctIcon,
+  StrctIconBadge,
+  registerStrctIcon,
+} from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
 interface StateExample {
@@ -12,7 +19,7 @@ interface StateExample {
 @Component({
   selector: 'app-icons-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PageHeader, DemoBlock, StrctIcon],
+  imports: [PageHeader, DemoBlock, StrctIcon, StrctButton, StrctButtonGroup],
   template: `
     <app-page-header
       title="Icons"
@@ -52,6 +59,69 @@ interface StateExample {
             <span class="ig-state__label">{{ s.label }}</span>
           </div>
         }
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="interactive-states"
+      heading="Interactive object states"
+      description="Click a state button to update the badge on each object icon. Cluster, Host and VM support every state."
+      code='<strct-icon name="cluster" [badge]="clusterState()" />'
+    >
+      <div class="ig-interactive">
+        <!-- Cluster -->
+        <div class="ig-interactive__col">
+          <strct-icon name="cluster" [size]="48" [strokeWidth]="1.2" [badge]="clusterState()" />
+          <span class="ig-interactive__label">Cluster</span>
+          <strct-button-group>
+            @for (opt of stateOptions; track opt.badge) {
+              <button
+                strct-button
+                size="sm"
+                [variant]="clusterState() === opt.badge ? 'primary' : 'neutral'"
+                (click)="clusterState.set(opt.badge)"
+              >
+                {{ opt.label }}
+              </button>
+            }
+          </strct-button-group>
+        </div>
+
+        <!-- Host -->
+        <div class="ig-interactive__col">
+          <strct-icon name="host" [size]="48" [strokeWidth]="1.2" [badge]="hostState()" />
+          <span class="ig-interactive__label">Host</span>
+          <strct-button-group>
+            @for (opt of stateOptions; track opt.badge) {
+              <button
+                strct-button
+                size="sm"
+                [variant]="hostState() === opt.badge ? 'primary' : 'neutral'"
+                (click)="hostState.set(opt.badge)"
+              >
+                {{ opt.label }}
+              </button>
+            }
+          </strct-button-group>
+        </div>
+
+        <!-- VM -->
+        <div class="ig-interactive__col">
+          <strct-icon name="vm" [size]="48" [strokeWidth]="1.2" [badge]="vmState()" />
+          <span class="ig-interactive__label">VM</span>
+          <strct-button-group>
+            @for (opt of stateOptions; track opt.badge) {
+              <button
+                strct-button
+                size="sm"
+                [variant]="vmState() === opt.badge ? 'primary' : 'neutral'"
+                (click)="vmState.set(opt.badge)"
+              >
+                {{ opt.label }}
+              </button>
+            }
+          </strct-button-group>
+        </div>
       </div>
     </app-demo>
 
@@ -148,6 +218,33 @@ interface StateExample {
         text-align: center;
       }
 
+      .ig-interactive {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+      }
+      .ig-interactive__col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        flex: 1 1 160px;
+        min-width: 160px;
+        max-width: 220px;
+        padding: 24px 16px;
+        border: 1px solid var(--b2);
+        border-radius: 10px;
+        background: var(--bg-1);
+      }
+      .ig-interactive__col strct-icon {
+        color: var(--t1);
+      }
+      .ig-interactive__label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--t2);
+      }
+
       .ig-vendors {
         display: flex;
         flex-wrap: wrap;
@@ -190,6 +287,17 @@ export class IconsPage {
     );
   }
 
+  protected readonly clusterState = signal<StrctIconBadge>('success');
+  protected readonly hostState = signal<StrctIconBadge>('success');
+  protected readonly vmState = signal<StrctIconBadge>('success');
+
+  protected readonly stateOptions: { badge: StrctIconBadge; label: string }[] = [
+    { badge: 'success', label: 'Running' },
+    { badge: 'warning', label: 'Maint' },
+    { badge: 'critical', label: 'Critical' },
+    { badge: 'off', label: 'Stopped' },
+  ];
+
   protected readonly groups = STRCT_ICON_GROUPS;
   protected readonly vendorNames =
     STRCT_ICON_GROUPS.find((g) => g.label.startsWith('Vendor'))?.names ?? [];
@@ -201,8 +309,13 @@ export class IconsPage {
     { name: 'host-critical', object: 'host', badge: 'critical', label: 'Host · critical' },
     { name: 'vm-run', object: 'vm', badge: 'success', label: 'VM · running' },
     { name: 'vm-off', object: 'vm', badge: 'off', label: 'VM · stopped' },
+    { name: 'vm-maint', object: 'vm', badge: 'warning', label: 'VM · maintenance' },
+    { name: 'vm-critical', object: 'vm', badge: 'critical', label: 'VM · critical' },
     { name: 'cluster-ok', object: 'cluster', badge: 'success', label: 'Cluster · healthy' },
     { name: 'cluster-degraded', object: 'cluster', badge: 'warning', label: 'Cluster · degraded' },
+    { name: 'cluster-maint', object: 'cluster', badge: 'warning', label: 'Cluster · maintenance' },
+    { name: 'cluster-critical', object: 'cluster', badge: 'critical', label: 'Cluster · critical' },
+    { name: 'cluster-off', object: 'cluster', badge: 'off', label: 'Cluster · stopped' },
     { name: 'storage-warn', object: 'storage', badge: 'warning', label: 'Datastore · low' },
   ];
 

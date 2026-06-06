@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.22] - 2026-06-06
+
+### Added
+
+- **Showcase icons page** — new "Interactive object states" demo where you can click state buttons (Running / Maint / Critical / Stopped) to update the badge on Cluster, Host and VM icons in real time.
+- **Object states gallery** — expanded the static state grid to cover every state for Cluster, Host and VM.
+
 ## [0.5.21] - 2026-06-06
 
 ### Changed
