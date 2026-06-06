@@ -183,7 +183,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         font-size: 12px;
         font-weight: 600;
         letter-spacing: 1px;
-        color: var(--t1);
+        color: var(--t2);
       }
       .auth-kicker {
         font-size: 13px;
@@ -196,7 +196,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         font-weight: 700;
         letter-spacing: 1px;
         text-transform: uppercase;
-        color: var(--t1);
+        color: var(--t2);
       }
       .auth-rule {
         display: block;
