@@ -69,7 +69,7 @@ import {
         position: relative;
         overflow: hidden;
         min-height: 420px;
-        color: var(--t1);
+        color: #111827;
         border-right: 1px solid var(--b2);
       }
       .strct-login__aside::before,
