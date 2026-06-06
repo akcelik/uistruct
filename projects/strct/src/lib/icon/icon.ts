@@ -414,9 +414,27 @@ export type StrctIconBadge = 'none' | 'success' | 'warning' | 'critical' | 'off'
       .strct-icon__badge--warning {
         background: var(--warning);
         border-radius: 1px;
-        clip-path: polygon(50% 12%, 90% 88%, 10% 88%);
+        clip-path: polygon(50% 10%, 92% 90%, 8% 90%);
         box-shadow: none;
-        filter: drop-shadow(0 0 1.2px var(--bg-1));
+        filter: drop-shadow(0 0 1.5px var(--bg-1));
+        right: -2px;
+        bottom: -2px;
+        width: 52%;
+        height: 52%;
+        min-width: 9px;
+        min-height: 9px;
+        max-width: 14px;
+        max-height: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(6px, 70%, 10px);
+        font-weight: 800;
+        color: rgba(0, 0, 0, 0.85);
+        line-height: 1;
+      }
+      .strct-icon__badge--warning::before {
+        content: '!';
       }
       .strct-icon__badge--critical {
         background: var(--critical);
