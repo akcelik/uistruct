@@ -855,7 +855,7 @@ export class StrctDatagrid {
     this.sortBy(key);
   }
 
-  protected toggleColumn(key: string, visible: boolean): void {
+  toggleColumn(key: string, visible: boolean): void {
     this.hiddenColumns.update((set) => {
       const next = new Set(set);
       if (visible) next.delete(key);
