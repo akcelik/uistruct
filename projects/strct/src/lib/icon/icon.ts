@@ -95,7 +95,7 @@ export const STRCT_ICONS: Record<string, string> = {
     '<rect x="2.5" y="2.5" width="11" height="11" rx="1"/><path d="M5 5h6M5 7.3h6M5 9.6h3.5"/><circle cx="11" cy="9.7" r=".5" fill="currentColor" stroke="none"/>',
   rack: '<rect x="3.5" y="2" width="9" height="12" rx="1"/><path d="M3.5 5.2h9M3.5 8.4h9M3.5 11.6h9"/><circle cx="5.4" cy="3.6" r=".4" fill="currentColor" stroke="none"/><circle cx="5.4" cy="6.8" r=".4" fill="currentColor" stroke="none"/><circle cx="5.4" cy="10" r=".4" fill="currentColor" stroke="none"/>',
   cluster:
-    '<rect x="2" y="2.5" width="5" height="5" rx="1"/><rect x="9" y="2.5" width="5" height="5" rx="1"/><rect x="5.5" y="9" width="5" height="5" rx="1"/><path d="M4.5 7.5l2.5 1.5M11.5 7.5L9 9"/>',
+    '<rect x="3" y="3" width="4" height="4" rx="1"/><rect x="9" y="3" width="4" height="4" rx="1"/><rect x="3" y="9" width="4" height="4" rx="1"/><rect x="9" y="9" width="4" height="4" rx="1"/><path d="M7 5h2M7 11h2M5 7v2M11 7v2"/>',
   host: '<rect x="2.5" y="3" width="11" height="4.2" rx="1"/><rect x="2.5" y="8.8" width="11" height="4.2" rx="1"/><circle cx="4.7" cy="5.1" r=".55" fill="currentColor" stroke="none"/><circle cx="4.7" cy="10.9" r=".55" fill="currentColor" stroke="none"/><path d="M7 5.1h4M7 10.9h4"/>',
   vm: '<rect x="2" y="3" width="12" height="8" rx="1"/><path d="M6 14h4M8 11v3"/>',
   switch:
