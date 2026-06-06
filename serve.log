@@ -6,5 +6,25 @@ Binding this server to an open connection can result in compromising your applic
 computer. Using a different host than the one passed to the "--host" flag might result in
 websocket connection issues.
     [39m[22m
-[1m[31mAn unhandled exception occurred: Port 4200 is already in use. Use '--port' to specify a different port.
-See "C:\Users\Admin\AppData\Local\Temp\ng-ZeH6yV\angular-errors.log" for further details.[39m[22m
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m        [2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m         [2m | [22m[36m60.18 kB[39m[2m | [22m
+[32mchunk-6ZULN7D5.js[39m  [2m | [22m[2m-[22m            [2m | [22m[36m26.14 kB[39m[2m | [22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m       [2m | [22m[36m13.07 kB[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m[2m | [22m[1m99.39 kB[22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m        [2m | [22m[1mRaw size[22m
+[32mchunk-FH3D7Y6X.js[39m  [2m | [22m[2mcategory-page[22m[2m | [22m[36m81.97 kB[39m[2m | [22m
+
+Application bundle generation complete. [11.989 seconds] - 2026-06-06T17:56:28.049Z
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4200[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.25.128.1:[1m4200[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.28.192.1:[1m4200[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.160.1:[1m4200[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.44.1:[1m4200[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.113:[1m4200[22m/[39m
