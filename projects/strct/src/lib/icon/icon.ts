@@ -388,11 +388,13 @@ export type StrctIconBadge =
             viewBox="0 0 16 16"
             fill="none"
             stroke="currentColor"
-            stroke-width="1.4"
+            stroke-width="1.5"
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path d="M3 3c0-1 1-2 2-1.5l6 6c.5.5.5 1.5 0 2l-1 1M6 9l3 3c1 1 2.5 1 3.5 0" />
+            <path
+              d="M3.5 2.5c-1.5 0-2.5 1.5-1.5 3l3.5 3.5c-.5 1.5 0 3 1.5 3.5s3 0 3.5-1.5M6.5 5.5l6 6M7.5 10.5c1 1.5 2.5 2.5 4 1.5s1.5-2.5.5-4"
+            />
           </svg>
         }
       </span>

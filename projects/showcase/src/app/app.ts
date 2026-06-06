@@ -49,7 +49,7 @@ export class App {
   private readonly theme = inject(StrctThemeService);
 
   protected readonly count = COMPONENT_COUNT;
-  protected readonly version = '0.5.26';
+  protected readonly version = '0.5.27';
 
   /** Icon strip + secondary panel source. Foundations first, then component categories. */
   protected readonly groups: NavGroup[] = [
