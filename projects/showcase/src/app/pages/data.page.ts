@@ -73,6 +73,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           selectable
           expandable
           resizable
+          columnChooser
           [compact]="dense()"
           [pageSize]="5"
         >

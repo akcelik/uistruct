@@ -1,26 +1,20 @@
 import { Routes } from '@angular/router';
+import { categoryGuard } from './guards/category.guard';
 
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    loadComponent: () => import('./pages/landing.page').then((m) => m.LandingPage),
+    redirectTo: 'compute',
   },
   {
-    path: 'get-started',
-    loadComponent: () => import('./pages/get-started.page').then((m) => m.GetStartedPage),
+    path: ':category',
+    canActivate: [categoryGuard],
+    children: [
+      {
+        path: ':id',
+        loadComponent: () => import('./pages/category.page').then((m) => m.CategoryPage),
+      },
+    ],
   },
-  {
-    path: 'foundations/theming',
-    loadComponent: () => import('./pages/overview.page').then((m) => m.OverviewPage),
-  },
-  {
-    path: 'foundations/icons',
-    loadComponent: () => import('./pages/icons.page').then((m) => m.IconsPage),
-  },
-  {
-    path: 'components/:id',
-    loadComponent: () => import('./docs/component-page').then((m) => m.ComponentPage),
-  },
-  { path: '**', redirectTo: '' },
 ];

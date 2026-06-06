@@ -247,13 +247,41 @@ export class StrctDatagridActionBar {}
 
     @if (pageSize() > 0 && !loading()) {
       <div class="strct-dg__foot">
-        <span class="strct-dg__count">
-          {{ sorted().length }} {{ sorted().length === 1 ? 'row' : 'rows' }}
-          @if (selectedCount()) {
-            <span class="strct-dg__count-sep">|</span>
-            <span class="strct-dg__count-sel">{{ selectedCount() }} selected</span>
+        <div class="strct-dg__foot-left">
+          @if (columnChooser()) {
+            <div class="strct-dg__chooser">
+              <button
+                type="button"
+                class="strct-dg__chooser-btn"
+                [class.is-open]="chooserOpen()"
+                aria-label="Choose columns"
+                (click)="chooserOpen.set(!chooserOpen())"
+              >
+                <strct-icon name="settings" [size]="14" />
+              </button>
+              @if (chooserOpen()) {
+                <div class="strct-dg__chooser-menu">
+                  @for (col of columns(); track col.key) {
+                    <label class="strct-dg__chooser-item">
+                      <strct-checkbox
+                        [checked]="!hiddenColumns().has(col.key)"
+                        (checkedChange)="toggleColumn(col.key, $event)"
+                      />
+                      <span>{{ col.label }}</span>
+                    </label>
+                  }
+                </div>
+              }
+            </div>
           }
-        </span>
+          <span class="strct-dg__count">
+            {{ sorted().length }} {{ sorted().length === 1 ? 'row' : 'rows' }}
+            @if (selectedCount()) {
+              <span class="strct-dg__count-sep">|</span>
+              <span class="strct-dg__count-sel">{{ selectedCount() }} selected</span>
+            }
+          </span>
+        </div>
         <strct-pagination [total]="sorted().length" [pageSize]="pageSize()" [(page)]="page" />
       </div>
     }
@@ -560,6 +588,65 @@ export class StrctDatagridActionBar {}
         margin-top: 12px;
         flex-wrap: wrap;
       }
+      .strct-dg__foot-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .strct-dg__chooser {
+        position: relative;
+      }
+      .strct-dg__chooser-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px;
+        border: 1px solid var(--b2);
+        border-radius: 6px;
+        background: var(--bg-2);
+        color: var(--t2);
+        cursor: pointer;
+        transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+      }
+      .strct-dg__chooser-btn:hover {
+        background: var(--bg-3);
+        color: var(--t1);
+      }
+      .strct-dg__chooser-btn.is-open {
+        border-color: var(--acc);
+        color: var(--acc);
+        background: var(--acc-m);
+      }
+      .strct-dg__chooser-menu {
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 0;
+        z-index: 10;
+        min-width: 180px;
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: 8px;
+        box-shadow: var(--shadow-pop);
+        padding: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .strct-dg__chooser-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        color: var(--t1);
+        transition: background 0.1s ease;
+        user-select: none;
+      }
+      .strct-dg__chooser-item:hover {
+        background: var(--bg-3);
+      }
       .strct-dg__count {
         font-size: 12px;
         color: var(--t2);
@@ -596,6 +683,8 @@ export class StrctDatagrid {
   readonly loading = input(false, { transform: booleanAttribute });
   /** Enable column resizing by dragging column headers. */
   readonly resizable = input(false, { transform: booleanAttribute });
+  /** Show a column-chooser dropdown in the footer. */
+  readonly columnChooser = input(false, { transform: booleanAttribute });
   /**
    * Stable row identity (property key or function). Set this for live-refreshing
    * data so selection, expansion and the active detail row survive re-fetches
@@ -621,6 +710,8 @@ export class StrctDatagrid {
   protected readonly selectedCount = computed(() => this.selected().size);
   private readonly expandedRows = signal<Set<unknown>>(new Set());
   private readonly columnWidths = signal<Map<string, number>>(new Map());
+  protected readonly hiddenColumns = signal<Set<string>>(new Set());
+  protected readonly chooserOpen = signal(false);
   private resizeState: { key: string; startX: number; startWidth: number } | null = null;
   private readonly onMove = (e: MouseEvent) => this.onResizeMove(e);
   private readonly onUp = () => this.onResizeEnd();
@@ -671,9 +762,11 @@ export class StrctDatagrid {
     () => this.detailPane() && !!this.detailDef() && !!this.activeRow(),
   );
   /** Only the first column is shown while the detail pane is open. */
-  protected readonly visibleColumns = computed(() =>
-    this.paneOpen() ? this.columns().slice(0, 1) : this.columns(),
-  );
+  protected readonly visibleColumns = computed(() => {
+    if (this.paneOpen()) return this.columns().slice(0, 1);
+    const hidden = this.hiddenColumns();
+    return this.columns().filter((c) => !hidden.has(c.key));
+  });
 
   protected readonly sorted = computed(() => {
     const { key, dir } = this.sort();
@@ -769,6 +862,15 @@ export class StrctDatagrid {
   protected onHeaderSpace(event: Event, key: string): void {
     event.preventDefault(); // stop page scroll
     this.sortBy(key);
+  }
+
+  protected toggleColumn(key: string, visible: boolean): void {
+    this.hiddenColumns.update((set) => {
+      const next = new Set(set);
+      if (visible) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   }
 
   protected isSelected(row: StrctRow): boolean {
