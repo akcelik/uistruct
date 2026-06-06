@@ -13,20 +13,18 @@ import {
   StrctToastOutlet,
   StrctVerticalNav,
 } from 'strct';
+import { COMPONENT_COUNT, DOCS, GUIDES } from './docs/registry';
 
+interface NavItem {
+  label: string;
+  path: string;
+}
 interface NavGroup {
   id: string;
   label: string;
   icon: string;
-  path: string;
+  items: NavItem[];
 }
-
-const CATEGORIES: NavGroup[] = [
-  { id: 'compute', label: 'Compute', icon: 'cpu', path: '/compute/default-appliance' },
-  { id: 'vm', label: 'VM', icon: 'container', path: '/vm/default-appliance' },
-  { id: 'network', label: 'Network', icon: 'network', path: '/network/default-appliance' },
-  { id: 'storage', label: 'Storage', icon: 'database', path: '/storage/default-appliance' },
-];
 
 @Component({
   selector: 'app-root',
@@ -50,19 +48,33 @@ export class App {
   private readonly router = inject(Router);
   private readonly theme = inject(StrctThemeService);
 
-  protected readonly groups = CATEGORIES;
+  protected readonly count = COMPONENT_COUNT;
+
+  /** Icon strip + secondary panel source. Foundations first, then component categories. */
+  protected readonly groups: NavGroup[] = [
+    { id: GUIDES.id, label: GUIDES.label, icon: GUIDES.icon, items: GUIDES.items },
+    ...DOCS.map((cat) => ({
+      id: cat.id,
+      label: cat.label,
+      icon: cat.icon,
+      items: cat.components.map((c) => ({ label: c.title, path: `/components/${c.id}` })),
+    })),
+  ];
 
   private readonly url = signal(this.router.url);
   private readonly path = computed(() => this.url().split('#')[0].split('?')[0]);
 
-  protected readonly showSidebar = computed(() => true);
+  protected readonly showSidebar = computed(() => this.path() !== '/');
 
   protected readonly activeGroup = computed<NavGroup>(() => {
     const p = this.path();
-    const parts = p.split('/').filter(Boolean);
-    if (parts.length > 0) {
-      const cat = this.groups.find((g) => g.id === parts[0]);
-      if (cat) return cat;
+    if (p.startsWith('/components/')) {
+      const id = p.split('/')[2] ?? '';
+      const cat = DOCS.find((c) => c.components.some((x) => x.id === id));
+      if (cat) return this.groups.find((g) => g.id === cat.id)!;
+    }
+    if (p.startsWith('/foundations') || p.startsWith('/get-started')) {
+      return this.groups[0];
     }
     return this.groups[0];
   });
@@ -83,5 +95,9 @@ export class App {
 
   protected isActiveGroup(id: string): boolean {
     return this.activeGroup().id === id;
+  }
+
+  protected isActiveItem(path: string): boolean {
+    return this.path() === path;
   }
 }
