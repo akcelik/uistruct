@@ -1185,6 +1185,18 @@ export const DOCS: DocCategory[] = [
             description: 'Show a column visibility toggle button in the footer.',
           },
           {
+            name: 'sync',
+            type: 'boolean',
+            default: 'false',
+            description: 'Show a refresh button in the footer action group.',
+          },
+          {
+            name: 'footerActionsDisabled',
+            type: 'boolean',
+            default: 'false',
+            description: 'Disable all footer action buttons (sync, column chooser).',
+          },
+          {
             name: 'loading',
             type: 'boolean',
             default: 'false',
@@ -1196,6 +1208,11 @@ export const DOCS: DocCategory[] = [
             name: 'selectionChange',
             type: 'StrctRow[]',
             description: 'Emits the selected rows when selection changes.',
+          },
+          {
+            name: 'syncChange',
+            type: 'void',
+            description: 'Emitted when the refresh button is clicked.',
           },
         ],
         methods: [
