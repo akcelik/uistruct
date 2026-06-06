@@ -249,16 +249,6 @@ export class StrctDatagridActionBar {}
     @if (pageSize() > 0 && !loading()) {
       <div class="strct-dg__foot">
         <div class="strct-dg__foot-left">
-          <span class="strct-dg__count">
-            {{ sorted().length }} {{ sorted().length === 1 ? 'row' : 'rows' }}
-            @if (selectedCount()) {
-              <span class="strct-dg__count-sep">|</span>
-              <span class="strct-dg__count-sel">{{ selectedCount() }} selected</span>
-            }
-          </span>
-        </div>
-        <div class="strct-dg__foot-right">
-          <strct-pagination [total]="sorted().length" [pageSize]="pageSize()" [(page)]="page" />
           @if (columnChooser()) {
             <div class="strct-dg__chooser">
               <button
@@ -271,7 +261,7 @@ export class StrctDatagridActionBar {}
                 <strct-icon name="settings" [size]="14" />
               </button>
               @if (chooserOpen()) {
-                <div class="strct-dg__chooser-menu strct-dg__chooser-menu--right">
+                <div class="strct-dg__chooser-menu">
                   @for (col of columns(); track col.key) {
                     <div class="strct-dg__chooser-item">
                       <strct-checkbox
@@ -285,6 +275,16 @@ export class StrctDatagridActionBar {}
               }
             </div>
           }
+          <span class="strct-dg__count">
+            {{ sorted().length }} {{ sorted().length === 1 ? 'row' : 'rows' }}
+            @if (selectedCount()) {
+              <span class="strct-dg__count-sep">|</span>
+              <span class="strct-dg__count-sel">{{ selectedCount() }} selected</span>
+            }
+          </span>
+        </div>
+        <div class="strct-dg__foot-right">
+          <strct-pagination [total]="sorted().length" [pageSize]="pageSize()" [(page)]="page" />
         </div>
       </div>
     }
