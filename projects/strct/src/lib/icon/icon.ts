@@ -413,6 +413,10 @@ export type StrctIconBadge = 'none' | 'success' | 'warning' | 'critical' | 'off'
       }
       .strct-icon__badge--warning {
         background: var(--warning);
+        border-radius: 1px;
+        clip-path: polygon(50% 12%, 90% 88%, 10% 88%);
+        box-shadow: none;
+        filter: drop-shadow(0 0 1.2px var(--bg-1));
       }
       .strct-icon__badge--critical {
         background: var(--critical);

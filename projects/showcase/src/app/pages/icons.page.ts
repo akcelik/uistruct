@@ -202,6 +202,7 @@ export class IconsPage {
     { name: 'vm-run', object: 'vm', badge: 'success', label: 'VM · running' },
     { name: 'vm-off', object: 'vm', badge: 'off', label: 'VM · stopped' },
     { name: 'cluster-ok', object: 'cluster', badge: 'success', label: 'Cluster · healthy' },
+    { name: 'cluster-degraded', object: 'cluster', badge: 'warning', label: 'Cluster · degraded' },
     { name: 'storage-warn', object: 'storage', badge: 'warning', label: 'Datastore · low' },
   ];
 
