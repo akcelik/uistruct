@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.11] - 2026-06-06
+
+### Changed
+
+- **Datagrid column chooser** — moved back to the left side of the footer, keeping the `strct-button` neutral small style.
+
+### Fixed
+
+- **Showcase app** — restored the component library documentation structure (landing page, component browser, sidebar categories) that was accidentally replaced by an appliance management app.
+
 ## [0.5.9] - 2026-06-06
 
 ### Changed
