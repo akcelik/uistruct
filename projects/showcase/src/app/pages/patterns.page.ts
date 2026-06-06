@@ -183,10 +183,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         font-size: 12px;
         font-weight: 600;
         letter-spacing: 1px;
+        color: var(--t1);
       }
       .auth-kicker {
         font-size: 13px;
         margin-bottom: 8px;
+        color: var(--t2);
       }
       .auth-welcome {
         margin: 0;
@@ -194,6 +196,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         font-weight: 700;
         letter-spacing: 1px;
         text-transform: uppercase;
+        color: var(--t1);
       }
       .auth-rule {
         display: block;
@@ -208,6 +211,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         font-size: 13px;
         line-height: 1.6;
         max-width: 34ch;
+        color: var(--t2);
       }
 
       .auth-form {
