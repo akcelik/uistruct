@@ -183,11 +183,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         font-size: 12px;
         font-weight: 600;
         letter-spacing: 1px;
-        color: rgba(255, 255, 255, 0.9);
       }
       .auth-kicker {
         font-size: 13px;
-        color: rgba(255, 255, 255, 0.82);
         margin-bottom: 8px;
       }
       .auth-welcome {
@@ -196,21 +194,19 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         font-weight: 700;
         letter-spacing: 1px;
         text-transform: uppercase;
-        color: #fff;
       }
       .auth-rule {
         display: block;
         width: 40px;
         height: 3px;
         border-radius: 2px;
-        background: rgba(255, 255, 255, 0.85);
+        background: var(--t2);
         margin: 14px 0;
       }
       .auth-lead {
         margin: 0;
         font-size: 13px;
         line-height: 1.6;
-        color: rgba(255, 255, 255, 0.78);
         max-width: 34ch;
       }
 

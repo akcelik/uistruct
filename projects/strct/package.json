@@ -1,6 +1,6 @@
 {
   "name": "@akcelik/strct",
-  "version": "0.5.14",
+  "version": "0.5.15",
   "description": "UIStruct — a standalone Angular component library with a tokenised, multi-palette theme system, built for datacenter / infrastructure management UIs.",
   "author": "Serkan Akcelik <serkan.akcelik@gmail.com>",
   "license": "MIT",
