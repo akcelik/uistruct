@@ -58,13 +58,13 @@ interface StateExample {
     <app-demo
       anchor="vendors"
       heading="Vendors"
-      description="Generic, abstract vendor marks (not real trademarked logos) — a starting point you can swap for licensed assets."
+      description="Vendor name labels used as fallback marks when licensed logos are not available."
     >
       <div class="ig-vendors">
         @for (name of vendorNames; track name) {
           <div class="ig-vendor">
-            <strct-icon [name]="name" [size]="30" [strokeWidth]="1.4" />
-            <span class="ig-name">{{ vendorLabel(name) }}</span>
+            <span class="ig-vendor__text">{{ vendorLabel(name) }}</span>
+            <span class="ig-name">{{ name }}</span>
           </div>
         }
       </div>
@@ -164,8 +164,12 @@ interface StateExample {
         border-radius: 8px;
         background: var(--bg-1);
       }
-      .ig-vendor strct-icon {
+      .ig-vendor__text {
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
         color: var(--acc);
+        text-transform: uppercase;
       }
     `,
   ],
@@ -202,6 +206,13 @@ export class IconsPage {
   ];
 
   protected vendorLabel(name: string): string {
-    return name.replace('vendor', '');
+    const map: Record<string, string> = {
+      vendorVmware: 'VMWARE',
+      vendorCisco: 'CISCO',
+      vendorHpe: 'HPE',
+      vendorDell: 'DELL',
+      vendorKaytus: 'KAYTUS',
+    };
+    return map[name] ?? name.replace('vendor', '').toUpperCase();
   }
 }

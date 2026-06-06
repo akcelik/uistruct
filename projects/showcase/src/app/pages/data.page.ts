@@ -48,7 +48,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="table"
       heading="Table"
-      description="Driven by columns and rows inputs, with optional striped and hover styling."
+      description="Driven by columns and rows inputs, with optional striped and hover styling. Cluster rows as an example."
       code='<strct-table [columns]="cols" [rows]="rows" striped hover />'
     >
       <strct-table style="width: 100%;" [columns]="cols" [rows]="rows" striped hover />
@@ -57,7 +57,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="datagrid"
       heading="Datagrid"
-      description="Sortable columns, row selection, expandable detail rows, a batch action bar, paging, resizable columns and a column chooser. A *strctCell template renders the Status column as a badge, and rowId keeps selection / expansion stable across live data refreshes."
+      description="Sortable columns, row selection, expandable detail rows, a batch action bar, paging, resizable columns and a column chooser. Populated with cluster rows; status renders as a badge."
       code='<strct-datagrid [columns]="cols" [rows]="rows" rowId="name" selectable expandable>&#10;  <ng-template strctCell="status" let-value="value">…</ng-template>&#10;</strct-datagrid>'
     >
       <div class="dg-wrap">
@@ -92,9 +92,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 
           <ng-template strctRowDetail let-row>
             <strct-stack style="max-width: 380px;">
-              <strct-stack-item label="Service">{{ row['name'] }}</strct-stack-item>
-              <strct-stack-item label="Region">{{ row['region'] }}</strct-stack-item>
-              <strct-stack-item label="Replicas">{{ row['replicas'] }}</strct-stack-item>
+              <strct-stack-item label="Cluster">{{ row['name'] }}</strct-stack-item>
+              <strct-stack-item label="Type">{{ row['type'] }}</strct-stack-item>
+              <strct-stack-item label="Hosts">{{ row['hosts'] }}</strct-stack-item>
               <strct-stack-item label="Status">{{ row['status'] }}</strct-stack-item>
             </strct-stack>
           </ng-template>
@@ -117,9 +117,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       >
         <ng-template strctRowDetail let-row>
           <strct-stack style="max-width: 340px;">
-            <strct-stack-item label="Service">{{ row['name'] }}</strct-stack-item>
-            <strct-stack-item label="Region">{{ row['region'] }}</strct-stack-item>
-            <strct-stack-item label="Replicas">{{ row['replicas'] }}</strct-stack-item>
+            <strct-stack-item label="Cluster">{{ row['name'] }}</strct-stack-item>
+            <strct-stack-item label="Type">{{ row['type'] }}</strct-stack-item>
+            <strct-stack-item label="Hosts">{{ row['hosts'] }}</strct-stack-item>
             <strct-stack-item label="Status">{{ row['status'] }}</strct-stack-item>
           </strct-stack>
         </ng-template>
@@ -193,38 +193,38 @@ export class DataPage {
   }
 
   protected readonly cols: StrctColumn[] = [
-    { key: 'name', label: 'Service' },
-    { key: 'region', label: 'Region' },
-    { key: 'replicas', label: 'Replicas', align: 'end' },
+    { key: 'name', label: 'Cluster' },
+    { key: 'type', label: 'Type' },
+    { key: 'hosts', label: 'Hosts', align: 'end' },
     { key: 'status', label: 'Status' },
   ];
 
   protected readonly rows: StrctRow[] = [
-    { name: 'api-gateway', region: 'eu-west', replicas: 4, status: 'Running' },
-    { name: 'auth-service', region: 'us-east', replicas: 3, status: 'Running' },
-    { name: 'billing-worker', region: 'eu-west', replicas: 2, status: 'Degraded' },
-    { name: 'search-index', region: 'apac', replicas: 6, status: 'Running' },
+    { name: 'Production Cluster', type: 'DRS', hosts: 8, status: 'Running' },
+    { name: 'DR Cluster', type: 'DRS', hosts: 4, status: 'Running' },
+    { name: 'Edge Cluster', type: 'Standard', hosts: 3, status: 'Degraded' },
+    { name: 'Dev Cluster', type: 'Standard', hosts: 2, status: 'Running' },
   ];
 
   protected readonly dgCols: StrctDatagridColumn[] = [
-    { key: 'name', label: 'Service', sortable: true },
-    { key: 'region', label: 'Region', sortable: true },
-    { key: 'replicas', label: 'Replicas', sortable: true, align: 'end' },
+    { key: 'name', label: 'Cluster', sortable: true },
+    { key: 'type', label: 'Type', sortable: true },
+    { key: 'hosts', label: 'Hosts', sortable: true, align: 'end' },
     { key: 'status', label: 'Status', sortable: true },
   ];
 
   protected readonly dgRows: StrctRow[] = [
-    { name: 'api-gateway', region: 'eu-west', replicas: 4, status: 'Running' },
-    { name: 'auth-service', region: 'us-east', replicas: 3, status: 'Running' },
-    { name: 'billing-worker', region: 'eu-west', replicas: 2, status: 'Degraded' },
-    { name: 'search-index', region: 'apac', replicas: 6, status: 'Running' },
-    { name: 'cache-redis', region: 'us-east', replicas: 5, status: 'Running' },
-    { name: 'mailer', region: 'eu-west', replicas: 1, status: 'Idle' },
-    { name: 'metrics-agent', region: 'apac', replicas: 8, status: 'Running' },
-    { name: 'cron-runner', region: 'us-west', replicas: 1, status: 'Degraded' },
-    { name: 'image-resizer', region: 'eu-central', replicas: 3, status: 'Running' },
-    { name: 'webhook-relay', region: 'apac', replicas: 2, status: 'Running' },
-    { name: 'pdf-export', region: 'us-east', replicas: 2, status: 'Idle' },
-    { name: 'audit-log', region: 'eu-west', replicas: 4, status: 'Running' },
+    { name: 'Production Cluster', type: 'DRS', hosts: 8, status: 'Running' },
+    { name: 'DR Cluster', type: 'DRS', hosts: 4, status: 'Running' },
+    { name: 'Edge Cluster', type: 'Standard', hosts: 3, status: 'Degraded' },
+    { name: 'Dev Cluster', type: 'Standard', hosts: 2, status: 'Running' },
+    { name: 'Staging Cluster', type: 'DRS', hosts: 3, status: 'Running' },
+    { name: 'Backup Cluster', type: 'Standard', hosts: 2, status: 'Idle' },
+    { name: 'Analytics Cluster', type: 'DRS', hosts: 6, status: 'Running' },
+    { name: 'Test Cluster', type: 'Standard', hosts: 1, status: 'Degraded' },
+    { name: 'AI Training Cluster', type: 'DRS', hosts: 12, status: 'Running' },
+    { name: 'Observability Cluster', type: 'Standard', hosts: 2, status: 'Running' },
+    { name: 'Archive Cluster', type: 'Standard', hosts: 2, status: 'Idle' },
+    { name: 'Management Cluster', type: 'DRS', hosts: 4, status: 'Running' },
   ];
 }
