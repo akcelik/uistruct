@@ -74,6 +74,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           expandable
           resizable
           columnChooser
+          sync
+          [footerActionsDisabled]="refreshing()"
+          (syncChange)="onRefresh()"
           [compact]="dense()"
           [pageSize]="5"
         >
@@ -84,7 +87,6 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             <button strct-button variant="primary" size="sm">
               <strct-icon name="upload" [size]="14" /> Add host
             </button>
-            <button strct-button size="sm"><strct-icon name="sync" [size]="14" /> Refresh</button>
             <button strct-button iconOnly size="sm" aria-label="Export">
               <strct-icon name="download" [size]="14" />
             </button>
@@ -180,6 +182,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 })
 export class DataPage {
   protected readonly dense = signal(false);
+  protected readonly refreshing = signal(false);
+
+  protected onRefresh(): void {
+    this.refreshing.set(true);
+    setTimeout(() => this.refreshing.set(false), 1500);
+  }
 
   protected badgeFor(status: unknown): StrctBadgeStatus {
     switch (status) {

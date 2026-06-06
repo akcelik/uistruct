@@ -18,7 +18,7 @@ import {
 import { StrctIcon } from '../icon/icon';
 import { StrctPagination } from '../pagination/pagination';
 import { StrctCheckbox } from '../forms/checkbox';
-import { StrctButton } from '../button/button';
+import { StrctButton, StrctButtonGroup } from '../button/button';
 import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
 
 /** Resolves a stable identity for a row: a property key, or a function. */
@@ -63,7 +63,14 @@ export class StrctDatagridActionBar {}
   selector: 'strct-datagrid',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon, StrctPagination, NgTemplateOutlet, StrctCheckbox, StrctButton],
+  imports: [
+    StrctIcon,
+    StrctPagination,
+    NgTemplateOutlet,
+    StrctCheckbox,
+    StrctButton,
+    StrctButtonGroup,
+  ],
   template: `
     @if (actionBarDef()) {
       <div class="strct-dg__toolbar"><ng-content select="[strctDatagridActionBar]" /></div>
@@ -249,18 +256,34 @@ export class StrctDatagridActionBar {}
     @if (pageSize() > 0 && !loading()) {
       <div class="strct-dg__foot">
         <div class="strct-dg__foot-left">
-          @if (columnChooser()) {
-            <div class="strct-dg__chooser">
-              <button
-                strct-button
-                size="sm"
-                [class.is-open]="chooserOpen()"
-                aria-label="Choose columns"
-                (click)="chooserOpen.set(!chooserOpen())"
-              >
-                <strct-icon name="settings" [size]="14" />
-              </button>
-              @if (chooserOpen()) {
+          @if (columnChooser() || sync()) {
+            <div class="strct-dg__actions">
+              <strct-button-group>
+                @if (columnChooser()) {
+                  <button
+                    strct-button
+                    size="sm"
+                    [class.is-open]="chooserOpen()"
+                    [disabled]="footerActionsDisabled()"
+                    aria-label="Choose columns"
+                    (click)="chooserOpen.set(!chooserOpen())"
+                  >
+                    <strct-icon name="settings" [size]="14" />
+                  </button>
+                }
+                @if (sync()) {
+                  <button
+                    strct-button
+                    size="sm"
+                    [disabled]="footerActionsDisabled()"
+                    aria-label="Refresh data"
+                    (click)="syncChange.emit()"
+                  >
+                    <strct-icon name="refresh" [size]="14" />
+                  </button>
+                }
+              </strct-button-group>
+              @if (columnChooser() && chooserOpen()) {
                 <div class="strct-dg__chooser-menu">
                   @for (col of columns(); track col.key) {
                     <div class="strct-dg__chooser-item">
@@ -601,7 +624,7 @@ export class StrctDatagridActionBar {}
         align-items: center;
         gap: 12px;
       }
-      .strct-dg__chooser {
+      .strct-dg__actions {
         position: relative;
       }
       .strct-dg__chooser-menu {
@@ -676,6 +699,10 @@ export class StrctDatagrid {
   readonly resizable = input(false, { transform: booleanAttribute });
   /** Show a column-chooser dropdown in the footer. */
   readonly columnChooser = input(false, { transform: booleanAttribute });
+  /** Show a refresh button in the footer. */
+  readonly sync = input(false, { transform: booleanAttribute });
+  /** Disable all footer action buttons (sync, column chooser, etc.). */
+  readonly footerActionsDisabled = input(false, { transform: booleanAttribute });
   /**
    * Stable row identity (property key or function). Set this for live-refreshing
    * data so selection, expansion and the active detail row survive re-fetches
@@ -684,6 +711,8 @@ export class StrctDatagrid {
   readonly rowId = input<StrctRowId | null>(null);
   /** Emitted when the selection changes. */
   readonly selectionChange = output<StrctRow[]>();
+  /** Emitted when the refresh button is clicked. */
+  readonly syncChange = output<void>();
 
   protected readonly detailDef = contentChild(StrctRowDetailDef);
   protected readonly actionBarDef = contentChild(StrctDatagridActionBar);

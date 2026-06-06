@@ -59,7 +59,7 @@ describe('StrctDatagrid', () => {
     fixture.componentRef.setInput('pageSize', 10);
     fixture.detectChanges();
 
-    const btn = fixture.nativeElement.querySelector('.strct-dg__chooser button');
+    const btn = fixture.nativeElement.querySelector('.strct-dg__actions button');
     expect(btn).toBeTruthy();
 
     btn.click();
