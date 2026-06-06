@@ -28,3 +28,15 @@ NOTE: Raw file sizes do not reflect development server per-request transformatio
   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.160.1:[1m4200[22m/[39m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.44.1:[1m4200[22m/[39m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.113:[1m4200[22m/[39m
+[33m❯[39m Changes detected. Rebuilding...
+[32m✔[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m        [2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m         [2m | [22m[36m59.33 kB[39m[2m | [22m
+[32mchunk-AVG4S62D.js[39m  [2m | [22m[2m-[22m            [2m | [22m[36m24.86 kB[39m[2m | [22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m        [2m | [22m[1mRaw size[22m
+[32mchunk-KSGO2E36.js[39m  [2m | [22m[2mcategory-page[22m[2m | [22m[36m83.20 kB[39m[2m | [22m
+
+Application bundle generation complete. [11.667 seconds] - 2026-06-06T18:01:47.421Z
+
+Page reload sent to client(s).
