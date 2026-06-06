@@ -340,7 +340,14 @@ export function registerStrctIcon(
 }
 
 /** Icon status dot variants. */
-export type StrctIconBadge = 'none' | 'success' | 'warning' | 'critical' | 'off' | 'info';
+export type StrctIconBadge =
+  | 'none'
+  | 'success'
+  | 'warning'
+  | 'critical'
+  | 'off'
+  | 'info'
+  | 'maintenance';
 
 /**
  * Inline stroke icon. `<strct-icon name="host" badge="success" />` renders the host
@@ -375,7 +382,20 @@ export type StrctIconBadge = 'none' | 'success' | 'warning' | 'critical' | 'off'
       ></svg>
     }
     @if (badge() !== 'none') {
-      <span class="strct-icon__badge strct-icon__badge--{{ badge() }}"></span>
+      <span class="strct-icon__badge strct-icon__badge--{{ badge() }}">
+        @if (badge() === 'maintenance') {
+          <svg
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4 12L7 9M7 9L10 6M10 6a2 2 0 1 1 2.5-2.5" />
+          </svg>
+        }
+      </span>
     }`,
   host: { class: 'strct-icon' },
   styles: [
@@ -444,6 +464,19 @@ export type StrctIconBadge = 'none' | 'success' | 'warning' | 'critical' | 'off'
       }
       .strct-icon__badge--info {
         background: var(--acc);
+      }
+      .strct-icon__badge--maintenance {
+        background: var(--warning);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1px;
+        box-shadow: 0 0 0 1.5px var(--bg-1);
+      }
+      .strct-icon__badge--maintenance svg {
+        width: 78%;
+        height: 78%;
+        color: rgba(0, 0, 0, 0.85);
       }
     `,
   ],

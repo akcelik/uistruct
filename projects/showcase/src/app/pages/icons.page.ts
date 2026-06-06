@@ -293,7 +293,8 @@ export class IconsPage {
 
   protected readonly stateOptions: { badge: StrctIconBadge; label: string }[] = [
     { badge: 'success', label: 'Running' },
-    { badge: 'warning', label: 'Maint' },
+    { badge: 'maintenance', label: 'Maint' },
+    { badge: 'warning', label: 'Degraded' },
     { badge: 'critical', label: 'Critical' },
     { badge: 'off', label: 'Stopped' },
   ];
@@ -305,7 +306,7 @@ export class IconsPage {
   protected readonly states: StateExample[] = [
     { name: 'host-run', object: 'host', badge: 'success', label: 'Host · running' },
     { name: 'host-off', object: 'host', badge: 'off', label: 'Host · powered off' },
-    { name: 'host-maint', object: 'host', badge: 'warning', label: 'Host · maintenance' },
+    { name: 'host-maint', object: 'host', badge: 'maintenance', label: 'Host · maintenance' },
     { name: 'host-critical', object: 'host', badge: 'critical', label: 'Host · critical' },
     { name: 'vm-run', object: 'vm', badge: 'success', label: 'VM · running' },
     { name: 'vm-off', object: 'vm', badge: 'off', label: 'VM · stopped' },
@@ -313,7 +314,12 @@ export class IconsPage {
     { name: 'vm-critical', object: 'vm', badge: 'critical', label: 'VM · critical' },
     { name: 'cluster-ok', object: 'cluster', badge: 'success', label: 'Cluster · healthy' },
     { name: 'cluster-degraded', object: 'cluster', badge: 'warning', label: 'Cluster · degraded' },
-    { name: 'cluster-maint', object: 'cluster', badge: 'warning', label: 'Cluster · maintenance' },
+    {
+      name: 'cluster-maint',
+      object: 'cluster',
+      badge: 'maintenance',
+      label: 'Cluster · maintenance',
+    },
     { name: 'cluster-critical', object: 'cluster', badge: 'critical', label: 'Cluster · critical' },
     { name: 'cluster-off', object: 'cluster', badge: 'off', label: 'Cluster · stopped' },
     { name: 'storage-warn', object: 'storage', badge: 'warning', label: 'Datastore · low' },
