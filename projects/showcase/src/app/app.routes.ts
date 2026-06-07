@@ -34,6 +34,10 @@ export const routes: Routes = [
     path: 'scenarios/host',
     loadComponent: () => import('./scenarios/host-detail.page').then((m) => m.HostDetailPage),
   },
+  {
+    path: 'scenarios/new-cluster',
+    loadComponent: () => import('./scenarios/cluster-wizard.page').then((m) => m.ClusterWizardPage),
+  },
   { path: 'scenarios', pathMatch: 'full', redirectTo: 'scenarios/dashboard' },
   { path: '**', redirectTo: '' },
 ];
