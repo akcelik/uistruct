@@ -14,6 +14,8 @@ import {
   StrctVerticalNav,
 } from 'strct';
 import { COMPONENT_COUNT, DOCS, GUIDES } from './docs/registry';
+// Single source of truth for the footer version — the published library version.
+import strctPkg from '../../../strct/package.json';
 
 interface NavItem {
   label: string;
@@ -49,7 +51,8 @@ export class App {
   private readonly theme = inject(StrctThemeService);
 
   protected readonly count = COMPONENT_COUNT;
-  protected readonly version = '0.5.31';
+  /** Derived from the library's package.json so it never goes stale. */
+  protected readonly version = strctPkg.version;
 
   /** Icon strip + secondary panel source. Foundations first, then component categories. */
   protected readonly groups: NavGroup[] = [
