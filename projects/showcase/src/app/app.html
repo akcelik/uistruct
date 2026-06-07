@@ -13,6 +13,17 @@
     <a class="hnav" routerLink="/get-started">Get started</a>
     <a class="hnav" routerLink="/components/button">Components</a>
 
+    <button
+      class="cmdbtn"
+      type="button"
+      (click)="openPalette()"
+      aria-label="Search (Ctrl or Cmd K)"
+    >
+      <strct-icon name="search" [size]="14" />
+      <span class="cmdbtn__label">Search</span>
+      <kbd class="cmdbtn__kbd">⌘K</kbd>
+    </button>
+
     <strct-theme-switcher />
 
     <a
@@ -73,3 +84,4 @@
 </strct-shell>
 
 <strct-toast-outlet />
+<app-command-palette />

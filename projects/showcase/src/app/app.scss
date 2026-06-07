@@ -5,19 +5,29 @@
   color: #fff;
   text-decoration: none;
 
-  strct-icon { color: var(--acc); }
+  strct-icon {
+    color: var(--acc);
+  }
 
   &__text {
     display: flex;
     flex-direction: column;
     line-height: 1.15;
 
-    strong { font-size: 15px; font-weight: 600; }
-    span { font-size: 11px; opacity: 0.6; }
+    strong {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    span {
+      font-size: 11px;
+      opacity: 0.6;
+    }
   }
 }
 
-.grow { flex: 1; }
+.grow {
+  flex: 1;
+}
 
 .hnav {
   font-size: 13px;
@@ -25,7 +35,9 @@
   text-decoration: none;
   padding: 6px 4px;
 
-  &:hover { color: #fff; }
+  &:hover {
+    color: #fff;
+  }
 }
 
 .ghbtn {
@@ -37,7 +49,36 @@
   border-radius: 7px;
   color: rgba(255, 255, 255, 0.72);
 
-  &:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+  &:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.cmdbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  font-size: 12px;
+
+  &:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.09);
+  }
+
+  &__kbd {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+  }
 }
 
 /* Sidebar: thin icon rail + scrollable list panel. */
@@ -86,9 +127,14 @@
   font-size: 13px;
   color: var(--t2);
   text-decoration: none;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
 
-  &:hover { background: var(--bg-3); color: var(--t1); }
+  &:hover {
+    background: var(--bg-3);
+    color: var(--t1);
+  }
 
   &.is-active {
     background: var(--acc-m);

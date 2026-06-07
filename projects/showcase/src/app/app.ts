@@ -14,6 +14,7 @@ import {
   StrctVerticalNav,
 } from 'strct';
 import { COMPONENT_COUNT, DOCS, GUIDES, SCENARIOS } from './docs/registry';
+import { CommandPalette, CommandPaletteService } from './ui/command-palette';
 // Single source of truth for the footer version — the published library version.
 import strctPkg from '../../../strct/package.json';
 
@@ -42,6 +43,7 @@ interface NavGroup {
     StrctThemeSwitcher,
     StrctToastOutlet,
     StrctIcon,
+    CommandPalette,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -49,6 +51,11 @@ interface NavGroup {
 export class App {
   private readonly router = inject(Router);
   private readonly theme = inject(StrctThemeService);
+  private readonly palette = inject(CommandPaletteService);
+
+  protected openPalette(): void {
+    this.palette.open.set(true);
+  }
 
   protected readonly count = COMPONENT_COUNT;
   /** Derived from the library's package.json so it never goes stale. */
