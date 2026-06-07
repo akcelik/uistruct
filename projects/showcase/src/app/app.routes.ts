@@ -26,6 +26,10 @@ export const routes: Routes = [
     path: 'scenarios/dashboard',
     loadComponent: () => import('./scenarios/dashboard.page').then((m) => m.DashboardPage),
   },
+  {
+    path: 'scenarios/inventory',
+    loadComponent: () => import('./scenarios/inventory.page').then((m) => m.InventoryPage),
+  },
   { path: 'scenarios', pathMatch: 'full', redirectTo: 'scenarios/dashboard' },
   { path: '**', redirectTo: '' },
 ];

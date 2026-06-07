@@ -1678,5 +1678,8 @@ export const SCENARIOS: { id: string; label: string; icon: string; items: GuideL
   id: 'scenarios',
   label: 'Scenarios',
   icon: 'datacenter',
-  items: [{ label: 'Dashboard', path: '/scenarios/dashboard' }],
+  items: [
+    { label: 'Dashboard', path: '/scenarios/dashboard' },
+    { label: 'Inventory', path: '/scenarios/inventory' },
+  ],
 };
