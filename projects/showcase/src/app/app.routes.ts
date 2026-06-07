@@ -38,6 +38,10 @@ export const routes: Routes = [
     path: 'scenarios/new-cluster',
     loadComponent: () => import('./scenarios/cluster-wizard.page').then((m) => m.ClusterWizardPage),
   },
+  {
+    path: 'scenarios/states',
+    loadComponent: () => import('./scenarios/states.page').then((m) => m.StatesPage),
+  },
   { path: 'scenarios', pathMatch: 'full', redirectTo: 'scenarios/dashboard' },
   { path: '**', redirectTo: '' },
 ];
