@@ -60,7 +60,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="field"
       heading="Form field"
       description="Wrap any control for a consistent label, required marker, hint and error — aria-describedby and aria-invalid are wired automatically. Type an address without an @ to see the error state."
-      code="<strct-field label=&quot;Email&quot; required hint=&quot;…&quot; [error]=&quot;err()&quot;><input strctInput /></strct-field>"
+      code='<strct-field label="Email" required hint="…" [error]="err()"><input strctInput /></strct-field>'
     >
       <div class="field">
         <strct-field label="Email" required hint="We'll never share it." [error]="emailError()">
@@ -79,10 +79,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="input"
       heading="Input"
       description="Text input wearing the shared control style."
-      code="<input strctInput placeholder=&quot;Your name&quot; [(ngModel)]=&quot;name&quot; />"
+      code='<input strctInput placeholder="Your name" [(ngModel)]="name" />'
     >
       <div class="field">
-        <input strctInput placeholder="Your name" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+        <input
+          strctInput
+          placeholder="Your name"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
+        />
         <span class="echo">value: {{ name() || '—' }}</span>
       </div>
     </app-demo>
@@ -103,7 +108,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="checkbox"
       heading="Checkbox"
       description="Custom box with form binding."
-      code="<strct-checkbox [(ngModel)]=&quot;agree&quot;>I agree</strct-checkbox>"
+      code='<strct-checkbox [(ngModel)]="agree">I agree</strct-checkbox>'
     >
       <div class="stack">
         <strct-checkbox [ngModel]="agree()" (ngModelChange)="agree.set($event)">
@@ -126,7 +131,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="radio"
       heading="Radio group"
       description="Single choice from a set."
-      code="<strct-radio-group [(ngModel)]=&quot;size&quot;>…</strct-radio-group>"
+      code='<strct-radio-group [(ngModel)]="size">…</strct-radio-group>'
     >
       <strct-radio-group [ngModel]="size()" (ngModelChange)="size.set($event)">
         <strct-radio [value]="'sm'">Small</strct-radio>
@@ -140,7 +145,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="range"
       heading="Slider"
       description="Range input with a filled track and live value."
-      code="<strct-range [min]=&quot;0&quot; [max]=&quot;100&quot; [(ngModel)]=&quot;volume&quot; showValue />"
+      code='<strct-range [min]="0" [max]="100" [(ngModel)]="volume" showValue />'
     >
       <strct-range
         [min]="0"
@@ -155,7 +160,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="combobox"
       heading="Combobox"
       description="Type to filter, click to select. ControlValueAccessor-compatible."
-      code="<strct-combobox [options]=&quot;cities&quot; [(ngModel)]=&quot;city&quot; />"
+      code='<strct-combobox [options]="cities" [(ngModel)]="city" />'
     >
       <strct-combobox
         [options]="cities"
@@ -170,7 +175,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="datepicker"
       heading="Date picker"
       description="Calendar popover; value is an ISO date string."
-      code="<strct-datepicker [(ngModel)]=&quot;date&quot; />"
+      code='<strct-datepicker [(ngModel)]="date" />'
     >
       <strct-datepicker [ngModel]="date()" (ngModelChange)="date.set($event)" />
       <span class="echo">value: {{ date() || '—' }}</span>
@@ -180,7 +185,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="password"
       heading="Password"
       description="Reveal toggle and an optional strength meter."
-      code="<strct-password [(ngModel)]=&quot;pw&quot; meter />"
+      code='<strct-password [(ngModel)]="pw" meter />'
     >
       <strct-password
         [ngModel]="pw()"
@@ -194,7 +199,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="file"
       heading="File upload"
       description="Drag and drop or browse; shows selected files. Value is a File[]."
-      code="<strct-file [(ngModel)]=&quot;files&quot; multiple />"
+      code='<strct-file [(ngModel)]="files" multiple />'
     >
       <strct-file [ngModel]="files()" (ngModelChange)="files.set($event)" multiple />
     </app-demo>
@@ -203,7 +208,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="colorpicker"
       heading="Color picker"
       description="Preset swatches plus a hex field. Value is a #rrggbb string."
-      code="<strct-color-picker [(ngModel)]=&quot;color&quot; />"
+      code='<strct-color-picker [(ngModel)]="color" />'
     >
       <strct-color-picker [ngModel]="color()" (ngModelChange)="color.set($event)" />
       <span class="echo">value: {{ color() || '—' }}</span>
@@ -213,7 +218,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="cascade"
       heading="Cascade select"
       description="Pick a leaf from nested groups — e.g. a port group under a virtual switch."
-      code="<strct-cascade-select [options]=&quot;switches&quot; [(ngModel)]=&quot;portGroup&quot; />"
+      code='<strct-cascade-select [options]="switches" [(ngModel)]="portGroup" />'
     >
       <strct-cascade-select
         [options]="switches"
@@ -228,7 +233,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="rating"
       heading="Rating"
       description="Star rating; click the active star again to clear."
-      code="<strct-rating [(ngModel)]=&quot;score&quot; />"
+      code='<strct-rating [(ngModel)]="score" />'
     >
       <strct-rating [ngModel]="score()" (ngModelChange)="score.set($event)" />
       <span class="echo">value: {{ score() }}</span>
@@ -238,9 +243,13 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="chips"
       heading="Chips"
       description="Type a tag and press Enter; Backspace removes the last. Value is a string[]."
-      code="<strct-chips [(ngModel)]=&quot;labels&quot; placeholder=&quot;Add a tag…&quot; />"
+      code='<strct-chips [(ngModel)]="labels" placeholder="Add a tag…" />'
     >
-      <strct-chips [ngModel]="labels()" (ngModelChange)="labels.set($event)" placeholder="Add a tag…" />
+      <strct-chips
+        [ngModel]="labels()"
+        (ngModelChange)="labels.set($event)"
+        placeholder="Add a tag…"
+      />
       <span class="echo">value: [{{ labels().join(', ') }}]</span>
     </app-demo>
 
@@ -248,7 +257,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="otp"
       heading="Input OTP"
       description="One-time-password boxes with auto-advance, backspace and paste."
-      code="<strct-input-otp [length]=&quot;6&quot; [(ngModel)]=&quot;code&quot; />"
+      code='<strct-input-otp [length]="6" [(ngModel)]="code" />'
     >
       <strct-input-otp [length]="6" [ngModel]="code()" (ngModelChange)="code.set($event)" />
       <span class="echo">value: {{ code() || '—' }}</span>
@@ -258,46 +267,98 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="knob"
       heading="Knob"
       description="Rotary dial — drag, use the arrow keys, or scroll. CVA-compatible."
-      code="<strct-knob [min]=&quot;0&quot; [max]=&quot;100&quot; [(ngModel)]=&quot;fan&quot; label=&quot;Fan&quot; />"
+      code='<strct-knob [min]="0" [max]="100" [(ngModel)]="fan" label="Fan" />'
     >
-      <strct-knob [ngModel]="fan()" (ngModelChange)="fan.set($event)" label="Fan %" status="accent" />
-      <strct-knob [ngModel]="temp()" (ngModelChange)="temp.set($event)" [min]="0" [max]="120" label="°C" status="warning" />
+      <strct-knob
+        [ngModel]="fan()"
+        (ngModelChange)="fan.set($event)"
+        label="Fan %"
+        status="accent"
+      />
+      <strct-knob
+        [ngModel]="temp()"
+        (ngModelChange)="temp.set($event)"
+        [min]="0"
+        [max]="120"
+        label="°C"
+        status="warning"
+      />
     </app-demo>
 
     <app-demo
       anchor="inputmask"
       heading="Input mask"
       description="Formatted entry. Tokens: 9 = digit, A = letter, * = alphanumeric; the rest are literals."
-      code="<strct-input-mask mask=&quot;(999) 999 99 99&quot; [(ngModel)]=&quot;phone&quot; />"
+      code='<strct-input-mask mask="(999) 999 99 99" [(ngModel)]="phone" />'
     >
       <div class="field">
         <span class="echo">Phone</span>
-        <strct-input-mask mask="(999) 999 99 99" [ngModel]="phone()" (ngModelChange)="phone.set($event)" />
+        <strct-input-mask
+          mask="(999) 999 99 99"
+          [ngModel]="phone()"
+          (ngModelChange)="phone.set($event)"
+        />
       </div>
       <div class="field">
         <span class="echo">National ID (TR)</span>
-        <strct-input-mask mask="99999999999" [ngModel]="tckn()" (ngModelChange)="tckn.set($event)" />
+        <strct-input-mask
+          mask="99999999999"
+          [ngModel]="tckn()"
+          (ngModelChange)="tckn.set($event)"
+        />
       </div>
       <div class="field">
         <span class="echo">Card</span>
-        <strct-input-mask mask="9999 9999 9999 9999" [ngModel]="card()" (ngModelChange)="card.set($event)" />
+        <strct-input-mask
+          mask="9999 9999 9999 9999"
+          [ngModel]="card()"
+          (ngModelChange)="card.set($event)"
+        />
       </div>
       <div class="field">
         <span class="echo">MAC address</span>
-        <strct-input-mask mask="HH:HH:HH:HH:HH:HH" uppercase [ngModel]="mac()" (ngModelChange)="mac.set($event)" />
+        <strct-input-mask
+          mask="HH:HH:HH:HH:HH:HH"
+          uppercase
+          [ngModel]="mac()"
+          (ngModelChange)="mac.set($event)"
+        />
       </div>
       <div class="field">
         <span class="echo">WWPN</span>
-        <strct-input-mask mask="HH:HH:HH:HH:HH:HH:HH:HH" uppercase [ngModel]="wwpn()" (ngModelChange)="wwpn.set($event)" />
+        <strct-input-mask
+          mask="HH:HH:HH:HH:HH:HH:HH:HH"
+          uppercase
+          [ngModel]="wwpn()"
+          (ngModelChange)="wwpn.set($event)"
+        />
       </div>
     </app-demo>
   `,
   styles: [
     `
-    .field { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 320px; }
-    .stack { display: flex; flex-direction: column; gap: 12px; }
-    .echo { font-size: 12px; color: var(--t2); font-family: var(--mono); }
-    select, textarea, input { max-width: 320px; }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+        max-width: 320px;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .echo {
+        font-size: 12px;
+        color: var(--t2);
+        font-family: var(--mono);
+      }
+      select,
+      textarea,
+      input {
+        max-width: 320px;
+      }
     `,
   ],
 })
@@ -333,22 +394,22 @@ export class FormsPage {
 
   protected readonly switches: StrctCascadeOption[] = [
     {
-      label: 'vSwitch0',
+      label: 'Switch-A',
       children: [
         { label: 'Management', value: 'pg-mgmt' },
-        { label: 'vMotion', value: 'pg-vmotion' },
+        { label: 'Live Migration', value: 'pg-livemig' },
         { label: 'Storage', value: 'pg-storage' },
       ],
     },
     {
-      label: 'vSwitch1',
+      label: 'Switch-B',
       children: [
         { label: 'Production', value: 'pg-prod' },
         { label: 'DMZ', value: 'pg-dmz' },
       ],
     },
     {
-      label: 'DvSwitch-Core',
+      label: 'Core-Switch',
       children: [
         { label: 'App Tier', value: 'pg-app' },
         { label: 'DB Tier', value: 'pg-db' },

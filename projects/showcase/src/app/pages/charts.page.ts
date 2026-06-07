@@ -173,7 +173,7 @@ export class ChartsPage {
   protected readonly hours = ['00', '04', '08', '12', '16', '20', '24'];
   protected readonly dayCpu = [22, 35, 48, 72, 65, 58, 44];
 
-  protected readonly hostNames = ['esx-01', 'esx-02', 'esx-03', 'esx-04', 'esx-05'];
+  protected readonly hostNames = ['hv-01', 'hv-02', 'hv-03', 'hv-04', 'hv-05'];
   protected readonly perHost = [18, 24, 12, 30, 21];
 
   protected readonly vmStates: StrctDonutSegment[] = [

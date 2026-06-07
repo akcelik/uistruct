@@ -208,8 +208,8 @@ export class DataPage {
   ];
 
   protected readonly rows: StrctRow[] = [
-    { name: 'Production Cluster', type: 'DRS', hosts: 8, status: 'Running' },
-    { name: 'DR Cluster', type: 'DRS', hosts: 4, status: 'Running' },
+    { name: 'Production Cluster', type: 'Failover', hosts: 8, status: 'Running' },
+    { name: 'DR Cluster', type: 'Failover', hosts: 4, status: 'Running' },
     { name: 'Edge Cluster', type: 'Standard', hosts: 3, status: 'Degraded' },
     { name: 'Dev Cluster', type: 'Standard', hosts: 2, status: 'Running' },
   ];
@@ -222,17 +222,17 @@ export class DataPage {
   ];
 
   protected readonly dgRows: StrctRow[] = [
-    { name: 'Production Cluster', type: 'DRS', hosts: 8, status: 'Running' },
-    { name: 'DR Cluster', type: 'DRS', hosts: 4, status: 'Running' },
+    { name: 'Production Cluster', type: 'Failover', hosts: 8, status: 'Running' },
+    { name: 'DR Cluster', type: 'Failover', hosts: 4, status: 'Running' },
     { name: 'Edge Cluster', type: 'Standard', hosts: 3, status: 'Degraded' },
     { name: 'Dev Cluster', type: 'Standard', hosts: 2, status: 'Running' },
-    { name: 'Staging Cluster', type: 'DRS', hosts: 3, status: 'Running' },
+    { name: 'Staging Cluster', type: 'Failover', hosts: 3, status: 'Running' },
     { name: 'Backup Cluster', type: 'Standard', hosts: 2, status: 'Idle' },
-    { name: 'Analytics Cluster', type: 'DRS', hosts: 6, status: 'Running' },
+    { name: 'Analytics Cluster', type: 'Failover', hosts: 6, status: 'Running' },
     { name: 'Test Cluster', type: 'Standard', hosts: 1, status: 'Degraded' },
-    { name: 'AI Training Cluster', type: 'DRS', hosts: 12, status: 'Running' },
+    { name: 'AI Training Cluster', type: 'Failover', hosts: 12, status: 'Running' },
     { name: 'Observability Cluster', type: 'Standard', hosts: 2, status: 'Running' },
     { name: 'Archive Cluster', type: 'Standard', hosts: 2, status: 'Idle' },
-    { name: 'Management Cluster', type: 'DRS', hosts: 4, status: 'Running' },
+    { name: 'Management Cluster', type: 'Failover', hosts: 4, status: 'Running' },
   ];
 }

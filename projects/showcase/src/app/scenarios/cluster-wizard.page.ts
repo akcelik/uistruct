@@ -124,9 +124,9 @@ interface HostOption {
               >High Availability (HA)</strct-toggle
             >
             <strct-toggle [ngModel]="drs()" (ngModelChange)="drs.set($event)"
-              >Distributed Resource Scheduler (DRS)</strct-toggle
+              >Dynamic optimization</strct-toggle
             >
-            <strct-field label="DRS automation level">
+            <strct-field label="Optimization level">
               <strct-radio-group [ngModel]="automation()" (ngModelChange)="automation.set($event)">
                 <strct-radio [value]="'manual'">Manual</strct-radio>
                 <strct-radio [value]="'partial'">Partially automated</strct-radio>
@@ -143,7 +143,7 @@ interface HostOption {
             <strct-stack-item label="Datacenter">{{ datacenter() }}</strct-stack-item>
             <strct-stack-item label="Hosts">{{ selectedHosts().length }} selected</strct-stack-item>
             <strct-stack-item label="HA">{{ ha() ? 'Enabled' : 'Disabled' }}</strct-stack-item>
-            <strct-stack-item label="DRS">{{
+            <strct-stack-item label="Optimization">{{
               drs() ? 'Enabled · ' + automation() : 'Disabled'
             }}</strct-stack-item>
           </strct-stack>
@@ -233,10 +233,10 @@ export class ClusterWizardPage {
   protected readonly created = signal(false);
 
   protected readonly hosts: HostOption[] = [
-    { id: 'h1', name: 'esx-pool-01', spec: '48 cores · 512 GB' },
-    { id: 'h2', name: 'esx-pool-02', spec: '48 cores · 512 GB' },
-    { id: 'h3', name: 'esx-pool-03', spec: '64 cores · 768 GB' },
-    { id: 'h4', name: 'esx-pool-04', spec: '64 cores · 768 GB' },
+    { id: 'h1', name: 'hv-pool-01', spec: '48 cores · 512 GB' },
+    { id: 'h2', name: 'hv-pool-02', spec: '48 cores · 512 GB' },
+    { id: 'h3', name: 'hv-pool-03', spec: '64 cores · 768 GB' },
+    { id: 'h4', name: 'hv-pool-04', spec: '64 cores · 768 GB' },
   ];
 
   protected readonly basicsValid = computed(() => this.name().trim().length > 0);

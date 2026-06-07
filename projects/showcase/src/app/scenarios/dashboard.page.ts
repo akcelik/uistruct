@@ -107,7 +107,7 @@ interface EventItem {
       }
     </section>
 
-    <!-- Health + gauges + datastores -->
+    <!-- Health + gauges + volumes -->
     <section class="dash__grid dash__grid--3">
       <strct-card>
         <strct-card-header
@@ -147,10 +147,10 @@ interface EventItem {
       </strct-card>
 
       <strct-card>
-        <strct-card-header><span>Top datastores</span></strct-card-header>
+        <strct-card-header><span>Top volumes</span></strct-card-header>
         <strct-card-block>
           <div class="bars">
-            @for (d of datastores; track d.label) {
+            @for (d of volumes; track d.label) {
               <div class="bar">
                 <div class="bar__row">
                   <span>{{ d.label }}</span
@@ -467,10 +467,10 @@ export class DashboardPage {
     { value: 1, label: 'Stopped' },
   ];
 
-  protected readonly datastores: Usage[] = [
-    { label: 'Datastore-SSD-01', value: 68, status: 'warning', detail: '6.8 / 10 TB' },
+  protected readonly volumes: Usage[] = [
+    { label: 'Volume-SSD-01', value: 68, status: 'warning', detail: '6.8 / 10 TB' },
     { label: 'LUN-SAN-01', value: 44, status: 'success', detail: '2.2 / 5 TB' },
-    { label: 'vSAN-Capacity', value: 88, status: 'critical', detail: '35.2 / 40 TB' },
+    { label: 'S2D-Capacity', value: 88, status: 'critical', detail: '35.2 / 40 TB' },
     { label: 'Backup-NFS', value: 21, status: 'accent', detail: '10.5 / 50 TB' },
   ];
 
@@ -480,13 +480,17 @@ export class DashboardPage {
   protected readonly vmsPerCluster = [96, 84, 32, 58, 28, 20];
 
   protected readonly events: EventItem[] = [
-    { title: 'vMotion completed', state: 'success', detail: 'web-frontend-01 → ESXi Host 03' },
+    {
+      title: 'Live migration completed',
+      state: 'success',
+      detail: 'web-frontend-01 → Hyper-V Host 03',
+    },
     {
       title: 'Host entered maintenance',
       state: 'current',
-      detail: 'ESXi Host 02 · fan redundancy alert',
+      detail: 'Hyper-V Host 02 · fan redundancy alert',
     },
-    { title: 'Datastore usage high', state: 'warning', detail: 'vSAN-Capacity crossed 85%' },
+    { title: 'Volume usage high', state: 'warning', detail: 'S2D-Capacity crossed 85%' },
     { title: 'Snapshot created', state: 'default', detail: 'db-primary · pre-upgrade' },
   ];
 
@@ -499,11 +503,11 @@ export class DashboardPage {
   ];
 
   protected readonly hostRows: StrctRow[] = [
-    { name: 'ESXi Host 01', cluster: 'Prod-A', vms: 24, cpu: 71, status: 'Running' },
-    { name: 'ESXi Host 02', cluster: 'Prod-A', vms: 18, cpu: 44, status: 'Maintenance' },
-    { name: 'ESXi Host 03', cluster: 'Prod-B', vms: 31, cpu: 86, status: 'Running' },
-    { name: 'ESXi Host 04', cluster: 'Edge', vms: 9, cpu: 22, status: 'Running' },
-    { name: 'ESXi Host 05', cluster: 'DR', vms: 0, cpu: 3, status: 'Stopped' },
+    { name: 'Hyper-V Host 01', cluster: 'Prod-A', vms: 24, cpu: 71, status: 'Running' },
+    { name: 'Hyper-V Host 02', cluster: 'Prod-A', vms: 18, cpu: 44, status: 'Maintenance' },
+    { name: 'Hyper-V Host 03', cluster: 'Prod-B', vms: 31, cpu: 86, status: 'Running' },
+    { name: 'Hyper-V Host 04', cluster: 'Edge', vms: 9, cpu: 22, status: 'Running' },
+    { name: 'Hyper-V Host 05', cluster: 'DR', vms: 0, cpu: 3, status: 'Stopped' },
   ];
 
   protected legendClass(label: string | undefined): string {

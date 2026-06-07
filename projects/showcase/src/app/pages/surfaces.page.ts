@@ -278,9 +278,9 @@ export class SurfacesPage {
           badge: 'success',
           expanded: true,
           children: [
-            { label: 'esx-01 · running', icon: 'host', badge: 'success' },
-            { label: 'esx-02 · maintenance', icon: 'host', badge: 'warning' },
-            { label: 'esx-03 · powered off', icon: 'host', badge: 'off' },
+            { label: 'hv-01 · running', icon: 'host', badge: 'success' },
+            { label: 'hv-02 · maintenance', icon: 'host', badge: 'warning' },
+            { label: 'hv-03 · powered off', icon: 'host', badge: 'off' },
           ],
         },
         {
@@ -288,7 +288,7 @@ export class SurfacesPage {
           icon: 'cluster',
           badge: 'critical',
           children: [
-            { label: 'esx-04 · critical', icon: 'host', badge: 'critical' },
+            { label: 'hv-04 · critical', icon: 'host', badge: 'critical' },
             { label: 'web-vm-01', icon: 'vm', badge: 'success' },
           ],
         },

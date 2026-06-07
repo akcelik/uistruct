@@ -59,7 +59,7 @@ import {
           <span class="det__avatar"
             ><strct-icon name="host" [size]="22" [strokeWidth]="1.4"
           /></span>
-          <h1 class="det__title">esx-prod-03</h1>
+          <h1 class="det__title">hv-prod-03</h1>
           <strct-badge status="success">Running</strct-badge>
           <strct-tag status="accent">Prod-B</strct-tag>
         </div>
@@ -83,7 +83,7 @@ import {
             <strct-card-block>
               <strct-stack>
                 <strct-stack-item label="Cluster">Prod-B</strct-stack-item>
-                <strct-stack-item label="Hypervisor">VMware ESXi 8.0</strct-stack-item>
+                <strct-stack-item label="Hypervisor">Hyper-V Server 2022</strct-stack-item>
                 <strct-stack-item label="CPU">2× Intel Xeon Gold 6248R · 48 cores</strct-stack-item>
                 <strct-stack-item label="Memory">512 GB DDR4</strct-stack-item>
                 <strct-stack-item label="IP address">10.0.1.13</strct-stack-item>
@@ -311,7 +311,7 @@ export class HostDetailPage {
   }[] = [
     { label: 'vCPU allocation', value: 86, status: 'critical', detail: '82 / 96 vCPU' },
     { label: 'Memory allocation', value: 78, status: 'warning', detail: '400 / 512 GB' },
-    { label: 'Local datastore', value: 62, status: 'success', detail: '1.2 / 2 TB' },
+    { label: 'Local volume', value: 62, status: 'success', detail: '1.2 / 2 TB' },
   ];
 
   protected readonly events: { title: string; state: StrctTimelineState; detail: string }[] = [
@@ -319,9 +319,13 @@ export class HostDetailPage {
     {
       title: 'VM powered on',
       state: 'current',
-      detail: '11:20 · web-frontend-07 placed here by DRS',
+      detail: '11:20 · web-frontend-07 placed here by dynamic optimization',
     },
     { title: 'Snapshot consolidated', state: 'success', detail: '09:42 · db-replica-01' },
-    { title: 'Patch applied', state: 'default', detail: 'Yesterday · ESXi 8.0 U2 build 23305546' },
+    {
+      title: 'Patch applied',
+      state: 'default',
+      detail: 'Yesterday · Hyper-V Server 2022 · build 25398.469',
+    },
   ];
 }

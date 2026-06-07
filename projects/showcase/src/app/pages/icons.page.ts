@@ -362,7 +362,7 @@ export class IconsPage {
     },
     { name: 'cluster-critical', object: 'cluster', badge: 'critical', label: 'Cluster · critical' },
     { name: 'cluster-off', object: 'cluster', badge: 'off', label: 'Cluster · stopped' },
-    { name: 'storage-warn', object: 'storage', badge: 'warning', label: 'Datastore · low' },
+    { name: 'storage-warn', object: 'storage', badge: 'warning', label: 'Volume · low' },
   ];
 
   protected vendorLabel(name: string): string {
