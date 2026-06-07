@@ -98,8 +98,9 @@ export const STRCT_ICONS: Record<string, string> = {
     '<rect x="3" y="3.5" width="3" height="9" rx="1"/><rect x="6.5" y="2.5" width="3" height="11" rx="1"/><rect x="10" y="3.5" width="3" height="9" rx="1"/><circle cx="4.5" cy="6" r=".5" fill="currentColor" stroke="none"/><circle cx="4.5" cy="8" r=".5" fill="currentColor" stroke="none"/><circle cx="4.5" cy="10" r=".5" fill="currentColor" stroke="none"/><circle cx="8" cy="5" r=".5" fill="currentColor" stroke="none"/><circle cx="8" cy="7" r=".5" fill="currentColor" stroke="none"/><circle cx="8" cy="9" r=".5" fill="currentColor" stroke="none"/><circle cx="8" cy="11" r=".5" fill="currentColor" stroke="none"/><circle cx="11.5" cy="6" r=".5" fill="currentColor" stroke="none"/><circle cx="11.5" cy="8" r=".5" fill="currentColor" stroke="none"/><circle cx="11.5" cy="10" r=".5" fill="currentColor" stroke="none"/>',
   host: '<rect x="2.5" y="3" width="11" height="4.2" rx="1"/><rect x="2.5" y="8.8" width="11" height="4.2" rx="1"/><circle cx="4.7" cy="5.1" r=".55" fill="currentColor" stroke="none"/><circle cx="4.7" cy="10.9" r=".55" fill="currentColor" stroke="none"/><path d="M7 5.1h4M7 10.9h4"/>',
   vm: '<rect x="2" y="3" width="12" height="8" rx="1"/><path d="M6 14h4M8 11v3"/>',
+  // Network switch — front-panel view: chassis + status LEDs + a row of RJ45 ports.
   switch:
-    '<rect x="2" y="5.5" width="12" height="5" rx="1"/><path d="M4.5 5.5V3.8M7 5.5V3.8M9 5.5V3.8M11.5 5.5V3.8M4.5 10.5v1.7M7 10.5v1.7M9 10.5v1.7M11.5 10.5v1.7"/>',
+    '<rect x="1.5" y="5" width="13" height="6" rx="1"/><circle cx="3.5" cy="6.6" r=".5" fill="currentColor" stroke="none"/><circle cx="3.5" cy="9.4" r=".5" fill="currentColor" stroke="none"/><rect x="5.3" y="7.2" width="1.6" height="2.6" rx=".3"/><rect x="7.5" y="7.2" width="1.6" height="2.6" rx=".3"/><rect x="9.7" y="7.2" width="1.6" height="2.6" rx=".3"/><rect x="11.9" y="7.2" width="1.6" height="2.6" rx=".3"/>',
   storage:
     '<ellipse cx="8" cy="3.6" rx="5" ry="2"/><path d="M3 3.6v8.8c0 1.1 2.2 2 5 2s5-.9 5-2V3.6"/><path d="M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>',
   network:

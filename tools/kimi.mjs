@@ -91,7 +91,12 @@ async function main() {
     process.exitCode = 1;
     return;
   }
-  process.stdout.write(data.choices?.[0]?.message?.content ?? '');
+  if (has('--raw')) {
+    console.log(JSON.stringify(data, null, 2));
+    return;
+  }
+  const msg = data.choices?.[0]?.message ?? {};
+  process.stdout.write(msg.content || msg.reasoning_content || msg.reasoning || '');
   const u = data.usage;
   if (u) {
     console.error(

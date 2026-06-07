@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.31] - 2026-06-07
+
+### Changed
+
+- **Switch icon** — redesigned the `switch` glyph as a network switch front-panel view (chassis + two status LEDs + a row of RJ45 ports) instead of the previous box-with-legs shape that read as an insect.
+
 ## [0.5.27] - 2026-06-06
 
 ### Changed
