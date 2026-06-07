@@ -1671,6 +1671,7 @@ export const GUIDES: { id: string; label: string; icon: string; items: GuideLink
     { label: 'Theming', path: '/foundations/theming' },
     { label: 'Icons', path: '/foundations/icons' },
     { label: 'Playground', path: '/playground' },
+    { label: 'Guidelines', path: '/guidelines' },
   ],
 };
 

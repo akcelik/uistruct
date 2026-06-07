@@ -23,6 +23,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/playground.page').then((m) => m.PlaygroundPage),
   },
   {
+    path: 'guidelines',
+    loadComponent: () => import('./pages/guidelines.page').then((m) => m.GuidelinesPage),
+  },
+  {
     path: 'components/:id',
     loadComponent: () => import('./docs/component-page').then((m) => m.ComponentPage),
   },
