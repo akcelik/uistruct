@@ -19,6 +19,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/icons.page').then((m) => m.IconsPage),
   },
   {
+    path: 'playground',
+    loadComponent: () => import('./pages/playground.page').then((m) => m.PlaygroundPage),
+  },
+  {
     path: 'components/:id',
     loadComponent: () => import('./docs/component-page').then((m) => m.ComponentPage),
   },
