@@ -1672,3 +1672,11 @@ export const GUIDES: { id: string; label: string; icon: string; items: GuideLink
     { label: 'Icons', path: '/foundations/icons' },
   ],
 };
+
+/** End-to-end example pages composed from the library (datacenter console). */
+export const SCENARIOS: { id: string; label: string; icon: string; items: GuideLink[] } = {
+  id: 'scenarios',
+  label: 'Scenarios',
+  icon: 'datacenter',
+  items: [{ label: 'Dashboard', path: '/scenarios/dashboard' }],
+};

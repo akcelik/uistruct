@@ -13,7 +13,7 @@ import {
   StrctToastOutlet,
   StrctVerticalNav,
 } from 'strct';
-import { COMPONENT_COUNT, DOCS, GUIDES } from './docs/registry';
+import { COMPONENT_COUNT, DOCS, GUIDES, SCENARIOS } from './docs/registry';
 // Single source of truth for the footer version — the published library version.
 import strctPkg from '../../../strct/package.json';
 
@@ -57,6 +57,7 @@ export class App {
   /** Icon strip + secondary panel source. Foundations first, then component categories. */
   protected readonly groups: NavGroup[] = [
     { id: GUIDES.id, label: GUIDES.label, icon: GUIDES.icon, items: GUIDES.items },
+    { id: SCENARIOS.id, label: SCENARIOS.label, icon: SCENARIOS.icon, items: SCENARIOS.items },
     ...DOCS.map((cat) => ({
       id: cat.id,
       label: cat.label,
@@ -76,6 +77,9 @@ export class App {
       const id = p.split('/')[2] ?? '';
       const cat = DOCS.find((c) => c.components.some((x) => x.id === id));
       if (cat) return this.groups.find((g) => g.id === cat.id)!;
+    }
+    if (p.startsWith('/scenarios')) {
+      return this.groups.find((g) => g.id === SCENARIOS.id)!;
     }
     if (p.startsWith('/foundations') || p.startsWith('/get-started')) {
       return this.groups[0];

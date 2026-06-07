@@ -22,5 +22,10 @@ export const routes: Routes = [
     path: 'components/:id',
     loadComponent: () => import('./docs/component-page').then((m) => m.ComponentPage),
   },
+  {
+    path: 'scenarios/dashboard',
+    loadComponent: () => import('./scenarios/dashboard.page').then((m) => m.DashboardPage),
+  },
+  { path: 'scenarios', pathMatch: 'full', redirectTo: 'scenarios/dashboard' },
   { path: '**', redirectTo: '' },
 ];
