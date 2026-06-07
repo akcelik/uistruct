@@ -177,9 +177,9 @@ export class ChartsPage {
   protected readonly perHost = [18, 24, 12, 30, 21];
 
   protected readonly vmStates: StrctDonutSegment[] = [
-    { value: 36, label: 'Running', color: 'var(--ok)' },
+    { value: 36, label: 'Running', color: 'var(--success)' },
     { value: 8, label: 'Stopped', color: 'var(--t3)' },
-    { value: 3, label: 'Suspended', color: 'var(--wrn)' },
-    { value: 1, label: 'Error', color: 'var(--crt)' },
+    { value: 3, label: 'Suspended', color: 'var(--warning)' },
+    { value: 1, label: 'Error', color: 'var(--critical)' },
   ];
 }
