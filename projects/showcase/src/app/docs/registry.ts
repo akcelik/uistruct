@@ -1798,6 +1798,7 @@ export const SCENARIOS: { id: string; label: string; icon: string; items: GuideL
     { label: 'Dashboard', path: '/scenarios/dashboard' },
     { label: 'Inventory', path: '/scenarios/inventory' },
     { label: 'Host detail', path: '/scenarios/host' },
+    { label: 'VM settings', path: '/scenarios/vm-settings' },
     { label: 'New cluster', path: '/scenarios/new-cluster' },
     { label: 'Empty & errors', path: '/scenarios/states' },
   ],

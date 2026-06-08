@@ -47,6 +47,10 @@ export const routes: Routes = [
     loadComponent: () => import('./scenarios/host-detail.page').then((m) => m.HostDetailPage),
   },
   {
+    path: 'scenarios/vm-settings',
+    loadComponent: () => import('./scenarios/vm-settings.page').then((m) => m.VmSettingsPage),
+  },
+  {
     path: 'scenarios/new-cluster',
     loadComponent: () => import('./scenarios/cluster-wizard.page').then((m) => m.ClusterWizardPage),
   },
