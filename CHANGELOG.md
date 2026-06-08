@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-06-08
+
+### Changed
+
+- **Accordion is now a unified stack.** Panels were previously detached cards
+  separated by gaps; they now form one cohesive surface — a single rounded border
+  with hairline dividers between consecutive panels and no gaps. Independent
+  expand/collapse behaviour is unchanged. Visual only; no API change.
+
 ## [0.8.0] - 2026-06-08
 
 ### Added — Visual comfort & accessibility (eye-health round II)

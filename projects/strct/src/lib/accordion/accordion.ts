@@ -13,7 +13,10 @@ import { StrctIcon } from '../icon/icon';
       .strct-accordion {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        border: 1px solid var(--b2);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--bg-1);
       }
     `,
   ],
@@ -47,10 +50,10 @@ export class StrctAccordion {}
     `
       .strct-acc {
         display: block;
-        background: var(--bg-1);
-        border: 1px solid var(--b2);
-        border-radius: 7px;
-        overflow: hidden;
+      }
+      /* Hairline divider joins consecutive panels into one stacked surface. */
+      .strct-acc + .strct-acc {
+        border-top: 1px solid var(--b2);
       }
       .strct-acc__head {
         display: flex;
