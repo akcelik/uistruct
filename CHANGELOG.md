@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-06-08
+
+### Changed
+
+- **Tree rows are more compact.** Reduced tree-node row vertical padding (7px → 4px)
+  and gap (7px → 6px), bringing row height from ~34px to ~28px for a denser
+  navigation list. Legibility and click target preserved. Visual only; no API change.
+
 ## [0.9.0] - 2026-06-08
 
 ### Added — new components (development round, phase 1 of 5)

@@ -120,8 +120,8 @@ export interface StrctTreeMenuEvent {
       .strct-tnode__row {
         display: flex;
         align-items: center;
-        gap: 7px;
-        padding: 7px 10px;
+        gap: 6px;
+        padding: 4px 9px;
         border-radius: 5px;
         cursor: pointer;
         font-size: 13px;
