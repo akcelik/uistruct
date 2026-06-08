@@ -954,7 +954,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         border-bottom: 1px solid var(--b1);
       }
       .vms__crumb {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -995,7 +995,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         color: var(--t1);
       }
       .f__h {
-        font-size: 11.5px;
+        font-size: 12px;
         color: var(--t3);
         line-height: 1.4;
       }
@@ -1143,7 +1143,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         display: flex;
         flex-direction: column;
         gap: 5px;
-        font-size: 11px;
+        font-size: 12px;
         color: var(--t3);
       }
       .mini > span {
@@ -1210,7 +1210,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         font-weight: 600;
       }
       .addopt em {
-        font-size: 11.5px;
+        font-size: 12px;
         color: var(--t3);
         font-style: normal;
       }

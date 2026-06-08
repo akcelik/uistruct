@@ -15,7 +15,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 import { DemoFilter } from '../ui/demo';
-import { ApiTable, Breadcrumb, Crumb, OnThisPage, PageRef, PrevNext, TocItem, UsageGuide } from './doc-ui';
+import {
+  ApiTable,
+  Breadcrumb,
+  Crumb,
+  OnThisPage,
+  PageRef,
+  PrevNext,
+  TocItem,
+  UsageGuide,
+} from './doc-ui';
 import { ALL_COMPONENTS, DocCategory, PACKAGE_NAME, findComponent } from './registry';
 
 interface CategoryHost {
@@ -92,7 +101,11 @@ interface CategoryHost {
         </article>
 
         <div class="doc__aside">
-          <app-on-this-page [items]="toc()" [active]="activeSection()" (select)="scrollTo($event)" />
+          <app-on-this-page
+            [items]="toc()"
+            [active]="activeSection()"
+            (select)="scrollTo($event)"
+          />
         </div>
       </div>
     } @else {
@@ -101,33 +114,122 @@ interface CategoryHost {
   `,
   styles: [
     `
-    .doc { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 36px; align-items: start; }
-    .doc__main { min-width: 0; max-width: 880px; }
-    .doc__title { margin: 0; font-size: 28px; font-weight: 650; color: var(--t1); letter-spacing: -0.01em; }
-    .doc__lead { margin: 10px 0 0; font-size: 15px; line-height: 1.6; color: var(--t2); max-width: 72ch; }
+      .doc {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 200px;
+        gap: 36px;
+        align-items: start;
+      }
+      .doc__main {
+        min-width: 0;
+        max-width: 880px;
+      }
+      .doc__title {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 650;
+        color: var(--t1);
+        letter-spacing: -0.01em;
+      }
+      .doc__lead {
+        margin: 10px 0 0;
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--t2);
+        max-width: 72ch;
+      }
 
-    .doc__import { margin: 20px 0 28px; border: 1px solid var(--b2); border-radius: 9px; overflow: hidden; background: var(--bg-1); }
-    .doc__import-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 14px; border-bottom: 1px solid var(--b1); background: var(--bg-2); }
-    .doc__import-cap { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--t3); }
-    .doc__selector { font-family: var(--mono); font-size: 11.5px; color: var(--t2); overflow-x: auto; }
-    .doc__import-code { margin: 0; padding: 12px 14px; font-family: var(--mono); font-size: 12.5px; color: var(--t1); overflow-x: auto; }
+      .doc__import {
+        margin: 20px 0 28px;
+        border: 1px solid var(--b2);
+        border-radius: 9px;
+        overflow: hidden;
+        background: var(--bg-1);
+      }
+      .doc__import-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--b1);
+        background: var(--bg-2);
+      }
+      .doc__import-cap {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--t3);
+      }
+      .doc__selector {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--t2);
+        overflow-x: auto;
+      }
+      .doc__import-code {
+        margin: 0;
+        padding: 12px 14px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--t1);
+        overflow-x: auto;
+      }
 
-    .doc__h2 { margin: 0 0 14px; font-size: 17px; font-weight: 600; color: var(--t1); }
-    .doc__section { margin-top: 38px; scroll-margin-top: 16px; }
-    .doc__examples { scroll-margin-top: 16px; }
+      .doc__h2 {
+        margin: 0 0 14px;
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--t1);
+      }
+      .doc__section {
+        margin-top: 38px;
+        scroll-margin-top: 16px;
+      }
+      .doc__examples {
+        scroll-margin-top: 16px;
+      }
 
-    .doc__a11y { margin-top: 16px; border: 1px solid var(--b2); border-radius: 9px; padding: 14px 16px; background: var(--bg-1); }
-    .doc__a11y-cap { font-size: 12px; font-weight: 600; color: var(--t1); margin-bottom: 6px; }
-    .doc__a11y ul { margin: 0; padding-left: 18px; }
-    .doc__a11y li { font-size: 13px; color: var(--t2); margin: 4px 0; line-height: 1.5; }
+      .doc__a11y {
+        margin-top: 16px;
+        border: 1px solid var(--b2);
+        border-radius: 9px;
+        padding: 14px 16px;
+        background: var(--bg-1);
+      }
+      .doc__a11y-cap {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--t1);
+        margin-bottom: 6px;
+      }
+      .doc__a11y ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+      .doc__a11y li {
+        font-size: 13px;
+        color: var(--t2);
+        margin: 4px 0;
+        line-height: 1.5;
+      }
 
-    .doc__aside { display: block; }
-    .doc__missing { color: var(--t2); }
+      .doc__aside {
+        display: block;
+      }
+      .doc__missing {
+        color: var(--t2);
+      }
 
-    @media (max-width: 1100px) {
-      .doc { grid-template-columns: 1fr; }
-      .doc__aside { display: none; }
-    }
+      @media (max-width: 1100px) {
+        .doc {
+          grid-template-columns: 1fr;
+        }
+        .doc__aside {
+          display: none;
+        }
+      }
     `,
   ],
 })
@@ -152,11 +254,7 @@ export class ComponentPage {
   protected readonly crumbs = computed<Crumb[]>(() => {
     const c = this.component();
     if (!c) return [];
-    return [
-      { label: 'Components' },
-      { label: c.category.label },
-      { label: c.title },
-    ];
+    return [{ label: 'Components' }, { label: c.category.label }, { label: c.title }];
   });
 
   protected readonly importLine = computed(() => {
@@ -241,9 +339,7 @@ export class ComponentPage {
   }
 
   private buildToc(): void {
-    const nodes = Array.from(
-      this.host.nativeElement.querySelectorAll<HTMLElement>('[data-toc]'),
-    );
+    const nodes = Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('[data-toc]'));
     const items: TocItem[] = nodes
       .filter((n) => n.id)
       .map((n) => ({ id: n.id, label: n.dataset['tocLabel'] || n.id }));

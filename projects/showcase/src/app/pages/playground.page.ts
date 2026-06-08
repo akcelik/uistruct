@@ -305,7 +305,7 @@ const PLAYGROUND: PlaygroundCmp[] = [
         padding: 14px;
       }
       .pg__controls-cap {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;

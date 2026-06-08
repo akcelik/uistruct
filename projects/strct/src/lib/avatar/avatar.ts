@@ -60,7 +60,7 @@ export type StrctAvatarStatus = 'none' | 'online' | 'busy' | 'offline';
       .strct-av--sm {
         width: 26px;
         height: 26px;
-        font-size: 11px;
+        font-size: 12px;
       }
       .strct-av--lg {
         width: 48px;

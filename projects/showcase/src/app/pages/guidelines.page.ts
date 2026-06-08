@@ -201,7 +201,7 @@ interface Row {
         background: var(--bg-2);
       }
       .gl__row--head .gl__rowname {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.4px;

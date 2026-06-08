@@ -135,7 +135,7 @@ export class StrctCellDef {
         border-bottom: 1px solid var(--b1);
       }
       .strct-table th {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.4px;

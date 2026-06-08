@@ -169,7 +169,7 @@ export interface StrctRailItem {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         line-height: 1;
         border-radius: 9px;

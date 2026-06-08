@@ -97,7 +97,7 @@ const COLOR: Record<StrctChartStatus, string> = {
         margin-left: 1px;
       }
       .strct-gauge__label {
-        font-size: 11px;
+        font-size: 12px;
         color: var(--t2);
         margin-top: 3px;
       }

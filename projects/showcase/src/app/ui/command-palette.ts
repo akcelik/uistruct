@@ -167,7 +167,7 @@ interface Entry {
         color: var(--t1);
       }
       .cmd__item-group {
-        font-size: 11px;
+        font-size: 12px;
         color: var(--t3);
       }
       .cmd__empty {

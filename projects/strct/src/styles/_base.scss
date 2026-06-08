@@ -62,6 +62,14 @@ kbd,
   outline-offset: 2px;
 }
 
+// Stronger, fully-opaque focus ring when the OS asks for more contrast.
+@media (prefers-contrast: more) {
+  :focus-visible {
+    outline: 3px solid var(--acc);
+    outline-offset: 2px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

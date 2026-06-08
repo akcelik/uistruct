@@ -148,7 +148,7 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
       }
       .strct-btn--mini {
         padding: 2px var(--space-2);
-        font-size: 11px;
+        font-size: 12px;
         border-radius: var(--radius-sm);
       }
       .strct-btn--block {

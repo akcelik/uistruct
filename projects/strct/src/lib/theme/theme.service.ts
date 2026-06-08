@@ -47,25 +47,70 @@ export class StrctThemeService {
     const storedPalette = this.read(PALETTE_KEY) as StrctPalette | null;
     const storedMode = this.read(MODE_KEY) as StrctMode | null;
 
-    // Fall back to whatever the host page already declared, then to defaults.
-    const palette =
-      storedPalette ?? (root.getAttribute('data-palette') as StrctPalette | null) ?? 'arctic';
-    const mode = storedMode ?? (root.getAttribute('data-theme') as StrctMode | null) ?? 'dark';
+    // Palette: stored choice, else whatever the host declared, else default.
+    this.applyPalette(
+      storedPalette ?? (root.getAttribute('data-palette') as StrctPalette | null) ?? 'arctic',
+    );
 
-    this.setPalette(palette);
-    this.setMode(mode);
+    // Mode: an explicit stored choice always wins. Otherwise follow the operating
+    // system's light/dark preference — and keep following it live — so a user
+    // working at night / in a dim room is never forced onto a bright screen. The
+    // initial resolution is NOT persisted, so it stays OS-driven until the user
+    // makes a deliberate choice via setMode/toggleMode.
+    if (storedMode) {
+      this.applyMode(storedMode);
+    } else {
+      // OS preference wins over a host-declared default; the attribute is only a
+      // fallback for environments without matchMedia (SSR).
+      this.applyMode(
+        this.systemMode() ?? (root.getAttribute('data-theme') as StrctMode | null) ?? 'dark',
+      );
+      this.watchSystemMode();
+    }
   }
 
   setPalette(palette: StrctPalette): void {
-    this._palette.set(palette);
-    this.doc.documentElement.setAttribute('data-palette', palette);
+    this.applyPalette(palette);
     this.write(PALETTE_KEY, palette);
   }
 
   setMode(mode: StrctMode): void {
+    this.applyMode(mode);
+    this.write(MODE_KEY, mode);
+  }
+
+  private applyPalette(palette: StrctPalette): void {
+    this._palette.set(palette);
+    this.doc.documentElement.setAttribute('data-palette', palette);
+  }
+
+  private applyMode(mode: StrctMode): void {
     this._mode.set(mode);
     this.doc.documentElement.setAttribute('data-theme', mode);
-    this.write(MODE_KEY, mode);
+  }
+
+  /** The OS-level light/dark preference, or null when matchMedia is unavailable. */
+  private systemMode(): StrctMode | null {
+    try {
+      const view = this.doc.defaultView;
+      if (!view?.matchMedia) return null;
+      return view.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    } catch {
+      return null;
+    }
+  }
+
+  /** Track OS theme changes until the user makes an explicit choice. */
+  private watchSystemMode(): void {
+    try {
+      const mq = this.doc.defaultView?.matchMedia('(prefers-color-scheme: dark)');
+      mq?.addEventListener('change', (e: MediaQueryListEvent) => {
+        if (this.read(MODE_KEY)) return; // user has since chosen — stop following
+        this.applyMode(e.matches ? 'dark' : 'light');
+      });
+    } catch {
+      // matchMedia unavailable (SSR) — stay on the resolved default.
+    }
   }
 
   toggleMode(): void {

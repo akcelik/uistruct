@@ -132,7 +132,7 @@ const COLOR: Record<StrctKnobStatus, string> = {
         line-height: 1;
       }
       .strct-knob__label {
-        font-size: 11px;
+        font-size: 12px;
         color: var(--t2);
         margin-top: 3px;
       }

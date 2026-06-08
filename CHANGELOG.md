@@ -5,6 +5,38 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-06-08
+
+### Added — Visual comfort & accessibility (eye-health round II)
+
+Continuing the eye-strain work from 0.7.2, this round respects the user's
+environment and their operating-system accessibility settings. Why each change:
+
+- **OS-aware theming.** `StrctThemeService` now follows the operating system's
+  `prefers-color-scheme` when the user has not made an explicit choice, and keeps
+  following it live. An explicit selection still wins and is persisted. Reason: a
+  user working at night or in a dim room should not be forced onto a bright screen
+  on first load (high luminance + melanopic / blue-light load suppresses melatonin
+  and shifts circadian phase). The showcase resolves the same preference before
+  paint to avoid a flash.
+- **High-contrast support (`prefers-contrast: more`).** When the OS asks for more
+  contrast (low-vision users, bright ambient light), borders and secondary /
+  tertiary text are strengthened and the focus ring becomes a solid 3px accent
+  outline. It is active **only** when the OS requests it — the default look is
+  unchanged.
+
+### Changed
+
+- **Type-size floor raised to 12px.** Every piece of readable text that previously
+  sat at 11px (hints, captions, labels and metadata across components) is now
+  ≥ 12px, and the default body line-height is 1.5. Reason: 11px sustained reading
+  is below the comfortable acuity threshold for all-day console work; together
+  with the 0.7.2 contrast fix this removes the remaining small-text strain. No
+  layout regressions.
+
+Backward compatible — no API or token-name changes. (`prefers-reduced-motion`
+continues to be honoured by the base stylesheet.)
+
 ## [0.7.2] - 2026-06-08
 
 ### Changed — Visual comfort & eye health

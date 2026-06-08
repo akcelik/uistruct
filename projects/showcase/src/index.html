@@ -5,8 +5,26 @@
     <title>UIStruct — Component Library</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='28'%3E%E2%AC%A1%3C/text%3E%3C/svg%3E" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='28'%3E%E2%AC%A1%3C/text%3E%3C/svg%3E"
+    />
     <!-- Fonts are self-hosted by @akcelik/strct (styles/theme) — no external request. -->
+    <!-- Resolve theme before paint (saved choice, else the OS preference) to avoid
+         a flash. StrctThemeService applies the same logic once Angular boots. -->
+    <script>
+      (function () {
+        try {
+          var d = document.documentElement;
+          d.setAttribute('data-palette', localStorage.getItem('strct-palette') || 'arctic');
+          d.setAttribute(
+            'data-theme',
+            localStorage.getItem('strct-theme') ||
+              (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'),
+          );
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <app-root></app-root>

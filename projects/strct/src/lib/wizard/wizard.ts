@@ -108,7 +108,7 @@ export class StrctStep {
         width: 22px;
         height: 22px;
         border-radius: 50%;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         color: var(--t2);
         background: var(--bg-3);

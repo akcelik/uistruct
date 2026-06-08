@@ -77,7 +77,7 @@ import { ApiRow } from './registry';
       .api__table th {
         text-align: left;
         padding: 9px 14px;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.4px;
@@ -101,13 +101,13 @@ import { ApiRow } from './registry';
       }
       .api__type {
         font-family: var(--mono);
-        font-size: 11.5px;
+        font-size: 12px;
         color: var(--t1);
         white-space: pre-wrap;
       }
       .api__def {
         font-family: var(--mono);
-        font-size: 11.5px;
+        font-size: 12px;
         color: var(--t2);
       }
       .api__dash {
@@ -190,7 +190,7 @@ export class ApiTable {
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        font-size: 11px;
+        font-size: 12px;
       }
       .ug__col--do .ug__mark {
         color: var(--success);
@@ -328,7 +328,7 @@ export interface PageRef {
         text-align: right;
       }
       .pn__dir {
-        font-size: 11px;
+        font-size: 12px;
         color: var(--t3);
       }
       .pn__title {
@@ -379,7 +379,7 @@ export interface TocItem {
         top: 8px;
       }
       .otp__cap {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;

@@ -149,7 +149,7 @@ import { StrctIcon } from '../icon/icon';
         color: var(--t1);
       }
       .strct-file__size {
-        font-size: 11px;
+        font-size: 12px;
         color: var(--t3);
         font-family: var(--mono);
       }

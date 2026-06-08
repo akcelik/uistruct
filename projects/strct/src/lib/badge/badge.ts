@@ -30,7 +30,7 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         line-height: 1;
         letter-spacing: 0.2px;

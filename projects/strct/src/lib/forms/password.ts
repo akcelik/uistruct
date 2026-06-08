@@ -116,7 +116,7 @@ const LEVELS = [
         transition: background 0.2s ease;
       }
       .strct-pw__label {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         min-width: 42px;
         text-align: right;

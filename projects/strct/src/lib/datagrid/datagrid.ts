@@ -376,7 +376,7 @@ export class StrctDatagridActionBar {}
       }
       .strct-dg th {
         position: relative;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.4px;

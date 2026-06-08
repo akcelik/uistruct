@@ -149,7 +149,7 @@ interface StateExample {
         margin-top: 20px;
       }
       .ig-group__title {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -202,7 +202,7 @@ interface StateExample {
         color: var(--t1);
       }
       .ig-state__label {
-        font-size: 11px;
+        font-size: 12px;
         color: var(--t2);
         text-align: center;
       }

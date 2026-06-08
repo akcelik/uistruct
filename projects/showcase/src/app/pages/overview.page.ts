@@ -38,7 +38,9 @@ interface TokenGroup {
         <strct-card-block>
           <div class="switch-row">
             <strct-theme-switcher />
-            <span class="hint">Palette dots set the hue family; the pill toggles light / dark.</span>
+            <span class="hint"
+              >Palette dots set the hue family; the pill toggles light / dark.</span
+            >
           </div>
         </strct-card-block>
       </strct-card>
@@ -67,31 +69,67 @@ interface TokenGroup {
   `,
   styles: [
     `
-    .switch-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-    .switch-row strct-theme-switcher {
-      padding: 8px 12px; border-radius: 8px; background: var(--hdr);
-    }
-    .hint { font-size: 12px; color: var(--t2); }
+      .switch-row {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+      .switch-row strct-theme-switcher {
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: var(--hdr);
+      }
+      .hint {
+        font-size: 12px;
+        color: var(--t2);
+      }
 
-    .tg { width: 100%; }
-    .tg + .tg { margin-top: 18px; }
-    .tg__title {
-      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
-      color: var(--t2); margin-bottom: 10px;
-    }
-    .tg__grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px;
-    }
-    .tok {
-      display: flex; align-items: center; gap: 9px;
-      padding: 8px 10px; border: 1px solid var(--b2); border-radius: 7px; background: var(--bg-1);
-    }
-    .tok__swatch {
-      width: 26px; height: 26px; border-radius: 5px; flex-shrink: 0;
-      border: 1px solid var(--b2);
-    }
-    .tok__name { font-size: 12px; color: var(--t1); flex: 1; }
-    .tok__var { font-family: var(--mono); font-size: 10px; color: var(--t3); }
+      .tg {
+        width: 100%;
+      }
+      .tg + .tg {
+        margin-top: 18px;
+      }
+      .tg__title {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--t2);
+        margin-bottom: 10px;
+      }
+      .tg__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 10px;
+      }
+      .tok {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 8px 10px;
+        border: 1px solid var(--b2);
+        border-radius: 7px;
+        background: var(--bg-1);
+      }
+      .tok__swatch {
+        width: 26px;
+        height: 26px;
+        border-radius: 5px;
+        flex-shrink: 0;
+        border: 1px solid var(--b2);
+      }
+      .tok__name {
+        font-size: 12px;
+        color: var(--t1);
+        flex: 1;
+      }
+      .tok__var {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--t3);
+      }
     `,
   ],
 })

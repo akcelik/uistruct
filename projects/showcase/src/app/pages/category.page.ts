@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -121,11 +128,15 @@ function badgeFor(status: DcObject['status']) {
               <div class="detail-card">
                 <div class="detail-card__title">Category Summary</div>
                 <strct-stack style="width: 100%; max-width: 480px;">
-                  <strct-stack-item label="Total objects">{{ objectsWithStatus().length }}</strct-stack-item>
+                  <strct-stack-item label="Total objects">{{
+                    objectsWithStatus().length
+                  }}</strct-stack-item>
                   <strct-stack-item label="Running">{{ runningCount() }}</strct-stack-item>
                   <strct-stack-item label="Warnings">{{ warningCount() }}</strct-stack-item>
                   <strct-stack-item label="Stopped">{{ stoppedCount() }}</strct-stack-item>
-                  <strct-stack-item label="In Maintenance">{{ maintenanceCount() }}</strct-stack-item>
+                  <strct-stack-item label="In Maintenance">{{
+                    maintenanceCount()
+                  }}</strct-stack-item>
                 </strct-stack>
               </div>
             </div>
@@ -151,7 +162,7 @@ function badgeFor(status: DcObject['status']) {
         padding-right: 16px;
       }
       .object-list__header {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -176,7 +187,9 @@ function badgeFor(status: DcObject['status']) {
         text-decoration: none;
         font-size: 13px;
         font-weight: 500;
-        transition: background 0.12s ease, color 0.12s ease;
+        transition:
+          background 0.12s ease,
+          color 0.12s ease;
       }
       .object-list__item:hover {
         background: var(--surface-hover, var(--b1));
