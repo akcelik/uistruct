@@ -74,9 +74,11 @@ export * from './lib/charts/sparkline';
 export * from './lib/charts/chart';
 export * from './lib/charts/donut';
 export * from './lib/charts/gauge';
+export * from './lib/metric-tile/metric-tile';
 
 // Feedback
 export * from './lib/alert/alert';
 export * from './lib/tooltip/tooltip';
 export * from './lib/signpost/signpost';
 export * from './lib/toast/toast';
+export * from './lib/empty-state/empty-state';

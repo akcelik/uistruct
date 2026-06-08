@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-06-08
+
+### Added — new components (development round, phase 1 of 5)
+
+- **`strct-metric-tile`** — a dense KPI tile for dashboards: a label, a large value
+  (+ unit), an optional change indicator (`delta` — its sign drives the arrow and
+  colour; `invertDelta` for metrics where up is bad) and an inline sparkline.
+- **`strct-empty-state`** — a centered zero / permission / error state with preset
+  `variant`s (`empty` / `denied` / `error` / `notfound`), an icon, a title, an
+  optional description and a projected call-to-action slot.
+
+Component count: 58. Both are standalone, token-themed and backward compatible.
+
 ## [0.8.1] - 2026-06-08
 
 ### Changed

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import {
   StrctAlert,
   StrctButton,
+  StrctEmptyState,
   StrctSignpost,
   StrctSkeleton,
   StrctToastService,
@@ -20,6 +21,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctTooltip,
     StrctSignpost,
     StrctSkeleton,
+    StrctEmptyState,
   ],
   template: `
     <app-page-header title="Feedback" subtitle="Contextual messages and hints." />
@@ -107,9 +109,43 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         </div>
       </div>
     </app-demo>
+
+    <app-demo
+      anchor="empty-state"
+      heading="Empty state"
+      description="Centered zero / permission / error states with an icon, copy and a call to action."
+    >
+      <div class="es-grid">
+        <strct-empty-state
+          variant="empty"
+          title="No virtual machines"
+          description="This cluster has no VMs yet. Create one to get started."
+        >
+          <button strct-button variant="primary" size="sm">New VM</button>
+        </strct-empty-state>
+        <strct-empty-state
+          variant="denied"
+          title="Insufficient privileges"
+          description="You don't have access to this cluster. Ask an administrator for the Operator role."
+        >
+          <button strct-button variant="outline" size="sm">Request access</button>
+        </strct-empty-state>
+      </div>
+    </app-demo>
   `,
   styles: [
     `
+      .es-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 14px;
+        width: 100%;
+      }
+      .es-grid strct-empty-state {
+        border: 1px solid var(--b2);
+        border-radius: 11px;
+        background: var(--bg-2);
+      }
       .stack {
         display: flex;
         flex-direction: column;

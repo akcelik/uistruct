@@ -1,11 +1,26 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { StrctChart, StrctDonut, StrctDonutSegment, StrctGauge, StrctSparkline } from 'strct';
+import {
+  StrctChart,
+  StrctDonut,
+  StrctDonutSegment,
+  StrctGauge,
+  StrctMetricTile,
+  StrctSparkline,
+} from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
 @Component({
   selector: 'app-charts-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PageHeader, DemoBlock, StrctSparkline, StrctChart, StrctDonut, StrctGauge],
+  imports: [
+    PageHeader,
+    DemoBlock,
+    StrctSparkline,
+    StrctChart,
+    StrctDonut,
+    StrctGauge,
+    StrctMetricTile,
+  ],
   template: `
     <app-page-header
       title="Charts"
@@ -102,6 +117,52 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <strct-gauge [value]="93" status="critical" label="Storage" />
       </div>
     </app-demo>
+
+    <app-demo
+      anchor="metric-tile"
+      heading="Metric tile"
+      description="Compact KPI tiles — a value, a change indicator (sign drives the arrow + colour) and an inline sparkline."
+      code='<strct-metric-tile label="CPU" [value]="62" unit="%" icon="cpu" status="warning" [delta]="8" [data]="cpuTrend" />'
+    >
+      <div class="mt-grid">
+        <strct-metric-tile
+          label="CPU"
+          [value]="62"
+          unit="%"
+          icon="cpu"
+          status="warning"
+          [delta]="8"
+          [data]="cpuTrend"
+        />
+        <strct-metric-tile
+          label="Memory"
+          [value]="81"
+          unit="%"
+          icon="memory"
+          status="critical"
+          [delta]="4"
+          [data]="memTrend"
+        />
+        <strct-metric-tile
+          label="Network"
+          [value]="340"
+          unit="Mb/s"
+          icon="network"
+          [delta]="12"
+          [data]="netTrend"
+          caption="last 5 minutes"
+        />
+        <strct-metric-tile
+          label="Errors / min"
+          [value]="3"
+          icon="alarm"
+          status="success"
+          [delta]="-40"
+          invertDelta
+          [data]="errTrend"
+        />
+      </div>
+    </app-demo>
   `,
   styles: [
     `
@@ -162,6 +223,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         gap: 22px;
         flex-wrap: wrap;
       }
+      .mt-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
+        width: 100%;
+      }
     `,
   ],
 })
@@ -169,6 +236,7 @@ export class ChartsPage {
   protected readonly cpuTrend = [40, 52, 48, 61, 55, 68, 62, 70, 62];
   protected readonly memTrend = [70, 72, 75, 74, 78, 80, 79, 82, 81];
   protected readonly netTrend = [120, 180, 90, 260, 200, 340, 280, 310, 340];
+  protected readonly errTrend = [8, 6, 7, 5, 4, 3];
 
   protected readonly hours = ['00', '04', '08', '12', '16', '20', '24'];
   protected readonly dayCpu = [22, 35, 48, 72, 65, 58, 44];
