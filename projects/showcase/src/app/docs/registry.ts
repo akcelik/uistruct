@@ -914,6 +914,56 @@ export const DOCS: DocCategory[] = [
         ],
       },
       {
+        id: 'drawer',
+        title: 'Drawer',
+        selector: 'strct-drawer',
+        importNames: ['StrctDrawer', 'StrctDrawerFooter'],
+        summary: 'Edge-anchored slide-out panel.',
+        lead: 'A slide-out overlay panel anchored to an edge of the viewport — ideal for inspecting or editing a record without losing the underlying table’s scroll position or selection. Project a footer with `strctDrawerFooter`.',
+        inputs: [
+          {
+            name: 'open',
+            type: 'boolean',
+            default: 'false',
+            description: 'Open state, two-way (`[(open)]`).',
+          },
+          {
+            name: 'side',
+            type: `'start' | 'end' | 'top' | 'bottom'`,
+            default: `'end'`,
+            description: 'Edge the panel slides in from.',
+          },
+          {
+            name: 'size',
+            type: `'sm' | 'md' | 'lg'`,
+            default: `'md'`,
+            description: 'Extent along the sliding axis.',
+          },
+          { name: 'title', type: 'string', default: `''`, description: 'Header title.' },
+          {
+            name: 'dismissable',
+            type: 'boolean',
+            default: 'true',
+            description: 'Show the close button and allow backdrop / Esc dismissal.',
+          },
+        ],
+        methods: [
+          {
+            name: 'close()',
+            type: '() => void',
+            description: 'Close the drawer programmatically.',
+          },
+        ],
+        do: [
+          'Use a drawer for contextual detail / edit panels beside a list or grid.',
+          'Anchor to `end` for inspectors; `bottom` for transient consoles.',
+        ],
+        dont: ['Do not use a drawer for a focused, must-answer decision — use a modal.'],
+        a11y: [
+          'role="dialog", aria-modal, aria-label from the title; backdrop and Escape close it when dismissable.',
+        ],
+      },
+      {
         id: 'dropdown',
         title: 'Dropdown',
         selector: 'strct-dropdown',
@@ -1067,6 +1117,57 @@ export const DOCS: DocCategory[] = [
         do: ['Keep pageSize consistent with what your data source returns.'],
         dont: ['Do not paginate very short lists.'],
         a11y: ['Page controls are buttons; the active page is indicated.'],
+      },
+      {
+        id: 'rail',
+        title: 'Rail',
+        selector: 'strct-rail',
+        importNames: ['StrctRail', 'StrctRailItem'],
+        summary: 'Collapsible icon navigation rail.',
+        lead: 'A data-driven primary navigation rail for an application shell. Each item is an icon + label + optional status badge; collapsing shrinks it to an icon-only rail where badges become dots and labels become tooltips.',
+        inputs: [
+          {
+            name: 'items',
+            type: 'StrctRailItem[]',
+            description:
+              'Navigation entries: { id, label, icon, badge?, badgeStatus?, disabled? }. Required.',
+          },
+          {
+            name: 'activeId',
+            type: 'string | null',
+            default: 'null',
+            description: 'Active item id, two-way (`[(activeId)]`).',
+          },
+          {
+            name: 'collapsed',
+            type: 'boolean',
+            default: 'false',
+            description: 'Icon-only state, two-way (`[(collapsed)]`).',
+          },
+          {
+            name: 'collapsible',
+            type: 'boolean',
+            default: 'true',
+            description: 'Show the collapse toggle at the foot of the rail.',
+          },
+          {
+            name: 'ariaLabel',
+            type: 'string',
+            default: `'Primary'`,
+            description: 'Accessible label for the nav landmark.',
+          },
+        ],
+        outputs: [
+          { name: 'select', type: 'StrctRailItem', description: 'Emitted when an item is chosen.' },
+        ],
+        do: [
+          'Give items a status badge to surface health / alert counts at a glance.',
+          'Collapse the rail on smaller screens to reclaim horizontal space.',
+        ],
+        dont: ['Do not exceed ~8 top-level items; group deeper navigation elsewhere.'],
+        a11y: [
+          'Renders a nav landmark; the active item gets aria-current. Collapsed items expose their label as a tooltip.',
+        ],
       },
     ],
   },

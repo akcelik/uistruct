@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-06-08
+
+### Added
+
+- **`strct-rail`** — collapsible, data-driven primary navigation rail for an application shell. Items are icon + label + optional status badge (`StrctRailItem`); collapsing shrinks it to an icon-only rail where badges become dots and labels become tooltips. Two-way `activeId` / `collapsed`, `select` output.
+- **`strct-drawer`** — edge-anchored slide-out overlay panel (`side` = start/end/top/bottom, `size` = sm/md/lg) for inspector / edit flows without losing the underlying list's scroll or selection. Two-way `open`, backdrop + Escape dismiss, `strctDrawerFooter` slot.
+
+### Notes
+
+- These were identified as the highest-value gaps for infrastructure consoles (alongside the existing shell, vertical-nav and stack/property views). Component count: 56.
+
 ## [0.6.0] - 2026-06-08
 
 ### Added

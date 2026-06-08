@@ -9,6 +9,9 @@ import {
   StrctCardFooter,
   StrctCardHeader,
   StrctDivider,
+  StrctDrawer,
+  StrctDrawerFooter,
+  StrctDrawerSide,
   StrctDropdown,
   StrctDropdownItem,
   StrctIcon,
@@ -43,6 +46,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctTree,
     StrctTreeNode,
     StrctModal,
+    StrctDrawer,
+    StrctDrawerFooter,
     StrctDropdown,
     StrctDropdownItem,
     StrctIcon,
@@ -161,6 +166,29 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="drawer"
+      heading="Drawer"
+      description="Edge-anchored slide-out panel for inspector / edit flows. Backdrop & Escape dismiss; project a footer with strctDrawerFooter."
+    >
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button strct-button variant="primary" (click)="openDrawer('end')">Inspect (end)</button>
+        <button strct-button variant="flat" (click)="openDrawer('start')">Filters (start)</button>
+        <button strct-button variant="flat" (click)="openDrawer('bottom')">Console (bottom)</button>
+      </div>
+      <strct-drawer [(open)]="drawerOpen" [side]="drawerSide()" title="Virtual machine" size="md">
+        <p style="margin: 0 0 10px;">
+          Inspect or edit a record without losing the underlying list's scroll position or
+          selection.
+        </p>
+        <p style="margin: 0; color: var(--t2);">Anchored to: {{ drawerSide() }}</p>
+        <ng-container strctDrawerFooter>
+          <button strct-button variant="flat" (click)="drawerOpen.set(false)">Close</button>
+          <button strct-button variant="primary" (click)="drawerOpen.set(false)">Save</button>
+        </ng-container>
+      </strct-drawer>
+    </app-demo>
+
+    <app-demo
       anchor="dropdown"
       heading="Dropdown"
       description="Click-to-open menu that closes on outside click."
@@ -259,6 +287,13 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 })
 export class SurfacesPage {
   protected readonly modalOpen = signal(false);
+  protected readonly drawerOpen = signal(false);
+  protected readonly drawerSide = signal<StrctDrawerSide>('end');
+
+  protected openDrawer(side: StrctDrawerSide): void {
+    this.drawerSide.set(side);
+    this.drawerOpen.set(true);
+  }
   protected readonly wizardDone = signal(false);
 
   protected readonly treePick = signal('');

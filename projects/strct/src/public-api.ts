@@ -13,6 +13,7 @@ export * from './lib/overlay/overlay';
 // Layout
 export * from './lib/layout/layout';
 export * from './lib/layout/nav';
+export * from './lib/layout/rail';
 export * from './lib/layout/login';
 
 // Buttons & indicators
@@ -31,6 +32,7 @@ export * from './lib/accordion/accordion';
 export * from './lib/tabs/tabs';
 export * from './lib/tree/tree';
 export * from './lib/modal/modal';
+export * from './lib/drawer/drawer';
 export * from './lib/dropdown/dropdown';
 export * from './lib/context-menu/context-menu';
 export * from './lib/context-menu/submenu';
