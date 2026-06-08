@@ -74,7 +74,8 @@ export const STRCT_ICONS: Record<string, string> = {
   plus: '<path d="M8 3v10M3 8h10"/>',
   minus: '<path d="M3 8h10"/>',
   pencil: '<path d="M11.5 2.5l2 2-8.5 8.5-3 .5.5-3z"/>',
-  trash: '<path d="M2.5 4.5h11M5.5 4.5v8.5a1 1 0 001 1h3a1 1 0 001-1V4.5M6.5 3h3"/>',
+  trash:
+    '<path d="M3 4.5h10"/><path d="M6.3 4.5v-1a1 1 0 0 1 1-1h1.4a1 1 0 0 1 1 1v1"/><path d="M4.2 4.5L5 13.3a1 1 0 0 0 1 .9h4a1 1 0 0 0 1-.9L11.8 4.5"/><path d="M6.6 6.9v4.6M8 6.9v4.6M9.4 6.9v4.6"/>',
   refresh: '<path d="M13.5 7.5a5.5 5.5 0 11-2-5.2"/><path d="M13.5 2.5v3.5H10"/>',
   filter: '<path d="M2 3.5h12l-4.5 5.5v4.5h-3V9z"/>',
   settings:
