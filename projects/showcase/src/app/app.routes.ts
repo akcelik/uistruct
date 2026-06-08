@@ -27,6 +27,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/guidelines.page').then((m) => m.GuidelinesPage),
   },
   {
+    path: 'theme-playground',
+    loadComponent: () => import('./pages/theme-playground.page').then((m) => m.ThemePlaygroundPage),
+  },
+  {
     path: 'components/:id',
     loadComponent: () => import('./docs/component-page').then((m) => m.ComponentPage),
   },
