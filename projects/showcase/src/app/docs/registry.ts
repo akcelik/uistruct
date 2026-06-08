@@ -1202,6 +1202,13 @@ export const DOCS: DocCategory[] = [
             default: 'false',
             description: 'Show skeleton rows while data is loading.',
           },
+          {
+            name: 'rowActions',
+            type: '(row) => StrctMenuItem[]',
+            default: 'null',
+            description:
+              'Per-row action menu resolver. When set, each row gets a trailing actions column with a vertical-dots (kebab) button that opens that row’s data-driven menu.',
+          },
         ],
         outputs: [
           {
@@ -1213,6 +1220,11 @@ export const DOCS: DocCategory[] = [
             name: 'syncChange',
             type: 'void',
             description: 'Emitted when the refresh button is clicked.',
+          },
+          {
+            name: 'rowAction',
+            type: '{ row; item: StrctMenuItem }',
+            description: 'Emitted when a row’s action-menu item is chosen.',
           },
         ],
         methods: [

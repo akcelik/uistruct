@@ -20,6 +20,7 @@ import { StrctPagination } from '../pagination/pagination';
 import { StrctCheckbox } from '../forms/checkbox';
 import { StrctButton, StrctButtonGroup } from '../button/button';
 import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
+import { StrctMenuItem, StrctMenuService } from '../context-menu/menu';
 
 /** Resolves a stable identity for a row: a property key, or a function. */
 export type StrctRowId = string | ((row: StrctRow) => unknown);
@@ -126,6 +127,9 @@ export class StrctDatagridActionBar {}
                   }
                 </th>
               }
+              @if (canActions()) {
+                <th class="strct-dg__actioncol" aria-label="Actions"></th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -145,6 +149,9 @@ export class StrctDatagridActionBar {}
                     <td [style.text-align]="col.align ?? 'start'">
                       <div class="strct-dg__skeleton-block"></div>
                     </td>
+                  }
+                  @if (canActions()) {
+                    <td class="strct-dg__actioncell"></td>
                   }
                 </tr>
               }
@@ -205,6 +212,18 @@ export class StrctDatagridActionBar {}
                       } @else {
                         {{ row[col.key] }}
                       }
+                    </td>
+                  }
+                  @if (canActions()) {
+                    <td class="strct-dg__actioncell">
+                      <button
+                        type="button"
+                        class="strct-dg__kebab"
+                        aria-label="Row actions"
+                        (click)="openRowMenu(row, $event)"
+                      >
+                        <strct-icon name="dots" [size]="16" />
+                      </button>
                     </td>
                   }
                 </tr>
@@ -427,6 +446,28 @@ export class StrctDatagridActionBar {}
       .strct-dg__expandcell {
         width: 1%;
         white-space: nowrap;
+      }
+      .strct-dg__actioncol,
+      .strct-dg__actioncell {
+        width: 1%;
+        white-space: nowrap;
+        text-align: right;
+      }
+      .strct-dg__kebab {
+        display: inline-flex;
+        padding: 4px;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--t3);
+        cursor: pointer;
+        transition:
+          color 0.14s ease,
+          background 0.14s ease;
+      }
+      .strct-dg__kebab:hover {
+        color: var(--t1);
+        background: var(--bg-3);
       }
       .strct-dg__expandbtn {
         display: inline-flex;
@@ -709,10 +750,20 @@ export class StrctDatagrid {
    * that replace the row objects. Defaults to object identity.
    */
   readonly rowId = input<StrctRowId | null>(null);
+  /**
+   * Per-row action menu resolver. When set, each row gets a trailing actions
+   * column with a vertical-dots (kebab) button that opens this row's menu.
+   *   [rowActions]="(row) => [{ label: 'Open', action: () => open(row) }, …]"
+   */
+  readonly rowActions = input<((row: StrctRow) => StrctMenuItem[]) | null>(null);
   /** Emitted when the selection changes. */
   readonly selectionChange = output<StrctRow[]>();
   /** Emitted when the refresh button is clicked. */
   readonly syncChange = output<void>();
+  /** Emitted when a row's action-menu item is chosen. */
+  readonly rowAction = output<{ row: StrctRow; item: StrctMenuItem }>();
+
+  private readonly menu = inject(StrctMenuService);
 
   protected readonly detailDef = contentChild(StrctRowDetailDef);
   protected readonly actionBarDef = contentChild(StrctDatagridActionBar);
@@ -781,6 +832,8 @@ export class StrctDatagrid {
   protected readonly paneOpen = computed(
     () => this.detailPane() && !!this.detailDef() && !!this.activeRow(),
   );
+  /** Whether to render the trailing row-actions (kebab) column. */
+  protected readonly canActions = computed(() => !!this.rowActions() && !this.paneOpen());
   /** Only the first column is shown while the detail pane is open. */
   protected readonly visibleColumns = computed(() => {
     if (this.paneOpen()) return this.columns().slice(0, 1);
@@ -841,7 +894,8 @@ export class StrctDatagrid {
       this.visibleColumns().length +
       (this.selectable() ? 1 : 0) +
       (this.canExpand() ? 1 : 0) +
-      (this.canDetail() ? 1 : 0)
+      (this.canDetail() ? 1 : 0) +
+      (this.canActions() ? 1 : 0)
     );
   }
 
@@ -854,6 +908,23 @@ export class StrctDatagrid {
 
   closePane(): void {
     this.activeId.set(null);
+  }
+
+  /** Open the row-action menu next to the clicked kebab button. */
+  protected openRowMenu(row: StrctRow, event: MouseEvent): void {
+    event.stopPropagation();
+    const fn = this.rowActions();
+    if (!fn) return;
+    const items = fn(row);
+    if (!items.length) return;
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    this.menu.open({
+      x: rect.right,
+      y: rect.bottom + 4,
+      items,
+      data: row,
+      onSelect: (item) => this.rowAction.emit({ row, item }),
+    });
   }
 
   sortBy(key: string): void {

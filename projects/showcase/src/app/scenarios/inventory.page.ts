@@ -8,11 +8,9 @@ import {
   StrctDatagrid,
   StrctDatagridActionBar,
   StrctDatagridColumn,
-  StrctDropdown,
-  StrctDropdownDivider,
-  StrctDropdownItem,
   StrctIcon,
   StrctInput,
+  StrctMenuItem,
   StrctProgress,
   StrctRow,
   StrctRowDetailDef,
@@ -42,9 +40,6 @@ import {
     StrctInput,
     StrctStack,
     StrctStackItem,
-    StrctDropdown,
-    StrctDropdownItem,
-    StrctDropdownDivider,
   ],
   template: `
     <header class="inv__head">
@@ -67,8 +62,10 @@ import {
       columnChooser
       sync
       [pageSize]="8"
+      [rowActions]="rowMenu"
       (selectionChange)="selected.set($event.length)"
       (syncChange)="onSync()"
+      (rowAction)="onRowAction($event)"
     >
       <!-- Persistent toolbar — filter + count, with batch actions on selection -->
       <div strctDatagridActionBar class="inv__toolbar">
@@ -125,27 +122,6 @@ import {
       <ng-template strctCell="status" let-value="value">
         <strct-badge [status]="statusBadge(value)">{{ value }}</strct-badge>
       </ng-template>
-      <ng-template strctCell="actions" let-row>
-        <strct-dropdown align="end">
-          <button strct-button strctDropdownTrigger iconOnly size="sm" aria-label="Row actions">
-            <strct-icon name="ellipsis" [size]="15" />
-          </button>
-          <strct-dropdown-item (click)="rowAction(row, 'Open console')">
-            <strct-icon name="compass" [size]="14" /> Open console
-          </strct-dropdown-item>
-          <strct-dropdown-item (click)="rowAction(row, maintLabel(row))">
-            <strct-icon name="maintenance" [size]="14" /> {{ maintLabel(row) }}
-          </strct-dropdown-item>
-          <strct-dropdown-item (click)="rowAction(row, powerLabel(row))">
-            <strct-icon name="power" [size]="14" /> {{ powerLabel(row) }}
-          </strct-dropdown-item>
-          <strct-dropdown-divider />
-          <strct-dropdown-item critical (click)="rowAction(row, 'Remove from inventory')">
-            <strct-icon name="close" [size]="14" /> Remove from inventory
-          </strct-dropdown-item>
-        </strct-dropdown>
-      </ng-template>
-
       <!-- Expandable detail -->
       <ng-template strctRowDetail let-row>
         <strct-stack style="max-width: 460px;">
@@ -240,7 +216,6 @@ export class InventoryPage {
     { key: 'cpu', label: 'CPU', sortable: true, width: '140px' },
     { key: 'mem', label: 'Memory', sortable: true, width: '140px' },
     { key: 'status', label: 'Status', sortable: true },
-    { key: 'actions', label: '', align: 'end' },
   ];
 
   private readonly allRows: StrctRow[] = [
@@ -439,8 +414,16 @@ export class InventoryPage {
     return row['power'] === 'On' ? 'Power off' : 'Power on';
   }
 
-  protected rowAction(row: StrctRow, action: string): void {
-    this.lastAction.set(`${action} · ${row['name']}`);
+  /** Per-row action menu (built-in datagrid kebab column). */
+  protected readonly rowMenu = (row: StrctRow): StrctMenuItem[] => [
+    { label: 'Open console', icon: 'compass' },
+    { label: this.maintLabel(row), icon: 'maintenance' },
+    { label: this.powerLabel(row), icon: 'power' },
+    { divider: true },
+    { label: 'Remove from inventory', icon: 'close', critical: true },
+  ];
+  protected onRowAction(e: { row: StrctRow; item: StrctMenuItem }): void {
+    this.lastAction.set(`${e.item.label} · ${e.row['name']}`);
   }
   protected batch(action: string): void {
     this.lastAction.set(`${action} · ${this.selected()} object(s)`);

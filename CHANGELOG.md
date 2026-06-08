@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-06-08
+
+### Added
+
+- **Datagrid row actions** — set `[rowActions]="(row) => StrctMenuItem[]"` to give every row a trailing actions column with a vertical-dots (kebab) button that opens that row's data-driven, body-portaled menu. A new `(rowAction)` output emits `{ row, item }` on selection.
+- **`StrctMenuService`** — imperatively open the data-driven menu panel at viewport coordinates; shared by the `[strctContextMenu]` directive and the datagrid kebab.
+
+### Changed
+
+- The `[strctContextMenu]` directive now delegates to `StrctMenuService` (no behavioral change).
+
 ## [0.5.31] - 2026-06-07
 
 ### Changed

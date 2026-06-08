@@ -8,8 +8,8 @@ import {
   ElementRef,
   EnvironmentInjector,
   HostListener,
+  Injectable,
   NgZone,
-  OnDestroy,
   ViewEncapsulation,
   afterNextRender,
   booleanAttribute,
@@ -372,55 +372,52 @@ export class StrctMenuPanel {
   }
 }
 
+/** Options for {@link StrctMenuService.open}. */
+export interface StrctMenuOpenOptions {
+  /** Viewport x of the menu's top-left (clamped/flipped to stay on screen). */
+  x: number;
+  /** Viewport y of the menu's top-left. */
+  y: number;
+  items: StrctMenuItem[];
+  /** Payload passed to each item's `action`. */
+  data?: unknown;
+  /** Called with the chosen item (after its `action` runs). */
+  onSelect?: (item: StrctMenuItem) => void;
+}
+
 /**
- * Right-click (context) menu driven by a data array. Attach to any trigger; the
- * menu portals into `<body>` and runs each item's `action` on selection.
- *   <div [strctContextMenu]="menuFor(host)" [strctContextMenuData]="host"
- *        (menuSelect)="onPick($event)">…</div>
+ * Imperatively opens the data-driven menu panel, portaled into `<body>`. Shared
+ * by the `[strctContextMenu]` directive (right-click) and any click trigger such
+ * as the datagrid row-action button. Only one menu is open at a time.
  */
-@Directive({ selector: '[strctContextMenu]' })
-export class StrctContextMenuTrigger implements OnDestroy {
+@Injectable({ providedIn: 'root' })
+export class StrctMenuService {
   private readonly appRef = inject(ApplicationRef);
   private readonly envInjector = inject(EnvironmentInjector);
   private readonly zone = inject(NgZone);
   private readonly doc = inject(DOCUMENT);
-
-  /** Menu items to display. */
-  readonly items = input.required<StrctMenuItem[]>({ alias: 'strctContextMenu' });
-  /** Arbitrary payload passed to item actions. */
-  readonly data = input<unknown>(undefined, { alias: 'strctContextMenuData' });
-  /** Emitted when a menu item is selected. */
-  readonly menuSelect = output<StrctMenuItem>();
-
   private ref: ComponentRef<StrctMenuPanel> | null = null;
-  private readonly onClose = () => this.zone.run(() => this.closeMenu());
 
-  @HostListener('contextmenu', ['$event'])
-  protected onContextMenu(event: MouseEvent): void {
-    if (!this.items()?.length) return;
-    event.preventDefault();
-    this.openAt(event.clientX, event.clientY);
-  }
-
-  private openAt(x: number, y: number): void {
-    this.closeMenu();
+  open(opts: StrctMenuOpenOptions): void {
+    this.close();
+    if (!opts.items?.length) return;
     const ref = createComponent(StrctMenuPanel, { environmentInjector: this.envInjector });
-    ref.setInput('items', this.items());
-    ref.setInput('data', this.data());
-    ref.setInput('x', x);
-    ref.setInput('y', y);
+    ref.setInput('items', opts.items);
+    ref.setInput('data', opts.data);
+    ref.setInput('x', opts.x);
+    ref.setInput('y', opts.y);
     ref.instance.select.subscribe((item) => {
-      item.action?.(this.data());
-      this.menuSelect.emit(item);
-      this.closeMenu();
+      item.action?.(opts.data);
+      opts.onSelect?.(item);
+      this.close();
     });
-    ref.instance.close.subscribe(() => this.closeMenu());
+    ref.instance.close.subscribe(() => this.close());
 
     this.appRef.attachView(ref.hostView);
     this.doc.body.appendChild(ref.location.nativeElement);
     this.ref = ref;
 
-    // Defer global listeners so the opening right-click doesn't immediately close.
+    // Defer global listeners so the opening click doesn't immediately close it.
     setTimeout(() => {
       this.zone.runOutsideAngular(() => {
         this.doc.addEventListener('mousedown', this.onOutside, true);
@@ -430,13 +427,14 @@ export class StrctContextMenuTrigger implements OnDestroy {
     });
   }
 
+  private readonly onClose = () => this.zone.run(() => this.close());
   private readonly onOutside = (event: Event) => {
     if (this.ref && !this.ref.location.nativeElement.contains(event.target as Node)) {
       this.onClose();
     }
   };
 
-  private closeMenu(): void {
+  close(): void {
     if (!this.ref) return;
     this.doc.removeEventListener('mousedown', this.onOutside, true);
     window.removeEventListener('scroll', this.onClose, true);
@@ -445,8 +443,35 @@ export class StrctContextMenuTrigger implements OnDestroy {
     this.ref.destroy();
     this.ref = null;
   }
+}
 
-  ngOnDestroy(): void {
-    this.closeMenu();
+/**
+ * Right-click (context) menu driven by a data array. Attach to any trigger; the
+ * menu portals into `<body>` and runs each item's `action` on selection.
+ *   <div [strctContextMenu]="menuFor(host)" [strctContextMenuData]="host"
+ *        (menuSelect)="onPick($event)">…</div>
+ */
+@Directive({ selector: '[strctContextMenu]' })
+export class StrctContextMenuTrigger {
+  private readonly menu = inject(StrctMenuService);
+
+  /** Menu items to display. */
+  readonly items = input.required<StrctMenuItem[]>({ alias: 'strctContextMenu' });
+  /** Arbitrary payload passed to item actions. */
+  readonly data = input<unknown>(undefined, { alias: 'strctContextMenuData' });
+  /** Emitted when a menu item is selected. */
+  readonly menuSelect = output<StrctMenuItem>();
+
+  @HostListener('contextmenu', ['$event'])
+  protected onContextMenu(event: MouseEvent): void {
+    if (!this.items()?.length) return;
+    event.preventDefault();
+    this.menu.open({
+      x: event.clientX,
+      y: event.clientY,
+      items: this.items(),
+      data: this.data(),
+      onSelect: (item) => this.menuSelect.emit(item),
+    });
   }
 }
