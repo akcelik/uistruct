@@ -5,6 +5,35 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2026-06-08
+
+### Changed — Visual comfort & eye health
+
+These token tweaks come from a vision-science / WCAG review of the theme, aimed at
+**reducing eye strain during long, all-day operations-console sessions**. Why each
+change was made:
+
+- **Tertiary text (`--t3`) now meets WCAG AA (≥ 4.5:1) in all six schemes.** It
+  previously measured only ~2.4:1 (dark) and ~3.0:1 (light) — below the AA
+  threshold — yet it is used for hints, captions, placeholders and metadata. Text
+  that faint forces the eye into sustained accommodation to decode it, and on dark
+  backgrounds off-axis halation lowers the effective contrast even further. `--t3`
+  now measures **4.65–4.77:1** everywhere.
+- **Secondary text (`--t2`) raised in the ember & sage palettes (to ~6:1).** Two
+  reasons: (1) raising `--t3` would otherwise have inverted the text hierarchy, so
+  `--t2` had to stay above it (the intended order is `--t1` > `--t2` > `--t3`); and
+  (2) `--t2` itself was already slightly below AA (~4.2–4.4:1) in the ember/sage
+  light schemes.
+- **Light arctic surface (`--bg-1`) softened from pure `#ffffff` to `#fbfcfd`.**
+  A pure-white surface produces discomfort glare (high luminance + high melanopic /
+  blue-light load) in dim datacenter rooms and creates a harsh near-black-on-white
+  contrast that triggers halation. A ~5% off-white reduces both while staying well
+  within AA.
+
+Values only — **no API or token-name changes, fully backward compatible.** The
+`--t1` > `--t2` > `--t3` legibility hierarchy is preserved across every palette and
+mode. (`prefers-reduced-motion` was already honoured in the base stylesheet.)
+
 ## [0.7.1] - 2026-06-08
 
 ### Changed
