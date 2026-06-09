@@ -16,6 +16,7 @@ import {
   StrctDropdownItem,
   StrctIcon,
   StrctModal,
+  StrctModalSize,
   StrctStep,
   StrctTab,
   StrctTabs,
@@ -153,14 +154,21 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="modal"
       heading="Modal"
-      description="Overlay dialog with two-way open, backdrop & Escape dismiss."
+      description="Overlay dialog in four fixed widths (sm 380 · md 480 · lg 640 · xl 860 px), with two-way open and backdrop / Escape dismiss."
     >
-      <button strct-button variant="primary" (click)="modalOpen.set(true)">Open modal</button>
-      <strct-modal [(open)]="modalOpen" title="Confirm action">
-        This dialog closes on the backdrop, the Escape key, or the buttons below.
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button strct-button (click)="openModal('sm')">Small</button>
+        <button strct-button variant="primary" (click)="openModal('md')">Medium</button>
+        <button strct-button (click)="openModal('lg')">Large</button>
+        <button strct-button (click)="openModal('xl')">Extra large</button>
+      </div>
+      <strct-modal [(open)]="modalOpen" [size]="modalSize()" [title]="'Modal · ' + modalSize()">
+        A fixed-width dialog — modals only ever take one of four preset sizes, so layouts stay
+        consistent. This one is <strong>{{ modalSize() }}</strong
+        >.
         <ng-container strctModalFooter>
           <button strct-button variant="flat" (click)="modalOpen.set(false)">Cancel</button>
-          <button strct-button variant="primary" (click)="modalOpen.set(false)">Confirm</button>
+          <button strct-button variant="primary" (click)="modalOpen.set(false)">OK</button>
         </ng-container>
       </strct-modal>
     </app-demo>
@@ -287,8 +295,14 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 })
 export class SurfacesPage {
   protected readonly modalOpen = signal(false);
+  protected readonly modalSize = signal<StrctModalSize>('md');
   protected readonly drawerOpen = signal(false);
   protected readonly drawerSide = signal<StrctDrawerSide>('end');
+
+  protected openModal(size: StrctModalSize): void {
+    this.modalSize.set(size);
+    this.modalOpen.set(true);
+  }
 
   protected openDrawer(side: StrctDrawerSide): void {
     this.drawerSide.set(side);

@@ -882,9 +882,9 @@ export const DOCS: DocCategory[] = [
           },
           {
             name: 'size',
-            type: `'sm' | 'md' | 'lg'`,
+            type: `'sm' | 'md' | 'lg' | 'xl'`,
             default: `'md'`,
-            description: 'Dialog width.',
+            description: 'Fixed dialog width: sm 380 · md 480 · lg 640 · xl 860 (px).',
           },
           {
             name: 'hideFooter',

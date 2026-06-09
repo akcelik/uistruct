@@ -13,8 +13,8 @@ import {
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 
-/** Modal width presets. */
-export type StrctModalSize = 'sm' | 'md' | 'lg';
+/** Fixed modal width presets: sm 380 · md 480 · lg 640 · xl 860 (px). */
+export type StrctModalSize = 'sm' | 'md' | 'lg' | 'xl';
 
 let modalCounter = 0;
 
@@ -58,9 +58,7 @@ function unlockBodyScroll(doc: Document): void {
       >
         <div
           #dialog
-          class="strct-modal__dialog"
-          [class.strct-modal__dialog--sm]="size() === 'sm'"
-          [class.strct-modal__dialog--lg]="size() === 'lg'"
+          class="strct-modal__dialog strct-modal__dialog--{{ size() }}"
           role="dialog"
           aria-modal="true"
           [attr.aria-labelledby]="title() ? titleId : null"
@@ -107,7 +105,6 @@ function unlockBodyScroll(doc: Document): void {
       }
       .strct-modal__dialog {
         width: 100%;
-        max-width: min(460px, calc(100vw - 32px));
         max-height: calc(100vh - 48px);
         display: flex;
         flex-direction: column;
@@ -118,11 +115,18 @@ function unlockBodyScroll(doc: Document): void {
         overflow: hidden;
         animation: strct-modal-rise 0.14s ease;
       }
+      /* Fixed width scale — the only widths a modal can take. */
       .strct-modal__dialog--sm {
-        max-width: min(360px, calc(100vw - 32px));
+        max-width: min(380px, calc(100vw - 32px));
+      }
+      .strct-modal__dialog--md {
+        max-width: min(480px, calc(100vw - 32px));
       }
       .strct-modal__dialog--lg {
-        max-width: min(720px, calc(100vw - 32px));
+        max-width: min(640px, calc(100vw - 32px));
+      }
+      .strct-modal__dialog--xl {
+        max-width: min(860px, calc(100vw - 32px));
       }
       .strct-modal__head {
         display: flex;
