@@ -195,8 +195,13 @@ export class StrctModal {
   readonly size = input<StrctModalSize>('md');
   /** Hide the footer slot. */
   readonly hideFooter = input(false, { transform: booleanAttribute });
-  /** Allow closing via backdrop click / Escape. */
-  readonly dismissible = input(true, { transform: booleanAttribute });
+  /**
+   * Allow closing via a backdrop click / the Escape key. **Off by default** —
+   * a modal closes only through its X button or an explicit action button, so a
+   * stray click outside (or Escape) never discards in-progress work. Set
+   * `dismissible` for lightweight, transient dialogs where quick dismissal is fine.
+   */
+  readonly dismissible = input(false, { transform: booleanAttribute });
   /** Emitted when the alert is dismissed. */
   readonly closed = output<void>();
 

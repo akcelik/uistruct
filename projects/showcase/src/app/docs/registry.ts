@@ -866,7 +866,7 @@ export const DOCS: DocCategory[] = [
         selector: 'strct-modal',
         importNames: ['StrctModal'],
         summary: 'Overlay dialog with focus trap.',
-        lead: 'An overlay dialog with two-way `open`, backdrop and Escape dismiss, and a focus trap that restores focus on close. Project the footer through `strctModalFooter`.',
+        lead: 'An overlay dialog with two-way `open` and a focus trap that restores focus on close. By default it closes only via its X or an action button — a click outside (or Escape) does not dismiss it; opt in with `dismissible`. Project the footer through `strctModalFooter`.',
         inputs: [
           {
             name: 'open',
@@ -895,8 +895,9 @@ export const DOCS: DocCategory[] = [
           {
             name: 'dismissible',
             type: 'boolean',
-            default: 'true',
-            description: 'Allow closing via backdrop click / Escape.',
+            default: 'false',
+            description:
+              'Allow closing via a backdrop click / Escape. Off by default, so a modal closes only via its X or an action button.',
           },
         ],
         outputs: [{ name: 'closed', type: 'void', description: 'Fired when the dialog closes.' }],
