@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 
-/** Fixed modal width presets: sm 380 · md 480 · lg 640 · xl 860 (px). */
+/** Fixed modal width presets: sm 480 · md 640 · lg 860 · xl 1080 (px). */
 export type StrctModalSize = 'sm' | 'md' | 'lg' | 'xl';
 
 let modalCounter = 0;
@@ -117,16 +117,16 @@ function unlockBodyScroll(doc: Document): void {
       }
       /* Fixed width scale — the only widths a modal can take. */
       .strct-modal__dialog--sm {
-        max-width: min(380px, calc(100vw - 32px));
-      }
-      .strct-modal__dialog--md {
         max-width: min(480px, calc(100vw - 32px));
       }
-      .strct-modal__dialog--lg {
+      .strct-modal__dialog--md {
         max-width: min(640px, calc(100vw - 32px));
       }
-      .strct-modal__dialog--xl {
+      .strct-modal__dialog--lg {
         max-width: min(860px, calc(100vw - 32px));
+      }
+      .strct-modal__dialog--xl {
+        max-width: min(1080px, calc(100vw - 32px));
       }
       .strct-modal__head {
         display: flex;
@@ -191,8 +191,8 @@ export class StrctModal {
   readonly open = model(false);
   /** Dialog title. */
   readonly title = input('');
-  /** Size variant. */
-  readonly size = input<StrctModalSize>('md');
+  /** Size variant (fixed scale; defaults to `sm` = 480px). */
+  readonly size = input<StrctModalSize>('sm');
   /** Hide the footer slot. */
   readonly hideFooter = input(false, { transform: booleanAttribute });
   /**

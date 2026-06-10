@@ -154,11 +154,11 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="modal"
       heading="Modal"
-      description="Overlay dialog in four fixed widths (sm 380 · md 480 · lg 640 · xl 860 px). Closes only via the X or an action button — clicking outside won't dismiss it; add dismissible to allow backdrop / Escape."
+      description="Overlay dialog in four fixed widths (sm 480 · md 640 · lg 860 · xl 1080 px). Closes only via the X or an action button — clicking outside won't dismiss it; add dismissible to allow backdrop / Escape."
     >
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button strct-button (click)="openModal('sm')">Small</button>
-        <button strct-button variant="primary" (click)="openModal('md')">Medium</button>
+        <button strct-button variant="primary" (click)="openModal('sm')">Small</button>
+        <button strct-button (click)="openModal('md')">Medium</button>
         <button strct-button (click)="openModal('lg')">Large</button>
         <button strct-button (click)="openModal('xl')">Extra large</button>
       </div>

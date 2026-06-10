@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-06-09
+
+### Changed
+
+- **Reworked the modal size scale.** The old `sm` (380px) sat too close to `md`, so
+  the two are merged: `sm` is now **480px** and the rest shift up one step —
+  **md 640 · lg 860** — with a new, larger **xl 1080**. The default stays `sm`
+  (480px = the previous default width), so untouched modals look the same; explicit
+  `size="md" | "lg" | "xl"` now render one step wider.
+
 ## [0.10.0] - 2026-06-09
 
 ### Changed — behavior
