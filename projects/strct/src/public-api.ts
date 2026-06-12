@@ -43,6 +43,7 @@ export * from './lib/divider/divider';
 // Navigation
 export * from './lib/breadcrumb/breadcrumb';
 export * from './lib/pagination/pagination';
+export * from './lib/section-menu/section-menu';
 
 // Forms
 export * from './lib/forms/field';

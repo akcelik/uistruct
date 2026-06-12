@@ -1,10 +1,14 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
   StrctBreadcrumb,
   StrctBreadcrumbItem,
+  StrctMenuSection,
   StrctPagination,
   StrctRail,
   StrctRailItem,
+  StrctSectionMenu,
+  StrctToggle,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -12,12 +16,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   selector: 'app-navigation-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    FormsModule,
     PageHeader,
     DemoBlock,
     StrctBreadcrumb,
     StrctBreadcrumbItem,
     StrctPagination,
     StrctRail,
+    StrctSectionMenu,
+    StrctToggle,
   ],
   template: `
     <app-page-header title="Navigation" subtitle="Wayfinding and paging controls." />
@@ -64,6 +71,33 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         </div>
       </div>
     </app-demo>
+
+    <app-demo
+      anchor="section-menu"
+      heading="Section menu"
+      description="A two-level category / item menu (not a tree). Toggle collapsible and icons to see the configurations."
+      code='<strct-section-menu [sections]="nav" [(activeId)]="active" [collapsible]="true" [showIcons]="true" />'
+    >
+      <div class="sm-demo">
+        <div class="sm-demo__controls">
+          <strct-toggle [ngModel]="menuCollapsible()" (ngModelChange)="menuCollapsible.set($event)"
+            >Collapsible</strct-toggle
+          >
+          <strct-toggle [ngModel]="menuIcons()" (ngModelChange)="menuIcons.set($event)"
+            >Show icons</strct-toggle
+          >
+        </div>
+        <div class="sm-demo__panel">
+          <strct-section-menu
+            [sections]="menuSections"
+            [(activeId)]="menuActive"
+            [collapsible]="menuCollapsible()"
+            [showIcons]="menuIcons()"
+          />
+        </div>
+        <span class="echo">active: {{ menuActive() }}</span>
+      </div>
+    </app-demo>
   `,
   styles: [
     `
@@ -94,6 +128,24 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         justify-content: center;
         background: var(--bg-2);
       }
+      .sm-demo {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        align-items: flex-start;
+      }
+      .sm-demo__controls {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+      .sm-demo__panel {
+        width: 244px;
+        padding: 8px;
+        border: 1px solid var(--b2);
+        border-radius: 10px;
+        background: var(--bg-1);
+      }
     `,
   ],
 })
@@ -111,5 +163,37 @@ export class NavigationPage {
     { id: 'network', label: 'Networking', icon: 'network' },
     { id: 'alerts', label: 'Alerts', icon: 'alarm', badge: 2, badgeStatus: 'critical' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
+  ];
+
+  protected readonly menuActive = signal('hosts');
+  protected readonly menuCollapsible = signal(true);
+  protected readonly menuIcons = signal(true);
+  protected readonly menuSections: StrctMenuSection[] = [
+    {
+      label: 'Compute',
+      icon: 'cpu',
+      items: [
+        { id: 'hosts', label: 'Hosts', icon: 'host' },
+        { id: 'vms', label: 'Virtual machines', icon: 'vm' },
+        { id: 'clusters', label: 'Clusters', icon: 'cluster' },
+      ],
+    },
+    {
+      label: 'Storage',
+      icon: 'storage',
+      items: [
+        { id: 'volumes', label: 'Volumes', icon: 'disk' },
+        { id: 'pools', label: 'Pools', icon: 'database' },
+      ],
+    },
+    {
+      label: 'Network',
+      icon: 'network',
+      expanded: false,
+      items: [
+        { id: 'switches', label: 'Switches', icon: 'switch' },
+        { id: 'firewall', label: 'Firewall', icon: 'firewall' },
+      ],
+    },
   ];
 }

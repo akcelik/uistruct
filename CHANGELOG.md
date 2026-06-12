@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-06-12
+
+### Added
+
+- **`strct-section-menu`** — a two-level navigation menu (categories → items; not a
+  tree). Categories are `collapsible` with chevrons (default) or render as static
+  uppercase section labels; category / item icons can be hidden with `showIcons`;
+  the active item gets a soft accent tint. Two-way `activeId`, `select` output.
+  Standalone, token-themed. Component count: 59.
+
 ## [0.10.1] - 2026-06-09
 
 ### Changed

@@ -1170,6 +1170,58 @@ export const DOCS: DocCategory[] = [
           'Renders a nav landmark; the active item gets aria-current. Collapsed items expose their label as a tooltip.',
         ],
       },
+      {
+        id: 'section-menu',
+        title: 'Section menu',
+        selector: 'strct-section-menu',
+        importNames: ['StrctSectionMenu', 'StrctMenuSection', 'StrctMenuLink'],
+        summary: 'Two-level category / item menu.',
+        lead: 'A two-level navigation menu — categories (level 1) each holding a flat list of items (level 2); not a tree. Categories can be collapsible (chevrons) or static section labels, and category / item icons can be hidden.',
+        inputs: [
+          {
+            name: 'sections',
+            type: 'StrctMenuSection[]',
+            description:
+              'Categories with items: { label, icon?, expanded?, items: [{ id, label, icon?, disabled? }] }. Required.',
+          },
+          {
+            name: 'activeId',
+            type: 'string | null',
+            default: 'null',
+            description: 'Active item id, two-way (`[(activeId)]`).',
+          },
+          {
+            name: 'collapsible',
+            type: 'boolean',
+            default: 'true',
+            description:
+              'Categories collapse via a chevron; `false` renders static uppercase section labels (always open).',
+          },
+          {
+            name: 'showIcons',
+            type: 'boolean',
+            default: 'true',
+            description: 'Show category / item icons.',
+          },
+          {
+            name: 'ariaLabel',
+            type: 'string',
+            default: `'Sections'`,
+            description: 'Accessible label for the nav landmark.',
+          },
+        ],
+        outputs: [
+          { name: 'select', type: 'StrctMenuLink', description: 'Emitted when an item is chosen.' },
+        ],
+        do: [
+          'Use it for a grouped side navigation that is at most two levels deep.',
+          'Reach for the tree instead when you need arbitrary nesting.',
+        ],
+        dont: ['Do not nest sections — items are a flat list under each category.'],
+        a11y: [
+          'Renders a nav landmark; the active item gets aria-current and collapsible categories expose aria-expanded.',
+        ],
+      },
     ],
   },
   {
