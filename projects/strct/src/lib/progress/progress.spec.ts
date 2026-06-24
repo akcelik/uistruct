@@ -28,4 +28,36 @@ describe('StrctProgress', () => {
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).classList).toContain('strct-progress--critical');
   });
+
+  describe('thresholds', () => {
+    function classesFor(value: number, thresholds: unknown, status?: string): DOMTokenList {
+      const fixture = TestBed.createComponent(StrctProgress);
+      fixture.componentRef.setInput('value', value);
+      fixture.componentRef.setInput('thresholds', thresholds);
+      if (status) fixture.componentRef.setInput('status', status);
+      fixture.detectChanges();
+      return (fixture.nativeElement as HTMLElement).classList;
+    }
+
+    it('derives status from the value when thresholds are set', () => {
+      const t = { warning: 80, critical: 90 };
+      expect(classesFor(95, t)).toContain('strct-progress--critical');
+      expect(classesFor(85, t)).toContain('strct-progress--warning');
+      // Below warning and status left at default → success (not accent).
+      const healthy = classesFor(40, t);
+      expect(healthy).toContain('strct-progress--success');
+      expect(healthy).not.toContain('strct-progress--warning');
+    });
+
+    it('keeps an explicit status as the healthy base below the warning threshold', () => {
+      const healthy = classesFor(40, { warning: 80, critical: 90 }, 'warning');
+      expect(healthy).toContain('strct-progress--warning');
+    });
+
+    it('falls back to the explicit status when no thresholds are set', () => {
+      const cls = classesFor(95, null, 'accent');
+      expect(cls).not.toContain('strct-progress--critical');
+      expect(cls).not.toContain('strct-progress--success');
+    });
+  });
 });

@@ -6,6 +6,7 @@ import {
   input,
 } from '@angular/core';
 import { StrctChartStatus } from './sparkline';
+import { StrctThresholds } from '../status';
 
 const COLOR: Record<StrctChartStatus, string> = {
   accent: 'var(--acc)',
@@ -109,6 +110,13 @@ export class StrctGauge {
   readonly value = input(0);
   /** Visual status color. */
   readonly status = input<StrctChartStatus>('accent');
+  /**
+   * Optional value-driven thresholds. When set, the gauge picks its own status
+   * from the value: `value >= critical` → critical, `>= warning` → warning, else
+   * the healthy base (`status`, or `'success'` when `status` is left at its
+   * default `'accent'`).
+   */
+  readonly thresholds = input<StrctThresholds | null>(null);
   /** Label text. */
   readonly label = input('');
   /** Size variant. */
@@ -119,7 +127,19 @@ export class StrctGauge {
   protected readonly clamped = computed(() => Math.round(Math.max(0, Math.min(100, this.value()))));
   protected readonly half = computed(() => this.size() / 2);
   protected readonly radius = computed(() => (this.size() - this.thickness()) / 2);
-  protected readonly color = computed(() => COLOR[this.status()]);
+
+  /** Status after applying thresholds (falls back to `status` when none set). */
+  protected readonly resolvedStatus = computed<StrctChartStatus>(() => {
+    const t = this.thresholds();
+    if (!t) return this.status();
+    const v = this.value();
+    if (t.critical != null && v >= t.critical) return 'critical';
+    if (t.warning != null && v >= t.warning) return 'warning';
+    const base = this.status();
+    return base === 'accent' ? 'success' : base;
+  });
+
+  protected readonly color = computed(() => COLOR[this.resolvedStatus()]);
 
   private readonly circumference = computed(() => 2 * Math.PI * this.radius());
 

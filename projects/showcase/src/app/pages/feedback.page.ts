@@ -1,8 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import {
   StrctAlert,
+  StrctBadge,
   StrctButton,
   StrctEmptyState,
+  StrctHero,
+  StrctMetricTile,
   StrctSignpost,
   StrctSkeleton,
   StrctToastService,
@@ -17,7 +20,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     PageHeader,
     DemoBlock,
     StrctAlert,
+    StrctBadge,
     StrctButton,
+    StrctHero,
+    StrctMetricTile,
     StrctTooltip,
     StrctSignpost,
     StrctSkeleton,
@@ -25,6 +31,42 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
   template: `
     <app-page-header title="Feedback" subtitle="Contextual messages and hints." />
+
+    <app-demo
+      anchor="hero"
+      heading="Hero"
+      description="A page-level status summary with a leading icon chip, heading, description and optional right-aligned metadata / actions."
+      code='<strct-hero status="success" icon="shield" heading="High availability is on">…</strct-hero>'
+    >
+      <div class="stack stack--wide">
+        <strct-hero status="success" icon="shield" heading="Protected — high availability is on">
+          The standby node keeps a live copy and can take over if this one fails.
+          <div strctHeroMeta><strct-badge status="success">HA ON</strct-badge></div>
+          <div strctHeroActions>
+            <button strct-button size="sm" variant="neutral">Switch over</button>
+          </div>
+        </strct-hero>
+
+        <strct-hero status="success" heading="All systems healthy">
+          All services are responding and resources are within limits.
+          <div strctHeroMeta>
+            <strct-metric-tile label="Version" value="1.4.2" />
+            <strct-metric-tile label="Uptime" value="6d 4h" />
+          </div>
+        </strct-hero>
+
+        <strct-hero status="warning" dense heading="Clock drift detected">
+          The system clock is 2.4s ahead of the NTP source.
+          <div strctHeroActions>
+            <button strct-button size="sm" variant="neutral">Re-sync</button>
+          </div>
+        </strct-hero>
+
+        <strct-hero status="critical" heading="Standby node unreachable">
+          Failover is not available until the standby node reconnects.
+        </strct-hero>
+      </div>
+    </app-demo>
 
     <app-demo
       anchor="alert"
@@ -152,6 +194,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         gap: 12px;
         width: 100%;
         max-width: 520px;
+      }
+      .stack--wide {
+        max-width: 100%;
       }
       .skel-card {
         display: flex;

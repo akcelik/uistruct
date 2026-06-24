@@ -285,8 +285,18 @@ export const DOCS: DocCategory[] = [
             description: 'Percentage 0–100 (clamped).',
           },
           { name: 'status', type: CHART_STATUS, default: `'accent'`, description: 'Fill color.' },
+          {
+            name: 'thresholds',
+            type: '{ warning?: number; critical?: number } | null',
+            default: 'null',
+            description:
+              'When set, the bar derives its status from the value: ≥ critical → critical, ≥ warning → warning, else the healthy base (success). Explicit status still wins when no thresholds are set.',
+          },
         ],
-        do: ['Switch to warning / critical as usage crosses your thresholds.'],
+        do: [
+          'Pass thresholds instead of computing status for every meter.',
+          'Switch to warning / critical as usage crosses your thresholds.',
+        ],
         dont: ['Do not use a determinate bar for unknown-duration work — use the spinner.'],
         a11y: ['Exposes role="progressbar" with aria-valuenow / min / max.'],
       },
@@ -349,6 +359,13 @@ export const DOCS: DocCategory[] = [
             default: 'null',
             description:
               'Error message (first of an array). Truthy puts the field in the invalid state.',
+          },
+          {
+            name: 'validationState',
+            type: `{ status: 'idle' | 'checking' | 'ok' | 'warning' | 'error'; message? } | null`,
+            default: 'null',
+            description:
+              'Async-validation affordance: a trailing spinner/check/warning adornment plus its message in the hint/error slot (aria-live). An explicit error takes precedence.',
           },
         ],
         do: [
@@ -439,6 +456,42 @@ export const DOCS: DocCategory[] = [
         do: ['Use for 2–5 mutually exclusive options that should all be visible.'],
         dont: ['Do not use radios for many options — use a select or combobox.'],
         a11y: [cvaA11y, 'Arrow keys move between options within the group.'],
+      },
+      {
+        id: 'segmented',
+        title: 'Segmented',
+        selector: 'strct-segmented',
+        importNames: ['StrctSegmented', 'StrctSegmentedOption'],
+        summary: 'One-of-N as a joined segmented control.',
+        lead: 'A single-select segmented control with managed selected state — distinct from `StrctTabs` (panel switching) and a button group (visual cluster only). Reach for it for mode pickers and list filters. CVA-compatible.',
+        inputs: [
+          {
+            name: 'options',
+            type: 'StrctSegmentedOption[]',
+            default: '[]',
+            description: '`{ value; label; icon?; disabled? }[]`.',
+          },
+          model('unknown', 'Selected segment value.'),
+          {
+            name: 'size',
+            type: `'sm' | 'md'`,
+            default: `'md'`,
+            description: 'Segment size.',
+          },
+          {
+            name: 'block',
+            type: 'boolean',
+            default: 'false',
+            description: 'Stretch to the full width of the container.',
+          },
+          disabledRow,
+        ],
+        do: [
+          'Use for 2–4 short, mutually exclusive choices that fit on one line.',
+          'Reach for it for mode pickers and list filters.',
+        ],
+        dont: ['Do not use it to switch page panels — that is what tabs are for.'],
+        a11y: [cvaA11y, 'role="radiogroup" with roving tabindex; arrow keys move the selection.'],
       },
       {
         id: 'range',
@@ -1231,6 +1284,44 @@ export const DOCS: DocCategory[] = [
     loadExamples: () => import('../pages/data.page').then((m) => m.DataPage),
     components: [
       {
+        id: 'description-list',
+        title: 'Description list',
+        selector: 'strct-description-list, strct-desc',
+        importNames: ['StrctDescriptionList', 'StrctDesc', 'StrctDescItem'],
+        summary: 'Aligned label → value pairs (+ inline stat strip).',
+        lead: 'A compact definition list: aligned `label : value` rows with an optional trailing slot. The `inline` variant is the horizontal "stat strip". Drive it with the `items` input, or project `<strct-desc label="…">` rows so a value can host a badge, icon or rich content.',
+        inputs: [
+          {
+            name: 'items',
+            type: 'StrctDescItem[]',
+            default: '[]',
+            description: '`{ label; value?; mono?; muted? }[]`. Alternative to projected rows.',
+          },
+          {
+            name: 'inline',
+            type: 'boolean',
+            default: 'false',
+            description: 'Horizontal stat-strip layout instead of stacked rows.',
+          },
+          {
+            name: 'align',
+            type: `'between' | 'start'`,
+            default: `'between'`,
+            description: 'Value alignment in stacked mode.',
+          },
+          {
+            name: 'strct-desc label',
+            type: 'string',
+            description: 'Projected-row label. Add `mono` / `muted` to style its value.',
+          },
+        ],
+        do: [
+          'Use the items input for plain text pairs; project strct-desc when a value needs a badge or icon.',
+          'Use inline for a horizontal stat strip of a few key facts.',
+        ],
+        dont: ['Do not use it for editable fields — that is what strct-field is for.'],
+      },
+      {
         id: 'table',
         title: 'Table',
         selector: 'strct-table',
@@ -1598,11 +1689,20 @@ export const DOCS: DocCategory[] = [
         inputs: [
           { name: 'value', type: 'number', default: '0', description: 'Value 0–100.' },
           { name: 'status', type: CHART_STATUS, default: `'accent'`, description: 'Arc color.' },
+          {
+            name: 'thresholds',
+            type: '{ warning?: number; critical?: number } | null',
+            default: 'null',
+            description:
+              'When set, the gauge derives its status from the value: ≥ critical → critical, ≥ warning → warning, else the healthy base (success).',
+          },
           { name: 'label', type: 'string', default: `''`, description: 'Caption under the value.' },
           { name: 'size', type: 'number', default: '120', description: 'Diameter in pixels.' },
           { name: 'thickness', type: 'number', default: '12', description: 'Arc stroke width.' },
         ],
-        do: ['Switch status with thresholds to flag warning / critical levels.'],
+        do: [
+          'Pass thresholds to flag warning / critical levels without computing status yourself.',
+        ],
         dont: ['Do not use a gauge for multi-series data.'],
       },
       {
@@ -1669,6 +1769,60 @@ export const DOCS: DocCategory[] = [
         ],
         dont: ['Do not crowd a tile with more than one metric.'],
       },
+      {
+        id: 'flow',
+        title: 'Flow',
+        selector: 'strct-flow',
+        importNames: ['StrctFlow', 'StrctFlowNode'],
+        summary: 'Animated relationship between endpoints.',
+        lead: 'Shows a connection between two (or N) endpoints with an optional animated "flow" — moving packets travelling along the connector — for live data movement such as replication, sync or a pipeline. When `live` is off (or the user prefers reduced motion) the connector is a static gradient with a direction arrow. Dependency-free.',
+        inputs: [
+          {
+            name: 'nodes',
+            type: 'StrctFlowNode[]',
+            default: '[]',
+            description: 'Ordered endpoints: { id; label; sublabel?; role?; status? }.',
+          },
+          {
+            name: 'live',
+            type: 'boolean',
+            default: 'false',
+            description: 'Animate packets travelling along the connector.',
+          },
+          {
+            name: 'direction',
+            type: `'forward' | 'reverse' | 'both'`,
+            default: `'forward'`,
+            description: 'Direction of travel; drives the arrow(s) and packets.',
+          },
+          {
+            name: 'status',
+            type: STATUS_VALUES,
+            default: `'accent'`,
+            description: 'Connector + packet color.',
+          },
+          {
+            name: 'orientation',
+            type: `'horizontal' | 'vertical'`,
+            default: `'horizontal'`,
+            description: 'Layout axis.',
+          },
+          {
+            name: 'label',
+            type: 'string',
+            default: `''`,
+            description: 'Caption under the connector (e.g. "live replication", "0 lag").',
+          },
+        ],
+        do: [
+          'Use it for replication / sync / pipeline relationships between two or more nodes.',
+          'Set `live` only while data is actually moving.',
+        ],
+        dont: ['Do not animate a static relationship — leave `live` off so the connector rests.'],
+        a11y: [
+          'Renders role="img" with an aria-label summarizing the flow; honours prefers-reduced-motion (packets drop to a static gradient).',
+        ],
+      },
     ],
   },
   {
@@ -1677,6 +1831,47 @@ export const DOCS: DocCategory[] = [
     icon: 'bell',
     loadExamples: () => import('../pages/feedback.page').then((m) => m.FeedbackPage),
     components: [
+      {
+        id: 'hero',
+        title: 'Hero',
+        selector: 'strct-hero',
+        importNames: ['StrctHero'],
+        summary: 'Page-level status summary banner.',
+        lead: 'A prominent, page-level status summary: a tone-colored surface with a leading icon chip, a heading, a description, and optional right-aligned metadata and actions. Distinct from `StrctAlert` (a dismissible inline notification) and `StrctSignpost` (a popover) — reach for it for the "Protected", "All systems healthy", "Clock synchronized" summaries.',
+        inputs: [
+          {
+            name: 'status',
+            type: STATUS_VALUES,
+            default: `'neutral'`,
+            description: 'Tone — drives the left rail and the filled icon chip color.',
+          },
+          {
+            name: 'icon',
+            type: 'string',
+            description:
+              'Leading icon name. Falls back to a per-status default (success → check, warning/critical → alert, accent/neutral → info).',
+          },
+          {
+            name: 'heading',
+            type: 'string',
+            description: 'The headline. Required; exposed as the banner’s accessible name.',
+          },
+          {
+            name: 'dense',
+            type: 'boolean',
+            default: 'false',
+            description: 'Tighter padding for secondary placements.',
+          },
+        ],
+        do: [
+          'Use one hero per page for the single most important status.',
+          'Project metadata into [strctHeroMeta] and buttons into [strctHeroActions].',
+        ],
+        dont: ['Do not use a hero for transient or dismissible messages — use an alert or toast.'],
+        a11y: [
+          'Renders role="status" (or role="alert" when status is critical); the heading names the region.',
+        ],
+      },
       {
         id: 'alert',
         title: 'Alert',

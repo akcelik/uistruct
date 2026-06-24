@@ -10,6 +10,8 @@ import {
   StrctDatagrid,
   StrctDatagridActionBar,
   StrctDatagridColumn,
+  StrctDesc,
+  StrctDescriptionList,
   StrctIcon,
   StrctRow,
   StrctRowDetailDef,
@@ -41,9 +43,43 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctTimelineItem,
     StrctStack,
     StrctStackItem,
+    StrctDescriptionList,
+    StrctDesc,
   ],
   template: `
     <app-page-header title="Data" subtitle="Declarative, token-styled data display." />
+
+    <app-demo
+      anchor="description-list"
+      heading="Description list"
+      description="Aligned label → value pairs. Project strct-desc so a value can host a badge; or pass plain pairs via items. The inline variant is a horizontal stat strip."
+      code='<strct-description-list><strct-desc label="IPv4" mono>172.16.75.100/24</strct-desc></strct-description-list>'
+    >
+      <div class="dl-grid">
+        <strct-description-list>
+          <strct-desc label="IPv4" mono>172.16.75.100/24</strct-desc>
+          <strct-desc label="Gateway" mono>172.16.75.2</strct-desc>
+          <strct-desc label="IPv6"><strct-badge status="success">Enabled</strct-badge></strct-desc>
+        </strct-description-list>
+
+        <strct-description-list
+          [items]="[
+            { label: 'Hostname', value: 'hyperstruct01', mono: true },
+            { label: 'Serial', value: 'KX-99213-AC', mono: true },
+            { label: 'Location', value: 'Rack B12', muted: true },
+          ]"
+        />
+      </div>
+
+      <strct-description-list inline class="dl-strip">
+        <strct-desc label="Access · VIP"
+          ><strct-badge status="accent" solid>172.16.75.250</strct-badge></strct-desc
+        >
+        <strct-desc label="Viewing"
+          ><strct-badge status="neutral">hyperstruct01</strct-badge></strct-desc
+        >
+      </strct-description-list>
+    </app-demo>
 
     <app-demo
       anchor="table"
@@ -169,6 +205,17 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         font-size: 12px;
         color: var(--t2);
         font-family: var(--mono);
+      }
+      .dl-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 14px 32px;
+        width: 100%;
+      }
+      .dl-strip {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--b1);
       }
       .dg-wrap {
         display: flex;

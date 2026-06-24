@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+  StrctButton,
   StrctCascadeOption,
   StrctCascadeSelect,
   StrctCheckbox,
@@ -20,7 +21,10 @@ import {
   StrctRadioGroup,
   StrctRange,
   StrctRating,
+  StrctSegmented,
+  StrctSegmentedOption,
   StrctToggle,
+  StrctValidationState,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -31,12 +35,14 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     PageHeader,
     DemoBlock,
     FormsModule,
+    StrctButton,
     StrctField,
     StrctInput,
     StrctCheckbox,
     StrctToggle,
     StrctRadio,
     StrctRadioGroup,
+    StrctSegmented,
     StrctRange,
     StrctCombobox,
     StrctDatepicker,
@@ -72,6 +78,60 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             (ngModelChange)="fieldEmail.set($event)"
           />
         </strct-field>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="field-validation"
+      heading="Async validation state"
+      description="A first-class checking → ok / warning / error affordance: a trailing spinner / check / warning plus the reason in the hint slot (aria-live). Simulate a live NTP-server reachability check:"
+      code='<strct-field label="NTP server" [validationState]="probe()"><input strctInput /></strct-field>'
+    >
+      <div class="field">
+        <strct-field
+          label="NTP server"
+          hint="We check reachability as you type."
+          [validationState]="probe()"
+        >
+          <input strctInput placeholder="time.example.com" [(ngModel)]="ntpServer" />
+        </strct-field>
+        <div class="vstate-btns">
+          <button strct-button size="sm" variant="flat" (click)="probe.set({ status: 'idle' })">
+            Idle
+          </button>
+          <button
+            strct-button
+            size="sm"
+            variant="flat"
+            (click)="probe.set({ status: 'checking', message: 'Checking reachability…' })"
+          >
+            Checking
+          </button>
+          <button
+            strct-button
+            size="sm"
+            variant="flat"
+            (click)="probe.set({ status: 'ok', message: 'Reachable · stratum 3' })"
+          >
+            OK
+          </button>
+          <button
+            strct-button
+            size="sm"
+            variant="flat"
+            (click)="probe.set({ status: 'warning', message: 'High latency (420ms)' })"
+          >
+            Warning
+          </button>
+          <button
+            strct-button
+            size="sm"
+            variant="flat"
+            (click)="probe.set({ status: 'error', message: 'Unreachable' })"
+          >
+            Error
+          </button>
+        </div>
       </div>
     </app-demo>
 
@@ -139,6 +199,25 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <strct-radio [value]="'lg'">Large</strct-radio>
       </strct-radio-group>
       <span class="echo">selected: {{ size() }}</span>
+    </app-demo>
+
+    <app-demo
+      anchor="segmented"
+      heading="Segmented"
+      description="One-of-N selection as a joined segmented control — for mode pickers and list filters. Keyboard accessible (role=radiogroup, arrow keys)."
+      code='<strct-segmented [options]="filters" [(ngModel)]="filter" size="sm" />'
+    >
+      <div class="seg-demo">
+        <strct-segmented
+          [options]="[
+            { value: false, label: 'Disabled' },
+            { value: true, label: 'Enabled' },
+          ]"
+          [(ngModel)]="ntpEnabled"
+        />
+        <strct-segmented [options]="taskFilters" [(ngModel)]="filter" size="sm" />
+        <span class="echo">NTP: {{ ntpEnabled() }} · filter: {{ filter() }}</span>
+      </div>
     </app-demo>
 
     <app-demo
@@ -359,6 +438,18 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       input {
         max-width: 320px;
       }
+      .seg-demo {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        align-items: flex-start;
+      }
+      .vstate-btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
     `,
   ],
 })
@@ -374,6 +465,15 @@ export class FormsPage {
   protected readonly agree = signal(false);
   protected readonly notify = signal(true);
   protected readonly size = signal('md');
+  protected readonly ntpServer = signal('');
+  protected readonly probe = signal<StrctValidationState>({ status: 'idle' });
+  protected readonly ntpEnabled = signal<unknown>(true);
+  protected readonly filter = signal<unknown>('all');
+  protected readonly taskFilters: StrctSegmentedOption[] = [
+    { value: 'all', label: 'All' },
+    { value: 'active', label: 'Active' },
+    { value: 'failed', label: 'Failed' },
+  ];
   protected readonly volume = signal(60);
   protected readonly city = signal<unknown>(null);
   protected readonly date = signal('');

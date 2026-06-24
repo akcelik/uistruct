@@ -11,6 +11,9 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { StrctIcon } from '../icon/icon';
+import { StrctSpinner } from '../spinner/spinner';
+import { StrctValidationState, strctValidationIcon } from '../validation/validation';
 
 let fieldCounter = 0;
 
@@ -27,6 +30,7 @@ let fieldCounter = 0;
   selector: 'strct-field',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
+  imports: [StrctIcon, StrctSpinner],
   template: `
     @if (label()) {
       <label class="strct-field__label" [attr.for]="controlId() || null">
@@ -36,10 +40,30 @@ let fieldCounter = 0;
         }
       </label>
     }
-    <div class="strct-field__control"><ng-content /></div>
+    <div class="strct-field__control">
+      <ng-content />
+      @if (stateActive()) {
+        <span class="strct-field__adorn strct-field__adorn--{{ stateStatus() }}" aria-hidden="true">
+          @if (stateStatus() === 'checking') {
+            <strct-spinner size="sm" />
+          } @else if (stateIcon()) {
+            <strct-icon [name]="stateIcon()" [size]="15" />
+          }
+        </span>
+      }
+    </div>
     @if (errorText()) {
       <div class="strct-field__msg strct-field__msg--error" [id]="errorId" role="alert">
         {{ errorText() }}
+      </div>
+    } @else if (stateMessage()) {
+      <div
+        class="strct-field__msg strct-field__msg--{{ stateStatus() }}"
+        [id]="hintId"
+        [attr.role]="stateStatus() === 'error' ? 'alert' : null"
+        aria-live="polite"
+      >
+        {{ stateMessage() }}
       </div>
     } @else if (hint()) {
       <div class="strct-field__msg strct-field__msg--hint" [id]="hintId">{{ hint() }}</div>
@@ -47,7 +71,8 @@ let fieldCounter = 0;
   `,
   host: {
     class: 'strct-field',
-    '[class.strct-field--invalid]': '!!errorText()',
+    '[class.strct-field--invalid]': 'isInvalid()',
+    '[class.strct-field--validating]': 'stateActive()',
   },
   styles: [
     `
@@ -66,15 +91,46 @@ let fieldCounter = 0;
         margin-left: 2px;
       }
       .strct-field__control {
+        position: relative;
         display: flex;
         flex-direction: column;
+      }
+      /* Trailing validation adornment, vertically centred on a single-line control. */
+      .strct-field__adorn {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        display: inline-flex;
+        align-items: center;
+        pointer-events: none;
+      }
+      .strct-field__adorn--ok {
+        color: var(--success);
+      }
+      .strct-field__adorn--warning {
+        color: var(--warning);
+      }
+      .strct-field__adorn--error {
+        color: var(--critical);
+      }
+      /* Make room for the adornment so it never overlaps the text. */
+      .strct-field--validating .strct-control {
+        padding-right: 32px;
       }
       .strct-field__msg {
         font-size: 12px;
         line-height: 1.4;
       }
-      .strct-field__msg--hint {
+      .strct-field__msg--hint,
+      .strct-field__msg--checking {
         color: var(--t3);
+      }
+      .strct-field__msg--ok {
+        color: var(--success);
+      }
+      .strct-field__msg--warning {
+        color: var(--warning);
       }
       .strct-field__msg--error {
         color: var(--critical);
@@ -91,6 +147,12 @@ export class StrctField {
   readonly hint = input('');
   /** Error message (string or first-of array); falsy clears the error state. */
   readonly error = input<string | string[] | null | undefined>(null);
+  /**
+   * Async-validation state rendered as a trailing adornment (spinner / check /
+   * warning) plus its message in the hint/error slot — so apps stop composing a
+   * spinner + badge by hand for live "checking… → ok / warning / error" checks.
+   */
+  readonly validationState = input<StrctValidationState | null>(null);
 
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
   private readonly n = ++fieldCounter;
@@ -103,12 +165,30 @@ export class StrctField {
     return (Array.isArray(e) ? e[0] : e) ?? '';
   });
 
+  /** Effective validation status ('idle' when no state supplied). */
+  protected readonly stateStatus = computed(() => this.validationState()?.status ?? 'idle');
+  /** Whether to show the trailing adornment (an explicit error suppresses it). */
+  protected readonly stateActive = computed(
+    () => !this.errorText() && this.stateStatus() !== 'idle',
+  );
+  protected readonly stateIcon = computed(() => strctValidationIcon(this.stateStatus()));
+  /** Validation message, shown only when there is no explicit error. */
+  protected readonly stateMessage = computed(() =>
+    this.errorText() ? '' : (this.validationState()?.message ?? ''),
+  );
+  /** Invalid when an explicit error is set or the validation state is 'error'. */
+  protected readonly isInvalid = computed(
+    () => !!this.errorText() || this.stateStatus() === 'error',
+  );
+
   constructor() {
     afterNextRender(() => this.link());
-    // Keep aria in sync as the error / hint change.
+    // Keep aria in sync as the error / hint / validation state change.
     effect(() => {
       this.errorText();
       this.hint();
+      this.stateStatus();
+      this.stateMessage();
       this.applyAria();
     });
   }
@@ -130,10 +210,14 @@ export class StrctField {
   private applyAria(): void {
     const el = this.control();
     if (!el) return;
-    const describedBy = this.errorText() ? this.errorId : this.hint() ? this.hintId : '';
+    const describedBy = this.errorText()
+      ? this.errorId
+      : this.stateMessage() || this.hint()
+        ? this.hintId
+        : '';
     if (describedBy) el.setAttribute('aria-describedby', describedBy);
     else el.removeAttribute('aria-describedby');
-    if (this.errorText()) el.setAttribute('aria-invalid', 'true');
+    if (this.isInvalid()) el.setAttribute('aria-invalid', 'true');
     else el.removeAttribute('aria-invalid');
   }
 }
