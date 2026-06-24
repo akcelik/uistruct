@@ -5,6 +5,43 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-06-24
+
+### Added
+
+- **`strct-hero`** — a page-level status summary banner: a tone-colored surface with
+  a leading icon chip, a heading, a description and optional right-aligned metadata
+  (`[strctHeroMeta]`) / actions (`[strctHeroActions]`). `role="status"` (or `alert`
+  when `status="critical"`), with the heading as the accessible name.
+- **`strct-flow`** — an animated relationship between two (or N) endpoints: packets
+  travel along the connector when `live`, with `direction` (`forward` / `reverse` /
+  `both`) and horizontal / vertical orientation. Degrades to a static gradient +
+  arrow when idle or under `prefers-reduced-motion`; `role="img"` with a summary
+  label.
+- **`strct-description-list` + `strct-desc`** — a compact `label → value` definition
+  list, driven by an `items` input or projected `<strct-desc>` rows (so a value can
+  host a badge or icon). Stacked rows plus an `inline` stat-strip variant.
+- **`strct-segmented`** — a single-select segmented control with managed selected
+  state, `ControlValueAccessor`-compatible. `role="radiogroup"` with roving tabindex
+  and arrow-key navigation; `sm` / `md` sizes and a `block` width.
+- **`strct-cell-status`** — a small "checking → ok / warning / error (reason)"
+  affordance (spinner / icon + message, `aria-live`) for datagrid cells.
+- Shared **`StrctStatus`** and **`StrctThresholds`** types in the public API.
+
+  Component count: 63.
+
+### Changed
+
+- **`strct-progress` / `strct-gauge`** gained an optional `thresholds` input
+  (`{ warning?, critical? }`). When set, the meter derives its own status from the
+  value (≥ critical → critical, ≥ warning → warning, else the healthy base), so
+  callers stop computing status for every disk / memory meter. Back-compatible: an
+  explicit `status` still wins when no thresholds are given.
+- **`strct-field`** gained a `validationState` input
+  (`{ status: 'idle' | 'checking' | 'ok' | 'warning' | 'error'; message? }`),
+  rendered as a trailing spinner / check / warning adornment plus the message in the
+  hint / error slot (`aria-live`). An explicit `error` still takes precedence.
+
 ## [0.11.0] - 2026-06-12
 
 ### Added
