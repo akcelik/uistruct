@@ -5,6 +5,7 @@ import {
   computed,
   input,
 } from '@angular/core';
+import { StrctThresholds } from '../status';
 
 /** Progress bar color variants. */
 export type StrctProgressStatus = 'accent' | 'success' | 'warning' | 'critical';
@@ -27,9 +28,9 @@ export type StrctProgressStatus = 'accent' | 'success' | 'warning' | 'critical';
   `,
   host: {
     class: 'strct-progress',
-    '[class.strct-progress--success]': "status() === 'success'",
-    '[class.strct-progress--warning]': "status() === 'warning'",
-    '[class.strct-progress--critical]': "status() === 'critical'",
+    '[class.strct-progress--success]': "resolvedStatus() === 'success'",
+    '[class.strct-progress--warning]': "resolvedStatus() === 'warning'",
+    '[class.strct-progress--critical]': "resolvedStatus() === 'critical'",
   },
   styles: [
     `
@@ -65,6 +66,25 @@ export class StrctProgress {
   readonly value = input(0);
   /** Visual status color. */
   readonly status = input<StrctProgressStatus>('accent');
+  /**
+   * Optional value-driven thresholds. When set, the component picks its own
+   * status from the value instead of the caller computing it: `value >= critical`
+   * → critical, `>= warning` → warning, else the healthy base. The healthy base is
+   * `status` when it has been set to a semantic tone, or `'success'` when `status`
+   * is left at its default `'accent'`.
+   */
+  readonly thresholds = input<StrctThresholds | null>(null);
 
   protected readonly clamped = computed(() => Math.max(0, Math.min(100, this.value())));
+
+  /** Status after applying thresholds (falls back to `status` when none set). */
+  protected readonly resolvedStatus = computed<StrctProgressStatus>(() => {
+    const t = this.thresholds();
+    if (!t) return this.status();
+    const v = this.value();
+    if (t.critical != null && v >= t.critical) return 'critical';
+    if (t.warning != null && v >= t.warning) return 'warning';
+    const base = this.status();
+    return base === 'accent' ? 'success' : base;
+  });
 }

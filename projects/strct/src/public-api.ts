@@ -7,6 +7,7 @@ export * from './lib/theme/theme.service';
 export * from './lib/theme/theme-switcher';
 
 // Foundations
+export * from './lib/status';
 export * from './lib/icon/icon';
 export * from './lib/overlay/overlay';
 
@@ -48,9 +49,11 @@ export * from './lib/section-menu/section-menu';
 // Forms
 export * from './lib/forms/field';
 export * from './lib/forms/input';
+export * from './lib/validation/validation';
 export * from './lib/forms/checkbox';
 export * from './lib/forms/toggle';
 export * from './lib/forms/radio';
+export * from './lib/segmented/segmented';
 export * from './lib/forms/range';
 export * from './lib/forms/password';
 export * from './lib/forms/file';
@@ -65,6 +68,7 @@ export * from './lib/color-picker/color-picker';
 export * from './lib/cascade-select/cascade-select';
 
 // Data
+export * from './lib/description-list/description-list';
 export * from './lib/table/table';
 export * from './lib/datagrid/datagrid';
 export * from './lib/timeline/timeline';
@@ -75,9 +79,11 @@ export * from './lib/charts/sparkline';
 export * from './lib/charts/chart';
 export * from './lib/charts/donut';
 export * from './lib/charts/gauge';
+export * from './lib/flow/flow';
 export * from './lib/metric-tile/metric-tile';
 
 // Feedback
+export * from './lib/hero/hero';
 export * from './lib/alert/alert';
 export * from './lib/tooltip/tooltip';
 export * from './lib/signpost/signpost';

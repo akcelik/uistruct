@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import {
+  StrctButton,
   StrctChart,
   StrctDonut,
   StrctDonutSegment,
+  StrctFlow,
+  StrctFlowNode,
   StrctGauge,
   StrctMetricTile,
   StrctSparkline,
@@ -15,9 +18,11 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   imports: [
     PageHeader,
     DemoBlock,
+    StrctButton,
     StrctSparkline,
     StrctChart,
     StrctDonut,
+    StrctFlow,
     StrctGauge,
     StrctMetricTile,
   ],
@@ -108,13 +113,13 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="gauge"
       heading="Gauge"
-      description="A 0–100 radial dial for utilisation."
-      code='<strct-gauge [value]="72" status="warning" label="CPU" />'
+      description="A 0–100 radial dial for utilisation. Pass thresholds and the gauge colors itself from the value."
+      code='<strct-gauge [value]="78" [thresholds]="{ warning: 70, critical: 90 }" label="Memory" />'
     >
       <div class="gauge-row">
-        <strct-gauge [value]="41" status="success" label="CPU" />
-        <strct-gauge [value]="78" status="warning" label="Memory" />
-        <strct-gauge [value]="93" status="critical" label="Storage" />
+        <strct-gauge [value]="41" [thresholds]="meterThresholds" label="CPU" />
+        <strct-gauge [value]="78" [thresholds]="meterThresholds" label="Memory" />
+        <strct-gauge [value]="93" [thresholds]="meterThresholds" label="Storage" />
       </div>
     </app-demo>
 
@@ -161,6 +166,34 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           invertDelta
           [data]="errTrend"
         />
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="flow"
+      heading="Flow"
+      description="An animated connection between endpoints — replication, sync, a pipeline. Toggle the live flow; packets stop and the connector rests when idle (and honour reduced motion)."
+      code='<strct-flow [nodes]="nodes" [live]="flowing()" label="live replication · 0 lag" status="success" />'
+    >
+      <div class="flow-demo">
+        <strct-flow
+          [nodes]="haNodes"
+          [live]="flowing()"
+          label="live replication · 0 lag"
+          status="success"
+        />
+
+        <strct-flow
+          [nodes]="pipeline"
+          [live]="flowing()"
+          direction="both"
+          label="bidirectional sync"
+          status="accent"
+        />
+
+        <button strct-button size="sm" variant="neutral" (click)="flowing.set(!flowing())">
+          {{ flowing() ? 'Pause flow' : 'Start flow' }}
+        </button>
       </div>
     </app-demo>
   `,
@@ -229,10 +262,31 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         gap: 12px;
         width: 100%;
       }
+      .flow-demo {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        width: 100%;
+        max-width: 480px;
+      }
+      .flow-demo button {
+        align-self: flex-start;
+      }
     `,
   ],
 })
 export class ChartsPage {
+  protected readonly meterThresholds = { warning: 70, critical: 90 };
+  protected readonly flowing = signal(true);
+  protected readonly haNodes: StrctFlowNode[] = [
+    { id: 'a', label: 'hyperstruct01', role: 'ACTIVE', status: 'success' },
+    { id: 'b', label: 'hyperstruct02', role: 'STANDBY', status: 'accent' },
+  ];
+  protected readonly pipeline: StrctFlowNode[] = [
+    { id: 's', label: 'primary', sublabel: 'us-east' },
+    { id: 'r', label: 'replica', sublabel: 'us-west' },
+  ];
+
   protected readonly cpuTrend = [40, 52, 48, 61, 55, 68, 62, 70, 62];
   protected readonly memTrend = [70, 72, 75, 74, 78, 80, 79, 82, 81];
   protected readonly netTrend = [120, 180, 90, 260, 200, 340, 280, 310, 340];
