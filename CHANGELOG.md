@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-06-25
+
+### Changed — `strct-donut` is now interactive
+
+- **Hover to focus** — hovering a slice (or its legend row) highlights it (it grows
+  with a soft glow) while the others dim, and the center reads out that slice's
+  value, label and share. `interactive` (default on) toggles this.
+- **Legend** — new `legend` input renders a `color · label · value · %` list beside
+  the ring, hover-linked to the slices in both directions.
+- **Modern slices** — rounded caps with gaps between slices (new `gap`, in degrees)
+  and a sweep-in entrance animation (honours `prefers-reduced-motion`).
+- Back-compatible: existing `segments` / `size` / `thickness` / `centerValue` /
+  `centerLabel` usage is unchanged.
+
 ## [0.13.0] - 2026-06-25
 
 ### Changed — `strct-chart` line chart overhaul
