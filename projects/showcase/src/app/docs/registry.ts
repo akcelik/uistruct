@@ -1587,15 +1587,65 @@ export const DOCS: DocCategory[] = [
         title: 'Line & area',
         selector: 'strct-chart',
         importNames: ['StrctChart'],
-        summary: 'Line or filled area chart.',
-        lead: 'A line or filled area chart for time series, driven by plain data arrays. Set `type` to `line` or `area`.',
+        summary: 'Smooth line / area chart with live streaming.',
+        lead: 'A single-series time chart, driven by a plain number array. Lines are smooth by default (monotone cubic — curves that never overshoot the data); set `curve` to `linear` or `step` to change it. Toggle the soft gradient fill with `area`, and turn on `live` for streaming metrics — the window scrolls left as you push new points, with a pulsing head at the leading edge. Dependency-free SVG, token-coloured, reduced-motion safe.',
         inputs: [
           { name: 'data', type: 'number[]', description: 'Series values. Required.' },
+          {
+            name: 'curve',
+            type: `'smooth' | 'linear' | 'step'`,
+            default: `'smooth'`,
+            description: 'Line interpolation. Smooth uses non-overshooting monotone cubic.',
+          },
+          {
+            name: 'area',
+            type: 'boolean',
+            default: 'false',
+            description: 'Fill under the line with a soft vertical gradient.',
+          },
+          {
+            name: 'glow',
+            type: 'boolean',
+            default: 'false',
+            description: 'Soft ambient glow on the line and the leading-edge dot.',
+          },
+          {
+            name: 'live',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Streaming mode: the window scrolls left as new points arrive, with a pulsing leading-edge dot.',
+          },
+          {
+            name: 'interactive',
+            type: 'boolean',
+            default: 'true',
+            description: 'Hover crosshair + value tooltip.',
+          },
+          {
+            name: 'strokeWidth',
+            type: 'number',
+            default: '2',
+            description: 'Line thickness in pixels.',
+          },
+          {
+            name: 'interval',
+            type: 'number',
+            default: '1000',
+            description: 'Expected ms between updates in live mode (drives the scroll duration).',
+          },
           {
             name: 'type',
             type: `'line' | 'area' | 'bar'`,
             default: `'line'`,
-            description: 'Chart style.',
+            description:
+              'Chart style (`area` is shorthand for line + area; `bar` switches to bars).',
+          },
+          {
+            name: 'grid / dots',
+            type: 'boolean',
+            default: 'true / false',
+            description: 'Show the gridlines / a dot per data point.',
           },
           { name: 'labels', type: 'string[]', default: '[]', description: 'X-axis labels.' },
           { name: 'status', type: CHART_STATUS, default: `'accent'`, description: 'Series color.' },
@@ -1612,8 +1662,14 @@ export const DOCS: DocCategory[] = [
             description: 'Fixed Y maximum; null auto-scales.',
           },
         ],
-        do: ['Use for continuous time-series data.'],
+        do: [
+          'Use for continuous time-series data; keep `curve="smooth"` for trends.',
+          'For live metrics, push a fixed-length sliding window and set `live` + `interval`.',
+        ],
         dont: ['Do not use a line chart for unordered categories — use bars.'],
+        a11y: [
+          'Honours prefers-reduced-motion: the scroll, pulse and draw-on animations are disabled.',
+        ],
       },
       {
         id: 'bar',
