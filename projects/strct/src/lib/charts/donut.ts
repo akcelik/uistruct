@@ -60,9 +60,7 @@ const round = (n: number): number => Math.round(n * 100) / 100;
             @for (arc of arcs(); track $index) {
               <circle
                 class="strct-donut__arc"
-                [class.is-active]="hovered() === $index"
                 [class.is-dim]="hovered() !== null && hovered() !== $index"
-                [style.--seg]="arc.color"
                 [attr.cx]="half()"
                 [attr.cy]="half()"
                 [attr.r]="radius()"
@@ -129,9 +127,6 @@ const round = (n: number): number => Math.round(n * 100) / 100;
         transition:
           stroke-width 0.16s ease,
           opacity 0.16s ease;
-      }
-      .strct-donut__arc.is-active {
-        filter: drop-shadow(0 0 5px var(--seg));
       }
       .strct-donut__arc.is-dim {
         opacity: 0.32;
