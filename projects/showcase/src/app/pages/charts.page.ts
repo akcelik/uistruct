@@ -1,13 +1,17 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
   StrctButton,
   StrctChart,
+  StrctChartCurve,
   StrctDonut,
   StrctDonutSegment,
   StrctFlow,
   StrctFlowNode,
   StrctGauge,
   StrctMetricTile,
+  StrctSegmented,
+  StrctSegmentedOption,
   StrctSparkline,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
@@ -18,7 +22,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   imports: [
     PageHeader,
     DemoBlock,
+    FormsModule,
     StrctButton,
+    StrctSegmented,
     StrctSparkline,
     StrctChart,
     StrctDonut,
@@ -58,18 +64,77 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="line"
       heading="Line & area"
-      description="Single-series time chart. Switch type between line and area."
-      code='<strct-chart [data]="cpu" type="area" [labels]="hours" />'
+      description="Single-series time chart. Smooth monotone curves by default (no overshoot); toggle the gradient fill and the interpolation."
+      code='<strct-chart [data]="cpu" [area]="true" curve="smooth" [labels]="hours" />'
     >
-      <div class="chart-box">
-        <strct-chart
-          [data]="dayCpu"
-          type="area"
-          [labels]="hours"
-          status="accent"
-          [height]="170"
-          [max]="100"
-        />
+      <div class="chart-stack">
+        <div class="chart-toolbar">
+          <strct-segmented [options]="curveOptions" [(ngModel)]="curve" size="sm" />
+          <button
+            strct-button
+            size="sm"
+            [variant]="area() ? 'primary' : 'neutral'"
+            (click)="area.set(!area())"
+          >
+            {{ area() ? 'Area on' : 'Area off' }}
+          </button>
+          <button
+            strct-button
+            size="sm"
+            [variant]="glow() ? 'primary' : 'neutral'"
+            (click)="glow.set(!glow())"
+          >
+            {{ glow() ? 'Glow on' : 'Glow off' }}
+          </button>
+        </div>
+        <div class="chart-box">
+          <strct-chart
+            [data]="dayCpu"
+            [area]="area()"
+            [glow]="glow()"
+            [curve]="curve()"
+            [labels]="hours"
+            status="accent"
+            [height]="170"
+            [max]="100"
+          />
+        </div>
+        <span class="chart-hint">Hover the chart for a crosshair + value tooltip.</span>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="line-live"
+      owner="line"
+      heading="Live stream"
+      description="A streaming metric: the window scrolls left as new points arrive, with a pulsing head at the leading edge. Honours prefers-reduced-motion."
+      code='<strct-chart [data]="stream()" live area [interval]="1000" status="success" />'
+    >
+      <div class="chart-stack">
+        <div class="chart-toolbar">
+          <button
+            strct-button
+            size="sm"
+            [variant]="streaming() ? 'critical' : 'primary'"
+            (click)="toggleStream()"
+          >
+            {{ streaming() ? 'Pause stream' : 'Start stream' }}
+          </button>
+          <span class="spark-val">live · {{ lastValue() }} Mb/s</span>
+        </div>
+        <div class="chart-box">
+          <strct-chart
+            [data]="stream()"
+            live
+            area
+            glow
+            [interval]="streamInterval"
+            status="success"
+            [height]="170"
+            [max]="100"
+            [grid]="false"
+          />
+        </div>
       </div>
     </app-demo>
 
@@ -272,10 +337,82 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       .flow-demo button {
         align-self: flex-start;
       }
+      .chart-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+      }
+      .chart-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .chart-toolbar .spark-val {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--success);
+      }
+      .chart-hint {
+        font-size: 11px;
+        color: var(--t3);
+      }
     `,
   ],
 })
-export class ChartsPage {
+export class ChartsPage implements OnDestroy {
+  // Line & area demo controls.
+  protected readonly area = signal(true);
+  protected readonly glow = signal(true);
+  protected readonly curve = signal<StrctChartCurve>('smooth');
+  protected readonly curveOptions: StrctSegmentedOption[] = [
+    { value: 'smooth', label: 'Smooth' },
+    { value: 'linear', label: 'Linear' },
+    { value: 'step', label: 'Step' },
+  ];
+
+  // Live-stream demo: a fixed-length sliding window of values.
+  protected readonly streamInterval = 900;
+  protected readonly stream = signal<number[]>(
+    Array.from({ length: 40 }, (_, i) => 45 + Math.round(18 * Math.sin(i / 4))),
+  );
+  protected readonly streaming = signal(false);
+  protected readonly lastValue = computed(() => {
+    const s = this.stream();
+    return s.length ? s[s.length - 1] : 0;
+  });
+  private streamTimer: ReturnType<typeof setInterval> | null = null;
+  private streamSeed = 40;
+
+  protected toggleStream(): void {
+    if (this.streaming()) {
+      this.stopStream();
+      return;
+    }
+    this.streaming.set(true);
+    this.streamTimer = setInterval(() => {
+      // Bounded random walk in [8, 96].
+      this.streamSeed += 1;
+      const drift = 10 * Math.sin(this.streamSeed / 5);
+      const next = Math.max(8, Math.min(96, this.lastValue() + drift + (this.streamSeed % 7) - 3));
+      this.stream.update((w) => [...w.slice(1), Math.round(next)]);
+    }, this.streamInterval);
+  }
+
+  private stopStream(): void {
+    if (this.streamTimer !== null) {
+      clearInterval(this.streamTimer);
+      this.streamTimer = null;
+    }
+    this.streaming.set(false);
+  }
+
+  ngOnDestroy(): void {
+    this.stopStream();
+  }
+
   protected readonly meterThresholds = { warning: 70, critical: 90 };
   protected readonly flowing = signal(true);
   protected readonly haNodes: StrctFlowNode[] = [

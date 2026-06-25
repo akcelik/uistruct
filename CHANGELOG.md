@@ -5,6 +5,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-06-25
+
+### Changed — `strct-chart` line chart overhaul
+
+A ground-up rework of the line / area chart for trends and live telemetry:
+
+- **Smooth curves** — lines now use monotone-cubic interpolation by default
+  (curves that never overshoot the data). New `curve` input: `'smooth' | 'linear' |
+'step'`.
+- **Area toggle** — `area` is now an independent boolean (a soft vertical
+  gradient), separate from `type`. `type="area"` still works.
+- **Live streaming** — `live` scrolls the window left as new points arrive (a
+  conveyor slide), with a pulsing head at the leading edge and a one-time draw-on.
+  `interval` drives the scroll duration.
+- **Ambient glow** — `glow` adds a layered neon glow to the line and head dot.
+- **Hover crosshair + tooltip** — `interactive` (default on) shows a vertical +
+  horizontal crosshair, a value chip on the y-axis edge, the highlighted x label,
+  and a tooltip with the value, the ▲/▼ delta from the previous point, and the time
+  (`Xs ago` while live).
+- **Crisp at any size** — the SVG is now measured (1:1 coordinates via
+  `ResizeObserver`) instead of stretched, so dots, the head and the glow stay
+  perfectly round and sharp.
+- New `strokeWidth`, `grid` and `dots` inputs. All animations honour
+  `prefers-reduced-motion`.
+
 ## [0.12.0] - 2026-06-24
 
 ### Added
