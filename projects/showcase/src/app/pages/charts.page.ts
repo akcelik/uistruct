@@ -158,21 +158,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="donut"
       heading="Donut"
-      description="Composition of a whole, e.g. VM power states."
-      code='<strct-donut [segments]="states" centerValue="48" centerLabel="VMs" />'
+      description="Composition of a whole, e.g. VM power states. Hover a slice or a legend row — the others dim and the center reads out that slice's value and share."
+      code='<strct-donut [segments]="states" centerValue="48" centerLabel="VMs" legend />'
     >
-      <div class="donut-row">
-        <strct-donut [segments]="vmStates" [centerValue]="48" centerLabel="VMs" [size]="140" />
-        <div class="legend">
-          @for (s of vmStates; track s.label) {
-            <div class="legend__item">
-              <span class="legend__dot" [style.background]="s.color"></span>
-              <span>{{ s.label }}</span>
-              <span class="legend__val">{{ s.value }}</span>
-            </div>
-          }
-        </div>
-      </div>
+      <strct-donut [segments]="vmStates" [centerValue]="48" centerLabel="VMs" [size]="150" legend />
     </app-demo>
 
     <app-demo
@@ -286,35 +275,6 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       .chart-box {
         width: 100%;
         max-width: 520px;
-      }
-      .donut-row {
-        display: flex;
-        align-items: center;
-        gap: 26px;
-        flex-wrap: wrap;
-      }
-      .legend {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        font-size: 13px;
-        color: var(--t1);
-      }
-      .legend__item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 150px;
-      }
-      .legend__dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 3px;
-      }
-      .legend__val {
-        margin-left: auto;
-        font-family: var(--mono);
-        color: var(--t2);
       }
       .gauge-row {
         display: flex;

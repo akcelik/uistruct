@@ -1709,13 +1709,13 @@ export const DOCS: DocCategory[] = [
         title: 'Donut',
         selector: 'strct-donut',
         importNames: ['StrctDonut', 'StrctDonutSegment'],
-        summary: 'Proportional ring chart.',
-        lead: 'A donut chart for parts of a whole, with an optional center label/value. Segments are `{ value; label }`.',
+        summary: 'Interactive proportional ring chart.',
+        lead: 'A donut chart for parts of a whole, with rounded, gapped slices and a sweep-in animation. Hover a slice (or its legend row) to highlight it — the others dim and the center reads out that slice’s value + share. Segments are `{ value; label; color? }`.',
         inputs: [
           {
             name: 'segments',
             type: 'StrctDonutSegment[]',
-            description: '`{ value; label; ... }[]`. Required.',
+            description: '`{ value; label?; color? }[]`. Required.',
           },
           { name: 'size', type: 'number', default: '120', description: 'Diameter in pixels.' },
           { name: 'thickness', type: 'number', default: '14', description: 'Ring stroke width.' },
@@ -1723,7 +1723,7 @@ export const DOCS: DocCategory[] = [
             name: 'centerValue',
             type: 'string | number',
             default: `''`,
-            description: 'Big value in the middle.',
+            description: 'Big value in the middle (when no slice is hovered).',
           },
           {
             name: 'centerLabel',
@@ -1731,9 +1731,32 @@ export const DOCS: DocCategory[] = [
             default: `''`,
             description: 'Caption under the center value.',
           },
+          {
+            name: 'legend',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Show a legend (color · label · value · %) beside the ring; rows hover-link to slices.',
+          },
+          {
+            name: 'gap',
+            type: 'number',
+            default: '3',
+            description: 'Gap between slices, in degrees (only with 2+ slices).',
+          },
+          {
+            name: 'interactive',
+            type: 'boolean',
+            default: 'true',
+            description: 'Hover highlight + center readout.',
+          },
         ],
-        do: ['Use for a small number of segments (2–5).'],
+        do: [
+          'Use for a small number of segments (2–5).',
+          'Turn on legend when slice labels and exact values matter.',
+        ],
         dont: ['Do not use a donut for many slivers — a bar chart reads better.'],
+        a11y: ['The sweep-in animation honours prefers-reduced-motion.'],
       },
       {
         id: 'gauge',
