@@ -188,6 +188,85 @@ export const STRCT_ICONS: Record<string, string> = {
   vendorHpe: '<rect x="2.5" y="5" width="11" height="6" rx="1"/><path d="M5.5 5v6"/>',
   vendorDell: '<circle cx="8" cy="8" r="5.6"/><path d="M5.4 8h3.4M5.4 6.6h2.6M5.4 9.4h2.6"/>',
   vendorKaytus: '<path d="M5 3v10M5 8l4.5-4.5M5 8l4.5 5"/>',
+
+  // ── Storage & removable media ────────────────────────────────
+  // Optical disc (CD / DVD) — platter with a wide hub and a reflective sheen arc.
+  opticalDisc:
+    '<circle cx="8" cy="8" r="5.8"/><circle cx="8" cy="8" r="1.9"/><path d="M10.9 4.7a4.6 4.6 0 011.1 2.4"/>',
+  // SSD — board with two memory chips and an edge connector.
+  ssd: '<rect x="2.4" y="4.2" width="11.2" height="7.6" rx="1"/><rect x="4" y="6" width="2.6" height="4" rx=".4"/><rect x="7.2" y="6" width="2.6" height="4" rx=".4"/><path d="M11.2 6.6h1.2M11.2 9.4h1.2"/>',
+  // USB flash drive — body with a metal connector (two contacts) and a label line.
+  usb: '<rect x="6.2" y="4.3" width="7.3" height="7.4" rx="1.3"/><rect x="2.5" y="6" width="3.7" height="4" rx=".4"/><path d="M3.4 7.2v1.6M5.1 7.2v1.6"/><path d="M8.4 6.7h3.1M8.4 9.3h3.1"/>',
+  // SD card — keyed (clipped corner) body with gold contact lines.
+  sdCard:
+    '<path d="M5 2.8h4.6l1.9 1.9v8.2a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5V3.3a.5.5 0 01.5-.5z"/><path d="M6.3 4.4v1.7M8 4v2.1M9.7 4.4v1.7"/>',
+  // Backup tape (LTO cartridge) — shell with a label strip and two reels.
+  tape: '<rect x="2.4" y="3.6" width="11.2" height="8.8" rx="1"/><path d="M2.4 5.7h11.2"/><circle cx="6.1" cy="9" r="1.6"/><circle cx="9.9" cy="9" r="1.6"/>',
+
+  // ── Hardware components ──────────────────────────────────────
+  // GPU — expansion card with a cooling fan, heatsink fins and a PCIe edge.
+  gpu: '<rect x="2.3" y="4.4" width="10.4" height="6.6" rx="1"/><circle cx="6" cy="7.7" r="1.9"/><path d="M6 5.8v3.8M4.1 7.7h3.8"/><path d="M9.8 6.2h1.8M9.8 7.7h1.8M9.8 9.2h1.8"/><path d="M4.3 11v1.6M9 11v1.6"/>',
+  // PSU — enclosure with a fan and an IEC power socket.
+  psu: '<rect x="2.4" y="3.5" width="11.2" height="9" rx="1"/><circle cx="6" cy="8" r="2.3"/><path d="M6 5.7v4.6M3.7 8h4.6"/><rect x="10" y="6.4" width="2.4" height="3.2" rx=".4"/>',
+  // Cooling fan — hub with four swept blades.
+  fan: '<circle cx="8" cy="8" r="5.8"/><circle cx="8" cy="8" r="1.2"/><path d="M8 6.8c2.1-1.6 4-1.2 4.7.5M8 9.2c-2.1 1.6-4 1.2-4.7-.5M9.2 8c1.6 2.1 1.2 4-.5 4.7M6.8 8c-1.6-2.1-1.2-4 .5-4.7"/>',
+  // Battery — cell with terminal nub and charge bars.
+  battery:
+    '<rect x="2.4" y="4.8" width="10" height="6.4" rx="1.2"/><path d="M13 6.8v2.4"/><path d="M4.3 6.8v2.4M6 6.8v2.4M7.7 6.8v2.4"/>',
+  // UPS — tower unit with a lightning bolt and a base line.
+  ups: '<rect x="3.4" y="2.4" width="9.2" height="11.2" rx="1"/><path d="M8.5 4.6L6.3 8h1.9l-1.7 3.4"/><path d="M5.4 12.4h5.2"/>',
+  // Motherboard — board with a CPU socket, RAM slots and traces.
+  motherboard:
+    '<rect x="2.4" y="2.4" width="11.2" height="11.2" rx="1"/><rect x="3.9" y="3.9" width="3.6" height="3.6" rx=".4"/><path d="M9 4.4h3.1M9 6h3.1"/><path d="M3.9 10h6M3.9 11.7h4"/><circle cx="11.6" cy="10.8" r=".55" fill="currentColor" stroke="none"/>',
+  // Sensor — central node with symmetric detection arcs.
+  sensor:
+    '<circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/><path d="M5.3 5.3a4 4 0 000 5.4M10.7 5.3a4 4 0 010 5.4M3.5 3.5a6.5 6.5 0 000 9M12.5 3.5a6.5 6.5 0 010 9"/>',
+  // Thermometer — stem, bulb and a fill line.
+  thermometer:
+    '<path d="M9.6 8.7V4.6a1.6 1.6 0 10-3.2 0v4.1a2.7 2.7 0 103.2 0z"/><path d="M8 5.6v3.3"/>',
+
+  // ── AI / machine learning ────────────────────────────────────
+  // Sparkles — the four-point "generate / AI" star plus a small twinkle.
+  sparkles:
+    '<path d="M7.5 2.6l1 2.9 2.9 1-2.9 1-1 2.9-1-2.9-2.9-1 2.9-1z"/><path d="M12 9.8l.45 1.3 1.3.45-1.3.45L12 13.3l-.45-1.3-1.3-.45 1.3-.45z"/>',
+  // Brain — two lobed hemispheres with folds around a central fissure.
+  brain:
+    '<path d="M8 3.3a2.3 2.3 0 00-2.2 1.7 2 2 0 00-1.2 3 2 2 0 001 3 2.2 2.2 0 002.4 1.2"/><path d="M8 3.3a2.3 2.3 0 012.2 1.7 2 2 0 011.2 3 2 2 0 01-1 3 2.2 2.2 0 01-2.4 1.2"/><path d="M8 3.3v9.5"/><path d="M5.8 6.2c.9.2 1.4.9 1.4 1.8M10.2 6.2c-.9.2-1.4.9-1.4 1.8M6 9.6c.8-.1 1.3-.7 1.3-1.5M10 9.6c-.8-.1-1.3-.7-1.3-1.5"/>',
+  // Robot — head with eyes, an antenna and a mouth.
+  robot:
+    '<rect x="3.6" y="5.2" width="8.8" height="7.4" rx="2"/><circle cx="6.4" cy="8.6" r="1" fill="currentColor" stroke="none"/><circle cx="9.6" cy="8.6" r="1" fill="currentColor" stroke="none"/><path d="M6.6 10.9h2.8"/><path d="M8 3.1v2"/><circle cx="8" cy="2.6" r=".75"/>',
+  // Neural network — four nodes, fully connected.
+  neuralNetwork:
+    '<circle cx="4.5" cy="4.6" r="1.3"/><circle cx="4.5" cy="11.4" r="1.3"/><circle cx="11.5" cy="4.6" r="1.3"/><circle cx="11.5" cy="11.4" r="1.3"/><path d="M5.8 4.6h4.4M5.8 11.4h4.4M5.6 5.6l4.8 4.8M5.6 10.4l4.8-4.8"/>',
+  // AI chip — a CPU frame with a sparkle inside instead of a plain core.
+  aiChip:
+    '<rect x="4.3" y="4.3" width="7.4" height="7.4" rx="1"/><path d="M8 5.9l.55 1.55L10.1 8l-1.55.55L8 10.1l-.55-1.55L5.9 8l1.55-.45z"/><path d="M6.5 2.6v1.7M9.5 2.6v1.7M6.5 11.7v1.7M9.5 11.7v1.7M2.6 6.5h1.7M2.6 9.5h1.7M11.7 6.5h1.7M11.7 9.5h1.7"/>',
+  // Wand — magic wand with a sparkle at the tip.
+  wand: '<path d="M3.8 12.2l6.4-6.4"/><path d="M10.4 3.1l.5 1.4 1.4.5-1.4.5-.5 1.4-.5-1.4-1.4-.5 1.4-.5z"/><path d="M4.7 4.4l.32.9.9.32-.9.32-.32.9-.32-.9-.9-.32.9-.32z"/>',
+  // Model — a packaged 3D artifact (solid box).
+  model:
+    '<path d="M8 2.4l4.9 2.7v5.8L8 13.6l-4.9-2.7V5.1z"/><path d="M3.2 5.2L8 7.9l4.8-2.7M8 7.9v5.7"/>',
+
+  // ── Peripherals & networking ─────────────────────────────────
+  // Router — chassis with status LEDs and two antennas.
+  router:
+    '<rect x="2.4" y="7" width="11.2" height="5.2" rx="1"/><circle cx="5" cy="9.6" r=".55" fill="currentColor" stroke="none"/><circle cx="7" cy="9.6" r=".55" fill="currentColor" stroke="none"/><path d="M10.6 9.6h1.4"/><path d="M6 7V4.4M10 7V4.4"/><path d="M6 4.4l-1-1.2M10 4.4l1-1.2"/>',
+  // Load balancer — one source distributing to three targets.
+  loadBalancer:
+    '<circle cx="3.8" cy="8" r="1.4"/><circle cx="12.2" cy="4.4" r="1.3"/><circle cx="12.2" cy="8" r="1.3"/><circle cx="12.2" cy="11.6" r="1.3"/><path d="M5.2 8h1.2M6.4 8l4.5-3.4M6.4 8h4.5M6.4 8l4.5 3.4"/>',
+  // Wi-Fi — three broadcast arcs over a node.
+  wifi: '<path d="M2.6 6.6a8 8 0 0110.8 0"/><path d="M4.8 9a5 5 0 016.4 0"/><path d="M6.9 11.3a2 2 0 012.2 0"/><circle cx="8" cy="12.6" r=".6" fill="currentColor" stroke="none"/>',
+  // Bluetooth — the rune.
+  bluetooth: '<path d="M6 5.6l5 5-3 2.4V3.1l3 2.4-5 5"/>',
+  // Monitor — screen on a stand.
+  monitor:
+    '<rect x="2.4" y="3" width="11.2" height="7.6" rx="1"/><path d="M6.4 13.2h3.2M8 10.6v2.6"/>',
+  // Keyboard — keys and a spacebar.
+  keyboard:
+    '<rect x="2" y="4.4" width="12" height="7.2" rx="1"/><path d="M4 6.8h1M6.5 6.8h1M9 6.8h1M11.3 6.8h.7M4 8.7h.7M6 10.3h4"/>',
+  // Printer — paper feed, body, output sheet and an LED.
+  printer:
+    '<path d="M5 6.4V3.2h6v3.2"/><rect x="2.8" y="6.4" width="10.4" height="4.8" rx="1"/><path d="M5 9.2h6v3.6H5z"/><circle cx="11" cy="8.4" r=".5" fill="currentColor" stroke="none"/>',
 };
 
 // Composite "off" variants — re-use base glyph + diagonal slash.
@@ -306,6 +385,22 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
       'logs',
       'trace',
     ],
+  },
+  {
+    label: 'Storage & media',
+    names: ['disk', 'ssd', 'opticalDisc', 'usb', 'sdCard', 'tape', 'snapshot'],
+  },
+  {
+    label: 'Hardware',
+    names: ['gpu', 'psu', 'fan', 'battery', 'ups', 'motherboard', 'sensor', 'thermometer'],
+  },
+  {
+    label: 'AI',
+    names: ['sparkles', 'brain', 'robot', 'neuralNetwork', 'aiChip', 'wand', 'model'],
+  },
+  {
+    label: 'Peripherals & network',
+    names: ['router', 'loadBalancer', 'wifi', 'bluetooth', 'monitor', 'keyboard', 'printer'],
   },
   {
     label: 'Object state',

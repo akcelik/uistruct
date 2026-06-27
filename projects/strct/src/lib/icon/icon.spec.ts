@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { StrctIcon, STRCT_ICONS } from './icon';
+import { StrctIcon, STRCT_ICONS, STRCT_ICON_GROUPS } from './icon';
 
 describe('StrctIcon', () => {
   it('applies the base host class', () => {
@@ -74,6 +74,52 @@ describe('StrctIcon', () => {
       fixture.detectChanges();
       const svg = fixture.nativeElement.querySelector('svg');
       expect(svg).toBeTruthy();
+    }
+  });
+
+  it('renders the new storage, hardware, AI and peripheral icons', () => {
+    const names = [
+      'opticalDisc',
+      'ssd',
+      'usb',
+      'sdCard',
+      'tape',
+      'gpu',
+      'psu',
+      'fan',
+      'battery',
+      'ups',
+      'motherboard',
+      'sensor',
+      'thermometer',
+      'sparkles',
+      'brain',
+      'robot',
+      'neuralNetwork',
+      'aiChip',
+      'wand',
+      'model',
+      'router',
+      'loadBalancer',
+      'wifi',
+      'bluetooth',
+      'monitor',
+      'keyboard',
+      'printer',
+    ];
+    for (const name of names) {
+      expect(STRCT_ICONS[name]).toBeTruthy();
+      const fixture = TestBed.createComponent(StrctIcon);
+      fixture.componentRef.setInput('name', name);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('svg')).toBeTruthy();
+    }
+  });
+
+  it('groups every new icon in STRCT_ICON_GROUPS', () => {
+    const grouped = new Set(STRCT_ICON_GROUPS.flatMap((g) => g.names));
+    for (const name of ['opticalDisc', 'gpu', 'sparkles', 'router']) {
+      expect(grouped.has(name)).toBe(true);
     }
   });
 
