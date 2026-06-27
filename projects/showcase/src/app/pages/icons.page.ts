@@ -158,20 +158,28 @@ interface StateExample {
       }
       .ig-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+        gap: 2px;
       }
+      /* Frameless tiles: just the glyph + name, with a soft highlight on hover. */
       .ig-tile {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
-        padding: 14px 6px 10px;
-        border: 1px solid var(--b2);
-        border-radius: 8px;
-        background: var(--bg-1);
+        gap: 10px;
+        padding: 16px 6px 12px;
+        border-radius: 10px;
+        background: transparent;
+        transition: background 0.14s ease;
+      }
+      .ig-tile:hover {
+        background: var(--bg-2);
       }
       .ig-tile strct-icon {
+        color: var(--t2);
+        transition: color 0.14s ease;
+      }
+      .ig-tile:hover strct-icon {
         color: var(--t1);
       }
       .ig-name {
