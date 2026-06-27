@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2026-06-25
+
+### Added — 27 new icons
+
+The datacenter icon set grows from 113 to 140 glyphs, in four new gallery groups:
+
+- **Storage & media** — `opticalDisc` (CD/DVD), `ssd`, `usb`, `sdCard`, `tape`.
+- **Hardware** — `gpu`, `psu`, `fan`, `battery`, `ups`, `motherboard`, `sensor`,
+  `thermometer`.
+- **AI** — `sparkles`, `brain`, `robot`, `neuralNetwork`, `aiChip`, `wand`, `model`.
+- **Peripherals & network** — `router`, `loadBalancer`, `wifi`, `bluetooth`,
+  `monitor`, `keyboard`, `printer`.
+
+All are stroke glyphs on the shared 16×16 grid, so size, color and status badges
+work as for every other icon.
+
 ## [0.14.1] - 2026-06-25
 
 ### Changed
