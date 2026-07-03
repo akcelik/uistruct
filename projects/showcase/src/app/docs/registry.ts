@@ -1586,11 +1586,22 @@ export const DOCS: DocCategory[] = [
         id: 'line',
         title: 'Line & area',
         selector: 'strct-chart',
-        importNames: ['StrctChart'],
-        summary: 'Smooth line / area chart with live streaming.',
-        lead: 'A single-series time chart, driven by a plain number array. Lines are smooth by default (monotone cubic — curves that never overshoot the data); set `curve` to `linear` or `step` to change it. Toggle the soft gradient fill with `area`, and turn on `live` for streaming metrics — the window scrolls left as you push new points, with a pulsing head at the leading edge. Dependency-free SVG, token-coloured, reduced-motion safe.',
+        importNames: ['StrctChart', 'StrctChartSeries', 'StrctChartThreshold'],
+        summary: 'Smooth line / area chart — multi-series, live, thresholds.',
+        lead: 'A time chart driven by a plain number array (`data`) or several `series`. Lines are smooth by default (monotone cubic — curves that never overshoot); set `curve` to `linear` or `step`. Toggle the gradient fill with `area`, turn on `live` for streaming metrics, add a `legend`, persistent `yAxis` scale labels, `thresholds` (reference lines), a `min` floor and `xTicks` thinning. Empty data shows a built-in `emptyText`. Dependency-free SVG, token-coloured, reduced-motion safe.',
         inputs: [
-          { name: 'data', type: 'number[]', description: 'Series values. Required.' },
+          {
+            name: 'data',
+            type: 'number[]',
+            description: 'Single-series values (or use `series`).',
+          },
+          {
+            name: 'series',
+            type: 'StrctChartSeries[] | null',
+            default: 'null',
+            description:
+              'Multiple lines: `{ data; label?; status?; area?; curve? }[]`. Takes precedence over `data`; pairs with `legend`.',
+          },
           {
             name: 'curve',
             type: `'smooth' | 'linear' | 'step'`,
@@ -1656,14 +1667,53 @@ export const DOCS: DocCategory[] = [
             description: 'Chart height in pixels.',
           },
           {
-            name: 'max',
+            name: 'min / max',
             type: 'number | null',
             default: 'null',
-            description: 'Fixed Y maximum; null auto-scales.',
+            description: 'Fixed Y floor / ceiling; null auto-scales (floor defaults to 0).',
+          },
+          {
+            name: 'legend',
+            type: 'boolean',
+            default: 'false',
+            description: 'Show a swatch + label per labeled series.',
+          },
+          {
+            name: 'yAxis / yTicks / axisFormat',
+            type: 'boolean / number / ((v)=>string)|null',
+            default: 'false / 3 / null',
+            description:
+              'Persistent y-axis scale labels aligned to the gridlines; axisFormat falls back to valueFormat.',
+          },
+          {
+            name: 'thresholds',
+            type: 'StrctChartThreshold[]',
+            default: '[]',
+            description: '`{ value; label?; status?; dashed? }[]` — horizontal reference lines.',
+          },
+          {
+            name: 'xTicks / xFormat',
+            type: 'number|null / ((label,i)=>string)|null',
+            default: 'null / null',
+            description: 'Subsample x labels to ~xTicks and/or reformat them.',
+          },
+          {
+            name: 'valueFormat',
+            type: '((v: number) => string) | null',
+            default: 'null',
+            description: 'Formats tooltip / y-axis-flag values (units, precision).',
+          },
+          {
+            name: 'emptyText',
+            type: 'string',
+            default: `'No data'`,
+            description: 'Centered message shown when data / series is empty.',
           },
         ],
         do: [
           'Use for continuous time-series data; keep `curve="smooth"` for trends.',
+          'Pass `series` + `legend` to compare two signals (in/out, read/write).',
+          'Add `yAxis` + `thresholds` so operators can read levels at a glance.',
           'For live metrics, push a fixed-length sliding window and set `live` + `interval`.',
         ],
         dont: ['Do not use a line chart for unordered categories — use bars.'],

@@ -4,6 +4,8 @@ import {
   StrctButton,
   StrctChart,
   StrctChartCurve,
+  StrctChartSeries,
+  StrctChartThreshold,
   StrctDonut,
   StrctDonutSegment,
   StrctFlow,
@@ -135,6 +137,30 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             [grid]="false"
           />
         </div>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="line-multi"
+      owner="line"
+      heading="Multi-series, legend, y-axis & thresholds"
+      description="Compare two signals (network in vs out) with a legend, persistent y-axis scale labels and a threshold line. Hover for a per-series tooltip."
+      code='<strct-chart [series]="[{data:inArr,label:&#39;In&#39;},{data:outArr,label:&#39;Out&#39;}]" legend yAxis [thresholds]="[{value:90,status:&#39;critical&#39;,label:&#39;cap&#39;}]" />'
+    >
+      <div class="chart-box">
+        <strct-chart
+          [series]="netSeries"
+          legend
+          yAxis
+          area
+          [min]="0"
+          [max]="100"
+          [thresholds]="netThresholds"
+          [labels]="hours"
+          [xTicks]="7"
+          [valueFormat]="pctFormat"
+          [height]="190"
+        />
       </div>
     </app-demo>
 
@@ -391,6 +417,16 @@ export class ChartsPage implements OnDestroy {
 
   protected readonly hours = ['00', '04', '08', '12', '16', '20', '24'];
   protected readonly dayCpu = [22, 35, 48, 72, 65, 58, 44];
+
+  // Multi-series demo: network in vs out (% of link capacity).
+  protected readonly netSeries: StrctChartSeries[] = [
+    { data: [30, 45, 38, 62, 55, 78, 48], label: 'In', status: 'accent' },
+    { data: [18, 28, 22, 40, 35, 52, 30], label: 'Out', status: 'success' },
+  ];
+  protected readonly netThresholds: StrctChartThreshold[] = [
+    { value: 90, status: 'critical', label: 'cap' },
+  ];
+  protected readonly pctFormat = (v: number) => v.toFixed(0) + '%';
 
   protected readonly hostNames = ['hv-01', 'hv-02', 'hv-03', 'hv-04', 'hv-05'];
   protected readonly perHost = [18, 24, 12, 30, 21];
