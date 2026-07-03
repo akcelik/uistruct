@@ -68,6 +68,11 @@ export const STRCT_ICONS: Record<string, string> = {
     '<path d="M2 4.6a1 1 0 0 1 1-1h3.1l1.3 1.6H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/>',
   template:
     '<path d="M4.3 2.5h4.6l3.1 3.1V13a.5.5 0 0 1-.5.5H4.3a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5z"/><path d="M8.7 2.6v3.1h3.1"/><path d="M5.8 9h4.2M5.8 11h2.6"/>',
+  // Plain document — a file with a dog-ear fold, no field/text lines (vs `template` / `form`).
+  file: '<path d="M4 2.5h4.9l3.1 3.1v7.9a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5z"/><path d="M8.8 2.6v3.1h3.1"/>',
+  // Clipboard with a checklist — task list (vs `logs`, which reads as a stream).
+  clipboard:
+    '<rect x="3.3" y="3.2" width="9.4" height="10.4" rx="1.3"/><rect x="5.8" y="1.9" width="4.4" height="2.2" rx=".8"/><path d="M6 8.2l1 1 2.2-2.4M6 11h4"/>',
   tag: '<path d="M2.6 7.7V3.2a.6.6 0 0 1 .6-.6h4.5l5.6 5.6a1 1 0 0 1 0 1.4l-3.5 3.5a1 1 0 0 1-1.4 0z"/><circle cx="5.4" cy="5.4" r=".9" fill="currentColor" stroke="none"/>',
 
   // ── Actions ──────────────────────────────────────────────────
@@ -307,7 +312,9 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
       'book',
       'terminal',
       'folder',
+      'file',
       'template',
+      'clipboard',
       'tag',
     ],
   },
