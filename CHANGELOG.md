@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-06-25
+
+### Added — `strct-chart` gaps (all additive, back-compatible)
+
+- **Multi-series** — new `series` input (`{ data; label?; status?; area?; curve? }[]`)
+  draws several colored lines that share the x/y domain, with a per-series hover
+  tooltip. Falls back to `data` when unset. Shorter series are right-aligned.
+- **Legend** — `legend` renders a swatch + label per labeled series.
+- **Persistent y-axis** — `yAxis` (+ `yTicks`, `axisFormat`) shows value labels
+  aligned to the gridlines; a left gutter is reserved so the plot never overlaps.
+- **Thresholds** — `thresholds` (`{ value; label?; status?; dashed? }[]`) draws
+  horizontal reference lines (dashed by default) with an optional right-edge tag.
+- **Y-axis floor** — `min` pins the baseline (defaults to 0, i.e. today's behavior).
+- **Empty state** — `emptyText` (default "No data") renders a centered message at
+  the normal height when there are no points, instead of an empty SVG.
+- **X-axis tick control** — `xTicks` subsamples labels to ~N evenly spaced ticks and
+  `xFormat` reformats them.
+
+Every new input defaults to today's behavior, so existing single-series usage is
+unchanged.
+
 ## [0.15.0] - 2026-06-25
 
 ### Added — 27 new icons
