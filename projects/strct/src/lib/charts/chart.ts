@@ -244,9 +244,9 @@ function smoothPath(p: Pt[]): string {
     </svg>
 
     @if (interactive() && hoverPt(); as hp) {
-      <div class="strct-chart__axis-y" [style.top.px]="hp.y">{{ hoverValue() }}</div>
+      <div class="strct-chart__axis-y" [style.top.px]="hp.y">{{ hoverValueText() }}</div>
       <div class="strct-chart__tip" [style.left.px]="hp.x" [style.top.px]="hp.y">
-        <span class="strct-chart__tip-v">{{ hoverValue() }}</span>
+        <span class="strct-chart__tip-v">{{ hoverValueText() }}</span>
         @if (hoverDelta() !== null || hoverMeta()) {
           <span class="strct-chart__tip-meta">
             @if (hoverDelta() !== null) {
@@ -255,7 +255,7 @@ function smoothPath(p: Pt[]): string {
                 [class.strct-chart__tip-delta--up]="hoverDelta()! > 0"
                 [class.strct-chart__tip-delta--down]="hoverDelta()! < 0"
               >
-                {{ hoverDelta()! > 0 ? '▲' : hoverDelta()! < 0 ? '▼' : '·' }}{{ absDelta() }}
+                {{ hoverDelta()! > 0 ? '▲' : hoverDelta()! < 0 ? '▼' : '·' }}{{ absDeltaText() }}
               </span>
             }
             @if (hoverMeta()) {
@@ -473,6 +473,12 @@ export class StrctChart {
   readonly height = input(160);
   /** Override the top of the value axis (defaults to the data max + headroom). */
   readonly max = input<number | null>(null);
+  /**
+   * Optional formatter for the values shown in the hover tooltip + y-axis flag
+   * (and the delta magnitude). Lets callers add units / fixed precision, e.g.
+   * `[valueFormat]="v => v.toFixed(3) + ' %'"`. When null, the raw value is shown.
+   */
+  readonly valueFormat = input<((v: number) => string) | null>(null);
 
   protected readonly pad = PAD;
   protected readonly color = computed(() => COLOR[this.status()]);
@@ -627,6 +633,18 @@ export class StrctChart {
     const i = this.hoverIdx();
     const d = this.data();
     return i != null && i >= 0 && i < d.length ? d[i] : '';
+  });
+  /** hoverValue run through valueFormat (unit / precision), else the raw value. */
+  protected readonly hoverValueText = computed(() => {
+    const v = this.hoverValue();
+    if (v === '' || v == null) return '';
+    const f = this.valueFormat();
+    return f ? f(v as number) : String(v);
+  });
+  /** Delta magnitude, formatted the same way so its unit matches the value. */
+  protected readonly absDeltaText = computed(() => {
+    const f = this.valueFormat();
+    return f ? f(this.absDelta()) : String(this.absDelta());
   });
   protected readonly hoverLabel = computed(() => {
     const i = this.hoverIdx();
