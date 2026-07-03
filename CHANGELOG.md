@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2026-06-25
+
+### Added
+
+- **`file`** — a plain document glyph (a file with a dog-ear fold, no field / text
+  lines) for file-browser and file-list UIs, distinct from `template` (lined) and
+  `form` (form fields).
+- **`clipboard`** — a clipboard with a checklist, for "task list" semantics
+  (distinct from `logs`, which reads as a stream). Icon count: 142.
+
 ## [0.16.0] - 2026-06-25
 
 ### Added — `strct-chart` gaps (all additive, back-compatible)

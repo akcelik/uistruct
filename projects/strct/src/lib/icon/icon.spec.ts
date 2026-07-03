@@ -116,6 +116,19 @@ describe('StrctIcon', () => {
     }
   });
 
+  it('registers the plain file and clipboard icons and groups them', () => {
+    for (const name of ['file', 'clipboard']) {
+      expect(STRCT_ICONS[name]).toBeTruthy();
+      const fixture = TestBed.createComponent(StrctIcon);
+      fixture.componentRef.setInput('name', name);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('svg')).toBeTruthy();
+    }
+    const grouped = new Set(STRCT_ICON_GROUPS.flatMap((g) => g.names));
+    expect(grouped.has('file')).toBe(true);
+    expect(grouped.has('clipboard')).toBe(true);
+  });
+
   it('groups every new icon in STRCT_ICON_GROUPS', () => {
     const grouped = new Set(STRCT_ICON_GROUPS.flatMap((g) => g.names));
     for (const name of ['opticalDisc', 'gpu', 'sparkles', 'router']) {
