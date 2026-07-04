@@ -52,9 +52,9 @@ function unlockBodyScroll(doc: Document): void {
         class="strct-modal__overlay"
         role="button"
         tabindex="0"
-        (click)="onBackdrop()"
-        (keydown.enter)="onBackdrop()"
-        (keydown.space)="onBackdrop()"
+        (click)="onBackdrop($event)"
+        (keydown.enter)="onBackdrop($event)"
+        (keydown.space)="onBackdrop($event)"
       >
         <div
           #dialog
@@ -244,7 +244,11 @@ export class StrctModal {
     this.closed.emit();
   }
 
-  protected onBackdrop(): void {
+  protected onBackdrop(event?: Event): void {
+    // Only act on interactions that originated on the overlay itself — a real
+    // backdrop click, or Enter/Space while the backdrop is focused. Ignore events
+    // that bubbled up from a child (e.g. a space typed in an input/textarea).
+    if (event && event.target !== event.currentTarget) return;
     if (this.dismissible()) this.close();
   }
 
