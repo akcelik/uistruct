@@ -95,7 +95,7 @@ const TOAST_ICON: Record<StrctToastType, string> = {
           [class.strct-toast--warning]="toast.type === 'warning'"
           [class.strct-toast--critical]="toast.type === 'critical'"
         >
-          <strct-icon [name]="icon(toast.type)" [size]="15" />
+          <strct-icon [name]="icon(toast.type)" [size]="16" />
           <span class="strct-toast__msg">{{ toast.message }}</span>
           <button
             type="button"

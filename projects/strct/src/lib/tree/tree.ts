@@ -99,7 +99,7 @@ export interface StrctTreeMenuEvent {
         <strct-icon
           class="strct-tnode__icon"
           [name]="displayIcon()!"
-          [size]="14"
+          [size]="16"
           [strokeWidth]="1.3"
           [badge]="displayBadge()"
         />

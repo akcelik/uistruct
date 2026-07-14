@@ -75,7 +75,7 @@ export interface StrctMenuItem {
                 <strct-icon
                   class="strct-menu__icon"
                   [name]="item.icon"
-                  [size]="14"
+                  [size]="16"
                   [strokeWidth]="1.3"
                 />
               } @else {

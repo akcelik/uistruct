@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.1] - 2026-07-19
+
+### Changed — "16 Native" icon render policy
+
+- **Object / semantic glyphs now render at the grid's native 16px** instead of
+  13–15px (a fractional downscale that blurred hairlines). 16 call sites updated
+  across alert, toast, tree, datagrid (settings/refresh), context menu, section
+  menu, field/validation adornments, segmented, metric-tile, datepicker,
+  password and theme-switcher. Simple single-stroke glyphs (chevrons, close,
+  check, dots, sort arrows) stay at 11–14px by design — the policy is documented
+  in the icon source. This matches the 16px-grid convention of Octicons, Carbon,
+  Fluent and Clarity.
+
+### Fixed
+
+- **`ellipsis` icon added** — `strct-pagination`'s gap indicator referenced an
+  unregistered name and silently rendered nothing; the "…" between page numbers
+  is now visible.
+
 ## [0.21.0] - 2026-07-19
 
 ### Icons — coverage, variants & small-size legibility (142 → 178 glyphs)

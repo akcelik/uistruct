@@ -62,7 +62,7 @@ export interface StrctMenuSection {
                 <strct-icon
                   class="strct-sm__cat-icon"
                   [name]="sec.icon"
-                  [size]="15"
+                  [size]="16"
                   [strokeWidth]="1.4"
                 />
               }
@@ -87,7 +87,7 @@ export interface StrctMenuSection {
                     <strct-icon
                       class="strct-sm__item-icon"
                       [name]="item.icon"
-                      [size]="15"
+                      [size]="16"
                       [strokeWidth]="1.4"
                     />
                   }

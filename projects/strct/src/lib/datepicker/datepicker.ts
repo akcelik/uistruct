@@ -69,7 +69,7 @@ const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}
         [disabled]="isDisabled()"
         (click)="toggle()"
       >
-        <strct-icon name="calendar" [size]="15" />
+        <strct-icon name="calendar" [size]="16" />
       </button>
     </div>
 

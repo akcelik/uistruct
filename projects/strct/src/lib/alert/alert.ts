@@ -19,7 +19,7 @@ export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
   encapsulation: ViewEncapsulation.None,
   imports: [StrctIcon],
   template: `
-    <strct-icon [name]="icon()" [size]="15" />
+    <strct-icon [name]="icon()" [size]="16" />
     <div class="strct-alert__body"><ng-content /></div>
     @if (closable()) {
       <button
