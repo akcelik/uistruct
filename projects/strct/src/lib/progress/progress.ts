@@ -19,6 +19,7 @@ export type StrctProgressStatus = 'accent' | 'success' | 'warning' | 'critical';
     <div
       class="strct-progress__track"
       role="progressbar"
+      [attr.aria-label]="label() || 'Progress'"
       [attr.aria-valuenow]="clamped()"
       aria-valuemin="0"
       aria-valuemax="100"
@@ -64,6 +65,8 @@ export type StrctProgressStatus = 'accent' | 'success' | 'warning' | 'critical';
 export class StrctProgress {
   /** Current value. */
   readonly value = input(0);
+  /** Accessible name of the bar (e.g. "CPU usage"). Falls back to "Progress". */
+  readonly label = input('');
   /** Visual status color. */
   readonly status = input<StrctProgressStatus>('accent');
   /**

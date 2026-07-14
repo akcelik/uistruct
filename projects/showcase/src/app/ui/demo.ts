@@ -107,7 +107,12 @@ export class PageHeader {
         </div>
         <div class="demo__stage"><ng-content /></div>
         @if (code() && showCode()) {
-          <pre class="demo__code"><code>{{ code() }}</code></pre>
+          <pre
+            class="demo__code"
+            tabindex="0"
+            role="region"
+            aria-label="Code example"
+          ><code>{{ code() }}</code></pre>
         }
       </section>
     }

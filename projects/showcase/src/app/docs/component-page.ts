@@ -52,7 +52,12 @@ interface CategoryHost {
               <span class="doc__import-cap">Import</span>
               <code class="doc__selector">{{ c.selector }}</code>
             </div>
-            <pre class="doc__import-code"><code>{{ importLine() }}</code></pre>
+            <pre
+              class="doc__import-code"
+              tabindex="0"
+              role="region"
+              aria-label="Import statement"
+            ><code>{{ importLine() }}</code></pre>
           </div>
 
           <section id="examples" data-toc data-toc-label="Examples" class="doc__examples">

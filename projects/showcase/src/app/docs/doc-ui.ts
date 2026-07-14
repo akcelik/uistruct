@@ -10,7 +10,7 @@ import { ApiRow } from './registry';
     @if (rows().length) {
       <div class="api">
         <div class="api__cap">{{ title() }}</div>
-        <div class="api__scroll">
+        <div class="api__scroll" tabindex="0" role="region" [attr.aria-label]="title()">
           <table class="api__table">
             <thead>
               <tr>
