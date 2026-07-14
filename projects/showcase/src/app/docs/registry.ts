@@ -1418,6 +1418,13 @@ export const DOCS: DocCategory[] = [
             description: 'Show selection checkboxes + batch action bar.',
           },
           {
+            name: 'initialSelection',
+            type: 'readonly unknown[] | null',
+            default: 'null',
+            description:
+              'Seed the selected rows (values are row ids matching `rowId`); requires `selectable`. Assigning a new array re-seeds — e.g. open a picker dialog with the current members already checked — while the user’s later toggles are preserved until it changes.',
+          },
+          {
             name: 'expandable',
             type: 'boolean',
             default: 'false',

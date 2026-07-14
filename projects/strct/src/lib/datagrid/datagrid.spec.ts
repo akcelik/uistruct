@@ -48,6 +48,26 @@ describe('StrctDatagrid', () => {
     expect(emitted).toEqual([]);
   });
 
+  it('seeds the selection from initialSelection and re-seeds when it changes', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', COLS);
+    fixture.componentRef.setInput('rows', ROWS);
+    fixture.componentRef.setInput('rowId', 'n');
+    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('pageSize', 10);
+    fixture.componentRef.setInput('initialSelection', ['alpha', 'beta']);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.strct-dg__row--selected').length).toBe(2);
+
+    // Assigning a new array re-seeds.
+    fixture.componentRef.setInput('initialSelection', ['gamma']);
+    fixture.detectChanges();
+    const sel = [...fixture.nativeElement.querySelectorAll('.strct-dg__row--selected')].map((r) =>
+      (r as HTMLElement).textContent!.trim(),
+    );
+    expect(sel).toEqual(['gamma']);
+  });
+
   it('toggles column visibility via the column chooser', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', [

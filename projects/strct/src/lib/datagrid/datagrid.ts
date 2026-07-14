@@ -14,6 +14,7 @@ import {
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 import { StrctPagination } from '../pagination/pagination';
@@ -756,6 +757,13 @@ export class StrctDatagrid {
    *   [rowActions]="(row) => [{ label: 'Open', action: () => open(row) }, …]"
    */
   readonly rowActions = input<((row: StrctRow) => StrctMenuItem[]) | null>(null);
+  /**
+   * Seed the row selection. Each value is a row id (matching {@link rowId}); the
+   * grid checks those rows when this input is set or changes. Requires
+   * `selectable`. Assigning a new array (e.g. when opening a dialog) re-seeds the
+   * selection; the user's subsequent toggles are preserved until the next change.
+   */
+  readonly initialSelection = input<readonly unknown[] | null>(null);
   /** Emitted when the selection changes. */
   readonly selectionChange = output<StrctRow[]>();
   /** Emitted when the refresh button is clicked. */
@@ -886,6 +894,13 @@ export class StrctDatagrid {
       if (size <= 0) return;
       const pageCount = Math.max(1, Math.ceil(this.sorted().length / size));
       if (this.page() > pageCount) this.page.set(pageCount);
+    });
+    // Seed the selection from initialSelection (re-runs only when the input changes,
+    // so a user's own toggles afterward are untouched).
+    effect(() => {
+      const init = this.initialSelection();
+      if (init == null) return;
+      untracked(() => this.selected.set(new Set(init)));
     });
   }
 
