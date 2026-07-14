@@ -84,6 +84,51 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="card-rich"
+      owner="card"
+      heading="Rich cards"
+      description="Opt-in states: a status tone rail, hover-lift for clickable cards, a selection ring, dense padding, a loading bar with aria-busy, and collapsible cards whose header grows a chevron."
+      code='<strct-card status="warning" collapsible [(collapsed)]="hidden">…</strct-card>'
+    >
+      <div class="rich-cards">
+        <strct-card status="success" interactive>
+          <strct-card-header icon="host">hv-01 · healthy</strct-card-header>
+          <strct-card-block>Interactive + success rail — hover me.</strct-card-block>
+        </strct-card>
+
+        <strct-card
+          status="warning"
+          [selected]="richSelected()"
+          interactive
+          (click)="richSelected.set(!richSelected())"
+        >
+          <strct-card-header icon="disk">Volume SSD-01</strct-card-header>
+          <strct-card-block>Click to toggle the selection ring.</strct-card-block>
+        </strct-card>
+
+        <strct-card [loading]="richLoading()" dense>
+          <strct-card-header icon="sync">Replication status</strct-card-header>
+          <strct-card-block>Dense paddings; body dims while loading.</strct-card-block>
+          <strct-card-footer>
+            <button strct-button size="sm" variant="flat" (click)="richLoading.set(!richLoading())">
+              {{ richLoading() ? 'Stop' : 'Load' }}
+            </button>
+          </strct-card-footer>
+        </strct-card>
+
+        <strct-card status="critical" collapsible [(collapsed)]="richCollapsed">
+          <strct-card-header icon="siren">3 active alarms</strct-card-header>
+          <strct-card-block
+            >Fan redundancy lost on hv-02 · SSD-01 above 85% · NTP drift.</strct-card-block
+          >
+          <strct-card-footer
+            ><button strct-button size="sm">Acknowledge all</button></strct-card-footer
+          >
+        </strct-card>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="accordion"
       heading="Accordion"
       description="Independently collapsible panels."
@@ -301,6 +346,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      .rich-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 14px;
+        width: 100%;
+      }
       .stack {
         display: flex;
         flex-direction: column;
@@ -317,6 +368,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class SurfacesPage {
+  protected readonly richSelected = signal(false);
+  protected readonly richLoading = signal(true);
+  protected richCollapsed = false;
+
   protected readonly modalOpen = signal(false);
   protected readonly modalSize = signal<StrctModalSize>('md');
   protected readonly drawerOpen = signal(false);

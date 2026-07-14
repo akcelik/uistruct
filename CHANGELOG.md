@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.0] - 2026-07-14
+
+### Changed — `strct-card` grows rich, opt-in states
+
+All backward-compatible; a plain composed card renders exactly as before.
+
+- **`status`** — tone rail on the leading edge (same language as alert / hero).
+- **`interactive`** — hover lift + accent border for clickable cards.
+- **`selected`** — accent ring for card-picker layouts.
+- **`dense`** — tighter paddings across header / block / footer.
+- **`loading`** — indeterminate top bar + `aria-busy`; body and footer dim and
+  ignore input. Reduced-motion collapses the bar to a static strip.
+- **`collapsible` + two-way `collapsed`** — the header grows a labeled chevron
+  toggle (`aria-expanded`); block and footer hide while collapsed.
+- **`strct-card-header`** gains an `icon` input and localizable
+  `collapseLabel` / `expandLabel`.
+
 ## [0.22.0] - 2026-07-14
 
 ### Added — `strct-command-palette` + `strct-kbd`
