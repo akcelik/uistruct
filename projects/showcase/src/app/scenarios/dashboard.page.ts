@@ -8,10 +8,15 @@ import {
   StrctCardHeader,
   StrctCellDef,
   StrctChart,
+  StrctChartSeries,
+  StrctChartThreshold,
   StrctColumn,
   StrctDonut,
   StrctDonutSegment,
+  StrctFlow,
+  StrctFlowNode,
   StrctGauge,
+  StrctHero,
   StrctIcon,
   StrctProgress,
   StrctRow,
@@ -61,6 +66,8 @@ interface EventItem {
     StrctDonut,
     StrctGauge,
     StrctChart,
+    StrctFlow,
+    StrctHero,
     StrctProgress,
     StrctTimeline,
     StrctTimelineItem,
@@ -81,6 +88,17 @@ interface EventItem {
         </button>
       </div>
     </header>
+
+    <strct-hero status="success" icon="shield" heading="All systems operational" class="dash__hero">
+      42 hosts responding · replication in sync · no critical alarms in the last 24h.
+      <div strctHeroMeta>
+        <strct-badge status="success">HA ON</strct-badge>
+        <strct-badge status="accent">v1.4.2</strct-badge>
+      </div>
+      <div strctHeroActions>
+        <button strct-button size="sm" variant="neutral">View alarms</button>
+      </div>
+    </strct-hero>
 
     <!-- KPI row -->
     <section class="dash__kpis">
@@ -168,17 +186,21 @@ interface EventItem {
     <section class="dash__grid dash__grid--2">
       <strct-card>
         <strct-card-header
-          ><span>CPU usage — last 24h</span
+          ><span>CPU vs memory — last 24h</span
           ><strct-badge status="warning">peak 84%</strct-badge></strct-card-header
         >
         <strct-card-block>
           <strct-chart
-            [data]="cpuSeries"
-            type="area"
-            [labels]="hours"
-            status="accent"
-            [height]="170"
+            [series]="usageSeries"
+            legend
+            yAxis
+            [min]="0"
             [max]="100"
+            [thresholds]="usageThresholds"
+            [labels]="hours"
+            [xTicks]="7"
+            [valueFormat]="pct"
+            [height]="190"
           />
         </strct-card-block>
       </strct-card>
@@ -196,6 +218,22 @@ interface EventItem {
         </strct-card-block>
       </strct-card>
     </section>
+
+    <!-- Replication -->
+    <strct-card class="dash__flow">
+      <strct-card-header
+        ><span>Site replication</span
+        ><strct-badge status="success">0 lag</strct-badge></strct-card-header
+      >
+      <strct-card-block>
+        <strct-flow
+          [nodes]="replication"
+          [live]="true"
+          label="asynchronous replication · RPO 15s"
+          status="success"
+        />
+      </strct-card-block>
+    </strct-card>
 
     <!-- Events + hosts -->
     <section class="dash__grid dash__grid--wide">
@@ -266,6 +304,17 @@ interface EventItem {
         gap: 8px;
       }
 
+      .dash__hero {
+        display: block;
+        margin-bottom: 18px;
+      }
+      .dash__flow {
+        display: block;
+        margin-bottom: 18px;
+      }
+      .dash__flow strct-flow {
+        max-width: 520px;
+      }
       .dash__kpis {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -508,6 +557,24 @@ export class DashboardPage {
     { name: 'Hyper-V Host 03', cluster: 'Prod-B', vms: 31, cpu: 86, status: 'Running' },
     { name: 'Hyper-V Host 04', cluster: 'Edge', vms: 9, cpu: 22, status: 'Running' },
     { name: 'Hyper-V Host 05', cluster: 'DR', vms: 0, cpu: 3, status: 'Stopped' },
+  ];
+
+  protected readonly pct = (v: number) => v.toFixed(0) + '%';
+  protected readonly usageSeries: StrctChartSeries[] = [
+    { data: [42, 48, 51, 62, 70, 84, 76, 64, 58, 61, 66, 59, 52], label: 'CPU', status: 'accent' },
+    {
+      data: [55, 56, 58, 60, 63, 66, 68, 67, 65, 64, 62, 60, 58],
+      label: 'Memory',
+      status: 'success',
+      dash: true,
+    },
+  ];
+  protected readonly usageThresholds: StrctChartThreshold[] = [
+    { value: 90, status: 'critical', label: 'SLA' },
+  ];
+  protected readonly replication: StrctFlowNode[] = [
+    { id: 'p', label: 'us-east-1', role: 'PRIMARY', status: 'success' },
+    { id: 'd', label: 'us-west-2', role: 'DR', status: 'accent' },
   ];
 
   protected legendClass(label: string | undefined): string {
