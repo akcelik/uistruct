@@ -96,8 +96,18 @@ import {
             <strct-card-header><span>Resource usage</span></strct-card-header>
             <strct-card-block>
               <div class="det__gauges">
-                <strct-gauge [value]="86" status="critical" label="CPU" [size]="116" />
-                <strct-gauge [value]="78" status="warning" label="Memory" [size]="116" />
+                <strct-gauge
+                  [value]="86"
+                  [thresholds]="{ warning: 70, critical: 85 }"
+                  label="CPU"
+                  [size]="116"
+                />
+                <strct-gauge
+                  [value]="78"
+                  [thresholds]="{ warning: 70, critical: 85 }"
+                  label="Memory"
+                  [size]="116"
+                />
               </div>
             </strct-card-block>
           </strct-card>

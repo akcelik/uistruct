@@ -29,21 +29,59 @@ interface StateExample {
     <app-demo
       anchor="gallery"
       heading="Icon set"
-      description="Every glyph, grouped. Click-to-copy is up to you — names are shown below each."
+      [description]="
+        totalIcons + ' glyphs, grouped. Type to filter; click any tile to copy its name.'
+      "
     >
-      @for (group of groups; track group.label) {
+      <input
+        class="ig-search"
+        type="search"
+        placeholder="Filter icons… (e.g. clock, gpu, chevron)"
+        [value]="query()"
+        (input)="query.set($any($event.target).value)"
+      />
+      @for (group of filteredGroups(); track group.label) {
         <div class="ig-group">
-          <div class="ig-group__title">{{ group.label }}</div>
+          <div class="ig-group__title">{{ group.label }} · {{ group.names.length }}</div>
           <div class="ig-grid">
             @for (name of group.names; track name) {
-              <div class="ig-tile">
+              <button
+                type="button"
+                class="ig-tile"
+                (click)="copyName(name)"
+                [title]="'Copy “' + name + '”'"
+              >
                 <strct-icon [name]="name" [size]="22" [strokeWidth]="1.4" />
-                <span class="ig-name">{{ name }}</span>
-              </div>
+                <span class="ig-name">{{ copied() === name ? 'copied!' : name }}</span>
+              </button>
             }
           </div>
         </div>
+      } @empty {
+        <p class="ig-empty">No icon matches “{{ query() }}”.</p>
       }
+    </app-demo>
+
+    <app-demo
+      anchor="sizes"
+      heading="Sizes — the “16 Native” policy"
+      description="Glyphs are drawn on a 16px grid (the Octicons / Carbon / Fluent convention) and must render at native 16px or larger — fractional downscaling blurs hairlines. Simple single-stroke glyphs (chevrons, close, check) may go smaller. Detail budget: keep gaps between parallel details ≥ 1.5px on the grid."
+    >
+      <div class="ig-sizes">
+        @for (sz of [16, 20, 24, 32]; track sz) {
+          <div class="ig-size">
+            <strct-icon name="host" [size]="sz" [strokeWidth]="1.4" badge="success" />
+            <span class="ig-name">{{ sz }}px</span>
+          </div>
+        }
+        <div class="ig-size ig-size--sep"></div>
+        @for (sz of [12, 14]; track sz) {
+          <div class="ig-size">
+            <strct-icon name="chevronRight" [size]="sz" [strokeWidth]="1.5" />
+            <span class="ig-name">{{ sz }}px · simple</span>
+          </div>
+        }
+      </div>
     </app-demo>
 
     <app-demo
@@ -142,6 +180,45 @@ interface StateExample {
   `,
   styles: [
     `
+      .ig-search {
+        width: 100%;
+        max-width: 380px;
+        margin-bottom: 16px;
+        padding: 8px 12px;
+        font-family: var(--font);
+        font-size: 13px;
+        color: var(--t1);
+        background: var(--bg-2);
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-md);
+      }
+      .ig-search:focus-visible {
+        outline: none;
+        border-color: var(--acc);
+        box-shadow: 0 0 0 3px var(--acc18);
+      }
+      .ig-empty {
+        font-size: 13px;
+        color: var(--t3);
+      }
+      .ig-sizes {
+        display: flex;
+        align-items: flex-end;
+        gap: 22px;
+        flex-wrap: wrap;
+      }
+      .ig-size {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        color: var(--t1);
+      }
+      .ig-size--sep {
+        width: 1px;
+        align-self: stretch;
+        background: var(--b2);
+      }
       .ig-group {
         width: 100%;
       }
@@ -163,6 +240,9 @@ interface StateExample {
       }
       /* Frameless tiles: just the glyph + name, with a soft highlight on hover. */
       .ig-tile {
+        border: 0;
+        font: inherit;
+        cursor: pointer;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -348,6 +428,22 @@ export class IconsPage {
   ];
 
   protected readonly groups = STRCT_ICON_GROUPS;
+  protected readonly totalIcons = STRCT_ICON_GROUPS.reduce((n, g) => n + g.names.length, 0);
+  protected readonly query = signal('');
+  protected readonly copied = signal('');
+  protected readonly filteredGroups = computed(() => {
+    const q = this.query().trim().toLowerCase();
+    if (!q) return this.groups;
+    return this.groups
+      .map((g) => ({ ...g, names: g.names.filter((n) => n.toLowerCase().includes(q)) }))
+      .filter((g) => g.names.length > 0);
+  });
+
+  protected copyName(name: string): void {
+    void navigator.clipboard?.writeText(name);
+    this.copied.set(name);
+    setTimeout(() => this.copied.set(''), 1200);
+  }
   protected readonly vendorNames =
     STRCT_ICON_GROUPS.find((g) => g.label.startsWith('Vendor'))?.names ?? [];
 
