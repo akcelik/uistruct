@@ -782,10 +782,59 @@ export const DOCS: DocCategory[] = [
         title: 'Card',
         selector: 'strct-card',
         importNames: ['StrctCard', 'StrctCardHeader', 'StrctCardBlock', 'StrctCardFooter'],
-        summary: 'Container composed of header / block / footer.',
-        lead: 'A surface container composed from `strct-card-header`, `strct-card-block` and an optional `strct-card-footer`, each reading from the shared token layer. The pieces are pure composition — no inputs.',
-        do: ['Compose only the pieces you need; all are optional except the card itself.'],
+        summary: 'Rich surface container: status rail, selection, loading, collapse.',
+        lead: 'A surface container composed from `strct-card-header`, `strct-card-block` and an optional `strct-card-footer`. Beyond plain composition it now carries rich, opt-in states: a `status` tone rail (same language as alert/hero), `interactive` hover lift for clickable cards, a `selected` ring for pickers, `dense` paddings, a `loading` bar with `aria-busy`, and `collapsible` with a two-way `collapsed` model — the header grows a chevron toggle.',
+        inputs: [
+          {
+            name: 'status',
+            type: STATUS_VALUES,
+            default: `'neutral'`,
+            description: 'Tone rail on the leading edge.',
+          },
+          {
+            name: 'interactive',
+            type: 'boolean',
+            default: 'false',
+            description: 'Hover lift + accent border for clickable cards (style-only affordance).',
+          },
+          {
+            name: 'selected',
+            type: 'boolean',
+            default: 'false',
+            description: 'Accent ring — card-picker layouts.',
+          },
+          {
+            name: 'dense',
+            type: 'boolean',
+            default: 'false',
+            description: 'Tighter paddings across header/block/footer.',
+          },
+          {
+            name: 'loading',
+            type: 'boolean',
+            default: 'false',
+            description: 'Indeterminate top bar + aria-busy; body/footer dim and ignore input.',
+          },
+          {
+            name: 'collapsible / collapsed',
+            type: 'boolean / boolean',
+            default: 'false / false',
+            description: 'Header gains a chevron toggle; `[(collapsed)]` hides block + footer.',
+          },
+          {
+            name: 'icon',
+            type: 'string',
+            description: 'On `strct-card-header`: optional leading icon.',
+          },
+        ],
+        do: [
+          'Compose only the pieces you need; all are optional except the card itself.',
+          'Use status + collapsible for scan-then-drill dashboards.',
+        ],
         dont: ['Do not nest cards deeply — flatten the hierarchy instead.'],
+        a11y: [
+          'The collapse chevron is a labeled button with aria-expanded; loading sets aria-busy; motion honours prefers-reduced-motion.',
+        ],
       },
       {
         id: 'accordion',
