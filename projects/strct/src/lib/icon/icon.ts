@@ -12,6 +12,11 @@ import { inject } from '@angular/core';
  * Inner markup (path/shape contents) for each icon, drawn on a 0 0 16 16
  * viewBox with `currentColor` stroke. Keep strokes at 1.3–1.5 for crispness.
  *
+ * DETAIL BUDGET (small-size legibility): icons render as small as 14px, so keep
+ * gaps between parallel details ≥ 1.5px on the 16-grid (≈ max 3 parallel lines),
+ * prefer one large distinguishing feature over many small ones, and cap a glyph
+ * at ~6 drawing elements. Filled dots should be r ≥ 0.55.
+ *
  * The set is intentionally datacenter-flavoured (hosts, clusters, switches,
  * storage, VMs …). Object state — running / stopped / maintenance — is layered
  * on with the `badge` input rather than a separate icon per state.
@@ -106,29 +111,29 @@ export const STRCT_ICONS: Record<string, string> = {
   vm: '<rect x="2" y="3" width="12" height="8" rx="1"/><path d="M6 14h4M8 11v3"/>',
   // Network switch — front-panel view: chassis + status LEDs + a row of RJ45 ports.
   switch:
-    '<rect x="1.5" y="5" width="13" height="6" rx="1"/><circle cx="3.5" cy="6.6" r=".5" fill="currentColor" stroke="none"/><circle cx="3.5" cy="9.4" r=".5" fill="currentColor" stroke="none"/><rect x="5.3" y="7.2" width="1.6" height="2.6" rx=".3"/><rect x="7.5" y="7.2" width="1.6" height="2.6" rx=".3"/><rect x="9.7" y="7.2" width="1.6" height="2.6" rx=".3"/><rect x="11.9" y="7.2" width="1.6" height="2.6" rx=".3"/>',
+    '<rect x="2.2" y="4.8" width="11.6" height="6.4" rx="1"/><circle cx="4.4" cy="7" r=".55" fill="currentColor" stroke="none"/><circle cx="6.2" cy="7" r=".55" fill="currentColor" stroke="none"/><path d="M4 9.4h1.8M7.1 9.4h1.8M10.2 9.4h1.8"/>',
   storage:
     '<ellipse cx="8" cy="3.6" rx="5" ry="2"/><path d="M3 3.6v8.8c0 1.1 2.2 2 5 2s5-.9 5-2V3.6"/><path d="M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>',
   network:
     '<circle cx="8" cy="3.4" r="1.7"/><circle cx="3.6" cy="12.4" r="1.7"/><circle cx="12.4" cy="12.4" r="1.7"/><path d="M8 5.1v2.6M7 8.8l-2.4 2M9 8.8l2.4 2"/>',
   cpu: '<rect x="4.5" y="4.5" width="7" height="7" rx="1"/><rect x="6.6" y="6.6" width="2.8" height="2.8" rx=".5"/><path d="M6.5 2.6v1.9M9.5 2.6v1.9M6.5 11.5v1.9M9.5 11.5v1.9M2.6 6.5h1.9M2.6 9.5h1.9M11.5 6.5h1.9M11.5 9.5h1.9"/>',
   memory:
-    '<rect x="2" y="5" width="12" height="6" rx="1"/><path d="M4.5 11v1.6M7 11v1.6M9 11v1.6M11.5 11v1.6M5 7.2h6"/>',
+    '<rect x="2.4" y="4.4" width="11.2" height="5.6" rx="1"/><path d="M4.6 10v2M8 10v2M11.4 10v2"/><path d="M5 7.2h2.2M8.8 7.2H11"/>',
   disk: '<circle cx="8" cy="8" r="5.6"/><circle cx="8" cy="8" r="1.3"/><path d="M8 2.4v2.3"/>',
   port: '<rect x="3" y="5" width="10" height="6" rx="1"/><path d="M6.5 5V3.6h3V5M5 11v1.6M11 11v1.6"/>',
   power: '<path d="M8 2.4v5"/><path d="M5.2 4.6a5 5 0 105.6 0"/>',
   // Network Adapter Card (NIC) — PCIe card with an RJ45 (square) port.
-  nic: '<rect x="2.3" y="3.4" width="11.4" height="6.4" rx="1"/><rect x="3.9" y="5.1" width="3.2" height="3" rx=".4"/><path d="M8.6 6.1h3.4M8.6 7.9h3.4M5 9.8v2.6M11 9.8v2.6"/>',
+  nic: '<rect x="2.3" y="3.6" width="11.4" height="6.2" rx="1"/><rect x="4.1" y="5.3" width="3.6" height="2.8" rx=".4"/><path d="M9.6 6.7h2.4"/><path d="M5 9.8v2.4M11 9.8v2.4"/>',
   // Host Bus Adapter (HBA) — PCIe card with optical/SFP (round) ports.
-  hba: '<rect x="2.3" y="3.4" width="11.4" height="6.4" rx="1"/><circle cx="5.1" cy="6.6" r="1.2"/><circle cx="8.1" cy="6.6" r="1.2"/><path d="M10.6 5.6h1.6M10.6 7.6h1.6M5 9.8v2.6M11 9.8v2.6"/>',
+  hba: '<rect x="2.3" y="3.6" width="11.4" height="6.2" rx="1"/><circle cx="5.4" cy="6.7" r="1.5"/><circle cx="9.2" cy="6.7" r="1.5"/><path d="M5 9.8v2.4M11 9.8v2.4"/>',
   // RJ45 ethernet port (switch / server) — keyed jack with contact pins.
   ethernet:
-    '<rect x="2.5" y="4" width="11" height="7.4" rx="1"/><path d="M6 4V2.6h4V4"/><path d="M5.3 7.6v2M7.1 7.6v2M8.9 7.6v2M10.7 7.6v2"/>',
+    '<rect x="3" y="4.8" width="10" height="6.6" rx="1"/><path d="M6 4.8V3.2h4v1.6"/><path d="M5.6 8.4v1.8M8 8.4v1.8M10.4 8.4v1.8"/>',
   // Resource pool — a proportional allocation (pie with two radii).
   resourcePool: '<circle cx="8" cy="8" r="5.6"/><path d="M8 8V2.4M8 8l4.9 2.7"/>',
   // Port group — a grouped set of switch ports under a shared rail.
   portGroup:
-    '<path d="M1.8 4.4h12.4"/><rect x="2.2" y="6.2" width="3.4" height="4" rx=".5"/><rect x="6.3" y="6.2" width="3.4" height="4" rx=".5"/><rect x="10.4" y="6.2" width="3.4" height="4" rx=".5"/><path d="M3.9 10.2v1.6M8 10.2v1.6M12.1 10.2v1.6"/>',
+    '<path d="M2.5 5h11"/><rect x="3" y="6.8" width="2.7" height="3.6" rx=".4"/><rect x="6.65" y="6.8" width="2.7" height="3.6" rx=".4"/><rect x="10.3" y="6.8" width="2.7" height="3.6" rx=".4"/>',
 
   // ── Modern infrastructure ────────────────────────────────────
   pod: '<path d="M3 4.5c0-1.1 2.2-2 5-2s5 .9 5 2v7c0 1.1-2.2 2-5 2s-5-.9-5-2z"/><path d="M3 4.5c0 1.1 2.2 2 5 2s5-.9 5-2"/>',
@@ -161,7 +166,7 @@ export const STRCT_ICONS: Record<string, string> = {
   lowVision:
     '<path d="M1.8 8S4.2 4 8 4s6.2 4 6.2 4"/><circle cx="8" cy="8.3" r="2.1"/><path d="M2.6 10.8 4 9.4M13.4 10.8 12 9.4"/>',
   braille:
-    '<circle cx="5" cy="4.5" r=".85" fill="currentColor" stroke="none"/><circle cx="5" cy="8" r=".85" fill="currentColor" stroke="none"/><circle cx="5" cy="11.5" r=".85" fill="currentColor" stroke="none"/><circle cx="9" cy="4.5" r=".85" fill="currentColor" stroke="none"/><circle cx="9" cy="8" r=".85" fill="currentColor" stroke="none"/><circle cx="11.2" cy="6" r=".85" fill="currentColor" stroke="none"/>',
+    '<circle cx="5" cy="4.5" r="1.05" fill="currentColor" stroke="none"/><circle cx="5" cy="8" r="1.05" fill="currentColor" stroke="none"/><circle cx="5" cy="11.5" r="1.05" fill="currentColor" stroke="none"/><circle cx="9" cy="4.5" r="1.05" fill="currentColor" stroke="none"/><circle cx="9" cy="8" r="1.05" fill="currentColor" stroke="none"/><circle cx="11.2" cy="6" r="1.05" fill="currentColor" stroke="none"/>',
   signLanguage:
     '<path d="M5.6 9.4V5a1 1 0 0 1 2 0M7.6 8V4.3a1 1 0 0 1 2 0V8M9.6 8V5.3a1 1 0 0 1 2 0v4.2c0 2.1-1.7 3.7-3.8 3.7-1.2 0-2.3-.5-3.1-1.5L4.1 11.5a1 1 0 0 1 1.5-1.3z"/>',
 
@@ -186,6 +191,57 @@ export const STRCT_ICONS: Record<string, string> = {
     '<rect x="2.5" y="4.5" width="11" height="8" rx="1.5"/><circle cx="8" cy="8.5" r="2.3"/><path d="M6 4.5l1-1.5h2l1 1.5"/>',
   lock: '<rect x="3.5" y="7" width="9" height="6" rx="1.5"/><path d="M5.5 7V5.4a2.5 2.5 0 015 0V7"/>',
 
+  // ── Time & scheduling ────────────────────────────────────────
+  clock: '<circle cx="8" cy="8" r="5.8"/><path d="M8 4.6V8l2.4 1.7"/>',
+  history: '<path d="M3.2 5.4A5.8 5.8 0 112.4 9"/><path d="M3 2.6v3h3"/><path d="M8 5.4V8l2 1.4"/>',
+  timer: '<circle cx="8" cy="9.2" r="4.6"/><path d="M6.4 2.2h3.2M8 2.2v2.4M8 9.2l1.9-1.9"/>',
+  hourglass:
+    '<path d="M4.4 2.5h7.2M4.4 13.5h7.2M5.2 2.5v2L8 8l2.8-3.5v-2M5.2 13.5v-2L8 8l2.8 3.5v2"/>',
+
+  // ── Communication ────────────────────────────────────────────
+  mail: '<rect x="2.2" y="3.6" width="11.6" height="8.8" rx="1.2"/><path d="M2.8 4.6L8 8.8l5.2-4.2"/>',
+  chat: '<path d="M3.7 3h8.6a1.2 1.2 0 011.2 1.2v5a1.2 1.2 0 01-1.2 1.2H7l-3.3 2.8v-2.8h0a1.2 1.2 0 01-1.2-1.2v-5A1.2 1.2 0 013.7 3z"/><path d="M5.4 6h5.2M5.4 8h3.4"/>',
+
+  // ── General additions ────────────────────────────────────────
+  help: '<circle cx="8" cy="8" r="6"/><path d="M6.2 6.3a1.8 1.8 0 113 1.3c-.7.6-1.2 1-1.2 1.8"/><path d="M8 11.6v.2"/>',
+  home: '<path d="M2.8 7.4L8 3l5.2 4.4"/><path d="M4.2 6.6V13h7.6V6.6"/><path d="M6.6 13V9.4h2.8V13"/>',
+  link: '<path d="M6.4 9.6l3.2-3.2"/><path d="M7.4 4.7l1.3-1.3a2.6 2.6 0 013.7 3.7l-1.3 1.3"/><path d="M8.6 11.3l-1.3 1.3a2.6 2.6 0 01-3.7-3.7l1.3-1.3"/>',
+  globe:
+    '<circle cx="8" cy="8" r="5.8"/><ellipse cx="8" cy="8" rx="2.6" ry="5.8"/><path d="M2.2 8h11.6"/>',
+  star: '<path d="M8 2.6l1.7 3.5 3.9.6-2.8 2.7.7 3.9L8 11.4l-3.5 1.9.7-3.9-2.8-2.7 3.9-.6z"/>',
+  pin: '<path d="M9.6 2.4l4 4-1.7.5-2.3 2.3-.3 2.7L4.6 7.2l2.7-.3L9.6 4.6z"/><path d="M5.6 10.4l-2.8 2.8"/>',
+  share:
+    '<circle cx="11.6" cy="3.8" r="1.6"/><circle cx="4.2" cy="8" r="1.6"/><circle cx="11.6" cy="12.2" r="1.6"/><path d="M5.7 7.2l4.4-2.6M5.7 8.8l4.4 2.6"/>',
+  archive:
+    '<rect x="2.4" y="3" width="11.2" height="3.2" rx=".8"/><path d="M3.4 6.2V12a1 1 0 001 1h7.2a1 1 0 001-1V6.2"/><path d="M6.6 8.6h2.8"/>',
+
+  // ── View / layout controls ───────────────────────────────────
+  zoomIn: '<circle cx="7" cy="7" r="4"/><path d="M10 10l3.5 3.5M5.4 7h3.2M7 5.4v3.2"/>',
+  zoomOut: '<circle cx="7" cy="7" r="4"/><path d="M10 10l3.5 3.5M5.4 7h3.2"/>',
+  fullscreen: '<path d="M2.5 5.5v-3h3M13.5 5.5v-3h-3M2.5 10.5v3h3M13.5 10.5v3h-3"/>',
+  exitFullscreen: '<path d="M5.5 2.5v3h-3M10.5 2.5v3h3M5.5 13.5v-3h-3M10.5 13.5v-3h3"/>',
+  listView:
+    '<path d="M5.6 4h7.9M5.6 8h7.9M5.6 12h7.9"/><circle cx="2.9" cy="4" r=".9" fill="currentColor" stroke="none"/><circle cx="2.9" cy="8" r=".9" fill="currentColor" stroke="none"/><circle cx="2.9" cy="12" r=".9" fill="currentColor" stroke="none"/>',
+  dragHandle:
+    '<circle cx="5.6" cy="3.6" r="1.05" fill="currentColor" stroke="none"/><circle cx="10.4" cy="3.6" r="1.05" fill="currentColor" stroke="none"/><circle cx="5.6" cy="8" r="1.05" fill="currentColor" stroke="none"/><circle cx="10.4" cy="8" r="1.05" fill="currentColor" stroke="none"/><circle cx="5.6" cy="12.4" r="1.05" fill="currentColor" stroke="none"/><circle cx="10.4" cy="12.4" r="1.05" fill="currentColor" stroke="none"/>',
+  chevronUp: '<path d="M3.5 10L8 5.5 12.5 10"/>',
+  chevronDoubleLeft: '<path d="M12.5 3.5L8 8l4.5 4.5M7.5 3.5L3 8l4.5 4.5"/>',
+  chevronDoubleUp: '<path d="M3.5 12.5L8 8l4.5 4.5M3.5 8L8 3.5 12.5 8"/>',
+  chevronDoubleDown: '<path d="M3.5 3.5L8 8l4.5-4.5M3.5 8L8 12.5 12.5 8"/>',
+
+  // ── Infrastructure & identity ────────────────────────────────
+  dns: '<circle cx="8" cy="3.4" r="1.5"/><circle cx="4" cy="12.4" r="1.5"/><circle cx="12" cy="12.4" r="1.5"/><path d="M8 4.9v2.7M8 7.6l-3.2 3.5M8 7.6l3.2 3.5"/>',
+  vpn: '<path d="M8 2.3l5.2 1.9v3.3c0 3.1-2.3 5.1-5.2 6.4C5.1 12.6 2.8 10.6 2.8 7.5V4.2z"/><circle cx="8" cy="6.8" r="1.2"/><path d="M8 8v2.2"/>',
+  api: '<path d="M5 3.5L2.5 8 5 12.5M11 3.5L13.5 8 11 12.5"/><circle cx="8" cy="8" r=".9" fill="currentColor" stroke="none"/>',
+  bolt: '<path d="M8.8 2.2L4.6 8.8h2.8L7.2 13.8l4.2-6.8H8.6z"/>',
+  queue: '<path d="M3 4.6h10M3 8h10M3 11.4h5.6"/><path d="M11 10l2 1.4-2 1.4"/>',
+  users:
+    '<circle cx="6" cy="5.6" r="2.2"/><path d="M2.2 13.4c0-2.3 1.7-3.9 3.8-3.9s3.8 1.6 3.8 3.9"/><path d="M10.4 3.8a2.2 2.2 0 010 3.8M11.6 9.8c1.5.6 2.4 1.9 2.4 3.5"/>',
+  login: '<path d="M9.5 3.5h2.5a1 1 0 011 1v7a1 1 0 01-1 1H9.5M6.5 5.5L9.5 8l-3 3M9.5 8H3"/>',
+  unlock:
+    '<rect x="3.5" y="7" width="9" height="6" rx="1.5"/><path d="M5.5 7V5.2A2.5 2.5 0 0110.4 4.4"/>',
+  ban: '<circle cx="8" cy="8" r="5.8"/><path d="M3.9 3.9l8.2 8.2"/>',
+
   // ── Generic vendor marks (abstract glyphs, NOT real trademarked logos) ─
   vendorVmware:
     '<rect x="2.5" y="6.5" width="3" height="3.4" rx=".5"/><rect x="6.5" y="6.5" width="3" height="3.4" rx=".5"/><rect x="10.5" y="6.5" width="3" height="3.4" rx=".5"/>',
@@ -201,18 +257,18 @@ export const STRCT_ICONS: Record<string, string> = {
   // SSD — board with two memory chips and an edge connector.
   ssd: '<rect x="2.4" y="4.2" width="11.2" height="7.6" rx="1"/><rect x="4" y="6" width="2.6" height="4" rx=".4"/><rect x="7.2" y="6" width="2.6" height="4" rx=".4"/><path d="M11.2 6.6h1.2M11.2 9.4h1.2"/>',
   // USB flash drive — body with a metal connector (two contacts) and a label line.
-  usb: '<rect x="6.2" y="4.3" width="7.3" height="7.4" rx="1.3"/><rect x="2.5" y="6" width="3.7" height="4" rx=".4"/><path d="M3.4 7.2v1.6M5.1 7.2v1.6"/><path d="M8.4 6.7h3.1M8.4 9.3h3.1"/>',
+  usb: '<rect x="6.2" y="4.3" width="7.3" height="7.4" rx="1.3"/><rect x="2.5" y="6" width="3.7" height="4" rx=".4"/><path d="M8.6 6.8h2.7M8.6 9.2h2.7"/>',
   // SD card — keyed (clipped corner) body with gold contact lines.
   sdCard:
-    '<path d="M5 2.8h4.6l1.9 1.9v8.2a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5V3.3a.5.5 0 01.5-.5z"/><path d="M6.3 4.4v1.7M8 4v2.1M9.7 4.4v1.7"/>',
+    '<path d="M5 2.8h4.6l1.9 1.9v8.2a.5.5 0 01-.5.5H5a.5.5 0 01-.5-.5V3.3a.5.5 0 01.5-.5z"/><path d="M6.8 4.2v2M9.2 4.2v2"/>',
   // Backup tape (LTO cartridge) — shell with a label strip and two reels.
   tape: '<rect x="2.4" y="3.6" width="11.2" height="8.8" rx="1"/><path d="M2.4 5.7h11.2"/><circle cx="6.1" cy="9" r="1.6"/><circle cx="9.9" cy="9" r="1.6"/>',
 
   // ── Hardware components ──────────────────────────────────────
   // GPU — expansion card with a cooling fan, heatsink fins and a PCIe edge.
-  gpu: '<rect x="2.3" y="4.4" width="10.4" height="6.6" rx="1"/><circle cx="6" cy="7.7" r="1.9"/><path d="M6 5.8v3.8M4.1 7.7h3.8"/><path d="M9.8 6.2h1.8M9.8 7.7h1.8M9.8 9.2h1.8"/><path d="M4.3 11v1.6M9 11v1.6"/>',
+  gpu: '<rect x="2.3" y="4.4" width="10.4" height="6.6" rx="1"/><circle cx="6.2" cy="7.7" r="2"/><path d="M6.2 5.7v4M4.2 7.7h4"/><path d="M10.3 6.5h1.7M10.3 9h1.7"/><path d="M4.3 11v1.6M9 11v1.6"/>',
   // PSU — enclosure with a fan and an IEC power socket.
-  psu: '<rect x="2.4" y="3.5" width="11.2" height="9" rx="1"/><circle cx="6" cy="8" r="2.3"/><path d="M6 5.7v4.6M3.7 8h4.6"/><rect x="10" y="6.4" width="2.4" height="3.2" rx=".4"/>',
+  psu: '<rect x="2.4" y="3.6" width="11.2" height="8.8" rx="1"/><circle cx="6.8" cy="8" r="2.5"/><path d="M6.8 5.5v5M4.3 8h5"/><path d="M11.8 6.6v2.8"/>',
   // Cooling fan — hub with four swept blades.
   fan: '<circle cx="8" cy="8" r="5.8"/><circle cx="8" cy="8" r="1.2"/><path d="M8 6.8c2.1-1.6 4-1.2 4.7.5M8 9.2c-2.1 1.6-4 1.2-4.7-.5M9.2 8c1.6 2.1 1.2 4-.5 4.7M6.8 8c-1.6-2.1-1.2-4 .5-4.7"/>',
   // Battery — cell with terminal nub and charge bars.
@@ -222,7 +278,7 @@ export const STRCT_ICONS: Record<string, string> = {
   ups: '<rect x="3.4" y="2.4" width="9.2" height="11.2" rx="1"/><path d="M8.5 4.6L6.3 8h1.9l-1.7 3.4"/><path d="M5.4 12.4h5.2"/>',
   // Motherboard — board with a CPU socket, RAM slots and traces.
   motherboard:
-    '<rect x="2.4" y="2.4" width="11.2" height="11.2" rx="1"/><rect x="3.9" y="3.9" width="3.6" height="3.6" rx=".4"/><path d="M9 4.4h3.1M9 6h3.1"/><path d="M3.9 10h6M3.9 11.7h4"/><circle cx="11.6" cy="10.8" r=".55" fill="currentColor" stroke="none"/>',
+    '<rect x="2.4" y="2.4" width="11.2" height="11.2" rx="1"/><rect x="4.4" y="4.4" width="4" height="4" rx=".5"/><path d="M10.8 4.6v3.8"/><path d="M4.4 11.2h4.6"/><circle cx="11.2" cy="11.2" r=".6" fill="currentColor" stroke="none"/>',
   // Sensor — central node with symmetric detection arcs.
   sensor:
     '<circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/><path d="M5.3 5.3a4 4 0 000 5.4M10.7 5.3a4 4 0 010 5.4M3.5 3.5a6.5 6.5 0 000 9M12.5 3.5a6.5 6.5 0 010 9"/>',
@@ -268,7 +324,7 @@ export const STRCT_ICONS: Record<string, string> = {
     '<rect x="2.4" y="3" width="11.2" height="7.6" rx="1"/><path d="M6.4 13.2h3.2M8 10.6v2.6"/>',
   // Keyboard — keys and a spacebar.
   keyboard:
-    '<rect x="2" y="4.4" width="12" height="7.2" rx="1"/><path d="M4 6.8h1M6.5 6.8h1M9 6.8h1M11.3 6.8h.7M4 8.7h.7M6 10.3h4"/>',
+    '<rect x="2" y="4.4" width="12" height="7.2" rx="1"/><path d="M4.4 7h1.4M7.3 7h1.4M10.2 7h1.4M5.2 9.6h5.6"/>',
   // Printer — paper feed, body, output sheet and an LED.
   printer:
     '<path d="M5 6.4V3.2h6v3.2"/><rect x="2.8" y="6.4" width="10.4" height="4.8" rx="1"/><path d="M5 9.2h6v3.6H5z"/><circle cx="11" cy="8.4" r=".5" fill="currentColor" stroke="none"/>',
@@ -277,6 +333,12 @@ export const STRCT_ICONS: Record<string, string> = {
 // Composite "off" variants — re-use base glyph + diagonal slash.
 STRCT_ICONS['eyeOff'] = `${STRCT_ICONS['eye']}<path d="M2.5 2.5l11 11"/>`;
 STRCT_ICONS['bellOff'] = `${STRCT_ICONS['bell']}<path d="M2.6 2.6l10.8 10.8"/>`;
+STRCT_ICONS['wifiOff'] = `${STRCT_ICONS['wifi']}<path d="M2.5 2.5l11 11"/>`;
+STRCT_ICONS['cloudOff'] = `${STRCT_ICONS['cloud']}<path d="M2.5 2.5l11 11"/>`;
+STRCT_ICONS['linkOff'] = `${STRCT_ICONS['link']}<path d="M2.5 2.5l11 11"/>`;
+// Semantic aliases.
+STRCT_ICONS['unlink'] = STRCT_ICONS['linkOff'];
+STRCT_ICONS['webhook'] = STRCT_ICONS['bolt'];
 
 /** Icon names grouped for galleries / documentation. */
 export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
@@ -316,6 +378,33 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
       'template',
       'clipboard',
       'tag',
+      'clock',
+      'history',
+      'timer',
+      'hourglass',
+      'help',
+      'home',
+      'link',
+      'linkOff',
+      'star',
+      'pin',
+      'share',
+      'archive',
+      'mail',
+      'chat',
+      'globe',
+      'listView',
+      'dragHandle',
+      'zoomIn',
+      'zoomOut',
+      'fullscreen',
+      'exitFullscreen',
+      'chevronUp',
+      'chevronDown',
+      'chevronDoubleLeft',
+      'chevronDoubleRight',
+      'chevronDoubleUp',
+      'chevronDoubleDown',
     ],
   },
   {
@@ -330,6 +419,10 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
       'settings',
       'user',
       'logout',
+      'login',
+      'users',
+      'unlock',
+      'ban',
       'undo',
       'redo',
       'arrowUp',
@@ -391,6 +484,11 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
       'metrics',
       'logs',
       'trace',
+      'dns',
+      'vpn',
+      'api',
+      'bolt',
+      'queue',
     ],
   },
   {
@@ -407,7 +505,17 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
   },
   {
     label: 'Peripherals & network',
-    names: ['router', 'loadBalancer', 'wifi', 'bluetooth', 'monitor', 'keyboard', 'printer'],
+    names: [
+      'router',
+      'loadBalancer',
+      'wifi',
+      'wifiOff',
+      'cloudOff',
+      'bluetooth',
+      'monitor',
+      'keyboard',
+      'printer',
+    ],
   },
   {
     label: 'Object state',
