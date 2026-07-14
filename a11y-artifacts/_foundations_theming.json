@@ -1,0 +1,14 @@
+[
+  {
+    "id": "page-has-heading-one",
+    "impact": "moderate",
+    "nodes": 1,
+    "help": "Page should contain a level-one heading"
+  },
+  {
+    "id": "region",
+    "impact": "moderate",
+    "nodes": 6,
+    "help": "All page content should be contained by landmarks"
+  }
+]

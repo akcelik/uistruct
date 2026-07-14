@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci --legacy-peer-deps
+      - run: npm ci
       - run: npm run lint
 
   test:
@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci --legacy-peer-deps
+      - run: npm ci
       - run: npm test
 
   build:
@@ -41,5 +41,23 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci --legacy-peer-deps
+      - run: npm ci
       - run: npx ng build strct
+
+  a11y-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx ng build showcase
+      - name: Run axe-core a11y smoke (+ page screenshots)
+        run: node scripts/a11y-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: a11y-artifacts
+          path: a11y-artifacts/

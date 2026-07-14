@@ -174,7 +174,11 @@ interface EventItem {
                   <span>{{ d.label }}</span
                   ><span class="bar__detail">{{ d.detail }}</span>
                 </div>
-                <strct-progress [value]="d.value" [status]="d.status" />
+                <strct-progress
+                  [value]="d.value"
+                  [status]="d.status"
+                  [label]="d.label + ' usage'"
+                />
               </div>
             }
           </div>
@@ -263,6 +267,7 @@ interface EventItem {
             <ng-template strctCell="cpu" let-value="value">
               <div class="cpucell">
                 <strct-progress
+                  label="CPU usage"
                   [value]="value"
                   [status]="value > 80 ? 'critical' : value > 60 ? 'warning' : 'success'"
                 />

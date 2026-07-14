@@ -109,13 +109,13 @@ import {
       </ng-template>
       <ng-template strctCell="cpu" let-value="value">
         <span class="usecell">
-          <strct-progress [value]="+value" [status]="usageStatus(+value)" />
+          <strct-progress [value]="+value" [status]="usageStatus(+value)" label="Usage" />
           <span class="usecell__n">{{ value }}%</span>
         </span>
       </ng-template>
       <ng-template strctCell="mem" let-value="value">
         <span class="usecell">
-          <strct-progress [value]="+value" [status]="usageStatus(+value)" />
+          <strct-progress [value]="+value" [status]="usageStatus(+value)" label="Usage" />
           <span class="usecell__n">{{ value }}%</span>
         </span>
       </ng-template>

@@ -122,7 +122,7 @@ import {
                       <span>{{ c.label }}</span
                       ><span class="bar__detail">{{ c.detail }}</span>
                     </div>
-                    <strct-progress [value]="c.value" [status]="c.status" />
+                    <strct-progress [value]="c.value" [status]="c.status" [label]="c.label" />
                   </div>
                 }
               </div>

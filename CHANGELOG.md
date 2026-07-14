@@ -5,6 +5,32 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.2] - 2026-07-14
+
+### Fixed — axe-core smoke findings
+
+The new CI a11y gate (axe-core over eight key routes) caught and we fixed:
+
+- **`strct-tree`** — expand/collapse chevrons were unnamed `role="button"`
+  elements; they now expose "Expand/Collapse <label>".
+- **`strct-progress`** — bars had no accessible name; new `label` input
+  (falls back to "Progress").
+- **`strct-table` / `strct-datagrid`** — horizontal scroll containers are now
+  keyboard-focusable named regions (WCAG scrollable-region-focusable).
+
+### Infrastructure
+
+- **vitest 3 → 4** — resolves the `@angular/build` peer conflict; the lockfile is
+  back in sync and `npm ci` works without `--legacy-peer-deps` (CI updated).
+- **CI is green again** — fixed the stale showcase footer assertion that had
+  failed every run since June 12.
+- **New `a11y-smoke` CI job** — axe-core over key routes (fails on
+  serious/critical) + per-page screenshots uploaded as artifacts.
+- **New `Publish to npm` workflow** — pushing a `v*` tag builds, tests and
+  publishes `@akcelik/strct` with provenance (requires the `NPM_TOKEN` secret).
+  npm's latest was stuck at 0.11.0.
+- **README** — real screenshots (dashboard, theming) and up-to-date counts.
+
 ## [0.21.1] - 2026-07-19
 
 ### Changed — "16 Native" icon render policy

@@ -7,10 +7,19 @@ A standalone Angular workspace containing **`@akcelik/strct`** — a reusable UI
 component library — and a showcase application that documents it. Independent of
 any other project. Built for **datacenter / infrastructure-management consoles**.
 
-**56 components · 3 palettes × dark/light · zero runtime dependencies.**
+**63 components · 179 icons · 3 palettes × dark/light · zero runtime dependencies.**
+
+![UIStruct dashboard scenario — dark, Arctic palette](docs/assets/dashboard-dark.png)
 
 - 📦 npm: [`@akcelik/strct`](https://www.npmjs.com/package/@akcelik/strct)
 - 📚 Docs & live demos: <https://akcelik.github.io/uistruct/>
+
+<details>
+<summary><strong>More screenshots</strong> — theming foundations</summary>
+
+![Theming — tokens, typography scale, measured AA contrast](docs/assets/theming.png)
+
+</details>
 
 The design system is **token-first**: one set of CSS custom properties, three
 palettes (**Arctic / Ember / Sage**) each in **dark** and **light** — six surface

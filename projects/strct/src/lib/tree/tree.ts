@@ -85,6 +85,7 @@ export interface StrctTreeMenuEvent {
           class="strct-tnode__chevron"
           [class.strct-tnode__chevron--open]="isOpen()"
           role="button"
+          [attr.aria-label]="(isOpen() ? 'Collapse ' : 'Expand ') + displayLabel()"
           [attr.tabindex]="tree ? -1 : 0"
           (click)="$event.stopPropagation(); toggle()"
           (keydown.enter)="$event.stopPropagation(); toggle()"

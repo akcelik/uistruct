@@ -110,7 +110,7 @@ export class StrctDatagridActionBar {}
     }
 
     <div class="strct-dg__layout" [class.strct-dg__layout--paned]="paneOpen()">
-      <div class="strct-dg__scroll">
+      <div class="strct-dg__scroll" tabindex="0" role="region" [attr.aria-label]="L().rows">
         <table class="strct-dg">
           <thead>
             <tr>

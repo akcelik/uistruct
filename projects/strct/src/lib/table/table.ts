@@ -111,6 +111,9 @@ export class StrctCellDef {
   `,
   host: {
     class: 'strct-table-host',
+    tabindex: '0',
+    role: 'region',
+    'aria-label': 'Table',
     '[class.strct-table-host--striped]': 'striped()',
     '[class.strct-table-host--hover]': 'hover()',
   },
