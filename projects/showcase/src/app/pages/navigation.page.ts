@@ -3,6 +3,10 @@ import { FormsModule } from '@angular/forms';
 import {
   StrctBreadcrumb,
   StrctBreadcrumbItem,
+  StrctButton,
+  StrctCommandItem,
+  StrctCommandPalette,
+  StrctKbd,
   StrctMenuSection,
   StrctPagination,
   StrctRail,
@@ -21,6 +25,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     DemoBlock,
     StrctBreadcrumb,
     StrctBreadcrumbItem,
+    StrctButton,
+    StrctCommandPalette,
+    StrctKbd,
     StrctPagination,
     StrctRail,
     StrctSectionMenu,
@@ -28,6 +35,44 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
   template: `
     <app-page-header title="Navigation" subtitle="Wayfinding and paging controls." />
+
+    <app-demo
+      anchor="command-palette"
+      heading="Command palette"
+      description="A ⌘/Ctrl-K spotlight over commands or pages: ranked search, keyboard-first, focus-restoring. This docs site's own ⌘K runs on this component."
+      code='<strct-command-palette [items]="commands" [(open)]="open" (picked)="run($event)" />'
+    >
+      <div class="cp-demo">
+        <button strct-button variant="primary" (click)="cpOpen.set(true)">Open palette</button>
+        <span class="cp-hint"
+          >or press <strct-kbd>⌘K</strct-kbd> / <strct-kbd>Ctrl K</strct-kbd></span
+        >
+        @if (cpLast()) {
+          <span class="echo">picked: {{ cpLast() }}</span>
+        }
+      </div>
+      <strct-command-palette
+        [items]="cpItems"
+        [open]="cpOpen()"
+        (openChange)="cpOpen.set($event)"
+        (picked)="cpLast.set($event.label)"
+        [hotkey]="false"
+      />
+    </app-demo>
+
+    <app-demo
+      anchor="kbd"
+      heading="Kbd"
+      description="Inline key chips for shortcut hints."
+      code="Press <strct-kbd>⌘K</strct-kbd> to search"
+    >
+      <div class="cp-demo">
+        <span class="cp-hint">
+          Press <strct-kbd>⌘K</strct-kbd> to search · <strct-kbd>Esc</strct-kbd> to close ·
+          <strct-kbd>↑</strct-kbd><strct-kbd>↓</strct-kbd> to move
+        </span>
+      </div>
+    </app-demo>
 
     <app-demo
       anchor="breadcrumb"
@@ -101,6 +146,19 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      .cp-demo {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .cp-hint {
+        font-size: 13px;
+        color: var(--t2);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
       .stack {
         display: flex;
         flex-direction: column;
@@ -150,6 +208,23 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class NavigationPage {
+  protected readonly cpOpen = signal(false);
+  protected readonly cpLast = signal('');
+  protected readonly cpItems: StrctCommandItem[] = [
+    { id: 'deploy', label: 'Deploy new cluster', group: 'Actions', icon: 'cluster', hint: '⌘D' },
+    { id: 'snapshot', label: 'Create snapshot', group: 'Actions', icon: 'snapshot' },
+    { id: 'hosts', label: 'Go to hosts', group: 'Navigate', icon: 'host' },
+    { id: 'alarms', label: 'Go to alarms', group: 'Navigate', icon: 'siren' },
+    {
+      id: 'theme',
+      label: 'Toggle dark mode',
+      group: 'Preferences',
+      icon: 'moon',
+      keywords: ['appearance', 'light'],
+    },
+    { id: 'logout', label: 'Sign out', group: 'Session', icon: 'logout' },
+  ];
+
   protected readonly pageA = signal(1);
   protected readonly pageB = signal(5);
 

@@ -1243,6 +1243,70 @@ export const DOCS: DocCategory[] = [
         ],
       },
       {
+        id: 'command-palette',
+        title: 'Command palette',
+        selector: 'strct-command-palette',
+        importNames: ['StrctCommandPalette', 'StrctCommandItem'],
+        summary: '⌘/Ctrl-K spotlight over app commands.',
+        lead: 'A spotlight search over commands or pages. Mount once near the app root, feed it `items` and act on `(picked)`. Opens via the two-way `open` model or the built-in ⌘/Ctrl-K hotkey. Ranked filtering (label prefix > word start > substring > keywords), full keyboard support, and focus restore on close. This docs site itself runs on it — press ⌘K.',
+        inputs: [
+          {
+            name: 'items',
+            type: 'StrctCommandItem[]',
+            default: '[]',
+            description: '`{ id; label; group?; icon?; hint?; keywords?; data? }[]`.',
+          },
+          {
+            name: 'open',
+            type: 'boolean',
+            default: 'false',
+            description: 'Two-way open state (`[(open)]`).',
+          },
+          {
+            name: 'hotkey',
+            type: 'boolean',
+            default: 'true',
+            description: 'Built-in ⌘/Ctrl-K toggle.',
+          },
+          {
+            name: 'placeholder / emptyText',
+            type: 'string',
+            description: 'Localizable strings.',
+          },
+          {
+            name: 'maxResults',
+            type: 'number',
+            default: '50',
+            description: 'Cap on rendered results.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'picked',
+            type: 'StrctCommandItem',
+            description: 'Chosen command (Enter or click); the palette closes itself.',
+          },
+        ],
+        do: [
+          'Give items stable ids and act on (picked) — navigation, actions, theme toggles.',
+          'Add keywords for synonyms users will actually type.',
+        ],
+        dont: ['Do not use it as a form control — it is a launcher, not a select.'],
+        a11y: [
+          'ARIA combobox/listbox pattern with aria-activedescendant; arrows/Home/End/Enter/Escape; focus returns to the trigger on close; reduced-motion safe.',
+        ],
+      },
+      {
+        id: 'kbd',
+        title: 'Kbd',
+        selector: 'strct-kbd',
+        importNames: ['StrctKbd'],
+        summary: 'Inline keyboard-key chip.',
+        lead: 'A small key chip for shortcut hints: `<strct-kbd>⌘K</strct-kbd>`. Used by the command palette; handy in menus, tooltips and docs.',
+        do: ['Keep contents short — a key or a chord.'],
+        dont: ['Do not use it for non-keyboard labels — that is a badge.'],
+      },
+      {
         id: 'section-menu',
         title: 'Section menu',
         selector: 'strct-section-menu',

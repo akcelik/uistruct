@@ -45,6 +45,8 @@ export * from './lib/divider/divider';
 export * from './lib/breadcrumb/breadcrumb';
 export * from './lib/pagination/pagination';
 export * from './lib/section-menu/section-menu';
+export * from './lib/command-palette/command-palette';
+export * from './lib/kbd/kbd';
 
 // Forms
 export * from './lib/forms/field';
