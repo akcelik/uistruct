@@ -12,6 +12,11 @@ import { inject } from '@angular/core';
  * Inner markup (path/shape contents) for each icon, drawn on a 0 0 16 16
  * viewBox with `currentColor` stroke. Keep strokes at 1.3–1.5 for crispness.
  *
+ * RENDER SIZES ("16 Native" policy): object / semantic glyphs must render at the
+ * grid's native 16px or larger — never downscaled (fractional scaling blurs
+ * hairlines). Simple single-stroke glyphs (chevrons, close, check, dots) may
+ * render at 11–14px; their wide details survive scaling.
+ *
  * DETAIL BUDGET (small-size legibility): icons render as small as 14px, so keep
  * gaps between parallel details ≥ 1.5px on the 16-grid (≈ max 3 parallel lines),
  * prefer one large distinguishing feature over many small ones, and cap a glyph
@@ -33,6 +38,8 @@ export const STRCT_ICONS: Record<string, string> = {
   check: '<path d="M3.5 8.5l3 3 6-7"/>',
   menu: '<path d="M3 4.5h10M3 8h10M3 11.5h10"/>',
   dots: '<circle cx="8" cy="3.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="8" cy="12.5" r="1.1" fill="currentColor" stroke="none"/>',
+  ellipsis:
+    '<circle cx="3.5" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="12.5" cy="8" r="1.1" fill="currentColor" stroke="none"/>',
   search: '<circle cx="7" cy="7" r="4"/><path d="M10 10l3.5 3.5"/>',
   calendar:
     '<rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/>',
@@ -349,6 +356,7 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
       'search',
       'menu',
       'dots',
+      'ellipsis',
       'close',
       'check',
       'calendar',

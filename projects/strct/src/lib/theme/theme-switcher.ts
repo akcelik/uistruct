@@ -33,7 +33,7 @@ import { StrctThemeService } from './theme.service';
         aria-label="Light theme"
         (click)="theme.setMode('light')"
       >
-        <strct-icon name="sun" [size]="15" [strokeWidth]="1.5" />
+        <strct-icon name="sun" [size]="16" [strokeWidth]="1.5" />
       </button>
       <button
         type="button"
@@ -43,7 +43,7 @@ import { StrctThemeService } from './theme.service';
         aria-label="Dark theme"
         (click)="theme.setMode('dark')"
       >
-        <strct-icon name="moon" [size]="15" [strokeWidth]="1.5" />
+        <strct-icon name="moon" [size]="16" [strokeWidth]="1.5" />
       </button>
     </div>
   `,

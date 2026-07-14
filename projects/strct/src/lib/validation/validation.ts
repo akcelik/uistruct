@@ -62,7 +62,7 @@ export function strctValidationIcon(status: StrctValidationStatus): string {
         @if (state().status === 'checking') {
           <strct-spinner size="sm" />
         } @else if (icon()) {
-          <strct-icon [name]="icon()" [size]="14" />
+          <strct-icon [name]="icon()" [size]="16" />
         }
         @if (state().message) {
           <span class="strct-vstate__msg" aria-live="polite">{{ state().message }}</span>

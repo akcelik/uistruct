@@ -47,7 +47,7 @@ let fieldCounter = 0;
           @if (stateStatus() === 'checking') {
             <strct-spinner size="sm" />
           } @else if (stateIcon()) {
-            <strct-icon [name]="stateIcon()" [size]="15" />
+            <strct-icon [name]="stateIcon()" [size]="16" />
           }
         </span>
       }

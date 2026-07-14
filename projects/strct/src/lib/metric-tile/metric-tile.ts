@@ -27,7 +27,7 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
   template: `
     <div class="strct-mt__top">
       @if (icon()) {
-        <span class="strct-mt__icon"><strct-icon [name]="icon()" [size]="14" /></span>
+        <span class="strct-mt__icon"><strct-icon [name]="icon()" [size]="16" /></span>
       }
       <span class="strct-mt__label">{{ label() }}</span>
       @if (hasDelta()) {

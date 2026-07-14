@@ -60,7 +60,7 @@ export type StrctSegmentedSize = 'sm' | 'md';
         (blur)="onTouched()"
       >
         @if (opt.icon) {
-          <strct-icon [name]="opt.icon" [size]="14" />
+          <strct-icon [name]="opt.icon" [size]="16" />
         }
         <span>{{ opt.label }}</span>
       </button>

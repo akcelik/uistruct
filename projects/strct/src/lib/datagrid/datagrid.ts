@@ -319,7 +319,7 @@ export class StrctDatagridActionBar {}
                     [attr.aria-label]="L().chooseColumns"
                     (click)="chooserOpen.set(!chooserOpen())"
                   >
-                    <strct-icon name="settings" [size]="14" />
+                    <strct-icon name="settings" [size]="16" />
                   </button>
                 }
                 @if (sync()) {
@@ -330,7 +330,7 @@ export class StrctDatagridActionBar {}
                     [attr.aria-label]="L().refresh"
                     (click)="syncChange.emit()"
                   >
-                    <strct-icon name="refresh" [size]="14" />
+                    <strct-icon name="refresh" [size]="16" />
                   </button>
                 }
               </strct-button-group>
