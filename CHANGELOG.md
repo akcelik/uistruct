@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.0] - 2026-07-14
+
+### Added — `strct-command-palette` + `strct-kbd`
+
+- **`strct-command-palette`** — a ⌘/Ctrl-K spotlight over app commands or pages.
+  `items` (`{ id; label; group?; icon?; hint?; keywords?; data? }[]`), two-way
+  `open`, built-in `hotkey`, ranked filtering (label prefix > word start >
+  substring > keywords), `(picked)` output. ARIA combobox/listbox pattern with
+  `aria-activedescendant`, full keyboard support, focus restore on close,
+  reduced-motion safe, localizable strings. The docs site's own ⌘K now runs on
+  it (dogfooded — and the wrapper shrank from 287 to ~60 lines).
+- **`strct-kbd`** — inline keyboard-key chip for shortcut hints.
+
+### Changed — overlay a11y audit outcomes
+
+- Audit result: `strct-combobox`, `strct-context-menu` and `strct-cascade-select`
+  already follow their APG patterns (combobox/listbox, menu/menuitem) — no
+  changes needed. `strct-datepicker` uses a labeled dialog with button day cells
+  and arrow-key focus; a strict APG grid refinement is noted for later.
+- **`strct-tree`** — chevron toggles now have a 24×24px hit target
+  (WCAG 2.5.8) without changing visual density, and their rotation honours
+  `prefers-reduced-motion`.
+
 ## [0.21.2] - 2026-07-14
 
 ### Fixed — axe-core smoke findings

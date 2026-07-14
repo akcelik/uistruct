@@ -163,10 +163,16 @@ export interface StrctTreeMenuEvent {
       }
       .strct-tnode__chevron {
         display: inline-flex;
+        align-items: center;
+        justify-content: center;
         color: var(--t3);
         transition: transform 0.15s ease;
-        width: 14px;
-        justify-content: center;
+        /* 24px hit target (WCAG 2.5.8) without changing visual density. */
+        width: 24px;
+        height: 24px;
+        margin: -5px;
+        margin-inline-end: -10px;
+        flex-shrink: 0;
       }
       .strct-tnode__chevron--open {
         transform: rotate(90deg);
@@ -174,6 +180,11 @@ export interface StrctTreeMenuEvent {
       .strct-tnode__spacer {
         width: 14px;
         flex-shrink: 0;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .strct-tnode__chevron {
+          transition: none;
+        }
       }
       .strct-tnode__icon {
         color: var(--t2);
