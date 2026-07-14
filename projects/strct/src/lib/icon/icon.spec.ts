@@ -129,6 +129,60 @@ describe('StrctIcon', () => {
     expect(grouped.has('clipboard')).toBe(true);
   });
 
+  it('registers the time/comms/view/identity additions and repairs (0.21.0)', () => {
+    const names = [
+      'clock',
+      'history',
+      'timer',
+      'hourglass',
+      'help',
+      'home',
+      'link',
+      'globe',
+      'star',
+      'pin',
+      'share',
+      'archive',
+      'mail',
+      'chat',
+      'zoomIn',
+      'zoomOut',
+      'fullscreen',
+      'exitFullscreen',
+      'listView',
+      'dragHandle',
+      'chevronUp',
+      'chevronDoubleLeft',
+      'chevronDoubleUp',
+      'chevronDoubleDown',
+      'dns',
+      'vpn',
+      'api',
+      'bolt',
+      'queue',
+      'users',
+      'login',
+      'unlock',
+      'ban',
+      'wifiOff',
+      'cloudOff',
+      'linkOff',
+    ];
+    for (const name of names) {
+      expect(STRCT_ICONS[name]).toBeTruthy();
+      const fixture = TestBed.createComponent(StrctIcon);
+      fixture.componentRef.setInput('name', name);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('svg')).toBeTruthy();
+    }
+    // Semantic aliases resolve to the same markup.
+    expect(STRCT_ICONS['unlink']).toBe(STRCT_ICONS['linkOff']);
+    expect(STRCT_ICONS['webhook']).toBe(STRCT_ICONS['bolt']);
+    // Off composites reuse their base glyphs.
+    expect(STRCT_ICONS['wifiOff']).toContain(STRCT_ICONS['wifi']);
+    expect(STRCT_ICONS['cloudOff']).toContain(STRCT_ICONS['cloud']);
+  });
+
   it('groups every new icon in STRCT_ICON_GROUPS', () => {
     const grouped = new Set(STRCT_ICON_GROUPS.flatMap((g) => g.names));
     for (const name of ['opticalDisc', 'gpu', 'sparkles', 'router']) {

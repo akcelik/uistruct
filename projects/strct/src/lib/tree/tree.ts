@@ -90,7 +90,7 @@ export interface StrctTreeMenuEvent {
           (keydown.enter)="$event.stopPropagation(); toggle()"
           (keydown.space)="$event.stopPropagation(); toggle()"
         >
-          <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
+          <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.5" />
         </span>
       } @else {
         <span class="strct-tnode__spacer"></span>

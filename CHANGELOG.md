@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0] - 2026-07-19
+
+### Icons — coverage, variants & small-size legibility (142 → 178 glyphs)
+
+- **Added — time & communication:** `clock`, `history`, `timer`, `hourglass`,
+  `mail`, `chat` (an NTP settings page finally has its clock).
+- **Added — general UI:** `help`, `home`, `link`, `globe`, `star`, `pin`, `share`,
+  `archive`, `zoomIn`/`zoomOut`, `fullscreen`/`exitFullscreen`, `listView`,
+  `dragHandle`.
+- **Added — direction set completed:** `chevronUp` (was missing!) and
+  `chevronDoubleLeft/Up/Down`.
+- **Added — infrastructure & identity:** `dns`, `vpn`, `api`, `bolt`, `queue`,
+  `users`, `login`, `unlock`, `ban`.
+- **Added — off-state composites & aliases:** `wifiOff`, `cloudOff`, `linkOff`
+  (slash composites); `unlink` → `linkOff`, `webhook` → `bolt`.
+- **Legibility repairs (verified at 14px, the real usage size):** 13 dense glyphs
+  redrawn so parallel details keep ≥ 1.5px gaps on the 16-grid — `nic` and `hba`
+  are now clearly distinct (one large square port vs two round ports), and
+  `memory`, `ethernet`, `switch`, `portGroup`, `keyboard`, `motherboard`, `psu`,
+  `gpu`, `sdCard`, `usb` no longer smudge; `braille` dots enlarged. The tree
+  chevron stroke is standardized to the 1.3–1.5 guideline, and a **detail-budget
+  rule** is documented in the icon source.
+
 ## [0.20.0] - 2026-07-19
 
 ### Accessibility & design-system hardening
