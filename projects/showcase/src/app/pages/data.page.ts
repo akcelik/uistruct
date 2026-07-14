@@ -93,8 +93,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="datagrid"
       heading="Datagrid"
-      description="Sortable columns, row selection, expandable detail rows, a batch action bar, paging, resizable columns and a column chooser. Populated with cluster rows; status renders as a badge."
-      code='<strct-datagrid [columns]="cols" [rows]="rows" rowId="name" selectable expandable>&#10;  <ng-template strctCell="status" let-value="value">…</ng-template>&#10;</strct-datagrid>'
+      description="Sortable columns, row selection, expandable detail rows, a batch action bar, paging, resizable columns and a column chooser. Populated with cluster rows; status renders as a badge. Opens with two rows pre-checked via [initialSelection] (ids matching rowId) — ideal for a picker dialog seeded with the current members."
+      code='<strct-datagrid [columns]="cols" [rows]="rows" rowId="name" selectable [initialSelection]="preChecked" expandable>&#10;  <ng-template strctCell="status" let-value="value">…</ng-template>&#10;</strct-datagrid>'
     >
       <div class="dg-wrap">
         <strct-checkbox [ngModel]="dense()" (ngModelChange)="dense.set($event)"
@@ -107,6 +107,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [rows]="dgRows"
           rowId="name"
           selectable
+          [initialSelection]="preChecked"
           expandable
           resizable
           columnChooser
@@ -267,6 +268,9 @@ export class DataPage {
     { key: 'hosts', label: 'Hosts', sortable: true, align: 'end' },
     { key: 'status', label: 'Status', sortable: true },
   ];
+
+  /** Seeds [initialSelection] — the rows the picker opens with already checked. */
+  protected readonly preChecked = ['Production Cluster', 'DR Cluster'];
 
   protected readonly dgRows: StrctRow[] = [
     { name: 'Production Cluster', type: 'Failover', hosts: 8, status: 'Running' },

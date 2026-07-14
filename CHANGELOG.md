@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] - 2026-07-14
+
+### Added
+
+- **`strct-datagrid`** — `initialSelection` input seeds the checked rows (values are
+  row ids matching `rowId`; requires `selectable`). Assigning a new array re-seeds —
+  e.g. open a picker dialog with the current members already checked — while the
+  user's later toggles are preserved until it changes. Additive; defaults to `null`
+  (no selection), so existing grids are unchanged.
+
 ## [0.18.0] - 2026-07-14
 
 ### Added — `strct-tree` stable identity + observable / controlled expansion
