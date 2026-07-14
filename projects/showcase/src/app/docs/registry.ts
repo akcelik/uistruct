@@ -914,6 +914,13 @@ export const DOCS: DocCategory[] = [
               'On `strct-tree`: controlled expansion (two-way, `[(expandedIds)]`). When non-null it is the single source of truth — node open state derives from it and toggles write back — so save/restore is a one-liner. When null, expansion is uncontrolled (seeded from each node’s `expanded` flag).',
           },
           {
+            name: 'density',
+            type: `'compact' | 'comfortable'`,
+            default: `'compact'`,
+            description:
+              'On `strct-tree`: row density. `compact` is the dense inventory layout (13px text / 16px icons); `comfortable` relaxes to 14px text / 18px icons with taller rows — for touch-friendly or low-density consoles.',
+          },
+          {
             name: 'label',
             type: 'string',
             default: `''`,

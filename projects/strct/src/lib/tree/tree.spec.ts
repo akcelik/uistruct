@@ -57,6 +57,34 @@ function chevron(el: HTMLElement, id: string): HTMLElement {
     .querySelector('.strct-tnode__chevron') as HTMLElement;
 }
 
+describe('StrctTree — density', () => {
+  @Component({
+    imports: [StrctTree],
+    template: `<strct-tree [nodes]="nodes" [density]="density" />`,
+  })
+  class DensityHost {
+    nodes: StrctTreeNodeData[] = [{ id: 'x', label: 'X', icon: 'vm', expanded: true }];
+    density: 'compact' | 'comfortable' = 'compact';
+  }
+
+  it('defaults to compact — no modifier class, 16px icons', () => {
+    const fixture = TestBed.createComponent(DensityHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-tree')!.classList).not.toContain('strct-tree--comfortable');
+    expect((el.querySelector('.strct-tnode__icon svg') as SVGElement).style.width).toBe('16px');
+  });
+
+  it('comfortable adds the modifier class and scales icons to 18px', () => {
+    const fixture = TestBed.createComponent(DensityHost);
+    fixture.componentInstance.density = 'comfortable';
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-tree')!.classList).toContain('strct-tree--comfortable');
+    expect((el.querySelector('.strct-tnode__icon svg') as SVGElement).style.width).toBe('18px');
+  });
+});
+
 describe('StrctTree — identity & expansion', () => {
   it('renders a data-node-id attribute per rendered node', () => {
     const { el } = setup();

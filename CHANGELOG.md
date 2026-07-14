@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.0] - 2026-07-14
+
+### Added — `strct-tree` density
+
+- **`density`** input on `strct-tree` (`'compact' | 'comfortable'`, default
+  `compact`). `comfortable` relaxes rows to 14px text / 18px icons with taller
+  rows and wider indent — for touch-friendly or low-density consoles. The
+  compact default renders pixel-identical to before.
+
 ## [0.23.0] - 2026-07-14
 
 ### Changed — `strct-card` grows rich, opt-in states

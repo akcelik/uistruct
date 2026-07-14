@@ -100,7 +100,7 @@ export interface StrctTreeMenuEvent {
         <strct-icon
           class="strct-tnode__icon"
           [name]="displayIcon()!"
-          [size]="16"
+          [size]="iconSize()"
           [strokeWidth]="1.3"
           [badge]="displayBadge()"
         />
@@ -236,6 +236,8 @@ export class StrctTreeNode {
     forwardRef(() => StrctTree),
     { optional: true },
   );
+  /** Node icon scales with the owning tree's density (16 native → 18 comfortable). */
+  protected readonly iconSize = computed(() => (this.tree?.density() === 'comfortable' ? 18 : 16));
   /** Parent tree node (element-injector ancestor); drives aria-level + ArrowLeft. */
   readonly parent = inject(StrctTreeNode, { optional: true, skipSelf: true });
   /** 1-based depth, exposed as aria-level. */
@@ -348,11 +350,34 @@ export class StrctTreeNode {
       <ng-content />
     }
   `,
-  host: { class: 'strct-tree', role: 'tree' },
+  host: {
+    class: 'strct-tree',
+    role: 'tree',
+    '[class.strct-tree--comfortable]': "density() === 'comfortable'",
+  },
   styles: [
     `
       .strct-tree {
         display: block;
+      }
+
+      /* Comfortable density: larger text / icons, taller rows, wider indent.
+         Opt-in — the compact default stays pixel-identical. */
+      .strct-tree--comfortable .strct-tnode__row {
+        gap: 7px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      .strct-tree--comfortable .strct-tnode__chevron {
+        margin: -4px;
+        margin-inline-end: -9px;
+      }
+      .strct-tree--comfortable .strct-tnode__spacer {
+        width: 16px;
+      }
+      .strct-tree--comfortable .strct-tnode__children {
+        margin-inline-start: 19px;
       }
     `,
   ],
@@ -360,6 +385,12 @@ export class StrctTreeNode {
 export class StrctTree {
   /** Data-driven node list; when set, projected content is ignored. */
   readonly nodes = input<StrctTreeNodeData[] | null>(null);
+  /**
+   * Row density. `compact` (default) is the dense inventory layout —
+   * 13px text / 16px icons; `comfortable` relaxes to 14px text / 18px icons
+   * with taller rows for touch-friendly or low-density consoles.
+   */
+  readonly density = input<'compact' | 'comfortable'>('compact');
   /** Per-node right-click menu resolver. */
   readonly nodeMenu = input<StrctTreeNodeMenuFn | null>(null);
   /** Emitted when any data-driven node is clicked. */

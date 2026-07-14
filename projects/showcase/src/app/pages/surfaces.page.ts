@@ -220,6 +220,25 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="tree-density"
+      owner="tree"
+      heading="Density"
+      description="compact (default) is the dense inventory layout — 13px text / 16px icons. comfortable relaxes to 14px text / 18px icons with taller rows, for touch-friendly or low-density consoles."
+      code='<strct-tree [nodes]="nodes" density="comfortable" />'
+    >
+      <div style="display: flex; gap: 32px; flex-wrap: wrap;">
+        <div class="stack" style="flex: 1; min-width: 220px; max-width: 300px;">
+          <span class="echo">compact (default)</span>
+          <strct-tree [nodes]="densityTree" />
+        </div>
+        <div class="stack" style="flex: 1; min-width: 220px; max-width: 300px;">
+          <span class="echo">comfortable</span>
+          <strct-tree [nodes]="densityTree" density="comfortable" />
+        </div>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="modal"
       heading="Modal"
       description="Overlay dialog in four fixed widths (sm 480 · md 640 · lg 860 · xl 1080 px). Closes only via the X or an action button — clicking outside won't dismiss it; add dismissible to allow backdrop / Escape."
@@ -429,6 +448,21 @@ export class SurfacesPage {
     },
   ];
   protected readonly expandedIds = signal<string[] | null>(['us', 'us-a']);
+
+  // Density demo: the same nodes rendered compact vs comfortable.
+  protected readonly densityTree: StrctTreeNodeData[] = [
+    {
+      id: 'd-cluster',
+      label: 'cluster-01',
+      icon: 'cluster',
+      expanded: true,
+      children: [
+        { id: 'd-hv1', label: 'hv-01', icon: 'host', badge: 'success' },
+        { id: 'd-hv2', label: 'hv-02', icon: 'host', badge: 'warning' },
+        { id: 'd-store', label: 'datastore-a', icon: 'storage' },
+      ],
+    },
+  ];
   protected expandAll(): void {
     const ids: string[] = [];
     const walk = (ns: StrctTreeNodeData[]) =>
