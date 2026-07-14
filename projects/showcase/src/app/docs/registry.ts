@@ -848,7 +848,7 @@ export const DOCS: DocCategory[] = [
             type: 'StrctTreeNodeData[]',
             default: 'null',
             description:
-              'On `strct-tree`: data-driven node list (`{ label; icon?; badge?; active?; expanded?; children?; data? }`). When set, projected content is ignored and the tree recurses itself.',
+              'On `strct-tree`: data-driven node list (`{ id?; label; icon?; badge?; active?; expanded?; children?; data? }`). When set, projected content is ignored and the tree recurses itself. An `id` gives each node a stable key (trackBy + expansion state + a `data-node-id` attribute); it falls back to `label`.',
           },
           {
             name: 'nodeMenu',
@@ -856,6 +856,13 @@ export const DOCS: DocCategory[] = [
             default: 'null',
             description:
               'On `strct-tree`: resolver that returns the right-click menu items for a given node. The tree wires a `[strctContextMenu]` trigger on every node row; nodes whose result is empty open no menu.',
+          },
+          {
+            name: 'expandedIds',
+            type: 'string[] | null',
+            default: 'null',
+            description:
+              'On `strct-tree`: controlled expansion (two-way, `[(expandedIds)]`). When non-null it is the single source of truth — node open state derives from it and toggles write back — so save/restore is a one-liner. When null, expansion is uncontrolled (seeded from each node’s `expanded` flag).',
           },
           {
             name: 'label',
@@ -895,6 +902,17 @@ export const DOCS: DocCategory[] = [
             description: 'On `strct-tree`: fired when any data-driven node is clicked.',
           },
           {
+            name: 'expandedChange',
+            type: 'string[]',
+            description:
+              'On `strct-tree`: the full set of expanded node ids, emitted on every expand / collapse.',
+          },
+          {
+            name: 'nodeToggled',
+            type: '{ node; expanded }',
+            description: 'On `strct-tree`: fired per toggle with the node and its new open state.',
+          },
+          {
             name: 'nodeMenuSelect',
             type: 'StrctTreeMenuEvent',
             description:
@@ -908,6 +926,7 @@ export const DOCS: DocCategory[] = [
         ],
         do: [
           'Use `[nodes]` for dynamic / deep inventory trees.',
+          'Give nodes a stable `id` and use `[(expandedIds)]` to persist / restore expansion.',
           'Use node `badge` to show object state on the node.',
           'Use `[nodeMenu]` for per-object right-click actions.',
         ],

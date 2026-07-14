@@ -152,6 +152,29 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="tree-expanded"
+      owner="tree"
+      heading="Controlled & persisted expansion"
+      description="Give nodes a stable id and bind [(expandedIds)] — the parent becomes the single source of truth, so saving/restoring which nodes are open (e.g. to localStorage) is a one-liner. expandedChange also emits the full set on every toggle."
+      code='<strct-tree [nodes]="nodes" [(expandedIds)]="expandedIds" />'
+    >
+      <div class="stack">
+        <div style="display: flex; gap: 8px;">
+          <button strct-button size="sm" variant="neutral" (click)="expandAll()">Expand all</button>
+          <button strct-button size="sm" variant="neutral" (click)="expandedIds.set([])">
+            Collapse all
+          </button>
+        </div>
+        <strct-tree
+          style="width: 100%; max-width: 340px;"
+          [nodes]="regionTree"
+          [(expandedIds)]="expandedIds"
+        />
+        <span class="echo">expandedIds: [{{ expandedIds()?.join(', ') }}]</span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="modal"
       heading="Modal"
       description="Overlay dialog in four fixed widths (sm 480 · md 640 · lg 860 · xl 1080 px). Closes only via the X or an action button — clicking outside won't dismiss it; add dismissible to allow backdrop / Escape."
@@ -311,6 +334,59 @@ export class SurfacesPage {
   protected readonly wizardDone = signal(false);
 
   protected readonly treePick = signal('');
+
+  // Controlled-expansion demo: ids are the single source of truth.
+  protected readonly regionTree: StrctTreeNodeData[] = [
+    {
+      id: 'us',
+      label: 'us-east',
+      icon: 'cloud',
+      children: [
+        {
+          id: 'us-a',
+          label: 'zone-a',
+          icon: 'rack',
+          children: [
+            { id: 'us-a-1', label: 'hv-01', icon: 'host', badge: 'success' },
+            { id: 'us-a-2', label: 'hv-02', icon: 'host', badge: 'warning' },
+          ],
+        },
+        {
+          id: 'us-b',
+          label: 'zone-b',
+          icon: 'rack',
+          children: [{ id: 'us-b-1', label: 'hv-03', icon: 'host' }],
+        },
+      ],
+    },
+    {
+      id: 'eu',
+      label: 'eu-west',
+      icon: 'cloud',
+      children: [
+        {
+          id: 'eu-a',
+          label: 'zone-a',
+          icon: 'rack',
+          children: [{ id: 'eu-a-1', label: 'hv-04', icon: 'host' }],
+        },
+      ],
+    },
+  ];
+  protected readonly expandedIds = signal<string[] | null>(['us', 'us-a']);
+  protected expandAll(): void {
+    const ids: string[] = [];
+    const walk = (ns: StrctTreeNodeData[]) =>
+      ns.forEach((n) => {
+        if (n.children?.length) {
+          ids.push(n.id!);
+          walk(n.children);
+        }
+      });
+    walk(this.regionTree);
+    this.expandedIds.set(ids);
+  }
+
   protected readonly step1Valid = signal(false);
   protected readonly submitting = signal(false);
   protected readonly wizMsg = signal('');
