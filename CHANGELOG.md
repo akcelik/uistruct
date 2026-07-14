@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] - 2026-07-14
+
+### Added — `strct-tree` stable identity + observable / controlled expansion
+
+All additive and backward-compatible:
+
+- **Stable node identity** — `StrctTreeNodeData.id` gives each node a stable key,
+  used for `trackBy`, expansion state and a `data-node-id` DOM attribute. Falls back
+  to `label` when absent.
+- **Observable expansion** — `(expandedChange)` emits the full set of expanded ids on
+  every toggle; `(nodeToggled)` emits `{ node, expanded }` per toggle.
+- **Controlled expansion** — `[(expandedIds)]` (two-way) makes the parent the single
+  source of truth, so persisting/restoring which nodes are open is a one-liner. When
+  null (default), expansion stays uncontrolled, seeded from each node's `expanded`
+  flag exactly as before.
+
+With no `id`, no `expandedIds` and no listeners, the tree behaves exactly as today.
+
 ## [0.17.1] - 2026-07-04
 
 ### Fixed
