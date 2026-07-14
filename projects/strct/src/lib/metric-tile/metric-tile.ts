@@ -94,8 +94,8 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
         display: inline-flex;
         align-items: center;
         gap: 2px;
-        margin-left: auto;
-        font-size: 11.5px;
+        margin-inline-start: auto;
+        font-size: 12px;
         font-weight: 600;
         font-variant-numeric: tabular-nums;
         flex-shrink: 0;
@@ -113,7 +113,7 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
         display: flex;
         align-items: baseline;
         gap: 4px;
-        font-size: 26px;
+        font-size: var(--text-3xl);
         font-weight: 650;
         letter-spacing: -0.01em;
         color: var(--t1);

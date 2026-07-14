@@ -5,6 +5,75 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0] - 2026-07-19
+
+### Accessibility & design-system hardening
+
+A tri-lens audit (visual arts · HCI · vision science) of the whole library,
+implemented end to end. All changes are backward-compatible; deprecations noted.
+
+#### Fixed — contrast (WCAG AA, computed)
+
+- **Light-mode semantic tones darkened** across all three palettes so colored
+  _text_ meets AA ≥ 4.5:1 (previously: warning ≈ 3.4:1, success ≈ 3.9:1,
+  accent ≈ 4.1:1). Matching translucent tints updated. Dark mode unchanged.
+- **Text on solid status fills** now uses the new rule `color: var(--inv)` instead
+  of hard-coded `#fff` (solid badges, hero chips, solid buttons, checkbox check,
+  datepicker selected day, speed-dial, toggle thumb). Previously _every_ dark-mode
+  solid badge failed AA (2.2–3.5:1); now ≥ 5:1 in both modes. No hard-coded colors
+  remain in the library; header-anchored UI uses the new `--hdr-fg` token.
+- **`strct-badge`**: the misspelled public class `strct-badge--warninging` is fixed
+  to `strct-badge--warning`; the old class is still emitted as a deprecated alias.
+
+#### Fixed — motion & typography
+
+- `prefers-reduced-motion` now also disables the modal, drawer and toast entrance
+  animations; charts track the OS setting _live_ instead of reading it once.
+- **12px type floor restored**: chart axis/tooltip annotations, flow role tags,
+  datepicker weekday header, section-menu category labels and metric-tile deltas
+  (10–11.5px) are all ≥ 12px. Display sizes are tokenized: new `--text-2xl` (22px)
+  and `--text-3xl` (26px) used by gauge, donut and metric-tile.
+
+#### Added — keyboard & screen-reader access
+
+- **`strct-tree`** implements the ARIA tree pattern: roving tabindex (one tab stop
+  per tree instead of one per row), ArrowUp/Down/Left/Right + Home/End navigation,
+  `aria-level`, and a visible `:focus-visible` ring on rows.
+- **`strct-chart`** is now exposed to AT: `role="img"` with a generated data
+  summary, keyboard-focusable crosshair (arrows / Home / End / Escape) and an
+  `aria-live` announcement of the selected point. X-axis labels are positioned at
+  their datapoint's real x (an honest axis under `xTicks` subsampling); overlays
+  are anchored to the plot so the legend can't shift them.
+- **`strct-donut`**: `role="img"` summary naming every slice; legend rows are
+  keyboard-focusable and drive the center readout.
+- **`strct-modal`**: the backdrop is no longer an unnamed `role="button"` phantom
+  tab stop (keyboard dismissal is Escape, unchanged).
+
+#### Added — color-vision safety
+
+- Icon status badges are **shape-coded**: ✓ success · × critical · i info · – off
+  (warning already had its ! triangle), so object state never relies on hue alone.
+- **`strct-chart` series** accept `dash` (boolean or dasharray) as a second visual
+  channel; the legend swatch mirrors the pattern.
+- The donut fallback palette's translucent 5th color is replaced with an opaque
+  accent mix.
+
+#### Added — internationalization & RTL
+
+- Every user-visible / assistive string is now an input: `strct-datagrid`
+  `[labels]` (row/rows/selected + all aria labels), `strct-alert` `dismissLabel`,
+  `strct-modal` `closeLabel`, `strct-spinner` `label`, toast outlet `regionLabel`,
+  pagination `prevLabel/nextLabel/regionLabel`, wizard `backLabel/nextLabel`,
+  chart `agoFormat`.
+- Library styles converted to **CSS logical properties**
+  (margin/padding/border-inline, text-align start/end) for RTL-readiness.
+
+#### Added — API consistency
+
+- **`strct-tabs`** `selectedIndex` and **`strct-wizard`** `current` are now
+  two-way `model()`s, completing the controlled-state pattern alongside the tree's
+  `expandedIds` and the datagrid's `initialSelection`.
+
 ## [0.19.0] - 2026-07-14
 
 ### Added

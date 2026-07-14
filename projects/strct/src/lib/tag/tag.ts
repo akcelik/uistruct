@@ -50,7 +50,7 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
         border: 1px solid var(--b2);
       }
       .strct-tag:not(:has(.strct-tag__remove)) {
-        padding-right: 9px;
+        padding-inline-end: 9px;
       }
       .strct-tag--accent {
         color: var(--acc);

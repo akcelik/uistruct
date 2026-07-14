@@ -20,7 +20,7 @@ const PALETTE = [
   'var(--success)',
   'var(--warning)',
   'var(--critical)',
-  'var(--acc50)',
+  'color-mix(in srgb, var(--acc) 55%, var(--bg-1))',
   'var(--t3)',
 ];
 
@@ -44,6 +44,8 @@ const round = (n: number): number => Math.round(n * 100) / 100;
       <div class="strct-donut__wrap" [style.width.px]="size()" [style.height.px]="size()">
         <svg
           class="strct-donut__svg"
+          role="img"
+          [attr.aria-label]="ariaSummary()"
           [attr.viewBox]="'0 0 ' + size() + ' ' + size()"
           [style.width.px]="size()"
           [style.height.px]="size()"
@@ -89,10 +91,13 @@ const round = (n: number): number => Math.round(n * 100) / 100;
           @for (arc of arcs(); track $index) {
             <li
               class="strct-donut__leg"
+              tabindex="0"
               [class.is-active]="hovered() === $index"
               [class.is-dim]="hovered() !== null && hovered() !== $index"
               (pointerenter)="enter($index)"
               (pointerleave)="leave()"
+              (focus)="enter($index)"
+              (blur)="leave()"
             >
               <span class="strct-donut__swatch" [style.background]="arc.color"></span>
               <span class="strct-donut__leg-label">{{ arc.label }}</span>
@@ -141,7 +146,7 @@ const round = (n: number): number => Math.round(n * 100) / 100;
         pointer-events: none;
       }
       .strct-donut__value {
-        font-size: 22px;
+        font-size: var(--text-2xl);
         font-weight: 650;
         color: var(--t1);
         line-height: 1;
@@ -184,6 +189,10 @@ const round = (n: number): number => Math.round(n * 100) / 100;
       .strct-donut__leg.is-dim {
         opacity: 0.45;
       }
+      .strct-donut__leg:focus-visible {
+        outline: none;
+        box-shadow: inset 0 0 0 2px var(--acc50);
+      }
       .strct-donut__swatch {
         width: 9px;
         height: 9px;
@@ -205,7 +214,7 @@ const round = (n: number): number => Math.round(n * 100) / 100;
         font-variant-numeric: tabular-nums;
         color: var(--t3);
         min-width: 34px;
-        text-align: right;
+        text-align: end;
       }
 
       @media (prefers-reduced-motion: no-preference) {
@@ -294,6 +303,12 @@ export class StrctDonut {
   protected readonly centerColor = computed(() => {
     const h = this.hovered();
     return h !== null ? (this.arcs()[h]?.color ?? 'var(--t1)') : 'var(--t1)';
+  });
+
+  /** Screen-reader summary (role="img" name): every slice with value + share. */
+  protected readonly ariaSummary = computed(() => {
+    const parts = this.arcs().map((a) => `${a.label} ${a.value} (${a.pct}%)`);
+    return `Donut chart: ${parts.join(', ')}`;
   });
 
   protected enter(i: number): void {

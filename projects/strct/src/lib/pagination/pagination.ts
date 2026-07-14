@@ -24,7 +24,7 @@ type PageToken = number | 'dots';
       type="button"
       class="strct-pg__btn strct-pg__nav"
       [disabled]="page() <= 1"
-      aria-label="Previous page"
+      [attr.aria-label]="prevLabel()"
       (click)="go(page() - 1)"
     >
       <strct-icon name="chevronLeft" [size]="13" [strokeWidth]="1.7" />
@@ -50,13 +50,13 @@ type PageToken = number | 'dots';
       type="button"
       class="strct-pg__btn strct-pg__nav"
       [disabled]="page() >= pageCount()"
-      aria-label="Next page"
+      [attr.aria-label]="nextLabel()"
       (click)="go(page() + 1)"
     >
       <strct-icon name="chevronRight" [size]="13" [strokeWidth]="1.7" />
     </button>
   `,
-  host: { class: 'strct-pg', role: 'navigation', 'aria-label': 'Pagination' },
+  host: { class: 'strct-pg', role: 'navigation', '[attr.aria-label]': 'regionLabel()' },
   styles: [
     `
       .strct-pg {
@@ -113,6 +113,11 @@ type PageToken = number | 'dots';
   ],
 })
 export class StrctPagination {
+  /** Accessible labels (localizable). */
+  readonly prevLabel = input('Previous page');
+  readonly nextLabel = input('Next page');
+  readonly regionLabel = input('Pagination');
+
   /** Total number of items. */
   readonly total = input.required<number>();
   /** Rows per page (0 disables paging). */

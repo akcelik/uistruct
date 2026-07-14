@@ -32,6 +32,12 @@ export interface StrctChartSeries {
   area?: boolean;
   /** Per-series interpolation; falls back to the chart's `curve`. */
   curve?: StrctChartCurve;
+  /**
+   * Dashed line — a second visual channel besides color, so two series stay
+   * distinguishable under color-vision deficiency. `true` uses `'5 4'`; pass a
+   * custom SVG dasharray string to tune it.
+   */
+  dash?: boolean | string;
 }
 
 /** A horizontal reference / threshold line. */
@@ -145,6 +151,7 @@ interface SeriesRender {
   color: string;
   label: string;
   area: boolean;
+  dash: string | null;
   pts: Pt[];
   path: string;
   areaPath: string;
@@ -180,234 +187,255 @@ interface SeriesRender {
         <div class="strct-chart__legend">
           @for (it of legendItems(); track it.label) {
             <span class="strct-chart__leg">
-              <span class="strct-chart__leg-sw" [style.background]="it.color"></span>{{ it.label }}
+              <span
+                class="strct-chart__leg-sw"
+                [style.background]="
+                  it.dash
+                    ? 'repeating-linear-gradient(90deg, ' +
+                      it.color +
+                      ' 0 4px, transparent 4px 7px)'
+                    : it.color
+                "
+              ></span
+              >{{ it.label }}
             </span>
           }
         </div>
       }
 
-      <svg
-        #svg
-        class="strct-chart__svg"
-        [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
-        [attr.width]="width()"
-        [attr.height]="height()"
-        [style.height.px]="height()"
-        (pointermove)="onMove($event)"
-        (pointerleave)="hoverIdx.set(null)"
-      >
-        <defs>
-          <linearGradient [attr.id]="gradId" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" [attr.stop-color]="color()" stop-opacity="0.22" />
-            <stop offset="0.9" [attr.stop-color]="color()" stop-opacity="0" />
-          </linearGradient>
-          <clipPath [attr.id]="clipId">
-            <rect [attr.x]="0" [attr.y]="0" [attr.width]="width()" [attr.height]="height()" />
-          </clipPath>
-        </defs>
+      <div class="strct-chart__plot">
+        <svg
+          #svg
+          class="strct-chart__svg"
+          role="img"
+          [attr.aria-label]="chartAria()"
+          [attr.tabindex]="interactive() && type() !== 'bar' ? 0 : null"
+          [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
+          [attr.width]="width()"
+          [attr.height]="height()"
+          [style.height.px]="height()"
+          (pointermove)="onMove($event)"
+          (pointerleave)="hoverIdx.set(null)"
+          (keydown)="onKey($event)"
+          (blur)="hoverIdx.set(null)"
+        >
+          <defs>
+            <linearGradient [attr.id]="gradId" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" [attr.stop-color]="color()" stop-opacity="0.22" />
+              <stop offset="0.9" [attr.stop-color]="color()" stop-opacity="0" />
+            </linearGradient>
+            <clipPath [attr.id]="clipId">
+              <rect [attr.x]="0" [attr.y]="0" [attr.width]="width()" [attr.height]="height()" />
+            </clipPath>
+          </defs>
 
-        @if (grid()) {
-          @for (g of gridY(); track g) {
-            <line
-              class="strct-chart__grid"
-              [attr.x1]="pl()"
-              [attr.x2]="width() - pad.r"
-              [attr.y1]="g"
-              [attr.y2]="g"
-            />
+          @if (grid()) {
+            @for (g of gridY(); track g) {
+              <line
+                class="strct-chart__grid"
+                [attr.x1]="pl()"
+                [attr.x2]="width() - pad.r"
+                [attr.y1]="g"
+                [attr.y2]="g"
+              />
+            }
           }
-        }
 
-        @if (type() === 'bar' && !isMulti()) {
-          @for (b of bars(); track $index) {
-            <rect
-              class="strct-chart__bar"
-              [attr.x]="b.x"
-              [attr.y]="b.y"
-              [attr.width]="b.w"
-              [attr.height]="b.h"
-              [attr.fill]="color()"
-            />
-          }
-        } @else {
-          <g [attr.clip-path]="'url(#' + clipId + ')'">
-            <g
-              class="strct-chart__flow"
-              [style.transform]="'translateX(' + slidePx() + 'px)'"
-              [style.transition]="sliding() ? 'transform ' + interval() + 'ms linear' : 'none'"
-            >
-              @if (isMulti()) {
-                @for (s of multiSeries(); track $index) {
-                  @if (s.area && s.areaPath) {
+          @if (type() === 'bar' && !isMulti()) {
+            @for (b of bars(); track $index) {
+              <rect
+                class="strct-chart__bar"
+                [attr.x]="b.x"
+                [attr.y]="b.y"
+                [attr.width]="b.w"
+                [attr.height]="b.h"
+                [attr.fill]="color()"
+              />
+            }
+          } @else {
+            <g [attr.clip-path]="'url(#' + clipId + ')'">
+              <g
+                class="strct-chart__flow"
+                [style.transform]="'translateX(' + slidePx() + 'px)'"
+                [style.transition]="sliding() ? 'transform ' + interval() + 'ms linear' : 'none'"
+              >
+                @if (isMulti()) {
+                  @for (s of multiSeries(); track $index) {
+                    @if (s.area && s.areaPath) {
+                      <path
+                        class="strct-chart__area strct-chart__area--flat"
+                        [attr.d]="s.areaPath"
+                        [attr.fill]="s.color"
+                      />
+                    }
                     <path
-                      class="strct-chart__area strct-chart__area--flat"
-                      [attr.d]="s.areaPath"
-                      [attr.fill]="s.color"
+                      class="strct-chart__line"
+                      fill="none"
+                      [attr.stroke-width]="strokeWidth()"
+                      [attr.stroke-dasharray]="s.dash"
+                      [attr.d]="s.path"
+                      [attr.stroke]="s.color"
+                    />
+                  }
+                } @else {
+                  @if (showArea()) {
+                    <path
+                      class="strct-chart__area"
+                      [attr.d]="areaPath()"
+                      [attr.fill]="'url(#' + gradId + ')'"
                     />
                   }
                   <path
                     class="strct-chart__line"
+                    [class.strct-chart__line--draw]="drawOn()"
                     fill="none"
+                    pathLength="1"
                     [attr.stroke-width]="strokeWidth()"
-                    [attr.d]="s.path"
-                    [attr.stroke]="s.color"
+                    [attr.d]="linePath()"
+                    [attr.stroke]="color()"
                   />
-                }
-              } @else {
-                @if (showArea()) {
-                  <path
-                    class="strct-chart__area"
-                    [attr.d]="areaPath()"
-                    [attr.fill]="'url(#' + gradId + ')'"
-                  />
-                }
-                <path
-                  class="strct-chart__line"
-                  [class.strct-chart__line--draw]="drawOn()"
-                  fill="none"
-                  pathLength="1"
-                  [attr.stroke-width]="strokeWidth()"
-                  [attr.d]="linePath()"
-                  [attr.stroke]="color()"
-                />
-                @if (dots()) {
-                  @for (p of points(); track $index) {
-                    <circle
-                      class="strct-chart__dot"
-                      [attr.cx]="p.x"
-                      [attr.cy]="p.y"
-                      r="2.5"
-                      [attr.fill]="color()"
-                    />
+                  @if (dots()) {
+                    @for (p of points(); track $index) {
+                      <circle
+                        class="strct-chart__dot"
+                        [attr.cx]="p.x"
+                        [attr.cy]="p.y"
+                        r="2.5"
+                        [attr.fill]="color()"
+                      />
+                    }
                   }
                 }
-              }
+              </g>
             </g>
-          </g>
 
-          @for (t of thresholdLines(); track $index) {
-            <line
-              class="strct-chart__threshold"
-              [class.strct-chart__threshold--dashed]="t.dashed"
-              [attr.x1]="pl()"
-              [attr.x2]="width() - pad.r"
-              [attr.y1]="t.y"
-              [attr.y2]="t.y"
-              [attr.stroke]="t.color"
-            />
-          }
-
-          @if (interactive() && hoverX() !== null) {
-            <line
-              class="strct-chart__cross"
-              [attr.x1]="hoverX()"
-              [attr.x2]="hoverX()"
-              [attr.y1]="pad.t"
-              [attr.y2]="height() - pad.b"
-            />
-            @if (!isMulti() && hoverPt(); as hp) {
+            @for (t of thresholdLines(); track $index) {
               <line
-                class="strct-chart__cross"
+                class="strct-chart__threshold"
+                [class.strct-chart__threshold--dashed]="t.dashed"
                 [attr.x1]="pl()"
                 [attr.x2]="width() - pad.r"
-                [attr.y1]="hp.y"
-                [attr.y2]="hp.y"
-              />
-              <circle
-                class="strct-chart__hoverdot"
-                [attr.cx]="hp.x"
-                [attr.cy]="hp.y"
-                r="3.5"
-                [attr.fill]="color()"
+                [attr.y1]="t.y"
+                [attr.y2]="t.y"
+                [attr.stroke]="t.color"
               />
             }
-            @if (isMulti()) {
-              @for (d of hoverDots(); track $index) {
+
+            @if (interactive() && hoverX() !== null) {
+              <line
+                class="strct-chart__cross"
+                [attr.x1]="hoverX()"
+                [attr.x2]="hoverX()"
+                [attr.y1]="pad.t"
+                [attr.y2]="height() - pad.b"
+              />
+              @if (!isMulti() && hoverPt(); as hp) {
+                <line
+                  class="strct-chart__cross"
+                  [attr.x1]="pl()"
+                  [attr.x2]="width() - pad.r"
+                  [attr.y1]="hp.y"
+                  [attr.y2]="hp.y"
+                />
                 <circle
                   class="strct-chart__hoverdot"
-                  [attr.cx]="d.x"
-                  [attr.cy]="d.y"
+                  [attr.cx]="hp.x"
+                  [attr.cy]="hp.y"
                   r="3.5"
-                  [attr.fill]="d.color"
+                  [attr.fill]="color()"
                 />
               }
+              @if (isMulti()) {
+                @for (d of hoverDots(); track $index) {
+                  <circle
+                    class="strct-chart__hoverdot"
+                    [attr.cx]="d.x"
+                    [attr.cy]="d.y"
+                    r="3.5"
+                    [attr.fill]="d.color"
+                  />
+                }
+              }
+            }
+
+            @if (!isMulti() && live() && head(); as h) {
+              <g class="strct-chart__head" [attr.transform]="'translate(' + h.x + ',' + h.y + ')'">
+                <circle class="strct-chart__pulse" r="3" [attr.fill]="color()" />
+                <circle class="strct-chart__head-dot" r="3" [attr.fill]="color()" />
+              </g>
             }
           }
+        </svg>
 
-          @if (!isMulti() && live() && head(); as h) {
-            <g class="strct-chart__head" [attr.transform]="'translate(' + h.x + ',' + h.y + ')'">
-              <circle class="strct-chart__pulse" r="3" [attr.fill]="color()" />
-              <circle class="strct-chart__head-dot" r="3" [attr.fill]="color()" />
-            </g>
+        @if (yAxis()) {
+          @for (t of yAxisTicks(); track t.value) {
+            <div class="strct-chart__ytick" [style.top.px]="t.y">{{ t.text }}</div>
           }
         }
-      </svg>
 
-      @if (yAxis()) {
-        @for (t of yAxisTicks(); track t.value) {
-          <div class="strct-chart__ytick" [style.top.px]="t.y">{{ t.text }}</div>
+        @for (t of thresholdLines(); track $index) {
+          @if (t.label) {
+            <div class="strct-chart__thr" [style.top.px]="t.y" [style.color]="t.color">
+              {{ t.label }}
+            </div>
+          }
         }
-      }
 
-      @for (t of thresholdLines(); track $index) {
-        @if (t.label) {
-          <div class="strct-chart__thr" [style.top.px]="t.y" [style.color]="t.color">
-            {{ t.label }}
-          </div>
+        @if (interactive() && hoverX() !== null) {
+          @if (isMulti()) {
+            <div class="strct-chart__tip strct-chart__tip--multi" [style.left.px]="hoverX()">
+              @if (hoverMeta()) {
+                <span class="strct-chart__tip-l">{{ hoverMeta() }}</span>
+              }
+              @for (r of hoverRows(); track r.label) {
+                <span class="strct-chart__tip-row">
+                  <span class="strct-chart__tip-sw" [style.background]="r.color"></span>
+                  @if (r.label) {
+                    <span class="strct-chart__tip-rl">{{ r.label }}</span>
+                  }
+                  <span class="strct-chart__tip-rv">{{ r.text }}</span>
+                </span>
+              }
+            </div>
+          } @else if (hoverPt(); as hp) {
+            <div class="strct-chart__axis-y" [style.top.px]="hp.y">{{ hoverValueText() }}</div>
+            <div class="strct-chart__tip" [style.left.px]="hp.x" [style.top.px]="hp.y">
+              <span class="strct-chart__tip-v">{{ hoverValueText() }}</span>
+              @if (hoverDelta() !== null || hoverMeta()) {
+                <span class="strct-chart__tip-meta">
+                  @if (hoverDelta() !== null) {
+                    <span
+                      class="strct-chart__tip-delta"
+                      [class.strct-chart__tip-delta--up]="hoverDelta()! > 0"
+                      [class.strct-chart__tip-delta--down]="hoverDelta()! < 0"
+                    >
+                      {{ hoverDelta()! > 0 ? '▲' : hoverDelta()! < 0 ? '▼' : '·'
+                      }}{{ absDeltaText() }}
+                    </span>
+                  }
+                  @if (hoverMeta()) {
+                    <span class="strct-chart__tip-l">{{ hoverMeta() }}</span>
+                  }
+                </span>
+              }
+            </div>
+          }
         }
-      }
 
-      @if (interactive() && hoverX() !== null) {
-        @if (isMulti()) {
-          <div class="strct-chart__tip strct-chart__tip--multi" [style.left.px]="hoverX()">
-            @if (hoverMeta()) {
-              <span class="strct-chart__tip-l">{{ hoverMeta() }}</span>
-            }
-            @for (r of hoverRows(); track r.label) {
-              <span class="strct-chart__tip-row">
-                <span class="strct-chart__tip-sw" [style.background]="r.color"></span>
-                @if (r.label) {
-                  <span class="strct-chart__tip-rl">{{ r.label }}</span>
-                }
-                <span class="strct-chart__tip-rv">{{ r.text }}</span>
-              </span>
-            }
-          </div>
-        } @else if (hoverPt(); as hp) {
-          <div class="strct-chart__axis-y" [style.top.px]="hp.y">{{ hoverValueText() }}</div>
-          <div class="strct-chart__tip" [style.left.px]="hp.x" [style.top.px]="hp.y">
-            <span class="strct-chart__tip-v">{{ hoverValueText() }}</span>
-            @if (hoverDelta() !== null || hoverMeta()) {
-              <span class="strct-chart__tip-meta">
-                @if (hoverDelta() !== null) {
-                  <span
-                    class="strct-chart__tip-delta"
-                    [class.strct-chart__tip-delta--up]="hoverDelta()! > 0"
-                    [class.strct-chart__tip-delta--down]="hoverDelta()! < 0"
-                  >
-                    {{ hoverDelta()! > 0 ? '▲' : hoverDelta()! < 0 ? '▼' : '·'
-                    }}{{ absDeltaText() }}
-                  </span>
-                }
-                @if (hoverMeta()) {
-                  <span class="strct-chart__tip-l">{{ hoverMeta() }}</span>
-                }
-              </span>
-            }
-          </div>
+        @if (interactive() && type() !== 'bar') {
+          <span class="strct-chart__sr" aria-live="polite">{{ srText() }}</span>
         }
-      }
+      </div>
 
       @if (displayLabels().length) {
-        <div
-          class="strct-chart__labels"
-          [style.paddingLeft.px]="yAxis() ? pl() : 0"
-          [style.paddingRight.px]="yAxis() ? pad.r : 0"
-        >
+        <!-- Labels sit at their datapoint's real x, so a subsampled axis never lies. -->
+        <div class="strct-chart__labels">
           @for (l of displayLabels(); track $index) {
-            <span [class.strct-chart__label--active]="interactive() && hoverIdx() === l.i">{{
-              l.text
-            }}</span>
+            <span
+              [class.strct-chart__label--active]="interactive() && hoverIdx() === l.i"
+              [style.left.px]="xOf(l.i)"
+              >{{ l.text }}</span
+            >
           }
         </div>
       }
@@ -424,10 +452,28 @@ interface SeriesRender {
         display: block;
         position: relative;
       }
+      /* Overlays (ticks, tooltip, threshold tags) anchor to the plot, so a legend
+         above the svg can never shift them. */
+      .strct-chart__plot {
+        position: relative;
+      }
       .strct-chart__svg {
         width: 100%;
         display: block;
         touch-action: none;
+      }
+      .strct-chart__svg:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: 2px;
+        border-radius: var(--radius-sm);
+      }
+      .strct-chart__sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
       }
       .strct-chart__empty {
         display: flex;
@@ -494,11 +540,11 @@ interface SeriesRender {
         position: absolute;
         left: 0;
         width: ${Y_AXIS_GUTTER - 8}px;
-        text-align: right;
+        text-align: end;
         transform: translateY(-50%);
         pointer-events: none;
         font-family: var(--mono);
-        font-size: 10px;
+        font-size: 12px;
         color: var(--t3);
         font-variant-numeric: tabular-nums;
       }
@@ -507,7 +553,7 @@ interface SeriesRender {
         right: 2px;
         transform: translateY(-50%);
         pointer-events: none;
-        font-size: 10px;
+        font-size: 12px;
         font-weight: 600;
         font-variant-numeric: tabular-nums;
         background: var(--bg-1);
@@ -524,7 +570,7 @@ interface SeriesRender {
         background: var(--bg-a);
         border: 1px solid var(--b2);
         font-family: var(--mono);
-        font-size: 10px;
+        font-size: 12px;
         font-weight: 600;
         color: var(--t2);
         font-variant-numeric: tabular-nums;
@@ -541,7 +587,7 @@ interface SeriesRender {
         flex-wrap: wrap;
         gap: 6px 14px;
         margin-bottom: 8px;
-        font-size: 11px;
+        font-size: 12px;
         color: var(--t2);
       }
       .strct-chart__leg {
@@ -591,7 +637,7 @@ interface SeriesRender {
         gap: 5px;
       }
       .strct-chart__tip-delta {
-        font-size: 10px;
+        font-size: 12px;
         font-weight: 600;
         color: var(--t3);
         font-variant-numeric: tabular-nums;
@@ -603,14 +649,14 @@ interface SeriesRender {
         color: var(--critical);
       }
       .strct-chart__tip-l {
-        font-size: 10px;
+        font-size: 12px;
         color: var(--t3);
       }
       .strct-chart__tip-row {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        font-size: 11px;
+        font-size: 12px;
       }
       .strct-chart__tip-sw {
         width: 8px;
@@ -620,7 +666,7 @@ interface SeriesRender {
       }
       .strct-chart__tip-rl {
         color: var(--t3);
-        margin-right: auto;
+        margin-inline-end: auto;
       }
       .strct-chart__tip-rv {
         color: var(--t1);
@@ -629,11 +675,16 @@ interface SeriesRender {
       }
 
       .strct-chart__labels {
-        display: flex;
-        justify-content: space-between;
+        position: relative;
+        height: 15px;
         margin-top: 6px;
-        font-size: 10px;
+        font-size: 12px;
         color: var(--t3);
+      }
+      .strct-chart__labels span {
+        position: absolute;
+        transform: translateX(-50%);
+        white-space: nowrap;
       }
 
       @media (prefers-reduced-motion: no-preference) {
@@ -720,6 +771,8 @@ export class StrctChart {
   readonly thresholds = input<StrctChartThreshold[]>([]);
   /** Text shown when there is no data. */
   readonly emptyText = input<string>('No data');
+  /** Formatter for the live-mode "Xs ago" tooltip line (receives seconds). */
+  readonly agoFormat = input<((seconds: number) => string) | null>(null);
   /**
    * Optional formatter for the values shown in the hover tooltip + y-axis flag
    * (and the delta magnitude). Lets callers add units / fixed precision, e.g.
@@ -744,14 +797,23 @@ export class StrctChart {
   protected readonly sliding = signal(false);
   protected readonly drawOn = signal(true);
   private firstData = true;
-  private readonly reduceMotion =
-    typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /** Reactive OS motion preference (tracks live changes, not just first load). */
+  private readonly reduceMotion = signal(
+    typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
 
   // Hover state.
   protected readonly hoverIdx = signal<number | null>(null);
 
   constructor() {
     const destroyRef = inject(DestroyRef);
+
+    if (typeof matchMedia !== 'undefined') {
+      const mq = matchMedia('(prefers-reduced-motion: reduce)');
+      const onChange = (e: MediaQueryListEvent) => this.reduceMotion.set(e.matches);
+      mq.addEventListener?.('change', onChange);
+      destroyRef.onDestroy(() => mq.removeEventListener?.('change', onChange));
+    }
 
     afterNextRender(() => {
       const el = this.svgRef()?.nativeElement;
@@ -772,7 +834,7 @@ export class StrctChart {
       if (
         this.isMulti() ||
         !this.live() ||
-        this.reduceMotion ||
+        this.reduceMotion() ||
         typeof requestAnimationFrame === 'undefined'
       )
         return;
@@ -892,6 +954,7 @@ export class StrctChart {
         color: COLOR[x.status ?? this.status()],
         label: x.label ?? '',
         area,
+        dash: x.dash ? (typeof x.dash === 'string' ? x.dash : '5 4') : null,
         pts,
         path,
         areaPath,
@@ -904,7 +967,7 @@ export class StrctChart {
   protected readonly legendItems = computed(() =>
     this.multiSeries()
       .filter((s) => s.label)
-      .map((s) => ({ label: s.label, color: s.color })),
+      .map((s) => ({ label: s.label, color: s.color, dash: s.dash })),
   );
 
   // ── Bars (single-series only) ─────────────────────────────────
@@ -1016,6 +1079,8 @@ export class StrctChart {
     if (i == null) return '';
     if (this.live()) {
       const ago = Math.round(((this.nx() - 1 - i) * this.interval()) / 1000);
+      const fmt = this.agoFormat();
+      if (fmt) return fmt(ago);
       return ago <= 0 ? 'now' : `${ago}s ago`;
     }
     const l = this.labels();
@@ -1056,6 +1121,70 @@ export class StrctChart {
       })
       .filter((d): d is { x: number; y: number; color: string } => d !== null);
   });
+
+  /** Screen-reader summary of the whole chart (role="img" name). */
+  protected readonly chartAria = computed(() => {
+    const f = this.valueFormat() ?? ((v: number) => String(Math.round(v * 100) / 100));
+    if (this.isMulti()) {
+      const parts = this.multiSeries().map((s) => {
+        const last = s.data.length ? f(s.data[s.data.length - 1]) : '';
+        return `${s.label || 'series'} latest ${last}`;
+      });
+      return `Chart, ${this.multiSeries().length} series: ${parts.join('; ')}`;
+    }
+    const d = this.data();
+    if (!d.length) return this.emptyText();
+    return `Chart, ${d.length} points. Min ${f(Math.min(...d))}, max ${f(Math.max(...d))}, latest ${f(d[d.length - 1])}`;
+  });
+
+  /** aria-live text announcing the hovered / keyboard-selected point. */
+  protected readonly srText = computed(() => {
+    const i = this.hoverIdx();
+    if (i == null) return '';
+    if (this.isMulti()) {
+      const rows = this.hoverRows()
+        .map((r) => `${r.label || 'series'} ${r.text}`)
+        .join(', ');
+      return `${this.hoverMeta() || 'point ' + (i + 1)}: ${rows}`;
+    }
+    const meta = this.hoverMeta();
+    return `${meta ? meta + ': ' : ''}${this.hoverValueText()}`;
+  });
+
+  /** Pixel x of a data index (shared by the plot and the x-axis labels). */
+  protected xOf(i: number): number {
+    return this.pl() + i * this.stepX();
+  }
+
+  /** Keyboard access to the crosshair: arrows walk the points. */
+  protected onKey(event: KeyboardEvent): void {
+    if (!this.interactive() || this.type() === 'bar') return;
+    const n = this.nx();
+    if (!n) return;
+    const cur = this.hoverIdx();
+    let next: number | null = null;
+    switch (event.key) {
+      case 'ArrowRight':
+        next = cur == null ? 0 : Math.min(n - 1, cur + 1);
+        break;
+      case 'ArrowLeft':
+        next = cur == null ? n - 1 : Math.max(0, cur - 1);
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = n - 1;
+        break;
+      case 'Escape':
+        this.hoverIdx.set(null);
+        return;
+      default:
+        return;
+    }
+    event.preventDefault();
+    this.hoverIdx.set(next);
+  }
 
   protected onMove(event: PointerEvent): void {
     if (!this.interactive() || (this.type() === 'bar' && !this.isMulti())) return;

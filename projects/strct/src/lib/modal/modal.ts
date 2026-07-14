@@ -48,14 +48,11 @@ function unlockBodyScroll(doc: Document): void {
   imports: [StrctIcon],
   template: `
     @if (open()) {
-      <div
-        class="strct-modal__overlay"
-        role="button"
-        tabindex="0"
-        (click)="onBackdrop($event)"
-        (keydown.enter)="onBackdrop($event)"
-        (keydown.space)="onBackdrop($event)"
-      >
+      <!-- Backdrop: pointer-only dismiss target. No role/tabindex — keyboard users
+           dismiss via Escape, and the focus trap makes the backdrop unreachable
+           anyway (a role="button" here was an unnamed phantom stop for AT). -->
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+      <div class="strct-modal__overlay" (click)="onBackdrop($event)">
         <div
           #dialog
           class="strct-modal__dialog strct-modal__dialog--{{ size() }}"
@@ -69,7 +66,12 @@ function unlockBodyScroll(doc: Document): void {
         >
           <div class="strct-modal__head">
             <span class="strct-modal__title" [id]="titleId">{{ title() }}</span>
-            <button type="button" class="strct-modal__close" aria-label="Close" (click)="close()">
+            <button
+              type="button"
+              class="strct-modal__close"
+              [attr.aria-label]="closeLabel()"
+              (click)="close()"
+            >
               <strct-icon name="close" [size]="14" />
             </button>
           </div>
@@ -180,6 +182,13 @@ function unlockBodyScroll(doc: Document): void {
           transform: translateY(8px) scale(0.98);
         }
       }
+
+      @media (prefers-reduced-motion: reduce) {
+        .strct-modal__overlay,
+        .strct-modal__dialog {
+          animation: none;
+        }
+      }
     `,
   ],
 })
@@ -195,6 +204,8 @@ export class StrctModal {
   readonly size = input<StrctModalSize>('sm');
   /** Hide the footer slot. */
   readonly hideFooter = input(false, { transform: booleanAttribute });
+  /** Accessible label of the X close button (localizable). */
+  readonly closeLabel = input('Close');
   /**
    * Allow closing via a backdrop click / the Escape key. **Off by default** —
    * a modal closes only through its X button or an explicit action button, so a

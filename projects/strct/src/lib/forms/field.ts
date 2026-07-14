@@ -88,7 +88,7 @@ let fieldCounter = 0;
       }
       .strct-field__req {
         color: var(--critical);
-        margin-left: 2px;
+        margin-inline-start: 2px;
       }
       .strct-field__control {
         position: relative;
@@ -116,7 +116,7 @@ let fieldCounter = 0;
       }
       /* Make room for the adornment so it never overlaps the text. */
       .strct-field--validating .strct-control {
-        padding-right: 32px;
+        padding-inline-end: 32px;
       }
       .strct-field__msg {
         font-size: 12px;

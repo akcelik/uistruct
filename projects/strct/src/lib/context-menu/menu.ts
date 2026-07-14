@@ -148,7 +148,7 @@ export interface StrctMenuItem {
         color: var(--t1);
         font-size: 13px;
         font-family: var(--font);
-        text-align: left;
+        text-align: start;
       }
       .strct-menu__item:hover:not(:disabled),
       .strct-menu__item--active:not(:disabled) {
@@ -198,14 +198,14 @@ export interface StrctMenuItem {
         position: absolute;
         top: -5px;
         left: 100%;
-        margin-left: 2px;
+        margin-inline-start: 2px;
         z-index: 1;
       }
       .strct-menu__subpanel--flip {
         left: auto;
         right: 100%;
-        margin-left: 0;
-        margin-right: 2px;
+        margin-inline-start: 0;
+        margin-inline-end: 2px;
       }
       @keyframes strct-menu-in {
         from {

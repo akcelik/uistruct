@@ -4,6 +4,7 @@ import {
   Injectable,
   ViewEncapsulation,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
@@ -86,7 +87,7 @@ const TOAST_ICON: Record<StrctToastType, string> = {
   encapsulation: ViewEncapsulation.None,
   imports: [StrctIcon],
   template: `
-    <div class="strct-toasts" role="region" aria-label="Notifications" aria-live="polite">
+    <div class="strct-toasts" role="region" [attr.aria-label]="regionLabel()" aria-live="polite">
       @for (toast of service.toasts(); track toast.id) {
         <div
           class="strct-toast"
@@ -131,7 +132,7 @@ const TOAST_ICON: Record<StrctToastType, string> = {
         color: var(--t1);
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-left: 3px solid var(--acc);
+        border-inline-start: 3px solid var(--acc);
         border-radius: var(--radius-lg);
         box-shadow: var(--shadow-floating);
         animation: strct-toast-in 0.16s ease;
@@ -160,19 +161,19 @@ const TOAST_ICON: Record<StrctToastType, string> = {
         background: var(--bg-3);
       }
       .strct-toast--success {
-        border-left-color: var(--success);
+        border-inline-start-color: var(--success);
       }
       .strct-toast--success strct-icon {
         color: var(--success);
       }
       .strct-toast--warning {
-        border-left-color: var(--warning);
+        border-inline-start-color: var(--warning);
       }
       .strct-toast--warning strct-icon {
         color: var(--warning);
       }
       .strct-toast--critical {
-        border-left-color: var(--critical);
+        border-inline-start-color: var(--critical);
       }
       .strct-toast--critical strct-icon {
         color: var(--critical);
@@ -183,10 +184,18 @@ const TOAST_ICON: Record<StrctToastType, string> = {
           transform: translateX(16px);
         }
       }
+
+      @media (prefers-reduced-motion: reduce) {
+        .strct-toast {
+          animation: none;
+        }
+      }
     `,
   ],
 })
 export class StrctToastOutlet {
+  /** Accessible name of the notifications region (localizable). */
+  readonly regionLabel = input('Notifications');
   protected readonly service = inject(StrctToastService);
   protected icon(type: StrctToastType): string {
     return TOAST_ICON[type];

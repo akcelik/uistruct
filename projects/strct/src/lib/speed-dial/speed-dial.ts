@@ -61,7 +61,7 @@ export type StrctSpeedDialDirection = 'up' | 'down' | 'left' | 'right';
         height: 44px;
         border-radius: 50%;
         cursor: pointer;
-        color: #fff;
+        color: var(--inv);
         background: var(--acc);
         border: 0;
         box-shadow: var(--shh);

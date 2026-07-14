@@ -19,6 +19,8 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
     class: 'strct-badge',
     '[class.strct-badge--accent]': "status() === 'accent'",
     '[class.strct-badge--success]': "status() === 'success'",
+    '[class.strct-badge--warning]': "status() === 'warning'",
+    // Deprecated alias of --warning (original typo), kept so consumer CSS keeps matching.
     '[class.strct-badge--warninging]': "status() === 'warning'",
     '[class.strct-badge--critical]': "status() === 'critical'",
     '[class.strct-badge--solid]': 'solid()',
@@ -41,7 +43,7 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
         background: transparent;
         border: 1px solid var(--b3);
         /* Thicker left rail gives badges a distinct "tag" identity vs. buttons. */
-        border-left-width: 3px;
+        border-inline-start-width: 3px;
       }
       .strct-badge--accent {
         color: var(--acc);
@@ -51,7 +53,7 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
         color: var(--success);
         border-color: var(--success);
       }
-      .strct-badge--warninging {
+      .strct-badge--warning {
         color: var(--warning);
         border-color: var(--warning);
       }
@@ -65,24 +67,24 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
         color: var(--t1);
         background: var(--bg-a);
         border-color: transparent;
-        border-left-width: 1px;
-        padding-left: 7px;
+        border-inline-start-width: 1px;
+        padding-inline-start: 7px;
       }
       .strct-badge--solid.strct-badge--accent {
         background: var(--acc);
-        color: #fff;
+        color: var(--inv);
       }
       .strct-badge--solid.strct-badge--success {
         background: var(--success);
-        color: #fff;
+        color: var(--inv);
       }
-      .strct-badge--solid.strct-badge--warninging {
+      .strct-badge--solid.strct-badge--warning {
         background: var(--warning);
-        color: #fff;
+        color: var(--inv);
       }
       .strct-badge--solid.strct-badge--critical {
         background: var(--critical);
-        color: #fff;
+        color: var(--inv);
       }
     `,
   ],

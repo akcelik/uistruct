@@ -70,7 +70,7 @@ import {
         overflow: hidden;
         min-height: 420px;
         color: var(--t1);
-        border-right: 1px solid var(--b2);
+        border-inline-end: 1px solid var(--b2);
       }
       .strct-login__aside::before,
       .strct-login__aside::after {

@@ -106,7 +106,7 @@ import { StrctIcon } from '../icon/icon';
         left: 100%;
         z-index: 1;
         min-width: 170px;
-        margin-left: 2px;
+        margin-inline-start: 2px;
         padding: 4px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
@@ -117,8 +117,8 @@ import { StrctIcon } from '../icon/icon';
       .strct-submenu__panel--flip {
         left: auto;
         right: 100%;
-        margin-left: 0;
-        margin-right: 2px;
+        margin-inline-start: 0;
+        margin-inline-end: 2px;
       }
       @keyframes strct-submenu-in {
         from {

@@ -33,28 +33,60 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   `,
   styles: [
     `
-    .strct-tg {
-      display: inline-flex; align-items: center; gap: 9px; cursor: pointer;
-      font-size: 13px; color: var(--t1); user-select: none;
-    }
-    .strct-tg--disabled { opacity: .5; cursor: not-allowed; }
-    .strct-tg__native { position: absolute; opacity: 0; width: 0; height: 0; }
-    .strct-tg__track {
-      position: relative; width: 34px; height: 19px; border-radius: 11px; flex-shrink: 0;
-      background: var(--bg-3); border: 1px solid var(--b3);
-      transition: background .16s ease, border-color .16s ease;
-    }
-    .strct-tg__thumb {
-      position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%;
-      background: var(--t2); transition: transform .16s ease, background .16s ease;
-    }
-    .strct-tg__native:checked + .strct-tg__track {
-      background: var(--acc); border-color: transparent;
-    }
-    .strct-tg__native:checked + .strct-tg__track .strct-tg__thumb {
-      transform: translateX(15px); background: #fff;
-    }
-    .strct-tg__native:focus-visible + .strct-tg__track { box-shadow: 0 0 0 3px var(--acc18); }
+      .strct-tg {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--t1);
+        user-select: none;
+      }
+      .strct-tg--disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .strct-tg__native {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .strct-tg__track {
+        position: relative;
+        width: 34px;
+        height: 19px;
+        border-radius: 11px;
+        flex-shrink: 0;
+        background: var(--bg-3);
+        border: 1px solid var(--b3);
+        transition:
+          background 0.16s ease,
+          border-color 0.16s ease;
+      }
+      .strct-tg__thumb {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: var(--t2);
+        transition:
+          transform 0.16s ease,
+          background 0.16s ease;
+      }
+      .strct-tg__native:checked + .strct-tg__track {
+        background: var(--acc);
+        border-color: transparent;
+      }
+      .strct-tg__native:checked + .strct-tg__track .strct-tg__thumb {
+        transform: translateX(15px);
+        background: var(--inv);
+      }
+      .strct-tg__native:focus-visible + .strct-tg__track {
+        box-shadow: 0 0 0 3px var(--acc18);
+      }
     `,
   ],
 })

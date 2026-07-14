@@ -105,12 +105,12 @@ export type StrctDrawerSize = 'sm' | 'md' | 'lg';
       }
       .strct-drawer--start {
         left: 0;
-        border-right: 1px solid var(--b2);
+        border-inline-end: 1px solid var(--b2);
         animation: strct-drawer-in-start 0.18s ease;
       }
       .strct-drawer--end {
         right: 0;
-        border-left: 1px solid var(--b2);
+        border-inline-start: 1px solid var(--b2);
         animation: strct-drawer-in-end 0.18s ease;
       }
       .strct-drawer--top,
@@ -227,6 +227,13 @@ export type StrctDrawerSize = 'sm' | 'md' | 'lg';
       @keyframes strct-drawer-in-bottom {
         from {
           transform: translateY(100%);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .strct-drawer__backdrop,
+        .strct-drawer {
+          animation: none;
         }
       }
     `,

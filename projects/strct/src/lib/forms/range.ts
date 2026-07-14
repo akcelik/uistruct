@@ -89,7 +89,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
       }
       .strct-range__value {
         min-width: 30px;
-        text-align: right;
+        text-align: end;
         font-size: 12px;
         font-family: var(--mono);
         color: var(--t2);

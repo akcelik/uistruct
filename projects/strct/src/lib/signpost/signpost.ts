@@ -90,7 +90,7 @@ export type StrctSignpostPosition = 'top' | 'bottom' | 'left' | 'right';
         height: 9px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-right: 0;
+        border-inline-end: 0;
         border-bottom: 0;
       }
       .strct-sp__panel--bottom {

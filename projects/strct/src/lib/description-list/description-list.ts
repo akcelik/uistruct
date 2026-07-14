@@ -108,11 +108,11 @@ export type StrctDescAlign = 'between' | 'start';
       .strct-desc__value {
         color: var(--t1);
         min-width: 0;
-        text-align: right;
+        text-align: end;
       }
       .strct-dl--inline .strct-desc__value,
       .strct-dl--start .strct-desc__value {
-        text-align: left;
+        text-align: start;
       }
       .strct-desc--mono .strct-desc__value {
         font-family: var(--mono);

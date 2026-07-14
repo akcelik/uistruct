@@ -184,4 +184,46 @@ describe('StrctChart', () => {
     const all = build({ data: labels.map(Number), labels });
     expect(all.querySelectorAll('.strct-chart__labels span').length).toBe(60);
   });
+
+  // A11y: role="img" + generated summary, keyboard crosshair, CVD dash channel
+  it('exposes the chart as role="img" with a data summary', () => {
+    const el = build({ data: [10, 30, 20] });
+    const svg = el.querySelector('svg')!;
+    expect(svg.getAttribute('role')).toBe('img');
+    const label = svg.getAttribute('aria-label') ?? '';
+    expect(label).toContain('3 points');
+    expect(label).toContain('30');
+  });
+
+  it('is keyboard-focusable and arrows move the crosshair point', () => {
+    const fixture = TestBed.createComponent(StrctChart);
+    fixture.componentRef.setInput('data', [10, 20, 30]);
+    fixture.detectChanges();
+    const svg = fixture.nativeElement.querySelector('svg') as SVGElement;
+    expect(svg.getAttribute('tabindex')).toBe('0');
+    svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.strct-chart__tip')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.strct-chart__sr')?.textContent).toContain('10');
+  });
+
+  it('renders a dashed line + dashed legend swatch for dash series', () => {
+    const el = build({
+      series: [
+        { data: [1, 2], label: 'A' },
+        { data: [2, 1], label: 'B', dash: true },
+      ],
+      legend: true,
+    });
+    const lines = el.querySelectorAll('.strct-chart__line');
+    expect(lines[0].getAttribute('stroke-dasharray')).toBeNull();
+    expect(lines[1].getAttribute('stroke-dasharray')).toBe('5 4');
+  });
+
+  it('positions x labels at their datapoint x (honest axis)', () => {
+    const el = build({ data: [1, 2, 3], labels: ['a', 'b', 'c'] });
+    const spans = [...el.querySelectorAll('.strct-chart__labels span')] as HTMLElement[];
+    expect(spans.length).toBe(3);
+    expect(spans.every((sp) => sp.style.left !== '')).toBe(true);
+  });
 });
