@@ -22,7 +22,12 @@ export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
     <strct-icon [name]="icon()" [size]="15" />
     <div class="strct-alert__body"><ng-content /></div>
     @if (closable()) {
-      <button type="button" class="strct-alert__close" aria-label="Dismiss" (click)="closed.emit()">
+      <button
+        type="button"
+        class="strct-alert__close"
+        [attr.aria-label]="dismissLabel()"
+        (click)="closed.emit()"
+      >
         <strct-icon name="close" [size]="13" />
       </button>
     }
@@ -48,7 +53,7 @@ export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
         color: var(--t1);
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-left: 3px solid var(--acc);
+        border-inline-start: 3px solid var(--acc);
       }
       .strct-alert strct-icon {
         color: var(--acc);
@@ -76,19 +81,19 @@ export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
       }
 
       .strct-alert--success {
-        border-left-color: var(--success);
+        border-inline-start-color: var(--success);
       }
       .strct-alert--success strct-icon {
         color: var(--success);
       }
       .strct-alert--warning {
-        border-left-color: var(--warning);
+        border-inline-start-color: var(--warning);
       }
       .strct-alert--warning strct-icon {
         color: var(--warning);
       }
       .strct-alert--critical {
-        border-left-color: var(--critical);
+        border-inline-start-color: var(--critical);
       }
       .strct-alert--critical strct-icon {
         color: var(--critical);
@@ -101,6 +106,8 @@ export class StrctAlert {
   readonly type = input<StrctAlertType>('info');
   /** Show a dismiss button. */
   readonly closable = input(false, { transform: booleanAttribute });
+  /** Accessible label of the dismiss button (localizable). */
+  readonly dismissLabel = input('Dismiss');
   /** Emitted when the alert is dismissed. */
   readonly closed = output<void>();
 

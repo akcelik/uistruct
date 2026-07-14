@@ -94,7 +94,7 @@ export abstract class StrctCascadeHost {
         left: 100%;
         z-index: 1;
         min-width: 160px;
-        margin-left: 2px;
+        margin-inline-start: 2px;
         padding: 4px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
@@ -187,7 +187,7 @@ export class StrctCascadeNode {
         color: var(--t1);
         background: var(--bg-2);
         border: 1px solid var(--b2);
-        text-align: left;
+        text-align: start;
       }
       .strct-cs__trigger:hover {
         border-color: var(--b3);

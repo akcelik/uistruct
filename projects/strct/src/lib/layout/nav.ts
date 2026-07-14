@@ -38,7 +38,7 @@ import { StrctShellService } from './layout';
         width: 264px;
         flex-shrink: 0;
         background: var(--bg-1);
-        border-right: 1px solid var(--b2);
+        border-inline-end: 1px solid var(--b2);
         overflow: hidden;
       }
       @media (max-width: 768px) {

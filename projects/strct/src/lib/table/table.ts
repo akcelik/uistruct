@@ -131,7 +131,7 @@ export class StrctCellDef {
       .strct-table th,
       .strct-table td {
         padding: 9px 13px;
-        text-align: left;
+        text-align: start;
         border-bottom: 1px solid var(--b1);
       }
       .strct-table th {

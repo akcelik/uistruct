@@ -20,4 +20,13 @@ describe('StrctBadge', () => {
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).classList).toContain('strct-badge--solid');
   });
+
+  it('emits the corrected --warning class plus the deprecated --warninging alias', () => {
+    const fixture = TestBed.createComponent(StrctBadge);
+    fixture.componentRef.setInput('status', 'warning');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.classList).toContain('strct-badge--warning');
+    expect(el.classList).toContain('strct-badge--warninging');
+  });
 });

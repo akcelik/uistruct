@@ -50,29 +50,70 @@ import { StrctThemeService } from './theme.service';
   host: { class: 'strct-ts' },
   styles: [
     `
-    .strct-ts { display: inline-flex; align-items: center; gap: 14px; }
-    .strct-ts__pal { display: inline-flex; gap: 7px; }
-    .strct-ts__dot {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 18px; height: 18px; border-radius: 50%; padding: 0; cursor: pointer;
-      background: transparent; border: 1.5px solid rgba(255,255,255,.35);
-      transition: transform .15s ease, border-color .15s ease;
-    }
-    .strct-ts__dot:hover { transform: scale(1.12); }
-    .strct-ts__inner { width: 11px; height: 11px; border-radius: 50%; display: block; }
-    .strct-ts__dot--on { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.25); }
+      .strct-ts {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .strct-ts__pal {
+        display: inline-flex;
+        gap: 7px;
+      }
+      .strct-ts__dot {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        padding: 0;
+        cursor: pointer;
+        background: transparent;
+        border: 1.5px solid rgba(255, 255, 255, 0.35);
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease;
+      }
+      .strct-ts__dot:hover {
+        transform: scale(1.12);
+      }
+      .strct-ts__inner {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        display: block;
+      }
+      .strct-ts__dot--on {
+        border-color: var(--hdr-fg);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+      }
 
-    .strct-ts__pill {
-      display: inline-flex; padding: 2px; gap: 2px; border-radius: 7px;
-      background: rgba(255,255,255,.10);
-    }
-    .strct-ts__pbtn {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 26px; height: 22px; border: 0; border-radius: 5px; cursor: pointer;
-      background: transparent; color: rgba(255,255,255,.6);
-      transition: background .14s ease, color .14s ease;
-    }
-    .strct-ts__pbtn--on { background: rgba(255,255,255,.18); color: #fff; }
+      .strct-ts__pill {
+        display: inline-flex;
+        padding: 2px;
+        gap: 2px;
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .strct-ts__pbtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 22px;
+        border: 0;
+        border-radius: 5px;
+        cursor: pointer;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.6);
+        transition:
+          background 0.14s ease,
+          color 0.14s ease;
+      }
+      .strct-ts__pbtn--on {
+        background: rgba(255, 255, 255, 0.18);
+        color: var(--hdr-fg);
+      }
     `,
   ],
 })

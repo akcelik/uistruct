@@ -93,7 +93,7 @@ export class StrctShell {}
       }
       .strct-header__drawer-toggle:hover {
         background: rgba(255, 255, 255, 0.12);
-        color: #fff;
+        color: var(--hdr-fg);
       }
       @media (max-width: 768px) {
         .strct-header__drawer-toggle {

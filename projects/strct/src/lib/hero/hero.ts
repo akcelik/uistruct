@@ -79,7 +79,7 @@ const DEFAULT_ICON: Record<StrctStatus, string> = {
         border-radius: var(--radius-lg);
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-left: 3px solid var(--b3);
+        border-inline-start: 3px solid var(--b3);
       }
       .strct-hero--dense {
         padding: var(--space-3) var(--space-4);
@@ -136,7 +136,7 @@ const DEFAULT_ICON: Record<StrctStatus, string> = {
         flex-direction: column;
         align-items: flex-end;
         gap: var(--space-2);
-        margin-left: auto;
+        margin-inline-start: auto;
       }
       .strct-hero__meta,
       .strct-hero__actions {
@@ -156,37 +156,37 @@ const DEFAULT_ICON: Record<StrctStatus, string> = {
 
       /* Status tints: colored left rail + filled icon chip. */
       .strct-hero--accent {
-        border-left-color: var(--acc);
+        border-inline-start-color: var(--acc);
       }
       .strct-hero--accent .strct-hero__chip {
         background: var(--acc);
-        color: #fff;
+        color: var(--inv);
       }
       .strct-hero--success {
-        border-left-color: var(--success);
+        border-inline-start-color: var(--success);
       }
       .strct-hero--success .strct-hero__chip {
         background: var(--success);
-        color: #fff;
+        color: var(--inv);
       }
       .strct-hero--warning {
-        border-left-color: var(--warning);
+        border-inline-start-color: var(--warning);
       }
       .strct-hero--warning .strct-hero__chip {
         background: var(--warning);
-        color: #fff;
+        color: var(--inv);
       }
       .strct-hero--critical {
-        border-left-color: var(--critical);
+        border-inline-start-color: var(--critical);
       }
       .strct-hero--critical .strct-hero__chip {
         background: var(--critical);
-        color: #fff;
+        color: var(--inv);
       }
 
       @media (max-width: 560px) {
         .strct-hero__aside {
-          margin-left: 0;
+          margin-inline-start: 0;
           align-items: stretch;
           width: 100%;
         }

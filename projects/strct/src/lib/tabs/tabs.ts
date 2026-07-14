@@ -6,6 +6,7 @@ import {
   contentChildren,
   effect,
   input,
+  model,
   signal,
 } from '@angular/core';
 
@@ -111,7 +112,7 @@ export class StrctTab {
 })
 export class StrctTabs {
   readonly tabs = contentChildren(StrctTab);
-  readonly selectedIndex = signal(0);
+  readonly selectedIndex = model(0);
 
   constructor() {
     // Keep each child panel's visibility in sync with the selected index.

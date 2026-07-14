@@ -102,15 +102,24 @@ pages with live examples, API tables and an on-this-page TOC, plus:
 The theme is reviewed against WCAG and display-ergonomics / vision science to
 limit eye strain during long, all-day console sessions:
 
-- **WCAG AA text contrast** — all text tokens (`--t1/--t2/--t3`) meet AA
-  (≥ 4.5:1) across every palette and mode, with a preserved `t1 > t2 > t3`
-  hierarchy.
+- **WCAG AA text contrast** — all text tokens (`--t1/--t2/--t3`) **and all
+  semantic text tones** (accent / success / warning / critical) meet AA (≥ 4.5:1)
+  across every palette and mode, with a preserved `t1 > t2 > t3` hierarchy. Text on
+  solid status fills uses the `--inv` token, keeping ≥ 4.5:1 in both modes.
 - **OS-aware theming** — `StrctThemeService` follows the operating system's
   `prefers-color-scheme` until the user makes an explicit choice (which then wins
   and persists), so no one is forced onto a bright screen at night.
 - **`prefers-contrast: more`** — strengthens borders, text and the focus ring when
   the OS asks; the default look is untouched otherwise.
-- **`prefers-reduced-motion`** — animations collapse to instant state changes.
+- **`prefers-reduced-motion`** — every animation (charts, donut, flow, modal,
+  drawer, toast, spinner) collapses to instant state changes; charts track the OS
+  setting live.
+- **Color-blind safe state badges** — icon status dots are shape-coded
+  (✓ success · × critical · ! warning · i info · – off), and chart series can add a
+  `dash` channel, so state never relies on hue alone.
+- **Keyboard-complete** — tree (roving tabindex + arrow keys), charts (focusable
+  crosshair with arrow keys + live announcements), donut legends, datagrid sort
+  headers and all form controls are fully keyboard-operable.
 - **12px type-size floor** with a 1.5 body line-height; softened (non-pure-white)
   light surfaces to cut glare.
 
@@ -118,7 +127,10 @@ limit eye strain during long, all-day console sessions:
 
 - Component selectors and the library package use the `strct` prefix; class names
   use `Strct…`.
-- Components never hard-code colors — only theme tokens (`var(--…)`).
+- Components never hard-code colors — only theme tokens (`var(--…)`); text on
+  status fills uses `--inv`, header-anchored UI uses `--hdr-fg`.
+- Styles use CSS logical properties (margin/padding/border-inline) for
+  RTL-readiness; user-visible strings are overridable inputs for localization.
 - Standalone components, signal inputs/outputs, `OnPush` change detection,
   zoneless-ready.
 

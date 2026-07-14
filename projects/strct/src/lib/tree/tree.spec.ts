@@ -114,3 +114,51 @@ describe('StrctTreeNode', () => {
     expect(host.classList).toContain('strct-tnode');
   });
 });
+
+describe('StrctTree — keyboard navigation (ARIA tree pattern)', () => {
+  function kb(el: HTMLElement, key: string): void {
+    el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+  }
+  function rows(el: HTMLElement): HTMLElement[] {
+    return [...el.querySelectorAll('.strct-tnode__row')] as HTMLElement[];
+  }
+
+  it('uses a roving tabindex: exactly one row is tabbable', () => {
+    const { el } = setup({ expandedIds: ['root', 'a'] });
+    const tabbables = rows(el).filter((r) => r.getAttribute('tabindex') === '0');
+    expect(tabbables.length).toBe(1);
+    expect(rows(el).every((r) => ['0', '-1'].includes(r.getAttribute('tabindex')!))).toBe(true);
+  });
+
+  it('exposes aria-level per depth', () => {
+    const { el } = setup({ expandedIds: ['root', 'a'] });
+    const level = (id: string) =>
+      el.querySelector(`[data-node-id="${id}"] > .strct-tnode__row`)?.getAttribute('aria-level');
+    expect(level('root')).toBe('1');
+    expect(level('a')).toBe('2');
+    expect(level('a1')).toBe('3');
+  });
+
+  it('moves focus with ArrowDown / ArrowUp', () => {
+    const { fixture, el } = setup({ expandedIds: ['root'] });
+    const [rootRow, aRow] = rows(el);
+    rootRow.focus();
+    kb(rootRow, 'ArrowDown');
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(aRow);
+    kb(aRow, 'ArrowUp');
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(rootRow);
+  });
+
+  it('expands a closed parent with ArrowRight and collapses with ArrowLeft', () => {
+    const { fixture, el } = setup({ expandedIds: ['root'] });
+    const aRow = el.querySelector('[data-node-id="a"] > .strct-tnode__row') as HTMLElement;
+    kb(aRow, 'ArrowRight');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-node-id="a1"]')).toBeTruthy();
+    kb(aRow, 'ArrowLeft');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-node-id="a1"]')).toBeNull();
+  });
+});

@@ -7,6 +7,7 @@ import {
   contentChildren,
   effect,
   input,
+  model,
   output,
   signal,
 } from '@angular/core';
@@ -67,7 +68,7 @@ export class StrctStep {
         </button>
       }
       <button strct-button variant="flat" [disabled]="current() === 0" (click)="back()">
-        Back
+        {{ backLabel() }}
       </button>
       @if (isLast()) {
         <button
@@ -80,7 +81,7 @@ export class StrctStep {
         </button>
       } @else {
         <button strct-button variant="primary" [disabled]="!canAdvance()" (click)="next()">
-          Next
+          {{ nextLabel() }}
         </button>
       }
     </div>
@@ -154,16 +155,19 @@ export class StrctStep {
         gap: 8px;
       }
       .strct-wiz__cancel {
-        margin-right: auto;
+        margin-inline-end: auto;
       }
     `,
   ],
 })
 export class StrctWizard {
   readonly steps = contentChildren(StrctStep);
-  readonly current = signal(0);
+  readonly current = model(0);
   /** Label for the final-step button (default "Finish"). */
   readonly finishLabel = input('Finish');
+  /** Labels for the Back / Next buttons (localizable). */
+  readonly backLabel = input('Back');
+  readonly nextLabel = input('Next');
   /** Disable Finish and show a busy label while an async submit is in flight. */
   readonly submitting = input(false, { transform: booleanAttribute });
   /** Show a Cancel button on the left. */

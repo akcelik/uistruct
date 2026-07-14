@@ -79,7 +79,7 @@ const LEVELS = [
         position: relative;
       }
       .strct-pw__input {
-        padding-right: 38px;
+        padding-inline-end: 38px;
       }
       .strct-pw__toggle {
         position: absolute;
@@ -119,7 +119,7 @@ const LEVELS = [
         font-size: 12px;
         font-weight: 600;
         min-width: 42px;
-        text-align: right;
+        text-align: end;
       }
     `,
   ],

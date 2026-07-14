@@ -55,4 +55,22 @@ describe('StrctDonut', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('.strct-donut__value')?.textContent).toContain('48');
   });
+
+  it('exposes a role="img" summary naming every slice', () => {
+    const el = build({ segments: SEGS }).nativeElement as HTMLElement;
+    const svg = el.querySelector('svg')!;
+    expect(svg.getAttribute('role')).toBe('img');
+    const label = svg.getAttribute('aria-label') ?? '';
+    expect(label).toContain('Running 36 (75%)');
+  });
+
+  it('legend rows are keyboard-focusable and drive the center readout', () => {
+    const fixture = build({ segments: SEGS, legend: true, centerValue: 48 });
+    const el = fixture.nativeElement as HTMLElement;
+    const row = el.querySelector('.strct-donut__leg') as HTMLElement;
+    expect(row.getAttribute('tabindex')).toBe('0');
+    row.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-donut__value')?.textContent).toContain('36');
+  });
 });

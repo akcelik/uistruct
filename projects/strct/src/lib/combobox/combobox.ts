@@ -106,7 +106,7 @@ let comboboxCounter = 0;
         position: relative;
       }
       .strct-cbx__input {
-        padding-right: 30px;
+        padding-inline-end: 30px;
       }
       .strct-cbx__caret {
         position: absolute;

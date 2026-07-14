@@ -135,7 +135,7 @@ const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}
         position: relative;
       }
       .strct-dp__input {
-        padding-right: 36px;
+        padding-inline-end: 36px;
         cursor: pointer;
       }
       .strct-dp__icon {
@@ -198,7 +198,7 @@ const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}
       }
       .strct-dp__dow span {
         text-align: center;
-        font-size: 10px;
+        font-size: 12px;
         font-weight: 600;
         color: var(--t3);
         padding: 4px 0;
@@ -235,7 +235,7 @@ const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}
       }
       .strct-dp__day--selected {
         background: var(--acc);
-        color: #fff;
+        color: var(--inv);
       }
       .strct-dp__day--selected:hover {
         background: var(--acc);

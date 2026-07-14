@@ -125,7 +125,7 @@ export interface StrctMenuSection {
         font-weight: 500;
         font-family: var(--font);
         cursor: pointer;
-        text-align: left;
+        text-align: start;
         transition:
           background 0.13s ease,
           color 0.13s ease;
@@ -160,7 +160,7 @@ export interface StrctMenuSection {
       }
       .strct-sm__cat-static {
         padding: 11px 10px 5px;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -183,12 +183,12 @@ export interface StrctMenuSection {
         font-size: 13px;
         font-family: var(--font);
         cursor: pointer;
-        text-align: left;
+        text-align: start;
         transition: background 0.13s ease;
       }
       /* Indent level-2 items under a collapsible category. */
       .strct-sm__section--collapsible .strct-sm__item {
-        padding-left: 31px;
+        padding-inline-start: 31px;
       }
       .strct-sm__item:hover:not(:disabled) {
         background: var(--bg-3);

@@ -95,7 +95,7 @@ export interface StrctRailItem {
         width: 232px;
         flex-shrink: 0;
         background: var(--bg-1);
-        border-right: 1px solid var(--b2);
+        border-inline-end: 1px solid var(--b2);
         overflow: hidden;
         transition: width 0.16s ease;
       }
@@ -124,7 +124,7 @@ export interface StrctRailItem {
         cursor: pointer;
         font-size: 13.5px;
         font-family: var(--font);
-        text-align: left;
+        text-align: start;
         white-space: nowrap;
         transition:
           background 0.14s ease,

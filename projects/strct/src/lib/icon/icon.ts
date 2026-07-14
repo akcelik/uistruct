@@ -534,8 +534,25 @@ export type StrctIconBadge =
         border-radius: 50%;
         box-shadow: 0 0 0 1.5px var(--bg-1);
       }
+      /* Shape-coded glyphs so states differ by more than hue (color-blind safe):
+         success ✓ · critical × · info i · off – (warning already has its ! triangle). */
+      .strct-icon__badge--success,
+      .strct-icon__badge--critical,
+      .strct-icon__badge--info,
+      .strct-icon__badge--off {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(6px, 68%, 10px);
+        font-weight: 800;
+        line-height: 1;
+        color: var(--inv);
+      }
       .strct-icon__badge--success {
         background: var(--success);
+      }
+      .strct-icon__badge--success::before {
+        content: '✓';
       }
       .strct-icon__badge--warning {
         background: var(--warning);
@@ -556,7 +573,7 @@ export type StrctIconBadge =
         justify-content: center;
         font-size: clamp(6px, 70%, 10px);
         font-weight: 800;
-        color: rgba(0, 0, 0, 0.85);
+        color: var(--inv);
         line-height: 1;
       }
       .strct-icon__badge--warning::before {
@@ -565,11 +582,20 @@ export type StrctIconBadge =
       .strct-icon__badge--critical {
         background: var(--critical);
       }
+      .strct-icon__badge--critical::before {
+        content: '×';
+      }
       .strct-icon__badge--off {
         background: var(--t3);
       }
+      .strct-icon__badge--off::before {
+        content: '–';
+      }
       .strct-icon__badge--info {
         background: var(--acc);
+      }
+      .strct-icon__badge--info::before {
+        content: 'i';
       }
       .strct-icon__badge--maintenance {
         background: var(--warning);
@@ -590,7 +616,7 @@ export type StrctIconBadge =
       .strct-icon__badge--maintenance svg {
         width: 84%;
         height: 84%;
-        color: rgba(0, 0, 0, 0.85);
+        color: var(--inv);
       }
     `,
   ],

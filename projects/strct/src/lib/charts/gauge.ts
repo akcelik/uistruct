@@ -87,7 +87,7 @@ const COLOR: Record<StrctChartStatus, string> = {
         pointer-events: none;
       }
       .strct-gauge__num {
-        font-size: 22px;
+        font-size: var(--text-2xl);
         font-weight: 600;
         color: var(--t1);
         line-height: 1;
@@ -95,7 +95,7 @@ const COLOR: Record<StrctChartStatus, string> = {
       .strct-gauge__pct {
         font-size: 12px;
         color: var(--t2);
-        margin-left: 1px;
+        margin-inline-start: 1px;
       }
       .strct-gauge__label {
         font-size: 12px;

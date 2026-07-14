@@ -75,7 +75,7 @@ import { StrctIcon } from '../icon/icon';
       .strct-cb__native:checked + .strct-cb__box {
         background: var(--acc);
         border-color: transparent;
-        color: #fff;
+        color: var(--inv);
       }
       .strct-cb__native:focus-visible + .strct-cb__box {
         box-shadow: 0 0 0 3px var(--acc18);

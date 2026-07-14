@@ -12,7 +12,7 @@ export type StrctSpinnerSize = 'sm' | 'md' | 'lg';
   host: {
     class: 'strct-spinner',
     role: 'progressbar',
-    'aria-label': 'Loading',
+    '[attr.aria-label]': 'label()',
     '[class.strct-spinner--sm]': "size() === 'sm'",
     '[class.strct-spinner--lg]': "size() === 'lg'",
   },
@@ -53,4 +53,6 @@ export type StrctSpinnerSize = 'sm' | 'md' | 'lg';
 export class StrctSpinner {
   /** Size variant. */
   readonly size = input<StrctSpinnerSize>('md');
+  /** Accessible label (localizable). */
+  readonly label = input('Loading');
 }

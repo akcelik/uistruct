@@ -68,7 +68,7 @@ export class StrctAccordion {}
         font-size: 13px;
         font-weight: 500;
         color: var(--t1);
-        text-align: left;
+        text-align: start;
       }
       .strct-acc__head:hover {
         background: var(--bg-3);

@@ -18,6 +18,37 @@ import {
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 import { StrctPagination } from '../pagination/pagination';
+
+/** Every user-visible / assistive string in the grid, overridable for i18n. */
+export interface StrctDatagridLabels {
+  row: string;
+  rows: string;
+  selected: string;
+  selectAll: string;
+  selectRow: string;
+  openDetail: string;
+  toggleDetail: string;
+  closeDetail: string;
+  rowActions: string;
+  chooseColumns: string;
+  refresh: string;
+  actions: string;
+}
+
+const DG_LABELS: StrctDatagridLabels = {
+  row: 'row',
+  rows: 'rows',
+  selected: 'selected',
+  selectAll: 'Select all rows on this page',
+  selectRow: 'Select row',
+  openDetail: 'Open detail',
+  toggleDetail: 'Toggle detail',
+  closeDetail: 'Close detail',
+  rowActions: 'Row actions',
+  chooseColumns: 'Choose columns',
+  refresh: 'Refresh data',
+  actions: 'Actions',
+};
 import { StrctCheckbox } from '../forms/checkbox';
 import { StrctButton, StrctButtonGroup } from '../button/button';
 import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
@@ -92,7 +123,7 @@ export class StrctDatagridActionBar {}
               @if (selectable()) {
                 <th class="strct-dg__sel">
                   <strct-checkbox
-                    ariaLabel="Select all rows on this page"
+                    [ariaLabel]="L().selectAll"
                     [checked]="allPageSelected()"
                     [indeterminate]="somePageSelected()"
                     (checkedChange)="toggleAll()"
@@ -129,7 +160,7 @@ export class StrctDatagridActionBar {}
                 </th>
               }
               @if (canActions()) {
-                <th class="strct-dg__actioncol" aria-label="Actions"></th>
+                <th class="strct-dg__actioncol" [attr.aria-label]="L().actions"></th>
               }
             </tr>
           </thead>
@@ -169,7 +200,7 @@ export class StrctDatagridActionBar {}
                         class="strct-dg__detailbtn"
                         [class.strct-dg__detailbtn--active]="row === activeRow()"
                         [attr.aria-expanded]="row === activeRow()"
-                        aria-label="Open detail"
+                        [attr.aria-label]="L().openDetail"
                         (click)="openDetail(row)"
                       >
                         <strct-icon name="chevronDoubleRight" [size]="13" [strokeWidth]="1.6" />
@@ -183,7 +214,7 @@ export class StrctDatagridActionBar {}
                         class="strct-dg__expandbtn"
                         [class.strct-dg__expandbtn--open]="isExpanded(row)"
                         [attr.aria-expanded]="isExpanded(row)"
-                        aria-label="Toggle detail"
+                        [attr.aria-label]="L().toggleDetail"
                         (click)="toggleExpand(row)"
                       >
                         <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
@@ -193,7 +224,7 @@ export class StrctDatagridActionBar {}
                   @if (selectable()) {
                     <td class="strct-dg__sel">
                       <strct-checkbox
-                        ariaLabel="Select row"
+                        [ariaLabel]="L().selectRow"
                         [checked]="isSelected(row)"
                         (checkedChange)="toggleRow(row)"
                       />
@@ -220,7 +251,7 @@ export class StrctDatagridActionBar {}
                       <button
                         type="button"
                         class="strct-dg__kebab"
-                        aria-label="Row actions"
+                        [attr.aria-label]="L().rowActions"
                         (click)="openRowMenu(row, $event)"
                       >
                         <strct-icon name="dots" [size]="16" />
@@ -257,7 +288,7 @@ export class StrctDatagridActionBar {}
             <button
               type="button"
               class="strct-dg__pane-close"
-              aria-label="Close detail"
+              [attr.aria-label]="L().closeDetail"
               (click)="closePane()"
             >
               <strct-icon name="close" [size]="13" />
@@ -285,7 +316,7 @@ export class StrctDatagridActionBar {}
                     size="sm"
                     [class.is-open]="chooserOpen()"
                     [disabled]="footerActionsDisabled()"
-                    aria-label="Choose columns"
+                    [attr.aria-label]="L().chooseColumns"
                     (click)="chooserOpen.set(!chooserOpen())"
                   >
                     <strct-icon name="settings" [size]="14" />
@@ -296,7 +327,7 @@ export class StrctDatagridActionBar {}
                     strct-button
                     size="sm"
                     [disabled]="footerActionsDisabled()"
-                    aria-label="Refresh data"
+                    [attr.aria-label]="L().refresh"
                     (click)="syncChange.emit()"
                   >
                     <strct-icon name="refresh" [size]="14" />
@@ -319,10 +350,10 @@ export class StrctDatagridActionBar {}
             </div>
           }
           <span class="strct-dg__count">
-            {{ sorted().length }} {{ sorted().length === 1 ? 'row' : 'rows' }}
+            {{ sorted().length }} {{ sorted().length === 1 ? L().row : L().rows }}
             @if (selectedCount()) {
               <span class="strct-dg__count-sep">|</span>
-              <span class="strct-dg__count-sel">{{ selectedCount() }} selected</span>
+              <span class="strct-dg__count-sel">{{ selectedCount() }} {{ L().selected }}</span>
             }
           </span>
         </div>
@@ -360,7 +391,7 @@ export class StrctDatagridActionBar {}
       .strct-dg th,
       .strct-dg td {
         padding: 9px 13px;
-        text-align: left;
+        text-align: start;
         border-bottom: 1px solid var(--b1);
       }
       .strct-dg tbody td {
@@ -452,7 +483,7 @@ export class StrctDatagridActionBar {}
       .strct-dg__actioncell {
         width: 1%;
         white-space: nowrap;
-        text-align: right;
+        text-align: end;
       }
       .strct-dg__kebab {
         display: inline-flex;
@@ -552,7 +583,7 @@ export class StrctDatagridActionBar {}
       /* Caret on the active row that points toward the open detail pane. */
       .strct-dg__layout--paned .strct-dg__row--active td:last-child {
         position: relative;
-        padding-right: 26px;
+        padding-inline-end: 26px;
       }
       .strct-dg__layout--paned .strct-dg__row--active td:last-child::after {
         content: '';
@@ -562,7 +593,7 @@ export class StrctDatagridActionBar {}
         width: 6px;
         height: 6px;
         border-top: 1.6px solid var(--acc);
-        border-right: 1.6px solid var(--acc);
+        border-inline-end: 1.6px solid var(--acc);
         transform: translateY(-50%) rotate(45deg);
       }
       .strct-dg__pane {
@@ -571,7 +602,7 @@ export class StrctDatagridActionBar {}
         align-self: stretch;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-left: 2px solid var(--acc);
+        border-inline-start: 2px solid var(--acc);
         border-radius: 8px;
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
@@ -764,6 +795,10 @@ export class StrctDatagrid {
    * selection; the user's subsequent toggles are preserved until the next change.
    */
   readonly initialSelection = input<readonly unknown[] | null>(null);
+  /** Override any user-visible / assistive string (partial; merged over defaults). */
+  readonly labels = input<Partial<StrctDatagridLabels>>({});
+  /** Effective labels (defaults + overrides). */
+  protected readonly L = computed(() => ({ ...DG_LABELS, ...this.labels() }));
   /** Emitted when the selection changes. */
   readonly selectionChange = output<StrctRow[]>();
   /** Emitted when the refresh button is clicked. */

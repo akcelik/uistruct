@@ -179,7 +179,7 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
         line-height: 1.2;
       }
       .strct-flow__role {
-        font-size: 10px;
+        font-size: 12px;
         font-weight: 700;
         letter-spacing: 0.4px;
         color: var(--t3);
@@ -236,12 +236,12 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
       .strct-flow__arrow--fwd {
         right: -1px;
         transform: translateY(-50%);
-        border-left: 6px solid var(--strct-flow-color);
+        border-inline-start: 6px solid var(--strct-flow-color);
       }
       .strct-flow__arrow--rev {
         left: -1px;
         transform: translateY(-50%);
-        border-right: 6px solid var(--strct-flow-color);
+        border-inline-end: 6px solid var(--strct-flow-color);
       }
       .strct-flow--vertical .strct-flow__arrow {
         top: auto;
@@ -251,8 +251,8 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
         right: auto;
         bottom: -1px;
         transform: translateX(-50%);
-        border-left: 4px solid transparent;
-        border-right: 4px solid transparent;
+        border-inline-start: 4px solid transparent;
+        border-inline-end: 4px solid transparent;
         border-top: 6px solid var(--strct-flow-color);
         border-bottom: 0;
       }
@@ -260,8 +260,8 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
         left: 50%;
         top: -1px;
         transform: translateX(-50%);
-        border-left: 4px solid transparent;
-        border-right: 4px solid transparent;
+        border-inline-start: 4px solid transparent;
+        border-inline-end: 4px solid transparent;
         border-bottom: 6px solid var(--strct-flow-color);
         border-top: 0;
       }
@@ -364,7 +364,7 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
         color: var(--t3);
       }
       .strct-flow--vertical .strct-flow__caption {
-        text-align: left;
+        text-align: start;
       }
 
       /* Reduced motion: keep the static gradient + arrows, drop the packets. */

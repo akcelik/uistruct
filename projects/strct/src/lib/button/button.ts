@@ -126,7 +126,7 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
       }
       .strct-btn--solid.strct-btn--primary {
         background: var(--acc);
-        color: #fff;
+        color: var(--inv);
       }
       .strct-btn--solid.strct-btn--primary:hover {
         background: var(--acc);
@@ -134,7 +134,7 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
       }
       .strct-btn--solid.strct-btn--critical {
         background: var(--critical);
-        color: #fff;
+        color: var(--inv);
       }
       .strct-btn--solid.strct-btn--critical:hover {
         background: var(--critical);
@@ -198,7 +198,7 @@ export class StrctButton {
         border-radius: 0;
       }
       .strct-btn-group > .strct-btn:not(:first-child) {
-        margin-left: -1px;
+        margin-inline-start: -1px;
       }
       .strct-btn-group > .strct-btn:first-child {
         border-top-left-radius: var(--radius-md);

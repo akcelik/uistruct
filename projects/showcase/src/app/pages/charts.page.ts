@@ -421,7 +421,7 @@ export class ChartsPage implements OnDestroy {
   // Multi-series demo: network in vs out (% of link capacity).
   protected readonly netSeries: StrctChartSeries[] = [
     { data: [30, 45, 38, 62, 55, 78, 48], label: 'In', status: 'accent' },
-    { data: [18, 28, 22, 40, 35, 52, 30], label: 'Out', status: 'success' },
+    { data: [18, 28, 22, 40, 35, 52, 30], label: 'Out', status: 'success', dash: true },
   ];
   protected readonly netThresholds: StrctChartThreshold[] = [
     { value: 90, status: 'critical', label: 'cap' },

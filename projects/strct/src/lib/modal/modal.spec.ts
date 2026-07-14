@@ -68,11 +68,15 @@ describe('StrctModal — backdrop close guard', () => {
     expect(host.open).toBe(false);
   });
 
-  it('closes a dismissible modal on Space while the backdrop itself is focused', () => {
+  it('has no phantom button on the backdrop and ignores keyboard events there', () => {
     const { fixture, host, overlay } = setup(true);
+    // The backdrop is pointer-only: no role/tabindex (it was an unnamed, keyboard-
+    // unreachable "button" for AT); keyboard dismissal goes through Escape.
+    expect(overlay.getAttribute('role')).toBeNull();
+    expect(overlay.getAttribute('tabindex')).toBeNull();
     overlay.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true }));
     fixture.detectChanges();
-    expect(host.open).toBe(false);
+    expect(host.open).toBe(true);
   });
 
   it('never closes a non-dismissible modal on backdrop click', () => {
