@@ -32,6 +32,19 @@ describe('StrctDatagrid', () => {
     expect(cells(fixture)).toEqual(['gamma', 'alpha', 'beta']);
   });
 
+  it('singleLine toggles the host modifier class (off by default)', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', COLS);
+    fixture.componentRef.setInput('rows', ROWS);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.classList).not.toContain('strct-dg-host--singleline');
+
+    fixture.componentRef.setInput('singleLine', true);
+    fixture.detectChanges();
+    expect(host.classList).toContain('strct-dg-host--singleline');
+  });
+
   it('emits the selected rows', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', COLS);

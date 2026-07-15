@@ -86,3 +86,94 @@ describe('StrctModal — backdrop close guard', () => {
     expect(host.open).toBe(true);
   });
 });
+
+describe('StrctModal — styling hooks', () => {
+  it('appends panelClass / backdropClass and defaults to no extra classes', () => {
+    const fixture = TestBed.createComponent(StrctModal);
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-modal__overlay')!.classList.length).toBe(1);
+
+    fixture.componentRef.setInput('panelClass', 'app-glass');
+    fixture.componentRef.setInput('backdropClass', 'app-scrim');
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-modal__dialog')!.classList).toContain('app-glass');
+    expect(el.querySelector('.strct-modal__overlay')!.classList).toContain('app-scrim');
+  });
+
+  it('variant="glass" applies the frosted preset classes', () => {
+    const fixture = TestBed.createComponent(StrctModal);
+    fixture.componentRef.setInput('open', true);
+    fixture.componentRef.setInput('variant', 'glass');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-modal__overlay')!.classList).toContain(
+      'strct-modal__overlay--glass',
+    );
+    expect(el.querySelector('.strct-modal__dialog')!.classList).toContain(
+      'strct-modal__dialog--glass',
+    );
+  });
+});
+
+describe('StrctModal — draggable', () => {
+  function drag(el: HTMLElement, from: [number, number], to: [number, number]) {
+    el.dispatchEvent(
+      new MouseEvent('pointerdown', { clientX: from[0], clientY: from[1], bubbles: true }),
+    );
+    el.dispatchEvent(
+      new MouseEvent('pointermove', { clientX: to[0], clientY: to[1], bubbles: true }),
+    );
+    el.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+  }
+
+  function setup(draggable = true) {
+    const fixture = TestBed.createComponent(StrctModal);
+    fixture.componentRef.setInput('open', true);
+    fixture.componentRef.setInput('draggable', draggable);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      head: el.querySelector('.strct-modal__head') as HTMLElement,
+      dialog: el.querySelector('.strct-modal__dialog') as HTMLElement,
+    };
+  }
+
+  it('drags the dialog by its header and re-centers on reopen', () => {
+    const { fixture, head, dialog } = setup(true);
+    expect(head.classList).toContain('strct-modal__head--drag');
+
+    drag(head, [100, 100], [140, 130]);
+    fixture.detectChanges();
+    expect(dialog.style.transform).toBe('translate(40px, 30px)');
+
+    // Close + reopen → centered again.
+    fixture.componentRef.setInput('open', false);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    const reopened = (fixture.nativeElement as HTMLElement).querySelector(
+      '.strct-modal__dialog',
+    ) as HTMLElement;
+    expect(reopened.style.transform).toBe('');
+  });
+
+  it('does not start a drag from the close button', () => {
+    const { fixture, el, dialog } = setup(true);
+    const close = el.querySelector('.strct-modal__close') as HTMLElement;
+    drag(close, [10, 10], [60, 60]);
+    fixture.detectChanges();
+    expect(dialog.style.transform).toBe('');
+  });
+
+  it('is inert without draggable', () => {
+    const { fixture, head, dialog } = setup(false);
+    expect(head.classList).not.toContain('strct-modal__head--drag');
+    drag(head, [100, 100], [160, 160]);
+    fixture.detectChanges();
+    expect(dialog.style.transform).toBe('');
+  });
+});

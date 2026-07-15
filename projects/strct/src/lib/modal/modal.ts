@@ -5,11 +5,13 @@ import {
   DestroyRef,
   ElementRef,
   booleanAttribute,
+  computed,
   effect,
   inject,
   input,
   model,
   output,
+  signal,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 
@@ -52,10 +54,16 @@ function unlockBodyScroll(doc: Document): void {
            dismiss via Escape, and the focus trap makes the backdrop unreachable
            anyway (a role="button" here was an unnamed phantom stop for AT). -->
       <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
-      <div class="strct-modal__overlay" (click)="onBackdrop($event)">
+      <div
+        class="strct-modal__overlay {{ backdropClass() }}"
+        [class.strct-modal__overlay--glass]="variant() === 'glass'"
+        (click)="onBackdrop($event)"
+      >
         <div
           #dialog
-          class="strct-modal__dialog strct-modal__dialog--{{ size() }}"
+          class="strct-modal__dialog strct-modal__dialog--{{ size() }} {{ panelClass() }}"
+          [class.strct-modal__dialog--glass]="variant() === 'glass'"
+          [style.transform]="dragTransform()"
           role="dialog"
           aria-modal="true"
           [attr.aria-labelledby]="title() ? titleId : null"
@@ -64,7 +72,14 @@ function unlockBodyScroll(doc: Document): void {
           (keydown.tab)="onTab($event)"
           (keydown.shift.tab)="onTab($event)"
         >
-          <div class="strct-modal__head">
+          <div
+            class="strct-modal__head"
+            [class.strct-modal__head--drag]="draggable()"
+            (pointerdown)="onHeadPointerDown($event)"
+            (pointermove)="onHeadPointerMove($event)"
+            (pointerup)="onHeadPointerEnd()"
+            (lostpointercapture)="onHeadPointerEnd()"
+          >
             <span class="strct-modal__title" [id]="titleId">{{ title() }}</span>
             <button
               type="button"
@@ -137,6 +152,25 @@ function unlockBodyScroll(doc: Document): void {
         gap: var(--space-3);
         padding: var(--space-3) var(--space-4);
         border-bottom: 1px solid var(--b1);
+      }
+      /* Drag handle: empty header space repositions the dialog. */
+      .strct-modal__head--drag {
+        cursor: move;
+        user-select: none;
+        touch-action: none;
+      }
+
+      /* Frosted-glass preset — theme-aware (derives from the surface tokens). */
+      .strct-modal__overlay--glass {
+        background: rgba(0, 0, 0, 0.38);
+        backdrop-filter: blur(10px) saturate(1.25);
+      }
+      .strct-modal__dialog--glass {
+        background: color-mix(in srgb, var(--bg-1) 72%, transparent);
+        backdrop-filter: blur(24px) saturate(1.4);
+      }
+      .strct-modal__dialog--glass .strct-modal__foot {
+        background: color-mix(in srgb, var(--bg-2) 55%, transparent);
       }
       .strct-modal__title {
         font-size: 14px;
@@ -213,6 +247,14 @@ export class StrctModal {
    * `dismissible` for lightweight, transient dialogs where quick dismissal is fine.
    */
   readonly dismissible = input(false, { transform: booleanAttribute });
+  /** Allow repositioning the dialog by dragging its header (mouse + touch). */
+  readonly draggable = input(false, { transform: booleanAttribute });
+  /** Extra class(es) added to the dialog panel — style it from app-global CSS. */
+  readonly panelClass = input('');
+  /** Extra class(es) added to the backdrop / overlay. */
+  readonly backdropClass = input('');
+  /** Built-in look: `glass` is a theme-aware frosted preset (translucent panel + blurred backdrop). */
+  readonly variant = input<'solid' | 'glass'>('solid');
   /** Emitted when the alert is dismissed. */
   readonly closed = output<void>();
 
@@ -227,6 +269,9 @@ export class StrctModal {
       const open = this.open();
       if (open && !this.locked) {
         this.locked = true;
+        // Position is per-open: every open starts centered again.
+        this.dragOffset.set({ x: 0, y: 0 });
+        this.dragStart = null;
         lockBodyScroll(this.doc);
         this.previousActive = this.doc.activeElement as HTMLElement | null;
         // Move focus into the dialog once it has rendered.
@@ -285,6 +330,67 @@ export class StrctModal {
       e.preventDefault();
       first.focus();
     }
+  }
+
+  // ── Drag-to-reposition (opt-in via `draggable`) ─────
+  /** Dialog translation from its centered position; reset on every open. */
+  private readonly dragOffset = signal({ x: 0, y: 0 });
+  /** Pointer + clamp bounds captured at drag start; null while not dragging. */
+  private dragStart: {
+    px: number;
+    py: number;
+    ox: number;
+    oy: number;
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  } | null = null;
+
+  protected readonly dragTransform = computed(() => {
+    const { x, y } = this.dragOffset();
+    return x || y ? `translate(${x}px, ${y}px)` : null;
+  });
+
+  protected onHeadPointerDown(event: PointerEvent): void {
+    if (!this.draggable()) return;
+    // Only empty header space starts a drag — never the close button or other controls.
+    if ((event.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+    const dialog = this.dialog();
+    const view = this.doc.defaultView;
+    if (!dialog || !view) return;
+    const rect = dialog.getBoundingClientRect();
+    const o = this.dragOffset();
+    const pad = 8;
+    this.dragStart = {
+      px: event.clientX,
+      py: event.clientY,
+      ox: o.x,
+      oy: o.y,
+      // Allowed offset range keeping the dialog inside the viewport (pad margin).
+      minX: o.x + pad - rect.left,
+      maxX: o.x + view.innerWidth - pad - rect.right,
+      minY: o.y + pad - rect.top,
+      maxY: o.y + view.innerHeight - pad - rect.bottom,
+    };
+    (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  }
+
+  protected onHeadPointerMove(event: PointerEvent): void {
+    const s = this.dragStart;
+    if (!s) return;
+    // A dialog larger than the viewport pins to the axis midpoint instead.
+    const clamp = (v: number, lo: number, hi: number) =>
+      lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v));
+    this.dragOffset.set({
+      x: clamp(s.ox + event.clientX - s.px, s.minX, s.maxX),
+      y: clamp(s.oy + event.clientY - s.py, s.minY, s.maxY),
+    });
+  }
+
+  protected onHeadPointerEnd(): void {
+    this.dragStart = null;
   }
 
   private dialog(): HTMLElement | null {

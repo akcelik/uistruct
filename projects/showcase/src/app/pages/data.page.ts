@@ -142,6 +142,26 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="datagrid-singleline"
+      owner="datagrid"
+      heading="Single-line rows"
+      description="By default cells wrap, so a long value can make one row much taller than the rest. Enable singleLine to keep every row exactly one line tall — long values truncate with an ellipsis and the grid's rhythm stays intact."
+      code='<strct-datagrid [columns]="cols" [rows]="rows" singleLine />'
+    >
+      <div class="dg-wrap">
+        <strct-checkbox [ngModel]="oneLine()" (ngModelChange)="oneLine.set($event)"
+          >Single-line rows</strct-checkbox
+        >
+        <strct-datagrid
+          style="width: 100%;"
+          [columns]="slCols"
+          [rows]="slRows"
+          [singleLine]="oneLine()"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="detailpane"
       heading="Detail pane"
       description="A different pattern from expandable rows: click the » button to collapse the grid to a single column and open a side pane with that row's details (the » keeps row cells free to select/copy). Click it again or the × to return."
@@ -230,6 +250,33 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 })
 export class DataPage {
   protected readonly dense = signal(false);
+  protected readonly oneLine = signal(true);
+
+  // Single-line demo: one column carries a deliberately long value.
+  protected readonly slCols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Alarm' },
+    { key: 'object', label: 'Object' },
+    { key: 'description', label: 'Description' },
+  ];
+  protected readonly slRows = [
+    {
+      name: 'Datastore usage',
+      object: 'datastore-a',
+      description:
+        'Usage on disk exceeded the warning threshold of 75% — consider migrating one of the powered-off virtual machines to another datastore or expanding the backing volume to restore headroom.',
+    },
+    {
+      name: 'Host connection',
+      object: 'hv-02',
+      description: 'Host connection and power state changed to Not responding.',
+    },
+    {
+      name: 'vCPU contention',
+      object: 'vm-web-14',
+      description:
+        'Ready time above 12% sustained for 15 minutes — the virtual machine is starved for CPU; rebalance the cluster or reduce the vCPU count of oversized neighbours.',
+    },
+  ];
   protected readonly refreshing = signal(false);
 
   protected onRefresh(): void {

@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.0] - 2026-07-15
+
+### Added — `strct-modal` draggable + styling hooks
+
+- **`draggable`** — reposition the dialog by dragging its header (Pointer
+  Events: mouse + touch). Clamped to the viewport, never starts from the close
+  button or header controls, re-centers on every open. Keyboard/AT flows
+  unchanged.
+- **`panelClass` / `backdropClass`** — append custom class(es) to the dialog
+  panel / backdrop, so consumers style modals from app-global CSS instead of
+  piercing internal class names with `::ng-deep`.
+- **`variant="glass"`** — built-in theme-aware frosted preset (translucent
+  panel + blurred, tinted backdrop).
+
+### Added — `strct-datagrid` single-line rows
+
+- **`singleLine`** — keep every row exactly one line tall: cell content never
+  wraps, long values truncate with an ellipsis (detail rows exempt), so tall
+  content can't distort the grid.
+
 ## [0.24.0] - 2026-07-14
 
 ### Added — `strct-tree` density
