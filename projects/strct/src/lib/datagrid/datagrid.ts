@@ -366,6 +366,7 @@ export class StrctDatagridActionBar {}
   host: {
     class: 'strct-dg-host',
     '[class.strct-dg-host--compact]': 'compact()',
+    '[class.strct-dg-host--singleline]': 'singleLine()',
   },
   styles: [
     `
@@ -405,6 +406,14 @@ export class StrctDatagridActionBar {}
       .strct-dg-host--compact .strct-dg th,
       .strct-dg-host--compact .strct-dg td {
         padding: 5px 11px;
+      }
+      /* Single-line rows: cells never wrap; long values truncate with an
+       * ellipsis (capped per cell) so row height stays uniform. */
+      .strct-dg-host--singleline .strct-dg tbody tr:not(.strct-dg__detailrow) > td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 360px;
       }
       .strct-dg th {
         position: relative;
@@ -764,6 +773,11 @@ export class StrctDatagrid {
   readonly detailPane = input(false, { transform: booleanAttribute });
   /** Compact density mode. */
   readonly compact = input(false, { transform: booleanAttribute });
+  /**
+   * Keep every row exactly one line tall: cell content never wraps — long values
+   * truncate with an ellipsis instead — so tall content can't distort the grid.
+   */
+  readonly singleLine = input(false, { transform: booleanAttribute });
   /** Message shown when there are no rows. */
   readonly emptyText = input('No data');
   /** Show skeleton rows while data is loading. */

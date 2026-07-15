@@ -261,6 +261,43 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="modal-rich"
+      owner="modal"
+      heading="Draggable & glass"
+      description='draggable lets operators move the dialog aside by its header to read what&apos;s behind it (viewport-clamped; re-centers on every open). variant="glass" is a theme-aware frosted preset; panelClass / backdropClass are the escape hatch for fully custom looks from app-global CSS.'
+      code='<strct-modal draggable variant="glass" …>'
+    >
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button strct-button variant="primary" (click)="dragModalOpen.set(true)">
+          Draggable modal
+        </button>
+        <button strct-button (click)="glassModalOpen.set(true)">Glass modal</button>
+      </div>
+      <strct-modal [(open)]="dragModalOpen" draggable size="md" title="Drag me by the header">
+        Grab the header and move this dialog aside — it stays inside the viewport, and every reopen
+        starts centered again. The close button never starts a drag.
+        <ng-container strctModalFooter>
+          <button strct-button variant="primary" (click)="dragModalOpen.set(false)">Done</button>
+        </ng-container>
+      </strct-modal>
+      <strct-modal
+        [(open)]="glassModalOpen"
+        draggable
+        dismissible
+        variant="glass"
+        size="md"
+        title="Frosted glass"
+      >
+        A translucent, blurred panel over a tinted backdrop — theme-aware out of the box. For a
+        fully custom look, style your own classes via <code>panelClass</code> /
+        <code>backdropClass</code> from global CSS.
+        <ng-container strctModalFooter>
+          <button strct-button variant="primary" (click)="glassModalOpen.set(false)">Close</button>
+        </ng-container>
+      </strct-modal>
+    </app-demo>
+
+    <app-demo
       anchor="drawer"
       heading="Drawer"
       description="Edge-anchored slide-out panel for inspector / edit flows. Backdrop & Escape dismiss; project a footer with strctDrawerFooter."
@@ -406,6 +443,9 @@ export class SurfacesPage {
     this.drawerOpen.set(true);
   }
   protected readonly wizardDone = signal(false);
+
+  protected readonly dragModalOpen = signal(false);
+  protected readonly glassModalOpen = signal(false);
 
   protected readonly treePick = signal('');
 

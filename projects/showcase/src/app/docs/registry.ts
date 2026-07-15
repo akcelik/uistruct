@@ -1027,6 +1027,33 @@ export const DOCS: DocCategory[] = [
             description:
               'Allow closing via a backdrop click / Escape. Off by default, so a modal closes only via its X or an action button.',
           },
+          {
+            name: 'draggable',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Reposition the dialog by dragging its header (mouse + touch). Clamped to the viewport, never starts from the close button, and every open re-centers. Keyboard/AT flows are unaffected.',
+          },
+          {
+            name: 'panelClass',
+            type: 'string',
+            default: `''`,
+            description:
+              'Extra class(es) appended to the dialog panel — style custom looks from app-global CSS instead of piercing internal class names with `::ng-deep`.',
+          },
+          {
+            name: 'backdropClass',
+            type: 'string',
+            default: `''`,
+            description: 'Extra class(es) appended to the backdrop / overlay.',
+          },
+          {
+            name: 'variant',
+            type: `'solid' | 'glass'`,
+            default: `'solid'`,
+            description:
+              'Built-in look. `glass` is a theme-aware frosted preset: translucent panel + blurred backdrop. `panelClass` / `backdropClass` remain the escape hatch for full control.',
+          },
         ],
         outputs: [{ name: 'closed', type: 'void', description: 'Fired when the dialog closes.' }],
         methods: [
@@ -1557,6 +1584,13 @@ export const DOCS: DocCategory[] = [
             description: 'Master/detail mode — see the Detail pane page.',
           },
           { name: 'compact', type: 'boolean', default: 'false', description: 'Denser row height.' },
+          {
+            name: 'singleLine',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Keep every row exactly one line tall: cell content never wraps — long values truncate with an ellipsis — so tall content can’t distort the grid.',
+          },
           {
             name: 'emptyText',
             type: 'string',
