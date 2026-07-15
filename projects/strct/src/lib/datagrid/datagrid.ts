@@ -370,8 +370,14 @@ export class StrctDatagridActionBar {}
   },
   styles: [
     `
+      /* Enclosed chrome: the action bar, grid and footer share one frame so the
+       * whole component reads as a single object on the page. */
       .strct-dg-host {
         display: block;
+        border: 1px solid var(--b2);
+        border-radius: 10px;
+        background: var(--bg-2);
+        box-shadow: var(--shadow-rest);
       }
       .strct-dg__scroll {
         flex: 1 1 auto;
@@ -383,11 +389,18 @@ export class StrctDatagridActionBar {}
         width: 100%;
         border-collapse: collapse;
         font-size: 13px;
-        border: 1px solid var(--b2);
-        border-radius: 8px;
         overflow: hidden;
-        box-shadow: var(--shadow-rest);
         background: var(--bg-2);
+      }
+      /* The table rounds only the frame corners it actually touches (no
+       * toolbar above / no footer below); interior edges stay square. */
+      .strct-dg-host:not(:has(.strct-dg__toolbar)) .strct-dg {
+        border-start-start-radius: 9px;
+        border-start-end-radius: 9px;
+      }
+      .strct-dg-host:not(:has(.strct-dg__foot)) .strct-dg {
+        border-end-start-radius: 9px;
+        border-end-end-radius: 9px;
       }
       .strct-dg th,
       .strct-dg td {
@@ -683,9 +696,8 @@ export class StrctDatagridActionBar {}
         align-items: center;
         gap: 8px;
         flex-wrap: wrap;
-        padding: 8px 0;
-        margin-bottom: 8px;
-        border-bottom: 1px solid var(--b1);
+        padding: 9px 14px;
+        border-bottom: 1px solid var(--b2);
       }
 
       .strct-dg__foot {
@@ -693,7 +705,8 @@ export class StrctDatagridActionBar {}
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        margin-top: 12px;
+        padding: 9px 14px;
+        border-top: 1px solid var(--b2);
         flex-wrap: wrap;
       }
       .strct-dg__foot-left {
