@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.0] - 2026-07-15
+
+### Changed — `strct-datagrid` enclosed chrome
+
+The action bar, grid and footer now share **one enclosing frame** (border +
+radius + shadow on the host), separated by interior hairlines — the whole
+component reads as a single object on the page instead of three floating
+pieces. The table rounds only the frame corners it actually touches (no
+toolbar above / no footer below). No API change.
+
 ## [0.25.0] - 2026-07-15
 
 ### Added — `strct-modal` draggable + styling hooks
