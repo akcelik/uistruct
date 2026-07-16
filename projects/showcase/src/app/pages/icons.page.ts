@@ -421,6 +421,7 @@ export class IconsPage {
 
   protected readonly stateOptions: { badge: StrctIconBadge; label: string }[] = [
     { badge: 'success', label: 'Running' },
+    { badge: 'paused', label: 'Paused' },
     { badge: 'maintenance', label: 'Maint' },
     { badge: 'warning', label: 'Degraded' },
     { badge: 'critical', label: 'Critical' },
@@ -453,6 +454,7 @@ export class IconsPage {
     { name: 'host-maint', object: 'host', badge: 'maintenance', label: 'Host · maintenance' },
     { name: 'host-critical', object: 'host', badge: 'critical', label: 'Host · critical' },
     { name: 'vm-run', object: 'vm', badge: 'success', label: 'VM · running' },
+    { name: 'vm-paused', object: 'vm', badge: 'paused', label: 'VM · paused' },
     { name: 'vm-off', object: 'vm', badge: 'off', label: 'VM · stopped' },
     { name: 'vm-maint', object: 'vm', badge: 'warning', label: 'VM · maintenance' },
     { name: 'vm-critical', object: 'vm', badge: 'critical', label: 'VM · critical' },

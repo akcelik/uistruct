@@ -559,13 +559,19 @@ export function registerStrctIcon(
   }
 }
 
-/** Icon status dot variants. */
+/**
+ * Icon status badge variants. Each state differs by **silhouette + glyph**, not
+ * just hue, so they stay distinguishable under color-vision deficiency:
+ * circle ✓ success · triangle ! warning · diamond × critical · square – off ·
+ * circle ⏸ paused · circle i info · circle wrench maintenance.
+ */
 export type StrctIconBadge =
   | 'none'
   | 'success'
   | 'warning'
   | 'critical'
   | 'off'
+  | 'paused'
   | 'info'
   | 'maintenance';
 
@@ -650,12 +656,14 @@ export type StrctIconBadge =
         border-radius: 50%;
         box-shadow: 0 0 0 1.5px var(--bg-1);
       }
-      /* Shape-coded glyphs so states differ by more than hue (color-blind safe):
-         success ✓ · critical × · info i · off – (warning already has its ! triangle). */
+      /* Silhouette + glyph coding so states differ by more than hue at any
+         size (color-blind safe): circle ✓ success · triangle ! warning ·
+         diamond × critical · square – off · circle ⏸ paused · circle i info. */
       .strct-icon__badge--success,
       .strct-icon__badge--critical,
       .strct-icon__badge--info,
-      .strct-icon__badge--off {
+      .strct-icon__badge--off,
+      .strct-icon__badge--paused {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -695,17 +703,44 @@ export type StrctIconBadge =
       .strct-icon__badge--warning::before {
         content: '!';
       }
+      /* Critical: diamond silhouette (vSphere-style alarm language). */
       .strct-icon__badge--critical {
         background: var(--critical);
+        border-radius: 1px;
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        box-shadow: none;
+        filter: drop-shadow(0 0 1.5px var(--bg-1));
+        width: 58%;
+        height: 58%;
+        min-width: 10px;
+        min-height: 10px;
+        max-width: 15px;
+        max-height: 15px;
+        font-size: clamp(6px, 56%, 9px);
       }
       .strct-icon__badge--critical::before {
         content: '×';
       }
+      /* Off / stopped: square silhouette (media "stop" metaphor). */
       .strct-icon__badge--off {
         background: var(--t3);
+        border-radius: 2px;
       }
       .strct-icon__badge--off::before {
         content: '–';
+      }
+      /* Paused: circle with two pause bars. */
+      .strct-icon__badge--paused {
+        background: var(--t3);
+      }
+      .strct-icon__badge--paused::before {
+        content: '';
+        width: 1.6px;
+        height: 42%;
+        min-height: 4px;
+        background: var(--inv);
+        box-shadow: 2.6px 0 0 var(--inv);
+        transform: translateX(-1.3px);
       }
       .strct-icon__badge--info {
         background: var(--acc);
