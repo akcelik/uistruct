@@ -9,6 +9,17 @@ describe('StrctIcon', () => {
     expect((fixture.nativeElement as HTMLElement).classList).toContain('strct-icon');
   });
 
+  it('renders every badge variant with its state class (incl. the new paused)', () => {
+    for (const badge of ['success', 'warning', 'critical', 'off', 'paused', 'info']) {
+      const fixture = TestBed.createComponent(StrctIcon);
+      fixture.componentRef.setInput('name', 'vm');
+      fixture.componentRef.setInput('badge', badge);
+      fixture.detectChanges();
+      const el = fixture.nativeElement.querySelector('.strct-icon__badge');
+      expect(el?.classList).toContain(`strct-icon__badge--${badge}`);
+    }
+  });
+
   it('renders the named icon', () => {
     const fixture = TestBed.createComponent(StrctIcon);
     fixture.componentRef.setInput('name', 'host');

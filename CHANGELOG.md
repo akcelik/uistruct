@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.0] - 2026-07-16
+
+### Changed — icon badges: silhouette coding (CVD-safe at any size)
+
+Badge states now differ by **outline silhouette**, not just hue + inner glyph,
+so they stay distinguishable for color-blind users even at 16px where the
+inner glyph is too small to read: circle ✓ success · triangle ! warning ·
+**diamond × critical** (new shape) · **square – off** (new shape) ·
+circle i info · wrench maintenance.
+
+### Added — `paused` icon badge
+
+New `StrctIconBadge` value for lifecycle states: a circle with two pause
+bars (⏸), distinct from `off` — a paused VM no longer has to render as
+powered-off.
+
 ## [0.26.0] - 2026-07-15
 
 ### Changed — `strct-datagrid` enclosed chrome

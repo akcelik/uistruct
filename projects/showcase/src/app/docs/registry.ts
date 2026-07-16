@@ -936,7 +936,8 @@ export const DOCS: DocCategory[] = [
             name: 'badge',
             type: 'StrctIconBadge',
             default: `'none'`,
-            description: 'On `strct-tree-node`: status dot on the icon (ok / warn / crit / off …).',
+            description:
+              'On `strct-tree-node`: status badge on the icon. Silhouette-coded for color-blind safety: circle ✓ success · triangle ! warning · diamond × critical · square – off · circle ⏸ paused · circle i info · wrench maintenance.',
           },
           {
             name: 'active',
