@@ -937,7 +937,7 @@ export const DOCS: DocCategory[] = [
             type: 'StrctIconBadge',
             default: `'none'`,
             description:
-              'On `strct-tree-node`: status badge on the icon. Silhouette-coded for color-blind safety: circle ✓ success · triangle ! warning · diamond × critical · square – off · circle ⏸ paused · circle i info · wrench maintenance.',
+              'On `strct-tree-node`: status badge on the icon, color-blind safe in two families. Lifecycle (vCenter media language): green disc ▶ running · amber disc ⏸ paused · grey disc ■ off. Health (silhouette-coded): circle ✓ success · triangle ! warning · diamond × critical · circle i info · wrench maintenance.',
           },
           {
             name: 'active',
