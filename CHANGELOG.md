@@ -5,6 +5,33 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.0] - 2026-07-16
+
+### Added — `strct-chart` monitoring suite (FR-CHART-08..13, all additive)
+
+- **Data gaps** — `data` / `series.data` accept `(number | null)[]`; a `null`
+  (or `NaN`) breaks the line into disjoint segments, so an outage never reads
+  as a flat line. The gap keeps its x-slot; hovering it says `gapText`
+  ("no data"); area fills drop to the baseline at gap edges.
+- **Synced crosshairs** — new `(hoverIndex)` output + `[activeIndex]` input:
+  wire one chart's hover into a sibling's crosshair for a vCenter-style
+  multi-chart dashboard. A local pointer always wins.
+- **Annotations** — `annotations: { index; label?; status?; dashed? }[]` draws
+  vertical event markers ("alarm raised", "reboot") behind the data; the label
+  joins the tooltip at that index.
+- **Min–max band** — per-series `lower` / `upper` bounds fill a soft envelope
+  behind the avg line, so downsampled spikes stay visible; the tooltip shows
+  `avg (min–max)`.
+- **Brush + zoom** — `brush` drag-selects a range and emits
+  `(brushChange) [start, end]`; `zoom` **zooms the chart into the selection**
+  (y rescales to the visible window) with a ⟲ reset chip — double-click or
+  Escape zooms back out, emitting `null`.
+- **Export** — public `toSVG()` / `toPNG(scale)` methods return the rendered
+  chart with theme colors resolved, background and axis text baked in.
+
+All defaults reproduce the previous behavior exactly; keyboard access extends
+to the new surface (Escape unwinds brush → zoom → crosshair).
+
 ## [0.28.0] - 2026-07-16
 
 ### Added — `running` icon badge (vCenter lifecycle language)

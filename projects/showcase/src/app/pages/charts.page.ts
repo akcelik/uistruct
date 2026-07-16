@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import {
   StrctButton,
   StrctChart,
+  StrctChartAnnotation,
   StrctChartCurve,
   StrctChartSeries,
   StrctChartThreshold,
@@ -11,6 +12,7 @@ import {
   StrctFlow,
   StrctFlowNode,
   StrctGauge,
+  StrctIcon,
   StrctMetricTile,
   StrctSegmented,
   StrctSegmentedOption,
@@ -32,6 +34,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctDonut,
     StrctFlow,
     StrctGauge,
+    StrctIcon,
     StrctMetricTile,
   ],
   template: `
@@ -161,6 +164,104 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [valueFormat]="pctFormat"
           [height]="190"
         />
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="line-monitoring"
+      owner="line"
+      heading="Monitoring: gaps, annotations & min–max band"
+      description="A null in the data breaks the line — an agent outage never reads as a flat line (hover the gap: 'no data'). Vertical annotations anchor events ('alarm', 'reboot') to the time axis, and lower/upper per point shades a min–max envelope so downsampled spikes stay visible; the tooltip shows avg (min–max)."
+      code='<strct-chart [series]="[{data:avg,lower:min,upper:max,label:&#39;CPU&#39;}]" [annotations]="[{index:14,label:&#39;alarm&#39;,status:&#39;critical&#39;}]" />'
+    >
+      <div class="chart-box">
+        <strct-chart
+          [series]="monSeries"
+          [annotations]="monAnnotations"
+          legend
+          yAxis
+          [min]="0"
+          [max]="100"
+          [labels]="monLabels"
+          [xTicks]="8"
+          [valueFormat]="pctFormat"
+          [height]="200"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="line-sync"
+      owner="line"
+      heading="Synced crosshairs (vCenter-style)"
+      description="A performance dashboard stacks charts on one time axis. Wire each chart's (hoverIndex) into the other's [activeIndex] and the crosshair moves on both while you hover either — read every metric at the same instant."
+      code='<strct-chart (hoverIndex)="memIdx.set($event)" [activeIndex]="cpuIdx()" … />'
+    >
+      <div class="chart-box chart-box--stack">
+        <strct-chart
+          [data]="syncCpu"
+          [activeIndex]="syncIdxMem()"
+          (hoverIndex)="syncIdxCpu.set($event)"
+          [labels]="monLabels"
+          [xTicks]="8"
+          [min]="0"
+          [max]="100"
+          [valueFormat]="pctFormat"
+          area
+          [height]="130"
+        />
+        <strct-chart
+          [data]="syncMem"
+          [activeIndex]="syncIdxCpu()"
+          (hoverIndex)="syncIdxMem.set($event)"
+          [labels]="monLabels"
+          [xTicks]="8"
+          [min]="0"
+          [max]="100"
+          [valueFormat]="pctFormat"
+          status="success"
+          area
+          [height]="130"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="line-zoom"
+      owner="line"
+      heading="Zoom into a range & export"
+      description="Drag across the plot to zoom into that window (the ⟲ chip, a double-click or Escape zooms back out); (brushChange) also emits the selected index range so you can re-query it at finer resolution. toPNG() exports the rendered chart — theme colors baked in — ready for a ticket."
+      code='<strct-chart zoom (brushChange)="range.set($event)" #perf /> … perf.toPNG(2)'
+    >
+      <div class="stack">
+        <div class="chart-box">
+          <strct-chart
+            #zoomChart
+            zoom
+            (brushChange)="zoomRange.set($event)"
+            [data]="zoomData"
+            [labels]="zoomLabels"
+            [xTicks]="10"
+            yAxis
+            area
+            [min]="0"
+            [max]="100"
+            [valueFormat]="pctFormat"
+            [height]="200"
+          />
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <button strct-button size="sm" variant="neutral" (click)="exportPng(zoomChart)">
+            <strct-icon name="download" [size]="14" /> PNG olarak indir
+          </button>
+          <span class="echo">
+            {{
+              zoomRange()
+                ? 'seçim: [' + zoomRange()![0] + ', ' + zoomRange()![1] + ']'
+                : 'sürükleyerek bir aralık seç'
+            }}
+          </span>
+        </div>
       </div>
     </app-demo>
 
@@ -302,6 +403,23 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         width: 100%;
         max-width: 520px;
       }
+      .chart-box--stack {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        max-width: 520px;
+      }
+      .echo {
+        font-size: 12px;
+        font-family: var(--mono);
+        color: var(--t3);
+      }
       .gauge-row {
         display: flex;
         gap: 22px;
@@ -427,6 +545,60 @@ export class ChartsPage implements OnDestroy {
     { value: 90, status: 'critical', label: 'cap' },
   ];
   protected readonly pctFormat = (v: number) => v.toFixed(0) + '%';
+
+  // Monitoring demo: 30-minute CPU window with an agent outage (nulls) and a
+  // min–max envelope around the per-bucket average.
+  protected readonly monLabels = Array.from({ length: 30 }, (_, i) => `${i}m`);
+  protected readonly monSeries: StrctChartSeries[] = (() => {
+    const avg: (number | null)[] = [];
+    const lo: (number | null)[] = [];
+    const hi: (number | null)[] = [];
+    for (let i = 0; i < 30; i++) {
+      if (i >= 12 && i <= 15) {
+        avg.push(null);
+        lo.push(null);
+        hi.push(null);
+        continue;
+      }
+      const base = 38 + 18 * Math.sin(i / 4) + (i > 20 ? 14 : 0);
+      avg.push(Math.round(base));
+      lo.push(Math.round(base - 6 - (i % 4)));
+      hi.push(Math.round(base + 8 + ((i * 3) % 11)));
+    }
+    return [{ data: avg, lower: lo, upper: hi, label: 'CPU avg (min–max)' }];
+  })();
+  protected readonly monAnnotations: StrctChartAnnotation[] = [
+    { index: 11, label: 'alarm', status: 'critical' },
+    { index: 21, label: 'reboot', status: 'warning' },
+  ];
+
+  // Synced crosshair demo: two metrics on one time axis.
+  protected readonly syncCpu = Array.from({ length: 30 }, (_, i) =>
+    Math.round(45 + 22 * Math.sin(i / 3.4) + 6 * Math.sin(i * 1.7)),
+  );
+  protected readonly syncMem = Array.from({ length: 30 }, (_, i) =>
+    Math.round(62 + 9 * Math.sin(i / 5 + 2) + 4 * Math.cos(i * 1.3)),
+  );
+  protected readonly syncIdxCpu = signal<number | null>(null);
+  protected readonly syncIdxMem = signal<number | null>(null);
+
+  // Zoom & export demo: a dense 24h window.
+  protected readonly zoomLabels = Array.from({ length: 96 }, (_, i) => {
+    const m = i * 15;
+    return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  });
+  protected readonly zoomData = Array.from({ length: 96 }, (_, i) =>
+    Math.round(34 + 20 * Math.sin(i / 8) + 9 * Math.sin(i / 2.1) + (i > 60 && i < 66 ? 28 : 0)),
+  );
+  protected readonly zoomRange = signal<[number, number] | null>(null);
+  protected exportPng(chart: StrctChart): void {
+    void chart.toPNG(2).then((url) => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'chart.png';
+      a.click();
+    });
+  }
 
   protected readonly hostNames = ['hv-01', 'hv-02', 'hv-03', 'hv-04', 'hv-05'];
   protected readonly perHost = [18, 24, 12, 30, 21];
