@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.28.0] - 2026-07-16
+
+### Added — `running` icon badge (vCenter lifecycle language)
+
+Lifecycle states now speak vCenter's media-transport language, as glyphs
+inside the badge disc: **green disc ▶ `running`** (new) · **amber disc ⏸
+`paused`** · **grey disc ■ `off`**. Health states keep their silhouette
+coding (circle ✓ / triangle ! / diamond × / circle i / wrench). `success`
+now reads as _healthy_; use `running` for power state.
+
+### Changed
+
+- `paused` badge: grey → amber disc (lifecycle family).
+- `off` badge: square – → neutral grey disc with a stop square ■.
+
 ## [0.27.0] - 2026-07-16
 
 ### Changed — icon badges: silhouette coding (CVD-safe at any size)

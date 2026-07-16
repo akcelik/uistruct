@@ -70,7 +70,7 @@ interface StateExample {
       <div class="ig-sizes">
         @for (sz of [16, 20, 24, 32]; track sz) {
           <div class="ig-size">
-            <strct-icon name="host" [size]="sz" [strokeWidth]="1.4" badge="success" />
+            <strct-icon name="host" [size]="sz" [strokeWidth]="1.4" badge="running" />
             <span class="ig-name">{{ sz }}px</span>
           </div>
         }
@@ -87,8 +87,8 @@ interface StateExample {
     <app-demo
       anchor="states"
       heading="Object states"
-      description="The same object glyph carries any state via a status badge — one icon, many variations."
-      code='<strct-icon name="host" badge="ok" />  <!-- running host -->'
+      description="The same object glyph carries any state via a status badge. Two families: lifecycle speaks vCenter's media language (▶ running · ⏸ paused · ■ off), health is silhouette-coded (circle ✓ · triangle ! · diamond × · wrench) — both read without color."
+      code='<strct-icon name="vm" badge="running" />  <!-- running VM -->'
     >
       <div class="ig-states">
         @for (s of states; track s.label) {
@@ -420,12 +420,13 @@ export class IconsPage {
   );
 
   protected readonly stateOptions: { badge: StrctIconBadge; label: string }[] = [
-    { badge: 'success', label: 'Running' },
+    { badge: 'running', label: 'Running' },
     { badge: 'paused', label: 'Paused' },
-    { badge: 'maintenance', label: 'Maint' },
+    { badge: 'off', label: 'Stopped' },
+    { badge: 'success', label: 'Healthy' },
     { badge: 'warning', label: 'Degraded' },
     { badge: 'critical', label: 'Critical' },
-    { badge: 'off', label: 'Stopped' },
+    { badge: 'maintenance', label: 'Maint' },
   ];
 
   protected readonly groups = STRCT_ICON_GROUPS;
@@ -449,11 +450,11 @@ export class IconsPage {
     STRCT_ICON_GROUPS.find((g) => g.label.startsWith('Vendor'))?.names ?? [];
 
   protected readonly states: StateExample[] = [
-    { name: 'host-run', object: 'host', badge: 'success', label: 'Host · running' },
+    { name: 'host-run', object: 'host', badge: 'running', label: 'Host · running' },
     { name: 'host-off', object: 'host', badge: 'off', label: 'Host · powered off' },
     { name: 'host-maint', object: 'host', badge: 'maintenance', label: 'Host · maintenance' },
     { name: 'host-critical', object: 'host', badge: 'critical', label: 'Host · critical' },
-    { name: 'vm-run', object: 'vm', badge: 'success', label: 'VM · running' },
+    { name: 'vm-run', object: 'vm', badge: 'running', label: 'VM · running' },
     { name: 'vm-paused', object: 'vm', badge: 'paused', label: 'VM · paused' },
     { name: 'vm-off', object: 'vm', badge: 'off', label: 'VM · stopped' },
     { name: 'vm-maint', object: 'vm', badge: 'warning', label: 'VM · maintenance' },

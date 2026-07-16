@@ -10,7 +10,7 @@ describe('StrctIcon', () => {
   });
 
   it('renders every badge variant with its state class (incl. the new paused)', () => {
-    for (const badge of ['success', 'warning', 'critical', 'off', 'paused', 'info']) {
+    for (const badge of ['success', 'warning', 'critical', 'running', 'paused', 'off', 'info']) {
       const fixture = TestBed.createComponent(StrctIcon);
       fixture.componentRef.setInput('name', 'vm');
       fixture.componentRef.setInput('badge', badge);

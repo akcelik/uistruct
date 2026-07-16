@@ -560,18 +560,22 @@ export function registerStrctIcon(
 }
 
 /**
- * Icon status badge variants. Each state differs by **silhouette + glyph**, not
- * just hue, so they stay distinguishable under color-vision deficiency:
- * circle ✓ success · triangle ! warning · diamond × critical · square – off ·
- * circle ⏸ paused · circle i info · circle wrench maintenance.
+ * Icon status badge variants — two families, both color-blind safe:
+ *
+ * **Health** (silhouette-coded): circle ✓ success · triangle ! warning ·
+ * diamond × critical · circle i info · circle wrench maintenance.
+ *
+ * **Lifecycle** (vCenter media language — glyphs in a badge disc):
+ * green disc ▶ running · amber disc ⏸ paused · grey disc ■ off.
  */
 export type StrctIconBadge =
   | 'none'
   | 'success'
   | 'warning'
   | 'critical'
-  | 'off'
+  | 'running'
   | 'paused'
+  | 'off'
   | 'info'
   | 'maintenance';
 
@@ -656,14 +660,15 @@ export type StrctIconBadge =
         border-radius: 50%;
         box-shadow: 0 0 0 1.5px var(--bg-1);
       }
-      /* Silhouette + glyph coding so states differ by more than hue at any
-         size (color-blind safe): circle ✓ success · triangle ! warning ·
-         diamond × critical · square – off · circle ⏸ paused · circle i info. */
+      /* Health states are silhouette-coded (circle ✓ · triangle ! · diamond ×
+         · circle i); lifecycle states speak vCenter's media language inside a
+         badge disc (▶ running · ⏸ paused · ■ off). Both read without color. */
       .strct-icon__badge--success,
       .strct-icon__badge--critical,
       .strct-icon__badge--info,
       .strct-icon__badge--off,
-      .strct-icon__badge--paused {
+      .strct-icon__badge--paused,
+      .strct-icon__badge--running {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -721,17 +726,23 @@ export type StrctIconBadge =
       .strct-icon__badge--critical::before {
         content: '×';
       }
-      /* Off / stopped: square silhouette (media "stop" metaphor). */
-      .strct-icon__badge--off {
-        background: var(--t3);
-        border-radius: 2px;
+      /* Running: green disc with a play triangle. */
+      .strct-icon__badge--running {
+        background: var(--success);
       }
-      .strct-icon__badge--off::before {
-        content: '–';
+      .strct-icon__badge--running::before {
+        content: '';
+        width: 46%;
+        height: 46%;
+        min-width: 4px;
+        min-height: 4px;
+        background: var(--inv);
+        clip-path: polygon(15% 2%, 100% 50%, 15% 98%);
+        transform: translateX(9%);
       }
-      /* Paused: circle with two pause bars. */
+      /* Paused: amber disc with two pause bars. */
       .strct-icon__badge--paused {
-        background: var(--t3);
+        background: var(--warning);
       }
       .strct-icon__badge--paused::before {
         content: '';
@@ -741,6 +752,19 @@ export type StrctIconBadge =
         background: var(--inv);
         box-shadow: 2.6px 0 0 var(--inv);
         transform: translateX(-1.3px);
+      }
+      /* Off / stopped: neutral grey disc with a stop square. */
+      .strct-icon__badge--off {
+        background: var(--t3);
+      }
+      .strct-icon__badge--off::before {
+        content: '';
+        width: 40%;
+        height: 40%;
+        min-width: 3.5px;
+        min-height: 3.5px;
+        background: var(--inv);
+        border-radius: 1px;
       }
       .strct-icon__badge--info {
         background: var(--acc);
