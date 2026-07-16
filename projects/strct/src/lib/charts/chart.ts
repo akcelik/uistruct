@@ -10,6 +10,7 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
   untracked,
   viewChild,
@@ -23,7 +24,8 @@ export type StrctChartCurve = 'smooth' | 'linear' | 'step';
 
 /** One series in a multi-series chart. */
 export interface StrctChartSeries {
-  data: number[];
+  /** Values; `null` (or `NaN`) marks a data gap — the line breaks, no interpolation. */
+  data: (number | null)[];
   /** Legend + tooltip name. */
   label?: string;
   /** Per-series color; falls back to the chart's `status`. */
@@ -38,6 +40,25 @@ export interface StrctChartSeries {
    * custom SVG dasharray string to tune it.
    */
   dash?: boolean | string;
+  /**
+   * Optional per-point lower/upper bound (e.g. min/max per downsampled bucket).
+   * When both are set a soft band is filled between them behind the line, so
+   * within-bucket spikes stay visible; the tooltip shows `avg (min–max)`.
+   */
+  lower?: (number | null)[];
+  upper?: (number | null)[];
+}
+
+/** A vertical event / annotation marker anchored to a data index. */
+export interface StrctChartAnnotation {
+  /** X position as a data index. */
+  index: number;
+  /** Shown near the top of the line and in the tooltip at that index. */
+  label?: string;
+  /** Line color; default 'accent'. */
+  status?: StrctChartStatus;
+  /** Dashed line; default true. */
+  dashed?: boolean;
 }
 
 /** A horizontal reference / threshold line. */
@@ -147,17 +168,82 @@ function pathFor(pts: Pt[], curve: StrctChartCurve): string {
   return curve === 'linear' ? linearPath(pts) : curve === 'step' ? stepPath(pts) : smoothPath(pts);
 }
 
+/** A real value — `null` and `NaN` both mark a data gap. */
+function isVal(v: number | null | undefined): v is number {
+  return v != null && !Number.isNaN(v);
+}
+
+/** Split a nullable point array into contiguous non-gap segments. */
+function segs(pts: (Pt | null)[]): Pt[][] {
+  const out: Pt[][] = [];
+  let cur: Pt[] = [];
+  for (const p of pts) {
+    if (p) cur.push(p);
+    else if (cur.length) {
+      out.push(cur);
+      cur = [];
+    }
+  }
+  if (cur.length) out.push(cur);
+  return out;
+}
+
+/** Line path that breaks at gaps (one sub-path per segment). */
+function pathForSegs(pts: (Pt | null)[], curve: StrctChartCurve): string {
+  return segs(pts)
+    .map((s) => pathFor(s, curve))
+    .join('');
+}
+
+/** Area path per segment — the fill drops to the baseline at gap edges, never across. */
+function areaForSegs(pts: (Pt | null)[], curve: StrctChartCurve, base: number): string {
+  return segs(pts)
+    .map(
+      (s) =>
+        `${pathFor(s, curve)}L${round(s[s.length - 1].x)},${round(base)}L${round(s[0].x)},${round(base)}Z`,
+    )
+    .join('');
+}
+
+/** Closed band between per-point upper and lower bounds (gap-aware). */
+function bandPath(upper: (Pt | null)[], lower: (Pt | null)[], curve: StrctChartCurve): string {
+  let out = '';
+  let u: Pt[] = [];
+  let l: Pt[] = [];
+  const flush = () => {
+    if (u.length > 1) {
+      const back = pathFor([...l].reverse(), curve).replace(/^M/, 'L');
+      out += pathFor(u, curve) + back + 'Z';
+    }
+    u = [];
+    l = [];
+  };
+  for (let i = 0; i < upper.length; i++) {
+    const up = upper[i];
+    const lo = lower[i];
+    if (up && lo) {
+      u.push(up);
+      l.push(lo);
+    } else flush();
+  }
+  flush();
+  return out;
+}
+
 interface SeriesRender {
   color: string;
   label: string;
   area: boolean;
   dash: string | null;
-  pts: Pt[];
+  pts: (Pt | null)[];
   path: string;
   areaPath: string;
+  bandPath: string;
   /** Global x-offset (right-aligned) so shorter series line up on the right. */
   offset: number;
-  data: number[];
+  data: (number | null)[];
+  lower?: (number | null)[];
+  upper?: (number | null)[];
 }
 
 /**
@@ -214,10 +300,14 @@ interface SeriesRender {
           [attr.width]="width()"
           [attr.height]="height()"
           [style.height.px]="height()"
+          (pointerdown)="onDown($event)"
           (pointermove)="onMove($event)"
-          (pointerleave)="hoverIdx.set(null)"
+          (pointerup)="onUp()"
+          (lostpointercapture)="onUp()"
+          (pointerleave)="onLeave()"
+          (dblclick)="onDblClick()"
           (keydown)="onKey($event)"
-          (blur)="hoverIdx.set(null)"
+          (blur)="onLeave()"
         >
           <defs>
             <linearGradient [attr.id]="gradId" x1="0" y1="0" x2="0" y2="1">
@@ -241,6 +331,19 @@ interface SeriesRender {
             }
           }
 
+          <!-- Event / annotation markers: behind the data, above the grid. -->
+          @for (a of annotationLines(); track $index) {
+            <line
+              class="strct-chart__ann"
+              [class.strct-chart__ann--dashed]="a.dashed"
+              [attr.x1]="a.x"
+              [attr.x2]="a.x"
+              [attr.y1]="pad.t"
+              [attr.y2]="height() - pad.b"
+              [attr.stroke]="a.color"
+            />
+          }
+
           @if (type() === 'bar' && !isMulti()) {
             @for (b of bars(); track $index) {
               <rect
@@ -261,6 +364,9 @@ interface SeriesRender {
               >
                 @if (isMulti()) {
                   @for (s of multiSeries(); track $index) {
+                    @if (s.bandPath) {
+                      <path class="strct-chart__band" [attr.d]="s.bandPath" [attr.fill]="s.color" />
+                    }
                     @if (s.area && s.areaPath) {
                       <path
                         class="strct-chart__area strct-chart__area--flat"
@@ -295,7 +401,7 @@ interface SeriesRender {
                     [attr.stroke]="color()"
                   />
                   @if (dots()) {
-                    @for (p of points(); track $index) {
+                    @for (p of dotPts(); track $index) {
                       <circle
                         class="strct-chart__dot"
                         [attr.cx]="p.x"
@@ -318,6 +424,16 @@ interface SeriesRender {
                 [attr.y1]="t.y"
                 [attr.y2]="t.y"
                 [attr.stroke]="t.color"
+              />
+            }
+
+            @if (brushRect(); as br) {
+              <rect
+                class="strct-chart__brush"
+                [attr.x]="br.x"
+                [attr.y]="pad.t"
+                [attr.width]="br.w"
+                [attr.height]="height() - pad.t - pad.b"
               />
             }
 
@@ -381,11 +497,28 @@ interface SeriesRender {
           }
         }
 
+        @for (a of annotationLines(); track $index) {
+          @if (a.label) {
+            <div class="strct-chart__ann-label" [style.left.px]="a.x" [style.color]="a.color">
+              {{ a.label }}
+            </div>
+          }
+        }
+
+        @if (zoomed()) {
+          <button type="button" class="strct-chart__reset" (click)="resetZoom()">
+            ⟲ {{ resetLabel() }}
+          </button>
+        }
+
         @if (interactive() && hoverX() !== null) {
           @if (isMulti()) {
             <div class="strct-chart__tip strct-chart__tip--multi" [style.left.px]="hoverX()">
               @if (hoverMeta()) {
                 <span class="strct-chart__tip-l">{{ hoverMeta() }}</span>
+              }
+              @if (annAt(); as ann) {
+                <span class="strct-chart__tip-ann" [style.color]="ann.color">{{ ann.label }}</span>
               }
               @for (r of hoverRows(); track r.label) {
                 <span class="strct-chart__tip-row">
@@ -418,6 +551,17 @@ interface SeriesRender {
                   }
                 </span>
               }
+              @if (annAt(); as ann) {
+                <span class="strct-chart__tip-ann" [style.color]="ann.color">{{ ann.label }}</span>
+              }
+            </div>
+          } @else if (hoverGap()) {
+            <!-- A gap point: keep the time slot, say "no data" instead of a value. -->
+            <div class="strct-chart__tip strct-chart__tip--gap" [style.left.px]="hoverX()">
+              <span class="strct-chart__tip-v">{{ gapText() }}</span>
+              @if (hoverMeta()) {
+                <span class="strct-chart__tip-l">{{ hoverMeta() }}</span>
+              }
             </div>
           }
         }
@@ -432,7 +576,7 @@ interface SeriesRender {
         <div class="strct-chart__labels">
           @for (l of displayLabels(); track $index) {
             <span
-              [class.strct-chart__label--active]="interactive() && hoverIdx() === l.i"
+              [class.strct-chart__label--active]="interactive() && dispIdx() === l.i"
               [style.left.px]="xOf(l.i)"
               >{{ l.text }}</span
             >
@@ -444,6 +588,7 @@ interface SeriesRender {
   host: {
     class: 'strct-chart',
     '[class.strct-chart--glow]': 'glow()',
+    '[class.strct-chart--brush]': 'brush() || zoom()',
     '[style.--strct-chart-c]': 'color()',
   },
   styles: [
@@ -521,6 +666,81 @@ interface SeriesRender {
       }
       .strct-chart__bar {
         rx: 1.5;
+      }
+
+      /* Min–max envelope behind the series line. */
+      .strct-chart__band {
+        opacity: 0.13;
+        stroke: none;
+      }
+
+      /* Vertical event / annotation markers. */
+      .strct-chart__ann {
+        stroke-width: 1;
+        opacity: 0.8;
+        vector-effect: non-scaling-stroke;
+      }
+      .strct-chart__ann--dashed {
+        stroke-dasharray: 4 3;
+      }
+      .strct-chart__ann-label {
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        pointer-events: none;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--bg-1);
+        padding: 0 3px;
+        border-radius: 3px;
+        white-space: nowrap;
+      }
+
+      /* Brush selection + zoom-out chip. */
+      .strct-chart--brush .strct-chart__svg {
+        cursor: crosshair;
+      }
+      .strct-chart__brush {
+        fill: var(--acc);
+        opacity: 0.16;
+        stroke: var(--acc50);
+        stroke-width: 1;
+        vector-effect: non-scaling-stroke;
+      }
+      .strct-chart__reset {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        z-index: 3;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 9px;
+        border: 1px solid var(--b2);
+        border-radius: 99px;
+        background: var(--bg-a);
+        color: var(--t2);
+        font-family: var(--font);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .strct-chart__reset:hover {
+        color: var(--t1);
+        border-color: var(--acc50);
+      }
+      .strct-chart__reset:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: 1px;
+      }
+
+      .strct-chart__tip--gap {
+        top: 6px;
+        transform: translate(-50%, 0);
+      }
+      .strct-chart__tip-ann {
+        font-size: 12px;
+        font-weight: 600;
       }
 
       /* Ambient neon glow — layered shadows for depth without thickening the line. */
@@ -721,8 +941,8 @@ interface SeriesRender {
   ],
 })
 export class StrctChart {
-  /** Single-series data (or use `series`). */
-  readonly data = input<number[]>([]);
+  /** Single-series data (or use `series`). `null` / `NaN` marks a gap — the line breaks. */
+  readonly data = input<(number | null)[]>([]);
   /** Multiple series; when set it takes precedence over `data`. */
   readonly series = input<StrctChartSeries[] | null>(null);
   /** Visual type / variant. */
@@ -779,6 +999,29 @@ export class StrctChart {
    * `[valueFormat]="v => v.toFixed(3) + ' %'"`. When null, the raw value is shown.
    */
   readonly valueFormat = input<((v: number) => string) | null>(null);
+  /** Vertical event / annotation markers ("alarm raised", "deploy", …). */
+  readonly annotations = input<StrctChartAnnotation[]>([]);
+  /**
+   * Drive the crosshair externally (e.g. mirror a sibling chart's hover for a
+   * vCenter-style synced dashboard). A local pointer wins while over this chart.
+   */
+  readonly activeIndex = input<number | null>(null);
+  /** Drag-select a range; the selection is emitted through `brushChange`. */
+  readonly brush = input(false, { transform: booleanAttribute });
+  /**
+   * Drag-select **zooms into** the selected range (implies `brush`).
+   * Double-click, Escape or the reset chip zooms back out.
+   */
+  readonly zoom = input(false, { transform: booleanAttribute });
+  /** Tooltip text for a gap (null) point. */
+  readonly gapText = input('no data');
+  /** Accessible label of the reset-zoom chip (localizable). */
+  readonly resetLabel = input('Reset zoom');
+
+  /** Emits the hovered point index (or null on leave) — wire cross-chart sync with it. */
+  readonly hoverIndex = output<number | null>();
+  /** Emits the brushed [startIndex, endIndex] (inclusive), or null when cleared. */
+  readonly brushChange = output<[number, number] | null>();
 
   protected readonly pad = PAD;
   protected readonly color = computed(() => COLOR[this.status()]);
@@ -802,8 +1045,22 @@ export class StrctChart {
     typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
 
-  // Hover state.
+  // Hover state. `hoverIdx` is the local pointer/keyboard index; `dispIdx` is
+  // what actually renders — local wins, else the externally driven activeIndex.
   protected readonly hoverIdx = signal<number | null>(null);
+  protected readonly dispIdx = computed<number | null>(() => {
+    const local = this.hoverIdx();
+    const i = local ?? this.activeIndex();
+    if (i == null) return null;
+    const [s, e] = this.domain();
+    return i >= s && i <= e ? i : null;
+  });
+
+  // Zoom / brush state (indices are always in the full-data domain).
+  private readonly viewRange = signal<[number, number] | null>(null);
+  protected readonly brushDrag = signal<{ a: number; b: number } | null>(null);
+  private readonly brushEnabled = computed(() => this.brush() || this.zoom());
+  protected readonly zoomed = computed(() => this.viewRange() !== null);
 
   constructor() {
     const destroyRef = inject(DestroyRef);
@@ -862,7 +1119,7 @@ export class StrctChart {
   protected readonly isMulti = computed(() => this.seriesResolved() !== null);
 
   /** All data arrays (multi or single). */
-  private readonly allData = computed<number[][]>(() => {
+  private readonly allData = computed<(number | null)[][]>(() => {
     const s = this.seriesResolved();
     return s ? s.map((x) => x.data ?? []) : [this.data()];
   });
@@ -870,6 +1127,16 @@ export class StrctChart {
 
   /** Number of x slots. */
   private readonly nx = computed(() => Math.max(1, ...this.allData().map((d) => d.length)));
+
+  /** Visible index window: the brush-zoom range, or the full data. */
+  private readonly domain = computed<[number, number]>(() => {
+    const n = this.nx();
+    const vr = this.viewRange();
+    if (!vr) return [0, n - 1];
+    const s = Math.max(0, Math.min(vr[0], n - 1));
+    const e = Math.max(s, Math.min(vr[1], n - 1));
+    return e > s ? [s, e] : [0, n - 1];
+  });
 
   /** Left padding: wider when the y-axis labels are shown. */
   protected readonly pl = computed(() => (this.yAxis() ? Y_AXIS_GUTTER : PAD.l));
@@ -880,16 +1147,43 @@ export class StrctChart {
     return this.height() - PAD.t - PAD.b;
   }
 
-  /** Horizontal gap between two data points, in px. */
+  /** Horizontal gap between two data points, in px (of the visible window). */
   private stepX(): number {
-    const n = this.nx();
-    return n > 1 ? this.chartW() / (n - 1) : 0;
+    const [s, e] = this.domain();
+    return e > s ? this.chartW() / (e - s) : 0;
   }
+
+  /** Real values inside the visible window (multi-aware; bands included). */
+  private readonly visibleValues = computed<number[]>(() => {
+    const [s, e] = this.domain();
+    const out: number[] = [];
+    const push = (v: number | null | undefined) => {
+      if (isVal(v)) out.push(v);
+    };
+    const ser = this.seriesResolved();
+    if (ser) {
+      const N = this.nx();
+      for (const x of ser) {
+        const data = x.data ?? [];
+        const offset = N - data.length;
+        for (let gi = Math.max(s, offset); gi <= e; gi++) {
+          const li = gi - offset;
+          if (li < 0 || li >= data.length) continue;
+          push(data[li]);
+          push(x.upper?.[li]);
+        }
+      }
+    } else {
+      const d = this.data();
+      for (let i = s; i <= Math.min(e, d.length - 1); i++) push(d[i]);
+    }
+    return out;
+  });
 
   private readonly yMax = computed(() => {
     const explicit = this.max();
     if (explicit != null) return explicit || 1;
-    const m = Math.max(0, ...this.allData().flat());
+    const m = Math.max(0, ...this.visibleValues());
     return m === 0 ? 1 : m * 1.1;
   });
   private readonly yMin = computed(() => this.min() ?? 0);
@@ -902,53 +1196,58 @@ export class StrctChart {
     return PAD.t + (1 - (c - lo) / range) * this.chartH();
   }
 
-  // ── Single-series geometry (unchanged output) ─────────────────
-  protected readonly points = computed<Pt[]>(() => {
+  // ── Single-series geometry (gap-aware; null keeps its x-slot) ──
+  protected readonly points = computed<(Pt | null)[]>(() => {
     const d = this.data();
-    const step = this.stepX();
-    const pl = this.pl();
-    return d.map((v, i) => ({ x: pl + i * step, y: this.yOf(v) }));
+    return d.map((v, i) => (isVal(v) ? { x: this.xOf(i), y: this.yOf(v) } : null));
   });
+
+  /** Non-gap points only (dot rendering). */
+  protected readonly dotPts = computed<Pt[]>(() =>
+    this.points().filter((p): p is Pt => p !== null),
+  );
 
   protected readonly head = computed<Pt | null>(() => {
     const p = this.points();
-    return p.length ? p[p.length - 1] : null;
+    for (let i = p.length - 1; i >= 0; i--) if (p[i]) return p[i];
+    return null;
   });
 
-  private readonly plotPoints = computed<Pt[]>(() => {
+  private readonly plotPoints = computed<(Pt | null)[]>(() => {
     const p = this.points();
-    if (!this.live() || p.length < 2) return p;
+    if (!this.live() || p.length < 2 || !p[0]) return p;
     return [{ x: p[0].x - this.stepX(), y: p[0].y }, ...p];
   });
 
-  protected readonly linePath = computed(() => pathFor(this.plotPoints(), this.curve()));
+  protected readonly linePath = computed(() => pathForSegs(this.plotPoints(), this.curve()));
 
-  protected readonly areaPath = computed(() => {
-    const line = this.linePath();
-    const p = this.plotPoints();
-    if (!line || !p.length) return '';
-    const base = this.height() - PAD.b;
-    return `${line}L${round(p[p.length - 1].x)},${round(base)}L${round(p[0].x)},${round(base)}Z`;
-  });
+  protected readonly areaPath = computed(() =>
+    areaForSegs(this.plotPoints(), this.curve(), this.height() - PAD.b),
+  );
 
   // ── Multi-series geometry ─────────────────────────────────────
   protected readonly multiSeries = computed<SeriesRender[]>(() => {
     const s = this.seriesResolved();
     if (!s) return [];
     const N = this.nx();
-    const step = this.stepX();
-    const pl = this.pl();
     const base = this.height() - PAD.b;
     return s.map((x) => {
       const data = x.data ?? [];
       const offset = N - data.length; // right-align shorter series
-      const pts = data.map((v, i) => ({ x: pl + (offset + i) * step, y: this.yOf(v) }));
+      const ptOf = (v: number | null | undefined, i: number): Pt | null =>
+        isVal(v) ? { x: this.xOf(offset + i), y: this.yOf(v) } : null;
+      const pts = data.map((v, i) => ptOf(v, i));
       const curve = x.curve ?? this.curve();
-      const path = pathFor(pts, curve);
+      const path = pathForSegs(pts, curve);
       const area = x.area ?? false;
-      const areaPath =
-        area && pts.length
-          ? `${path}L${round(pts[pts.length - 1].x)},${round(base)}L${round(pts[0].x)},${round(base)}Z`
+      const areaPath = area ? areaForSegs(pts, curve, base) : '';
+      const band =
+        x.lower && x.upper
+          ? bandPath(
+              x.upper.map((v, i) => ptOf(v, i)),
+              x.lower.map((v, i) => ptOf(v, i)),
+              curve,
+            )
           : '';
       return {
         color: COLOR[x.status ?? this.status()],
@@ -958,8 +1257,11 @@ export class StrctChart {
         pts,
         path,
         areaPath,
+        bandPath: band,
         offset,
         data,
+        lower: x.lower,
+        upper: x.upper,
       };
     });
   });
@@ -970,18 +1272,30 @@ export class StrctChart {
       .map((s) => ({ label: s.label, color: s.color, dash: s.dash })),
   );
 
-  // ── Bars (single-series only) ─────────────────────────────────
+  // ── Bars (single-series only; gaps render no bar, keep their slot) ──
   protected readonly bars = computed(() => {
     const d = this.data();
+    const [s, e] = this.domain();
     const chartW = this.chartW();
     const base = this.height() - PAD.b;
-    const slot = d.length ? chartW / d.length : chartW;
+    const last = Math.min(e, d.length - 1);
+    const count = Math.max(1, last - s + 1);
+    const slot = chartW / count;
     const w = slot * 0.6;
     const pl = this.pl();
-    return d.map((v, i) => {
+    const out: { x: number; y: number; w: number; h: number }[] = [];
+    for (let i = s; i <= last; i++) {
+      const v = d[i];
+      if (!isVal(v)) continue;
       const h = ((Math.max(0, v) - this.yMin()) / (this.yMax() - this.yMin() || 1)) * this.chartH();
-      return { x: pl + i * slot + (slot - w) / 2, y: base - Math.max(0, h), w, h: Math.max(0, h) };
-    });
+      out.push({
+        x: pl + (i - s) * slot + (slot - w) / 2,
+        y: base - Math.max(0, h),
+        w,
+        h: Math.max(0, h),
+      });
+    }
+    return out;
   });
 
   // ── Axes ───────────────────────────────────────────────────────
@@ -1022,32 +1336,46 @@ export class StrctChart {
     const ls = this.labels();
     const fmt = this.xFormat();
     const xt = this.xTicks();
-    let items: { l: string; i: number }[];
-    if (xt && xt > 1 && ls.length > xt) {
-      const stepI = (ls.length - 1) / (xt - 1);
-      const idxs = Array.from(new Set(Array.from({ length: xt }, (_, k) => Math.round(k * stepI))));
-      items = idxs.map((i) => ({ l: ls[i], i }));
+    const [s, e] = this.domain();
+    const last = Math.min(e, ls.length - 1);
+    let idxs: number[];
+    if (xt && xt > 1 && last - s + 1 > xt) {
+      const stepI = (last - s) / (xt - 1);
+      idxs = Array.from(new Set(Array.from({ length: xt }, (_, k) => s + Math.round(k * stepI))));
     } else {
-      items = ls.map((l, i) => ({ l, i }));
+      idxs = Array.from({ length: Math.max(0, last - s + 1) }, (_, k) => s + k);
     }
-    return items.map(({ l, i }) => ({ text: fmt ? fmt(l, i) : l, i }));
+    return idxs
+      .filter((i) => i >= 0 && i < ls.length)
+      .map((i) => ({
+        text: fmt ? fmt(ls[i], i) : ls[i],
+        i,
+      }));
   });
 
-  // ── Hover ──────────────────────────────────────────────────────
+  // ── Hover (driven by dispIdx: local pointer, else external activeIndex) ──
   protected readonly hoverX = computed<number | null>(() => {
-    const i = this.hoverIdx();
+    const i = this.dispIdx();
     if (i == null) return null;
-    return this.pl() + i * this.stepX();
+    return this.xOf(i);
   });
   protected readonly hoverPt = computed<Pt | null>(() => {
-    const i = this.hoverIdx();
+    const i = this.dispIdx();
     const p = this.points();
     return i != null && i >= 0 && i < p.length ? p[i] : null;
   });
   protected readonly hoverValue = computed(() => {
-    const i = this.hoverIdx();
+    const i = this.dispIdx();
     const d = this.data();
-    return i != null && i >= 0 && i < d.length ? d[i] : '';
+    const v = i != null && i >= 0 && i < d.length ? d[i] : null;
+    return isVal(v) ? v : '';
+  });
+  /** The hovered slot exists but holds a gap (single-series). */
+  protected readonly hoverGap = computed(() => {
+    const i = this.dispIdx();
+    if (i == null || this.isMulti()) return false;
+    const d = this.data();
+    return i >= 0 && i < d.length && !isVal(d[i]);
   });
   /** hoverValue run through valueFormat (unit / precision), else the raw value. */
   protected readonly hoverValueText = computed(() => {
@@ -1062,20 +1390,23 @@ export class StrctChart {
     return f ? f(this.absDelta()) : String(this.absDelta());
   });
   protected readonly hoverLabel = computed(() => {
-    const i = this.hoverIdx();
+    const i = this.dispIdx();
     const l = this.labels();
     return i != null && i >= 0 && i < l.length ? l[i] : '';
   });
-  /** Change from the previous point (single-series; null at the first point). */
+  /** Change from the previous point (single-series; null at the first point or across a gap). */
   protected readonly hoverDelta = computed<number | null>(() => {
-    const i = this.hoverIdx();
+    const i = this.dispIdx();
     const d = this.data();
-    return i != null && i > 0 && i < d.length ? d[i] - d[i - 1] : null;
+    if (i == null || i <= 0 || i >= d.length) return null;
+    const cur = d[i];
+    const prev = d[i - 1];
+    return isVal(cur) && isVal(prev) ? cur - prev : null;
   });
   protected readonly absDelta = computed(() => Math.abs(this.hoverDelta() ?? 0));
   /** Second tooltip line: "Xs ago" while live, else the x label. */
   protected readonly hoverMeta = computed(() => {
-    const i = this.hoverIdx();
+    const i = this.dispIdx();
     if (i == null) return '';
     if (this.live()) {
       const ago = Math.round(((this.nx() - 1 - i) * this.interval()) / 1000);
@@ -1087,21 +1418,26 @@ export class StrctChart {
     return i >= 0 && i < l.length ? l[i] : '';
   });
 
-  /** Per-series value at the hovered index (multi-series tooltip). */
+  /** Per-series value at the hovered index (multi-series tooltip; bands as `avg (min–max)`). */
   protected readonly hoverRows = computed(() => {
-    const i = this.hoverIdx();
+    const i = this.dispIdx();
     const s = this.multiSeries();
     if (i == null || !s.length) return [];
     const f = this.valueFormat();
+    const fmt = (v: number) => (f ? f(v) : String(v));
     return s
       .map((x) => {
         const li = i - x.offset;
-        const v = li >= 0 && li < x.data.length ? x.data[li] : null;
+        const raw = li >= 0 && li < x.data.length ? x.data[li] : null;
+        const v = isVal(raw) ? raw : null;
+        const lo = x.lower?.[li];
+        const hi = x.upper?.[li];
+        const band = isVal(lo) && isVal(hi) ? ` (${fmt(lo)}–${fmt(hi)})` : '';
         return {
           label: x.label,
           color: x.color,
           value: v,
-          text: v == null ? '' : f ? f(v) : String(v),
+          text: v == null ? '' : fmt(v) + band,
         };
       })
       .filter((r) => r.value !== null);
@@ -1109,37 +1445,76 @@ export class StrctChart {
 
   /** Per-series hover dots (multi-series). */
   protected readonly hoverDots = computed(() => {
-    const i = this.hoverIdx();
+    const i = this.dispIdx();
     const s = this.multiSeries();
     if (i == null || !s.length) return [];
     return s
       .map((x) => {
         const li = i - x.offset;
-        return li >= 0 && li < x.pts.length
-          ? { x: x.pts[li].x, y: x.pts[li].y, color: x.color }
-          : null;
+        const p = li >= 0 && li < x.pts.length ? x.pts[li] : null;
+        return p ? { x: p.x, y: p.y, color: x.color } : null;
       })
       .filter((d): d is { x: number; y: number; color: string } => d !== null);
   });
+
+  // ── Annotations ────────────────────────────────────────────────
+  protected readonly annotationLines = computed(() => {
+    const [s, e] = this.domain();
+    return this.annotations()
+      .filter((a) => a.index >= s && a.index <= e)
+      .map((a) => ({
+        x: this.xOf(a.index),
+        color: COLOR[a.status ?? 'accent'],
+        dashed: a.dashed ?? true,
+        label: a.label ?? '',
+        index: a.index,
+      }));
+  });
+  /** The annotation sitting exactly under the crosshair, if any. */
+  protected readonly annAt = computed(() => {
+    const i = this.dispIdx();
+    if (i == null) return null;
+    return this.annotationLines().find((a) => a.index === i && a.label) ?? null;
+  });
+
+  // ── Brush / zoom ───────────────────────────────────────────────
+  protected readonly brushRect = computed(() => {
+    const d = this.brushDrag();
+    if (!d) return null;
+    const x1 = this.xOf(Math.min(d.a, d.b));
+    const x2 = this.xOf(Math.max(d.a, d.b));
+    return { x: round(x1), w: round(Math.max(1, x2 - x1)) };
+  });
+
+  /** Zoom back out to the full data window (also emits `brushChange` null). */
+  resetZoom(): void {
+    this.brushDrag.set(null);
+    if (this.viewRange() !== null) {
+      this.viewRange.set(null);
+      this.brushChange.emit(null);
+    }
+  }
 
   /** Screen-reader summary of the whole chart (role="img" name). */
   protected readonly chartAria = computed(() => {
     const f = this.valueFormat() ?? ((v: number) => String(Math.round(v * 100) / 100));
     if (this.isMulti()) {
       const parts = this.multiSeries().map((s) => {
-        const last = s.data.length ? f(s.data[s.data.length - 1]) : '';
+        const reals = s.data.filter(isVal);
+        const last = reals.length ? f(reals[reals.length - 1]) : '';
         return `${s.label || 'series'} latest ${last}`;
       });
       return `Chart, ${this.multiSeries().length} series: ${parts.join('; ')}`;
     }
     const d = this.data();
-    if (!d.length) return this.emptyText();
-    return `Chart, ${d.length} points. Min ${f(Math.min(...d))}, max ${f(Math.max(...d))}, latest ${f(d[d.length - 1])}`;
+    const reals = d.filter(isVal);
+    if (!reals.length) return this.emptyText();
+    return `Chart, ${d.length} points. Min ${f(Math.min(...reals))}, max ${f(Math.max(...reals))}, latest ${f(reals[reals.length - 1])}`;
   });
 
   /** aria-live text announcing the hovered / keyboard-selected point. */
   protected readonly srText = computed(() => {
-    const i = this.hoverIdx();
+    const i = this.dispIdx();
     if (i == null) return '';
     if (this.isMulti()) {
       const rows = this.hoverRows()
@@ -1148,55 +1523,210 @@ export class StrctChart {
       return `${this.hoverMeta() || 'point ' + (i + 1)}: ${rows}`;
     }
     const meta = this.hoverMeta();
-    return `${meta ? meta + ': ' : ''}${this.hoverValueText()}`;
+    const value = this.hoverGap() ? this.gapText() : this.hoverValueText();
+    return `${meta ? meta + ': ' : ''}${value}`;
   });
 
-  /** Pixel x of a data index (shared by the plot and the x-axis labels). */
+  /** Pixel x of a data index (shared by the plot, labels and annotations). */
   protected xOf(i: number): number {
-    return this.pl() + i * this.stepX();
+    const [s] = this.domain();
+    return this.pl() + (i - s) * this.stepX();
   }
 
-  /** Keyboard access to the crosshair: arrows walk the points. */
+  /** Set the local hover index, emitting `hoverIndex` on change. */
+  private setHover(i: number | null): void {
+    if (i === this.hoverIdx()) return;
+    this.hoverIdx.set(i);
+    this.hoverIndex.emit(i);
+  }
+
+  protected onLeave(): void {
+    this.setHover(null);
+  }
+
+  /** Keyboard access: arrows walk the points; Escape unwinds brush → zoom → crosshair. */
   protected onKey(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      if (this.brushDrag()) {
+        this.brushDrag.set(null);
+      } else if (this.zoomed()) {
+        this.resetZoom();
+      } else {
+        this.setHover(null);
+      }
+      return;
+    }
     if (!this.interactive() || this.type() === 'bar') return;
-    const n = this.nx();
-    if (!n) return;
+    const [s, e] = this.domain();
     const cur = this.hoverIdx();
     let next: number | null = null;
     switch (event.key) {
       case 'ArrowRight':
-        next = cur == null ? 0 : Math.min(n - 1, cur + 1);
+        next = cur == null ? s : Math.min(e, cur + 1);
         break;
       case 'ArrowLeft':
-        next = cur == null ? n - 1 : Math.max(0, cur - 1);
+        next = cur == null ? e : Math.max(s, cur - 1);
         break;
       case 'Home':
-        next = 0;
+        next = s;
         break;
       case 'End':
-        next = n - 1;
+        next = e;
         break;
-      case 'Escape':
-        this.hoverIdx.set(null);
-        return;
       default:
         return;
     }
     event.preventDefault();
-    this.hoverIdx.set(next);
+    this.setHover(next);
   }
 
-  protected onMove(event: PointerEvent): void {
-    if (!this.interactive() || (this.type() === 'bar' && !this.isMulti())) return;
+  /** Data index under the pointer, clamped to the visible window. */
+  private idxAt(event: PointerEvent): number | null {
     const el = this.svgRef()?.nativeElement;
-    const n = this.nx();
-    if (!el || this.isEmpty()) return;
+    if (!el || this.isEmpty()) return null;
     const rect = el.getBoundingClientRect();
-    if (!rect.width) return;
+    if (!rect.width) return null;
     const plFrac = this.pl() / this.width();
     const rFrac = PAD.r / this.width();
     const fx = ((event.clientX - rect.left) / rect.width - plFrac) / (1 - plFrac - rFrac);
-    const idx = Math.max(0, Math.min(n - 1, Math.round(fx * (n - 1))));
-    this.hoverIdx.set(idx);
+    const [s, e] = this.domain();
+    return Math.max(s, Math.min(e, s + Math.round(fx * (e - s))));
+  }
+
+  protected onDown(event: PointerEvent): void {
+    if (!this.brushEnabled() || this.isEmpty()) return;
+    const i = this.idxAt(event);
+    if (i == null) return;
+    (event.currentTarget as Element | null)?.setPointerCapture?.(event.pointerId);
+    this.brushDrag.set({ a: i, b: i });
+    this.setHover(null);
+    event.preventDefault();
+  }
+
+  protected onMove(event: PointerEvent): void {
+    const drag = this.brushDrag();
+    if (drag) {
+      const i = this.idxAt(event);
+      if (i != null && i !== drag.b) this.brushDrag.set({ a: drag.a, b: i });
+      return;
+    }
+    if (!this.interactive() || (this.type() === 'bar' && !this.isMulti())) return;
+    const i = this.idxAt(event);
+    if (i != null) this.setHover(i);
+  }
+
+  protected onUp(): void {
+    const d = this.brushDrag();
+    if (!d) return;
+    this.brushDrag.set(null);
+    const lo = Math.min(d.a, d.b);
+    const hi = Math.max(d.a, d.b);
+    if (hi - lo < 1) return; // a click, not a selection
+    if (this.zoom()) this.viewRange.set([lo, hi]);
+    this.brushChange.emit([lo, hi]);
+  }
+
+  protected onDblClick(): void {
+    if (this.brushEnabled()) this.resetZoom();
+  }
+
+  // ── Export (FR-CHART-13) ───────────────────────────────────────
+  /**
+   * The rendered chart as a standalone SVG string — theme colors resolved to
+   * literals, background baked in, y-tick / x-label text included.
+   */
+  toSVG(): string {
+    const svg = this.svgRef()?.nativeElement;
+    if (!svg || typeof getComputedStyle === 'undefined') return '';
+    const doc = svg.ownerDocument;
+    const NS = 'http://www.w3.org/2000/svg';
+    const clone = svg.cloneNode(true) as SVGSVGElement;
+    clone.setAttribute('xmlns', NS);
+    clone.removeAttribute('class');
+    clone.removeAttribute('style');
+    clone.removeAttribute('tabindex');
+    const PROPS = [
+      'stroke',
+      'fill',
+      'stroke-width',
+      'stroke-dasharray',
+      'stroke-linecap',
+      'stroke-linejoin',
+      'opacity',
+      'fill-opacity',
+      'stroke-opacity',
+    ];
+    const src = Array.from(svg.querySelectorAll<SVGElement>('*'));
+    const dst = Array.from(clone.querySelectorAll<SVGElement>('*'));
+    src.forEach((el, i) => {
+      const cs = getComputedStyle(el);
+      for (const p of PROPS) {
+        const v = cs.getPropertyValue(p);
+        if (v) dst[i].setAttribute(p, v);
+      }
+      dst[i].removeAttribute('class');
+    });
+    const rootCs = getComputedStyle(svg);
+    const bg = rootCs.getPropertyValue('--bg-1').trim();
+    const fg = rootCs.getPropertyValue('--t3').trim() || '#888';
+    const hasLabels = this.displayLabels().length > 0;
+    const w = this.width();
+    const h = this.height() + (hasLabels ? 18 : 0);
+    clone.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    clone.setAttribute('width', String(w));
+    clone.setAttribute('height', String(h));
+    if (bg) {
+      const rect = doc.createElementNS(NS, 'rect');
+      rect.setAttribute('width', String(w));
+      rect.setAttribute('height', String(h));
+      rect.setAttribute('fill', bg);
+      clone.insertBefore(rect, clone.firstChild);
+    }
+    const text = (x: number, y: number, content: string, anchor: string) => {
+      const t = doc.createElementNS(NS, 'text');
+      t.setAttribute('x', String(round(x)));
+      t.setAttribute('y', String(round(y)));
+      t.setAttribute('fill', fg);
+      t.setAttribute('font-size', '10');
+      t.setAttribute('font-family', 'monospace');
+      t.setAttribute('text-anchor', anchor);
+      t.textContent = content;
+      clone.appendChild(t);
+    };
+    for (const tick of this.yAxisTicks()) text(this.pl() - 6, tick.y + 3.5, tick.text, 'end');
+    if (hasLabels) {
+      for (const l of this.displayLabels())
+        text(this.xOf(l.i), this.height() + 12, l.text, 'middle');
+    }
+    return new XMLSerializer().serializeToString(clone);
+  }
+
+  /** The chart as a PNG data URL at the given scale (default 2×). */
+  toPNG(scale = 2): Promise<string> {
+    const s = this.toSVG();
+    const w = this.width();
+    const h = this.height() + (this.displayLabels().length ? 18 : 0);
+    return new Promise((resolve, reject) => {
+      if (!s) {
+        reject(new Error('chart is not rendered'));
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(w * scale);
+        canvas.height = Math.round(h * scale);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('no 2d canvas context'));
+          return;
+        }
+        ctx.scale(scale, scale);
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => reject(new Error('SVG rasterization failed'));
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);
+    });
   }
 }

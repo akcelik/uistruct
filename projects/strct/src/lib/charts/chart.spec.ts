@@ -226,4 +226,120 @@ describe('StrctChart', () => {
     expect(spans.length).toBe(3);
     expect(spans.every((sp) => sp.style.left !== '')).toBe(true);
   });
+
+  // FR-CHART-08: data gaps
+  it('breaks the line at null points into disjoint segments', () => {
+    const el = build({ data: [10, 20, null, null, 40], curve: 'linear' });
+    const d = el.querySelector('.strct-chart__line')?.getAttribute('d') ?? '';
+    expect(d.split('M').filter(Boolean).length).toBe(2); // two sub-paths
+    // all-number arrays are unaffected
+    const solid = build({ data: [10, 20, 30, 20, 40], curve: 'linear' });
+    const ds = solid.querySelector('.strct-chart__line')?.getAttribute('d') ?? '';
+    expect(ds.split('M').filter(Boolean).length).toBe(1);
+  });
+
+  it('announces "no data" when a gap point is selected', () => {
+    const fixture = TestBed.createComponent(StrctChart);
+    fixture.componentRef.setInput('data', [10, null, 30]);
+    fixture.detectChanges();
+    const svg = fixture.nativeElement.querySelector('svg') as SVGElement;
+    svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-chart__tip--gap')?.textContent).toContain('no data');
+    expect(el.querySelector('.strct-chart__sr')?.textContent).toContain('no data');
+  });
+
+  // FR-CHART-09: hover output + driven crosshair
+  it('emits hoverIndex on keyboard hover and clears it on Escape', () => {
+    const fixture = TestBed.createComponent(StrctChart);
+    fixture.componentRef.setInput('data', [10, 20, 30]);
+    fixture.detectChanges();
+    const emitted: (number | null)[] = [];
+    fixture.componentInstance.hoverIndex.subscribe((i) => emitted.push(i));
+    const svg = fixture.nativeElement.querySelector('svg') as SVGElement;
+    svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(emitted).toEqual([0, null]);
+  });
+
+  it('activeIndex drives the crosshair without a local pointer', () => {
+    const fixture = TestBed.createComponent(StrctChart);
+    fixture.componentRef.setInput('data', [10, 20, 30]);
+    fixture.componentRef.setInput('activeIndex', 1);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-chart__cross')).toBeTruthy();
+    expect(el.querySelector('.strct-chart__tip-v')?.textContent).toContain('20');
+  });
+
+  // FR-CHART-10: annotations
+  it('draws a vertical annotation line with its label', () => {
+    const el = build({
+      data: [1, 2, 3, 4, 5],
+      annotations: [{ index: 2, label: 'alarm', status: 'critical' }],
+    });
+    const line = el.querySelector('.strct-chart__ann');
+    expect(line).toBeTruthy();
+    expect(line?.getAttribute('stroke')).toBe('var(--critical)');
+    expect(el.querySelector('.strct-chart__ann-label')?.textContent).toContain('alarm');
+  });
+
+  // FR-CHART-11: min–max band
+  it('fills a band between lower and upper bounds', () => {
+    const el = build({
+      series: [{ data: [5, 6, 5], lower: [3, 4, 3], upper: [8, 9, 8], label: 'cpu' }],
+    });
+    const band = el.querySelector('.strct-chart__band');
+    expect(band).toBeTruthy();
+    expect(band?.getAttribute('d')).toContain('Z');
+    // no bounds → no band
+    const plain = build({ series: [{ data: [5, 6, 5], label: 'cpu' }] });
+    expect(plain.querySelector('.strct-chart__band')).toBeNull();
+  });
+
+  // FR-CHART-12 (+ zoom): brush selection
+  it('brush drag emits the selected range; zoom narrows the window and reset clears it', () => {
+    const fixture = TestBed.createComponent(StrctChart);
+    fixture.componentRef.setInput('data', [1, 2, 3, 4, 5, 6, 7, 8]);
+    fixture.componentRef.setInput('labels', ['0', '1', '2', '3', '4', '5', '6', '7']);
+    fixture.componentRef.setInput('zoom', true);
+    fixture.detectChanges();
+    const emitted: ([number, number] | null)[] = [];
+    fixture.componentInstance.brushChange.subscribe((r) => emitted.push(r));
+    // Simulate the drag the pointer handlers would produce.
+    const cmp = fixture.componentInstance as unknown as {
+      brushDrag: { set(v: { a: number; b: number } | null): void };
+      onUp(): void;
+    };
+    cmp.brushDrag.set({ a: 2, b: 5 });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.strct-chart__brush')).toBeTruthy();
+    cmp.onUp();
+    fixture.detectChanges();
+    expect(emitted).toEqual([[2, 5]]);
+    // zoomed: only the selected window's labels remain, reset chip appears
+    const el = fixture.nativeElement as HTMLElement;
+    const shown = [...el.querySelectorAll('.strct-chart__labels span')].map((s) => s.textContent);
+    expect(shown).toEqual(['2', '3', '4', '5']);
+    const reset = el.querySelector('.strct-chart__reset') as HTMLButtonElement;
+    expect(reset).toBeTruthy();
+    reset.click();
+    fixture.detectChanges();
+    expect(emitted).toEqual([[2, 5], null]);
+    expect(el.querySelectorAll('.strct-chart__labels span').length).toBe(8);
+  });
+
+  // FR-CHART-13: export
+  it('toSVG returns a standalone SVG string with resolved presentation', () => {
+    const fixture = TestBed.createComponent(StrctChart);
+    fixture.componentRef.setInput('data', [1, 2, 3]);
+    fixture.componentRef.setInput('labels', ['a', 'b', 'c']);
+    fixture.detectChanges();
+    const s = fixture.componentInstance.toSVG();
+    expect(s).toContain('<svg');
+    expect(s).toContain('xmlns');
+    expect(s).not.toContain('class=');
+  });
 });

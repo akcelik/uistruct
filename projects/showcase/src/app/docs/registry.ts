@@ -1773,15 +1773,16 @@ export const DOCS: DocCategory[] = [
         inputs: [
           {
             name: 'data',
-            type: 'number[]',
-            description: 'Single-series values (or use `series`).',
+            type: '(number | null)[]',
+            description:
+              'Single-series values (or use `series`). `null` / `NaN` marks a data gap: the line breaks — an outage never reads as a flat line.',
           },
           {
             name: 'series',
             type: 'StrctChartSeries[] | null',
             default: 'null',
             description:
-              'Multiple lines: `{ data; label?; status?; area?; curve? }[]`. Takes precedence over `data`; pairs with `legend`.',
+              'Multiple lines: `{ data; label?; status?; area?; curve?; dash?; lower?; upper? }[]`. `lower`+`upper` fill a min–max band behind the line (downsampled spikes stay visible; tooltip shows `avg (min–max)`). Takes precedence over `data`; pairs with `legend`.',
           },
           {
             name: 'curve',
@@ -1890,16 +1891,73 @@ export const DOCS: DocCategory[] = [
             default: `'No data'`,
             description: 'Centered message shown when data / series is empty.',
           },
+          {
+            name: 'annotations',
+            type: 'StrctChartAnnotation[]',
+            default: '[]',
+            description:
+              '`{ index; label?; status?; dashed? }[]` — vertical event markers ("alarm raised", "deploy") anchored to a data index; the label joins the tooltip at that index.',
+          },
+          {
+            name: 'activeIndex',
+            type: 'number | null',
+            default: 'null',
+            description:
+              'Drive the crosshair externally — mirror a sibling chart’s `(hoverIndex)` into it for a vCenter-style synced multi-chart dashboard. A local pointer wins while over this chart.',
+          },
+          {
+            name: 'brush / zoom',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Drag-select a range. `brush` emits it through `(brushChange)`; `zoom` also zooms the chart into the selection (double-click, Escape or the ⟲ chip zooms back out).',
+          },
+          {
+            name: 'gapText / resetLabel',
+            type: 'string',
+            default: `'no data' / 'Reset zoom'`,
+            description: 'Localizable strings for the gap tooltip and the reset-zoom chip.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'hoverIndex',
+            type: 'number | null',
+            description:
+              'The hovered point index (null on leave) — wire it into a sibling chart’s `activeIndex` for synced crosshairs.',
+          },
+          {
+            name: 'brushChange',
+            type: '[number, number] | null',
+            description:
+              'The brushed [startIndex, endIndex] (inclusive), or null when the selection / zoom is cleared — re-query that range at finer resolution.',
+          },
+        ],
+        methods: [
+          {
+            name: 'toSVG()',
+            type: '() => string',
+            description:
+              'The rendered chart as a standalone SVG string — theme colors resolved, background and axis text baked in.',
+          },
+          {
+            name: 'toPNG(scale?)',
+            type: '(scale = 2) => Promise<string>',
+            description:
+              'The chart as a PNG data URL at the given scale — drop a perf chart straight into a ticket.',
+          },
         ],
         do: [
           'Use for continuous time-series data; keep `curve="smooth"` for trends.',
           'Pass `series` + `legend` to compare two signals (in/out, read/write).',
           'Add `yAxis` + `thresholds` so operators can read levels at a glance.',
           'For live metrics, push a fixed-length sliding window and set `live` + `interval`.',
+          'Represent missing samples as `null` — never fill an outage with fake values.',
         ],
         dont: ['Do not use a line chart for unordered categories — use bars.'],
         a11y: [
           'Honours prefers-reduced-motion: the scroll, pulse and draw-on animations are disabled.',
+          'Keyboard: arrows walk the crosshair; Escape unwinds brush → zoom → crosshair.',
         ],
       },
       {
