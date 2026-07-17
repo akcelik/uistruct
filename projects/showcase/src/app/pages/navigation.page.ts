@@ -104,8 +104,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="rail"
       heading="Rail"
-      description="Collapsible, data-driven primary navigation. Toggle the foot control to collapse to icons — badges become dots and labels become tooltips."
-      code='<strct-rail [items]="items" [(activeId)]="section" [(collapsed)]="off" />'
+      description="Collapsible, data-driven primary navigation. placement: 'bottom' pins an item (Administration) to the foot under a divider; routerLink/href items are real links — middle-click or ⌘-click 'Rail docs' to open a new tab. Toggle the foot control to collapse to icons — badges become dots and labels become tooltips."
+      code='<strct-rail [items]="[{id:&#39;compute&#39;,label:&#39;Compute&#39;,icon:&#39;host&#39;,routerLink:&#39;/compute&#39;}, …, {id:&#39;admin&#39;,label:&#39;Administration&#39;,icon:&#39;settings&#39;,placement:&#39;bottom&#39;}]" [(activeId)]="section" />'
     >
       <div class="rail-demo">
         <strct-rail [items]="railItems" [(activeId)]="section" [(collapsed)]="railOff" />
@@ -120,8 +120,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="section-menu"
       heading="Section menu"
-      description="A two-level category / item menu (not a tree). Toggle collapsible and icons to see the configurations."
-      code='<strct-section-menu [sections]="nav" [(activeId)]="active" [collapsible]="true" [showIcons]="true" />'
+      description="A two-level category / item menu (not a tree). Items carry the same trailing vocabulary as the rail: a status dot (Hosts — 'unsaved changes'), a muted trailing icon (VMs — 'restart required') and a count chip (Volumes — deviations). Toggle collapsible and icons to see the configurations."
+      code='<strct-section-menu [sections]="[{label:&#39;Compute&#39;,items:[{id:&#39;hosts&#39;,label:&#39;Hosts&#39;,dot:true,dotStatus:&#39;warning&#39;},{id:&#39;vms&#39;,label:&#39;VMs&#39;,trailingIcon:&#39;sync&#39;}]}]" [(activeId)]="active" />'
     >
       <div class="sm-demo">
         <div class="sm-demo__controls">
@@ -235,9 +235,12 @@ export class NavigationPage {
     { id: 'hosts', label: 'Hosts', icon: 'host', badge: 24 },
     { id: 'vms', label: 'Virtual machines', icon: 'vm', badge: 112 },
     { id: 'storage', label: 'Storage', icon: 'storage', badge: 3, badgeStatus: 'warning' },
-    { id: 'network', label: 'Networking', icon: 'network' },
+    { id: 'network', label: 'Networking', icon: 'network', dot: true, dotStatus: 'warning' },
     { id: 'alerts', label: 'Alerts', icon: 'alarm', badge: 2, badgeStatus: 'critical' },
-    { id: 'settings', label: 'Settings', icon: 'settings' },
+    // A real router link: middle-click / ⌘-click opens a new tab.
+    { id: 'docs', label: 'Rail docs (link)', icon: 'link', routerLink: '/components/rail' },
+    // Pinned to the foot of the rail, under a divider.
+    { id: 'admin', label: 'Administration', icon: 'settings', placement: 'bottom' },
   ];
 
   protected readonly menuActive = signal('hosts');
@@ -248,8 +251,9 @@ export class NavigationPage {
       label: 'Compute',
       icon: 'cpu',
       items: [
-        { id: 'hosts', label: 'Hosts', icon: 'host' },
-        { id: 'vms', label: 'Virtual machines', icon: 'vm' },
+        // "unsaved changes" dot + "restart required" trailing icon (FR-NAV-02)
+        { id: 'hosts', label: 'Hosts', icon: 'host', dot: true, dotStatus: 'warning' },
+        { id: 'vms', label: 'Virtual machines', icon: 'vm', trailingIcon: 'sync' },
         { id: 'clusters', label: 'Clusters', icon: 'cluster' },
       ],
     },
@@ -257,7 +261,7 @@ export class NavigationPage {
       label: 'Storage',
       icon: 'storage',
       items: [
-        { id: 'volumes', label: 'Volumes', icon: 'disk' },
+        { id: 'volumes', label: 'Volumes', icon: 'disk', badge: 3, badgeStatus: 'critical' },
         { id: 'pools', label: 'Pools', icon: 'database' },
       ],
     },

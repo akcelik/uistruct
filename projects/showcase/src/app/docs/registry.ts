@@ -1287,7 +1287,7 @@ export const DOCS: DocCategory[] = [
             name: 'items',
             type: 'StrctRailItem[]',
             description:
-              'Navigation entries: { id, label, icon, badge?, badgeStatus?, disabled? }. Required.',
+              'Navigation entries: `{ id, label, icon, badge?, badgeStatus?, disabled?, placement?, routerLink?, href?, dot?, dotStatus?, trailingIcon? }`. `placement: "bottom"` pins the item to the foot of the rail under a divider (e.g. Administration). `routerLink` / `href` render the item as a real `<a>` — middle-click, ⌘/Ctrl-click and "open in new tab" work; `(select)` still fires on plain activation. `dot` + `dotStatus` show a small trailing status dot; `trailingIcon` a muted trailing glyph. Required.',
           },
           {
             name: 'activeId',
@@ -1320,10 +1320,12 @@ export const DOCS: DocCategory[] = [
         do: [
           'Give items a status badge to surface health / alert counts at a glance.',
           'Collapse the rail on smaller screens to reclaim horizontal space.',
+          'Use routerLink items for the app’s primary categories so browser affordances (new tab, middle-click) keep working.',
+          'Pin utility destinations (Administration, Settings) with placement: "bottom".',
         ],
         dont: ['Do not exceed ~8 top-level items; group deeper navigation elsewhere.'],
         a11y: [
-          'Renders a nav landmark; the active item gets aria-current. Collapsed items expose their label as a tooltip.',
+          'Renders a nav landmark; the active item gets aria-current. Collapsed items expose their label as a tooltip. Link items are real anchors, so assistive tech announces them as links.',
         ],
       },
       {
@@ -1402,7 +1404,7 @@ export const DOCS: DocCategory[] = [
             name: 'sections',
             type: 'StrctMenuSection[]',
             description:
-              'Categories with items: { label, icon?, expanded?, items: [{ id, label, icon?, disabled? }] }. Required.',
+              'Categories with items: `{ label, icon?, expanded?, items: StrctMenuLink[] }`. Each item is `{ id, label, icon?, disabled?, badge?, badgeStatus?, dot?, dotStatus?, trailingIcon? }` — `badge` renders a trailing count chip, `dot` a small status dot (e.g. "unsaved changes"), `trailingIcon` a muted glyph (e.g. "restart required"). Same status vocabulary as the rail (`StrctRailStatus`). Required.',
           },
           {
             name: 'activeId',

@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
+import { StrctRailStatus } from '../layout/rail';
 
 /** A leaf entry under a {@link StrctMenuSection}. */
 export interface StrctMenuLink {
@@ -18,6 +19,16 @@ export interface StrctMenuLink {
   /** Optional leading icon name. */
   icon?: string;
   disabled?: boolean;
+  /** Trailing count/label chip (e.g. a deviation count). */
+  badge?: string | number;
+  /** Badge tone; defaults to `accent` (shared vocabulary with {@link StrctRailItem}). */
+  badgeStatus?: StrctRailStatus;
+  /** Small trailing status dot with no text (e.g. "unsaved changes"). */
+  dot?: boolean;
+  /** Dot tone; defaults to `accent`. */
+  dotStatus?: StrctRailStatus;
+  /** Muted trailing icon (e.g. "restart required"), before any badge / dot. */
+  trailingIcon?: string;
 }
 
 /** A category (level 1) that groups {@link StrctMenuLink} items (level 2). */
@@ -92,6 +103,25 @@ export interface StrctMenuSection {
                     />
                   }
                   <span class="strct-sm__item-label">{{ item.label }}</span>
+                  @if (item.trailingIcon) {
+                    <strct-icon
+                      class="strct-sm__trailing"
+                      [name]="item.trailingIcon"
+                      [size]="14"
+                      [strokeWidth]="1.5"
+                    />
+                  }
+                  @if (item.badge !== undefined && item.badge !== null && item.badge !== '') {
+                    <span
+                      class="strct-sm__badge strct-sm__badge--{{ item.badgeStatus ?? 'accent' }}"
+                    >
+                      {{ item.badge }}
+                    </span>
+                  } @else if (item.dot) {
+                    <span
+                      class="strct-sm__dot strct-sm__dot--{{ item.dotStatus ?? 'accent' }}"
+                    ></span>
+                  }
                 </button>
               }
             </div>
@@ -214,6 +244,60 @@ export interface StrctMenuSection {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+      /* Trailing cues: muted icon, count chip, status dot — same vocabulary as
+         the rail, so the two nav objects stay consistent. */
+      .strct-sm__trailing {
+        flex-shrink: 0;
+        color: var(--t3);
+      }
+      .strct-sm__badge {
+        flex-shrink: 0;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+        border-radius: 9px;
+        font-variant-numeric: tabular-nums;
+      }
+      .strct-sm__badge--accent {
+        background: var(--acc-m);
+        color: var(--acc);
+      }
+      .strct-sm__badge--success {
+        background: var(--success-bg);
+        color: var(--success);
+      }
+      .strct-sm__badge--warning {
+        background: var(--warning-bg);
+        color: var(--warning);
+      }
+      .strct-sm__badge--critical {
+        background: var(--critical-bg);
+        color: var(--critical);
+      }
+      .strct-sm__dot {
+        flex-shrink: 0;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+      }
+      .strct-sm__dot--accent {
+        background: var(--acc);
+      }
+      .strct-sm__dot--success {
+        background: var(--success);
+      }
+      .strct-sm__dot--warning {
+        background: var(--warning);
+      }
+      .strct-sm__dot--critical {
+        background: var(--critical);
       }
     `,
   ],

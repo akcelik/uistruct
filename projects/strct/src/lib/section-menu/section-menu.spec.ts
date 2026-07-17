@@ -64,4 +64,28 @@ describe('StrctSectionMenu', () => {
     expect(picked?.id).toBe('hosts');
     expect(f.componentInstance.activeId()).toBe('hosts');
   });
+
+  it('renders trailing badge / dot / trailingIcon per item (FR-NAV-02)', () => {
+    const f = TestBed.createComponent(StrctSectionMenu);
+    f.componentRef.setInput('sections', [
+      {
+        label: 'Settings',
+        items: [
+          { id: 'general', label: 'General', dot: true, dotStatus: 'warning' },
+          { id: 'net', label: 'Network', trailingIcon: 'sync', badge: 3, badgeStatus: 'critical' },
+          { id: 'plain', label: 'Plain' },
+        ],
+      },
+    ] satisfies StrctMenuSection[]);
+    f.detectChanges();
+    const host = f.nativeElement as HTMLElement;
+    expect(host.querySelector('.strct-sm__dot--warning')).toBeTruthy();
+    expect(host.querySelector('.strct-sm__trailing')).toBeTruthy();
+    const badge = host.querySelector('.strct-sm__badge--critical');
+    expect(badge?.textContent?.trim()).toBe('3');
+    // the plain item carries none of the trailing cues
+    const rows = host.querySelectorAll('.strct-sm__item');
+    const plain = rows[rows.length - 1];
+    expect(plain.querySelector('.strct-sm__badge, .strct-sm__dot, .strct-sm__trailing')).toBeNull();
+  });
 });
