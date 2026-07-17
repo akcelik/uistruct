@@ -10,6 +10,7 @@ import {
   StrctDatagrid,
   StrctDatagridActionBar,
   StrctDatagridColumn,
+  StrctDatagridLazyState,
   StrctDesc,
   StrctDescriptionList,
   StrctIcon,
@@ -162,6 +163,65 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="datagrid-virtual"
+      owner="datagrid"
+      heading="Virtual scroll — 20.000 rows"
+      description="virtual keeps only the viewport (plus a small overscan) in the DOM, so tens of thousands of rows scroll smoothly with a sticky header. The first column is frozen (sticky) against horizontal scroll, column widths/visibility persist under stateKey, and the whole set exports with downloadCSV()."
+      code='<strct-datagrid [columns]="cols" [rows]="rows20k" virtual [viewportHeight]="380" stateKey="inventory" #g /> … g.downloadCSV()'
+    >
+      <div class="dg-wrap">
+        <strct-datagrid
+          #vgrid
+          style="width: 100%;"
+          [columns]="vCols"
+          [rows]="vRows"
+          rowId="id"
+          virtual
+          [viewportHeight]="380"
+          selectable
+          resizable
+          columnChooser
+          stateKey="docs-inventory"
+          [labels]="{ rows: 'hosts' }"
+        />
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button
+            strct-button
+            size="sm"
+            variant="neutral"
+            (click)="vgrid.downloadCSV('inventory.csv')"
+          >
+            <strct-icon name="download" [size]="14" /> CSV indir (20k satır)
+          </button>
+          <span class="echo">DOM'da yalnızca görünür satırlar render edilir</span>
+        </div>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="datagrid-lazy"
+      owner="datagrid"
+      heading="Server-side data (lazy)"
+      description="With lazy the grid never sorts or slices rows itself — it emits (lazyLoad) with { page, pageSize, sortKey, sortDir } whenever you page or sort (and once on init), and you fetch that window from your API. total drives the pager. Below, a fake 500-row server answers with 300ms latency."
+      code='<strct-datagrid [columns]="cols" [rows]="pageRows()" lazy [total]="500" [pageSize]="8" [loading]="busy()" (lazyLoad)="fetch($event)" />'
+    >
+      <div class="dg-wrap">
+        <strct-datagrid
+          style="width: 100%;"
+          [columns]="lzCols"
+          [rows]="lzRows()"
+          rowId="id"
+          lazy
+          [total]="500"
+          [pageSize]="8"
+          [loading]="lzLoading()"
+          (lazyLoad)="onLazyLoad($event)"
+        />
+        <span class="echo">{{ lzEcho() }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="detailpane"
       heading="Detail pane"
       description="A different pattern from expandable rows: click the » button to collapse the grid to a single column and open a side pane with that row's details (the » keeps row cells free to select/copy). Click it again or the × to return."
@@ -251,6 +311,65 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 export class DataPage {
   protected readonly dense = signal(false);
   protected readonly oneLine = signal(true);
+
+  // Virtual scroll demo: a 20k-row inventory.
+  protected readonly vCols: StrctDatagridColumn[] = [
+    { key: 'host', label: 'Host', sticky: true, width: '150px', sortable: true },
+    { key: 'cluster', label: 'Cluster', sortable: true },
+    { key: 'cpu', label: 'CPU %', align: 'end', sortable: true },
+    { key: 'mem', label: 'Memory %', align: 'end', sortable: true },
+    { key: 'state', label: 'State', sortable: true },
+    { key: 'zone', label: 'Zone' },
+    { key: 'kernel', label: 'Kernel' },
+  ];
+  protected readonly vRows = Array.from({ length: 20000 }, (_, i) => ({
+    id: i,
+    host: `hv-${String(i).padStart(5, '0')}`,
+    cluster: `cluster-${(i % 40) + 1}`,
+    cpu: Math.round(20 + 70 * Math.abs(Math.sin(i / 7))),
+    mem: Math.round(30 + 60 * Math.abs(Math.cos(i / 11))),
+    state: i % 13 === 0 ? 'maintenance' : i % 7 === 0 ? 'degraded' : 'running',
+    zone: `zone-${(i % 6) + 1}`,
+    kernel: `5.14.0-${300 + (i % 90)}`,
+  }));
+
+  // Lazy demo: a fake 500-row "server" answering with latency.
+  protected readonly lzCols: StrctDatagridColumn[] = [
+    { key: 'id', label: '#', align: 'end', width: '64px' },
+    { key: 'vm', label: 'VM', sortable: true },
+    { key: 'owner', label: 'Owner', sortable: true },
+    { key: 'vcpus', label: 'vCPUs', align: 'end', sortable: true },
+  ];
+  private readonly lzAll = Array.from({ length: 500 }, (_, i) => ({
+    id: i + 1,
+    vm: `vm-${String(i + 1).padStart(3, '0')}`,
+    owner: ['ops', 'dev', 'qa', 'sec'][i % 4],
+    vcpus: 2 + (i % 7),
+  }));
+  protected readonly lzRows = signal<StrctRow[]>([]);
+  protected readonly lzLoading = signal(false);
+  protected readonly lzEcho = signal('bekleniyor…');
+  protected onLazyLoad(state: StrctDatagridLazyState): void {
+    this.lzLoading.set(true);
+    this.lzEcho.set(
+      `istek: sayfa ${state.page} · sıralama ${state.sortKey ?? '—'} ${state.sortKey ? state.sortDir : ''}`,
+    );
+    setTimeout(() => {
+      const data = [...this.lzAll];
+      if (state.sortKey) {
+        const k = state.sortKey;
+        const sign = state.sortDir === 'asc' ? 1 : -1;
+        data.sort((a, b) => {
+          const av = a[k as keyof typeof a];
+          const bv = b[k as keyof typeof b];
+          return sign * String(av).localeCompare(String(bv), undefined, { numeric: true });
+        });
+      }
+      const start = (state.page - 1) * state.pageSize;
+      this.lzRows.set(data.slice(start, start + state.pageSize));
+      this.lzLoading.set(false);
+    }, 300);
+  }
 
   // Single-line demo: one column carries a deliberately long value.
   protected readonly slCols: StrctDatagridColumn[] = [

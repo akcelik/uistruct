@@ -12,6 +12,7 @@ import {
   effect,
   inject,
   input,
+  model,
   output,
   signal,
   untracked,
@@ -67,9 +68,35 @@ export interface StrctDatagridColumn {
   /** Allow the user to resize this column by dragging its right edge.
    *  Defaults to the global {@link StrctDatagrid#resizable} setting. */
   resizable?: boolean;
+  /**
+   * Freeze this column against horizontal scroll. Mark **leading** columns
+   * (utility columns freeze automatically alongside). Give every sticky column
+   * except the last an explicit px `width` so offsets stay exact.
+   */
+  sticky?: boolean;
 }
 
 type SortDir = 'asc' | 'desc';
+
+/** What the grid wants loaded in server-side (`lazy`) mode. */
+export interface StrctDatagridLazyState {
+  /** 1-based page. */
+  page: number;
+  pageSize: number;
+  sortKey: string | null;
+  sortDir: SortDir;
+}
+
+/** Persistable user column preferences (widths from resize, hidden from the chooser). */
+export interface StrctDatagridColumnState {
+  widths?: Record<string, number>;
+  hidden?: string[];
+}
+
+/** Utility-column widths used when sticky columns are active (px). */
+const UTIL_W = { detail: 36, expand: 36, sel: 40 } as const;
+/** Fallback width for a sticky column without an explicit px width. */
+const STICKY_FALLBACK_W = 120;
 
 /**
  * Marks the expandable-row detail template. The row is the template's implicit
@@ -110,18 +137,37 @@ export class StrctDatagridActionBar {}
     }
 
     <div class="strct-dg__layout" [class.strct-dg__layout--paned]="paneOpen()">
-      <div class="strct-dg__scroll" tabindex="0" role="region" [attr.aria-label]="L().rows">
+      <div
+        class="strct-dg__scroll"
+        tabindex="0"
+        role="region"
+        [attr.aria-label]="L().rows"
+        [style.max-height.px]="virtual() ? viewportHeight() : null"
+        (scroll)="virtual() && onScroll($event)"
+      >
         <table class="strct-dg">
           <thead>
             <tr>
               @if (canDetail()) {
-                <th class="strct-dg__expandcol"></th>
+                <th
+                  class="strct-dg__expandcol"
+                  [class.strct-dg__cell--sticky]="stickyActive()"
+                  [style.left.px]="utilLeft('detail')"
+                ></th>
               }
               @if (canExpand()) {
-                <th class="strct-dg__expandcol"></th>
+                <th
+                  class="strct-dg__expandcol"
+                  [class.strct-dg__cell--sticky]="stickyActive()"
+                  [style.left.px]="utilLeft('expand')"
+                ></th>
               }
               @if (selectable()) {
-                <th class="strct-dg__sel">
+                <th
+                  class="strct-dg__sel"
+                  [class.strct-dg__cell--sticky]="stickyActive()"
+                  [style.left.px]="utilLeft('sel')"
+                >
                   <strct-checkbox
                     [ariaLabel]="L().selectAll"
                     [checked]="allPageSelected()"
@@ -135,6 +181,9 @@ export class StrctDatagridActionBar {}
                   [style.text-align]="col.align ?? 'start'"
                   [style.width]="colWidth(col.key) ?? col.width ?? null"
                   [class.strct-dg__th--sortable]="col.sortable"
+                  [class.strct-dg__cell--sticky]="isSticky(col)"
+                  [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
+                  [style.left.px]="stickyLeft(col.key)"
                   [attr.tabindex]="col.sortable ? 0 : null"
                   [attr.aria-sort]="col.sortable ? ariaSort(col.key) : null"
                   (click)="col.sortable && sortBy(col.key)"
@@ -188,13 +237,22 @@ export class StrctDatagridActionBar {}
                 </tr>
               }
             } @else {
-              @for (row of paged(); track rowKey(row)) {
+              @if (virtual() && topPad() > 0) {
+                <tr class="strct-dg__vspacer" aria-hidden="true">
+                  <td [attr.colspan]="colspan()" [style.height.px]="topPad()"></td>
+                </tr>
+              }
+              @for (row of renderRows(); track rowKey(row)) {
                 <tr
                   [class.strct-dg__row--selected]="isSelected(row)"
                   [class.strct-dg__row--active]="paneOpen() && row === activeRow()"
                 >
                   @if (canDetail()) {
-                    <td class="strct-dg__expandcell">
+                    <td
+                      class="strct-dg__expandcell"
+                      [class.strct-dg__cell--sticky]="stickyActive()"
+                      [style.left.px]="utilLeft('detail')"
+                    >
                       <button
                         type="button"
                         class="strct-dg__detailbtn"
@@ -208,7 +266,11 @@ export class StrctDatagridActionBar {}
                     </td>
                   }
                   @if (canExpand()) {
-                    <td class="strct-dg__expandcell">
+                    <td
+                      class="strct-dg__expandcell"
+                      [class.strct-dg__cell--sticky]="stickyActive()"
+                      [style.left.px]="utilLeft('expand')"
+                    >
                       <button
                         type="button"
                         class="strct-dg__expandbtn"
@@ -222,7 +284,11 @@ export class StrctDatagridActionBar {}
                     </td>
                   }
                   @if (selectable()) {
-                    <td class="strct-dg__sel">
+                    <td
+                      class="strct-dg__sel"
+                      [class.strct-dg__cell--sticky]="stickyActive()"
+                      [style.left.px]="utilLeft('sel')"
+                    >
                       <strct-checkbox
                         [ariaLabel]="L().selectRow"
                         [checked]="isSelected(row)"
@@ -231,7 +297,12 @@ export class StrctDatagridActionBar {}
                     </td>
                   }
                   @for (col of visibleColumns(); track col.key) {
-                    <td [style.text-align]="col.align ?? 'start'">
+                    <td
+                      [style.text-align]="col.align ?? 'start'"
+                      [class.strct-dg__cell--sticky]="isSticky(col)"
+                      [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
+                      [style.left.px]="stickyLeft(col.key)"
+                    >
                       @if (cellTemplate(col.key); as tpl) {
                         <ng-container
                           [ngTemplateOutlet]="tpl"
@@ -276,6 +347,11 @@ export class StrctDatagridActionBar {}
                   <td class="strct-dg__empty" [attr.colspan]="colspan()">{{ emptyText() }}</td>
                 </tr>
               }
+              @if (virtual() && bottomPad() > 0) {
+                <tr class="strct-dg__vspacer" aria-hidden="true">
+                  <td [attr.colspan]="colspan()" [style.height.px]="bottomPad()"></td>
+                </tr>
+              }
             }
           </tbody>
         </table>
@@ -304,7 +380,7 @@ export class StrctDatagridActionBar {}
       }
     </div>
 
-    @if (pageSize() > 0 && !loading()) {
+    @if ((pageSize() > 0 || virtual()) && !loading()) {
       <div class="strct-dg__foot">
         <div class="strct-dg__foot-left">
           @if (columnChooser() || sync()) {
@@ -350,7 +426,7 @@ export class StrctDatagridActionBar {}
             </div>
           }
           <span class="strct-dg__count">
-            {{ sorted().length }} {{ sorted().length === 1 ? L().row : L().rows }}
+            {{ totalCount() }} {{ totalCount() === 1 ? L().row : L().rows }}
             @if (selectedCount()) {
               <span class="strct-dg__count-sep">|</span>
               <span class="strct-dg__count-sel">{{ selectedCount() }} {{ L().selected }}</span>
@@ -358,7 +434,9 @@ export class StrctDatagridActionBar {}
           </span>
         </div>
         <div class="strct-dg__foot-right">
-          <strct-pagination [total]="sorted().length" [pageSize]="pageSize()" [(page)]="page" />
+          @if (pageSize() > 0) {
+            <strct-pagination [total]="totalCount()" [pageSize]="pageSize()" [(page)]="page" />
+          }
         </div>
       </div>
     }
@@ -367,6 +445,8 @@ export class StrctDatagridActionBar {}
     class: 'strct-dg-host',
     '[class.strct-dg-host--compact]': 'compact()',
     '[class.strct-dg-host--singleline]': 'singleLine()',
+    '[class.strct-dg-host--virtual]': 'virtual()',
+    '[class.strct-dg-host--sticky]': 'stickyActive()',
   },
   styles: [
     `
@@ -384,6 +464,98 @@ export class StrctDatagridActionBar {}
         min-width: 0;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+      }
+      /* Virtual mode: a fixed-height y-scroll viewport with a sticky header. */
+      .strct-dg-host--virtual .strct-dg__scroll {
+        overflow-y: auto;
+      }
+      .strct-dg-host--virtual .strct-dg thead th {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+      }
+      .strct-dg__vspacer td {
+        padding: 0;
+        border: 0;
+        background: transparent;
+      }
+      /* Sticky cells require border-collapse: separate (collapse breaks
+         position: sticky on table cells in Chromium); per-cell bottom borders
+         keep the visuals identical. width: max-content lets declared column
+         widths win so frozen offsets stay exact. */
+      .strct-dg-host--sticky .strct-dg,
+      .strct-dg-host--virtual .strct-dg {
+        border-collapse: separate;
+        border-spacing: 0;
+        /* overflow: hidden on the table (corner rounding) would become the
+           sticky containing block and defeat position: sticky entirely. */
+        overflow: visible;
+        border-radius: 0;
+      }
+      .strct-dg-host--sticky .strct-dg {
+        width: max-content;
+        min-width: 100%;
+      }
+      /* Frozen columns: pinned against horizontal scroll, opaque over content. */
+      .strct-dg .strct-dg__cell--sticky {
+        position: sticky;
+        z-index: 3;
+      }
+      /* th.….--sticky (0-2-2) must beat the virtual-mode "thead th" rule of the
+         same specificity by source order, so corner cells paint above both the
+         scrolled header cells and the frozen body cells. */
+      .strct-dg thead th.strct-dg__cell--sticky {
+        z-index: 6;
+      }
+      .strct-dg .strct-dg__cell--sticky-last::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: -1px;
+        width: 7px;
+        pointer-events: none;
+        background: linear-gradient(90deg, rgba(0, 0, 0, 0.14), transparent);
+      }
+      /* Fixed utility-column widths so frozen offsets stay exact. */
+      .strct-dg-host--sticky .strct-dg__expandcol,
+      .strct-dg-host--sticky .strct-dg__expandcell {
+        width: 36px;
+        min-width: 36px;
+        max-width: 36px;
+        box-sizing: border-box;
+      }
+      .strct-dg-host--sticky .strct-dg__sel {
+        width: 40px;
+        min-width: 40px;
+        max-width: 40px;
+        box-sizing: border-box;
+      }
+      /* Sticky header cells need an opaque ground (thead th already has bg-2;
+         utility body cells inherit the row background rules below). */
+      .strct-dg-host--sticky tbody .strct-dg__cell--sticky {
+        background: var(--bg-1);
+      }
+      [data-theme='dark'] .strct-dg-host--sticky tbody .strct-dg__cell--sticky {
+        background: var(--bg-3);
+      }
+      /* Hover / selected tints can be translucent — composite them over the
+         opaque base so scrolled content never shows through a frozen cell. */
+      .strct-dg-host--sticky tbody tr:hover .strct-dg__cell--sticky {
+        background: linear-gradient(var(--acc-s), var(--acc-s)) var(--bg-1);
+      }
+      [data-theme='dark'] .strct-dg-host--sticky tbody tr:hover .strct-dg__cell--sticky {
+        background: linear-gradient(var(--acc-s), var(--acc-s)) var(--bg-3);
+      }
+      .strct-dg-host--sticky tbody .strct-dg__row--selected .strct-dg__cell--sticky {
+        background: linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-1);
+      }
+      [data-theme='dark']
+        .strct-dg-host--sticky
+        tbody
+        .strct-dg__row--selected
+        .strct-dg__cell--sticky {
+        background: linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-3);
       }
       .strct-dg {
         width: 100%;
@@ -826,12 +998,42 @@ export class StrctDatagrid {
   readonly labels = input<Partial<StrctDatagridLabels>>({});
   /** Effective labels (defaults + overrides). */
   protected readonly L = computed(() => ({ ...DG_LABELS, ...this.labels() }));
+  /**
+   * Virtual scrolling for large data sets: only the rows inside the viewport
+   * (plus a small overscan) are in the DOM — 20k+ rows stay smooth. The scroll
+   * area gets `viewportHeight` and a sticky header. Assumes uniform
+   * `rowHeight`; combine with `expandable` is unsupported.
+   */
+  readonly virtual = input(false, { transform: booleanAttribute });
+  /** Scroll viewport height in px (virtual mode). */
+  readonly viewportHeight = input(360);
+  /** Uniform row height in px (virtual mode; tune when `compact`). */
+  readonly rowHeight = input(38);
+  /**
+   * Server-side mode: the grid never sorts or slices `rows` itself — it shows
+   * them as given and emits `(lazyLoad)` with `{ page, pageSize, sortKey,
+   * sortDir }` whenever the user pages or sorts (and once on init). Provide
+   * `total` so the pager and count reflect the full server-side set.
+   */
+  readonly lazy = input(false, { transform: booleanAttribute });
+  /** Total row count on the server (lazy mode). */
+  readonly total = input<number | null>(null);
+  /**
+   * Persist the user's column widths + hidden columns under this key in
+   * localStorage (`strct-dg:<key>`), restoring them on init. For full control
+   * use the two-way `columnState` instead (both may be combined).
+   */
+  readonly stateKey = input<string | null>(null);
+  /** User column preferences (two-way): widths from resize, hidden from the chooser. */
+  readonly columnState = model<StrctDatagridColumnState | null>(null);
   /** Emitted when the selection changes. */
   readonly selectionChange = output<StrctRow[]>();
   /** Emitted when the refresh button is clicked. */
   readonly syncChange = output<void>();
   /** Emitted when a row's action-menu item is chosen. */
   readonly rowAction = output<{ row: StrctRow; item: StrctMenuItem }>();
+  /** Server-side data request (lazy mode): load this page / sort and set `rows`. */
+  readonly lazyLoad = output<StrctDatagridLazyState>();
 
   private readonly menu = inject(StrctMenuService);
 
@@ -912,6 +1114,8 @@ export class StrctDatagrid {
   });
 
   protected readonly sorted = computed(() => {
+    // Server-side mode: rows arrive already ordered / sliced — never touch them.
+    if (this.lazy()) return this.rows();
     const { key, dir } = this.sort();
     const data = [...this.rows()];
     if (!key) return data;
@@ -921,9 +1125,91 @@ export class StrctDatagrid {
 
   protected readonly paged = computed(() => {
     const size = this.pageSize();
-    if (size <= 0) return this.sorted();
+    if (this.lazy() || size <= 0) return this.sorted();
     const start = (this.page() - 1) * size;
     return this.sorted().slice(start, start + size);
+  });
+
+  /** Full count for the pager / footer (server total in lazy mode). */
+  protected readonly totalCount = computed(() =>
+    this.lazy() ? (this.total() ?? this.rows().length) : this.sorted().length,
+  );
+
+  // ── Virtual scrolling ──────────────────────────────────────────
+  private readonly scrollTop = signal(0);
+  protected onScroll(event: Event): void {
+    this.scrollTop.set((event.target as HTMLElement).scrollTop);
+  }
+  /** Visible index window incl. overscan (virtual mode). */
+  private readonly vRange = computed(() => {
+    const rh = Math.max(1, this.rowHeight());
+    const n = this.sorted().length;
+    const start = Math.max(0, Math.floor(this.scrollTop() / rh) - 6);
+    const count = Math.ceil(this.viewportHeight() / rh) + 12;
+    return { start, end: Math.min(n, start + count) };
+  });
+  /** The rows actually rendered: the virtual window, or the current page. */
+  protected readonly renderRows = computed(() =>
+    this.virtual() ? this.sorted().slice(this.vRange().start, this.vRange().end) : this.paged(),
+  );
+  protected readonly topPad = computed(() =>
+    this.virtual() ? this.vRange().start * this.rowHeight() : 0,
+  );
+  protected readonly bottomPad = computed(() =>
+    this.virtual() ? Math.max(0, (this.sorted().length - this.vRange().end) * this.rowHeight()) : 0,
+  );
+
+  // ── Sticky (frozen) columns ────────────────────────────────────
+  protected readonly stickyActive = computed(
+    () => !this.paneOpen() && this.visibleColumns().some((c) => c.sticky),
+  );
+  /** Total width of the frozen utility columns (detail / expand / select). */
+  private readonly utilityWidth = computed(
+    () =>
+      (this.canDetail() ? UTIL_W.detail : 0) +
+      (this.canExpand() ? UTIL_W.expand : 0) +
+      (this.selectable() ? UTIL_W.sel : 0),
+  );
+  /** Left offset of a frozen utility column, or null when sticky is off. */
+  protected utilLeft(which: 'detail' | 'expand' | 'sel'): number | null {
+    if (!this.stickyActive()) return null;
+    let x = 0;
+    if (which === 'detail') return x;
+    if (this.canDetail()) x += UTIL_W.detail;
+    if (which === 'expand') return x;
+    if (this.canExpand()) x += UTIL_W.expand;
+    return x;
+  }
+  /** Effective px width of a column (resize override → declared px → fallback). */
+  private colPx(col: StrctDatagridColumn): number {
+    const resized = this.columnWidths().get(col.key);
+    if (resized != null) return resized;
+    const m = /^(\d+(?:\.\d+)?)px$/.exec(col.width ?? '');
+    return m ? parseFloat(m[1]) : STICKY_FALLBACK_W;
+  }
+  /** key → left px for sticky data columns. */
+  private readonly stickyOffsets = computed(() => {
+    const map = new Map<string, number>();
+    if (!this.stickyActive()) return map;
+    let x = this.utilityWidth();
+    for (const col of this.visibleColumns()) {
+      if (!col.sticky) continue;
+      map.set(col.key, x);
+      x += this.colPx(col);
+    }
+    return map;
+  });
+  protected stickyLeft(key: string): number | null {
+    return this.stickyOffsets().get(key) ?? null;
+  }
+  protected isSticky(col: StrctDatagridColumn): boolean {
+    return !!col.sticky && this.stickyActive();
+  }
+  /** The last frozen column carries the edge shadow. */
+  protected readonly lastStickyKey = computed(() => {
+    let last: string | null = null;
+    for (const col of this.visibleColumns()) if (col.sticky) last = col.key;
+    return this.stickyActive() ? last : null;
   });
 
   protected readonly allPageSelected = computed(() => {
@@ -949,12 +1235,18 @@ export class StrctDatagrid {
     return this.cellMap().get(key) ?? null;
   }
 
+  /** Last emitted lazy request (dedupe key). */
+  private lastLazyKey = '';
+  /** Last serialized column state pushed outward (loop guard). */
+  private lastStateKey = '';
+
   constructor() {
-    // Keep the page in range when the data set shrinks.
+    // Keep the page in range when the data set shrinks (server total in lazy mode).
     effect(() => {
       const size = this.pageSize();
       if (size <= 0) return;
-      const pageCount = Math.max(1, Math.ceil(this.sorted().length / size));
+      const count = this.totalCount();
+      const pageCount = Math.max(1, Math.ceil(count / size));
       if (this.page() > pageCount) this.page.set(pageCount);
     });
     // Seed the selection from initialSelection (re-runs only when the input changes,
@@ -964,6 +1256,101 @@ export class StrctDatagrid {
       if (init == null) return;
       untracked(() => this.selected.set(new Set(init)));
     });
+    // Server-side mode: announce what to load whenever page / sort / pageSize
+    // change (and once on init, so the consumer fetches the first page).
+    effect(() => {
+      if (!this.lazy()) return;
+      const state: StrctDatagridLazyState = {
+        page: this.page(),
+        pageSize: this.pageSize(),
+        sortKey: this.sort().key,
+        sortDir: this.sort().dir,
+      };
+      const key = JSON.stringify(state);
+      untracked(() => {
+        if (key === this.lastLazyKey) return;
+        this.lastLazyKey = key;
+        this.lazyLoad.emit(state);
+      });
+    });
+    // Restore persisted column preferences once, before the first render.
+    const persisted = this.readPersistedState();
+    if (persisted) this.applyColumnState(persisted);
+    // Apply externally-driven columnState.
+    effect(() => {
+      const st = this.columnState();
+      untracked(() => {
+        if (!st || JSON.stringify(st) === this.lastStateKey) return;
+        this.lastStateKey = JSON.stringify(st);
+        this.applyColumnState(st);
+      });
+    });
+    // Push user changes (resize / chooser) outward + persist under stateKey.
+    effect(() => {
+      const widths = Object.fromEntries(this.columnWidths());
+      const hidden = [...this.hiddenColumns()];
+      const st: StrctDatagridColumnState = { widths, hidden };
+      const key = JSON.stringify(st);
+      untracked(() => {
+        if (key === this.lastStateKey) return;
+        this.lastStateKey = key;
+        this.columnState.set(st);
+        const sk = this.stateKey();
+        if (sk && typeof localStorage !== 'undefined') {
+          try {
+            localStorage.setItem(`strct-dg:${sk}`, key);
+          } catch {
+            /* storage full / denied — persistence is best-effort */
+          }
+        }
+      });
+    });
+  }
+
+  private readPersistedState(): StrctDatagridColumnState | null {
+    const sk = this.stateKey();
+    if (!sk || typeof localStorage === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(`strct-dg:${sk}`);
+      return raw ? (JSON.parse(raw) as StrctDatagridColumnState) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private applyColumnState(st: StrctDatagridColumnState): void {
+    this.columnWidths.set(new Map(Object.entries(st.widths ?? {}).map(([k, v]) => [k, Number(v)])));
+    this.hiddenColumns.set(new Set(st.hidden ?? []));
+  }
+
+  /**
+   * The grid as CSV: header labels + every non-hidden column, all rows in the
+   * current order (client mode: the full sorted set, not just the page).
+   */
+  toCSV(): string {
+    const hidden = this.hiddenColumns();
+    const cols = this.columns().filter((c) => !hidden.has(c.key));
+    const esc = (v: unknown): string => {
+      const s = v == null ? '' : String(v);
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const data = this.lazy() ? this.rows() : this.sorted();
+    return [
+      cols.map((c) => esc(c.label)).join(','),
+      ...data.map((r) => cols.map((c) => esc(r[c.key])).join(',')),
+    ].join('\n');
+  }
+
+  /** Download the grid as a CSV file. */
+  downloadCSV(filename = 'datagrid.csv'): void {
+    if (typeof document === 'undefined') return;
+    const blob = new Blob(['\uFEFF' + this.toCSV()], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   protected colspan(): number {
