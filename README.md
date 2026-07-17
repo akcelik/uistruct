@@ -143,6 +143,28 @@ limit eye strain during long, all-day console sessions:
 - Standalone components, signal inputs/outputs, `OnPush` change detection,
   zoneless-ready.
 
+## Stability & support
+
+UIStruct is **pre-1.0**, and honest about what that means — and what it
+doesn't:
+
+- **Additive-first releases.** New inputs are optional with defaults that
+  reproduce the previous behavior; existing call sites keep meaning. Anything
+  that changes rendering or behavior is flagged in
+  [CHANGELOG.md](CHANGELOG.md) under `Changed`.
+- **A defined path to 1.0.** The API-freeze criteria (RTL audit, visual
+  regression baseline, API review pass, …) and the post-1.0 semver /
+  deprecation contract are written down in [ROADMAP.md](ROADMAP.md).
+- **Security handling.** Private reporting channel, response expectations and
+  supply-chain notes (zero runtime dependencies, npm provenance) are in
+  [SECURITY.md](SECURITY.md).
+- **Contributions.** House conventions and the PR checklist live in
+  [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Continuity.** Single-maintainer today — mitigated by a small,
+  dependency-free codebase that is easy to fork, and a fully scripted
+  verification story (unit tests, an axe-core CI gate, reproducible
+  benchmarks) that travels with the repo.
+
 ## License
 
 [MIT](LICENSE) © Serkan Akçelik
