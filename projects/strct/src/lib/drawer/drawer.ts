@@ -104,14 +104,21 @@ export type StrctDrawerSize = 'sm' | 'md' | 'lg';
         border-radius: 0;
       }
       .strct-drawer--start {
-        left: 0;
+        inset-inline-start: 0;
         border-inline-end: 1px solid var(--b2);
         animation: strct-drawer-in-start 0.18s ease;
       }
       .strct-drawer--end {
-        right: 0;
+        inset-inline-end: 0;
         border-inline-start: 1px solid var(--b2);
         animation: strct-drawer-in-end 0.18s ease;
+      }
+      /* RTL: start anchors right, so the slide-in mirrors. */
+      [dir='rtl'] .strct-drawer--start {
+        animation-name: strct-drawer-in-end;
+      }
+      [dir='rtl'] .strct-drawer--end {
+        animation-name: strct-drawer-in-start;
       }
       .strct-drawer--top,
       .strct-drawer--bottom {

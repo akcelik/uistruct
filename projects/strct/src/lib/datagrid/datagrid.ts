@@ -634,7 +634,7 @@ export class StrctDatagridActionBar {}
       }
       .strct-dg__resize {
         position: absolute;
-        right: 0;
+        inset-inline-end: 0;
         top: 0;
         bottom: 0;
         width: 4px;
@@ -910,8 +910,8 @@ export class StrctDatagridActionBar {}
         gap: 2px;
       }
       .strct-dg__chooser-menu--right {
-        left: auto;
-        right: 0;
+        inset-inline-start: auto;
+        inset-inline-end: 0;
       }
       .strct-dg__chooser-item {
         display: flex;

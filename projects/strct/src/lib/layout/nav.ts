@@ -45,13 +45,17 @@ import { StrctShellService } from './layout';
         .strct-vnav {
           position: fixed;
           top: 0;
-          left: 0;
+          inset-inline-start: 0;
           bottom: 0;
           z-index: 300;
           transform: translateX(-100%);
           transition: transform 0.2s ease;
         }
-        .strct-vnav--open {
+        [dir='rtl'] .strct-vnav {
+          transform: translateX(100%);
+        }
+        .strct-vnav--open,
+        [dir='rtl'] .strct-vnav--open {
           transform: translateX(0);
         }
         .strct-vnav__backdrop {
