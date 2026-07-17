@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-07-17
+
+### Added — `strct-datagrid` power features (all additive)
+
+- **Column drag-reorder** — `reorderable`: drag headers to rearrange data
+  columns; the order persists through `columnState` / `stateKey` (new
+  `order` field on `StrctDatagridColumnState`).
+- **Row grouping** — `groupBy`: a collapsible header row per distinct value
+  with a count chip; the current sort applies within groups. Paging is
+  bypassed while grouped; not combinable with `virtual`.
+- **Excel export** — `toXLSX()` / `downloadXLSX(filename)`: a real `.xlsx`
+  workbook built with an in-house, **dependency-free** SpreadsheetML + ZIP
+  writer (stored entries, correct CRC32). Numeric cells stay numeric; opens
+  in Excel, LibreOffice and Google Sheets.
+
 ## [1.0.0] - 2026-07-17
 
 **UIStruct is stable.** Every 1.0 criterion in [ROADMAP.md](ROADMAP.md) is

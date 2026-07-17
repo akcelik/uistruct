@@ -128,6 +128,92 @@ describe('StrctDatagrid', () => {
     expect(states.at(-1)?.hidden).toEqual([]);
   });
 
+  it('groupBy renders collapsible group headers with counts, respecting sort', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [
+      { key: 'vm', label: 'VM' },
+      { key: 'owner', label: 'Owner' },
+    ] satisfies StrctDatagridColumn[]);
+    fixture.componentRef.setInput('rows', [
+      { vm: 'a', owner: 'ops' },
+      { vm: 'b', owner: 'dev' },
+      { vm: 'c', owner: 'ops' },
+    ]);
+    fixture.componentRef.setInput('groupBy', 'owner');
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    const headers = [...host.querySelectorAll('.strct-dg__groupbtn')];
+    expect(headers.length).toBe(2);
+    expect(headers[0].textContent).toContain('ops');
+    expect(headers[0].querySelector('.strct-dg__groupcount')?.textContent?.trim()).toBe('2');
+    expect(host.querySelectorAll('tbody tr:not(.strct-dg__grouprow)').length).toBe(3);
+    // collapse the first group → its 2 rows disappear
+    (headers[0] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(host.querySelectorAll('tbody tr:not(.strct-dg__grouprow)').length).toBe(1);
+    expect(headers.length).toBe(2);
+  });
+
+  it('drag-reordering columns updates the order and round-trips through columnState', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [
+      { key: 'a', label: 'A' },
+      { key: 'b', label: 'B' },
+      { key: 'c', label: 'C' },
+    ] satisfies StrctDatagridColumn[]);
+    fixture.componentRef.setInput('rows', [{ a: 1, b: 2, c: 3 }]);
+    fixture.componentRef.setInput('reorderable', true);
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance as unknown as {
+      onColDragStart(k: string, e: DragEvent): void;
+      onColDrop(k: string): void;
+    };
+    cmp.onColDragStart('c', new Event('dragstart') as DragEvent); // jsdom lacks DragEvent
+    cmp.onColDrop('a'); // move C before A
+    fixture.detectChanges();
+    const heads = [...(fixture.nativeElement as HTMLElement).querySelectorAll('thead th')].map(
+      (t) => t.textContent?.trim(),
+    );
+    expect(heads).toEqual(['C', 'A', 'B']);
+    expect(fixture.componentInstance.columnState()?.order).toEqual(['c', 'a', 'b']);
+    // applying the order via columnState reproduces it (persistence path)
+    const f2 = TestBed.createComponent(StrctDatagrid);
+    f2.componentRef.setInput('columns', [
+      { key: 'a', label: 'A' },
+      { key: 'b', label: 'B' },
+      { key: 'c', label: 'C' },
+    ] satisfies StrctDatagridColumn[]);
+    f2.componentRef.setInput('rows', [{ a: 1, b: 2, c: 3 }]);
+    f2.componentRef.setInput('columnState', { order: ['c', 'a', 'b'] });
+    f2.detectChanges();
+    const heads2 = [...(f2.nativeElement as HTMLElement).querySelectorAll('thead th')].map((t) =>
+      t.textContent?.trim(),
+    );
+    expect(heads2).toEqual(['C', 'A', 'B']);
+  });
+
+  it('toXLSX produces a valid stored ZIP with the sheet data inline', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [
+      { key: 'n', label: 'Name' },
+      { key: 'v', label: 'Value' },
+    ] satisfies StrctDatagridColumn[]);
+    fixture.componentRef.setInput('rows', [
+      { n: 'alpha', v: 42 },
+      { n: 'be<ta>', v: 7 },
+    ]);
+    fixture.detectChanges();
+    const bytes = fixture.componentInstance.toXLSX();
+    // ZIP magic + end-of-central-directory present
+    expect([bytes[0], bytes[1], bytes[2], bytes[3]]).toEqual([0x50, 0x4b, 0x03, 0x04]);
+    const text = new TextDecoder().decode(bytes);
+    expect(text).toContain('[Content_Types].xml');
+    expect(text).toContain('xl/worksheets/sheet1.xml');
+    expect(text).toContain('<t xml:space="preserve">alpha</t>'); // inline string
+    expect(text).toContain('<v>42</v>'); // numeric cell stays numeric
+    expect(text).toContain('be&lt;ta&gt;'); // XML-escaped
+  });
+
   it('toCSV exports visible columns with escaping, in the current sort order', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', [

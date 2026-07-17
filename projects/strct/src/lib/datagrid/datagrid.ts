@@ -54,6 +54,7 @@ import { StrctCheckbox } from '../forms/checkbox';
 import { StrctButton, StrctButtonGroup } from '../button/button';
 import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
 import { StrctMenuItem, StrctMenuService } from '../context-menu/menu';
+import { XlsxValue, buildXlsx } from './xlsx';
 
 /** Resolves a stable identity for a row: a property key, or a function. */
 export type StrctRowId = string | ((row: StrctRow) => unknown);
@@ -87,10 +88,18 @@ export interface StrctDatagridLazyState {
   sortDir: SortDir;
 }
 
-/** Persistable user column preferences (widths from resize, hidden from the chooser). */
+/** Persistable user column preferences (widths from resize, hidden from the
+ *  chooser, order from drag-reorder). */
 export interface StrctDatagridColumnState {
   widths?: Record<string, number>;
   hidden?: string[];
+  order?: string[];
+}
+
+/** One rendered tbody item: a data row, or a group header. */
+interface DgItem {
+  row?: StrctRow;
+  group?: { key: unknown; label: string; count: number; collapsed: boolean };
 }
 
 /** Utility-column widths used when sticky columns are active (px). */
@@ -181,11 +190,17 @@ export class StrctDatagridActionBar {}
                   [style.text-align]="col.align ?? 'start'"
                   [style.width]="colWidth(col.key) ?? col.width ?? null"
                   [class.strct-dg__th--sortable]="col.sortable"
+                  [class.strct-dg__th--drop]="col.key === dropKey()"
                   [class.strct-dg__cell--sticky]="isSticky(col)"
                   [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
                   [style.insetInlineStart.px]="stickyLeft(col.key)"
                   [attr.tabindex]="col.sortable ? 0 : null"
                   [attr.aria-sort]="col.sortable ? ariaSort(col.key) : null"
+                  [attr.draggable]="reorderable() ? true : null"
+                  (dragstart)="onColDragStart(col.key, $event)"
+                  (dragover)="onColDragOver(col.key, $event)"
+                  (drop)="onColDrop(col.key)"
+                  (dragend)="onColDragEnd()"
                   (click)="col.sortable && sortBy(col.key)"
                   (keydown.enter)="col.sortable && sortBy(col.key)"
                   (keydown.space)="col.sortable && onHeaderSpace($event, col.key)"
@@ -242,105 +257,129 @@ export class StrctDatagridActionBar {}
                   <td [attr.colspan]="colspan()" [style.height.px]="topPad()"></td>
                 </tr>
               }
-              @for (row of renderRows(); track rowKey(row)) {
-                <tr
-                  [class.strct-dg__row--selected]="isSelected(row)"
-                  [class.strct-dg__row--active]="paneOpen() && row === activeRow()"
-                >
-                  @if (canDetail()) {
-                    <td
-                      class="strct-dg__expandcell"
-                      [class.strct-dg__cell--sticky]="stickyActive()"
-                      [style.insetInlineStart.px]="utilLeft('detail')"
-                    >
-                      <button
-                        type="button"
-                        class="strct-dg__detailbtn"
-                        [class.strct-dg__detailbtn--active]="row === activeRow()"
-                        [attr.aria-expanded]="row === activeRow()"
-                        [attr.aria-label]="L().openDetail"
-                        (click)="openDetail(row)"
-                      >
-                        <strct-icon name="chevronDoubleRight" [size]="13" [strokeWidth]="1.6" />
-                      </button>
-                    </td>
-                  }
-                  @if (canExpand()) {
-                    <td
-                      class="strct-dg__expandcell"
-                      [class.strct-dg__cell--sticky]="stickyActive()"
-                      [style.insetInlineStart.px]="utilLeft('expand')"
-                    >
-                      <button
-                        type="button"
-                        class="strct-dg__expandbtn"
-                        [class.strct-dg__expandbtn--open]="isExpanded(row)"
-                        [attr.aria-expanded]="isExpanded(row)"
-                        [attr.aria-label]="L().toggleDetail"
-                        (click)="toggleExpand(row)"
-                      >
-                        <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
-                      </button>
-                    </td>
-                  }
-                  @if (selectable()) {
-                    <td
-                      class="strct-dg__sel"
-                      [class.strct-dg__cell--sticky]="stickyActive()"
-                      [style.insetInlineStart.px]="utilLeft('sel')"
-                    >
-                      <strct-checkbox
-                        [ariaLabel]="L().selectRow"
-                        [checked]="isSelected(row)"
-                        (checkedChange)="toggleRow(row)"
-                      />
-                    </td>
-                  }
-                  @for (col of visibleColumns(); track col.key) {
-                    <td
-                      [style.text-align]="col.align ?? 'start'"
-                      [class.strct-dg__cell--sticky]="isSticky(col)"
-                      [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
-                      [style.insetInlineStart.px]="stickyLeft(col.key)"
-                    >
-                      @if (cellTemplate(col.key); as tpl) {
-                        <ng-container
-                          [ngTemplateOutlet]="tpl"
-                          [ngTemplateOutletContext]="{
-                            $implicit: row,
-                            value: row[col.key],
-                            column: col,
-                          }"
-                        />
-                      } @else {
-                        {{ row[col.key] }}
-                      }
-                    </td>
-                  }
-                  @if (canActions()) {
-                    <td class="strct-dg__actioncell">
-                      <button
-                        type="button"
-                        class="strct-dg__kebab"
-                        [attr.aria-label]="L().rowActions"
-                        (click)="openRowMenu(row, $event)"
-                      >
-                        <strct-icon name="dots" [size]="16" />
-                      </button>
-                    </td>
-                  }
-                </tr>
-                @if (canExpand() && isExpanded(row)) {
-                  <tr class="strct-dg__detailrow">
+              @for (it of displayItems(); track itemKey(it)) {
+                @if (it.group; as grp) {
+                  <!-- Group header: distinct value + count, collapsible. -->
+                  <tr class="strct-dg__grouprow">
                     <td [attr.colspan]="colspan()">
-                      <div class="strct-dg__detail">
-                        <ng-container
-                          [ngTemplateOutlet]="detailDef()!.template"
-                          [ngTemplateOutletContext]="{ $implicit: row }"
-                        />
-                      </div>
+                      <button
+                        type="button"
+                        class="strct-dg__groupbtn"
+                        [attr.aria-expanded]="!grp.collapsed"
+                        (click)="toggleGroup(grp.key)"
+                      >
+                        <span
+                          class="strct-dg__groupchev"
+                          [class.strct-dg__groupchev--open]="!grp.collapsed"
+                        >
+                          <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
+                        </span>
+                        <span class="strct-dg__grouplabel">{{ grp.label }}</span>
+                        <span class="strct-dg__groupcount">{{ grp.count }}</span>
+                      </button>
                     </td>
                   </tr>
+                } @else {
+                  @let row = it.row!;
+                  <tr
+                    [class.strct-dg__row--selected]="isSelected(row)"
+                    [class.strct-dg__row--active]="paneOpen() && row === activeRow()"
+                  >
+                    @if (canDetail()) {
+                      <td
+                        class="strct-dg__expandcell"
+                        [class.strct-dg__cell--sticky]="stickyActive()"
+                        [style.insetInlineStart.px]="utilLeft('detail')"
+                      >
+                        <button
+                          type="button"
+                          class="strct-dg__detailbtn"
+                          [class.strct-dg__detailbtn--active]="row === activeRow()"
+                          [attr.aria-expanded]="row === activeRow()"
+                          [attr.aria-label]="L().openDetail"
+                          (click)="openDetail(row)"
+                        >
+                          <strct-icon name="chevronDoubleRight" [size]="13" [strokeWidth]="1.6" />
+                        </button>
+                      </td>
+                    }
+                    @if (canExpand()) {
+                      <td
+                        class="strct-dg__expandcell"
+                        [class.strct-dg__cell--sticky]="stickyActive()"
+                        [style.insetInlineStart.px]="utilLeft('expand')"
+                      >
+                        <button
+                          type="button"
+                          class="strct-dg__expandbtn"
+                          [class.strct-dg__expandbtn--open]="isExpanded(row)"
+                          [attr.aria-expanded]="isExpanded(row)"
+                          [attr.aria-label]="L().toggleDetail"
+                          (click)="toggleExpand(row)"
+                        >
+                          <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
+                        </button>
+                      </td>
+                    }
+                    @if (selectable()) {
+                      <td
+                        class="strct-dg__sel"
+                        [class.strct-dg__cell--sticky]="stickyActive()"
+                        [style.insetInlineStart.px]="utilLeft('sel')"
+                      >
+                        <strct-checkbox
+                          [ariaLabel]="L().selectRow"
+                          [checked]="isSelected(row)"
+                          (checkedChange)="toggleRow(row)"
+                        />
+                      </td>
+                    }
+                    @for (col of visibleColumns(); track col.key) {
+                      <td
+                        [style.text-align]="col.align ?? 'start'"
+                        [class.strct-dg__cell--sticky]="isSticky(col)"
+                        [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
+                        [style.insetInlineStart.px]="stickyLeft(col.key)"
+                      >
+                        @if (cellTemplate(col.key); as tpl) {
+                          <ng-container
+                            [ngTemplateOutlet]="tpl"
+                            [ngTemplateOutletContext]="{
+                              $implicit: row,
+                              value: row[col.key],
+                              column: col,
+                            }"
+                          />
+                        } @else {
+                          {{ row[col.key] }}
+                        }
+                      </td>
+                    }
+                    @if (canActions()) {
+                      <td class="strct-dg__actioncell">
+                        <button
+                          type="button"
+                          class="strct-dg__kebab"
+                          [attr.aria-label]="L().rowActions"
+                          (click)="openRowMenu(row, $event)"
+                        >
+                          <strct-icon name="dots" [size]="16" />
+                        </button>
+                      </td>
+                    }
+                  </tr>
+                  @if (canExpand() && isExpanded(row)) {
+                    <tr class="strct-dg__detailrow">
+                      <td [attr.colspan]="colspan()">
+                        <div class="strct-dg__detail">
+                          <ng-container
+                            [ngTemplateOutlet]="detailDef()!.template"
+                            [ngTemplateOutletContext]="{ $implicit: row }"
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  }
                 }
               } @empty {
                 <tr>
@@ -434,7 +473,7 @@ export class StrctDatagridActionBar {}
           </span>
         </div>
         <div class="strct-dg__foot-right">
-          @if (pageSize() > 0) {
+          @if (pageSize() > 0 && !groupBy()) {
             <strct-pagination [total]="totalCount()" [pageSize]="pageSize()" [(page)]="page" />
           }
         </div>
@@ -478,6 +517,66 @@ export class StrctDatagridActionBar {}
         padding: 0;
         border: 0;
         background: transparent;
+      }
+      /* Column drag-reorder affordances. */
+      .strct-dg th[draggable] {
+        cursor: grab;
+      }
+      .strct-dg__th--drop {
+        box-shadow: inset 3px 0 0 var(--acc);
+      }
+      /* Row-group header rows. */
+      .strct-dg__grouprow td {
+        background: var(--bg-2) !important;
+        padding: 0;
+      }
+      .strct-dg__groupbtn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 7px 13px;
+        border: 0;
+        background: transparent;
+        color: var(--t1);
+        font-family: var(--font);
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: start;
+      }
+      .strct-dg__groupbtn:hover {
+        background: var(--bg-3);
+      }
+      .strct-dg__groupbtn:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: -2px;
+      }
+      .strct-dg__groupchev {
+        display: inline-flex;
+        color: var(--t3);
+        transition: transform 0.15s ease;
+      }
+      .strct-dg__groupchev--open {
+        transform: rotate(90deg);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .strct-dg__groupchev {
+          transition: none;
+        }
+      }
+      .strct-dg__groupcount {
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        border-radius: 9px;
+        background: var(--acc-m);
+        color: var(--acc);
+        font-variant-numeric: tabular-nums;
       }
       /* Sticky cells require border-collapse: separate (collapse breaks
          position: sticky on table cells in Chromium); per-cell bottom borders
@@ -1029,6 +1128,14 @@ export class StrctDatagrid {
   readonly stateKey = input<string | null>(null);
   /** User column preferences (two-way): widths from resize, hidden from the chooser. */
   readonly columnState = model<StrctDatagridColumnState | null>(null);
+  /** Let the user reorder data columns by dragging their headers. */
+  readonly reorderable = input(false, { transform: booleanAttribute });
+  /**
+   * Group rows by this column key: the grid renders a collapsible header row
+   * per distinct value (with a count), respecting the current sort within
+   * groups. Paging is bypassed while grouped; not combinable with `virtual`.
+   */
+  readonly groupBy = input<string | null>(null);
   /** Emitted when the selection changes. */
   readonly selectionChange = output<StrctRow[]>();
   /** Emitted when the refresh button is clicked. */
@@ -1109,12 +1216,94 @@ export class StrctDatagrid {
   );
   /** Whether to render the trailing row-actions (kebab) column. */
   protected readonly canActions = computed(() => !!this.rowActions() && !this.paneOpen());
+  /** User-chosen column order (keys); unknown keys keep declared positions. */
+  private readonly columnOrder = signal<string[] | null>(null);
+  /** Declared columns re-arranged by the user's drag order. */
+  private readonly orderedColumns = computed(() => {
+    const cols = this.columns();
+    const order = this.columnOrder();
+    if (!order?.length) return cols;
+    const byKey = new Map(cols.map((c) => [c.key, c]));
+    const out: StrctDatagridColumn[] = [];
+    for (const key of order) {
+      const c = byKey.get(key);
+      if (c) {
+        out.push(c);
+        byKey.delete(key);
+      }
+    }
+    for (const c of cols) if (byKey.has(c.key)) out.push(c);
+    return out;
+  });
   /** Only the first column is shown while the detail pane is open. */
   protected readonly visibleColumns = computed(() => {
-    if (this.paneOpen()) return this.columns().slice(0, 1);
+    if (this.paneOpen()) return this.orderedColumns().slice(0, 1);
     const hidden = this.hiddenColumns();
-    return this.columns().filter((c) => !hidden.has(c.key));
+    return this.orderedColumns().filter((c) => !hidden.has(c.key));
   });
+
+  // ── Column drag-reorder ────────────────────────────────────────
+  protected readonly dragKey = signal<string | null>(null);
+  protected readonly dropKey = signal<string | null>(null);
+  protected onColDragStart(key: string, event: DragEvent): void {
+    if (!this.reorderable()) return;
+    this.dragKey.set(key);
+    event.dataTransfer?.setData('text/plain', key);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  }
+  protected onColDragOver(key: string, event: DragEvent): void {
+    if (!this.reorderable() || !this.dragKey() || key === this.dragKey()) return;
+    event.preventDefault();
+    this.dropKey.set(key);
+  }
+  protected onColDrop(key: string): void {
+    const from = this.dragKey();
+    this.dragKey.set(null);
+    this.dropKey.set(null);
+    if (!from || from === key) return;
+    const keys = this.orderedColumns().map((c) => c.key);
+    const fromIdx = keys.indexOf(from);
+    const toIdx = keys.indexOf(key);
+    if (fromIdx < 0 || toIdx < 0) return;
+    keys.splice(toIdx, 0, ...keys.splice(fromIdx, 1));
+    this.columnOrder.set(keys);
+  }
+  protected onColDragEnd(): void {
+    this.dragKey.set(null);
+    this.dropKey.set(null);
+  }
+
+  // ── Row grouping ───────────────────────────────────────────────
+  private readonly collapsedGroups = signal<Set<unknown>>(new Set());
+  /** Collapse / expand one group header. */
+  toggleGroup(key: unknown): void {
+    const next = new Set(this.collapsedGroups());
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    this.collapsedGroups.set(next);
+  }
+  /** What tbody renders: plain (virtual/paged) rows, or groups + their rows. */
+  protected readonly displayItems = computed<DgItem[]>(() => {
+    const g = this.groupBy();
+    if (!g || this.virtual()) return this.renderRows().map((row) => ({ row }));
+    const map = new Map<unknown, StrctRow[]>();
+    for (const row of this.sorted()) {
+      const key = row[g];
+      const bucket = map.get(key);
+      if (bucket) bucket.push(row);
+      else map.set(key, [row]);
+    }
+    const out: DgItem[] = [];
+    for (const [key, rows] of map) {
+      const collapsed = this.collapsedGroups().has(key);
+      out.push({ group: { key, label: String(key ?? '—'), count: rows.length, collapsed } });
+      if (!collapsed) for (const row of rows) out.push({ row });
+    }
+    return out;
+  });
+  protected itemKey(it: DgItem): unknown {
+    return it.group ? `strct-group:${String(it.group.key)}` : this.rowKey(it.row!);
+  }
 
   protected readonly sorted = computed(() => {
     // Server-side mode: rows arrive already ordered / sliced — never touch them.
@@ -1288,11 +1477,12 @@ export class StrctDatagrid {
         this.applyColumnState(st);
       });
     });
-    // Push user changes (resize / chooser) outward + persist under stateKey.
+    // Push user changes (resize / chooser / reorder) outward + persist under stateKey.
     effect(() => {
       const widths = Object.fromEntries(this.columnWidths());
       const hidden = [...this.hiddenColumns()];
-      const st: StrctDatagridColumnState = { widths, hidden };
+      const order = this.columnOrder() ?? undefined;
+      const st: StrctDatagridColumnState = { widths, hidden, order };
       const key = JSON.stringify(st);
       untracked(() => {
         if (key === this.lastStateKey) return;
@@ -1324,6 +1514,7 @@ export class StrctDatagrid {
   private applyColumnState(st: StrctDatagridColumnState): void {
     this.columnWidths.set(new Map(Object.entries(st.widths ?? {}).map(([k, v]) => [k, Number(v)])));
     this.hiddenColumns.set(new Set(st.hidden ?? []));
+    this.columnOrder.set(st.order?.length ? [...st.order] : null);
   }
 
   /**
@@ -1342,6 +1533,37 @@ export class StrctDatagrid {
       cols.map((c) => esc(c.label)).join(','),
       ...data.map((r) => cols.map((c) => esc(r[c.key])).join(',')),
     ].join('\n');
+  }
+
+  /**
+   * The grid as a real .xlsx workbook (dependency-free SpreadsheetML):
+   * header labels + every non-hidden column in the current order, all rows in
+   * the current sort; numeric cells stay numeric.
+   */
+  toXLSX(): Uint8Array {
+    const hidden = this.hiddenColumns();
+    const cols = this.orderedColumns().filter((c) => !hidden.has(c.key));
+    const data = this.lazy() ? this.rows() : this.sorted();
+    return buildXlsx(
+      cols.map((c) => c.label),
+      data.map((r) => cols.map((c) => r[c.key] as XlsxValue)),
+    );
+  }
+
+  /** Download the grid as an .xlsx file. */
+  downloadXLSX(filename = 'datagrid.xlsx'): void {
+    if (typeof document === 'undefined') return;
+    const bytes = this.toXLSX();
+    const copy = new Uint8Array(bytes);
+    const blob = new Blob([copy.buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   /** Download the grid as a CSV file. */
