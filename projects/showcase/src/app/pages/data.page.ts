@@ -166,8 +166,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="datagrid-virtual"
       owner="datagrid"
       heading="Virtual scroll — 20.000 rows"
-      description="virtual keeps only the viewport (plus a small overscan) in the DOM, so tens of thousands of rows scroll smoothly with a sticky header. The first column is frozen (sticky) against horizontal scroll, column widths/visibility persist under stateKey, and the whole set exports with downloadCSV()."
-      code='<strct-datagrid [columns]="cols" [rows]="rows20k" virtual [viewportHeight]="380" stateKey="inventory" #g /> … g.downloadCSV()'
+      description="virtual keeps only the viewport (plus a small overscan) in the DOM, so tens of thousands of rows scroll smoothly with a sticky header. The first column is frozen (sticky), headers can be drag-reordered (reorderable — order persists under stateKey along with widths and visibility), and the whole set exports as CSV or a real dependency-free .xlsx."
+      code='<strct-datagrid [columns]="cols" [rows]="rows20k" virtual reorderable stateKey="inventory" #g /> … g.downloadXLSX()'
     >
       <div class="dg-wrap">
         <strct-datagrid
@@ -180,6 +180,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [viewportHeight]="380"
           selectable
           resizable
+          reorderable
           columnChooser
           stateKey="docs-inventory"
           [labels]="{ rows: 'hosts' }"
@@ -191,7 +192,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             variant="neutral"
             (click)="vgrid.downloadCSV('inventory.csv')"
           >
-            <strct-icon name="download" [size]="14" /> CSV indir (20k satır)
+            <strct-icon name="download" [size]="14" /> CSV
+          </button>
+          <button
+            strct-button
+            size="sm"
+            variant="neutral"
+            (click)="vgrid.downloadXLSX('inventory.xlsx')"
+          >
+            <strct-icon name="download" [size]="14" /> Excel (.xlsx)
           </button>
           <span class="echo">DOM'da yalnızca görünür satırlar render edilir</span>
         </div>
@@ -218,6 +227,31 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           (lazyLoad)="onLazyLoad($event)"
         />
         <span class="echo">{{ lzEcho() }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="datagrid-grouping"
+      owner="datagrid"
+      heading="Row grouping"
+      description="groupBy renders a collapsible header row per distinct value with a count — sorting still applies within groups. Click a group header to collapse it."
+      code='<strct-datagrid [columns]="cols" [rows]="rows" groupBy="type" />'
+    >
+      <div class="dg-wrap">
+        <strct-checkbox [ngModel]="grouped()" (ngModelChange)="grouped.set($event)"
+          >Group by type</strct-checkbox
+        >
+        <strct-datagrid
+          style="width: 100%;"
+          [columns]="dgCols"
+          [rows]="dgRows"
+          rowId="name"
+          [groupBy]="grouped() ? 'type' : null"
+        >
+          <ng-template strctCell="status" let-value="value">
+            <strct-badge [status]="badgeFor(value)">{{ value }}</strct-badge>
+          </ng-template>
+        </strct-datagrid>
       </div>
     </app-demo>
 
@@ -311,6 +345,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 export class DataPage {
   protected readonly dense = signal(false);
   protected readonly oneLine = signal(true);
+  protected readonly grouped = signal(true);
 
   // Virtual scroll demo: a 20k-row inventory.
   protected readonly vCols: StrctDatagridColumn[] = [

@@ -1613,7 +1613,21 @@ export const DOCS: DocCategory[] = [
             type: 'string | null / StrctDatagridColumnState',
             default: 'null / null',
             description:
-              'Column-preference persistence (widths from resize, hidden from the chooser). `stateKey` auto-persists to localStorage (`strct-dg:<key>`) and restores on init; `[(columnState)]` gives full two-way control.',
+              'Column-preference persistence (widths from resize, hidden from the chooser, order from drag-reorder). `stateKey` auto-persists to localStorage (`strct-dg:<key>`) and restores on init; `[(columnState)]` gives full two-way control.',
+          },
+          {
+            name: 'reorderable',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Drag column headers to reorder data columns; the order persists through `columnState` / `stateKey`.',
+          },
+          {
+            name: 'groupBy',
+            type: 'string | null',
+            default: 'null',
+            description:
+              'Group rows by a column key: a collapsible header row per distinct value with a count; sorting applies within groups. Paging is bypassed while grouped; not combinable with `virtual`.',
           },
           {
             name: 'columns[].sticky',
@@ -1694,6 +1708,12 @@ export const DOCS: DocCategory[] = [
             name: 'sortBy(key)',
             type: '(key: string) => void',
             description: 'Toggle sort on a column (asc → desc → none).',
+          },
+          {
+            name: 'toXLSX() / downloadXLSX(filename?)',
+            type: '() => Uint8Array / (name?) => void',
+            description:
+              'Export the grid as a real .xlsx workbook — dependency-free SpreadsheetML, numeric cells stay numeric; opens in Excel, LibreOffice and Google Sheets.',
           },
           {
             name: 'toCSV() / downloadCSV(filename?)',
