@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.1] - 2026-07-17
+
+### Fixed — RTL audit outcomes
+
+Full `dir="rtl"` audit (static sweep + rendered verification — see
+`docs/rtl-audit.md`). Text/spacing/borders were already fully logical; these
+directional behaviors are now correct in RTL too:
+
+- **`strct-toggle`** — the thumb travels toward inline-end
+  (`:host-context([dir='rtl'])` — the component uses emulated encapsulation).
+- **`strct-drawer`** — `start`/`end` anchor with logical insets; the slide-in
+  animation mirrors.
+- **`strct-nav`** — the mobile off-canvas panel anchors inline-start and
+  slides from the correct edge.
+- **Icon badges & rail dots** — anchored with `inset-inline-end`.
+- **Datagrid** — column-resize grip and chooser alignment use logical insets.
+
+Known caveat (tracked in ROADMAP): datagrid sticky-column offsets remain
+physical-left; keep wide frozen grids in an LTR container for now.
+
 ## [0.31.0] - 2026-07-17
 
 ### Added — `strct-datagrid` enterprise pack (all additive)

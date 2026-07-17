@@ -649,7 +649,7 @@ export type StrctIconBadge =
       }
       .strct-icon__badge {
         position: absolute;
-        right: -3px;
+        inset-inline-end: -3px;
         bottom: -3px;
         width: 50%;
         height: 50%;
@@ -689,7 +689,7 @@ export type StrctIconBadge =
         clip-path: polygon(50% 10%, 92% 90%, 8% 90%);
         box-shadow: none;
         filter: drop-shadow(0 0 1.5px var(--bg-1));
-        right: -2px;
+        inset-inline-end: -2px;
         bottom: -2px;
         width: 60%;
         height: 60%;
@@ -774,7 +774,7 @@ export type StrctIconBadge =
       }
       .strct-icon__badge--maintenance {
         background: var(--warning);
-        right: -2px;
+        inset-inline-end: -2px;
         bottom: -2px;
         width: 58%;
         height: 58%;

@@ -269,7 +269,7 @@ export interface StrctRailItem {
       .strct-rail__badge--dot {
         position: absolute;
         top: 5px;
-        right: 7px;
+        inset-inline-end: 7px;
         min-width: 8px;
         width: 8px;
         height: 8px;
@@ -319,7 +319,7 @@ export interface StrctRailItem {
       .strct-rail--collapsed .strct-rail__dot {
         position: absolute;
         top: 5px;
-        right: 7px;
+        inset-inline-end: 7px;
       }
       .strct-rail__dot--accent {
         background: var(--acc);

@@ -84,6 +84,11 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         transform: translateX(15px);
         background: var(--inv);
       }
+      /* RTL: the thumb travels toward the inline-end, i.e. to the left.
+         (:host-context because this component uses emulated encapsulation.) */
+      :host-context([dir='rtl']) .strct-tg__native:checked + .strct-tg__track .strct-tg__thumb {
+        transform: translateX(-15px);
+      }
       .strct-tg__native:focus-visible + .strct-tg__track {
         box-shadow: 0 0 0 3px var(--acc18);
       }

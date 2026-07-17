@@ -7,8 +7,12 @@ absent — items ship when they meet the bar. Ordering reflects priority.
 
 1.0 is a **stability contract**, not a feature milestone. It ships when:
 
-- [ ] **RTL / i18n audit** — every component verified under `dir="rtl"`
-      (logical properties everywhere), all user-visible strings overridable.
+- [x] **RTL / i18n audit** — static sweep + rendered verification done, with
+      directional fixes shipped; see [docs/rtl-audit.md](docs/rtl-audit.md).
+      Remaining 1.0 blocker from the audit: logical offsets for datagrid
+      sticky columns (tracked below).
+- [ ] **Datagrid sticky columns in RTL** — logical (`inset-inline-start`)
+      frozen-column offsets.
 - [ ] **Datepicker keyboard grid** — strict APG date-grid pattern
       (arrow/PageUp/PageDown/Home/End across the calendar).
 - [ ] **Visual regression baseline** — screenshot diffing in CI on top of the
