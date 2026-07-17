@@ -331,6 +331,63 @@ describe('StrctChart', () => {
     expect(el.querySelectorAll('.strct-chart__labels span').length).toBe(8);
   });
 
+  // v1.2: stacked series
+  it('stacked series draw cumulative lines with solid stack bands', () => {
+    const el = build({
+      series: [
+        { data: [10, 10, 10], label: 'A' },
+        { data: [5, 5, 5], label: 'B' },
+      ],
+      stacked: true,
+      curve: 'linear',
+      max: 20,
+      height: 120,
+    });
+    const bands = el.querySelectorAll('.strct-chart__band--stack');
+    expect(bands.length).toBe(2);
+    const lines = el.querySelectorAll('.strct-chart__line');
+    // B rides on A: its line sits at 15 of 20 → strictly above A's 10 of 20
+    const yOfPath = (d: string) => parseFloat(d.slice(1).split(',')[1]);
+    const yA = yOfPath(lines[0].getAttribute('d')!);
+    const yB = yOfPath(lines[1].getAttribute('d')!);
+    expect(yB).toBeLessThan(yA); // smaller y = higher on screen
+  });
+
+  // v1.2: time axis
+  it('times maps x positions to real timestamps (uneven spacing)', () => {
+    const el = build({
+      data: [1, 2, 3],
+      times: [0, 1000, 4000], // second gap is 3× the first
+      curve: 'linear',
+    });
+    const d = el.querySelector('.strct-chart__line')!.getAttribute('d')!;
+    const xs = [...d.matchAll(/[ML]([\d.]+),/g)].map((m) => parseFloat(m[1]));
+    const gap1 = xs[1] - xs[0];
+    const gap2 = xs[2] - xs[1];
+    expect(gap2 / gap1).toBeCloseTo(3, 1);
+  });
+
+  // v1.2: log scale
+  it('scale="log" spaces decades equally and renders decade ticks', () => {
+    const fixture = TestBed.createComponent(StrctChart);
+    fixture.componentRef.setInput('data', [1, 10, 100]);
+    fixture.componentRef.setInput('scale', 'log');
+    fixture.componentRef.setInput('yAxis', true);
+    fixture.componentRef.setInput('max', 100);
+    fixture.componentRef.setInput('min', 1);
+    fixture.componentRef.setInput('curve', 'linear');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const d = el.querySelector('.strct-chart__line')!.getAttribute('d')!;
+    const ys = [...d.matchAll(/[ML][\d.]+,([\d.]+)/g)].map((m) => parseFloat(m[1]));
+    // 1 → 10 → 100 are equidistant on a log axis
+    expect(ys[0] - ys[1]).toBeCloseTo(ys[1] - ys[2], 0);
+    const ticks = [...el.querySelectorAll('.strct-chart__ytick')].map((t) => t.textContent?.trim());
+    expect(ticks).toContain('1');
+    expect(ticks).toContain('10');
+    expect(ticks).toContain('100');
+  });
+
   // FR-CHART-13: export
   it('toSVG returns a standalone SVG string with resolved presentation', () => {
     const fixture = TestBed.createComponent(StrctChart);

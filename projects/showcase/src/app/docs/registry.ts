@@ -1975,6 +1975,27 @@ export const DOCS: DocCategory[] = [
               'Drag-select a range. `brush` emits it through `(brushChange)`; `zoom` also zooms the chart into the selection (double-click, Escape or the ⟲ chip zooms back out).',
           },
           {
+            name: 'stacked',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Stack multi-series values cumulatively with solid layer bands; tooltips keep the original per-series values. Nulls break the stack at that slot.',
+          },
+          {
+            name: 'times',
+            type: '(number | Date)[] | null',
+            default: 'null',
+            description:
+              'Per-point timestamps: x positions map to real time, so uneven sampling renders honestly instead of equally spaced. Hover snaps to the nearest point by pixel distance.',
+          },
+          {
+            name: 'scale',
+            type: `'linear' | 'log'`,
+            default: `'linear'`,
+            description:
+              'Y-axis scale. `log` spaces decades equally (decade ticks on the y-axis); values must be positive — non-positives clamp to the floor.',
+          },
+          {
             name: 'gapText / resetLabel',
             type: 'string',
             default: `'no data' / 'Reset zoom'`,
