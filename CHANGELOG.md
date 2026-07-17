@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-07-17
+
+### Added — `strct-chart` advanced axes & composition (all additive)
+
+- **`stacked`** — multi-series values stack cumulatively: each series draws
+  at the running total and fills a solid layer band down to the series below;
+  tooltips keep the original per-series values; nulls break the stack.
+- **`times`** — per-point timestamps (`number | Date`): x positions map to
+  real time, so uneven sampling renders honestly; hover snaps to the nearest
+  point by pixel distance; labels/annotations/zoom all follow.
+- **`scale="log"`** — logarithmic y-axis with equal decade spacing and decade
+  ticks; the floor is the smallest positive visible value (or an explicit
+  positive `min`).
+
 ## [1.1.0] - 2026-07-17
 
 ### Added — `strct-datagrid` power features (all additive)

@@ -227,6 +227,59 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="line-stacked"
+      owner="line"
+      heading="Stacked series"
+      description="stacked draws each series on the running total of the ones below it, filling solid layer bands — composition and total read together (per-series tooltips keep the original values)."
+      code='<strct-chart [series]="tiers" stacked legend />'
+    >
+      <div class="chart-box">
+        <strct-chart
+          [series]="stackSeries"
+          stacked
+          legend
+          yAxis
+          [labels]="monLabels"
+          [xTicks]="8"
+          [height]="200"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="line-timelog"
+      owner="line"
+      heading="Time axis & log scale"
+      description="times maps x positions to real timestamps, so uneven sampling renders honestly (watch the gap widths). scale='log' spaces decades equally — the right chart shows request latency percentiles spanning three orders of magnitude."
+      code='<strct-chart [data]="lat" [times]="stamps" scale="log" yAxis />'
+    >
+      <div class="chart-box chart-box--stack">
+        <strct-chart
+          [data]="timeData"
+          [times]="timeStamps"
+          [labels]="timeLabels"
+          curve="linear"
+          dots
+          yAxis
+          [height]="150"
+        />
+        <strct-chart
+          [series]="latSeries"
+          scale="log"
+          [min]="1"
+          [max]="2000"
+          legend
+          yAxis
+          status="warning"
+          [labels]="monLabels"
+          [xTicks]="8"
+          [valueFormat]="msFormat"
+          [height]="170"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="line-zoom"
       owner="line"
       heading="Zoom into a range & export"
@@ -591,6 +644,52 @@ export class ChartsPage implements OnDestroy {
     Math.round(34 + 20 * Math.sin(i / 8) + 9 * Math.sin(i / 2.1) + (i > 60 && i < 66 ? 28 : 0)),
   );
   protected readonly zoomRange = signal<[number, number] | null>(null);
+
+  // Stacked demo: storage tiers composing a total.
+  protected readonly stackSeries: StrctChartSeries[] = [
+    {
+      data: Array.from({ length: 30 }, (_, i) => Math.round(20 + 6 * Math.sin(i / 4))),
+      label: 'Hot tier',
+      status: 'accent',
+    },
+    {
+      data: Array.from({ length: 30 }, (_, i) => Math.round(14 + 5 * Math.cos(i / 5))),
+      label: 'Warm tier',
+      status: 'success',
+    },
+    {
+      data: Array.from({ length: 30 }, (_, i) => Math.round(9 + 3 * Math.sin(i / 3 + 2))),
+      label: 'Cold tier',
+      status: 'warning',
+    },
+  ];
+
+  // Time-axis demo: uneven sampling (bursts + quiet stretches).
+  protected readonly timeStamps = [0, 1, 2, 3, 8, 9, 15, 16, 17, 25].map((m) => m * 60000);
+  protected readonly timeData = [42, 45, 51, 48, 62, 58, 41, 44, 49, 46];
+  protected readonly timeLabels = this.timeStamps.map((ms) => `${ms / 60000}m`);
+
+  // Log demo: latency percentiles across three orders of magnitude.
+  protected readonly latSeries: StrctChartSeries[] = [
+    {
+      data: Array.from({ length: 30 }, (_, i) => Math.round(3 + Math.abs(Math.sin(i / 5)) * 4)),
+      label: 'p50',
+      status: 'success',
+    },
+    {
+      data: Array.from({ length: 30 }, (_, i) => Math.round(20 + Math.abs(Math.sin(i / 4)) * 40)),
+      label: 'p95',
+      status: 'accent',
+    },
+    {
+      data: Array.from({ length: 30 }, (_, i) =>
+        Math.round(150 + Math.abs(Math.sin(i / 6)) * 1400),
+      ),
+      label: 'p99',
+      status: 'warning',
+    },
+  ];
+  protected readonly msFormat = (v: number) => `${v} ms`;
   protected exportPng(chart: StrctChart): void {
     void chart.toPNG(2).then((url) => {
       const a = document.createElement('a');

@@ -365,7 +365,12 @@ interface SeriesRender {
                 @if (isMulti()) {
                   @for (s of multiSeries(); track $index) {
                     @if (s.bandPath) {
-                      <path class="strct-chart__band" [attr.d]="s.bandPath" [attr.fill]="s.color" />
+                      <path
+                        class="strct-chart__band"
+                        [class.strct-chart__band--stack]="stacked()"
+                        [attr.d]="s.bandPath"
+                        [attr.fill]="s.color"
+                      />
                     }
                     @if (s.area && s.areaPath) {
                       <path
@@ -672,6 +677,10 @@ interface SeriesRender {
       .strct-chart__band {
         opacity: 0.13;
         stroke: none;
+      }
+      /* Stacked fills read as solid layers, not a faint halo. */
+      .strct-chart__band--stack {
+        opacity: 0.32;
       }
 
       /* Vertical event / annotation markers. */
@@ -1013,6 +1022,19 @@ export class StrctChart {
    * Double-click, Escape or the reset chip zooms back out.
    */
   readonly zoom = input(false, { transform: booleanAttribute });
+  /**
+   * Stack multi-series values cumulatively: each series draws its line at the
+   * running total and fills the band down to the series below (nulls break the
+   * stack at that slot). Tooltips keep the original per-series values.
+   */
+  readonly stacked = input(false, { transform: booleanAttribute });
+  /** Y-axis scale. `log` needs positive values; non-positives clamp to the floor. */
+  readonly scale = input<'linear' | 'log'>('linear');
+  /**
+   * Per-point timestamps (ms epoch or Date). When set, x positions map to real
+   * time, so uneven sampling renders honestly instead of equally spaced.
+   */
+  readonly times = input<(number | Date)[] | null>(null);
   /** Tooltip text for a gap (null) point. */
   readonly gapText = input('no data');
   /** Accessible label of the reset-zoom chip (localizable). */
@@ -1153,7 +1175,8 @@ export class StrctChart {
     return e > s ? this.chartW() / (e - s) : 0;
   }
 
-  /** Real values inside the visible window (multi-aware; bands included). */
+  /** Real values inside the visible window (multi-aware; bands included;
+   *  per-slot totals when stacked). */
   private readonly visibleValues = computed<number[]>(() => {
     const [s, e] = this.domain();
     const out: number[] = [];
@@ -1161,6 +1184,24 @@ export class StrctChart {
       if (isVal(v)) out.push(v);
     };
     const ser = this.seriesResolved();
+    if (ser && this.stacked() && ser.length > 1) {
+      const N = this.nx();
+      const totals = new Array<number>(N).fill(0);
+      const has = new Array<boolean>(N).fill(false);
+      for (const x of ser) {
+        const data = x.data ?? [];
+        const offset = N - data.length;
+        for (let li = 0; li < data.length; li++) {
+          const v = data[li];
+          if (isVal(v)) {
+            totals[offset + li] += v;
+            has[offset + li] = true;
+          }
+        }
+      }
+      for (let gi = s; gi <= Math.min(e, N - 1); gi++) if (has[gi]) out.push(totals[gi]);
+      return out;
+    }
     if (ser) {
       const N = this.nx();
       for (const x of ser) {
@@ -1188,13 +1229,35 @@ export class StrctChart {
   });
   private readonly yMin = computed(() => this.min() ?? 0);
 
+  /** Smallest positive visible value — the floor of a log axis. */
+  private readonly logFloor = computed(() => {
+    const explicit = this.min();
+    if (explicit != null && explicit > 0) return explicit;
+    const positives = this.visibleValues().filter((v) => v > 0);
+    return positives.length ? Math.min(...positives) : 1;
+  });
+
   private yOf(v: number): number {
+    if (this.scale() === 'log') {
+      const lo = this.logFloor();
+      const hi = Math.max(this.yMax(), lo * 10);
+      const c = Math.max(lo, Math.min(hi, v));
+      const span = Math.log10(hi) - Math.log10(lo) || 1;
+      const f = (Math.log10(c) - Math.log10(lo)) / span;
+      return PAD.t + (1 - f) * this.chartH();
+    }
     const lo = this.yMin();
     const hi = this.yMax();
     const range = hi - lo || 1;
     const c = Math.max(lo, Math.min(hi, v));
     return PAD.t + (1 - (c - lo) / range) * this.chartH();
   }
+
+  /** Timestamps normalized to ms (null when the axis is index-based). */
+  private readonly timesMs = computed<number[] | null>(() => {
+    const t = this.times();
+    return t?.length ? t.map((v) => +v) : null;
+  });
 
   // ── Single-series geometry (gap-aware; null keeps its x-slot) ──
   protected readonly points = computed<(Pt | null)[]>(() => {
@@ -1231,6 +1294,45 @@ export class StrctChart {
     if (!s) return [];
     const N = this.nx();
     const base = this.height() - PAD.b;
+    // Stacked: each series rides on the running total of the ones before it,
+    // filling the band down to that total; a null breaks the stack there.
+    if (this.stacked() && s.length > 1) {
+      const running = new Array<number>(N).fill(0);
+      return s.map((x) => {
+        const data = x.data ?? [];
+        const offset = N - data.length;
+        const pts: (Pt | null)[] = [];
+        const lowerPts: (Pt | null)[] = [];
+        for (let li = 0; li < data.length; li++) {
+          const v = data[li];
+          const gi = offset + li;
+          if (isVal(v)) {
+            const lo = running[gi];
+            const hi = lo + v;
+            running[gi] = hi;
+            const px = this.xOf(gi);
+            lowerPts.push({ x: px, y: this.yOf(lo) });
+            pts.push({ x: px, y: this.yOf(hi) });
+          } else {
+            lowerPts.push(null);
+            pts.push(null);
+          }
+        }
+        const curve = x.curve ?? this.curve();
+        return {
+          color: COLOR[x.status ?? this.status()],
+          label: x.label ?? '',
+          area: false,
+          dash: x.dash ? (typeof x.dash === 'string' ? x.dash : '5 4') : null,
+          pts,
+          path: pathForSegs(pts, curve),
+          areaPath: '',
+          bandPath: bandPath(pts, lowerPts, curve),
+          offset,
+          data,
+        };
+      });
+    }
     return s.map((x) => {
       const data = x.data ?? [];
       const offset = N - data.length; // right-align shorter series
@@ -1312,10 +1414,23 @@ export class StrctChart {
 
   protected readonly yAxisTicks = computed(() => {
     if (!this.yAxis()) return [];
+    const out: { value: number; y: number; text: string }[] = [];
+    if (this.scale() === 'log') {
+      // Decade ticks between the floor and the max, endpoints included.
+      const lo = this.logFloor();
+      const hi = Math.max(this.yMax(), lo * 10);
+      const values = new Set<number>([lo, hi]);
+      for (let p = Math.ceil(Math.log10(lo)); p <= Math.floor(Math.log10(hi)); p++) {
+        values.add(10 ** p);
+      }
+      for (const v of [...values].sort((a, b) => a - b)) {
+        out.push({ value: v, y: this.yOf(v), text: this.fmtAxis(v) });
+      }
+      return out;
+    }
     const n = Math.max(2, this.yTicks());
     const lo = this.yMin();
     const hi = this.yMax();
-    const out: { value: number; y: number; text: string }[] = [];
     for (let i = 0; i < n; i++) {
       const v = lo + (hi - lo) * (i / (n - 1));
       out.push({ value: v, y: this.yOf(v), text: this.fmtAxis(v) });
@@ -1527,9 +1642,17 @@ export class StrctChart {
     return `${meta ? meta + ': ' : ''}${value}`;
   });
 
-  /** Pixel x of a data index (shared by the plot, labels and annotations). */
+  /** Pixel x of a data index (shared by the plot, labels and annotations).
+   *  With `times`, positions map to real timestamps — uneven sampling shows. */
   protected xOf(i: number): number {
-    const [s] = this.domain();
+    const [s, e] = this.domain();
+    const t = this.timesMs();
+    if (t && e > s) {
+      const clamp = (k: number) => Math.min(Math.max(k, 0), t.length - 1);
+      const t0 = t[clamp(s)];
+      const span = t[clamp(e)] - t0 || 1;
+      return this.pl() + ((t[clamp(i)] - t0) / span) * this.chartW();
+    }
     return this.pl() + (i - s) * this.stepX();
   }
 
@@ -1586,10 +1709,24 @@ export class StrctChart {
     if (!el || this.isEmpty()) return null;
     const rect = el.getBoundingClientRect();
     if (!rect.width) return null;
+    const [s, e] = this.domain();
+    if (this.timesMs()) {
+      // Non-uniform x: nearest point by pixel distance.
+      const svgX = ((event.clientX - rect.left) / rect.width) * this.width();
+      let best = s;
+      let bestDist = Infinity;
+      for (let i = s; i <= e; i++) {
+        const d = Math.abs(this.xOf(i) - svgX);
+        if (d < bestDist) {
+          bestDist = d;
+          best = i;
+        }
+      }
+      return best;
+    }
     const plFrac = this.pl() / this.width();
     const rFrac = PAD.r / this.width();
     const fx = ((event.clientX - rect.left) / rect.width - plFrac) / (1 - plFrac - rFrac);
-    const [s, e] = this.domain();
     return Math.max(s, Math.min(e, s + Math.round(fx * (e - s))));
   }
 
