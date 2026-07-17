@@ -61,3 +61,21 @@ jobs:
         with:
           name: a11y-artifacts
           path: a11y-artifacts/
+
+  visual-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx ng build showcase
+      - name: Compare pages against committed baselines
+        run: node scripts/visual-regression.mjs
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-diffs
+          path: visual-artifacts/

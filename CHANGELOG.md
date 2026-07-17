@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Infrastructure — visual regression gate
+
+- New `visual-regression` CI job: `scripts/visual-regression.mjs` screenshots
+  key routes (dark + light) in headless Chrome and compares them against
+  committed baselines (`tests/visual/baseline/`), failing on >0.5% pixel
+  drift; diff images upload as artifacts. Animations/transitions are frozen
+  and the showcase now **self-hosts DM Sans / JetBrains Mono** (fontsource),
+  making rendering deterministic across machines — and giving every visitor
+  the intended typography instead of a system-font fallback.
+
 ### Changed — 1.0 hardening
 
 - **`strct-datagrid` sticky columns are RTL-correct** — frozen-column offsets

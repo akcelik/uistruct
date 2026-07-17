@@ -12,8 +12,13 @@ npx ng build strct      # library
 npx ng build showcase   # docs app
 npx ng test strct --watch=false
 npx ng lint
-node scripts/a11y-smoke.mjs   # axe-core gate over 8 key routes (needs Chrome)
+node scripts/a11y-smoke.mjs          # axe-core gate over 8 key routes (needs Chrome)
+node scripts/visual-regression.mjs   # pixel-diff key routes vs committed baselines
 ```
+
+If a PR intentionally changes how something looks, regenerate the baselines
+with `node scripts/visual-regression.mjs --update` and commit them alongside
+the change — the diff then documents the visual change in review.
 
 `npm start` serves the showcase at `http://localhost:4200`.
 

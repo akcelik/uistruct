@@ -18,8 +18,11 @@ absent — items ship when they meet the bar. Ordering reflects priority.
       grid/row/columnheader/gridcell semantics, roving cell focus,
       arrows / Home / End / PageUp / PageDown / Shift+Page (year), labeled
       cells, focus returned to the input on close.
-- [ ] **Visual regression baseline** — screenshot diffing in CI on top of the
-      existing axe gate, across all six palette × theme schemes.
+- [x] **Visual regression baseline** — `scripts/visual-regression.mjs`
+      compares key routes against committed baselines (dark + light) in CI,
+      with frozen animations and self-hosted fonts for determinism; diffs
+      upload as artifacts on failure. Extending to all six palette schemes is
+      a threshold-tuning exercise on the same harness.
 - [ ] **API review pass** — naming/shape consistency sweep over all public
       inputs/outputs; anything renamed gets a deprecation alias for one minor.
 - [ ] **Performance docs** — published, reproducible benchmarks
