@@ -164,6 +164,9 @@ doesn't:
   dependency-free codebase that is easy to fork, and a fully scripted
   verification story (unit tests, an axe-core CI gate, reproducible
   benchmarks) that travels with the repo.
+- **Measured performance.** The 20k-row datagrid numbers (22 `<tr>`s in the
+  DOM, ~31 ms deep-scroll window swaps) and the script to reproduce them are
+  in [docs/performance.md](docs/performance.md).
 
 ## License
 
