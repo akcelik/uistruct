@@ -1,3 +1,13 @@
+// Self-hosted fonts: the token layer names 'DM Sans' / 'JetBrains Mono' —
+// bundling them makes rendering identical on every machine (users and the
+// visual-regression gate alike) instead of falling back to system fonts.
+@use '@fontsource/dm-sans/400.css' as dm-sans-400;
+@use '@fontsource/dm-sans/500.css' as dm-sans-500;
+@use '@fontsource/dm-sans/600.css' as dm-sans-600;
+@use '@fontsource/dm-sans/700.css' as dm-sans-700;
+@use '@fontsource/jetbrains-mono/400.css' as jb-mono-400;
+@use '@fontsource/jetbrains-mono/600.css' as jb-mono-600;
+
 // Pull in the library's theme (tokens + base reset + form-control styles).
 // Published consumers would instead use `@use 'strct/styles/theme';`.
 @use '../../strct/src/styles/theme';
