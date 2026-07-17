@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.0] - 2026-07-17
+
+### Added — `strct-datagrid` enterprise pack (all additive)
+
+- **Virtual scrolling** — `virtual` + `viewportHeight` + `rowHeight`: only the
+  viewport rows (plus a small overscan) are in the DOM, with a sticky header —
+  20k+ rows scroll smoothly. Assumes uniform row height; not combinable with
+  `expandable`.
+- **Server-side data** — `lazy` + `total` + `(lazyLoad)`: the grid never sorts
+  or slices `rows` itself; it emits `{ page, pageSize, sortKey, sortDir }` on
+  init and whenever the user pages or sorts, and shows rows as given. `total`
+  drives the pager and footer count.
+- **Sticky (frozen) columns** — `StrctDatagridColumn.sticky` pins leading
+  columns (utility columns freeze automatically alongside) with exact
+  cumulative offsets, opaque grounds and an edge shadow on the last frozen
+  column. Give sticky columns an explicit px `width`.
+- **Column state persistence** — two-way `columnState` (widths from resize +
+  hidden from the chooser) and `stateKey` for built-in localStorage
+  persistence (`strct-dg:<key>`), restored before first render.
+- **CSV export** — public `toCSV()` / `downloadCSV(filename)` with proper
+  quoting: header labels + every non-hidden column, all rows in the current
+  order (full sorted set in client mode, as-given in lazy mode).
+
 ## [0.30.0] - 2026-07-17
 
 ### Added — navigation gaps (FR-NAV-01 / FR-NAV-02, all additive)

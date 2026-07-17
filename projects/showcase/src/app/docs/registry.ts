@@ -1595,6 +1595,34 @@ export const DOCS: DocCategory[] = [
               'Keep every row exactly one line tall: cell content never wraps — long values truncate with an ellipsis — so tall content can’t distort the grid.',
           },
           {
+            name: 'virtual / viewportHeight / rowHeight',
+            type: 'boolean / number / number',
+            default: 'false / 360 / 38',
+            description:
+              'Virtual scrolling for large sets: only the rows in the viewport (plus a small overscan) are in the DOM — 20k+ rows stay smooth, with a sticky header. Assumes uniform row height; not combinable with `expandable`.',
+          },
+          {
+            name: 'lazy / total',
+            type: 'boolean / number | null',
+            default: 'false / null',
+            description:
+              'Server-side mode: the grid never sorts or slices `rows` itself — it emits `(lazyLoad)` with `{ page, pageSize, sortKey, sortDir }` whenever the user pages or sorts (and once on init); `total` drives the pager and count.',
+          },
+          {
+            name: 'stateKey / columnState',
+            type: 'string | null / StrctDatagridColumnState',
+            default: 'null / null',
+            description:
+              'Column-preference persistence (widths from resize, hidden from the chooser). `stateKey` auto-persists to localStorage (`strct-dg:<key>`) and restores on init; `[(columnState)]` gives full two-way control.',
+          },
+          {
+            name: 'columns[].sticky',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Freeze leading columns against horizontal scroll (utility columns freeze automatically alongside). Give every sticky column except the last an explicit px `width`.',
+          },
+          {
             name: 'emptyText',
             type: 'string',
             default: `'No data'`,
@@ -1654,12 +1682,24 @@ export const DOCS: DocCategory[] = [
             type: '{ row; item: StrctMenuItem }',
             description: 'Emitted when a row’s action-menu item is chosen.',
           },
+          {
+            name: 'lazyLoad',
+            type: 'StrctDatagridLazyState',
+            description:
+              'Server-side data request (`lazy` mode): `{ page, pageSize, sortKey, sortDir }` — fetch that window from your API and set `rows`.',
+          },
         ],
         methods: [
           {
             name: 'sortBy(key)',
             type: '(key: string) => void',
             description: 'Toggle sort on a column (asc → desc → none).',
+          },
+          {
+            name: 'toCSV() / downloadCSV(filename?)',
+            type: '() => string / (name?) => void',
+            description:
+              'Export the grid as CSV: header labels + every non-hidden column, all rows in the current order (with proper quoting) — `downloadCSV` also triggers the file download.',
           },
         ],
         do: [
