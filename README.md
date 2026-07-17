@@ -145,16 +145,16 @@ limit eye strain during long, all-day console sessions:
 
 ## Stability & support
 
-UIStruct is **pre-1.0**, and honest about what that means — and what it
-doesn't:
+UIStruct is **1.0 — a stability contract**, not just a version number:
 
-- **Additive-first releases.** New inputs are optional with defaults that
-  reproduce the previous behavior; existing call sites keep meaning. Anything
-  that changes rendering or behavior is flagged in
-  [CHANGELOG.md](CHANGELOG.md) under `Changed`.
-- **A defined path to 1.0.** The API-freeze criteria (RTL audit, visual
-  regression baseline, API review pass, …) and the post-1.0 semver /
-  deprecation contract are written down in [ROADMAP.md](ROADMAP.md).
+- **Semver, for real.** Patches fix; minors are additive (new inputs default
+  to previous behavior; visual changes are opt-in); majors are reserved for
+  Angular major adoptions and rare breaking cleanups with migration notes.
+  Deprecations live for at least one minor before removal. Details in
+  [ROADMAP.md](ROADMAP.md).
+- **A reviewed, frozen API.** The full public surface (327 signal members)
+  was swept before 1.0; naming taxonomy and the few accepted deviations are
+  documented in [docs/api-review.md](docs/api-review.md).
 - **Security handling.** Private reporting channel, response expectations and
   supply-chain notes (zero runtime dependencies, npm provenance) are in
   [SECURITY.md](SECURITY.md).

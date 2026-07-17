@@ -2,15 +2,15 @@
 
 ## Supported versions
 
-UIStruct is pre-1.0. Only the **latest published minor** on npm receives fixes —
-there are no maintenance branches for older 0.x versions. Upgrading is designed
-to be cheap: every release so far has been additive, and any behavioral change
-is called out in [CHANGELOG.md](CHANGELOG.md).
+Only the **latest published minor** on npm receives fixes — there are no
+maintenance branches. Upgrading is designed to be cheap: releases are
+additive-first under the [1.0 semver contract](ROADMAP.md), and any
+behavioral change is called out in [CHANGELOG.md](CHANGELOG.md).
 
 | Version        | Supported           |
 | -------------- | ------------------- |
-| latest `0.x`   | ✅                  |
-| older releases | ❌ (please upgrade) |
+| latest `1.x`   | ✅                  |
+| `0.x` releases | ❌ (please upgrade) |
 
 ## Reporting a vulnerability
 

@@ -5,7 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-07-17
+
+**UIStruct is stable.** Every 1.0 criterion in [ROADMAP.md](ROADMAP.md) is
+met: RTL/i18n audit (with fixes), strict APG datepicker grid, a visual
+regression gate in CI, a full API review (327 signal members — the surface
+freezes as-is, taxonomy in [docs/api-review.md](docs/api-review.md)), and
+published reproducible benchmarks. From here on the
+[semver contract](ROADMAP.md#after-10--semver-contract) applies: patches fix,
+minors add, majors migrate — deprecations live for at least one minor first.
 
 ### Infrastructure — visual regression gate
 
