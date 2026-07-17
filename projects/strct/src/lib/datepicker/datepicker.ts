@@ -5,10 +5,12 @@ import {
   ElementRef,
   HostListener,
   computed,
+  effect,
   forwardRef,
   inject,
   input,
   signal,
+  untracked,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
@@ -35,8 +37,11 @@ const MONTHS = [
   'December',
 ];
 const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+const DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const pad = (n: number) => String(n).padStart(2, '0');
 const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
+
+let dpUid = 0;
 
 /**
  * Calendar date picker. Value is an ISO `yyyy-mm-dd` string. CVA-compatible.
@@ -77,6 +82,7 @@ const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}
       <div
         class="strct-dp__panel"
         role="dialog"
+        [attr.aria-labelledby]="titleId"
         [strctOverlay]="field"
         strctOverlayPlacement="bottom-start"
       >
@@ -89,7 +95,7 @@ const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}
           >
             <strct-icon name="chevronLeft" [size]="14" [strokeWidth]="1.7" />
           </button>
-          <span class="strct-dp__title">{{ monthLabel() }}</span>
+          <span class="strct-dp__title" [id]="titleId" aria-live="polite">{{ monthLabel() }}</span>
           <button
             type="button"
             class="strct-dp__nav"
@@ -99,24 +105,39 @@ const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}
             <strct-icon name="chevronRight" [size]="14" [strokeWidth]="1.7" />
           </button>
         </div>
-        <div class="strct-dp__dow">
-          @for (d of dow; track d) {
-            <span>{{ d }}</span>
-          }
-        </div>
-        <div class="strct-dp__grid">
-          @for (cell of cells(); track cell.iso) {
-            <button
-              type="button"
-              class="strct-dp__day"
-              [class.strct-dp__day--muted]="!cell.inMonth"
-              [class.strct-dp__day--today]="cell.iso === today"
-              [class.strct-dp__day--focused]="cell.iso === focusedIso()"
-              [class.strct-dp__day--selected]="cell.iso === value()"
-              (click)="pick(cell.iso)"
-            >
-              {{ cell.day }}
-            </button>
+        <!-- ARIA grid (APG date-picker dialog pattern): focus roves the day
+             cells; the input regains focus on close. -->
+        <div class="strct-dp__gridwrap" role="grid" [attr.aria-labelledby]="titleId">
+          <div class="strct-dp__dow" role="row">
+            @for (d of dow; track d; let i = $index) {
+              <span role="columnheader" [attr.aria-label]="dowFull[i]" [attr.abbr]="dowFull[i]">{{
+                d
+              }}</span>
+            }
+          </div>
+          @for (week of weeks(); track $index) {
+            <div class="strct-dp__grid" role="row">
+              @for (cell of week; track cell.iso) {
+                <button
+                  type="button"
+                  role="gridcell"
+                  class="strct-dp__day"
+                  [class.strct-dp__day--muted]="!cell.inMonth"
+                  [class.strct-dp__day--today]="cell.iso === today"
+                  [class.strct-dp__day--focused]="cell.iso === focusedIso()"
+                  [class.strct-dp__day--selected]="cell.iso === value()"
+                  [attr.data-iso]="cell.iso"
+                  [attr.tabindex]="cell.iso === focusedIso() ? 0 : -1"
+                  [attr.aria-selected]="cell.iso === value()"
+                  [attr.aria-current]="cell.iso === today ? 'date' : null"
+                  [attr.aria-label]="cellAria(cell)"
+                  (click)="pick(cell.iso)"
+                  (keydown)="onKeydown($event)"
+                >
+                  {{ cell.day }}
+                </button>
+              }
+            </div>
           }
         </div>
       </div>
@@ -249,6 +270,8 @@ export class StrctDatepicker implements ControlValueAccessor {
   /** Placeholder text when empty. */
   readonly placeholder = input('Select a date');
   protected readonly dow = DOW;
+  protected readonly dowFull = DOW_FULL;
+  protected readonly titleId = `strct-dp-title-${++dpUid}`;
 
   readonly value = signal('');
   readonly open = signal(false);
@@ -288,6 +311,19 @@ export class StrctDatepicker implements ControlValueAccessor {
     });
   });
 
+  /** The 42 cells chunked into ARIA grid rows (weeks). */
+  protected readonly weeks = computed<DayCell[][]>(() => {
+    const all = this.cells();
+    return Array.from({ length: 6 }, (_, w) => all.slice(w * 7, w * 7 + 7));
+  });
+
+  /** Accessible name of one day cell: "Tuesday, March 4, 2026". */
+  protected cellAria(cell: DayCell): string {
+    const [y, m, d] = cell.iso.split('-').map(Number);
+    const dow = DOW_FULL[new Date(y, m - 1, d).getDay()];
+    return `${dow}, ${MONTHS[m - 1]} ${d}, ${y}`;
+  }
+
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
 
@@ -308,9 +344,27 @@ export class StrctDatepicker implements ControlValueAccessor {
     this.focusedIso.set(iso);
     const [y, m] = iso.split('-').map(Number);
     this.view.set({ y, m: m - 1 });
-    this.open.set(false);
+    this.close();
     this.onChange(iso);
     this.onTouched();
+  }
+
+  constructor() {
+    // Roving focus: the keyboard cursor's day cell takes real focus while the
+    // calendar is open (APG date-picker dialog pattern); the input gets it back
+    // on close via close().
+    effect(() => {
+      const open = this.open();
+      const iso = this.focusedIso();
+      untracked(() => {
+        if (!open || !iso) return;
+        setTimeout(() =>
+          (this.host.nativeElement as HTMLElement)
+            .querySelector<HTMLButtonElement>(`.strct-dp__day[data-iso="${iso}"]`)
+            ?.focus(),
+        );
+      });
+    });
   }
 
   onKeydown(event: KeyboardEvent): void {
@@ -339,13 +393,24 @@ export class StrctDatepicker implements ControlValueAccessor {
         event.preventDefault();
         this.shiftFocus(7);
         break;
+      case 'Home': {
+        // Start of the focused week (APG grid pattern).
+        event.preventDefault();
+        this.shiftFocus(-this.focusedDow());
+        break;
+      }
+      case 'End': {
+        event.preventDefault();
+        this.shiftFocus(6 - this.focusedDow());
+        break;
+      }
       case 'PageUp':
         event.preventDefault();
-        this.shiftFocus(0, -1);
+        this.shiftFocus(0, event.shiftKey ? -12 : -1); // Shift = previous year
         break;
       case 'PageDown':
         event.preventDefault();
-        this.shiftFocus(0, 1);
+        this.shiftFocus(0, event.shiftKey ? 12 : 1); // Shift = next year
         break;
       case 'Enter':
       case ' ':
@@ -354,9 +419,23 @@ export class StrctDatepicker implements ControlValueAccessor {
         break;
       case 'Escape':
         event.preventDefault();
-        this.open.set(false);
+        this.close();
         break;
     }
+  }
+
+  /** Day-of-week (0–6) of the keyboard cursor. */
+  private focusedDow(): number {
+    const [y, m, d] = (this.focusedIso() || this.today).split('-').map(Number);
+    return new Date(y, m - 1, d).getDay();
+  }
+
+  /** Close the panel and hand focus back to the input. */
+  private close(): void {
+    this.open.set(false);
+    (this.host.nativeElement as HTMLElement)
+      .querySelector<HTMLInputElement>('.strct-dp__input')
+      ?.focus();
   }
 
   private syncFocus(): void {

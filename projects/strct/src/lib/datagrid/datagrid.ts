@@ -152,21 +152,21 @@ export class StrctDatagridActionBar {}
                 <th
                   class="strct-dg__expandcol"
                   [class.strct-dg__cell--sticky]="stickyActive()"
-                  [style.left.px]="utilLeft('detail')"
+                  [style.insetInlineStart.px]="utilLeft('detail')"
                 ></th>
               }
               @if (canExpand()) {
                 <th
                   class="strct-dg__expandcol"
                   [class.strct-dg__cell--sticky]="stickyActive()"
-                  [style.left.px]="utilLeft('expand')"
+                  [style.insetInlineStart.px]="utilLeft('expand')"
                 ></th>
               }
               @if (selectable()) {
                 <th
                   class="strct-dg__sel"
                   [class.strct-dg__cell--sticky]="stickyActive()"
-                  [style.left.px]="utilLeft('sel')"
+                  [style.insetInlineStart.px]="utilLeft('sel')"
                 >
                   <strct-checkbox
                     [ariaLabel]="L().selectAll"
@@ -183,7 +183,7 @@ export class StrctDatagridActionBar {}
                   [class.strct-dg__th--sortable]="col.sortable"
                   [class.strct-dg__cell--sticky]="isSticky(col)"
                   [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
-                  [style.left.px]="stickyLeft(col.key)"
+                  [style.insetInlineStart.px]="stickyLeft(col.key)"
                   [attr.tabindex]="col.sortable ? 0 : null"
                   [attr.aria-sort]="col.sortable ? ariaSort(col.key) : null"
                   (click)="col.sortable && sortBy(col.key)"
@@ -251,7 +251,7 @@ export class StrctDatagridActionBar {}
                     <td
                       class="strct-dg__expandcell"
                       [class.strct-dg__cell--sticky]="stickyActive()"
-                      [style.left.px]="utilLeft('detail')"
+                      [style.insetInlineStart.px]="utilLeft('detail')"
                     >
                       <button
                         type="button"
@@ -269,7 +269,7 @@ export class StrctDatagridActionBar {}
                     <td
                       class="strct-dg__expandcell"
                       [class.strct-dg__cell--sticky]="stickyActive()"
-                      [style.left.px]="utilLeft('expand')"
+                      [style.insetInlineStart.px]="utilLeft('expand')"
                     >
                       <button
                         type="button"
@@ -287,7 +287,7 @@ export class StrctDatagridActionBar {}
                     <td
                       class="strct-dg__sel"
                       [class.strct-dg__cell--sticky]="stickyActive()"
-                      [style.left.px]="utilLeft('sel')"
+                      [style.insetInlineStart.px]="utilLeft('sel')"
                     >
                       <strct-checkbox
                         [ariaLabel]="L().selectRow"
@@ -301,7 +301,7 @@ export class StrctDatagridActionBar {}
                       [style.text-align]="col.align ?? 'start'"
                       [class.strct-dg__cell--sticky]="isSticky(col)"
                       [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
-                      [style.left.px]="stickyLeft(col.key)"
+                      [style.insetInlineStart.px]="stickyLeft(col.key)"
                     >
                       @if (cellTemplate(col.key); as tpl) {
                         <ng-container
@@ -512,10 +512,13 @@ export class StrctDatagridActionBar {}
         position: absolute;
         top: 0;
         bottom: 0;
-        right: -1px;
+        inset-inline-end: -1px;
         width: 7px;
         pointer-events: none;
-        background: linear-gradient(90deg, rgba(0, 0, 0, 0.14), transparent);
+        background: linear-gradient(to right, rgba(0, 0, 0, 0.14), transparent);
+      }
+      [dir='rtl'] .strct-dg .strct-dg__cell--sticky-last::after {
+        background: linear-gradient(to left, rgba(0, 0, 0, 0.14), transparent);
       }
       /* Fixed utility-column widths so frozen offsets stay exact. */
       .strct-dg-host--sticky .strct-dg__expandcol,

@@ -11,10 +11,13 @@ absent — items ship when they meet the bar. Ordering reflects priority.
       directional fixes shipped; see [docs/rtl-audit.md](docs/rtl-audit.md).
       Remaining 1.0 blocker from the audit: logical offsets for datagrid
       sticky columns (tracked below).
-- [ ] **Datagrid sticky columns in RTL** — logical (`inset-inline-start`)
-      frozen-column offsets.
-- [ ] **Datepicker keyboard grid** — strict APG date-grid pattern
-      (arrow/PageUp/PageDown/Home/End across the calendar).
+- [x] **Datagrid sticky columns in RTL** — frozen-column offsets are logical
+      (`inset-inline-start`); verified pinning to the reading start under
+      `dir="rtl"` horizontal scroll.
+- [x] **Datepicker keyboard grid** — strict APG date-grid pattern: ARIA
+      grid/row/columnheader/gridcell semantics, roving cell focus,
+      arrows / Home / End / PageUp / PageDown / Shift+Page (year), labeled
+      cells, focus returned to the input on close.
 - [ ] **Visual regression baseline** — screenshot diffing in CI on top of the
       existing axe gate, across all six palette × theme schemes.
 - [ ] **API review pass** — naming/shape consistency sweep over all public
