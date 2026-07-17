@@ -80,7 +80,11 @@ describe('StrctRail', () => {
   });
 
   it('routerLink items are real <a> links; plain click emits, ctrl-click does not', async () => {
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    // A resolvable route, so the click's navigation settles inside the test
+    // (an unmatched route would reject after teardown → NG0205 in CI).
+    TestBed.configureTestingModule({
+      providers: [provideRouter([{ path: 'compute', children: [] }])],
+    });
     const f = TestBed.createComponent(StrctRail);
     f.componentRef.setInput('items', [
       { id: 'compute', label: 'Compute', icon: 'host', routerLink: '/compute' },
@@ -96,6 +100,7 @@ describe('StrctRail', () => {
     expect(picked).toEqual([]); // browser's click (new tab), not ours
     a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     f.detectChanges();
+    await f.whenStable(); // let the RouterLink navigation finish before teardown
     expect(picked).toEqual(['compute']);
     expect(f.componentInstance.activeId()).toBe('compute');
   });
