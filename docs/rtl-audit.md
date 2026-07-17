@@ -37,10 +37,9 @@ These intentionally stay physical and behave correctly in RTL:
 
 ## Known caveats (tracked for 1.0)
 
-- **Datagrid sticky columns** compute physical `left` offsets; in an RTL
-  document frozen columns pin to the left rather than the reading-order start.
-  Workaround: keep wide frozen grids in an LTR container; a logical-offset
-  implementation is on the [roadmap](../ROADMAP.md).
+- ~~**Datagrid sticky columns** compute physical `left` offsets~~ — resolved:
+  offsets are logical (`inset-inline-start`); frozen columns pin to the
+  reading start in RTL (verified under RTL horizontal scroll).
 - **Column resize drag math** treats rightward movement as widening; in RTL
   the gesture is inverted (cosmetic — resizing still works).
 - **Decorative motion** (card loading bar sweep, toast entrance nudge) keeps

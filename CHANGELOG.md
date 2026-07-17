@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed — 1.0 hardening
+
+- **`strct-datagrid` sticky columns are RTL-correct** — frozen-column offsets
+  use logical `inset-inline-start`, so they pin to the reading start under
+  `dir="rtl"`; the edge shadow mirrors.
+- **`strct-datepicker` implements the strict APG date-grid pattern** — real
+  ARIA grid semantics (`grid` / `row` / `columnheader` / labeled `gridcell`s),
+  roving focus on the day cells, `Home`/`End` (week edges),
+  `Shift+PageUp/PageDown` (year), `aria-selected` / `aria-current="date"`,
+  and focus returns to the input on close.
+
 ## [0.31.1] - 2026-07-17
 
 ### Fixed — RTL audit outcomes

@@ -99,11 +99,13 @@ describe('StrctDatagrid', () => {
     const host = fixture.nativeElement as HTMLElement;
     expect(host.classList).toContain('strct-dg-host--sticky');
     const ths = [...host.querySelectorAll('thead th')] as HTMLElement[];
-    // select util col frozen at 0; A after the 40px select col; B after A
+    // select util col frozen at 0; A after the 40px select col; B after A.
+    // Offsets are logical (inset-inline-start), so RTL pins to the reading start.
+    const inlineStart = (el: HTMLElement) => el.style.getPropertyValue('inset-inline-start');
     expect(ths[0].classList).toContain('strct-dg__cell--sticky');
-    expect(ths[0].style.left).toBe('0px');
-    expect(ths[1].style.left).toBe('40px');
-    expect(ths[2].style.left).toBe('140px'); // 40 (select) + 100 (A)
+    expect(inlineStart(ths[0])).toBe('0px');
+    expect(inlineStart(ths[1])).toBe('40px');
+    expect(inlineStart(ths[2])).toBe('140px'); // 40 (select) + 100 (A)
     expect(ths[2].classList).toContain('strct-dg__cell--sticky-last');
     expect(ths[3].classList).not.toContain('strct-dg__cell--sticky');
   });
