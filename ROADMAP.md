@@ -5,7 +5,8 @@ absent — items ship when they meet the bar. Ordering reflects priority.
 
 ## To 1.0 — API freeze
 
-1.0 is a **stability contract**, not a feature milestone. It ships when:
+1.0 is a **stability contract**, not a feature milestone. **Shipped: v1.0.0
+(2026-07-17)** — every criterion below was met:
 
 - [x] **RTL / i18n audit** — static sweep + rendered verification done, with
       directional fixes shipped; see [docs/rtl-audit.md](docs/rtl-audit.md).
@@ -23,10 +24,12 @@ absent — items ship when they meet the bar. Ordering reflects priority.
       with frozen animations and self-hosted fonts for determinism; diffs
       upload as artifacts on failure. Extending to all six palette schemes is
       a threshold-tuning exercise on the same harness.
-- [ ] **API review pass** — naming/shape consistency sweep over all public
-      inputs/outputs; anything renamed gets a deprecation alias for one minor.
-- [ ] **Performance docs** — published, reproducible benchmarks
-      (see `docs/performance.md`).
+- [x] **API review pass** — full sweep of the published `.d.ts` (327 signal
+      members); taxonomy codified and four accepted deviations documented in
+      [docs/api-review.md](docs/api-review.md). No renames needed — the
+      surface freezes as-is.
+- [x] **Performance docs** — published, reproducible benchmarks
+      (see [docs/performance.md](docs/performance.md)).
 
 Until 1.0, the practical policy already in force:
 
