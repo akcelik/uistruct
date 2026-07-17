@@ -2,10 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   ViewEncapsulation,
+  computed,
   input,
   model,
   output,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { StrctIcon } from '../icon/icon';
 
 /** Semantic colour for a rail item's count badge. */
@@ -23,6 +26,22 @@ export interface StrctRailItem {
   /** Badge colour (defaults to `accent`). When collapsed it renders as a dot. */
   badgeStatus?: StrctRailStatus;
   disabled?: boolean;
+  /** `'bottom'` pins the item to the foot of the rail (e.g. Administration). */
+  placement?: 'top' | 'bottom';
+  /**
+   * Render as a real router link (`<a routerLink>`): middle-click, ⌘/Ctrl-click
+   * and "open in new tab" work; `(select)` still fires on plain activation.
+   * When neither `routerLink` nor `href` is set the item stays a `<button>`.
+   */
+  routerLink?: string | unknown[];
+  /** Render as a plain `<a href>` (external or non-router destinations). */
+  href?: string;
+  /** Small trailing status dot with no text (e.g. "unsaved changes"). */
+  dot?: boolean;
+  /** Dot tone; defaults to `accent`. */
+  dotStatus?: StrctRailStatus;
+  /** Muted trailing icon (e.g. "restart required"), before any badge / dot. */
+  trailingIcon?: string;
 }
 
 /**
@@ -37,10 +56,63 @@ export interface StrctRailItem {
   selector: 'strct-rail',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon],
+  imports: [NgTemplateOutlet, RouterLink, RouterLinkActive, StrctIcon],
   template: `
-    <nav class="strct-rail__nav" [attr.aria-label]="ariaLabel()">
-      @for (item of items(); track item.id) {
+    <!-- Shared row content: icon, label, trailing indicator, badge / dot. -->
+    <ng-template #rowContent let-item>
+      <strct-icon class="strct-rail__icon" [name]="item.icon" [size]="18" [strokeWidth]="1.6" />
+      @if (!collapsed()) {
+        <span class="strct-rail__label">{{ item.label }}</span>
+        @if (item.trailingIcon) {
+          <strct-icon
+            class="strct-rail__trailing"
+            [name]="item.trailingIcon"
+            [size]="14"
+            [strokeWidth]="1.5"
+          />
+        }
+      }
+      @if (item.badge !== undefined && item.badge !== null && item.badge !== '') {
+        <span
+          class="strct-rail__badge strct-rail__badge--{{ item.badgeStatus ?? 'accent' }}"
+          [class.strct-rail__badge--dot]="collapsed()"
+        >
+          @if (!collapsed()) {
+            {{ item.badge }}
+          }
+        </span>
+      } @else if (item.dot) {
+        <span class="strct-rail__dot strct-rail__dot--{{ item.dotStatus ?? 'accent' }}"></span>
+      }
+    </ng-template>
+
+    <!-- One rail row: a router link, a plain link, or a button (today's default). -->
+    <ng-template #row let-item>
+      @if (isRouted(item)) {
+        <a
+          class="strct-rail__item"
+          [routerLink]="item.routerLink"
+          routerLinkActive
+          #rla="routerLinkActive"
+          [class.strct-rail__item--active]="isActive(item, rla.isActive)"
+          [attr.aria-current]="isActive(item, rla.isActive) ? 'page' : null"
+          [attr.title]="collapsed() ? item.label : null"
+          (click)="pick(item, $event)"
+        >
+          <ng-container *ngTemplateOutlet="rowContent; context: { $implicit: item }" />
+        </a>
+      } @else if (item.href && !item.disabled) {
+        <a
+          class="strct-rail__item"
+          [href]="item.href"
+          [class.strct-rail__item--active]="item.id === activeId()"
+          [attr.aria-current]="item.id === activeId() ? 'page' : null"
+          [attr.title]="collapsed() ? item.label : null"
+          (click)="pick(item, $event)"
+        >
+          <ng-container *ngTemplateOutlet="rowContent; context: { $implicit: item }" />
+        </a>
+      } @else {
         <button
           type="button"
           class="strct-rail__item"
@@ -48,23 +120,25 @@ export interface StrctRailItem {
           [disabled]="item.disabled"
           [attr.aria-current]="item.id === activeId() ? 'page' : null"
           [attr.title]="collapsed() ? item.label : null"
-          (click)="pick(item)"
+          (click)="pick(item, $event)"
         >
-          <strct-icon class="strct-rail__icon" [name]="item.icon" [size]="18" [strokeWidth]="1.6" />
-          @if (!collapsed()) {
-            <span class="strct-rail__label">{{ item.label }}</span>
-          }
-          @if (item.badge !== undefined && item.badge !== null && item.badge !== '') {
-            <span
-              class="strct-rail__badge strct-rail__badge--{{ item.badgeStatus ?? 'accent' }}"
-              [class.strct-rail__badge--dot]="collapsed()"
-            >
-              @if (!collapsed()) {
-                {{ item.badge }}
-              }
-            </span>
-          }
+          <ng-container *ngTemplateOutlet="rowContent; context: { $implicit: item }" />
         </button>
+      }
+    </ng-template>
+
+    <nav class="strct-rail__nav" [attr.aria-label]="ariaLabel()">
+      <div class="strct-rail__group strct-rail__group--top">
+        @for (item of topItems(); track item.id) {
+          <ng-container *ngTemplateOutlet="row; context: { $implicit: item }" />
+        }
+      </div>
+      @if (bottomItems().length) {
+        <div class="strct-rail__group strct-rail__group--bottom">
+          @for (item of bottomItems(); track item.id) {
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: item }" />
+          }
+        </div>
       }
     </nav>
 
@@ -104,11 +178,26 @@ export interface StrctRailItem {
       }
       .strct-rail__nav {
         flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 8px;
+      }
+      .strct-rail__group {
         display: flex;
         flex-direction: column;
         gap: 2px;
-        padding: 8px;
+      }
+      /* Top group scrolls; the bottom group stays pinned under a divider. */
+      .strct-rail__group--top {
+        flex: 1;
+        min-height: 0;
         overflow-y: auto;
+      }
+      .strct-rail__group--bottom {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--b1);
       }
       .strct-rail__item {
         position: relative;
@@ -116,6 +205,7 @@ export interface StrctRailItem {
         align-items: center;
         gap: 11px;
         width: 100%;
+        box-sizing: border-box;
         padding: 8px 10px;
         border: 0;
         border-radius: 8px;
@@ -125,6 +215,7 @@ export interface StrctRailItem {
         font-size: 13.5px;
         font-family: var(--font);
         text-align: start;
+        text-decoration: none;
         white-space: nowrap;
         transition:
           background 0.14s ease,
@@ -213,6 +304,35 @@ export interface StrctRailItem {
       .strct-rail__badge--dot.strct-rail__badge--critical {
         background: var(--critical);
       }
+      /* Muted trailing indicator icon ("restart required" etc.). */
+      .strct-rail__trailing {
+        flex-shrink: 0;
+        color: var(--t3);
+      }
+      /* Small trailing status dot ("unsaved changes" etc.). */
+      .strct-rail__dot {
+        flex-shrink: 0;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+      }
+      .strct-rail--collapsed .strct-rail__dot {
+        position: absolute;
+        top: 5px;
+        right: 7px;
+      }
+      .strct-rail__dot--accent {
+        background: var(--acc);
+      }
+      .strct-rail__dot--success {
+        background: var(--success);
+      }
+      .strct-rail__dot--warning {
+        background: var(--warning);
+      }
+      .strct-rail__dot--critical {
+        background: var(--critical);
+      }
       .strct-rail__toggle {
         display: flex;
         align-items: center;
@@ -257,8 +377,38 @@ export class StrctRail {
   /** Emitted when an item is chosen. */
   readonly select = output<StrctRailItem>();
 
-  protected pick(item: StrctRailItem): void {
+  protected readonly topItems = computed(() =>
+    this.items().filter((i) => i.placement !== 'bottom'),
+  );
+  protected readonly bottomItems = computed(() =>
+    this.items().filter((i) => i.placement === 'bottom'),
+  );
+
+  /** Enabled item with a router destination → renders as `<a routerLink>`. */
+  protected isRouted(item: StrctRailItem): boolean {
+    return item.routerLink != null && !item.disabled;
+  }
+
+  /**
+   * Active state of a router-link item: an explicit `activeId` is authoritative;
+   * without one, the router's own active state drives it.
+   */
+  protected isActive(item: StrctRailItem, routerActive: boolean): boolean {
+    const id = this.activeId();
+    return id !== null ? item.id === id : routerActive;
+  }
+
+  protected pick(item: StrctRailItem, event?: MouseEvent): void {
     if (item.disabled) return;
+    // A modified / non-primary click on a link is the browser's (new tab etc.) —
+    // never ours: no activeId change, no (select).
+    if (
+      event &&
+      (item.routerLink != null || item.href) &&
+      (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+    ) {
+      return;
+    }
     this.activeId.set(item.id);
     this.select.emit(item);
   }

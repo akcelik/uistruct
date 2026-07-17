@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.30.0] - 2026-07-17
+
+### Added — navigation gaps (FR-NAV-01 / FR-NAV-02, all additive)
+
+**`strct-rail`** (`StrctRailItem`):
+
+- **`placement: 'bottom'`** — pins an item to the foot of the rail under a
+  divider (vCenter-style Administration), in declaration order. The top group
+  scrolls; the bottom group stays put.
+- **`routerLink` / `href`** — the item renders as a real `<a>`: middle-click,
+  ⌘/Ctrl-click and "open in new tab" work like a real link; `(select)` still
+  fires on plain activation, and modified clicks never touch `activeId`. With
+  `routerLink`, the router's own active state drives highlighting when no
+  explicit `activeId` is provided (explicit wins).
+- **`dot` + `dotStatus`, `trailingIcon`** — the same trailing vocabulary as the
+  section menu (below), so the two nav objects stay consistent.
+
+**`strct-section-menu`** (`StrctMenuLink`):
+
+- **`badge` + `badgeStatus`** — trailing count/label chip (e.g. deviations).
+- **`dot` + `dotStatus`** — small trailing status dot ("unsaved changes").
+- **`trailingIcon`** — muted trailing glyph ("restart required"), rendered
+  after the label and before any badge / dot.
+
+Both share the `StrctRailStatus` tone union — no new status vocabulary. Items
+without the new fields render identically to 0.29.0.
+
+### Changed
+
+- `@angular/router` is now a peer dependency (used by `strct-rail` link items).
+
 ## [0.29.0] - 2026-07-16
 
 ### Added — `strct-chart` monitoring suite (FR-CHART-08..13, all additive)
