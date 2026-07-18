@@ -389,6 +389,42 @@ describe('StrctChart', () => {
   });
 
   // FR-CHART-13: export
+  // FR-CHART-14: tooltip edge clamp / flip
+  it('flips the tooltip at the edges so first/last values are never clipped', () => {
+    const fixture = TestBed.createComponent(StrctChart);
+    fixture.componentRef.setInput('data', [10, 20, 30, 40, 50]);
+    fixture.componentRef.setInput('labels', ['a', 'b', 'c', 'd', 'e']);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const tip = () => el.querySelector('.strct-chart__tip') as HTMLElement;
+    const set = (i: number) => {
+      fixture.componentRef.setInput('activeIndex', i);
+      fixture.detectChanges();
+    };
+    set(0); // first point → left-aligned, vertical lift preserved
+    expect(tip().style.transform).toBe('translate(8px, calc(-100% - 10px))');
+    set(4); // last point → right-aligned
+    expect(tip().style.transform).toBe('translate(calc(-100% - 8px), calc(-100% - 10px))');
+    set(2); // mid-chart → unchanged (centered)
+    expect(tip().style.transform).toBe('translate(-50%, calc(-100% - 10px))');
+  });
+
+  it('edge-flips the multi and gap tips too (horizontal only)', () => {
+    const multi = TestBed.createComponent(StrctChart);
+    multi.componentRef.setInput('series', [{ data: [1, 2, 3, 4, 5], label: 'A' }]);
+    multi.componentRef.setInput('activeIndex', 0);
+    multi.detectChanges();
+    const mtip = multi.nativeElement.querySelector('.strct-chart__tip--multi') as HTMLElement;
+    expect(mtip.style.transform).toBe('translate(8px, 0)');
+
+    const gap = TestBed.createComponent(StrctChart);
+    gap.componentRef.setInput('data', [null, 10, 20, 30, 40]);
+    gap.componentRef.setInput('activeIndex', 0);
+    gap.detectChanges();
+    const gtip = gap.nativeElement.querySelector('.strct-chart__tip--gap') as HTMLElement;
+    expect(gtip.style.transform).toBe('translate(8px, 0)');
+  });
+
   it('toSVG returns a standalone SVG string with resolved presentation', () => {
     const fixture = TestBed.createComponent(StrctChart);
     fixture.componentRef.setInput('data', [1, 2, 3]);
