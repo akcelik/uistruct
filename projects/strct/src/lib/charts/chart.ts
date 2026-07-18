@@ -518,7 +518,11 @@ interface SeriesRender {
 
         @if (interactive() && hoverX() !== null) {
           @if (isMulti()) {
-            <div class="strct-chart__tip strct-chart__tip--multi" [style.left.px]="hoverX()">
+            <div
+              class="strct-chart__tip strct-chart__tip--multi"
+              [style.left.px]="hoverX()"
+              [style.transform]="tipShift()"
+            >
               @if (hoverMeta()) {
                 <span class="strct-chart__tip-l">{{ hoverMeta() }}</span>
               }
@@ -536,8 +540,15 @@ interface SeriesRender {
               }
             </div>
           } @else if (hoverPt(); as hp) {
-            <div class="strct-chart__axis-y" [style.top.px]="hp.y">{{ hoverValueText() }}</div>
-            <div class="strct-chart__tip" [style.left.px]="hp.x" [style.top.px]="hp.y">
+            <div class="strct-chart__axis-y" [style.top.px]="axisChipY(hp.y)">
+              {{ hoverValueText() }}
+            </div>
+            <div
+              class="strct-chart__tip"
+              [style.left.px]="hp.x"
+              [style.top.px]="hp.y"
+              [style.transform]="tipShiftRaised()"
+            >
               <span class="strct-chart__tip-v">{{ hoverValueText() }}</span>
               @if (hoverDelta() !== null || hoverMeta()) {
                 <span class="strct-chart__tip-meta">
@@ -562,7 +573,11 @@ interface SeriesRender {
             </div>
           } @else if (hoverGap()) {
             <!-- A gap point: keep the time slot, say "no data" instead of a value. -->
-            <div class="strct-chart__tip strct-chart__tip--gap" [style.left.px]="hoverX()">
+            <div
+              class="strct-chart__tip strct-chart__tip--gap"
+              [style.left.px]="hoverX()"
+              [style.transform]="tipShift()"
+            >
               <span class="strct-chart__tip-v">{{ gapText() }}</span>
               @if (hoverMeta()) {
                 <span class="strct-chart__tip-l">{{ hoverMeta() }}</span>
@@ -745,7 +760,6 @@ interface SeriesRender {
 
       .strct-chart__tip--gap {
         top: 6px;
-        transform: translate(-50%, 0);
       }
       .strct-chart__tip-ann {
         font-size: 12px;
@@ -834,7 +848,6 @@ interface SeriesRender {
       /* Hover tooltip. */
       .strct-chart__tip {
         position: absolute;
-        transform: translate(-50%, calc(-100% - 10px));
         pointer-events: none;
         display: flex;
         flex-direction: column;
@@ -850,7 +863,6 @@ interface SeriesRender {
       }
       .strct-chart__tip--multi {
         top: 6px;
-        transform: translate(-50%, 0);
         align-items: stretch;
         gap: 3px;
       }
@@ -1474,6 +1486,49 @@ export class StrctChart {
     if (i == null) return null;
     return this.xOf(i);
   });
+
+  /**
+   * Tooltip edge-flip (FR-CHART-14): near the left edge the balloon
+   * left-aligns, near the right edge it right-aligns, otherwise it stays
+   * centered — so the first/last point's values are never clipped by an
+   * `overflow: hidden` ancestor. Only the balloon shifts; the crosshair
+   * stays on the true point-X.
+   */
+  private readonly tipAlign = computed<'start' | 'center' | 'end'>(() => {
+    const x = this.hoverX();
+    const w = this.width();
+    if (x == null || !w) return 'center';
+    if (x < w * 0.12) return 'start';
+    if (x > w * 0.88) return 'end';
+    return 'center';
+  });
+  /** Horizontal-only shift (multi / gap tips, anchored below the plot top). */
+  protected readonly tipShift = computed(() => {
+    switch (this.tipAlign()) {
+      case 'start':
+        return 'translate(8px, 0)';
+      case 'end':
+        return 'translate(calc(-100% - 8px), 0)';
+      default:
+        return 'translate(-50%, 0)';
+    }
+  });
+  /** Shift incl. the single tip's vertical lift above the hover point. */
+  protected readonly tipShiftRaised = computed(() => {
+    switch (this.tipAlign()) {
+      case 'start':
+        return 'translate(8px, calc(-100% - 10px))';
+      case 'end':
+        return 'translate(calc(-100% - 8px), calc(-100% - 10px))';
+      default:
+        return 'translate(-50%, calc(-100% - 10px))';
+    }
+  });
+  /** Keep the y-axis value chip vertically inside the plot box. */
+  protected axisChipY(y: number): number {
+    return Math.max(12, Math.min(this.height() - 12, y));
+  }
+
   protected readonly hoverPt = computed<Pt | null>(() => {
     const i = this.dispIdx();
     const p = this.points();
