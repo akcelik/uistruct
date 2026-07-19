@@ -1844,7 +1844,7 @@ export const DOCS: DocCategory[] = [
             type: 'StrctChartSeries[] | null',
             default: 'null',
             description:
-              'Multiple lines: `{ data; label?; status?; area?; curve?; dash?; lower?; upper? }[]`. `lower`+`upper` fill a min–max band behind the line (downsampled spikes stay visible; tooltip shows `avg (min–max)`). Takes precedence over `data`; pairs with `legend`.',
+              'Multiple lines: `{ data; label?; color?; status?; area?; curve?; dash?; lower?; upper? }[]`. `color` accepts a semantic status or a categorical slot `"chart-1".."chart-8"` — theme tokens with a fixed, colorblind-validated order per palette (slot 1 tracks the accent hue); use slots for N distinct entities and keep statuses for health. `lower`+`upper` fill a min–max band behind the line (downsampled spikes stay visible; tooltip shows `avg (min–max)`). Takes precedence over `data`; pairs with `legend`.',
           },
           {
             name: 'curve',

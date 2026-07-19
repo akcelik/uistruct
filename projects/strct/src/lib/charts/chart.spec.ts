@@ -389,6 +389,22 @@ describe('StrctChart', () => {
   });
 
   // FR-CHART-13: export
+  // FR-CHART-15: categorical palette slots
+  it('series can opt into categorical slots; statuses stay unchanged', () => {
+    const el = build({
+      series: [
+        { data: [1, 2], label: 'node-a', color: 'chart-1' },
+        { data: [2, 1], label: 'node-b', color: 'chart-5' },
+        { data: [3, 2], label: 'alarmed', status: 'critical' },
+      ],
+      legend: true,
+    });
+    const lines = el.querySelectorAll('.strct-chart__line');
+    expect(lines[0].getAttribute('stroke')).toBe('var(--chart-1)');
+    expect(lines[1].getAttribute('stroke')).toBe('var(--chart-5)');
+    expect(lines[2].getAttribute('stroke')).toBe('var(--critical)'); // semantic untouched
+  });
+
   // FR-CHART-14: tooltip edge clamp / flip
   it('flips the tooltip at the edges so first/last values are never clipped', () => {
     const fixture = TestBed.createComponent(StrctChart);

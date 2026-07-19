@@ -22,13 +22,45 @@ export type StrctChartType = 'line' | 'area' | 'bar';
 /** Line interpolation between points. */
 export type StrctChartCurve = 'smooth' | 'linear' | 'step';
 
+/**
+ * A categorical palette slot: theme tokens `--chart-1..8` (FR-CHART-15).
+ * Fixed slot order per palette is the CVD-safety mechanism; slot 1 tracks the
+ * theme's accent hue at data-grade chroma. Use for N *distinct entities*
+ * (per-node CPU, per-datastore latency) — the four semantic statuses stay
+ * reserved for health/threshold meaning.
+ */
+export type StrctChartSlot =
+  | 'chart-1'
+  | 'chart-2'
+  | 'chart-3'
+  | 'chart-4'
+  | 'chart-5'
+  | 'chart-6'
+  | 'chart-7'
+  | 'chart-8';
+
+/** A series color role: a semantic status, or a categorical palette slot. */
+export type StrctChartColor = StrctChartStatus | StrctChartSlot;
+
+/** Resolve a color role to its CSS value. */
+function colorOf(role: StrctChartColor): string {
+  return role.startsWith('chart-') ? `var(--${role})` : COLOR[role as StrctChartStatus];
+}
+
 /** One series in a multi-series chart. */
 export interface StrctChartSeries {
   /** Values; `null` (or `NaN`) marks a data gap — the line breaks, no interpolation. */
   data: (number | null)[];
   /** Legend + tooltip name. */
   label?: string;
-  /** Per-series color; falls back to the chart's `status`. */
+  /**
+   * Color role: a semantic status *or* a categorical slot `'chart-1'..'chart-8'`
+   * (theme tokens, validator-passed per palette × mode). Takes precedence over
+   * `status`; two-directional pairs (in/out, read/write) should instead share
+   * one hue and differ by `dash`.
+   */
+  color?: StrctChartColor;
+  /** Per-series semantic color; falls back to the chart's `status`. */
   status?: StrctChartStatus;
   /** Per-series area fill. */
   area?: boolean;
@@ -1332,7 +1364,7 @@ export class StrctChart {
         }
         const curve = x.curve ?? this.curve();
         return {
-          color: COLOR[x.status ?? this.status()],
+          color: colorOf(x.color ?? x.status ?? this.status()),
           label: x.label ?? '',
           area: false,
           dash: x.dash ? (typeof x.dash === 'string' ? x.dash : '5 4') : null,
@@ -1364,7 +1396,7 @@ export class StrctChart {
             )
           : '';
       return {
-        color: COLOR[x.status ?? this.status()],
+        color: colorOf(x.color ?? x.status ?? this.status()),
         label: x.label ?? '',
         area,
         dash: x.dash ? (typeof x.dash === 'string' ? x.dash : '5 4') : null,
