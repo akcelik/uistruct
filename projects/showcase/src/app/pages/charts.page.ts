@@ -168,6 +168,28 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="line-categorical"
+      owner="line"
+      heading="Categorical series — theme data palette"
+      description="For N distinct entities (per-node CPU here) use the categorical slots color: 'chart-1..8' — theme tokens with a fixed, colorblind-validated order per palette; slot 1 tracks the theme's accent hue at data-grade chroma. Semantic statuses stay reserved for health. Switch the palette from the header to see the whole set re-skin."
+      code="<strct-chart [series]=&quot;[{data: nodeA, label: 'node-a', color: 'chart-1'}, …]&quot; legend />"
+    >
+      <div class="chart-box">
+        <strct-chart
+          [series]="catSeries"
+          legend
+          yAxis
+          [min]="0"
+          [max]="100"
+          [labels]="monLabels"
+          [xTicks]="8"
+          [valueFormat]="pctFormat"
+          [height]="200"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="line-monitoring"
       owner="line"
       heading="Monitoring: gaps, annotations & min–max band"
@@ -624,6 +646,17 @@ export class ChartsPage implements OnDestroy {
     { index: 11, label: 'alarm', status: 'critical' },
     { index: 21, label: 'reboot', status: 'warning' },
   ];
+
+  // Categorical demo: 4 distinct nodes on the theme's data palette.
+  protected readonly catSeries: StrctChartSeries[] = ['node-a', 'node-b', 'node-c', 'node-d'].map(
+    (label, n) => ({
+      label,
+      color: (['chart-1', 'chart-2', 'chart-3', 'chart-4'] as const)[n],
+      data: Array.from({ length: 30 }, (_, i) =>
+        Math.round(38 + 22 * Math.sin(i / (3.1 + n * 0.7) + n * 1.9) + 6 * Math.sin(i * 1.3 + n)),
+      ),
+    }),
+  );
 
   // Synced crosshair demo: two metrics on one time axis.
   protected readonly syncCpu = Array.from({ length: 30 }, (_, i) =>

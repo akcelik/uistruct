@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-19
+
+### Added — categorical chart palette `--chart-1..8` (FR-CHART-15)
+
+- **Theme tokens** `--chart-1..8` in every palette × mode: a categorical data
+  palette with a **fixed, colorblind-validated slot order per palette** (the
+  CVD-safety mechanism). Slot 1 tracks the theme's accent hue at data-grade
+  chroma, so a primary series feels on-theme without the muted UI `--acc`.
+  Every set was run through the dataviz palette validator against its `--bg-0`
+  surface — results and design rules in `docs/chart-palette.md`.
+- **`StrctChartSeries.color`** — accepts a semantic status _or_ a categorical
+  slot `'chart-1'..'chart-8'` (new `StrctChartColor` / `StrctChartSlot`
+  types). Semantic statuses stay reserved for health; existing callers are
+  untouched.
+
 ## [1.2.1] - 2026-07-19
 
 ### Fixed — `strct-chart` tooltip edge clamp (FR-CHART-14)

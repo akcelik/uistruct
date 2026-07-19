@@ -18,6 +18,17 @@
   --font: 'DM Sans', -apple-system, system-ui, sans-serif;
   --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
   --bg-0: #0e1015;
+  /* Categorical data palette (FR-CHART-15): fixed slot order per palette
+     (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade
+     chroma. Validator-passed per surface — see docs/chart-palette.md. */
+  --chart-1: #3987e5;
+  --chart-2: #008300;
+  --chart-3: #d55181;
+  --chart-4: #c98500;
+  --chart-5: #199e70;
+  --chart-6: #d95926;
+  --chart-7: #9085e9;
+  --chart-8: #e66767;
   --bg-1: #161920;
   --bg-2: #1c2028;
   --bg-3: #23282f;
@@ -77,6 +88,17 @@
 
 [data-palette='arctic'][data-theme='light'] {
   --bg-0: #f3f4f6;
+  /* Categorical data palette (FR-CHART-15): fixed slot order per palette
+     (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade
+     chroma. Validator-passed per surface — see docs/chart-palette.md. */
+  --chart-1: #2a78d6;
+  --chart-2: #008300;
+  --chart-3: #e87ba4;
+  --chart-4: #eda100;
+  --chart-5: #1baf7a;
+  --chart-6: #eb6834;
+  --chart-7: #4a3aa7;
+  --chart-8: #e34948;
   --bg-1: #fbfcfd;
   --bg-2: #f8f9fb;
   --bg-3: #eef0f3;
@@ -136,6 +158,17 @@
 
 [data-palette='ember'][data-theme='dark'] {
   --bg-0: #12100d;
+  /* Categorical data palette (FR-CHART-15): fixed slot order per palette
+     (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade
+     chroma. Validator-passed per surface — see docs/chart-palette.md. */
+  --chart-1: #c98500;
+  --chart-2: #d55181;
+  --chart-3: #008300;
+  --chart-4: #3987e5;
+  --chart-5: #199e70;
+  --chart-6: #d95926;
+  --chart-7: #9085e9;
+  --chart-8: #e66767;
   --bg-1: #1a1714;
   --bg-2: #211e1a;
   --bg-3: #2a2621;
@@ -195,6 +228,17 @@
 
 [data-palette='ember'][data-theme='light'] {
   --bg-0: #f5f2ee;
+  /* Categorical data palette (FR-CHART-15): fixed slot order per palette
+     (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade
+     chroma. Validator-passed per surface — see docs/chart-palette.md. */
+  --chart-1: #eda100;
+  --chart-2: #e87ba4;
+  --chart-3: #008300;
+  --chart-4: #2a78d6;
+  --chart-5: #1baf7a;
+  --chart-6: #eb6834;
+  --chart-7: #4a3aa7;
+  --chart-8: #e34948;
   --bg-1: #fdfcfa;
   --bg-2: #f9f7f4;
   --bg-3: #f0ece7;
@@ -254,6 +298,17 @@
 
 [data-palette='sage'][data-theme='dark'] {
   --bg-0: #0d1210;
+  /* Categorical data palette (FR-CHART-15): fixed slot order per palette
+     (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade
+     chroma. Validator-passed per surface — see docs/chart-palette.md. */
+  --chart-1: #008300;
+  --chart-2: #3987e5;
+  --chart-3: #d55181;
+  --chart-4: #c98500;
+  --chart-5: #199e70;
+  --chart-6: #d95926;
+  --chart-7: #9085e9;
+  --chart-8: #e66767;
   --bg-1: #141a17;
   --bg-2: #1a211e;
   --bg-3: #222a26;
@@ -313,6 +368,17 @@
 
 [data-palette='sage'][data-theme='light'] {
   --bg-0: #f2f5f3;
+  /* Categorical data palette (FR-CHART-15): fixed slot order per palette
+     (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade
+     chroma. Validator-passed per surface — see docs/chart-palette.md. */
+  --chart-1: #008300;
+  --chart-2: #2a78d6;
+  --chart-3: #e87ba4;
+  --chart-4: #eda100;
+  --chart-5: #1baf7a;
+  --chart-6: #eb6834;
+  --chart-7: #4a3aa7;
+  --chart-8: #e34948;
   --bg-1: #fafcfb;
   --bg-2: #f5f8f6;
   --bg-3: #eaf0ec;
