@@ -1936,6 +1936,33 @@ export const DOCS: DocCategory[] = [
               'Freeze leading columns against horizontal scroll (utility columns freeze automatically alongside). Give every sticky column except the last an explicit px `width`.',
           },
           {
+            name: 'columns[].filterable / columns[].filterOptions',
+            type: 'boolean / unknown[]',
+            description:
+              'Header filter popover: contains-text, or a checkbox value set when `filterOptions` is given.',
+          },
+          {
+            name: 'filters',
+            type: 'StrctDatagridFilters',
+            default: '{}',
+            description:
+              'Two-way per-column filter state (`[(filters)]`): key → text or checked value set. Filters AND together, reset paging, and ride on `(lazyLoad)` in server mode.',
+          },
+          {
+            name: 'childrenKey',
+            type: 'string | null',
+            default: 'null',
+            description:
+              'Tree grid: the row property holding children. Indent + carets, per-level sorting, aria-level; an active filter shows matches with ancestors force-expanded. Not combinable with `groupBy` / `lazy`.',
+          },
+          {
+            name: 'columns[].editable',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Inline cell editing: double-click opens an input; Enter / blur commit via `(cellEdit)`, Escape cancels.',
+          },
+          {
             name: 'emptyText',
             type: 'string',
             default: `'No data'`,
@@ -1984,6 +2011,12 @@ export const DOCS: DocCategory[] = [
             name: 'selectionChange',
             type: 'StrctRow[]',
             description: 'Emits the selected rows when selection changes.',
+          },
+          {
+            name: 'cellEdit',
+            type: '{ row; column; value; previous }',
+            description:
+              'An editable cell was committed. The grid never mutates rows — apply the change and pass the updated array back in.',
           },
           {
             name: 'syncChange',

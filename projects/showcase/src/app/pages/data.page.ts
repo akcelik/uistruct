@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { JsonPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   StrctBadge,
@@ -10,6 +11,7 @@ import {
   StrctDatagrid,
   StrctDatagridActionBar,
   StrctDatagridColumn,
+  StrctDatagridFilters,
   StrctDatagridLazyState,
   StrctDesc,
   StrctDescriptionList,
@@ -31,6 +33,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   selector: 'app-data-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    JsonPipe,
     PageHeader,
     DemoBlock,
     FormsModule,
@@ -321,6 +324,68 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="datagrid-filters"
+      owner="datagrid"
+      heading="Column filters"
+      description="Mark a column filterable (contains-text popover) or give it filterOptions (checkbox value set). Filters are ANDed, two-way via [(filters)], reset paging, and ride on (lazyLoad) in server mode."
+      code='cols = [{ key: "name", filterable: true }, { key: "status", filterOptions: ["Running", "Stopped"] }]  +  <strct-datagrid [(filters)]="filters" … />'
+    >
+      <div class="dg-wrap">
+        <strct-datagrid
+          style="width: 100%;"
+          [columns]="dgFilterCols"
+          [rows]="dgRows"
+          rowId="name"
+          [(filters)]="dgFilters"
+        >
+          <ng-template strctCell="status" let-value="value">
+            <strct-badge [status]="badgeFor(value)">{{ value }}</strct-badge>
+          </ng-template>
+        </strct-datagrid>
+        <span class="echo">filters: {{ dgFilters() | json }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="datagrid-tree"
+      owner="datagrid"
+      heading="Tree grid"
+      description="childrenKey renders hierarchical rows with indentation and carets — the vCenter inventory shape. Sorting applies per sibling level; a text filter shows matches with their ancestors force-expanded."
+      code='<strct-datagrid [columns]="cols" [rows]="tree" childrenKey="children" rowId="name" />'
+    >
+      <strct-datagrid
+        style="width: 100%;"
+        [columns]="dgTreeCols"
+        [rows]="dgTreeRows"
+        childrenKey="children"
+        rowId="name"
+      >
+        <ng-template strctCell="status" let-value="value">
+          <strct-badge [status]="badgeFor(value)">{{ value }}</strct-badge>
+        </ng-template>
+      </strct-datagrid>
+    </app-demo>
+
+    <app-demo
+      anchor="datagrid-editing"
+      owner="datagrid"
+      heading="Inline cell editing"
+      description="editable columns open an input on double-click; Enter or blur commit through (cellEdit) — Escape cancels. The grid never mutates your rows: apply the change and pass the array back, so your store stays the single source of truth."
+      code='<strct-datagrid [columns]="cols" [rows]="rows()" (cellEdit)="apply($event)" />'
+    >
+      <div class="dg-wrap">
+        <strct-datagrid
+          style="width: 100%;"
+          [columns]="dgEditCols"
+          [rows]="dgEditRows()"
+          rowId="name"
+          (cellEdit)="onCellEdit($event)"
+        />
+        <span class="echo">{{ dgEditLast() || 'double-click a CPU / Memory cell' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="detailpane"
       heading="Detail pane"
       description="A different pattern from expandable rows: click the » button to collapse the grid to a single column and open a side pane with that row's details (the » keeps row cells free to select/copy). Click it again or the × to return."
@@ -589,4 +654,79 @@ mtu = 9000`;
     { name: 'Archive Cluster', type: 'Standard', hosts: 2, status: 'Idle' },
     { name: 'Management Cluster', type: 'Failover', hosts: 4, status: 'Running' },
   ];
+
+  // Column filters demo
+  protected readonly dgFilterCols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Cluster', sortable: true, filterable: true },
+    { key: 'type', label: 'Type', sortable: true, filterOptions: ['Failover', 'Standard'] },
+    { key: 'hosts', label: 'Hosts', sortable: true, align: 'end' },
+    { key: 'status', label: 'Status', filterOptions: ['Running', 'Degraded', 'Idle'] },
+  ];
+  protected readonly dgFilters = signal<StrctDatagridFilters>({});
+
+  // Tree grid demo — the vCenter inventory shape.
+  protected readonly dgTreeCols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Inventory', sortable: true },
+    { key: 'kind', label: 'Kind' },
+    { key: 'status', label: 'Status' },
+  ];
+  protected readonly dgTreeRows: StrctRow[] = [
+    {
+      name: 'dc-east',
+      kind: 'Datacenter',
+      status: 'Running',
+      children: [
+        {
+          name: 'cluster-01',
+          kind: 'Cluster',
+          status: 'Running',
+          children: [
+            {
+              name: 'hv-01',
+              kind: 'Host',
+              status: 'Running',
+              children: [
+                { name: 'web-01', kind: 'VM', status: 'Running' },
+                { name: 'web-02', kind: 'VM', status: 'Running' },
+              ],
+            },
+            {
+              name: 'hv-02',
+              kind: 'Host',
+              status: 'Degraded',
+              children: [{ name: 'db-primary', kind: 'VM', status: 'Running' }],
+            },
+          ],
+        },
+        { name: 'cluster-02', kind: 'Cluster', status: 'Idle', children: [] },
+      ],
+    },
+    { name: 'dc-west', kind: 'Datacenter', status: 'Idle', children: [] },
+  ];
+
+  // Inline editing demo — the consumer owns the data.
+  protected readonly dgEditCols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'VM' },
+    { key: 'cpu', label: 'vCPU', editable: true, align: 'end' },
+    { key: 'mem', label: 'Memory (GiB)', editable: true, align: 'end' },
+  ];
+  protected readonly dgEditRows = signal<StrctRow[]>([
+    { name: 'web-01', cpu: 4, mem: 16 },
+    { name: 'web-02', cpu: 4, mem: 16 },
+    { name: 'db-primary', cpu: 8, mem: 64 },
+  ]);
+  protected readonly dgEditLast = signal('');
+  protected onCellEdit(e: {
+    row: StrctRow;
+    column: StrctDatagridColumn;
+    value: string;
+    previous: unknown;
+  }): void {
+    this.dgEditRows.update((rows) =>
+      rows.map((r) => (r === e.row ? { ...r, [e.column.key]: e.value } : r)),
+    );
+    this.dgEditLast.set(
+      `${String(e.row['name'])}: ${e.column.label} ${String(e.previous)} \u2192 ${e.value}`,
+    );
+  }
 }

@@ -74,12 +74,12 @@ describe('StrctDatagrid', () => {
     fixture.componentInstance.lazyLoad.subscribe((s) => emitted.push(s));
     fixture.detectChanges();
     // initial request
-    expect(emitted).toEqual([{ page: 1, pageSize: 3, sortKey: null, sortDir: 'asc' }]);
+    expect(emitted).toEqual([{ filters: {}, page: 1, pageSize: 3, sortKey: null, sortDir: 'asc' }]);
     // rows shown as given (no client sort even after clicking sort)
     fixture.componentInstance.sortBy('n');
     fixture.detectChanges();
     expect(cells(fixture)).toEqual(['gamma', 'alpha', 'beta']);
-    expect(emitted[1]).toEqual({ page: 1, pageSize: 3, sortKey: 'n', sortDir: 'asc' });
+    expect(emitted[1]).toEqual({ filters: {}, page: 1, pageSize: 3, sortKey: 'n', sortDir: 'asc' });
     // pager reflects the server total, page change emits
     fixture.componentInstance.page.set(2);
     fixture.detectChanges();
@@ -311,5 +311,201 @@ describe('StrctDatagrid', () => {
     const ths = fixture.nativeElement.querySelectorAll('thead th');
     expect(ths.length).toBe(1);
     expect(ths[0].textContent!.trim()).toBe('A');
+  });
+});
+
+describe('StrctDatagrid column filters', () => {
+  const cols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Name', filterable: true },
+    { key: 'state', label: 'State', filterOptions: ['running', 'stopped'] },
+  ];
+  const rows: StrctRow[] = [
+    { name: 'web-01', state: 'running' },
+    { name: 'web-02', state: 'stopped' },
+    { name: 'db-01', state: 'running' },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return fixture;
+  }
+  const bodyNames = (f: ReturnType<typeof make>) =>
+    [...f.nativeElement.querySelectorAll('tbody tr td:first-child')].map((td) =>
+      (td as HTMLElement).textContent!.trim(),
+    );
+
+  it('text filter narrows rows case-insensitively (contains)', () => {
+    const fixture = make({ filters: { name: 'WEB' } });
+    expect(bodyNames(fixture)).toEqual(['web-01', 'web-02']);
+  });
+
+  it('value-set filter keeps only checked values; both filters AND together', () => {
+    const fixture = make({ filters: { state: ['running'] } });
+    expect(bodyNames(fixture)).toEqual(['web-01', 'db-01']);
+    fixture.componentRef.setInput('filters', { state: ['running'], name: 'db' });
+    fixture.detectChanges();
+    expect(bodyNames(fixture)).toEqual(['db-01']);
+  });
+
+  it('opens the header filter popover, types, marks the button active, clears', () => {
+    const fixture = make();
+    const btn = fixture.nativeElement.querySelector('.strct-dg__filterbtn') as HTMLButtonElement;
+    btn.click();
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('.strct-dg__filterinput') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    input.value = 'web';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(bodyNames(fixture)).toEqual(['web-01', 'web-02']);
+    expect(btn.classList).toContain('strct-dg__filterbtn--active');
+    (fixture.nativeElement.querySelector('.strct-dg__filterclear') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(bodyNames(fixture).length).toBe(3);
+  });
+
+  it('filter button click does not sort, and filters ride on lazyLoad', () => {
+    let last: StrctDatagridLazyState | null = null;
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('lazy', true);
+    fixture.componentRef.setInput('pageSize', 10);
+    fixture.componentInstance.lazyLoad.subscribe((s) => (last = s));
+    fixture.detectChanges();
+    fixture.componentRef.setInput('filters', { name: 'web' });
+    fixture.detectChanges();
+    expect(last!.filters).toEqual({ name: 'web' });
+    // Lazy mode never filters client-side.
+    expect(fixture.nativeElement.querySelectorAll('tbody tr').length).toBe(3);
+  });
+});
+
+describe('StrctDatagrid tree-grid', () => {
+  const cols: StrctDatagridColumn[] = [{ key: 'name', label: 'Name', sortable: true }];
+  const rows: StrctRow[] = [
+    {
+      name: 'cluster-01',
+      kids: [{ name: 'hv-02', kids: [{ name: 'vm-b' }, { name: 'vm-a' }] }, { name: 'hv-01' }],
+    },
+    { name: 'cluster-02' },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('childrenKey', 'kids');
+    fixture.componentRef.setInput('rowId', 'name');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return fixture;
+  }
+  const names = (f: ReturnType<typeof make>) =>
+    [...f.nativeElement.querySelectorAll('tbody tr')].map((tr) =>
+      (tr as HTMLElement).textContent!.trim(),
+    );
+
+  it('renders roots collapsed with carets and aria-level', () => {
+    const fixture = make();
+    expect(names(fixture)).toEqual(['cluster-01', 'cluster-02']);
+    const first = fixture.nativeElement.querySelector('tbody tr')!;
+    expect(first.getAttribute('aria-level')).toBe('1');
+    expect(first.getAttribute('aria-expanded')).toBe('false');
+    expect(
+      fixture.nativeElement.querySelectorAll('.strct-dg__treebtn:not(.strct-dg__treebtn--leaf)')
+        .length,
+    ).toBe(1);
+  });
+
+  it('expands on caret click, sorts siblings per level, collapses back', () => {
+    const fixture = make();
+    fixture.componentInstance.sortBy('name');
+    fixture.detectChanges();
+    const caret = fixture.nativeElement.querySelector(
+      '.strct-dg__treebtn:not(.strct-dg__treebtn--leaf)',
+    ) as HTMLButtonElement;
+    caret.click();
+    fixture.detectChanges();
+    expect(names(fixture)).toEqual(['cluster-01', 'hv-01', 'hv-02', 'cluster-02']);
+    // Expand hv-02 too: its children sort among themselves.
+    const carets = fixture.nativeElement.querySelectorAll(
+      '.strct-dg__treebtn:not(.strct-dg__treebtn--leaf)',
+    );
+    (carets[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(names(fixture)).toEqual(['cluster-01', 'hv-01', 'hv-02', 'vm-a', 'vm-b', 'cluster-02']);
+    const vmRow = [...fixture.nativeElement.querySelectorAll('tbody tr')].find((tr) =>
+      (tr as HTMLElement).textContent!.includes('vm-a'),
+    )!;
+    expect(vmRow.getAttribute('aria-level')).toBe('3');
+    (fixture.nativeElement.querySelector('.strct-dg__treebtn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(names(fixture)).toEqual(['cluster-01', 'cluster-02']);
+  });
+
+  it('an active filter shows matches with ancestors, force-expanded', () => {
+    const fixture = make({
+      columns: [{ key: 'name', label: 'Name', filterable: true }],
+      filters: { name: 'vm-a' },
+    });
+    expect(names(fixture)).toEqual(['cluster-01', 'hv-02', 'vm-a']);
+  });
+});
+
+describe('StrctDatagrid inline editing', () => {
+  const cols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Name' },
+    { key: 'cpu', label: 'CPU', editable: true },
+  ];
+  const rows: StrctRow[] = [{ name: 'web-01', cpu: '4' }];
+
+  function make() {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    const edits: { value: string; previous: unknown }[] = [];
+    fixture.componentInstance.cellEdit.subscribe((e) => edits.push(e));
+    fixture.detectChanges();
+    return { fixture, edits };
+  }
+  const editableCell = (f: ReturnType<typeof TestBed.createComponent<StrctDatagrid>>) =>
+    f.nativeElement.querySelector('.strct-dg__cell--editable') as HTMLElement;
+
+  it('double-click opens an input; Enter commits and emits value + previous', () => {
+    const { fixture, edits } = make();
+    editableCell(fixture).dispatchEvent(new MouseEvent('dblclick'));
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('.strct-dg__editinput') as HTMLInputElement;
+    expect(input.value).toBe('4');
+    input.value = '8';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+    expect(edits).toEqual([{ row: rows[0], column: cols[1], value: '8', previous: '4' } as never]);
+    expect(fixture.nativeElement.querySelector('.strct-dg__editinput')).toBeNull();
+  });
+
+  it('Escape cancels without emitting; unchanged commit does not emit', () => {
+    const { fixture, edits } = make();
+    editableCell(fixture).dispatchEvent(new MouseEvent('dblclick'));
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('.strct-dg__editinput') as HTMLInputElement;
+    input.value = '99';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect(edits.length).toBe(0);
+    expect(fixture.nativeElement.querySelector('.strct-dg__editinput')).toBeNull();
+
+    // Reopen, commit unchanged via blur: no emit either.
+    editableCell(fixture).dispatchEvent(new MouseEvent('dblclick'));
+    fixture.detectChanges();
+    const again = fixture.nativeElement.querySelector('.strct-dg__editinput') as HTMLInputElement;
+    again.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    expect(edits.length).toBe(0);
   });
 });
