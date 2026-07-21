@@ -55,30 +55,20 @@
   }
 }
 
-.cmdbtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 8px 5px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.72);
-  cursor: pointer;
-  font-size: 12px;
-
-  &:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.09);
-  }
-
-  &__kbd {
-    font-family: var(--mono);
-    font-size: 10px;
-    padding: 1px 5px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.1);
-  }
+/* Header search: the library strct-searchbox in trigger mode, re-skinned to
+   the header's white-alpha surface via the component's --strct-sb-* hooks
+   (custom properties inherit through its encapsulation boundary). */
+.hdr-search {
+  --strct-sb-border: rgba(255, 255, 255, 0.14);
+  --strct-sb-bg: rgba(255, 255, 255, 0.04);
+  --strct-sb-bg-hover: rgba(255, 255, 255, 0.09);
+  --strct-sb-fg: rgba(255, 255, 255, 0.72);
+  --strct-sb-fg-hover: #fff;
+  --strct-sb-muted: rgba(255, 255, 255, 0.72);
+  --strct-sb-font-size: 12px;
+  --strct-sb-kbd-bg: rgba(255, 255, 255, 0.1);
+  --strct-sb-kbd-border: transparent;
+  --strct-sb-kbd-fg: rgba(255, 255, 255, 0.82);
 }
 
 /* Sidebar: thin icon rail + scrollable list panel. */

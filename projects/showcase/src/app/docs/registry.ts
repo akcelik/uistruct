@@ -1383,6 +1383,80 @@ export const DOCS: DocCategory[] = [
         ],
       },
       {
+        id: 'searchbox',
+        title: 'Searchbox',
+        selector: 'strct-searchbox',
+        importNames: ['StrctSearchbox'],
+        summary: 'Compact search pill — input or palette trigger.',
+        lead: 'The docs-header search pattern as a component: a leading search icon, a label / input and an optional keyboard-hint chip. Default mode is a real search field (two-way `value`, CVA-compatible, Enter emits `(search)`, Escape / × clears). `trigger` mode renders a button that only emits `(activated)` — the classic "fake search that opens the command palette" header pattern. The docs header itself runs on it.',
+        inputs: [
+          {
+            name: 'placeholder',
+            type: 'string',
+            default: `'Search'`,
+            description: 'Placeholder text (and the trigger mode’s label).',
+          },
+          {
+            name: 'hint',
+            type: 'string',
+            default: `''`,
+            description: 'Keyboard-hint chip (e.g. "⌘K"); hidden while typing.',
+          },
+          {
+            name: 'trigger',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Render as an activation button instead of a real input — pair with the command palette.',
+          },
+          {
+            name: 'clearable',
+            type: 'boolean',
+            default: 'true',
+            description: 'Show the × clear button while there is a value.',
+          },
+          {
+            name: 'value',
+            type: 'string',
+            default: `''`,
+            description: 'Current text, two-way (`[(value)]`); also the CVA value.',
+          },
+          {
+            name: 'ariaLabel / clearLabel',
+            type: 'string',
+            default: `'' / 'Clear search'`,
+            description: 'Accessible labels (localizable); ariaLabel falls back to placeholder.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'search',
+            type: 'string',
+            description: 'Enter pressed in input mode — run the search with the current text.',
+          },
+          {
+            name: 'activated',
+            type: 'void',
+            description: 'Trigger mode clicked — open your command palette / search surface.',
+          },
+        ],
+        methods: [
+          {
+            name: 'focus() / clear()',
+            type: '() => void',
+            description: 'Focus the input (e.g. from a global shortcut) / clear the text.',
+          },
+        ],
+        do: [
+          'Pair trigger mode with strct-command-palette and show its hotkey in `hint`.',
+          'Use input mode for list filtering; act on `(search)` or live `[(value)]`.',
+        ],
+        dont: ['Do not register a second global hotkey here — the palette owns ⌘K.'],
+        a11y: [
+          'Input mode is a labeled role="searchbox"; Escape clears; the × is a labeled button. Trigger mode is a real button with a visible focus ring.',
+        ],
+      },
+      {
         id: 'kbd',
         title: 'Kbd',
         selector: 'strct-kbd',

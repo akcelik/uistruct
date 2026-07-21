@@ -11,6 +11,7 @@ import {
   StrctPagination,
   StrctRail,
   StrctRailItem,
+  StrctSearchbox,
   StrctSectionMenu,
   StrctToggle,
 } from 'strct';
@@ -30,6 +31,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctKbd,
     StrctPagination,
     StrctRail,
+    StrctSearchbox,
     StrctSectionMenu,
     StrctToggle,
   ],
@@ -58,6 +60,33 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         (picked)="cpLast.set($event.label)"
         [hotkey]="false"
       />
+    </app-demo>
+
+    <app-demo
+      anchor="searchbox"
+      heading="Searchbox"
+      description="The docs-header search pattern as a component. Default mode is a real search field — two-way value, Enter emits (search), Escape or the × clears. trigger mode is a button that only emits (activated): pair it with the command palette and show the hotkey in hint. The header of this site runs on it."
+      code='<strct-searchbox [(value)]="q" (search)="run($event)" />  ·  <strct-searchbox trigger hint="⌘K" (activated)="palette.open.set(true)" />'
+    >
+      <div class="sb-demo">
+        <div class="sb-demo__row">
+          <strct-searchbox
+            style="width: 260px"
+            placeholder="Search hosts…"
+            [(value)]="sbQuery"
+            (search)="sbLast.set($event)"
+          />
+          @if (sbLast()) {
+            <span class="echo">searched: {{ sbLast() }}</span>
+          } @else if (sbQuery()) {
+            <span class="echo">typing: {{ sbQuery() }}</span>
+          }
+        </div>
+        <div class="sb-demo__row">
+          <strct-searchbox trigger hint="⌘K" placeholder="Search" (activated)="cpOpen.set(true)" />
+          <span class="cp-hint">trigger mode — opens the palette above</span>
+        </div>
+      </div>
     </app-demo>
 
     <app-demo
@@ -146,6 +175,19 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      .sb-demo {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+      }
+      .sb-demo__row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
       .cp-demo {
         display: flex;
         align-items: center;
@@ -210,6 +252,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 export class NavigationPage {
   protected readonly cpOpen = signal(false);
   protected readonly cpLast = signal('');
+  protected readonly sbQuery = signal('');
+  protected readonly sbLast = signal('');
   protected readonly cpItems: StrctCommandItem[] = [
     { id: 'deploy', label: 'Deploy new cluster', group: 'Actions', icon: 'cluster', hint: '⌘D' },
     { id: 'snapshot', label: 'Create snapshot', group: 'Actions', icon: 'snapshot' },
