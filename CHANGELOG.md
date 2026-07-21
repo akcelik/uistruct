@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-07-21
+
+### Added — console patterns quartet
+
+Four proven showcase/consumer patterns extracted into components:
+
+- **`strct-copy`** — click-to-copy chip with ✓ "Copied" feedback (polite
+  live-region announcement); for UUIDs, IPs, serials.
+- **`strct-code`** — copyable mono code / rendered-config block: title +
+  language tag + copy header, optional uncopyable line-number gutter,
+  `maxHeight` scroll region, `collapsible` fold — the `<details><pre>`
+  pattern, componentized.
+- **`strct-page-header`** — breadcrumb slot + h1 title/subtitle + end-aligned
+  actions + projected meta strip; the docs pages now run on it (dogfood).
+- **`strct-filter-bar`** — `strct-searchbox` + removable filter chips +
+  clear-all + live result count; presentation-only, intent via outputs.
+
 ## [1.4.0] - 2026-07-20
 
 ### Added — `strct-searchbox`

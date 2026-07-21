@@ -10,6 +10,7 @@ import {
   StrctSpinner,
   StrctTag,
   StrctTooltip,
+  StrctCopy,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -29,6 +30,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctSpinner,
     StrctSpeedDial,
     StrctTooltip,
+    StrctCopy,
   ],
   template: `
     <app-page-header title="Controls" subtitle="Buttons and at-a-glance status indicators." />
@@ -172,6 +174,23 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       @for (t of tags(); track t) {
         <strct-tag status="accent" removable (removed)="removeTag(t)">{{ t }}</strct-tag>
       }
+    </app-demo>
+
+    <app-demo
+      anchor="copy"
+      heading="Copy"
+      description="Click-to-copy with built-in feedback: the icon flips to a ✓ 'Copied' state and announces it to screen readers. The console workhorse for UUIDs, IPs and serials."
+      code='<strct-copy text="172.16.75.100" />  ·  <strct-copy [text]="host.id" label="Copy ID" />'
+    >
+      <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
+        <span style="font-family: var(--mono); font-size: 13px; color: var(--t1);"
+          >172.16.75.100 <strct-copy text="172.16.75.100"
+        /></span>
+        <span style="font-family: var(--mono); font-size: 13px; color: var(--t1);"
+          >KX-99213-AC <strct-copy text="KX-99213-AC"
+        /></span>
+        <strct-copy text="550e8400-e29b-41d4-a716-446655440000" label="Copy UUID" />
+      </div>
     </app-demo>
 
     <app-demo
