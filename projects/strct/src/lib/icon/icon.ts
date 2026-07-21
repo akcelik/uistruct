@@ -4,6 +4,7 @@ import {
   ViewEncapsulation,
   computed,
   input,
+  isDevMode,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { inject } from '@angular/core';
@@ -26,7 +27,9 @@ import { inject } from '@angular/core';
  * storage, VMs …). Object state — running / stopped / maintenance — is layered
  * on with the `badge` input rather than a separate icon per state.
  */
-export const STRCT_ICONS: Record<string, string> = {
+// Built-in stroke glyphs. Keys stay inferred so \`StrctIconName\` below is a
+// compile-time union of every name.
+const STRCT_ICON_DEFS = {
   // ── General UI ───────────────────────────────────────────────
   hexagon: '<path d="M8 1.6l5.5 3.2v6.4L8 14.4 2.5 11.2V4.8L8 1.6z"/>',
   chevronRight: '<path d="M6 3.5L10.5 8 6 12.5"/>',
@@ -185,6 +188,8 @@ export const STRCT_ICONS: Record<string, string> = {
   flag: '<path d="M4 13.5V3M4 3.6h7.4L9.8 6.2l1.6 2.6H4"/>',
   shieldAlert:
     '<path d="M8 2.3l5.2 1.9v3.3c0 3.1-2.3 5.1-5.2 6.4C5.1 12.6 2.8 10.6 2.8 7.5V4.2z"/><path d="M8 5.5v3.1M8 10.6v.2"/>',
+  shieldCheck:
+    '<path d="M8 2.3l5.2 1.9v3.3c0 3.1-2.3 5.1-5.2 6.4C5.1 12.6 2.8 10.6 2.8 7.5V4.2z"/><path d="M5.9 7.9l1.5 1.5 2.8-2.9"/>',
 
   // ── State / action (also usable as badges via the icon `badge` input) ─
   running: '<path d="M5.5 4l6 4-6 4z"/>',
@@ -337,18 +342,40 @@ export const STRCT_ICONS: Record<string, string> = {
     '<path d="M5 6.4V3.2h6v3.2"/><rect x="2.8" y="6.4" width="10.4" height="4.8" rx="1"/><path d="M5 9.2h6v3.6H5z"/><circle cx="11" cy="8.4" r=".5" fill="currentColor" stroke="none"/>',
 };
 
-// Composite "off" variants — re-use base glyph + diagonal slash.
-STRCT_ICONS['eyeOff'] = `${STRCT_ICONS['eye']}<path d="M2.5 2.5l11 11"/>`;
-STRCT_ICONS['bellOff'] = `${STRCT_ICONS['bell']}<path d="M2.6 2.6l10.8 10.8"/>`;
-STRCT_ICONS['wifiOff'] = `${STRCT_ICONS['wifi']}<path d="M2.5 2.5l11 11"/>`;
-STRCT_ICONS['cloudOff'] = `${STRCT_ICONS['cloud']}<path d="M2.5 2.5l11 11"/>`;
-STRCT_ICONS['linkOff'] = `${STRCT_ICONS['link']}<path d="M2.5 2.5l11 11"/>`;
-// Semantic aliases.
-STRCT_ICONS['unlink'] = STRCT_ICONS['linkOff'];
-STRCT_ICONS['webhook'] = STRCT_ICONS['bolt'];
+// Composite "off" variants — re-use base glyph + diagonal slash — and aliases.
+const STRCT_ICON_DERIVED_DEFS = {
+  eyeOff: `${STRCT_ICON_DEFS.eye}<path d="M2.5 2.5l11 11"/>`,
+  bellOff: `${STRCT_ICON_DEFS.bell}<path d="M2.6 2.6l10.8 10.8"/>`,
+  wifiOff: `${STRCT_ICON_DEFS.wifi}<path d="M2.5 2.5l11 11"/>`,
+  cloudOff: `${STRCT_ICON_DEFS.cloud}<path d="M2.5 2.5l11 11"/>`,
+  linkOff: `${STRCT_ICON_DEFS.link}<path d="M2.5 2.5l11 11"/>`,
+  unlink: `${STRCT_ICON_DEFS.link}<path d="M2.5 2.5l11 11"/>`,
+  webhook: STRCT_ICON_DEFS.bolt,
+};
+
+/**
+ * Every built-in icon name, as a compile-time union — a mistyped name is a
+ * build error instead of a silently empty box:
+ *
+ *   const icon: StrctIconName = 'shieldCheck'; // ✓
+ *   const icon: StrctIconName = 'sheildCheck'; // ✗ compile error
+ */
+export type StrctIconName = keyof typeof STRCT_ICON_DEFS | keyof typeof STRCT_ICON_DERIVED_DEFS;
+
+/**
+ * Icon name → glyph markup. Open (`Record<string, string>`) on purpose so
+ * `registerStrctIcon` can add app-specific names at runtime.
+ */
+export const STRCT_ICONS: Record<string, string> = {
+  ...STRCT_ICON_DEFS,
+  ...STRCT_ICON_DERIVED_DEFS,
+};
+
+/** All built-in icon names — greppable, iterable (galleries, docs, tests). */
+export const STRCT_ICON_NAMES = Object.keys(STRCT_ICONS).sort() as readonly StrctIconName[];
 
 /** Icon names grouped for galleries / documentation. */
-export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
+export const STRCT_ICON_GROUPS: { label: string; names: StrctIconName[] }[] = [
   {
     label: 'General',
     names: [
@@ -487,6 +514,7 @@ export const STRCT_ICON_GROUPS: { label: string; names: string[] }[] = [
       'container',
       'firewall',
       'shield',
+      'shieldCheck',
       'certificate',
       'key',
       'metrics',
@@ -584,6 +612,10 @@ export type StrctIconBadge =
  * glyph with a green status dot (a "running host"). Unknown names render
  * nothing rather than throwing.
  */
+// One warning per unknown name per app run — enough to surface the bug
+// without flooding the console from a list render.
+const warnedUnknownIcons = new Set<string>();
+
 @Component({
   selector: 'strct-icon',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -799,8 +831,11 @@ export type StrctIconBadge =
 export class StrctIcon {
   private readonly sanitizer = inject(DomSanitizer);
 
-  /** Icon name from the STRCT_ICONS registry. */
-  readonly name = input.required<string>();
+  /**
+   * Icon name. Typed to autocomplete the built-in set while still accepting
+   * any string, since `registerStrctIcon` can add names at runtime.
+   */
+  readonly name = input.required<StrctIconName | (string & {})>();
   /** Icon size in pixels. */
   readonly size = input(16);
   /** Stroke width for outline icons. */
@@ -815,9 +850,19 @@ export class StrctIcon {
     Object.prototype.hasOwnProperty.call(STRCT_RAW_ICONS, this.name()),
   );
 
-  protected readonly svg = computed<SafeHtml>(() =>
-    this.sanitizer.bypassSecurityTrustHtml(STRCT_ICONS[this.name()] ?? ''),
-  );
+  protected readonly svg = computed<SafeHtml>(() => {
+    const name = this.name();
+    const glyph = STRCT_ICONS[name];
+    if (glyph === undefined && !this.isRaw() && isDevMode() && !warnedUnknownIcons.has(name)) {
+      warnedUnknownIcons.add(name);
+      console.warn(
+        `[strct-icon] Unknown icon name "${name}" — it will render empty. ` +
+          `Built-in names are exported as STRCT_ICON_NAMES (type StrctIconName); ` +
+          `custom icons must be added with registerStrctIcon().`,
+      );
+    }
+    return this.sanitizer.bypassSecurityTrustHtml(glyph ?? '');
+  });
   protected readonly rawSvg = computed<SafeHtml>(() =>
     this.sanitizer.bypassSecurityTrustHtml(STRCT_RAW_ICONS[this.name()] ?? ''),
   );

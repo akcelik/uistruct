@@ -61,13 +61,14 @@ import { StrctIcon } from '../icon/icon';
     @if (!collapsible() || !collapsed()) {
       <div
         class="strct-code__scroll"
+        [class.strct-code__scroll--wrap]="wrap()"
         tabindex="0"
         role="region"
         [attr.aria-label]="title() || language() || 'code'"
         [style.max-height.px]="maxHeight()"
       >
         <pre class="strct-code__pre"><!--
-       -->@if (lineNumbers()) {<!--
+       -->@if (lineNumbers() && !wrap()) {<!--
          --><span class="strct-code__gutter" aria-hidden="true">@for (n of lineNos(); track n) {<span class="strct-code__ln">{{ n }}</span>}</span><!--
        -->}<!--
        --><code class="strct-code__code">{{ code() }}</code></pre>
@@ -180,6 +181,12 @@ import { StrctIcon } from '../icon/icon';
         display: block;
         white-space: pre;
       }
+      /* Soft wrap: 'anywhere' so unbroken base64/PEM breaks, prose still
+         breaks at spaces. */
+      .strct-code__scroll--wrap .strct-code__code {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
     `,
   ],
 })
@@ -198,6 +205,12 @@ export class StrctCode {
   readonly collapsed = model(false);
   /** Show a line-number gutter (numbers are never copied — `code` is). */
   readonly lineNumbers = input(false, { transform: booleanAttribute });
+  /**
+   * Soft-wrap long unbroken text (PEM/CSR blocks, base64, long commands) so a
+   * dialog never scrolls horizontally. Wrapping breaks the gutter's visual
+   * alignment, so `wrap` takes precedence and hides `lineNumbers`.
+   */
+  readonly wrap = input(false, { transform: booleanAttribute });
   /** Scroll the body past this height (px); null grows freely. */
   readonly maxHeight = input<number | null>(null);
   /** Localizable labels for the collapse toggle. */

@@ -30,7 +30,10 @@ interface StateExample {
       anchor="gallery"
       heading="Icon set"
       [description]="
-        totalIcons + ' glyphs, grouped. Type to filter; click any tile to copy its name.'
+        totalIcons +
+        ' glyphs, grouped. Type to filter; click any tile to copy its name. Names are exported' +
+        ' as the StrctIconName union (plus the STRCT_ICON_NAMES array), so a mistyped name is a' +
+        ' compile error — and strct-icon warns once in dev mode if an unknown name slips through.'
       "
     >
       <input

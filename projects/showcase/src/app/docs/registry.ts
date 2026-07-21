@@ -1067,6 +1067,26 @@ export const DOCS: DocCategory[] = [
             description: 'Two-way open state (`[(open)]`).',
           },
           {
+            name: 'query',
+            type: 'string',
+            default: `''`,
+            description:
+              'Typed text, two-way (`[(query)]`) — observe it to serve results from an API. Resets on open.',
+          },
+          {
+            name: 'filter',
+            type: 'boolean',
+            default: 'true',
+            description:
+              'Internal ranked filtering. `false` = "render `items` in the order given, I already filtered them".',
+          },
+          {
+            name: 'loading / loadingText',
+            type: 'boolean / string',
+            default: `false / 'Searching…'`,
+            description: 'Politely-announced "searching" row while server results are in flight.',
+          },
+          {
             name: 'title',
             type: 'string',
             default: `''`,
@@ -1189,13 +1209,26 @@ export const DOCS: DocCategory[] = [
         selector: 'strct-dropdown',
         importNames: ['StrctDropdown', 'StrctDropdownItem'],
         summary: 'Click-to-open menu.',
-        lead: 'A click-to-open menu that closes on outside click. Mark the trigger with `strctDropdownTrigger`; project `strct-dropdown-item` entries (which can be `critical` or `disabled`).',
+        lead: 'A click-to-open menu that closes on outside click. Mark the trigger with `strctDropdownTrigger`; project `strct-dropdown-item` entries (which can be `critical` or `disabled`). With `popover` the panel holds form controls instead of menu items: inner clicks never close it (only outside click / Escape do) and it announces as a labeled `role="dialog"` — the filter/settings-panel pattern without hand-rolling `strctOverlay`.',
         inputs: [
           {
             name: 'align',
             type: `'start' | 'end'`,
             default: `'start'`,
             description: 'Which edge the menu aligns to.',
+          },
+          {
+            name: 'popover',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Panel-of-form-controls mode: inner clicks do not close; semantics switch from menu to dialog.',
+          },
+          {
+            name: 'popoverLabel',
+            type: 'string',
+            default: `'Filters'`,
+            description: 'Accessible name of the popover dialog (localizable).',
           },
           {
             name: 'critical',
@@ -1212,7 +1245,10 @@ export const DOCS: DocCategory[] = [
         ],
         do: ['Use for a short list of actions tied to a trigger.'],
         dont: ['Do not use a dropdown for primary navigation.'],
-        a11y: ['Closes on outside click and Escape; the menu escapes overflow clipping.'],
+        a11y: [
+          'Closes on outside click and Escape; the menu escapes overflow clipping.',
+          'The trigger exposes aria-haspopup (menu/dialog) + aria-expanded; popover panels are labeled dialogs.',
+        ],
       },
       {
         id: 'wizard',
@@ -1397,7 +1433,7 @@ export const DOCS: DocCategory[] = [
         selector: 'strct-command-palette',
         importNames: ['StrctCommandPalette', 'StrctCommandItem'],
         summary: '⌘/Ctrl-K spotlight over app commands.',
-        lead: 'A spotlight search over commands or pages. Mount once near the app root, feed it `items` and act on `(picked)`. Opens via the two-way `open` model or the built-in ⌘/Ctrl-K hotkey. Ranked filtering (label prefix > word start > substring > keywords), full keyboard support, and focus restore on close. This docs site itself runs on it — press ⌘K.',
+        lead: 'A spotlight search over commands or pages. Mount once near the app root, feed it `items` and act on `(picked)`. Opens via the two-way `open` model or the built-in ⌘/Ctrl-K hotkey. Ranked filtering (label prefix > word start > substring > keywords), full keyboard support, and focus restore on close. For server-backed search (RBAC-filtered inventories, thousands of objects) bind the two-way `query`, pass `[filter]="false"` and flip `loading` while results are in flight. This docs site itself runs on it — press ⌘K.',
         inputs: [
           {
             name: 'items',
@@ -1410,6 +1446,26 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description: 'Two-way open state (`[(open)]`).',
+          },
+          {
+            name: 'query',
+            type: 'string',
+            default: `''`,
+            description:
+              'Typed text, two-way (`[(query)]`) — observe it to serve results from an API. Resets on open.',
+          },
+          {
+            name: 'filter',
+            type: 'boolean',
+            default: 'true',
+            description:
+              'Internal ranked filtering. `false` = "render `items` in the order given, I already filtered them".',
+          },
+          {
+            name: 'loading / loadingText',
+            type: 'boolean / string',
+            default: `false / 'Searching…'`,
+            description: 'Politely-announced "searching" row while server results are in flight.',
           },
           {
             name: 'hotkey',
@@ -1426,7 +1482,8 @@ export const DOCS: DocCategory[] = [
             name: 'maxResults',
             type: 'number',
             default: '50',
-            description: 'Cap on rendered results.',
+            description:
+              'Cap on rendered results (also with `filter=false` — it caps rendering, not selection).',
           },
         ],
         outputs: [
@@ -1663,6 +1720,13 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description: 'Line-number gutter; numbers are never copied — `code` is.',
+          },
+          {
+            name: 'wrap',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Soft-wrap long unbroken text (PEM/CSR, base64, one-liner commands) — no horizontal scroll in dialogs. Takes precedence over `lineNumbers`.',
           },
           {
             name: 'maxHeight',

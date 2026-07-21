@@ -37,4 +37,17 @@ describe('StrctCode', () => {
     expect(gutter.querySelectorAll('.strct-code__ln').length).toBe(3);
     expect(gutter.getAttribute('aria-hidden')).toBe('true');
   });
+
+  it('wrap applies the soft-wrap class (default stays nowrap)', () => {
+    const { el } = make({ code: 'x'.repeat(500) });
+    expect(el.querySelector('.strct-code__scroll--wrap')).toBeNull();
+    const wrapped = make({ code: 'x'.repeat(500), wrap: true });
+    expect(wrapped.el.querySelector('.strct-code__scroll--wrap')).toBeTruthy();
+  });
+
+  it('wrap takes precedence over the line-number gutter (alignment would lie)', () => {
+    const { el } = make({ code: 'one\ntwo', lineNumbers: true, wrap: true });
+    expect(el.querySelector('.strct-code__gutter')).toBeNull();
+    expect(el.querySelector('.strct-code__scroll--wrap')).toBeTruthy();
+  });
 });

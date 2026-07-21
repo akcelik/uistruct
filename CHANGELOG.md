@@ -5,6 +5,41 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-07-21
+
+App-integration gaps found by a consumer adopting 1.5.0 (FR-15), plus icon-set
+hardening.
+
+### Added
+
+- **`strct-dropdown` popover mode** (FR-15-01) — `popover` turns the panel
+  into a home for form controls: inner clicks / Enter / Space no longer close
+  it (only outside click and Escape do), and semantics switch from
+  `role="menu"` to a labeled `role="dialog"` (`popoverLabel`, default
+  "Filters"). The trigger now exposes `aria-haspopup` (menu/dialog) +
+  `aria-expanded` in both modes. Filter/settings panels no longer need to
+  hand-roll `strctOverlay`.
+- **`strct-command-palette` server-backed search** (FR-15-02) — `query` is
+  now a two-way `model<string>` (still resets on open), and `[filter]="false"`
+  opts out of internal ranking: items render in the order given, for
+  RBAC-filtered / API-served corpora. `maxResults` still caps rendering, not
+  selection. Bonus: `loading` + `loadingText` render a spinner "Searching…"
+  row while results are in flight, and the active option is clamped when async
+  results shrink under the cursor.
+- **`strct-code` `wrap`** (FR-15-03) — soft-wraps long unbroken text
+  (PEM/CSR blocks, base64 thumbprints, one-liner commands) via
+  `white-space: pre-wrap; overflow-wrap: anywhere`, so dialogs never scroll
+  horizontally. `wrap` takes precedence over `lineNumbers` (wrapping would
+  break the gutter's line alignment).
+- **`StrctIconName` union + `STRCT_ICON_NAMES`** — every built-in icon name
+  as a compile-time union type and a greppable sorted array; `STRCT_ICON_GROUPS`
+  is now typed against the union, and the `strct-icon` `name` input
+  autocompletes built-ins while still accepting runtime-registered names.
+- **`shieldCheck` glyph** — the "protection on" state (2FA enabled, verified),
+  sharing the `shield` silhouette; icon set is now 180 glyphs.
+- **Dev-mode unknown-icon warning** — `strct-icon` warns once per unknown
+  name (an invented name used to fail silently as an empty box).
+
 ## [1.5.0] - 2026-07-21
 
 ### Added — console patterns quartet

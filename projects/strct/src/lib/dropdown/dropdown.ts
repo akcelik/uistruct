@@ -18,6 +18,16 @@ import { StrctOverlay } from '../overlay/overlay';
  *     <strct-dropdown-item>Rename</strct-dropdown-item>
  *     <strct-dropdown-item critical>Delete</strct-dropdown-item>
  *   </strct-dropdown>
+ *
+ * With `popover`, the panel holds *form controls* instead of menu items: an
+ * inner click no longer closes it (only outside click / Escape do), and the
+ * semantics switch from `role="menu"` to a labeled `role="dialog"` — a panel
+ * of selects is not a menu to a screen reader either:
+ *
+ *   <strct-dropdown popover popoverLabel="Filters">
+ *     <button strct-button strctDropdownTrigger>Filters</button>
+ *     <strct-field label="Severity">…</strct-field>
+ *   </strct-dropdown>
  */
 @Component({
   selector: 'strct-dropdown',
@@ -30,22 +40,30 @@ import { StrctOverlay } from '../overlay/overlay';
       class="strct-dd__trigger"
       role="button"
       tabindex="0"
+      [attr.aria-haspopup]="popover() ? 'dialog' : 'menu'"
+      [attr.aria-expanded]="open()"
       (click)="toggle()"
       (keydown.enter)="toggle()"
       (keydown.space)="toggle()"
     >
       <ng-content select="[strctDropdownTrigger]" />
     </div>
+    <!--
+      One panel for both modes (a default ng-content per @if branch would strand
+      the projected content in the inactive branch) — mode picks the semantics.
+    -->
     @if (open()) {
       <div
         class="strct-dd__menu"
+        [class.strct-dd__menu--popover]="popover()"
         [strctOverlay]="trigger"
         [strctOverlayPlacement]="align() === 'end' ? 'bottom-end' : 'bottom-start'"
-        role="menu"
-        tabindex="0"
-        (click)="close()"
-        (keydown.enter)="close()"
-        (keydown.space)="close()"
+        [attr.role]="popover() ? 'dialog' : 'menu'"
+        [attr.aria-label]="popover() ? popoverLabel() : null"
+        [attr.tabindex]="popover() ? -1 : 0"
+        (click)="onInnerActivate()"
+        (keydown.enter)="onInnerActivate()"
+        (keydown.space)="onInnerActivate()"
       >
         <ng-content />
       </div>
@@ -79,6 +97,11 @@ import { StrctOverlay } from '../overlay/overlay';
         left: auto;
         right: 0;
       }
+      /* Popover panels hold form controls — roomier padding, no item hover. */
+      .strct-dd__menu--popover {
+        min-width: 240px;
+        padding: 12px 14px;
+      }
       @keyframes strct-dd-in {
         from {
           opacity: 0;
@@ -92,6 +115,14 @@ export class StrctDropdown {
   private readonly host = inject(ElementRef<HTMLElement>);
   /** Horizontal alignment of the menu. */
   readonly align = input<'start' | 'end'>('start');
+  /**
+   * Popover mode for panels holding form controls (filter/settings panels):
+   * inner clicks never close the panel — only outside click / Escape do —
+   * and it renders as a labeled `role="dialog"` instead of a menu.
+   */
+  readonly popover = input(false, { transform: booleanAttribute });
+  /** Accessible name of the popover dialog (localizable). */
+  readonly popoverLabel = input('Filters');
   readonly open = signal(false);
 
   toggle(): void {
@@ -100,6 +131,11 @@ export class StrctDropdown {
 
   close(): void {
     this.open.set(false);
+  }
+
+  /** Menu items close on activation; popover form controls never do. */
+  protected onInnerActivate(): void {
+    if (!this.popover()) this.close();
   }
 
   @HostListener('document:click', ['$event'])
