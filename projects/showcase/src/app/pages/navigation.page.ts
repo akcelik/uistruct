@@ -63,6 +63,36 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="command-palette-server"
+      owner="command-palette"
+      heading="Server-backed search"
+      description="For RBAC-filtered / thousands-of-objects inventories the query has to reach an API: bind [(query)], pass [filter]=false (items render in the order you already ranked them) and flip [loading] while results are in flight. maxResults still caps rendering."
+      code='<strct-command-palette [(open)]="open" [(query)]="q" [items]="results()" [filter]="false" [loading]="searching()" (picked)="go($event)" />'
+    >
+      <div class="cp-demo">
+        <button strct-button variant="primary" (click)="srvOpen.set(true)">
+          Search inventory (simulated API)
+        </button>
+        @if (srvLast()) {
+          <span class="echo">picked: {{ srvLast() }}</span>
+        }
+      </div>
+      <strct-command-palette
+        [items]="srvResults()"
+        [open]="srvOpen()"
+        (openChange)="srvOpen.set($event)"
+        [query]="srvQuery()"
+        (queryChange)="onSrvQuery($event)"
+        [filter]="false"
+        [loading]="srvLoading()"
+        placeholder="Search the inventory…"
+        emptyText="No inventory matches"
+        [hotkey]="false"
+        (picked)="srvLast.set($event.label)"
+      />
+    </app-demo>
+
+    <app-demo
       anchor="searchbox"
       heading="Searchbox"
       description="The docs-header search pattern as a component. Default mode is a real search field — two-way value, Enter emits (search), Escape or the × clears. trigger mode is a button that only emits (activated): pair it with the command palette and show the hotkey in hint. The header of this site runs on it."
@@ -268,6 +298,41 @@ export class NavigationPage {
     },
     { id: 'logout', label: 'Sign out', group: 'Session', icon: 'logout' },
   ];
+
+  // Server-backed palette demo: a simulated API with latency.
+  protected readonly srvOpen = signal(false);
+  protected readonly srvQuery = signal('');
+  protected readonly srvLoading = signal(false);
+  protected readonly srvLast = signal('');
+  private readonly srvCorpus: StrctCommandItem[] = [
+    { id: 'vm-web-01', label: 'web-01', group: 'Virtual machines', icon: 'vm' },
+    { id: 'vm-web-02', label: 'web-02', group: 'Virtual machines', icon: 'vm' },
+    { id: 'vm-db-01', label: 'db-primary', group: 'Virtual machines', icon: 'vm' },
+    { id: 'vm-db-02', label: 'db-replica', group: 'Virtual machines', icon: 'vm' },
+    { id: 'hv-01', label: 'hv-01.dc-east', group: 'Hosts', icon: 'host' },
+    { id: 'hv-02', label: 'hv-02.dc-east', group: 'Hosts', icon: 'host' },
+    { id: 'ds-ssd', label: 'datastore-ssd-01', group: 'Storage', icon: 'disk' },
+    { id: 'ds-hdd', label: 'datastore-hdd-02', group: 'Storage', icon: 'disk' },
+    { id: 'net-dmz', label: 'pg-dmz', group: 'Networks', icon: 'network' },
+    { id: 'net-mgmt', label: 'pg-mgmt', group: 'Networks', icon: 'network' },
+  ];
+  protected readonly srvResults = signal<StrctCommandItem[]>(this.srvCorpus.slice(0, 6));
+  private srvTimer: ReturnType<typeof setTimeout> | undefined;
+
+  protected onSrvQuery(q: string): void {
+    this.srvQuery.set(q);
+    clearTimeout(this.srvTimer);
+    this.srvLoading.set(true);
+    this.srvTimer = setTimeout(() => {
+      const needle = q.trim().toLowerCase();
+      this.srvResults.set(
+        needle
+          ? this.srvCorpus.filter((i) => i.label.toLowerCase().includes(needle))
+          : this.srvCorpus.slice(0, 6),
+      );
+      this.srvLoading.set(false);
+    }, 350);
+  }
 
   protected readonly pageA = signal(1);
   protected readonly pageB = signal(5);

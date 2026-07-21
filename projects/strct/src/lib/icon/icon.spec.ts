@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { StrctIcon, STRCT_ICONS, STRCT_ICON_GROUPS } from './icon';
+import { StrctIcon, STRCT_ICONS, STRCT_ICON_GROUPS, STRCT_ICON_NAMES } from './icon';
 
 describe('StrctIcon', () => {
   it('applies the base host class', () => {
@@ -135,7 +135,7 @@ describe('StrctIcon', () => {
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('svg')).toBeTruthy();
     }
-    const grouped = new Set(STRCT_ICON_GROUPS.flatMap((g) => g.names));
+    const grouped = new Set<string>(STRCT_ICON_GROUPS.flatMap((g) => g.names));
     expect(grouped.has('file')).toBe(true);
     expect(grouped.has('clipboard')).toBe(true);
   });
@@ -195,7 +195,7 @@ describe('StrctIcon', () => {
   });
 
   it('groups every new icon in STRCT_ICON_GROUPS', () => {
-    const grouped = new Set(STRCT_ICON_GROUPS.flatMap((g) => g.names));
+    const grouped = new Set<string>(STRCT_ICON_GROUPS.flatMap((g) => g.names));
     for (const name of ['opticalDisc', 'gpu', 'sparkles', 'router']) {
       expect(grouped.has(name)).toBe(true);
     }
@@ -209,5 +209,39 @@ describe('StrctIcon', () => {
   it('renders composite bellOff using the bell base path', () => {
     expect(STRCT_ICONS['bellOff']).toContain(STRCT_ICONS['bell']);
     expect(STRCT_ICONS['bellOff']).toContain('M2.6 2.6l10.8 10.8');
+  });
+
+  it('ships shieldCheck (the 2FA-on state) sharing the shield silhouette', () => {
+    expect(STRCT_ICONS['shieldCheck']).toBeTruthy();
+    expect(STRCT_ICONS['shieldCheck']).toContain('M8 2.3l5.2 1.9');
+    const fixture = TestBed.createComponent(StrctIcon);
+    fixture.componentRef.setInput('name', 'shieldCheck');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('svg path')).toBeTruthy();
+    const grouped = new Set<string>(STRCT_ICON_GROUPS.flatMap((g) => g.names));
+    expect(grouped.has('shieldCheck')).toBe(true);
+  });
+
+  it('STRCT_ICON_NAMES lists every built-in name, sorted, matching the registry', () => {
+    expect(STRCT_ICON_NAMES.length).toBe(Object.keys(STRCT_ICONS).length);
+    expect([...STRCT_ICON_NAMES]).toEqual([...STRCT_ICON_NAMES].sort());
+    for (const name of STRCT_ICON_NAMES) expect(STRCT_ICONS[name]).toBeTruthy();
+    // Every documented group entry is a real registered icon.
+    for (const g of STRCT_ICON_GROUPS) {
+      for (const name of g.names) expect(STRCT_ICONS[name], name).toBeTruthy();
+    }
+  });
+
+  it('warns once (dev mode) on an unknown icon name and renders empty', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    for (let i = 0; i < 3; i++) {
+      const fixture = TestBed.createComponent(StrctIcon);
+      fixture.componentRef.setInput('name', 'sheildCheck'); // typo on purpose
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('svg')?.innerHTML.trim()).toBeFalsy();
+    }
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain('sheildCheck');
+    warn.mockRestore();
   });
 });

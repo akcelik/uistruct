@@ -85,6 +85,11 @@ export interface StrctCommandItem {
             <strct-kbd>Esc</strct-kbd>
           </div>
           <div class="strct-cmdp__list" role="listbox" [id]="listId">
+            @if (loading()) {
+              <div class="strct-cmdp__loading" aria-live="polite">
+                <span class="strct-cmdp__spin" aria-hidden="true"></span>{{ loadingText() }}
+              </div>
+            }
             @for (item of filtered(); track item.id; let i = $index) {
               <button
                 type="button"
@@ -114,7 +119,9 @@ export interface StrctCommandItem {
                 }
               </button>
             } @empty {
-              <div class="strct-cmdp__empty">{{ emptyText() }} “{{ query() }}”</div>
+              @if (!loading()) {
+                <div class="strct-cmdp__empty">{{ emptyText() }} “{{ query() }}”</div>
+              }
             }
           </div>
         </div>
@@ -207,6 +214,32 @@ export interface StrctCommandItem {
         color: var(--t3);
         flex-shrink: 0;
       }
+      .strct-cmdp__loading {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 10px 12px;
+        font-size: var(--text-md);
+        color: var(--t3);
+      }
+      .strct-cmdp__spin {
+        width: 13px;
+        height: 13px;
+        border: 2px solid var(--acc30);
+        border-top-color: var(--acc);
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .strct-cmdp__spin {
+          animation: strct-cmdp-spin 0.8s linear infinite;
+        }
+      }
+      @keyframes strct-cmdp-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
       .strct-cmdp__empty {
         padding: 20px;
         text-align: center;
@@ -249,10 +282,25 @@ export class StrctCommandPalette {
   readonly emptyText = input('No matches for');
   /** Maximum rendered results. */
   readonly maxResults = input(50);
+  /**
+   * Internal ranked filtering. Set `false` for a **server-backed** palette:
+   * items render in the order given (you already filtered them) and the query
+   * reaches you through the two-way `query` model. `maxResults` still caps
+   * rendering.
+   */
+  readonly filter = input(true, { transform: booleanAttribute });
+  /** Show a "searching" row while server results are in flight. */
+  readonly loading = input(false, { transform: booleanAttribute });
+  /** Localizable text of the loading row. */
+  readonly loadingText = input('Searching…');
   /** Emitted when a command is chosen (Enter or click); the palette closes. */
   readonly picked = output<StrctCommandItem>();
 
-  protected readonly query = signal('');
+  /**
+   * The typed query (two-way). The palette still owns typing and keyboard
+   * behaviour; consumers observe it to serve results asynchronously.
+   */
+  readonly query = model('');
   protected readonly activeIndex = signal(0);
   protected readonly listId = `strct-cmdp-list-${++paletteCounter}`;
   private previousActive: HTMLElement | null = null;
@@ -263,8 +311,10 @@ export class StrctCommandPalette {
 
   /** Rank: label prefix > word-start > substring; group/keyword matches last. */
   protected readonly filtered = computed(() => {
-    const q = this.query().trim().toLowerCase();
     const items = this.items();
+    // Server-backed mode: the caller already filtered — render as given.
+    if (!this.filter()) return items.slice(0, this.maxResults());
+    const q = this.query().trim().toLowerCase();
     if (!q) return items.slice(0, this.maxResults());
     const scored: { item: StrctCommandItem; score: number }[] = [];
     for (const item of items) {
@@ -284,6 +334,11 @@ export class StrctCommandPalette {
   });
 
   constructor() {
+    // Async results can shrink under the cursor — keep the active option in range.
+    effect(() => {
+      const len = this.filtered().length;
+      if (this.activeIndex() >= len) this.activeIndex.set(Math.max(0, len - 1));
+    });
     // Focus the input on open; restore focus on close.
     effect(() => {
       if (this.open()) {

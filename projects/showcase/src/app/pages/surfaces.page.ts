@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
   StrctAccordion,
   StrctAccordionPanel,
@@ -14,6 +15,9 @@ import {
   StrctDrawerSide,
   StrctDropdown,
   StrctDropdownItem,
+  StrctField,
+  StrctInput,
+  StrctCheckbox,
   StrctIcon,
   StrctModal,
   StrctModalSize,
@@ -56,6 +60,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctDrawerFooter,
     StrctDropdown,
     StrctDropdownItem,
+    StrctField,
+    StrctInput,
+    StrctCheckbox,
+    FormsModule,
     StrctIcon,
     StrctWizard,
     StrctStep,
@@ -375,6 +383,35 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="dropdown-popover"
+      owner="dropdown"
+      heading="Popover mode — filter / settings panels"
+      description="With popover, the panel holds form controls: inner clicks never close it (only outside click / Escape), and it announces as a labeled dialog instead of a menu."
+      code='<strct-dropdown popover popoverLabel="Filters">…form controls…</strct-dropdown>'
+    >
+      <strct-dropdown popover popoverLabel="Alarm filters">
+        <button strct-button strctDropdownTrigger>
+          <strct-icon name="filter" [size]="13" />
+          Filters
+          <strct-icon name="chevronDown" [size]="13" />
+        </button>
+        <div class="stack" style="min-width: 220px;">
+          <strct-field label="Severity">
+            <select strctInput [(ngModel)]="popoverSeverity">
+              <option value="all">All</option>
+              <option value="critical">Critical</option>
+              <option value="warning">Warning</option>
+            </select>
+          </strct-field>
+          <strct-checkbox [(ngModel)]="popoverAcked">Include acknowledged</strct-checkbox>
+        </div>
+      </strct-dropdown>
+      <span style="color: var(--t2); font-size: 12.5px;">
+        severity: {{ popoverSeverity() }} · acknowledged: {{ popoverAcked() ? 'shown' : 'hidden' }}
+      </span>
+    </app-demo>
+
+    <app-demo
       anchor="wizard"
       heading="Wizard"
       description="Multi-step flow with Back / Next / Finish."
@@ -486,6 +523,10 @@ export class SurfacesPage {
   protected readonly glassModalOpen = signal(false);
 
   protected readonly treePick = signal('');
+
+  // Popover filter panel state.
+  protected readonly popoverSeverity = signal('all');
+  protected readonly popoverAcked = signal(false);
 
   // Controlled-expansion demo: ids are the single source of truth.
   protected readonly regionTree: StrctTreeNodeData[] = [

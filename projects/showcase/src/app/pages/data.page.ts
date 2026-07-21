@@ -112,6 +112,23 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="code-wrap"
+      owner="code"
+      heading="Soft wrap — long unbroken text"
+      description="wrap soft-wraps PEM/CSR blocks, base64 thumbprints and long one-liner commands so a dialog never scrolls horizontally. overflow-wrap: anywhere breaks unbroken base64 while prose still breaks at spaces; wrap hides the line-number gutter, whose alignment wrapping would break."
+      code='<strct-code [code]="csr.csr_pem" copyable wrap />'
+    >
+      <div class="stack" style="width: 100%; max-width: 640px;">
+        <strct-code [code]="csrLine" language="pem" title="CSR (single line) — wrap" wrap />
+        <strct-code
+          [code]="csrLine"
+          language="pem"
+          title="Same content without wrap — scrolls sideways"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="filter-bar"
       heading="Filter bar"
       description="The standard strip above a grid: a searchbox, removable filter chips, clear-all and a live result count. The bar owns no filtering logic — it renders state and announces intent."
@@ -414,6 +431,10 @@ capacity_gb = 4096
 [network]
 vlan = 120
 mtu = 9000`;
+
+  // One-line CSR: the wrap demo's worst case — no spaces for 300+ chars.
+  protected readonly csrLine =
+    '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';
 
   // Filter bar demo
   protected readonly fbQuery = signal('');
