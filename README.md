@@ -7,7 +7,7 @@ A standalone Angular workspace containing **`@akcelik/strct`** — a reusable UI
 component library — and a showcase application that documents it. Independent of
 any other project. Built for **datacenter / infrastructure-management consoles**.
 
-**70 components · 180 icons · 3 palettes × dark/light · zero runtime dependencies.**
+**73 components · 180 icons · 3 palettes × dark/light · zero runtime dependencies.**
 
 ![UIStruct dashboard scenario — dark, Arctic palette](docs/assets/dashboard-dark.png)
 
@@ -90,6 +90,7 @@ setup and usage examples. The component set, by area:
 - **Navigation** — breadcrumb, pagination
 - **Forms** — input directive, textarea, select, checkbox, toggle, radio group, slider, combobox, cascade select, date picker, password, file upload, color picker, rating, chips, input OTP, knob, input mask (all CVA-compatible)
 - **Data** — table, datagrid (sort / select / expandable rows / detail pane / batch action bar / per-row kebab action menu / compact / paginate / resizable / column chooser / loading / sync), timeline, stack view
+- **Ops** — time-range picker (Grafana-style quick + absolute), virtualized log viewer (follow mode, ANSI colors), config/YAML diff (unified + split), unit-formatting pipes (bytes / bit-rates / durations / SI)
 - **Charts** — sparkline, line/area/bar chart, donut, gauge (dependency-free SVG)
 - **Feedback** — alert, tooltip, signpost, toast service + outlet
 - **Foundations** — icon (datacenter icon set with status badges + vendor marks), theme service + switcher
