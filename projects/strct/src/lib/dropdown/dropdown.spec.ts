@@ -1,9 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { StrctDropdown, StrctDropdownItem } from './dropdown';
+import { StrctDropdown, StrctDropdownItem, StrctDropdownTrigger } from './dropdown';
 
 @Component({
-  imports: [StrctDropdown, StrctDropdownItem],
+  imports: [StrctDropdown, StrctDropdownItem, StrctDropdownTrigger],
   template: `
     <strct-dropdown [popover]="popover()" popoverLabel="Filters">
       <button strctDropdownTrigger>Open</button>
@@ -22,7 +22,8 @@ function setup(popover: boolean) {
   fixture.detectChanges();
   const el = fixture.nativeElement as HTMLElement;
   const trigger = el.querySelector<HTMLElement>('.strct-dd__trigger')!;
-  return { fixture, el, trigger };
+  const triggerBtn = el.querySelector<HTMLElement>('[strctDropdownTrigger]')!;
+  return { fixture, el, trigger, triggerBtn };
 }
 
 describe('StrctDropdown', () => {
@@ -34,13 +35,16 @@ describe('StrctDropdown', () => {
     expect(host.classList).toContain('strct-dd');
   });
 
-  it('menu mode: aria-haspopup=menu, role=menu, inner click closes', () => {
-    const { fixture, el, trigger } = setup(false);
-    expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
-    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  it('menu mode: aria-haspopup=menu on the real button, role=menu, inner click closes', () => {
+    const { fixture, el, trigger, triggerBtn } = setup(false);
+    expect(triggerBtn.getAttribute('aria-haspopup')).toBe('menu');
+    expect(triggerBtn.getAttribute('aria-expanded')).toBe('false');
+    // The wrapper stays inert — interactives must not nest (axe).
+    expect(trigger.getAttribute('role')).toBeNull();
+    expect(trigger.getAttribute('tabindex')).toBeNull();
     trigger.click();
     fixture.detectChanges();
-    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(triggerBtn.getAttribute('aria-expanded')).toBe('true');
     const menu = el.querySelector<HTMLElement>('[role="menu"]')!;
     expect(menu).toBeTruthy();
     menu.querySelector<HTMLElement>('strct-dropdown-item')!.click();
@@ -49,8 +53,8 @@ describe('StrctDropdown', () => {
   });
 
   it('popover mode: labeled dialog whose inner clicks do NOT close it', () => {
-    const { fixture, el, trigger } = setup(true);
-    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+    const { fixture, el, trigger, triggerBtn } = setup(true);
+    expect(triggerBtn.getAttribute('aria-haspopup')).toBe('dialog');
     trigger.click();
     fixture.detectChanges();
     const dialog = el.querySelector<HTMLElement>('[role="dialog"]')!;

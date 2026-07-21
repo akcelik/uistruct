@@ -28,6 +28,7 @@ const ROUTES = [
   '/components/line',
   '/components/tree',
   '/components/datagrid',
+  '/components/time-range',
   '/scenarios/dashboard',
 ];
 const OUT = 'a11y-artifacts';

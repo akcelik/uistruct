@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  Directive,
   ViewEncapsulation,
   ElementRef,
   HostListener,
@@ -35,17 +36,13 @@ import { StrctOverlay } from '../overlay/overlay';
   encapsulation: ViewEncapsulation.None,
   imports: [StrctOverlay],
   template: `
-    <div
-      #trigger
-      class="strct-dd__trigger"
-      role="button"
-      tabindex="0"
-      [attr.aria-haspopup]="popover() ? 'dialog' : 'menu'"
-      [attr.aria-expanded]="open()"
-      (click)="toggle()"
-      (keydown.enter)="toggle()"
-      (keydown.space)="toggle()"
-    >
+    <!--
+      The wrapper is intentionally inert: the projected trigger should be a
+      real button (nesting interactives fails axe). Its native click —
+      pointer or Enter/Space — bubbles here; the strctDropdownTrigger
+      directive puts aria-haspopup/aria-expanded on the button itself.
+    -->
+    <div #trigger class="strct-dd__trigger" (click)="toggle()">
       <ng-content select="[strctDropdownTrigger]" />
     </div>
     <!--
@@ -149,6 +146,22 @@ export class StrctDropdown {
   protected onEscape(): void {
     this.close();
   }
+}
+
+/**
+ * Marks (and upgrades) the dropdown's trigger element. The attribute alone is
+ * enough for content projection; importing the directive additionally wires
+ * `aria-haspopup` / `aria-expanded` onto the real button.
+ */
+@Directive({
+  selector: '[strctDropdownTrigger]',
+  host: {
+    '[attr.aria-haspopup]': "dd ? (dd.popover() ? 'dialog' : 'menu') : null",
+    '[attr.aria-expanded]': 'dd ? dd.open() : null',
+  },
+})
+export class StrctDropdownTrigger {
+  protected readonly dd = inject(StrctDropdown, { optional: true });
 }
 
 /** A selectable row inside a `<strct-dropdown>`. */

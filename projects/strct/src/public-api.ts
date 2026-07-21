@@ -96,3 +96,7 @@ export * from './lib/tooltip/tooltip';
 export * from './lib/signpost/signpost';
 export * from './lib/toast/toast';
 export * from './lib/empty-state/empty-state';
+export * from './lib/format/format';
+export * from './lib/time-range/time-range';
+export * from './lib/log-viewer/log-viewer';
+export * from './lib/diff/diff';

@@ -5,6 +5,44 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-07-21
+
+### Added — the ops suite (monitoring-console trio + units)
+
+Grafana / Blueprint-inspired components no general-purpose library ships
+together, under a new **Ops** docs category:
+
+- **`strct-time-range`** — the "Last 1 hour ▾" control charts hang off:
+  Grafana-conventional quick ranges (15m…30d, customizable via `presets`)
+  plus an absolute from/to editor, in one dialog popover (dogfoods
+  `strct-dropdown`'s popover mode). Two-way `range`, `applied` output,
+  `presetId` stamping and a `refresh()` method to re-resolve "last X"
+  against now from your auto-refresh tick.
+- **`strct-log-viewer`** — a virtualized log tail (`kubectl logs -f` as a
+  component): only the visible window is in the DOM (5k lines ⇒ ~24 rows),
+  two-way `follow` that sticks to the tail, pauses on scroll-up and resumes
+  at the bottom, ANSI SGR colors (16-color + bold) parsed into safe spans
+  mapped onto theme tokens, severity tinting from `StrctLogLine.level` or
+  auto-detected ERROR/WARN tokens, and a wrap toggle. `role="log"`,
+  keyboard-focusable scroll region.
+- **`strct-diff`** — LCS line diff for change-approval screens: unified or
+  side-by-side `split`, +/− symbol marking (never color alone), add/del
+  counts, collapsible unchanged runs with expanders, copy-new-version
+  button. `strctComputeDiff()` exported for programmatic "anything
+  changed?" gating.
+- **Unit formatting** — `strctFormatBytes` (binary KiB default / decimal
+  opt-in), `strctFormatRate` (bit/s), `strctFormatDuration` ("2h 14m"),
+  `strctFormatSi` ("12.4k IOPS") plus the matching `strctBytes` /
+  `strctRate` / `strctDuration` / `strctSi` pipes.
+
+### Fixed
+
+- **`strct-dropdown` nested-interactive violation** (axe serious): the
+  trigger wrapper was a `role="button"` around the consumer's real button.
+  The wrapper is now inert; the new `StrctDropdownTrigger` directive
+  (same `strctDropdownTrigger` attribute — import it to activate) carries
+  `aria-haspopup` / `aria-expanded` on the actual trigger element.
+
 ## [1.6.0] - 2026-07-21
 
 App-integration gaps found by a consumer adopting 1.5.0 (FR-15), plus icon-set

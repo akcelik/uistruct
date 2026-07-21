@@ -24,6 +24,8 @@ export interface DocComponent {
   inputs?: ApiRow[];
   outputs?: ApiRow[];
   methods?: ApiRow[];
+  /** Utility entries (pipes / functions) are documented but not counted as components. */
+  utility?: boolean;
   /** Usage guidance. */
   do?: string[];
   dont?: string[];
@@ -2095,6 +2097,203 @@ export const DOCS: DocCategory[] = [
     ],
   },
   {
+    id: 'ops',
+    label: 'Ops',
+    icon: 'metrics',
+    loadExamples: () => import('../pages/ops.page').then((m) => m.OpsPage),
+    components: [
+      {
+        id: 'time-range',
+        title: 'Time range',
+        selector: 'strct-time-range',
+        importNames: ['StrctTimeRangePicker', 'StrctTimeRange', 'STRCT_TIME_RANGE_PRESETS'],
+        summary: 'Grafana-style quick + absolute time window picker.',
+        lead: 'The "Last 1 hour ▾" control monitoring charts hang off: quick relative ranges and an absolute from/to editor in one dialog popover (built on `strct-dropdown`\u2019s popover mode). Picking a preset resolves it against now and stamps `presetId`, so your refresh tick can re-resolve the same window; `refresh()` does exactly that imperatively.',
+        inputs: [
+          {
+            name: 'range',
+            type: 'StrctTimeRange | null',
+            default: 'null',
+            description: 'The selected window `{ from, to, presetId? }`, two-way (`[(range)]`).',
+          },
+          {
+            name: 'presets',
+            type: 'StrctTimeRangePreset[]',
+            default: 'STRCT_TIME_RANGE_PRESETS',
+            description:
+              'Quick ranges (15m \u00b7 1h \u00b7 6h \u00b7 24h \u00b7 7d \u00b7 30d by default).',
+          },
+          {
+            name: 'align',
+            type: `'start' | 'end'`,
+            default: `'start'`,
+            description: 'Popover alignment.',
+          },
+          {
+            name: 'dialogLabel / quickLabel / absoluteLabel / fromLabel / toLabel / applyLabel / invalidLabel / placeholderLabel',
+            type: 'string',
+            description: 'Localizable strings.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'applied',
+            type: 'StrctTimeRange',
+            description: 'Every commit \u2014 preset pick or absolute apply.',
+          },
+        ],
+        methods: [
+          {
+            name: 'refresh()',
+            type: 'void',
+            description: 'Re-resolve the current preset against now (no-op for absolute ranges).',
+          },
+        ],
+        do: [
+          'Feed (applied) into your chart / query reload.',
+          'Call refresh() from your auto-refresh tick to keep "Last 1 hour" true.',
+        ],
+        dont: [
+          'Do not use it as a general date picker \u2014 that is strct-datepicker\u2019s job.',
+        ],
+        a11y: [
+          'The panel is a labeled dialog (dropdown popover mode); presets expose aria-pressed; the invalid-range message is an alert.',
+        ],
+      },
+      {
+        id: 'log-viewer',
+        title: 'Log viewer',
+        selector: 'strct-log-viewer',
+        importNames: ['StrctLogViewer', 'StrctLogLine'],
+        summary: 'Virtualized log tail with follow mode and ANSI colors.',
+        lead: 'The `kubectl logs -f` surface as a component: a virtualized window (100k lines scroll flat), a follow mode that sticks to the tail and pauses when you scroll up (Grafana/Loki convention), ANSI SGR colors parsed into safe spans mapped onto theme tokens, and severity tinting from explicit levels or auto-detected ERROR/WARN tokens.',
+        inputs: [
+          {
+            name: 'lines',
+            type: '(string | StrctLogLine)[]',
+            default: '[]',
+            description: 'Log lines \u2014 plain strings or `{ text, level }`.',
+          },
+          {
+            name: 'follow',
+            type: 'boolean',
+            default: 'true',
+            description: 'Stick to the tail (two-way; pauses on scroll-up, resumes at bottom).',
+          },
+          {
+            name: 'wrapMode',
+            type: 'boolean',
+            default: 'false',
+            description: 'Soft-wrap long lines (two-way; also a toolbar toggle).',
+          },
+          { name: 'height', type: 'number', default: '320', description: 'Viewport height (px).' },
+          {
+            name: 'autoLevel',
+            type: 'boolean',
+            default: 'true',
+            description: 'Detect ERROR/WARN/INFO/DEBUG tokens on plain strings.',
+          },
+          {
+            name: 'title / followLabel / wrapLabel / linesLabel / emptyLabel',
+            type: 'string',
+            description: 'Localizable strings.',
+          },
+        ],
+        do: [
+          'Append immutably (update the array reference) so OnPush sees new lines.',
+          'Use { text, level } objects when your backend already knows severity.',
+        ],
+        dont: ['Do not pipe megabyte blobs through as one line \u2014 split on newlines first.'],
+        a11y: [
+          'role="log" region, keyboard-focusable scroll area, aria-pressed toolbar toggles; ANSI colors ride on theme tokens so contrast follows the palette.',
+        ],
+      },
+      {
+        id: 'diff',
+        title: 'Diff',
+        selector: 'strct-diff',
+        importNames: ['StrctDiff', 'StrctDiffRow', 'strctComputeDiff'],
+        summary: 'Config / YAML line diff \u2014 unified or split.',
+        lead: 'Change-approval screens without a hand-rolled diff: an LCS line diff rendered unified or side-by-side, +/\u2212 symbol marking (never color alone), add/del counts, collapsible unchanged runs and a copy-new-version button. `strctComputeDiff()` is exported for programmatic use \u2014 change counts, "anything changed?" gating.',
+        inputs: [
+          { name: 'before / after', type: 'string', description: 'The two texts. Required.' },
+          {
+            name: 'mode',
+            type: `'unified' | 'split'`,
+            default: `'unified'`,
+            description: 'Render style.',
+          },
+          {
+            name: 'context',
+            type: 'number',
+            default: '3',
+            description: 'Context lines kept around changes; 0 disables collapsing.',
+          },
+          {
+            name: 'title / language / beforeLabel / afterLabel / unchangedLabel / copyAfterLabel',
+            type: 'string',
+            description: 'Header bits + localizable strings.',
+          },
+          {
+            name: 'copyable',
+            type: 'boolean',
+            default: 'true',
+            description: 'Copy button for the new version.',
+          },
+          {
+            name: 'maxHeight',
+            type: 'number | null',
+            default: 'null',
+            description: 'Scroll the body past this height (px).',
+          },
+        ],
+        do: [
+          'Show it in the confirm step of config edits \u2014 the diff is the review.',
+          'Use strctComputeDiff() to disable "Save" when nothing changed.',
+        ],
+        dont: ['Do not diff binary or minified one-line blobs \u2014 line diffs need lines.'],
+        a11y: [
+          'Adds/removals carry +/\u2212 signs, not just tint; the body is a labeled, focusable region; fold rows are real buttons.',
+        ],
+      },
+      {
+        id: 'units',
+        title: 'Units',
+        selector: 'strctBytes \u00b7 strctRate \u00b7 strctDuration \u00b7 strctSi',
+        importNames: ['StrctBytesPipe', 'StrctRatePipe', 'StrctDurationPipe', 'StrctSiPipe'],
+        utility: true,
+        summary: 'Byte / rate / duration / SI formatting \u2014 pipes + functions.',
+        lead: 'The units infrastructure consoles speak, as pure functions (`strctFormatBytes`, `strctFormatRate`, `strctFormatDuration`, `strctFormatSi`) plus template pipes. Bytes default to binary (KiB \u2014 what memory and storage actually mean) with decimal on request; rates step in bit/s; durations render the two most significant units ("2h 14m"); SI handles counts ("12.4k IOPS").',
+        inputs: [
+          {
+            name: 'strctBytes : binary? : digits?',
+            type: 'number \u2192 string',
+            description:
+              '`68719476736 | strctBytes` \u2192 "64 GiB"; `| strctBytes: false` \u2192 decimal kB/MB.',
+          },
+          {
+            name: 'strctRate : digits?',
+            type: 'number \u2192 string',
+            description: 'Bits per second: `2400000000 | strctRate` \u2192 "2.4 Gbit/s".',
+          },
+          {
+            name: 'strctDuration : maxUnits?',
+            type: 'number \u2192 string',
+            description: 'Milliseconds: `8040000 | strctDuration` \u2192 "2h 14m".',
+          },
+          {
+            name: 'strctSi : unit? : digits?',
+            type: 'number \u2192 string',
+            description: `\`12400 | strctSi : 'IOPS'\` \u2192 "12.4k IOPS".`,
+          },
+        ],
+        do: ['Use one formatter everywhere \u2014 mixed GiB/GB in one console erodes trust.'],
+        dont: ['Do not format bytes as decimal unless the vendor spec sheet does.'],
+        a11y: ['Non-finite values render as an em dash, never "NaN".'],
+      },
+    ],
+  },
+  {
     id: 'charts',
     label: 'Charts',
     icon: 'gauge',
@@ -2855,7 +3054,7 @@ export const ALL_COMPONENTS: (DocComponent & { category: DocCategory })[] = DOCS
   cat.components.map((c) => ({ ...c, category: cat })),
 );
 
-export const COMPONENT_COUNT = ALL_COMPONENTS.length;
+export const COMPONENT_COUNT = ALL_COMPONENTS.filter((c) => !c.utility).length;
 
 export function findComponent(id: string) {
   return ALL_COMPONENTS.find((c) => c.id === id) ?? null;
