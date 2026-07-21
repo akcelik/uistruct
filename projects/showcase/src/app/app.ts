@@ -12,6 +12,7 @@ import {
   StrctThemeSwitcher,
   StrctToastOutlet,
   StrctVerticalNav,
+  StrctSearchbox,
 } from 'strct';
 import { COMPONENT_COUNT, DOCS, GUIDES, SCENARIOS } from './docs/registry';
 import { CommandPalette, CommandPaletteService } from './ui/command-palette';
@@ -43,6 +44,7 @@ interface NavGroup {
     StrctThemeSwitcher,
     StrctToastOutlet,
     StrctIcon,
+    StrctSearchbox,
     CommandPalette,
   ],
   templateUrl: './app.html',

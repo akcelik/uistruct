@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-20
+
+### Added — `strct-searchbox`
+
+The docs-header search pattern as a component: a compact pill with a leading
+search icon, a label / input and an optional keyboard-hint chip.
+
+- **Input mode** (default): a real search field — two-way `value` (CVA-
+  compatible), Enter emits `(search)`, Escape / the labeled × clears, the
+  hint chip hides while typing. `role="searchbox"`, fully labeled.
+- **`trigger` mode**: a button that only emits `(activated)` — the classic
+  "search pill that opens the command palette" header pattern; show the
+  palette hotkey via `hint="⌘K"`.
+- Public `focus()` / `clear()` methods; localizable labels.
+- Dogfooded: the docs site's own header search now runs on it.
+
 ## [1.3.0] - 2026-07-19
 
 ### Added — categorical chart palette `--chart-1..8` (FR-CHART-15)
