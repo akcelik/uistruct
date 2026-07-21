@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-07-21
+
+### Added — platform DX (Material / Blueprint infrastructure)
+
+- **`StrctAnnouncer`** — screen-reader live announcements as a root service
+  (Material's LiveAnnouncer pattern): hidden polite/assertive regions,
+  clear-then-set so identical messages re-announce, 10s stale wipe.
+- **`StrctHotkeysService` + `<strct-hotkeys-help/>`** — centrally registered
+  application hotkeys (Blueprint pattern): `mod+k`-style combos (mod =
+  Ctrl/⌘), plain keys suppressed while typing, dispose-function
+  unregistration — plus the `?` cheatsheet overlay listing everything,
+  grouped. The docs site dogfoods it (`?` anywhere).
+- **`[strctReorder]` / `[strctReorderItem]`** — list drag-reorder primitive:
+  HTML5 drag plus Alt+↑/↓ keyboard moves; emits `(reordered) { from, to }`
+  and never touches the consumer's array; styling hooks via
+  `--dragging`/`--over` classes.
+
+The theme playground (palette generator + CSS token export) requested with
+this package already shipped earlier — see /theme-playground on the docs
+site.
+
 ## [1.9.0] - 2026-07-21
 
 ### Added — component tour (Ant / Carbon / Fluent / Blueprint gaps)

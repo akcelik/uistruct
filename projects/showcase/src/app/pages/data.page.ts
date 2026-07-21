@@ -26,6 +26,9 @@ import {
   StrctCode,
   StrctFilterBar,
   StrctFilterChip,
+  StrctReorder,
+  StrctReorderItem,
+  StrctReorderEvent,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -54,6 +57,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctDesc,
     StrctCode,
     StrctFilterBar,
+    StrctReorder,
+    StrctReorderItem,
   ],
   template: `
     <app-page-header title="Data" subtitle="Declarative, token-styled data display." />
@@ -443,8 +448,60 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <strct-stack-item label="Last deploy">Jun 3, 2026 · 09:24</strct-stack-item>
       </strct-stack>
     </app-demo>
+
+    <app-demo
+      anchor="reorder"
+      heading="Reorder"
+      description="A list drag-reorder primitive: the container emits (reordered) {from,to} and you own the array move — drag rows, or focus one and press Alt+↑/↓. Powers priority lists, boot orders, pipeline steps."
+      code='<ul strctReorder (reordered)="move($event)">@for … <li strctReorderItem>…</li>}</ul>'
+    >
+      <div class="dg-wrap">
+        <ul class="ro-list" strctReorder (reordered)="roMove($event)">
+          @for (step of roSteps(); track step) {
+            <li class="ro-item" strctReorderItem>
+              <strct-icon name="dragHandle" [size]="13" />
+              {{ step }}
+            </li>
+          }
+        </ul>
+        <span class="echo">boot order: {{ roSteps().join(' → ') }}</span>
+      </div>
+    </app-demo>
   `,
   styles: [
+    `
+      .ro-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        max-width: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .ro-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border: 1px solid var(--b2);
+        border-radius: 7px;
+        background: var(--bg-2);
+        color: var(--t1);
+        font-size: 12.5px;
+        cursor: grab;
+      }
+      .ro-item.strct-reorder--dragging {
+        opacity: 0.5;
+      }
+      .ro-item.strct-reorder--over {
+        border-color: var(--acc);
+      }
+      .ro-item:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: 1px;
+      }
+    `,
     `
       .echo {
         font-size: 12px;
@@ -473,6 +530,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class DataPage {
+  protected readonly roSteps = signal(['disk', 'network (PXE)', 'optical', 'usb']);
+  protected roMove(e: StrctReorderEvent): void {
+    this.roSteps.update((list) => {
+      const next = [...list];
+      next.splice(e.to, 0, ...next.splice(e.from, 1));
+      return next;
+    });
+  }
+
   protected readonly dense = signal(false);
   protected readonly oneLine = signal(true);
 

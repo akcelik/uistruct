@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+  DestroyRef,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -13,6 +20,8 @@ import {
   StrctToastOutlet,
   StrctVerticalNav,
   StrctSearchbox,
+  StrctHotkeysService,
+  StrctHotkeysHelp,
 } from 'strct';
 import { COMPONENT_COUNT, DOCS, GUIDES, SCENARIOS } from './docs/registry';
 import { CommandPalette, CommandPaletteService } from './ui/command-palette';
@@ -46,12 +55,14 @@ interface NavGroup {
     StrctIcon,
     StrctSearchbox,
     CommandPalette,
+    StrctHotkeysHelp,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
   private readonly router = inject(Router);
+  private readonly hotkeys = inject(StrctHotkeysService);
   private readonly theme = inject(StrctThemeService);
   private readonly palette = inject(CommandPaletteService);
 
@@ -108,6 +119,15 @@ export class App {
         takeUntilDestroyed(),
       )
       .subscribe((e) => this.url.set(e.urlAfterRedirects));
+    // Discoverability: the palette's own ⌘K listener stays; this entry makes
+    // it show up in the ? cheatsheet (and works as a second binding).
+    const dispose = this.hotkeys.register({
+      combo: 'mod+k',
+      description: 'Open the command palette',
+      group: 'Global',
+      handler: () => this.openPalette(),
+    });
+    inject(DestroyRef).onDestroy(dispose);
   }
 
   protected isActiveGroup(id: string): boolean {

@@ -106,3 +106,6 @@ export * from './lib/button/split-button';
 export * from './lib/watermark/watermark';
 export * from './lib/tour/tour';
 export * from './lib/menubar/menubar';
+export * from './lib/a11y/announcer';
+export * from './lib/hotkeys/hotkeys';
+export * from './lib/reorder/reorder';

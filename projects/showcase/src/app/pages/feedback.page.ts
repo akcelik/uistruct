@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, DestroyRef } from '@angular/core';
 import {
   StrctAlert,
   StrctBadge,
@@ -12,6 +12,9 @@ import {
   StrctTooltip,
   StrctTour,
   StrctTourStep,
+  StrctAnnouncer,
+  StrctHotkeysHelp,
+  StrctHotkeysService,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -31,6 +34,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctSkeleton,
     StrctEmptyState,
     StrctTour,
+    StrctHotkeysHelp,
   ],
   template: `
     <app-page-header title="Feedback" subtitle="Contextual messages and hints." />
@@ -200,6 +204,38 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         (dismissed)="tourMsg.set('dismissed')"
       />
     </app-demo>
+
+    <app-demo
+      anchor="announcer"
+      heading="Announcer"
+      description="Screen-reader announcements for state changes with no visible text — a root-provided service maintaining hidden polite/assertive live regions. Identical consecutive messages re-announce (clear-then-set)."
+      code="inject(StrctAnnouncer).announce('12 rows loaded')  ·  .announce('disk failure', 'assertive')"
+    >
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <button strct-button variant="neutral" (click)="announcePolite()">Announce politely</button>
+        <button strct-button variant="neutral" (click)="announceAssertive()">
+          Announce assertively
+        </button>
+        <span class="echo">{{ annMsg() || 'turn on a screen reader to hear it' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="hotkeys"
+      heading="Hotkeys"
+      description="Centrally registered application hotkeys (Blueprint pattern): combos like mod+k (mod = Ctrl/⌘), plain keys suppressed while typing, and a ? cheatsheet overlay that lists everything. This docs site's ? runs on it — try pressing ?."
+      code="hotkeys.register({ combo: 'mod+k', description: 'Open palette', group: 'Global', handler: open })  +  <strct-hotkeys-help />"
+    >
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <button strct-button variant="primary" (click)="helpOpen.set(true)">
+          Open cheatsheet (or press ?)
+        </button>
+        @if (hkMsg()) {
+          <span class="echo">{{ hkMsg() }}</span>
+        }
+      </div>
+      <strct-hotkeys-help [(open)]="helpOpen" />
+    </app-demo>
   `,
   styles: [
     `
@@ -247,6 +283,31 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class FeedbackPage {
+  private readonly announcer = inject(StrctAnnouncer);
+  private readonly hotkeys = inject(StrctHotkeysService);
+  protected readonly annMsg = signal('');
+  protected readonly helpOpen = signal(false);
+  protected readonly hkMsg = signal('');
+
+  protected announcePolite(): void {
+    this.announcer.announce('12 rows loaded');
+    this.annMsg.set('announced (polite): "12 rows loaded"');
+  }
+  protected announceAssertive(): void {
+    this.announcer.announce('Fan redundancy lost on hv-02', 'assertive');
+    this.annMsg.set('announced (assertive): "Fan redundancy lost on hv-02"');
+  }
+
+  constructor() {
+    const dispose = this.hotkeys.register({
+      combo: 'shift+d',
+      description: 'Demo: deploy something',
+      group: 'Demos',
+      handler: () => this.hkMsg.set('shift+D fired'),
+    });
+    inject(DestroyRef).onDestroy(dispose);
+  }
+
   protected readonly tourOpen = signal(false);
   protected readonly tourMsg = signal('');
   protected readonly tourSteps: StrctTourStep[] = [
