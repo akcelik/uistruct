@@ -1824,6 +1824,33 @@ export const DOCS: DocCategory[] = [
     loadExamples: () => import('../pages/data.page').then((m) => m.DataPage),
     components: [
       {
+        id: 'reorder',
+        title: 'Reorder',
+        selector: '[strctReorder] + [strctReorderItem]',
+        importNames: ['StrctReorder', 'StrctReorderItem', 'StrctReorderEvent'],
+        utility: true,
+        summary: 'List drag-reorder primitive \u2014 you own the array.',
+        lead: 'Two directives: the container emits `(reordered) { from, to }` and the consumer applies the move \u2014 the primitive never touches your data. Items are HTML5-draggable and keyboard-movable (Alt+\u2191/\u2193 on the focused row); `.strct-reorder--dragging` / `--over` classes hook your styling.',
+        inputs: [
+          {
+            name: 'reorderDisabled',
+            type: 'boolean',
+            default: 'false',
+            description: 'Display-only mode.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'reordered',
+            type: 'StrctReorderEvent',
+            description: '`{ from, to }` \u2014 splice your array accordingly.',
+          },
+        ],
+        do: ['Keep rows homogeneous \u2014 boot orders, priority lists, pipeline steps.'],
+        dont: ['Do not use it for cross-list moves \u2014 that is strct-transfer\u2019s job.'],
+        a11y: ['Rows are focusable, aria-roledescription="sortable", and fully keyboard-movable.'],
+      },
+      {
         id: 'description-list',
         title: 'Description list',
         selector: 'strct-description-list, strct-desc',
@@ -3125,6 +3152,59 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not gate critical workflows behind a tour.'],
         a11y: [
           'The card is a labeled role="dialog"; Escape dismisses; targets scroll into view before measuring.',
+        ],
+      },
+      {
+        id: 'announcer',
+        title: 'Announcer',
+        selector: 'StrctAnnouncer (service)',
+        importNames: ['StrctAnnouncer'],
+        utility: true,
+        summary: 'Screen-reader live announcements (service).',
+        lead: 'Material\u2019s LiveAnnouncer, strct-sized: a root-provided service maintaining hidden `aria-live` regions (polite + assertive). `announce(message, politeness?)` clears-then-sets so identical consecutive messages still speak, and stale text is wiped after 10s.',
+        inputs: [
+          {
+            name: "announce(message, politeness = 'polite')",
+            type: 'method',
+            description:
+              'Queue an announcement; `assertive` interrupts \u2014 reserve it for failures.',
+          },
+        ],
+        do: ['Announce async outcomes with no visible text change ("12 rows loaded").'],
+        dont: ['Do not announce what a focused control already reads out.'],
+        a11y: ['This IS the a11y \u2014 pair every silent state change with an announcement.'],
+      },
+      {
+        id: 'hotkeys',
+        title: 'Hotkeys',
+        selector: 'strct-hotkeys-help',
+        importNames: ['StrctHotkeysService', 'StrctHotkeysHelp', 'StrctHotkey'],
+        summary: 'Central hotkey registry + ? cheatsheet overlay.',
+        lead: 'Blueprint\u2019s pattern: components register `{ combo, description, group, handler }` with `StrctHotkeysService` (combos like `mod+k` \u2014 mod = Ctrl/\u2318; plain keys are suppressed while typing) and get a dispose function back. `<strct-hotkeys-help/>`, mounted once, registers `?` itself and renders the grouped cheatsheet \u2014 shortcuts stay discoverable.',
+        inputs: [
+          {
+            name: 'register(hotkey)',
+            type: '() => void',
+            description: 'Service: add a hotkey; call the returned function to unregister.',
+          },
+          {
+            name: 'open',
+            type: 'boolean',
+            default: 'false',
+            description: 'Overlay: two-way visibility (`?` toggles it too).',
+          },
+          {
+            name: 'title / emptyText',
+            type: 'string',
+            description: 'Overlay: localizable strings.',
+          },
+        ],
+        do: ['Register in a component\u2019s constructor and dispose via DestroyRef.'],
+        dont: [
+          'Do not bind single letters that fight with typing \u2014 they are muted in inputs anyway.',
+        ],
+        a11y: [
+          'The overlay is a labeled dialog; Escape closes locally (never swallowed app-wide); combos render as kbd chips.',
         ],
       },
       {
