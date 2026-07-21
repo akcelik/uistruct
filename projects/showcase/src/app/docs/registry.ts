@@ -235,6 +235,43 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not use tags to convey one-off status — prefer a badge.'],
       },
       {
+        id: 'copy',
+        title: 'Copy',
+        selector: 'strct-copy',
+        importNames: ['StrctCopy'],
+        summary: 'Click-to-copy with ✓ feedback.',
+        lead: 'An icon (or icon + label) button that writes `text` to the clipboard and flips to a ✓ "Copied" state for a moment, announcing it politely to screen readers. The console workhorse for UUIDs, IPs, serials and snippets.',
+        inputs: [
+          {
+            name: 'text',
+            type: 'string',
+            description: 'The text written to the clipboard. Required.',
+          },
+          {
+            name: 'label',
+            type: 'string',
+            default: `''`,
+            description: 'Optional visible label next to the icon (icon-only by default).',
+          },
+          {
+            name: 'copyLabel / copiedLabel / ariaLabel',
+            type: 'string',
+            default: `'Copy' / 'Copied' / ''`,
+            description: 'Localizable strings.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'copied',
+            type: 'string',
+            description: 'Emitted after a successful copy, with the copied text.',
+          },
+        ],
+        do: ['Place it right beside the value it copies (mono IDs, IPs).'],
+        dont: ['Do not use it for actions other than copying — that is a button.'],
+        a11y: ['A labeled button; the state change is announced via a polite live region.'],
+      },
+      {
         id: 'avatar',
         title: 'Avatar',
         selector: 'strct-avatar',
@@ -777,6 +814,32 @@ export const DOCS: DocCategory[] = [
     icon: 'sidebar',
     loadExamples: () => import('../pages/surfaces.page').then((m) => m.SurfacesPage),
     components: [
+      {
+        id: 'page-header',
+        title: 'Page header',
+        selector: 'strct-page-header',
+        importNames: ['StrctPageHeader', 'StrctPageHeaderCrumbs', 'StrctPageHeaderActions'],
+        summary: 'Console page top: crumbs, title, actions.',
+        lead: 'The top of every console object page: an optional breadcrumb row (`strctPageHeaderCrumbs`), an h1 `title` + `subtitle`, actions aligned to the end (`strctPageHeaderActions`) and default content projected below (status badges, meta strips). The doc pages themselves run on it.',
+        inputs: [
+          { name: 'title', type: 'string', description: 'Page title (an h1). Required.' },
+          {
+            name: 'subtitle',
+            type: 'string',
+            default: `''`,
+            description: 'One-line description under the title.',
+          },
+          {
+            name: 'divider',
+            type: 'boolean',
+            default: 'false',
+            description: 'Hairline divider under the header.',
+          },
+        ],
+        do: ['Keep actions to the two or three that matter; overflow the rest into a menu.'],
+        dont: ['Do not nest another h1 inside the projected content.'],
+        a11y: ['Renders the title as the page h1; actions are real buttons in source order.'],
+      },
       {
         id: 'card',
         title: 'Card',
@@ -1563,6 +1626,102 @@ export const DOCS: DocCategory[] = [
           'Use inline for a horizontal stat strip of a few key facts.',
         ],
         dont: ['Do not use it for editable fields — that is what strct-field is for.'],
+      },
+      {
+        id: 'code',
+        title: 'Code',
+        selector: 'strct-code',
+        importNames: ['StrctCode'],
+        summary: 'Copyable mono code / config block.',
+        lead: 'The component form of the `<details><pre>` pattern: a mono block with a header row (optional `title`, uppercase `language` tag, built-in copy button), optional line numbers in an uncopyable gutter, a `maxHeight` scroll region and a `collapsible` mode that folds to the header.',
+        inputs: [
+          {
+            name: 'code',
+            type: 'string',
+            description: 'The code / rendered config text (copied verbatim). Required.',
+          },
+          {
+            name: 'title / language',
+            type: 'string',
+            default: `'' / ''`,
+            description: 'Header title (e.g. a filename) and a small uppercase language tag.',
+          },
+          {
+            name: 'copyable',
+            type: 'boolean',
+            default: 'true',
+            description: 'Show the copy button (a `strct-copy`).',
+          },
+          {
+            name: 'collapsible / collapsed',
+            type: 'boolean',
+            default: 'false / false',
+            description: 'Fold to just the header; `collapsed` is two-way.',
+          },
+          {
+            name: 'lineNumbers',
+            type: 'boolean',
+            default: 'false',
+            description: 'Line-number gutter; numbers are never copied — `code` is.',
+          },
+          {
+            name: 'maxHeight',
+            type: 'number | null',
+            default: 'null',
+            description: 'Scroll the body past this height (px).',
+          },
+        ],
+        do: ['Use it for rendered configs, snippets and logs excerpts.'],
+        dont: ['Do not put interactive content inside — it is a text surface.'],
+        a11y: [
+          'The body is a keyboard-focusable, labeled scroll region; the collapse toggle exposes aria-expanded.',
+        ],
+      },
+      {
+        id: 'filter-bar',
+        title: 'Filter bar',
+        selector: 'strct-filter-bar',
+        importNames: ['StrctFilterBar', 'StrctFilterChip'],
+        summary: 'Search + filter chips + result count.',
+        lead: 'The standard strip above a data grid: a `strct-searchbox`, removable filter chips, a clear-all action and a live result count. The bar owns no filtering logic — it renders your state and announces intent through outputs.',
+        inputs: [
+          {
+            name: 'query',
+            type: 'string',
+            default: `''`,
+            description: 'Search text, two-way (`[(query)]`).',
+          },
+          {
+            name: 'filters',
+            type: 'StrctFilterChip[]',
+            default: '[]',
+            description: '`{ id, label, data? }[]` — the active filter chips.',
+          },
+          {
+            name: 'count',
+            type: 'number | null',
+            default: 'null',
+            description: 'Result count shown at the end; null hides it.',
+          },
+          {
+            name: 'placeholder / countLabel / clearLabel / removeLabel',
+            type: 'string',
+            description: 'Localizable strings.',
+          },
+        ],
+        outputs: [
+          { name: 'search', type: 'string', description: 'Enter pressed in the search field.' },
+          { name: 'removed', type: 'StrctFilterChip', description: 'A chip’s × was clicked.' },
+          { name: 'cleared', type: 'void', description: '"Clear filters" was clicked.' },
+        ],
+        do: [
+          'Feed (removed)/(cleared) straight back into your filter state.',
+          'Pair with the datagrid and keep `count` in sync with the filtered rows.',
+        ],
+        dont: ['Do not filter inside the bar — it is presentation for your query state.'],
+        a11y: [
+          'Chip removers are labeled buttons; the count is a polite live region; the search field is a labeled searchbox.',
+        ],
       },
       {
         id: 'table',

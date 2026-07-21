@@ -25,6 +25,11 @@ import {
   StrctTreeNodeData,
   StrctTreeNodeMenuFn,
   StrctWizard,
+  StrctPageHeader,
+  StrctPageHeaderActions,
+  StrctPageHeaderCrumbs,
+  StrctBreadcrumb,
+  StrctBreadcrumbItem,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -55,12 +60,45 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctWizard,
     StrctStep,
     StrctDivider,
+    StrctPageHeader,
+    StrctPageHeaderActions,
+    StrctPageHeaderCrumbs,
+    StrctBreadcrumb,
+    StrctBreadcrumbItem,
   ],
   template: `
     <app-page-header
       title="Surfaces"
       subtitle="Containers and disclosure patterns: cards, accordions, tabs, trees, modals, menus and a multi-step wizard."
     />
+
+    <app-demo
+      anchor="page-header"
+      heading="Page header"
+      description="The top of every console object page: an optional breadcrumb row, an h1 title + subtitle, end-aligned actions and a projected meta strip below. The doc pages you are reading use it."
+      code='<strct-page-header title="hv-02" subtitle="Hypervisor · cluster-01"><strct-breadcrumb strctPageHeaderCrumbs>…</strct-breadcrumb><button strct-button strctPageHeaderActions>Migrate</button></strct-page-header>'
+    >
+      <strct-page-header
+        style="width: 100%"
+        title="hv-02"
+        subtitle="Hypervisor · cluster-01 · 2×64 cores · 1.5 TB"
+        divider
+      >
+        <strct-breadcrumb strctPageHeaderCrumbs>
+          <strct-breadcrumb-item><a href="javascript:void(0)">Compute</a></strct-breadcrumb-item>
+          <strct-breadcrumb-item><a href="javascript:void(0)">Hosts</a></strct-breadcrumb-item>
+          <strct-breadcrumb-item current>hv-02</strct-breadcrumb-item>
+        </strct-breadcrumb>
+        <button strct-button strctPageHeaderActions size="sm" variant="neutral">Maintenance</button>
+        <button strct-button strctPageHeaderActions size="sm" variant="primary" solid>
+          Migrate VMs
+        </button>
+        <div style="display: flex; gap: 8px; margin-top: 10px;">
+          <strct-badge status="success">Connected</strct-badge>
+          <strct-badge status="neutral">vSAN member</strct-badge>
+        </div>
+      </strct-page-header>
+    </app-demo>
 
     <app-demo
       anchor="card"

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   StrctBadge,
@@ -21,6 +21,9 @@ import {
   StrctTable,
   StrctTimeline,
   StrctTimelineItem,
+  StrctCode,
+  StrctFilterBar,
+  StrctFilterChip,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -46,6 +49,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctStackItem,
     StrctDescriptionList,
     StrctDesc,
+    StrctCode,
+    StrctFilterBar,
   ],
   template: `
     <app-page-header title="Data" subtitle="Declarative, token-styled data display." />
@@ -80,6 +85,49 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           ><strct-badge status="neutral">hyperstruct01</strct-badge></strct-desc
         >
       </strct-description-list>
+    </app-demo>
+
+    <app-demo
+      anchor="code"
+      heading="Code"
+      description="Copyable mono code / rendered-config block — the component form of the details/pre pattern. Header carries a title, a language tag and a copy button; collapsible folds it to the header; line numbers live in an uncopyable gutter."
+      code='<strct-code [code]="yaml" language="yaml" title="cloud-init" collapsible lineNumbers />'
+    >
+      <div class="stack" style="width: 100%; max-width: 640px;">
+        <strct-code
+          [code]="cloudInit"
+          language="yaml"
+          title="cloud-init.yaml"
+          lineNumbers
+          [maxHeight]="220"
+        />
+        <strct-code
+          [code]="renderedCfg"
+          language="ini"
+          title="Rendered config"
+          collapsible
+          [collapsed]="true"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="filter-bar"
+      heading="Filter bar"
+      description="The standard strip above a grid: a searchbox, removable filter chips, clear-all and a live result count. The bar owns no filtering logic — it renders state and announces intent."
+      code='<strct-filter-bar [(query)]="q" [filters]="chips" [count]="rows.length" (removed)="drop($event)" (cleared)="reset()" />'
+    >
+      <div class="dg-wrap">
+        <strct-filter-bar
+          [(query)]="fbQuery"
+          [filters]="fbChips()"
+          [count]="fbCount()"
+          placeholder="Search hosts…"
+          (removed)="fbRemove($event)"
+          (cleared)="fbChips.set([])"
+        />
+        <span class="echo">query: "{{ fbQuery() }}" · aktif filtre: {{ fbChips().length }}</span>
+      </div>
     </app-demo>
 
     <app-demo
@@ -345,6 +393,39 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 export class DataPage {
   protected readonly dense = signal(false);
   protected readonly oneLine = signal(true);
+
+  // Code demo
+  protected readonly cloudInit = `#cloud-config
+hostname: hv-02
+users:
+  - name: ops
+    groups: [sudo]
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAA...ops@bastion
+package_update: true
+packages: [qemu-guest-agent, chrony]
+runcmd:
+  - systemctl enable --now qemu-guest-agent`;
+  protected readonly renderedCfg = `[datastore]
+name = ssd-01
+policy = raid1
+capacity_gb = 4096
+
+[network]
+vlan = 120
+mtu = 9000`;
+
+  // Filter bar demo
+  protected readonly fbQuery = signal('');
+  protected readonly fbChips = signal<StrctFilterChip[]>([
+    { id: 'state', label: 'state: running' },
+    { id: 'zone', label: 'zone: eu-1' },
+    { id: 'cluster', label: 'cluster: prod' },
+  ]);
+  protected readonly fbCount = computed(() => 42 - this.fbChips().length * 9);
+  protected fbRemove(chip: StrctFilterChip): void {
+    this.fbChips.update((list) => list.filter((c) => c.id !== chip.id));
+  }
   protected readonly grouped = signal(true);
 
   // Virtual scroll demo: a 20k-row inventory.

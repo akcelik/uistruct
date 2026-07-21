@@ -16,6 +16,7 @@ export * from './lib/layout/layout';
 export * from './lib/layout/nav';
 export * from './lib/layout/rail';
 export * from './lib/layout/login';
+export * from './lib/layout/page-header';
 
 // Buttons & indicators
 export * from './lib/button/button';
@@ -48,6 +49,9 @@ export * from './lib/section-menu/section-menu';
 export * from './lib/command-palette/command-palette';
 export * from './lib/kbd/kbd';
 export * from './lib/searchbox/searchbox';
+export * from './lib/copy/copy';
+export * from './lib/code/code';
+export * from './lib/filter-bar/filter-bar';
 
 // Forms
 export * from './lib/forms/field';

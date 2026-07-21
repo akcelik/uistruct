@@ -7,7 +7,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { StrctIcon } from 'strct';
+import { StrctIcon, StrctPageHeader } from 'strct';
 
 /**
  * Provided by the per-component documentation page through a child injector.
@@ -19,36 +19,22 @@ export class DemoFilter {
   readonly only = signal<string>('');
 }
 
-/** Page heading block shown at the top of each gallery / demo page. */
+/** Page heading block — a thin wrapper over the library's strct-page-header
+ * (dogfooding), preserving the demo-filter behavior. */
 @Component({
   selector: 'app-page-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [StrctPageHeader],
   template: `
     @if (!filtered()) {
-      <header class="ph">
-        <h2 class="ph__title">{{ title() }}</h2>
-        @if (subtitle()) {
-          <p class="ph__sub">{{ subtitle() }}</p>
-        }
-      </header>
+      <strct-page-header class="ph" [title]="title()" [subtitle]="subtitle()" />
     }
   `,
   styles: [
     `
       .ph {
+        display: block;
         margin-bottom: 22px;
-      }
-      .ph__title {
-        margin: 0;
-        font-size: 22px;
-        font-weight: 600;
-        color: var(--t1);
-      }
-      .ph__sub {
-        margin: 6px 0 0;
-        font-size: 14px;
-        color: var(--t2);
-        max-width: 70ch;
       }
     `,
   ],
