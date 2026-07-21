@@ -7,7 +7,7 @@ A standalone Angular workspace containing **`@akcelik/strct`** — a reusable UI
 component library — and a showcase application that documents it. Independent of
 any other project. Built for **datacenter / infrastructure-management consoles**.
 
-**63 components · 179 icons · 3 palettes × dark/light · zero runtime dependencies.**
+**70 components · 179 icons · 3 palettes × dark/light · zero runtime dependencies.**
 
 ![UIStruct dashboard scenario — dark, Arctic palette](docs/assets/dashboard-dark.png)
 
