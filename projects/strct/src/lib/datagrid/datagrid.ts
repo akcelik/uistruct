@@ -1,21 +1,23 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
-  Directive,
-  TemplateRef,
-  ViewEncapsulation,
-  booleanAttribute,
   computed,
   contentChild,
   contentChildren,
+  Directive,
   effect,
+  ElementRef,
+  HostListener,
   inject,
   input,
   model,
   output,
   signal,
+  TemplateRef,
   untracked,
+  ViewEncapsulation,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 import { StrctPagination } from '../pagination/pagination';
@@ -34,6 +36,11 @@ export interface StrctDatagridLabels {
   chooseColumns: string;
   refresh: string;
   actions: string;
+  filterColumn: string;
+  filterPlaceholder: string;
+  clearFilter: string;
+  editCell: string;
+  toggleChildren: string;
 }
 
 const DG_LABELS: StrctDatagridLabels = {
@@ -49,11 +56,17 @@ const DG_LABELS: StrctDatagridLabels = {
   chooseColumns: 'Choose columns',
   refresh: 'Refresh data',
   actions: 'Actions',
+  filterColumn: 'Filter',
+  filterPlaceholder: 'Filter…',
+  clearFilter: 'Clear filter',
+  editCell: 'Edit',
+  toggleChildren: 'Toggle children',
 };
 import { StrctCheckbox } from '../forms/checkbox';
 import { StrctButton, StrctButtonGroup } from '../button/button';
 import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
 import { StrctMenuItem, StrctMenuService } from '../context-menu/menu';
+import { StrctOverlay } from '../overlay/overlay';
 import { XlsxValue, buildXlsx } from './xlsx';
 
 /** Resolves a stable identity for a row: a property key, or a function. */
@@ -75,7 +88,20 @@ export interface StrctDatagridColumn {
    * except the last an explicit px `width` so offsets stay exact.
    */
   sticky?: boolean;
+  /** Header filter popover: contains-text by default; see `filterOptions`. */
+  filterable?: boolean;
+  /** Distinct values for a checkbox set-filter (implies `filterable`). */
+  filterOptions?: unknown[];
+  /**
+   * Inline cell editing: double-click opens an input; Enter / blur commit via
+   * `(cellEdit)`, Escape cancels. The grid never mutates rows — apply the
+   * change in your handler and pass the updated array back in.
+   */
+  editable?: boolean;
 }
+
+/** Per-column filter state: contains-text, or the checked value set. */
+export type StrctDatagridFilters = Record<string, string | unknown[]>;
 
 type SortDir = 'asc' | 'desc';
 
@@ -86,6 +112,8 @@ export interface StrctDatagridLazyState {
   pageSize: number;
   sortKey: string | null;
   sortDir: SortDir;
+  /** Active per-column filters (empty object when none). */
+  filters: StrctDatagridFilters;
 }
 
 /** Persistable user column preferences (widths from resize, hidden from the
@@ -139,6 +167,7 @@ export class StrctDatagridActionBar {}
     StrctCheckbox,
     StrctButton,
     StrctButtonGroup,
+    StrctOverlay,
   ],
   template: `
     @if (actionBarDef()) {
@@ -154,7 +183,7 @@ export class StrctDatagridActionBar {}
         [style.max-height.px]="virtual() ? viewportHeight() : null"
         (scroll)="virtual() && onScroll($event)"
       >
-        <table class="strct-dg">
+        <table class="strct-dg" [attr.role]="childrenKey() ? 'treegrid' : null">
           <thead>
             <tr>
               @if (canDetail()) {
@@ -213,6 +242,62 @@ export class StrctDatagridActionBar {}
                         [name]="sortIcon(col.key)"
                         [size]="13"
                       />
+                    }
+                    @if (col.filterable || col.filterOptions) {
+                      <button
+                        #fbtn
+                        type="button"
+                        class="strct-dg__filterbtn"
+                        [class.strct-dg__filterbtn--active]="hasFilter(col.key)"
+                        [attr.aria-expanded]="filterOpenKey() === col.key"
+                        [attr.aria-label]="L().filterColumn + ': ' + col.label"
+                        (click)="toggleFilterPanel(col.key, $event)"
+                        (keydown.enter)="$event.stopPropagation()"
+                        (keydown.space)="$event.stopPropagation()"
+                      >
+                        <strct-icon name="filter" [size]="12" />
+                      </button>
+                      @if (filterOpenKey() === col.key) {
+                        <div
+                          class="strct-dg__filterpanel"
+                          role="dialog"
+                          [attr.aria-label]="L().filterColumn + ': ' + col.label"
+                          [strctOverlay]="fbtn"
+                          strctOverlayPlacement="bottom-start"
+                          (click)="$event.stopPropagation()"
+                          (keydown.enter)="$event.stopPropagation()"
+                          (keydown.space)="$event.stopPropagation()"
+                        >
+                          @if (col.filterOptions; as opts) {
+                            @for (opt of opts; track $index) {
+                              <label class="strct-dg__filteropt">
+                                <input
+                                  type="checkbox"
+                                  [checked]="optionChecked(col.key, opt)"
+                                  (change)="toggleFilterOption(col.key, opt)"
+                                />
+                                <span>{{ opt }}</span>
+                              </label>
+                            }
+                          } @else {
+                            <input
+                              class="strct-dg__filterinput"
+                              type="text"
+                              [attr.placeholder]="L().filterPlaceholder"
+                              [value]="textFilter(col.key)"
+                              (input)="setTextFilter(col.key, $any($event.target).value)"
+                            />
+                          }
+                          <button
+                            type="button"
+                            class="strct-dg__filterclear"
+                            [disabled]="!hasFilter(col.key)"
+                            (click)="clearFilter(col.key)"
+                          >
+                            {{ L().clearFilter }}
+                          </button>
+                        </div>
+                      }
                     }
                   </span>
                   @if (resizable() && col.resizable !== false) {
@@ -284,6 +369,10 @@ export class StrctDatagridActionBar {}
                   <tr
                     [class.strct-dg__row--selected]="isSelected(row)"
                     [class.strct-dg__row--active]="paneOpen() && row === activeRow()"
+                    [attr.aria-level]="childrenKey() ? treeDepth(row) + 1 : null"
+                    [attr.aria-expanded]="
+                      childrenKey() && treeHasChildren(row) ? treeExpanded(row) : null
+                    "
                   >
                     @if (canDetail()) {
                       <td
@@ -334,14 +423,51 @@ export class StrctDatagridActionBar {}
                         />
                       </td>
                     }
-                    @for (col of visibleColumns(); track col.key) {
+                    @for (col of visibleColumns(); track col.key; let colIdx = $index) {
                       <td
                         [style.text-align]="col.align ?? 'start'"
                         [class.strct-dg__cell--sticky]="isSticky(col)"
                         [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
+                        [class.strct-dg__cell--editable]="col.editable"
                         [style.insetInlineStart.px]="stickyLeft(col.key)"
+                        (dblclick)="col.editable && startEdit(row, col)"
                       >
-                        @if (cellTemplate(col.key); as tpl) {
+                        @if (childrenKey() && colIdx === 0) {
+                          <span
+                            class="strct-dg__treepad"
+                            [style.width.px]="treeDepth(row) * 18"
+                            aria-hidden="true"
+                          ></span>
+                          @if (treeHasChildren(row)) {
+                            <button
+                              type="button"
+                              class="strct-dg__treebtn"
+                              [class.strct-dg__treebtn--open]="treeExpanded(row)"
+                              [attr.aria-expanded]="treeExpanded(row)"
+                              [attr.aria-label]="L().toggleChildren"
+                              (click)="toggleTreeRow(row)"
+                            >
+                              <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
+                            </button>
+                          } @else {
+                            <span
+                              class="strct-dg__treebtn strct-dg__treebtn--leaf"
+                              aria-hidden="true"
+                            ></span>
+                          }
+                        }
+                        @if (isEditingCell(row, col)) {
+                          <input
+                            class="strct-dg__editinput"
+                            type="text"
+                            [value]="row[col.key] ?? ''"
+                            [attr.aria-label]="L().editCell + ': ' + col.label"
+                            (keydown.enter)="commitEdit(row, col, $event)"
+                            (keydown.escape)="cancelEdit($event)"
+                            (blur)="commitEdit(row, col, $event)"
+                            (click)="$event.stopPropagation()"
+                          />
+                        } @else if (cellTemplate(col.key); as tpl) {
                           <ng-container
                             [ngTemplateOutlet]="tpl"
                             [ngTemplateOutletContext]="{
@@ -1041,6 +1167,157 @@ export class StrctDatagridActionBar {}
       .strct-dg__count-sel {
         color: var(--acc);
       }
+      /* ── Column filter popover ─────────────────────────────── */
+      .strct-dg__filterbtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        margin-inline-start: 2px;
+        padding: 0;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--t3);
+        cursor: pointer;
+        vertical-align: middle;
+      }
+      .strct-dg__filterbtn:hover {
+        color: var(--t1);
+        background: var(--bg-3);
+      }
+      .strct-dg__filterbtn--active {
+        color: var(--acc);
+      }
+      .strct-dg__filterbtn:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: 1px;
+      }
+      .strct-dg__filterpanel {
+        position: absolute;
+        z-index: 210;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 180px;
+        padding: 10px;
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: 7px;
+        box-shadow: var(--shh);
+        font-weight: 400;
+        text-transform: none;
+        letter-spacing: normal;
+        white-space: nowrap;
+      }
+      .strct-dg__filterinput {
+        padding: 5px 8px;
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-sm);
+        background: var(--bg-2);
+        color: var(--t1);
+        font-family: var(--font);
+        font-size: 12px;
+      }
+      .strct-dg__filterinput:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: 1px;
+      }
+      .strct-dg__filteropt {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12.5px;
+        color: var(--t1);
+        cursor: pointer;
+      }
+      .strct-dg__filterclear {
+        align-self: flex-start;
+        padding: 3px 8px;
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--t2);
+        font-family: var(--font);
+        font-size: 11.5px;
+        cursor: pointer;
+      }
+      .strct-dg__filterclear:hover:not(:disabled) {
+        color: var(--t1);
+        background: var(--bg-3);
+      }
+      .strct-dg__filterclear:disabled {
+        color: var(--t4);
+        cursor: default;
+      }
+
+      /* ── Tree-grid ─────────────────────────────────────────── */
+      .strct-dg__treepad {
+        display: inline-block;
+        height: 1px;
+        vertical-align: middle;
+      }
+      .strct-dg__treebtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        margin-inline-end: 4px;
+        padding: 0;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--t3);
+        cursor: pointer;
+        vertical-align: middle;
+      }
+      .strct-dg__treebtn:hover {
+        color: var(--t1);
+        background: var(--bg-3);
+      }
+      .strct-dg__treebtn:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: 1px;
+      }
+      .strct-dg__treebtn strct-icon {
+        transition: transform 0.15s ease;
+      }
+      .strct-dg__treebtn--open strct-icon {
+        transform: rotate(90deg);
+      }
+      .strct-dg__treebtn--leaf {
+        cursor: default;
+        pointer-events: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .strct-dg__treebtn strct-icon {
+          transition: none;
+        }
+      }
+
+      /* ── Inline cell editing ───────────────────────────────── */
+      .strct-dg__cell--editable {
+        cursor: text;
+      }
+      .strct-dg__cell--editable:hover {
+        box-shadow: inset 0 0 0 1px var(--b2);
+      }
+      .strct-dg__editinput {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 3px 6px;
+        border: 1px solid var(--acc);
+        border-radius: var(--radius-sm);
+        background: var(--bg-1);
+        color: var(--t1);
+        font: inherit;
+      }
+      .strct-dg__editinput:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: 1px;
+      }
     `,
   ],
 })
@@ -1136,6 +1413,19 @@ export class StrctDatagrid {
    * groups. Paging is bypassed while grouped; not combinable with `virtual`.
    */
   readonly groupBy = input<string | null>(null);
+  /**
+   * Two-way per-column filter state: `key → contains-text` (text filter) or
+   * `key → unknown[]` (checked value set). Applied client-side; in `lazy`
+   * mode it is passed through on `lazyLoad` instead.
+   */
+  readonly filters = model<StrctDatagridFilters>({});
+  /**
+   * Tree-grid: the row property holding a row's children array. Rows render
+   * hierarchically with indent + carets; sorting applies per sibling level;
+   * an active filter shows matches with their ancestors, force-expanded.
+   * Not combinable with `groupBy` or `lazy`.
+   */
+  readonly childrenKey = input<string | null>(null);
   /** Emitted when the selection changes. */
   readonly selectionChange = output<StrctRow[]>();
   /** Emitted when the refresh button is clicked. */
@@ -1144,6 +1434,14 @@ export class StrctDatagrid {
   readonly rowAction = output<{ row: StrctRow; item: StrctMenuItem }>();
   /** Server-side data request (lazy mode): load this page / sort and set `rows`. */
   readonly lazyLoad = output<StrctDatagridLazyState>();
+  /** An editable cell was committed (Enter / blur). The grid does not mutate
+   *  rows — apply `value` to your data and pass the updated array back in. */
+  readonly cellEdit = output<{
+    row: StrctRow;
+    column: StrctDatagridColumn;
+    value: string;
+    previous: unknown;
+  }>();
 
   private readonly menu = inject(StrctMenuService);
 
@@ -1246,6 +1544,11 @@ export class StrctDatagrid {
   protected readonly dragKey = signal<string | null>(null);
   protected readonly dropKey = signal<string | null>(null);
   protected onColDragStart(key: string, event: DragEvent): void {
+    // Text selection inside the filter panel must not start a column drag.
+    if ((event.target as HTMLElement | null)?.closest?.('.strct-dg__filterpanel')) {
+      event.preventDefault();
+      return;
+    }
     if (!this.reorderable()) return;
     this.dragKey.set(key);
     event.dataTransfer?.setData('text/plain', key);
@@ -1305,11 +1608,161 @@ export class StrctDatagrid {
     return it.group ? `strct-group:${String(it.group.key)}` : this.rowKey(it.row!);
   }
 
+  // ── Column filter popover ──────────────────────────────────────
+  protected readonly filterOpenKey = signal<string | null>(null);
+  protected toggleFilterPanel(key: string, event: Event): void {
+    event.stopPropagation();
+    this.filterOpenKey.set(this.filterOpenKey() === key ? null : key);
+  }
+  protected hasFilter(key: string): boolean {
+    const v = this.filters()[key];
+    return Array.isArray(v) ? v.length > 0 : v != null && String(v).trim() !== '';
+  }
+  protected textFilter(key: string): string {
+    const v = this.filters()[key];
+    return typeof v === 'string' ? v : '';
+  }
+  protected setTextFilter(key: string, value: string): void {
+    this.filters.update((f) => ({ ...f, [key]: value }));
+  }
+  protected optionChecked(key: string, opt: unknown): boolean {
+    const v = this.filters()[key];
+    return Array.isArray(v) && v.includes(opt);
+  }
+  protected toggleFilterOption(key: string, opt: unknown): void {
+    this.filters.update((f) => {
+      const cur = Array.isArray(f[key]) ? [...(f[key] as unknown[])] : [];
+      const i = cur.indexOf(opt);
+      if (i >= 0) cur.splice(i, 1);
+      else cur.push(opt);
+      return { ...f, [key]: cur };
+    });
+  }
+  protected clearFilter(key: string): void {
+    this.filters.update((f) => {
+      const next = { ...f };
+      delete next[key];
+      return next;
+    });
+  }
+  @HostListener('document:click', ['$event'])
+  protected onDocClickFilter(event: MouseEvent): void {
+    if (!this.filterOpenKey()) return;
+    const t = event.target as HTMLElement;
+    if (t.closest('.strct-dg__filterpanel') || t.closest('.strct-dg__filterbtn')) return;
+    this.filterOpenKey.set(null);
+  }
+  @HostListener('document:keydown.escape')
+  protected onEscapeFilter(): void {
+    this.filterOpenKey.set(null);
+  }
+
+  // ── Tree-grid state ────────────────────────────────────────────
+  private readonly expandedTree = signal<Set<unknown>>(new Set());
+  protected treeDepth(row: StrctRow): number {
+    return this.treeFlat().meta.get(this.rowKey(row))?.depth ?? 0;
+  }
+  protected treeHasChildren(row: StrctRow): boolean {
+    return this.treeFlat().meta.get(this.rowKey(row))?.hasChildren ?? false;
+  }
+  protected treeExpanded(row: StrctRow): boolean {
+    return this.treeFlat().meta.get(this.rowKey(row))?.expanded ?? false;
+  }
+  /** Expand / collapse one tree row. */
+  toggleTreeRow(row: StrctRow): void {
+    const key = this.rowKey(row);
+    const next = new Set(this.expandedTree());
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    this.expandedTree.set(next);
+  }
+
+  // ── Inline cell editing ────────────────────────────────────────
+  private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
+  protected readonly editing = signal<{ rowKey: unknown; colKey: string } | null>(null);
+  protected isEditingCell(row: StrctRow, col: StrctDatagridColumn): boolean {
+    const e = this.editing();
+    return !!e && e.rowKey === this.rowKey(row) && e.colKey === col.key;
+  }
+  protected startEdit(row: StrctRow, col: StrctDatagridColumn): void {
+    this.editing.set({ rowKey: this.rowKey(row), colKey: col.key });
+    setTimeout(() =>
+      this.hostRef.nativeElement.querySelector<HTMLInputElement>('.strct-dg__editinput')?.focus(),
+    );
+  }
+  protected commitEdit(row: StrctRow, col: StrctDatagridColumn, event: Event): void {
+    if (!this.isEditingCell(row, col)) return; // Escape/Enter already closed it
+    const value = (event.target as HTMLInputElement).value;
+    this.editing.set(null);
+    const previous = row[col.key];
+    if (String(previous ?? '') !== value) this.cellEdit.emit({ row, column: col, value, previous });
+  }
+  protected cancelEdit(event?: Event): void {
+    event?.stopPropagation();
+    this.editing.set(null);
+  }
+
+  /** Active (non-empty) filter entries. */
+  private readonly activeFilters = computed(() =>
+    Object.entries(this.filters()).filter(([, v]) =>
+      Array.isArray(v) ? v.length > 0 : String(v).trim() !== '',
+    ),
+  );
+
+  private matchesFilters(row: StrctRow): boolean {
+    return this.activeFilters().every(([key, v]) =>
+      Array.isArray(v)
+        ? v.some((opt) => opt === row[key])
+        : String(row[key] ?? '')
+            .toLowerCase()
+            .includes(String(v).trim().toLowerCase()),
+    );
+  }
+
+  /** Rows surviving the per-column filters (client-side modes only). */
+  private readonly filteredRows = computed(() => {
+    if (this.lazy() || !this.activeFilters().length) return this.rows();
+    return this.rows().filter((r) => this.matchesFilters(r));
+  });
+
+  /** Tree mode: flattened visible rows + per-row depth/children/expanded meta. */
+  private readonly treeFlat = computed<{
+    rows: StrctRow[];
+    meta: Map<unknown, { depth: number; hasChildren: boolean; expanded: boolean }>;
+  }>(() => {
+    const ck = this.childrenKey()!;
+    const { key, dir } = this.sort();
+    const sign = dir === 'asc' ? 1 : -1;
+    const sortRows = (rs: StrctRow[]) => {
+      const c = [...rs];
+      if (key) c.sort((a, b) => sign * this.compare(a[key], b[key]));
+      return c;
+    };
+    const filtering = this.activeFilters().length > 0;
+    const kidsOf = (r: StrctRow) => (r[ck] as StrctRow[] | undefined) ?? [];
+    const survives = (r: StrctRow): boolean => this.matchesFilters(r) || kidsOf(r).some(survives);
+    const meta = new Map<unknown, { depth: number; hasChildren: boolean; expanded: boolean }>();
+    const rowsOut: StrctRow[] = [];
+    const walk = (rs: StrctRow[], depth: number) => {
+      for (const r of sortRows(rs)) {
+        const kids = filtering ? kidsOf(r).filter(survives) : kidsOf(r);
+        // Filtering force-expands so matches are never hidden under a fold.
+        const expanded = filtering ? true : this.expandedTree().has(this.rowKey(r));
+        meta.set(this.rowKey(r), { depth, hasChildren: kids.length > 0, expanded });
+        rowsOut.push(r);
+        if (kids.length && expanded) walk(kids, depth + 1);
+      }
+    };
+    walk(filtering ? this.rows().filter(survives) : this.rows(), 0);
+    return { rows: rowsOut, meta };
+  });
+
   protected readonly sorted = computed(() => {
     // Server-side mode: rows arrive already ordered / sliced — never touch them.
     if (this.lazy()) return this.rows();
+    if (this.childrenKey()) return this.treeFlat().rows;
     const { key, dir } = this.sort();
-    const data = [...this.rows()];
+    const data = [...this.filteredRows()];
     if (!key) return data;
     const sign = dir === 'asc' ? 1 : -1;
     return data.sort((a, b) => sign * this.compare(a[key], b[key]));
@@ -1441,6 +1894,11 @@ export class StrctDatagrid {
       const pageCount = Math.max(1, Math.ceil(count / size));
       if (this.page() > pageCount) this.page.set(pageCount);
     });
+    // A changed filter always restarts from page 1.
+    effect(() => {
+      this.filters();
+      untracked(() => this.page.set(1));
+    });
     // Seed the selection from initialSelection (re-runs only when the input changes,
     // so a user's own toggles afterward are untouched).
     effect(() => {
@@ -1457,6 +1915,7 @@ export class StrctDatagrid {
         pageSize: this.pageSize(),
         sortKey: this.sort().key,
         sortDir: this.sort().dir,
+        filters: this.filters(),
       };
       const key = JSON.stringify(state);
       untracked(() => {

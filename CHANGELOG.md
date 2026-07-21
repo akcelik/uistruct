@@ -5,6 +5,33 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-07-21
+
+### Added — Datagrid Pro
+
+The Clarity / MUI X-tier grid features, additively:
+
+- **Per-column filters** — `columns[].filterable` opens a contains-text
+  popover in the header; `columns[].filterOptions` renders a checkbox value
+  set instead. Filters AND together, are two-way via `[(filters)]`
+  (`StrctDatagridFilters`), reset paging, and in `lazy` mode ride on the
+  `(lazyLoad)` state instead of filtering client-side.
+- **Tree grid** — `childrenKey` renders hierarchical rows (the vCenter
+  inventory shape): indentation + carets, per-sibling-level sorting,
+  `role="treegrid"` with `aria-level` / `aria-expanded`; an active filter
+  shows matches with their ancestors, force-expanded. Works with paging and
+  virtual mode over the flattened visible set.
+- **Inline cell editing** — `columns[].editable` opens an input on
+  double-click; Enter / blur commit via `(cellEdit)` `{ row, column, value,
+previous }`, Escape cancels, unchanged commits don't emit. The grid never
+  mutates rows — the consumer's store stays the single source of truth.
+
+### Fixed
+
+- Tree rows announce correctly: `aria-expanded`/`aria-level` are emitted
+  under a `treegrid` role, not on plain table rows (axe
+  `aria-conditional-attr`).
+
 ## [1.7.0] - 2026-07-21
 
 ### Added — the ops suite (monitoring-console trio + units)
