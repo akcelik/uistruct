@@ -10,6 +10,8 @@ import {
   StrctSkeleton,
   StrctToastService,
   StrctTooltip,
+  StrctTour,
+  StrctTourStep,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -28,6 +30,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctSignpost,
     StrctSkeleton,
     StrctEmptyState,
+    StrctTour,
   ],
   template: `
     <app-page-header title="Feedback" subtitle="Contextual messages and hints." />
@@ -174,8 +177,37 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         </strct-empty-state>
       </div>
     </app-demo>
+
+    <app-demo
+      anchor="tour"
+      heading="Tour"
+      description="Coach marks over live UI: each step spotlights its target with an accent ring and anchors a dialog card next to it. Arrows/buttons step, Escape dismisses; reopening restarts."
+      code='<strct-tour [(open)]="tourOpen" [steps]="steps" (finished)="markSeen()" />'
+    >
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <button strct-button variant="primary" id="tour-start" (click)="tourOpen.set(true)">
+          Start tour
+        </button>
+        <strct-badge id="tour-badge" status="success">Deployment healthy</strct-badge>
+        @if (tourMsg()) {
+          <span class="echo">{{ tourMsg() }}</span>
+        }
+      </div>
+      <strct-tour
+        [(open)]="tourOpen"
+        [steps]="tourSteps"
+        (finished)="tourMsg.set('finished')"
+        (dismissed)="tourMsg.set('dismissed')"
+      />
+    </app-demo>
   `,
   styles: [
+    `
+      .echo {
+        font-size: 12.5px;
+        color: var(--t2);
+      }
+    `,
     `
       .es-grid {
         display: grid;
@@ -215,6 +247,14 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class FeedbackPage {
+  protected readonly tourOpen = signal(false);
+  protected readonly tourMsg = signal('');
+  protected readonly tourSteps: StrctTourStep[] = [
+    { target: '#tour-start', title: 'Start here', body: 'This button opened the tour you are on.' },
+    { target: '#tour-badge', title: 'Live status', body: 'Badges carry deployment health.' },
+    { target: null, title: 'All set', body: 'A targetless step centers the card.' },
+  ];
+
   protected readonly showDanger = signal(true);
   protected readonly toast = inject(StrctToastService);
 }

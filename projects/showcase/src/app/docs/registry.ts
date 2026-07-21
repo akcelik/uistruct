@@ -144,6 +144,51 @@ export const DOCS: DocCategory[] = [
         ],
       },
       {
+        id: 'split-button',
+        title: 'Split button',
+        selector: 'strct-split-button',
+        importNames: ['StrctSplitButton'],
+        summary: 'Primary action + a chevron menu of variants.',
+        lead: 'Fluent\u2019s split button: the main segment fires `(action)`; the chevron opens the variants (`StrctMenuItem[]` \u2014 icons, dividers, critical entries) and `(picked)` carries the chosen one. Use when one action dominates but variants exist \u2014 "Deploy \u25be Deploy with snapshot".',
+        inputs: [
+          { name: 'label', type: 'string', description: 'Main action label. Required.' },
+          {
+            name: 'items',
+            type: 'StrctMenuItem[]',
+            default: '[]',
+            description: 'Variant entries (label, icon?, critical?, disabled?, divider?).',
+          },
+          {
+            name: 'icon',
+            type: 'string',
+            default: `''`,
+            description: 'Leading icon of the main segment.',
+          },
+          { name: 'solid', type: 'boolean', default: 'false', description: 'Filled accent look.' },
+          {
+            name: 'disabled',
+            type: 'boolean',
+            default: 'false',
+            description: 'Disable both segments.',
+          },
+          {
+            name: 'menuLabel',
+            type: 'string',
+            default: `'More actions'`,
+            description: 'Accessible name of the chevron.',
+          },
+        ],
+        outputs: [
+          { name: 'action', type: 'void', description: 'The main segment was clicked.' },
+          { name: 'picked', type: 'StrctMenuItem', description: 'A variant was chosen.' },
+        ],
+        do: ['Make the main segment the safe, most common variant.'],
+        dont: ['Do not hide the only action behind the chevron \u2014 use a dropdown then.'],
+        a11y: [
+          'The chevron is a separately-focusable labeled button with aria-haspopup/expanded; menu semantics come from strct-dropdown.',
+        ],
+      },
+      {
         id: 'speeddial',
         title: 'Speed dial',
         selector: 'strct-speed-dial',
@@ -720,6 +765,44 @@ export const DOCS: DocCategory[] = [
         a11y: [cvaA11y, 'Keyboard adjustable; stars are focusable.'],
       },
       {
+        id: 'transfer',
+        title: 'Transfer',
+        selector: 'strct-transfer',
+        importNames: ['StrctTransfer', 'StrctTransferItem'],
+        summary: 'Dual-list picklist \u2014 assign items to a set.',
+        lead: '"Assign hosts to the cluster": available items on the left, the chosen set on the right, checkbox multi-select and move buttons between, a searchbox per side. `items` stays the single source-of-truth list; `assigned` is the two-way id set.',
+        inputs: [
+          {
+            name: 'items',
+            type: 'StrctTransferItem[]',
+            description: '`{ id; label; icon?; disabled?; data? }[]`. Required.',
+          },
+          {
+            name: 'assigned',
+            type: 'string[]',
+            default: '[]',
+            description: 'Assigned ids, two-way (`[(assigned)]`).',
+          },
+          {
+            name: 'sourceLabel / targetLabel / searchPlaceholder / emptyLabel / assignLabel / unassignLabel',
+            type: 'string',
+            description: 'Localizable strings.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'moved',
+            type: `{ direction: 'assign' | 'unassign'; ids: string[] }`,
+            description: 'A move happened.',
+          },
+        ],
+        do: ['Use for membership editing with more items than a multi-select handles well.'],
+        dont: ['Do not use it for a handful of options \u2014 checkboxes are simpler.'],
+        a11y: [
+          'Both lists are labeled listboxes; every checkbox carries the item label; move buttons are labeled and disabled until a selection exists.',
+        ],
+      },
+      {
         id: 'chips',
         title: 'Chips',
         selector: 'strct-chips',
@@ -1253,6 +1336,69 @@ export const DOCS: DocCategory[] = [
         ],
       },
       {
+        id: 'splitter',
+        title: 'Splitter',
+        selector: 'strct-splitter',
+        importNames: ['StrctSplitter'],
+        summary: 'Two resizable panes with a draggable gutter.',
+        lead: 'Master/detail layouts where the split is the user\u2019s to own: project `strctPaneStart` / `strctPaneEnd`, bind `[(split)]` (start pane %, persistable) and clamp with `min`/`max`. The gutter is a keyboard `role="separator"`: arrows nudge by `step`, Home/End jump to the bounds.',
+        inputs: [
+          {
+            name: 'split',
+            type: 'number',
+            default: '50',
+            description: 'Start pane share in percent, two-way.',
+          },
+          {
+            name: 'min / max',
+            type: 'number',
+            default: '15 / 85',
+            description: 'Clamp bounds (%).',
+          },
+          {
+            name: 'vertical',
+            type: 'boolean',
+            default: 'false',
+            description: 'Stack panes vertically.',
+          },
+          { name: 'step', type: 'number', default: '3', description: 'Keyboard nudge (%).' },
+          {
+            name: 'gutterLabel',
+            type: 'string',
+            default: `'Resize panes'`,
+            description: 'Accessible separator name.',
+          },
+        ],
+        do: ['Persist `split` next to your other user preferences.'],
+        dont: ['Do not nest splitters more than one level deep \u2014 use a real layout then.'],
+        a11y: ['The gutter exposes aria-valuenow/min/max and is fully keyboard-operable.'],
+      },
+      {
+        id: 'watermark',
+        title: 'Watermark',
+        selector: 'strct-watermark',
+        importNames: ['StrctWatermark'],
+        summary: 'Repeating diagonal text overlay (compliance).',
+        lead: 'A pointer-transparent tiled SVG layer over its content \u2014 "CONFIDENTIAL", "user@corp \u00b7 2026-07-21" \u2014 for classified / internal consoles. Content below stays fully interactive and selectable; the layer is aria-hidden and text is XML-escaped.',
+        inputs: [
+          { name: 'text', type: 'string', description: 'The repeated mark. Required.' },
+          {
+            name: 'opacity',
+            type: 'number',
+            default: '0.06',
+            description: 'Layer opacity (0\u20131).',
+          },
+          { name: 'angle', type: 'number', default: '-24', description: 'Rotation in degrees.' },
+          { name: 'gap', type: 'number', default: '220', description: 'Tile size (px).' },
+          { name: 'fontSize', type: 'number', default: '15', description: 'Mark font size (px).' },
+        ],
+        do: ['Stamp who/when for screenshot traceability.'],
+        dont: [
+          'Do not raise opacity until text contrast suffers \u2014 it is a deterrent, not a lock.',
+        ],
+        a11y: ['Purely decorative: aria-hidden and pointer-events: none.'],
+      },
+      {
         id: 'wizard',
         title: 'Wizard',
         selector: 'strct-wizard',
@@ -1354,6 +1500,35 @@ export const DOCS: DocCategory[] = [
         do: ['Mark the final item current so it is not a link.'],
         dont: ['Do not use a breadcrumb when the hierarchy is only one level deep.'],
         a11y: ['Use within a nav landmark; the current item should not be a link.'],
+      },
+      {
+        id: 'menubar',
+        title: 'Menubar',
+        selector: 'strct-menubar',
+        importNames: ['StrctMenubar', 'StrctMenubarItem'],
+        summary: 'Horizontal application-menu strip.',
+        lead: 'The "VM \u00b7 Host \u00b7 Cluster" application-menu strip for dense tool-style consoles. Click or Enter/Down opens a menu; Left/Right move across the bar and, while open, switch the open menu (APG menubar). `(picked)` carries `{ menu, item }`.',
+        inputs: [
+          {
+            name: 'menus',
+            type: 'StrctMenubarItem[]',
+            description: '`{ id; label; items: StrctMenuItem[] }[]`. Required.',
+          },
+          {
+            name: 'ariaLabel',
+            type: 'string',
+            default: `'Application menu'`,
+            description: 'Accessible bar name.',
+          },
+        ],
+        outputs: [
+          { name: 'picked', type: '{ menu; item }', description: 'A menu entry was chosen.' },
+        ],
+        do: ['Group verbs by object (VM / Host / Cluster) the way vSphere does.'],
+        dont: ['Do not use it for site navigation \u2014 that is the header / rail\u2019s job.'],
+        a11y: [
+          'role="menubar" with roving tabindex; menus are labeled role="menu"; Escape and outside click close.',
+        ],
       },
       {
         id: 'pagination',
@@ -2916,6 +3091,41 @@ export const DOCS: DocCategory[] = [
         ],
         do: ['Use for a paragraph of help or a small set of details.'],
         dont: ['Do not use a signpost where a one-line tooltip suffices.'],
+      },
+      {
+        id: 'tour',
+        title: 'Tour',
+        selector: 'strct-tour',
+        importNames: ['StrctTour', 'StrctTourStep'],
+        summary: 'Coach marks \u2014 spotlight onboarding over live UI.',
+        lead: '"What\u2019s new" onboarding: each step spotlights a CSS-selector `target` with an accent ring cut out of a dimmed backdrop and anchors a labeled dialog card next to it (auto-flipping near the viewport edge; `target: null` centers the card). Targets are looked up when the step shows, so it works over any page.',
+        inputs: [
+          {
+            name: 'open',
+            type: 'boolean',
+            default: 'false',
+            description: 'Two-way visibility; reopening restarts at step 1.',
+          },
+          {
+            name: 'steps',
+            type: 'StrctTourStep[]',
+            description: '`{ target: string | null; title; body }[]`. Required.',
+          },
+          {
+            name: 'nextLabel / backLabel / skipLabel / doneLabel',
+            type: 'string',
+            description: 'Localizable strings.',
+          },
+        ],
+        outputs: [
+          { name: 'finished', type: 'void', description: 'Done was clicked on the last step.' },
+          { name: 'dismissed', type: 'void', description: 'Skipped / Escape / outside click.' },
+        ],
+        do: ['Keep it to 3\u20135 steps and persist "seen" so it never nags.'],
+        dont: ['Do not gate critical workflows behind a tour.'],
+        a11y: [
+          'The card is a labeled role="dialog"; Escape dismisses; targets scroll into view before measuring.',
+        ],
       },
       {
         id: 'toast',

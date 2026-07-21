@@ -35,6 +35,8 @@ import {
   StrctPageHeaderCrumbs,
   StrctBreadcrumb,
   StrctBreadcrumbItem,
+  StrctSplitter,
+  StrctWatermark,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -75,6 +77,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctPageHeaderCrumbs,
     StrctBreadcrumb,
     StrctBreadcrumbItem,
+    StrctSplitter,
+    StrctWatermark,
   ],
   template: `
     <app-page-header
@@ -476,6 +480,44 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         </div>
       </div>
     </app-demo>
+
+    <app-demo
+      anchor="splitter"
+      heading="Splitter"
+      description="Two resizable panes with a draggable gutter — master/detail where the split is the user's to own. The gutter is a keyboard separator: arrows nudge, Home/End jump to the bounds. Persist [(split)] with your other preferences."
+      code='<strct-splitter [(split)]="pct"><div strctPaneStart>…</div><div strctPaneEnd>…</div></strct-splitter>'
+    >
+      <div style="width: 100%;">
+        <strct-splitter
+          [(split)]="splitPct"
+          [min]="20"
+          [max]="80"
+          style="height: 180px; border: 1px solid var(--b2); border-radius: 9px;"
+        >
+          <div strctPaneStart style="padding: 12px; font-size: 12.5px; color: var(--t2);">
+            VM list ({{ splitPct() }}%)
+          </div>
+          <div strctPaneEnd style="padding: 12px; font-size: 12.5px; color: var(--t2);">
+            Selected VM detail
+          </div>
+        </strct-splitter>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="watermark"
+      heading="Watermark"
+      description="A pointer-transparent repeating text overlay for compliance consoles — content stays fully interactive and selectable. Stamp who/when for screenshot traceability."
+      code='<strct-watermark text="CONFIDENTIAL · serkan@corp">…page…</strct-watermark>'
+    >
+      <strct-watermark text="CONFIDENTIAL · serkan@corp" style="width: 100%;">
+        <div
+          style="height: 140px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--b2); border-radius: 9px; color: var(--t2); font-size: 12.5px;"
+        >
+          A classified inventory table would render here — try selecting this text.
+        </div>
+      </strct-watermark>
+    </app-demo>
   `,
   styles: [
     `
@@ -501,6 +543,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class SurfacesPage {
+  protected readonly splitPct = signal(40);
+
   protected readonly richSelected = signal(false);
   protected readonly richLoading = signal(true);
   protected richCollapsed = false;
