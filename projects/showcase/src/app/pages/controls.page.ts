@@ -11,6 +11,8 @@ import {
   StrctTag,
   StrctTooltip,
   StrctCopy,
+  StrctSplitButton,
+  StrctMenuItem,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -31,6 +33,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctSpeedDial,
     StrctTooltip,
     StrctCopy,
+    StrctSplitButton,
   ],
   template: `
     <app-page-header title="Controls" subtitle="Buttons and at-a-glance status indicators." />
@@ -228,8 +231,41 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       <strct-spinner />
       <strct-spinner size="lg" />
     </app-demo>
+
+    <app-demo
+      anchor="split-button"
+      heading="Split button"
+      description="A primary action plus a chevron of variants: the main segment fires (action), menu entries fire (picked). Use when one action dominates but variants exist."
+      code='<strct-split-button label="Deploy" solid [items]="variants" (action)="deploy()" (picked)="run($event)" />'
+    >
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <strct-split-button
+          label="Deploy"
+          icon="rocket"
+          solid
+          [items]="deployVariants"
+          (action)="sbLast.set('Deploy')"
+          (picked)="sbLast.set($event.label ?? '')"
+        />
+        <strct-split-button
+          label="Power on"
+          [items]="powerVariants"
+          (action)="sbLast.set('Power on')"
+          (picked)="sbLast.set($event.label ?? '')"
+        />
+        @if (sbLast()) {
+          <span class="echo">ran: {{ sbLast() }}</span>
+        }
+      </div>
+    </app-demo>
   `,
   styles: [
+    `
+      .echo {
+        font-size: 12.5px;
+        color: var(--t2);
+      }
+    `,
     `
       .stack {
         display: flex;
@@ -248,6 +284,18 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class ControlsPage {
+  protected readonly sbLast = signal('');
+  protected readonly deployVariants: StrctMenuItem[] = [
+    { label: 'Deploy with snapshot', icon: 'snapshot' },
+    { label: 'Deploy paused', icon: 'paused' },
+    { divider: true },
+    { label: 'Force deploy', icon: 'warning', critical: true },
+  ];
+  protected readonly powerVariants: StrctMenuItem[] = [
+    { label: 'Power on and open console' },
+    { label: 'Power on all in cluster' },
+  ];
+
   protected readonly tags = signal(['Frontend', 'Design', 'Infra']);
 
   protected removeTag(tag: string): void {

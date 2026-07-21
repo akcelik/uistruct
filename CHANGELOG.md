@@ -5,6 +5,36 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-07-21
+
+### Added — component tour (Ant / Carbon / Fluent / Blueprint gaps)
+
+Six new components; the set is now 79:
+
+- **`strct-splitter`** — two resizable panes with a draggable gutter
+  (`strctPaneStart` / `strctPaneEnd`, two-way `split` %, `min`/`max` clamps,
+  `vertical`); the gutter is a keyboard `role="separator"` with
+  aria-valuenow/min/max, arrow nudge and Home/End.
+- **`strct-transfer`** — dual-list picklist ("assign hosts to the cluster"):
+  checkbox multi-select, per-side searchboxes, move buttons, two-way
+  `assigned` id set, `(moved)` events.
+- **`strct-split-button`** — main action + chevron of variants
+  (`StrctMenuItem[]` with icons/dividers/critical); `(action)` / `(picked)`;
+  outline and `solid` looks.
+- **`strct-menubar`** — the "VM · Host · Cluster" application-menu strip:
+  APG menubar keyboarding (roving tabindex, Left/Right switch the open
+  menu), labeled `role="menu"` panels, `(picked)` with `{ menu, item }`.
+- **`strct-tour`** — coach marks over live UI: CSS-selector targets get an
+  accent spotlight ring + anchored dialog card (viewport-aware placement,
+  `target: null` centers), Escape/skip vs. `finished` semantics.
+- **`strct-watermark`** — pointer-transparent repeating diagonal text
+  overlay for compliance consoles; XML-escaped, aria-hidden, content stays
+  interactive.
+
+Also: `strct-segmented` (already shipped) and `strct-metric-tile`'s
+delta/trend covered the "content switcher" and "statistic" items of this
+package — no duplicates added.
+
 ## [1.8.0] - 2026-07-21
 
 ### Added — Datagrid Pro

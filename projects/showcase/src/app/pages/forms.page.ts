@@ -25,6 +25,8 @@ import {
   StrctSegmentedOption,
   StrctToggle,
   StrctValidationState,
+  StrctTransfer,
+  StrctTransferItem,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -55,6 +57,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctInputOtp,
     StrctKnob,
     StrctInputMask,
+    StrctTransfer,
   ],
   template: `
     <app-page-header
@@ -413,6 +416,18 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         />
       </div>
     </app-demo>
+
+    <app-demo
+      anchor="transfer"
+      heading="Transfer"
+      description="Dual-list picklist for membership editing — assign hosts to a cluster. Checkbox multi-select, move buttons, a searchbox per side; [(assigned)] is the two-way id set."
+      code='<strct-transfer [items]="hosts" [(assigned)]="clusterHosts" (moved)="log($event)" />'
+    >
+      <div style="width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 8px;">
+        <strct-transfer [items]="tfHosts" [(assigned)]="tfAssigned" />
+        <span class="echo">assigned: {{ tfAssigned().join(', ') || '—' }}</span>
+      </div>
+    </app-demo>
   `,
   styles: [
     `
@@ -454,6 +469,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class FormsPage {
+  protected readonly tfHosts: StrctTransferItem[] = [
+    { id: 'hv-01', label: 'hv-01.dc-east', icon: 'host' },
+    { id: 'hv-02', label: 'hv-02.dc-east', icon: 'host' },
+    { id: 'hv-03', label: 'hv-03.dc-east', icon: 'host' },
+    { id: 'hv-04', label: 'hv-04.dc-west', icon: 'host' },
+    { id: 'hv-05', label: 'hv-05.dc-west', icon: 'host', disabled: true },
+  ];
+  protected readonly tfAssigned = signal<string[]>(['hv-01']);
+
   protected readonly fieldEmail = signal('');
   protected readonly emailError = computed(() => {
     const v = this.fieldEmail();

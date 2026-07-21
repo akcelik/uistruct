@@ -14,6 +14,8 @@ import {
   StrctSearchbox,
   StrctSectionMenu,
   StrctToggle,
+  StrctMenubar,
+  StrctMenubarItem,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -34,6 +36,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctSearchbox,
     StrctSectionMenu,
     StrctToggle,
+    StrctMenubar,
   ],
   template: `
     <app-page-header title="Navigation" subtitle="Wayfinding and paging controls." />
@@ -202,6 +205,20 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <span class="echo">active: {{ menuActive() }}</span>
       </div>
     </app-demo>
+
+    <app-demo
+      anchor="menubar"
+      heading="Menubar"
+      description="The application-menu strip for dense tool consoles. Click or Enter/Down opens; Left/Right move across the bar and switch the open menu (APG menubar); Escape and outside click close."
+      code='<strct-menubar [menus]="menus" (picked)="run($event)" />'
+    >
+      <div class="cp-demo">
+        <strct-menubar [menus]="mbMenus" (picked)="mbLast.set($event.item.label ?? '')" />
+        @if (mbLast()) {
+          <span class="echo">picked: {{ mbLast() }}</span>
+        }
+      </div>
+    </app-demo>
   `,
   styles: [
     `
@@ -280,6 +297,33 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class NavigationPage {
+  protected readonly mbLast = signal('');
+  protected readonly mbMenus: StrctMenubarItem[] = [
+    {
+      id: 'vm',
+      label: 'VM',
+      items: [
+        { label: 'Power on', icon: 'running' },
+        { label: 'Suspend', icon: 'paused' },
+        { divider: true },
+        { label: 'Delete from disk', icon: 'trash', critical: true },
+      ],
+    },
+    {
+      id: 'host',
+      label: 'Host',
+      items: [
+        { label: 'Enter maintenance mode', icon: 'maintenance' },
+        { label: 'Reboot', icon: 'refresh' },
+      ],
+    },
+    {
+      id: 'cluster',
+      label: 'Cluster',
+      items: [{ label: 'Edit DRS settings', icon: 'settings' }],
+    },
+  ];
+
   protected readonly cpOpen = signal(false);
   protected readonly cpLast = signal('');
   protected readonly sbQuery = signal('');
