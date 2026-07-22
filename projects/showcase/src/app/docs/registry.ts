@@ -831,6 +831,20 @@ export const DOCS: DocCategory[] = [
         summary: 'One-time-password boxes.',
         lead: 'Segmented one-time-password boxes with auto-advance, backspace and paste support. Value is the concatenated string. ControlValueAccessor-compatible.',
         inputs: [
+          {
+            name: 'autofocus',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Focus box 0 on first render — the "second-factor step just appeared" case.',
+          },
+          {
+            name: 'groupSize',
+            type: 'number',
+            default: '0',
+            description:
+              'Insert a separator every N boxes (3 ⇒ "nnn – nnn"), mirroring authenticator apps. 0 disables.',
+          },
           model('string', 'Entered code.'),
           { name: 'length', type: 'number', default: '6', description: 'Number of boxes.' },
           {
@@ -838,6 +852,14 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description: 'Obscure entered characters.',
+          },
+        ],
+        methods: [
+          {
+            name: 'focus(index = 0)',
+            type: 'void',
+            description:
+              'Move the caret programmatically — e.g. back to box 0 after a rejected code.',
           },
         ],
         do: ['Match length to the code your backend issues.', 'Allow pasting a full code.'],
@@ -2170,6 +2192,13 @@ export const DOCS: DocCategory[] = [
             default: 'false',
             description:
               'Render the built-in quick-filter searchbox in the toolbar, with a "filtered / total" count while narrowing.',
+          },
+          {
+            name: 'quickFilterAlign',
+            type: `'start' | 'end'`,
+            default: `'end'`,
+            description:
+              'Toolbar placement of the built-in box. The default follows console convention: action verbs lead, view controls sit at the far right.',
           },
           {
             name: 'childrenKey',

@@ -3,6 +3,8 @@ import {
   Component,
   ViewEncapsulation,
   ElementRef,
+  afterNextRender,
+  booleanAttribute,
   computed,
   forwardRef,
   inject,
@@ -26,6 +28,9 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   template: `
     <div class="strct-otp">
       @for (i of indices(); track i) {
+        @if (groupSize() > 0 && i > 0 && i % groupSize() === 0) {
+          <span class="strct-otp__sep" aria-hidden="true">–</span>
+        }
         <input
           class="strct-otp__box"
           [type]="masked() ? 'password' : 'text'"
@@ -46,7 +51,15 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     `
       .strct-otp {
         display: inline-flex;
+        align-items: center;
         gap: 8px;
+      }
+      /* Group separator — mirrors how authenticator apps display the code. */
+      .strct-otp__sep {
+        margin-inline: 3px;
+        color: var(--t3);
+        font-size: 16px;
+        user-select: none;
       }
       .strct-otp__box {
         width: 40px;
@@ -81,6 +94,16 @@ export class StrctInputOtp implements ControlValueAccessor {
   readonly length = input(6);
   /** Mask each box as a password dot. */
   readonly masked = input(false);
+  /**
+   * Focus box 0 on first render — the "second-factor step just appeared"
+   * case, declaratively.
+   */
+  readonly autofocus = input(false, { transform: booleanAttribute });
+  /**
+   * Insert a visual separator every N boxes (0 = none): `groupSize=3` renders
+   * `nnn – nnn`, mirroring how authenticator apps display the code.
+   */
+  readonly groupSize = input(0);
 
   readonly slots = signal<string[]>([]);
   readonly isDisabled = signal(false);
@@ -89,6 +112,17 @@ export class StrctInputOtp implements ControlValueAccessor {
 
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
+
+  constructor() {
+    afterNextRender(() => {
+      if (this.autofocus()) this.focusBox(0);
+    });
+  }
+
+  /** Move the caret to a box — e.g. back to 0 after clearing a rejected code. */
+  focus(index = 0): void {
+    this.focusBox(index);
+  }
 
   onInput(i: number, event: Event): void {
     const ch = (event.target as HTMLInputElement).value.slice(-1);

@@ -181,13 +181,18 @@ export class StrctDatagridActionBar {}
         @if (quickFilterable()) {
           <strct-searchbox
             class="strct-dg__quickfilter"
+            [class.strct-dg__quickfilter--end]="quickFilterAlign() === 'end'"
             [placeholder]="L().quickFilter"
             [ariaLabel]="L().quickFilter"
             [value]="quickFilter()"
             (valueChange)="quickFilter.set($event)"
           />
           @if (filterNote(); as note) {
-            <span class="strct-dg__filternote">{{ note }}</span>
+            <span
+              class="strct-dg__filternote"
+              [class.strct-dg__filternote--end]="quickFilterAlign() === 'end'"
+              >{{ note }}</span
+            >
           }
         }
         <ng-content select="[strctDatagridActionBar]" />
@@ -1106,9 +1111,32 @@ export class StrctDatagridActionBar {}
       }
       .strct-dg__skeleton-block {
         height: 12px;
-        background: var(--bg-3);
         border-radius: var(--radius-sm);
-        animation: strct-skeleton-pulse 1.4s ease infinite;
+        /* A moving sweep, not an opacity pulse — --bg-3 sits one step from the
+           cell background on dark themes, so pulsing bars read as EMPTY rows.
+           --skeleton-hi lets a theme tune the highlight without overrides. */
+        background: linear-gradient(
+          90deg,
+          var(--bg-3) 25%,
+          var(--skeleton-hi, var(--acc18)) 50%,
+          var(--bg-3) 75%
+        );
+        background-size: 200% 100%;
+        animation: strct-dg-skeleton-sweep 1.1s linear infinite;
+      }
+      @keyframes strct-dg-skeleton-sweep {
+        0% {
+          background-position: 100% 0;
+        }
+        100% {
+          background-position: -100% 0;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .strct-dg__skeleton-block {
+          animation: none;
+          background: var(--skeleton-hi, var(--acc18));
+        }
       }
       .strct-dg__skeleton-row td {
         border-bottom: 1px solid var(--b1);
@@ -1121,6 +1149,14 @@ export class StrctDatagridActionBar {}
       .strct-dg__quickfilter {
         min-width: 180px;
         max-width: 260px;
+      }
+      /* align end: action verbs lead, the view control sits at the far right. */
+      .strct-dg__quickfilter--end {
+        order: 2;
+        margin-inline-start: auto;
+      }
+      .strct-dg__filternote--end {
+        order: 3;
       }
       .strct-dg__filternote {
         font-size: 11.5px;
@@ -1468,6 +1504,13 @@ export class StrctDatagrid {
   readonly quickFilterFields = input<string[] | null>(null);
   /** Render the built-in quick-filter searchbox in the toolbar. */
   readonly quickFilterable = input(false, { transform: booleanAttribute });
+  /**
+   * Where the built-in box sits in the toolbar. `'end'` (default) follows the
+   * console convention: action verbs lead on the left, view controls sit at
+   * the far right — and the box keeps a stable position across grids whose
+   * button sets differ.
+   */
+  readonly quickFilterAlign = input<'start' | 'end'>('end');
   /**
    * Tree-grid: the row property holding a row's children array. Rows render
    * hierarchically with indent + carets; sorting applies per sibling level;

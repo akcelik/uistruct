@@ -582,6 +582,15 @@ describe('StrctDatagrid quick filter (FR-16-02)', () => {
     expect((cb as HTMLInputElement).checked).toBe(true);
   });
 
+  it('quick filter aligns end by default; start opts out', () => {
+    const fixture = make({ quickFilterable: true });
+    const box = fixture.nativeElement.querySelector('.strct-dg__quickfilter')!;
+    expect(box.classList).toContain('strct-dg__quickfilter--end');
+    fixture.componentRef.setInput('quickFilterAlign', 'start');
+    fixture.detectChanges();
+    expect(box.classList).not.toContain('strct-dg__quickfilter--end');
+  });
+
   it('quickFilterable renders the toolbar searchbox and the N / M note', () => {
     const fixture = make({ quickFilterable: true });
     const box = fixture.nativeElement.querySelector('.strct-dg__quickfilter input')!;
