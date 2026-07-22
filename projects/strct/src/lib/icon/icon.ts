@@ -836,9 +836,17 @@ export class StrctIcon {
 
   /**
    * Icon name. Typed to autocomplete the built-in set while still accepting
-   * any string, since `registerStrctIcon` can add names at runtime.
+   * any string, since `registerStrctIcon` can add names at runtime. For a
+   * compile-time guarantee use `strictName` instead.
    */
-  readonly name = input.required<StrctIconName | (string & {})>();
+  readonly name = input<StrctIconName | (string & {})>('');
+  /**
+   * Strict alternative to `name`: typed as the bare `StrctIconName` union, so
+   * a mistyped built-in name is a BUILD error under strict templates —
+   * `strictName="sheildCheck"` fails to compile. Wins over `name` when both
+   * are set. Use `name` for runtime-registered custom icons.
+   */
+  readonly strictName = input<StrctIconName | null>(null);
   /** Icon size in pixels. */
   readonly size = input(16);
   /** Stroke width for outline icons. */
@@ -848,15 +856,24 @@ export class StrctIcon {
   /** Accessible label for the icon. When empty the icon is hidden from assistive tech. */
   readonly ariaLabel = input<string>('');
 
+  /** The effective name: `strictName` wins when set. */
+  protected readonly iconName = computed(() => this.strictName() ?? this.name());
+
   /** True when the named icon is a full-SVG (raw) icon registered by the app. */
   protected readonly isRaw = computed(() =>
-    Object.prototype.hasOwnProperty.call(STRCT_RAW_ICONS, this.name()),
+    Object.prototype.hasOwnProperty.call(STRCT_RAW_ICONS, this.iconName()),
   );
 
   protected readonly svg = computed<SafeHtml>(() => {
-    const name = this.name();
+    const name = this.iconName();
     const glyph = STRCT_ICONS[name];
-    if (glyph === undefined && !this.isRaw() && isDevMode() && !warnedUnknownIcons.has(name)) {
+    if (
+      name !== '' &&
+      glyph === undefined &&
+      !this.isRaw() &&
+      isDevMode() &&
+      !warnedUnknownIcons.has(name)
+    ) {
       warnedUnknownIcons.add(name);
       console.warn(
         `[strct-icon] Unknown icon name "${name}" — it will render empty. ` +
@@ -867,6 +884,6 @@ export class StrctIcon {
     return this.sanitizer.bypassSecurityTrustHtml(glyph ?? '');
   });
   protected readonly rawSvg = computed<SafeHtml>(() =>
-    this.sanitizer.bypassSecurityTrustHtml(STRCT_RAW_ICONS[this.name()] ?? ''),
+    this.sanitizer.bypassSecurityTrustHtml(STRCT_RAW_ICONS[this.iconName()] ?? ''),
   );
 }

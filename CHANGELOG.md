@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2026-07-22
+
+### Added — consumer-reported gaps (FR-16-01 + singleLine reveal)
+
+- **`strct-icon` `strictName`** — the compile-time opt-in the icon note asked
+  for: typed as the bare `StrctIconName` union, so a mistyped built-in name
+  (`strictName="sheildCheck"`) fails the BUILD under strict templates. Wins
+  over `name` when both are set; `name` (now optional, unchanged behavior)
+  stays the escape hatch for runtime-registered custom icons.
+- **`strct-datagrid` singleLine truncation reveal** — hovering (or keyboard-
+  focusing into) a cell whose content is actually clipped reveals the full
+  text as a native `title`. Hover-lazy: one delegated tbody listener, zero
+  render cost, so virtual grids pay nothing for unhovered cells. Covers
+  plain and `strctCell`-templated cells alike via `textContent`, clears the
+  title again after a column resize, and cells that fit get none.
+  `singleLine` off ⇒ behavior completely unchanged.
+
 ## [1.11.0] - 2026-07-22
 
 ### Added — consumer-reported gaps (FR-16-02 / FR-16-03)

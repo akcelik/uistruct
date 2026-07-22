@@ -232,6 +232,27 @@ describe('StrctIcon', () => {
     }
   });
 
+  it('strictName renders like name and wins when both are set', () => {
+    const fixture = TestBed.createComponent(StrctIcon);
+    fixture.componentRef.setInput('strictName', 'rocket');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('svg path')).toBeTruthy();
+    fixture.componentRef.setInput('name', 'host');
+    fixture.componentRef.setInput('strictName', 'shieldCheck');
+    fixture.detectChanges();
+    const html = fixture.nativeElement.querySelector('svg')!.innerHTML;
+    expect(html).toContain('M8 2.3l5.2 1.9'); // the shield silhouette, not host
+  });
+
+  it('an unset name (empty string) renders empty without warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const fixture = TestBed.createComponent(StrctIcon);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('svg')?.innerHTML.trim()).toBeFalsy();
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
   it('warns once (dev mode) on an unknown icon name and renders empty', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     for (let i = 0; i < 3; i++) {
