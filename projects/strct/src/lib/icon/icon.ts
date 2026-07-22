@@ -188,6 +188,8 @@ const STRCT_ICON_DEFS = {
   flag: '<path d="M4 13.5V3M4 3.6h7.4L9.8 6.2l1.6 2.6H4"/>',
   shieldAlert:
     '<path d="M8 2.3l5.2 1.9v3.3c0 3.1-2.3 5.1-5.2 6.4C5.1 12.6 2.8 10.6 2.8 7.5V4.2z"/><path d="M8 5.5v3.1M8 10.6v.2"/>',
+  rocket:
+    '<path d="M8 1.8c1.9 1.3 2.9 3.1 2.9 5.3 0 1.5-.4 2.9-1 4.1H6.1c-.6-1.2-1-2.6-1-4.1 0-2.2 1-4 2.9-5.3z"/><circle cx="8" cy="6.3" r="1.1"/><path d="M5.1 8.9 3.5 11l2-.2M10.9 8.9l1.6 2.1-2-.2M6.9 11.2 8 14.1l1.1-2.9"/>',
   shieldCheck:
     '<path d="M8 2.3l5.2 1.9v3.3c0 3.1-2.3 5.1-5.2 6.4C5.1 12.6 2.8 10.6 2.8 7.5V4.2z"/><path d="M5.9 7.9l1.5 1.5 2.8-2.9"/>',
 
@@ -525,6 +527,7 @@ export const STRCT_ICON_GROUPS: { label: string; names: StrctIconName[] }[] = [
       'api',
       'bolt',
       'queue',
+      'rocket',
     ],
   },
   {

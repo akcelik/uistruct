@@ -122,6 +122,14 @@ export class StrctDropdown {
   readonly popoverLabel = input('Filters');
   readonly open = signal(false);
 
+  constructor() {
+    // The static `popover` attribute collides with the native HTML Popover
+    // API: the UA styles [popover] hosts (Canvas background, medium border,
+    // fixed positioning) — a white frame around the trigger in dark themes.
+    // Angular has already read the input by now; the DOM attribute must go.
+    this.host.nativeElement.removeAttribute('popover');
+  }
+
   toggle(): void {
     this.open.update((v) => !v);
   }

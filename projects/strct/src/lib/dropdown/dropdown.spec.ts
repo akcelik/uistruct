@@ -67,6 +67,23 @@ describe('StrctDropdown', () => {
     expect(el.querySelector('[role="dialog"]')).toBeTruthy();
   });
 
+  it('strips the static popover attribute so native HTML Popover UA styles never apply', () => {
+    @Component({
+      imports: [StrctDropdown],
+      template: `<strct-dropdown popover><button strctDropdownTrigger>o</button></strct-dropdown>`,
+    })
+    class StaticHost {}
+    const fixture = TestBed.createComponent(StaticHost);
+    fixture.detectChanges();
+    const host = (fixture.nativeElement as HTMLElement).querySelector('strct-dropdown')!;
+    // The UA would style [popover] hosts (Canvas bg + medium border) — the
+    // attribute must be gone while the input stays truthy.
+    expect(host.hasAttribute('popover')).toBe(false);
+    host.querySelector<HTMLElement>('.strct-dd__trigger')!.click();
+    fixture.detectChanges();
+    expect(host.querySelector('[role="dialog"]')).toBeTruthy(); // input still true
+  });
+
   it('popover mode: outside click and Escape still close', () => {
     const { fixture, el, trigger } = setup(true);
     trigger.click();

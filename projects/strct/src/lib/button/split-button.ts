@@ -83,6 +83,20 @@ import { StrctMenuItem } from '../context-menu/menu';
         display: inline-flex;
         align-items: stretch;
       }
+      /* The chevron lives inside strct-dropdown's trigger wrapper — both
+         layers must stretch or the two segments render at different heights. */
+      .strct-sbt .strct-dd {
+        display: inline-flex;
+        align-self: stretch;
+      }
+      .strct-sbt .strct-dd__trigger {
+        display: inline-flex;
+        align-items: stretch;
+      }
+      .strct-sbt__chev {
+        align-self: stretch;
+        height: 100%;
+      }
       .strct-sbt__main,
       .strct-sbt__chev {
         display: inline-flex;
