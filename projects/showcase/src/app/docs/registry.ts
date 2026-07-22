@@ -2093,7 +2093,7 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description:
-              'Keep every row exactly one line tall: cell content never wraps — long values truncate with an ellipsis — so tall content can’t distort the grid.',
+              'Keep every row exactly one line tall: cell content never wraps — long values truncate with an ellipsis — so tall content can’t distort the grid. Hovering a cell whose content is actually clipped reveals the full text as a native title (hover-lazy — no render cost); cells that fit get none.',
           },
           {
             name: 'virtual / viewportHeight / rowHeight',

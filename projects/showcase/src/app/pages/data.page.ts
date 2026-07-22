@@ -219,7 +219,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="datagrid-singleline"
       owner="datagrid"
       heading="Single-line rows"
-      description="By default cells wrap, so a long value can make one row much taller than the rest. Enable singleLine to keep every row exactly one line tall — long values truncate with an ellipsis and the grid's rhythm stays intact."
+      description="By default cells wrap, so a long value can make one row much taller than the rest. Enable singleLine to keep every row exactly one line tall — long values truncate with an ellipsis and the grid's rhythm stays intact. Hover a clipped cell to reveal its full value; cells that fit get no tooltip."
       code='<strct-datagrid [columns]="cols" [rows]="rows" singleLine />'
     >
       <div class="dg-wrap">

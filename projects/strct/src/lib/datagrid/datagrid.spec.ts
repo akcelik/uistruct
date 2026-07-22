@@ -611,3 +611,48 @@ describe('StrctDatagrid quick filter (FR-16-02)', () => {
     expect(fixture.nativeElement.querySelectorAll('tbody tr').length).toBe(3);
   });
 });
+
+describe('StrctDatagrid singleLine truncation reveal', () => {
+  const cols: StrctDatagridColumn[] = [{ key: 'msg', label: 'Message' }];
+  const rows: StrctRow[] = [{ msg: 'a very long certificate subject line that will clip' }];
+
+  function make(singleLine: boolean) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('singleLine', singleLine);
+    fixture.detectChanges();
+    const td = fixture.nativeElement.querySelector('tbody td') as HTMLElement;
+    return { fixture, td };
+  }
+  // jsdom has no layout — model clipped/fitting cells explicitly.
+  const setWidths = (td: HTMLElement, scroll: number, client: number) => {
+    Object.defineProperty(td, 'scrollWidth', { value: scroll, configurable: true });
+    Object.defineProperty(td, 'clientWidth', { value: client, configurable: true });
+  };
+
+  it('hovering a clipped cell reveals the full text as title', () => {
+    const { td } = make(true);
+    setWidths(td, 500, 360);
+    td.dispatchEvent(new Event('mouseover', { bubbles: true }));
+    expect(td.getAttribute('title')).toBe(rows[0]['msg']);
+  });
+
+  it('a cell that fits gets no title, and a stale title is cleared', () => {
+    const { td } = make(true);
+    setWidths(td, 500, 360);
+    td.dispatchEvent(new Event('mouseover', { bubbles: true }));
+    expect(td.getAttribute('title')).toBeTruthy();
+    // Column resized wider: the same cell now fits.
+    setWidths(td, 360, 360);
+    td.dispatchEvent(new Event('mouseover', { bubbles: true }));
+    expect(td.getAttribute('title')).toBeNull();
+  });
+
+  it('singleLine off — behavior completely unchanged', () => {
+    const { td } = make(false);
+    setWidths(td, 500, 360);
+    td.dispatchEvent(new Event('mouseover', { bubbles: true }));
+    expect(td.getAttribute('title')).toBeNull();
+  });
+});

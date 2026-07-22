@@ -333,7 +333,15 @@ export class StrctDatagridActionBar {}
               }
             </tr>
           </thead>
-          <tbody>
+          <!--
+            focusin is the real keyboard path (focus does not bubble from cells);
+            the plain focus binding exists to satisfy mouse-events-have-key-events.
+          -->
+          <tbody
+            (mouseover)="revealIfClipped($event)"
+            (focusin)="revealIfClipped($event)"
+            (focus)="revealIfClipped($event)"
+          >
             @if (loading()) {
               @for (_ of [1, 2, 3, 4, 5]; track $index) {
                 <tr class="strct-dg__skeleton-row">
@@ -1741,6 +1749,25 @@ export class StrctDatagrid {
   protected cancelEdit(event?: Event): void {
     event?.stopPropagation();
     this.editing.set(null);
+  }
+
+  /**
+   * `singleLine` reveal: hovering a cell whose content is actually clipped
+   * gets the full text as a native `title`. Hover-lazy (one delegated
+   * listener, zero render cost — virtual grids pay nothing for unhovered
+   * cells), covers plain and `strctCell`-templated cells alike via
+   * `textContent`, and self-corrects after a column resize.
+   */
+  protected revealIfClipped(event: Event): void {
+    if (!this.singleLine()) return;
+    const td = (event.target as HTMLElement | null)?.closest('td');
+    if (!td) return;
+    if (td.scrollWidth > td.clientWidth) {
+      const full = (td.textContent ?? '').trim();
+      if (full && td.getAttribute('title') !== full) td.setAttribute('title', full);
+    } else {
+      td.removeAttribute('title');
+    }
   }
 
   /** Active (non-empty) filter entries. */
