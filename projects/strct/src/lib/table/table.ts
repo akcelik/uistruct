@@ -168,9 +168,32 @@ export class StrctCellDef {
       }
       .strct-table__skeleton-block {
         height: 12px;
-        background: var(--bg-3);
         border-radius: var(--radius-sm);
-        animation: strct-skeleton-pulse 1.4s ease infinite;
+        /* Same sweep as strct-datagrid / strct-skeleton — "loading" must look
+           identical across the three surfaces, and a pulse on --bg-3 is
+           invisible on dark themes. */
+        background: linear-gradient(
+          90deg,
+          var(--bg-3) 25%,
+          var(--skeleton-hi, var(--acc18)) 50%,
+          var(--bg-3) 75%
+        );
+        background-size: 200% 100%;
+        animation: strct-table-skeleton-sweep 1.1s linear infinite;
+      }
+      @keyframes strct-table-skeleton-sweep {
+        0% {
+          background-position: 100% 0;
+        }
+        100% {
+          background-position: -100% 0;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .strct-table__skeleton-block {
+          animation: none;
+          background: var(--skeleton-hi, var(--acc18));
+        }
       }
       .strct-table__skeleton-row td {
         border-bottom: 1px solid var(--b1);

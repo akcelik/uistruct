@@ -5,6 +5,34 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-07-22
+
+### Added — consumer-reported gaps (FR-16-04…07)
+
+- **`strct-datagrid` `quickFilterAlign`** — the built-in quick-filter box
+  now sits at the toolbar's END by default (action verbs lead on the left,
+  view controls right — the vCenter/Grafana/GitHub convention, and a stable
+  position across grids whose button sets differ). `'start'` restores the
+  old order.
+- **`strct-input-otp` `autofocus` + `focus(index = 0)`** — focus box 0
+  declaratively when the second-factor step appears, and refocus
+  programmatically after a rejected code — no more DOM-reach workarounds.
+- **`strct-input-otp` `groupSize`** — a separator every N boxes
+  (`groupSize=3` ⇒ `nnn – nnn`), mirroring how authenticator apps display
+  the code. Separators are `aria-hidden`; keyboarding is untouched.
+- **Loading skeletons read as loading** — the opacity pulse on `--bg-3` was
+  near-invisible on dark themes ("I see 5–6 EMPTY rows while it loads").
+  `strct-datagrid`, `strct-table` and `strct-skeleton` now share one moving
+  sweep with a `--skeleton-hi` highlight token (default `--acc18`);
+  `prefers-reduced-motion` gets a static highlight bar instead. No API
+  change.
+
+### Docs
+
+- `docs/feature-requests/` gained an `archive/` (13 fully-shipped FR
+  documents moved in) and a status ledger README mapping every FR to the
+  release that shipped it.
+
 ## [1.12.0] - 2026-07-22
 
 ### Added — consumer-reported gaps (FR-16-01 + singleLine reveal)

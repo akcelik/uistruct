@@ -29,7 +29,12 @@ import {
       .strct-skel {
         display: block;
         border-radius: 5px;
-        background: linear-gradient(90deg, var(--bg-3) 25%, var(--bg-h) 37%, var(--bg-3) 63%);
+        background: linear-gradient(
+          90deg,
+          var(--bg-3) 25%,
+          var(--skeleton-hi, var(--acc18)) 50%,
+          var(--bg-3) 75%
+        );
         background-size: 400% 100%;
         animation: strct-skel-shimmer 1.4s ease infinite;
       }
@@ -47,6 +52,7 @@ import {
       @media (prefers-reduced-motion: reduce) {
         .strct-skel {
           animation: none;
+          background: var(--skeleton-hi, var(--acc18));
         }
       }
     `,
