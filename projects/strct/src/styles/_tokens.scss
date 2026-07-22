@@ -14,6 +14,18 @@
 
 // Default scheme (arctic / dark) so the library renders before any attribute is set.
 :root,
+// Tell the browser which scheme the theme is in, so NATIVE UI follows the
+// tokens: datetime/date pickers and their popup calendars, select dropdowns,
+// scrollbars, autofill. Without this the page darkens via CSS while Chromium
+// still paints native widgets in the light system scheme (white fields in a
+// dark console).
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+[data-theme='light'] {
+  color-scheme: light;
+}
+
 [data-palette='arctic'][data-theme='dark'] {
   --font: 'DM Sans', -apple-system, system-ui, sans-serif;
   --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;

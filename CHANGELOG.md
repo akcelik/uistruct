@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.1] - 2026-07-22
+
+### Fixed
+
+- **Native widgets now follow the theme** — the token layer declares
+  `color-scheme: dark/light` on `[data-theme]`, so datetime/date fields,
+  their popup calendars, select dropdowns, scrollbars and autofill render in
+  the theme's scheme. Previously the page darkened via CSS while Chromium
+  kept painting native UI in the light system scheme — the white fields the
+  time-range picker showed in dark mode. `strct-time-range`'s inputs now
+  inherit the root scheme instead of a local `light dark`.
+
 ## [1.10.0] - 2026-07-21
 
 ### Added — platform DX (Material / Blueprint infrastructure)
