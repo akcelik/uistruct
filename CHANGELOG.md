@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.2] - 2026-07-22
+
+### Fixed
+
+- **`strct-dropdown` popover-attribute collision** — the static `popover`
+  attribute collides with the native HTML Popover API, so the UA styled the
+  host (Canvas background, medium border): the white frame around
+  `strct-time-range`'s trigger in dark themes. The component now strips the
+  DOM attribute after Angular reads the input — same API, no UA styling.
+- **`strct-split-button` segment misalignment** — the chevron lives inside
+  the dropdown's trigger wrapper and didn't stretch, rendering 4px shorter
+  than the main segment (stepped, broken join). Both wrapper layers now
+  stretch; segments join seamlessly in outline and solid looks.
+
+### Added
+
+- **`rocket` glyph** (deploy/launch — 181 icons). The split-button demo
+  referenced it before it existed; the icon set's own dev warning flagged it.
+
 ## [1.10.1] - 2026-07-22
 
 ### Fixed
