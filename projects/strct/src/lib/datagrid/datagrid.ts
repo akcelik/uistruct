@@ -41,6 +41,7 @@ export interface StrctDatagridLabels {
   clearFilter: string;
   editCell: string;
   toggleChildren: string;
+  quickFilter: string;
 }
 
 const DG_LABELS: StrctDatagridLabels = {
@@ -61,12 +62,14 @@ const DG_LABELS: StrctDatagridLabels = {
   clearFilter: 'Clear filter',
   editCell: 'Edit',
   toggleChildren: 'Toggle children',
+  quickFilter: 'Quick filter',
 };
 import { StrctCheckbox } from '../forms/checkbox';
 import { StrctButton, StrctButtonGroup } from '../button/button';
 import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
 import { StrctMenuItem, StrctMenuService } from '../context-menu/menu';
 import { StrctOverlay } from '../overlay/overlay';
+import { StrctSearchbox } from '../searchbox/searchbox';
 import { XlsxValue, buildXlsx } from './xlsx';
 
 /** Resolves a stable identity for a row: a property key, or a function. */
@@ -114,6 +117,8 @@ export interface StrctDatagridLazyState {
   sortDir: SortDir;
   /** Active per-column filters (empty object when none). */
   filters: StrctDatagridFilters;
+  /** The global quick-filter term ('' when none). */
+  quickFilter: string;
 }
 
 /** Persistable user column preferences (widths from resize, hidden from the
@@ -168,10 +173,25 @@ export class StrctDatagridActionBar {}
     StrctButton,
     StrctButtonGroup,
     StrctOverlay,
+    StrctSearchbox,
   ],
   template: `
-    @if (actionBarDef()) {
-      <div class="strct-dg__toolbar"><ng-content select="[strctDatagridActionBar]" /></div>
+    @if (actionBarDef() || quickFilterable()) {
+      <div class="strct-dg__toolbar">
+        @if (quickFilterable()) {
+          <strct-searchbox
+            class="strct-dg__quickfilter"
+            [placeholder]="L().quickFilter"
+            [ariaLabel]="L().quickFilter"
+            [value]="quickFilter()"
+            (valueChange)="quickFilter.set($event)"
+          />
+          @if (filterNote(); as note) {
+            <span class="strct-dg__filternote">{{ note }}</span>
+          }
+        }
+        <ng-content select="[strctDatagridActionBar]" />
+      </div>
     }
 
     <div class="strct-dg__layout" [class.strct-dg__layout--paned]="paneOpen()">
@@ -1090,6 +1110,16 @@ export class StrctDatagridActionBar {}
         color: var(--t3);
         padding: 22px;
       }
+      .strct-dg__quickfilter {
+        min-width: 180px;
+        max-width: 260px;
+      }
+      .strct-dg__filternote {
+        font-size: 11.5px;
+        color: var(--t3);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
       /* Persistent action bar (toolbar) above the grid — always visible. */
       .strct-dg__toolbar {
         display: flex;
@@ -1420,6 +1450,17 @@ export class StrctDatagrid {
    */
   readonly filters = model<StrctDatagridFilters>({});
   /**
+   * Global quick filter (two-way): one term substring-matched (OR) across
+   * `quickFilterFields` — the console-standard "filter this list fast" box.
+   * Complementary to the per-column `filters` (which AND). Applied before
+   * paging client-side; passed through on `lazyLoad` in server mode.
+   */
+  readonly quickFilter = model('');
+  /** Columns the quick term scans. Defaults to every column's `key`. */
+  readonly quickFilterFields = input<string[] | null>(null);
+  /** Render the built-in quick-filter searchbox in the toolbar. */
+  readonly quickFilterable = input(false, { transform: booleanAttribute });
+  /**
    * Tree-grid: the row property holding a row's children array. Rows render
    * hierarchically with indent + carets; sorting applies per sibling level;
    * an active filter shows matches with their ancestors, force-expanded.
@@ -1709,20 +1750,42 @@ export class StrctDatagrid {
     ),
   );
 
-  private matchesFilters(row: StrctRow): boolean {
-    return this.activeFilters().every(([key, v]) =>
-      Array.isArray(v)
-        ? v.some((opt) => opt === row[key])
-        : String(row[key] ?? '')
-            .toLowerCase()
-            .includes(String(v).trim().toLowerCase()),
+  private readonly quickTerm = computed(() => this.quickFilter().trim().toLowerCase());
+
+  private matchesQuick(row: StrctRow): boolean {
+    const term = this.quickTerm();
+    if (!term) return true;
+    const fields = this.quickFilterFields() ?? this.columns().map((c) => c.key);
+    return fields.some((key) =>
+      String(row[key] ?? '')
+        .toLowerCase()
+        .includes(term),
     );
   }
 
-  /** Rows surviving the per-column filters (client-side modes only). */
+  private matchesFilters(row: StrctRow): boolean {
+    return (
+      this.matchesQuick(row) &&
+      this.activeFilters().every(([key, v]) =>
+        Array.isArray(v)
+          ? v.some((opt) => opt === row[key])
+          : String(row[key] ?? '')
+              .toLowerCase()
+              .includes(String(v).trim().toLowerCase()),
+      )
+    );
+  }
+
+  /** Rows surviving the quick + per-column filters (client-side modes only). */
   private readonly filteredRows = computed(() => {
-    if (this.lazy() || !this.activeFilters().length) return this.rows();
+    if (this.lazy() || (!this.activeFilters().length && !this.quickTerm())) return this.rows();
     return this.rows().filter((r) => this.matchesFilters(r));
+  });
+
+  /** "12 / 480" — shown while any client-side filtering narrows the set. */
+  protected readonly filterNote = computed(() => {
+    if (this.lazy() || (!this.activeFilters().length && !this.quickTerm())) return null;
+    return `${this.sorted().length} / ${this.rows().length}`;
   });
 
   /** Tree mode: flattened visible rows + per-row depth/children/expanded meta. */
@@ -1738,7 +1801,7 @@ export class StrctDatagrid {
       if (key) c.sort((a, b) => sign * this.compare(a[key], b[key]));
       return c;
     };
-    const filtering = this.activeFilters().length > 0;
+    const filtering = this.activeFilters().length > 0 || this.quickTerm() !== '';
     const kidsOf = (r: StrctRow) => (r[ck] as StrctRow[] | undefined) ?? [];
     const survives = (r: StrctRow): boolean => this.matchesFilters(r) || kidsOf(r).some(survives);
     const meta = new Map<unknown, { depth: number; hasChildren: boolean; expanded: boolean }>();
@@ -1897,6 +1960,7 @@ export class StrctDatagrid {
     // A changed filter always restarts from page 1.
     effect(() => {
       this.filters();
+      this.quickTerm();
       untracked(() => this.page.set(1));
     });
     // Seed the selection from initialSelection (re-runs only when the input changes,
@@ -1916,6 +1980,7 @@ export class StrctDatagrid {
         sortKey: this.sort().key,
         sortDir: this.sort().dir,
         filters: this.filters(),
+        quickFilter: this.quickTerm(),
       };
       const key = JSON.stringify(state);
       untracked(() => {

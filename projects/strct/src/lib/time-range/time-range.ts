@@ -55,7 +55,13 @@ export const STRCT_TIME_RANGE_PRESETS: StrctTimeRangePreset[] = [
   imports: [StrctButton, StrctDropdown, StrctDropdownTrigger, StrctIcon],
   template: `
     <strct-dropdown #dd popover [popoverLabel]="dialogLabel()" [align]="align()">
-      <button strct-button variant="neutral" strctDropdownTrigger class="strct-tr__trigger">
+      <button
+        strct-button
+        variant="neutral"
+        [size]="size()"
+        strctDropdownTrigger
+        class="strct-tr__trigger"
+      >
         <strct-icon name="clock" [size]="13" />
         <span class="strct-tr__label">{{ triggerLabel() }}</span>
         <strct-icon name="chevronDown" [size]="12" />
@@ -203,6 +209,8 @@ export class StrctTimeRangePicker {
   readonly presets = input<StrctTimeRangePreset[]>(STRCT_TIME_RANGE_PRESETS);
   /** Popover alignment, as in strct-dropdown. */
   readonly align = input<'start' | 'end'>('start');
+  /** Trigger size — match it to the toolbar's buttons (sm strips). */
+  readonly size = input<'sm' | 'md'>('md');
   /** Localizable strings. */
   readonly dialogLabel = input('Time range');
   readonly quickLabel = input('Quick ranges');

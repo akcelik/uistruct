@@ -74,12 +74,21 @@ describe('StrctDatagrid', () => {
     fixture.componentInstance.lazyLoad.subscribe((s) => emitted.push(s));
     fixture.detectChanges();
     // initial request
-    expect(emitted).toEqual([{ filters: {}, page: 1, pageSize: 3, sortKey: null, sortDir: 'asc' }]);
+    expect(emitted).toEqual([
+      { filters: {}, quickFilter: '', page: 1, pageSize: 3, sortKey: null, sortDir: 'asc' },
+    ]);
     // rows shown as given (no client sort even after clicking sort)
     fixture.componentInstance.sortBy('n');
     fixture.detectChanges();
     expect(cells(fixture)).toEqual(['gamma', 'alpha', 'beta']);
-    expect(emitted[1]).toEqual({ filters: {}, page: 1, pageSize: 3, sortKey: 'n', sortDir: 'asc' });
+    expect(emitted[1]).toEqual({
+      filters: {},
+      quickFilter: '',
+      page: 1,
+      pageSize: 3,
+      sortKey: 'n',
+      sortDir: 'asc',
+    });
     // pager reflects the server total, page change emits
     fixture.componentInstance.page.set(2);
     fixture.detectChanges();
@@ -507,5 +516,98 @@ describe('StrctDatagrid inline editing', () => {
     again.dispatchEvent(new Event('blur'));
     fixture.detectChanges();
     expect(edits.length).toBe(0);
+  });
+});
+
+describe('StrctDatagrid quick filter (FR-16-02)', () => {
+  const cols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Name' },
+    { key: 'type', label: 'Type' },
+    { key: 'moref', label: 'Ref' },
+  ];
+  const rows: StrctRow[] = [
+    { name: 'db-prod-01', type: 'vm', moref: 'x1' },
+    { name: 'web-01', type: 'vm', moref: 'db-prod' },
+    { name: 'edge-01', type: 'host', moref: 'x3' },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return fixture;
+  }
+  const names = (f: ReturnType<typeof make>) =>
+    [...f.nativeElement.querySelectorAll('tbody tr td:first-child')].map((td) =>
+      (td as HTMLElement).textContent!.trim(),
+    );
+
+  it('one term OR-matches across every column by default', () => {
+    const fixture = make({ quickFilter: 'db-prod' });
+    // Matches name on row 1 and moref on row 2.
+    expect(names(fixture)).toEqual(['db-prod-01', 'web-01']);
+  });
+
+  it('quickFilterFields restricts the scanned columns', () => {
+    const fixture = make({ quickFilter: 'db-prod', quickFilterFields: ['name'] });
+    expect(names(fixture)).toEqual(['db-prod-01']);
+  });
+
+  it('ANDs with per-column filters and preserves selection identity', () => {
+    const fixture = make({
+      selectable: true,
+      rowId: 'name',
+      quickFilter: 'vm',
+      filters: { name: 'web' },
+    });
+    // With selectable on, the first cell is the checkbox — name is cell 2.
+    const visibleNames = () =>
+      [...fixture.nativeElement.querySelectorAll('tbody tr td:nth-child(2)')].map((td) =>
+        (td as HTMLElement).textContent!.trim(),
+      );
+    expect(visibleNames()).toEqual(['web-01']);
+    // Select the visible row, then clear the quick filter: selection survives.
+    let selected: StrctRow[] = [];
+    fixture.componentInstance.selectionChange.subscribe((s) => (selected = s));
+    fixture.componentInstance.toggleRow(rows[1]);
+    fixture.componentRef.setInput('quickFilter', '');
+    fixture.detectChanges();
+    expect(selected.map((r) => r['name'])).toEqual(['web-01']);
+    // The per-column filter (name: web) is still active, so web-01 remains the
+    // only visible row — and its checkbox is still checked.
+    expect(visibleNames()).toEqual(['web-01']);
+    const cb = fixture.nativeElement.querySelector('tbody strct-checkbox input');
+    expect((cb as HTMLInputElement).checked).toBe(true);
+  });
+
+  it('quickFilterable renders the toolbar searchbox and the N / M note', () => {
+    const fixture = make({ quickFilterable: true });
+    const box = fixture.nativeElement.querySelector('.strct-dg__quickfilter input')!;
+    expect(box).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.strct-dg__filternote')).toBeNull();
+    (box as HTMLInputElement).value = 'vm';
+    box.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(names(fixture).length).toBe(2);
+    expect(fixture.nativeElement.querySelector('.strct-dg__filternote')?.textContent?.trim()).toBe(
+      '2 / 3',
+    );
+  });
+
+  it('lazy mode never filters client-side; the term rides on lazyLoad', () => {
+    let last: StrctDatagridLazyState | null = null;
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('lazy', true);
+    fixture.componentRef.setInput('pageSize', 10);
+    fixture.componentInstance.lazyLoad.subscribe((st) => (last = st));
+    fixture.detectChanges();
+    fixture.componentRef.setInput('quickFilter', 'db-prod');
+    fixture.detectChanges();
+    expect(last!.quickFilter).toBe('db-prod');
+    expect(fixture.nativeElement.querySelectorAll('tbody tr').length).toBe(3);
   });
 });

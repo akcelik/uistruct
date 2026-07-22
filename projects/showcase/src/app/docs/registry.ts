@@ -2151,6 +2151,27 @@ export const DOCS: DocCategory[] = [
               'Two-way per-column filter state (`[(filters)]`): key → text or checked value set. Filters AND together, reset paging, and ride on `(lazyLoad)` in server mode.',
           },
           {
+            name: 'quickFilter',
+            type: 'string',
+            default: `''`,
+            description:
+              'Global quick filter, two-way (`[(quickFilter)]`): one term OR-substring-matched across `quickFilterFields`. ANDs with the per-column filters, resets paging, rides on `(lazyLoad)`.',
+          },
+          {
+            name: 'quickFilterFields',
+            type: 'string[] | null',
+            default: 'null',
+            description:
+              'Columns the quick term scans (default: every column key) — skip opaque ids here.',
+          },
+          {
+            name: 'quickFilterable',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Render the built-in quick-filter searchbox in the toolbar, with a "filtered / total" count while narrowing.',
+          },
+          {
             name: 'childrenKey',
             type: 'string | null',
             default: 'null',
@@ -2363,6 +2384,12 @@ export const DOCS: DocCategory[] = [
             type: `'start' | 'end'`,
             default: `'start'`,
             description: 'Popover alignment.',
+          },
+          {
+            name: 'size',
+            type: `'sm' | 'md'`,
+            default: `'md'`,
+            description: 'Trigger button size — match size="sm" toolbars.',
           },
           {
             name: 'dialogLabel / quickLabel / absoluteLabel / fromLabel / toLabel / applyLabel / invalidLabel / placeholderLabel',
