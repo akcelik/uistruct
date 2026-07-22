@@ -84,6 +84,10 @@ const LOG_TEMPLATES: { text: string; level?: StrctLogLine['level'] }[] = [
     >
       <div class="ops-row">
         <strct-time-range [(range)]="range" />
+        <span class="echo">· sm toolbar:</span>
+        <strct-time-range size="sm" [(range)]="range" />
+        <button strct-button size="sm" variant="neutral">Live</button>
+        <button strct-button size="sm" variant="neutral">Refresh</button>
         @if (range(); as r) {
           <span class="echo">
             {{ r.from.toLocaleString() }} → {{ r.to.toLocaleString() }}

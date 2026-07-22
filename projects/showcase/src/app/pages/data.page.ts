@@ -331,9 +331,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="datagrid-filters"
       owner="datagrid"
-      heading="Column filters"
-      description="Mark a column filterable (contains-text popover) or give it filterOptions (checkbox value set). Filters are ANDed, two-way via [(filters)], reset paging, and ride on (lazyLoad) in server mode."
-      code='cols = [{ key: "name", filterable: true }, { key: "status", filterOptions: ["Running", "Stopped"] }]  +  <strct-datagrid [(filters)]="filters" … />'
+      heading="Filters — quick + per-column"
+      description="quickFilterable renders the built-in quick-filter box: one term OR-matched across every column (the console-standard fast filter), with a filtered-from-total count. Per-column filters (contains-text popover / checkbox value set) AND on top. Both reset paging and ride on (lazyLoad) in server mode."
+      code='<strct-datagrid quickFilterable [(quickFilter)]="q" [(filters)]="filters" … />  ·  cols = [{ key: "name", filterable: true }, { key: "status", filterOptions: [...] }]'
     >
       <div class="dg-wrap">
         <strct-datagrid
@@ -341,13 +341,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="dgFilterCols"
           [rows]="dgRows"
           rowId="name"
+          quickFilterable
+          [(quickFilter)]="dgQuickFilter"
           [(filters)]="dgFilters"
         >
           <ng-template strctCell="status" let-value="value">
             <strct-badge [status]="badgeFor(value)">{{ value }}</strct-badge>
           </ng-template>
         </strct-datagrid>
-        <span class="echo">filters: {{ dgFilters() | json }}</span>
+        <span class="echo">quick: “{{ dgQuickFilter() }}” · filters: {{ dgFilters() | json }}</span>
       </div>
     </app-demo>
 
@@ -729,6 +731,7 @@ mtu = 9000`;
     { key: 'status', label: 'Status', filterOptions: ['Running', 'Degraded', 'Idle'] },
   ];
   protected readonly dgFilters = signal<StrctDatagridFilters>({});
+  protected readonly dgQuickFilter = signal('');
 
   // Tree grid demo — the vCenter inventory shape.
   protected readonly dgTreeCols: StrctDatagridColumn[] = [

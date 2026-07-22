@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-07-22
+
+### Added — consumer-reported gaps (FR-16-02 / FR-16-03)
+
+- **`strct-datagrid` global quick filter** — the console-standard "filter
+  this list fast" box, owned by the grid: two-way `quickFilter` OR-substring-
+  matches one term across every column (`quickFilterFields` restricts the
+  scan — skip opaque ids), ANDs with the per-column `filters`, resets paging
+  and rides on `(lazyLoad)` in server mode. Opt-in `quickFilterable` renders
+  the built-in toolbar searchbox with a "filtered / total" count, and the
+  grid-owned term keeps selection/expansion identity across keystrokes —
+  the three things the feed-it-filtered-rows stopgap could not do. Works in
+  tree mode too (matches keep their ancestors, force-expanded).
+- **`strct-time-range` `size`** — `'sm' | 'md'` (default `'md'`) forwarded
+  to the trigger button, so the picker lines up inside `size="sm"` toolbars
+  next to Live / Refresh buttons.
+
 ## [1.10.2] - 2026-07-22
 
 ### Fixed

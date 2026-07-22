@@ -23,6 +23,16 @@ function setup() {
 }
 
 describe('StrctTimeRangePicker', () => {
+  it('size forwards to the trigger button (sm toolbars line up)', () => {
+    const fixture = TestBed.createComponent(StrctTimeRangePicker);
+    fixture.detectChanges();
+    const btn = () => (fixture.nativeElement as HTMLElement).querySelector('.strct-tr__trigger')!;
+    expect(btn().classList).not.toContain('strct-btn--sm');
+    fixture.componentRef.setInput('size', 'sm');
+    fixture.detectChanges();
+    expect(btn().classList).toContain('strct-btn--sm');
+  });
+
   it('shows the placeholder until a range is picked', () => {
     const { el } = setup();
     expect(el.querySelector('.strct-tr__label')?.textContent?.trim()).toBe('Select time range');
