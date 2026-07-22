@@ -184,7 +184,6 @@ export const STRCT_TIME_RANGE_PRESETS: StrctTimeRangePreset[] = [
         color: var(--t1);
         font-family: var(--font);
         font-size: 12px;
-        color-scheme: light dark;
       }
       .strct-tr__error {
         font-size: 11.5px;
