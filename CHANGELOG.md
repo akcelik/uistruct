@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] - 2026-07-22
+
+### Added
+
+- **`provideStrctWizardDefaults({ vertical: true })`** — flip the wizard's
+  default app-wide, for the house rule "steps are always vertical". A bound
+  `[vertical]` on an instance still wins (so `[vertical]="false"` remains
+  the explicit opt-out), and without the provider the default stays
+  horizontal — the semver contract holds.
+
 ## [1.14.0] - 2026-07-22
 
 ### Added — vertical wizard

@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { StrctStep, StrctWizard, StrctWizardAside } from './wizard';
+import { StrctStep, StrctWizard, StrctWizardAside, provideStrctWizardDefaults } from './wizard';
 
 describe('StrctWizard', () => {
   it('applies the host class', () => {
@@ -104,5 +104,52 @@ describe('StrctWizard vertical', () => {
     expect(el.querySelector('.strct-wiz__rail')).toBeNull();
     expect(el.querySelector('.strct-wiz__steps')).toBeTruthy();
     expect(getComputedStyle(el.querySelector('.strct-wiz__aside')!).display).toBe('none');
+  });
+});
+
+describe('StrctWizard app-wide defaults', () => {
+  @Component({
+    imports: [StrctWizard, StrctStep],
+    template: `<strct-wizard>
+      <strct-step label="A">a</strct-step>
+      <strct-step label="B">b</strct-step>
+    </strct-wizard>`,
+  })
+  class PlainHost {}
+
+  @Component({
+    imports: [StrctWizard, StrctStep],
+    template: `<strct-wizard [vertical]="false">
+      <strct-step label="A">a</strct-step>
+    </strct-wizard>`,
+  })
+  class OptOutHost {}
+
+  it('provideStrctWizardDefaults({ vertical: true }) makes plain wizards vertical', () => {
+    TestBed.configureTestingModule({
+      providers: [provideStrctWizardDefaults({ vertical: true })],
+    });
+    const fixture = TestBed.createComponent(PlainHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-wiz__rail')).toBeTruthy();
+    expect(el.querySelector('.strct-wiz__steps')).toBeNull();
+  });
+
+  it('a bound [vertical]="false" wins over the app-wide default', () => {
+    TestBed.configureTestingModule({
+      providers: [provideStrctWizardDefaults({ vertical: true })],
+    });
+    const fixture = TestBed.createComponent(OptOutHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-wiz__rail')).toBeNull();
+    expect(el.querySelector('.strct-wiz__steps')).toBeTruthy();
+  });
+
+  it('without the provider the default stays horizontal (semver)', () => {
+    const fixture = TestBed.createComponent(PlainHost);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.strct-wiz__rail')).toBeNull();
   });
 });

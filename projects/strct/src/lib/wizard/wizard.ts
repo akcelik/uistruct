@@ -2,12 +2,15 @@ import {
   ChangeDetectionStrategy,
   Component,
   Directive,
+  InjectionToken,
+  Provider,
   ViewEncapsulation,
   booleanAttribute,
   computed,
   contentChild,
   contentChildren,
   effect,
+  inject,
   input,
   model,
   output,
@@ -44,6 +47,28 @@ export class StrctStep {
 /** Marks the live-summary column projected beside a vertical wizard. */
 @Directive({ selector: '[strctWizardAside]' })
 export class StrctWizardAside {}
+
+/** App-wide wizard defaults, provided once (see {@link provideStrctWizardDefaults}). */
+export interface StrctWizardDefaults {
+  /** Make every wizard vertical unless an instance opts out. */
+  vertical?: boolean;
+}
+
+export const STRCT_WIZARD_DEFAULTS = new InjectionToken<StrctWizardDefaults>(
+  'STRCT_WIZARD_DEFAULTS',
+);
+
+/**
+ * Flip wizard defaults for the whole app — the way to make a house rule like
+ * "steps are always vertical" hold without repeating the attribute:
+ *
+ *   providers: [provideStrctWizardDefaults({ vertical: true })]
+ *
+ * A per-instance binding still wins: `[vertical]="false"` opts one wizard out.
+ */
+export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provider {
+  return { provide: STRCT_WIZARD_DEFAULTS, useValue: defaults };
+}
 
 /**
  * Multi-step flow with Back / Next / Finish controls.
@@ -470,6 +495,7 @@ export class StrctWizardAside {}
   ],
 })
 export class StrctWizard {
+  private readonly defaults = inject(STRCT_WIZARD_DEFAULTS, { optional: true });
   readonly steps = contentChildren(StrctStep);
   protected readonly asideDef = contentChild(StrctWizardAside);
   readonly current = model(0);
@@ -478,8 +504,13 @@ export class StrctWizard {
    * progress bar and click-back navigation; `strctWizardAside` projects a
    * right column. The rail collapses to a compact vertical ring column under
    * ~720px of component width — it never flips horizontal.
+   *
+   * The default can be flipped app-wide via `provideStrctWizardDefaults`;
+   * this input always wins when bound.
    */
-  readonly vertical = input(false, { transform: booleanAttribute });
+  readonly vertical = input(this.defaults?.vertical ?? false, {
+    transform: booleanAttribute,
+  });
   /** Rail heading shown above the progress bar (vertical mode). */
   readonly title = input('');
   /** Label for the final-step button (default "Finish"). */
