@@ -1378,6 +1378,12 @@ export const DOCS: DocCategory[] = [
             description: 'Clamp bounds (%).',
           },
           {
+            name: 'provideStrctWizardDefaults({ vertical })',
+            type: 'Provider',
+            description:
+              'Flip the default app-wide ("steps are always vertical" as a house rule) — a bound [vertical] on an instance still wins.',
+          },
+          {
             name: 'vertical',
             type: 'boolean',
             default: 'false',
@@ -1428,6 +1434,12 @@ export const DOCS: DocCategory[] = [
         summary: 'Multi-step flow with Back / Next / Finish.',
         lead: 'A multi-step flow with built-in Back / Next / Finish controls. Each `strct-step` carries a `label` and can gate progress with `[canAdvance]`; the wizard emits `finished` on completion and supports a busy submit state and an optional Cancel.',
         inputs: [
+          {
+            name: 'provideStrctWizardDefaults({ vertical })',
+            type: 'Provider',
+            description:
+              'Flip the default app-wide ("steps are always vertical" as a house rule) — a bound [vertical] on an instance still wins.',
+          },
           {
             name: 'vertical',
             type: 'boolean',
@@ -1524,6 +1536,12 @@ export const DOCS: DocCategory[] = [
         summary: 'Separator rule, optional label, vertical mode.',
         lead: 'A separator rule, optionally with a centered label (projected content) or in vertical inline mode.',
         inputs: [
+          {
+            name: 'provideStrctWizardDefaults({ vertical })',
+            type: 'Provider',
+            description:
+              'Flip the default app-wide ("steps are always vertical" as a house rule) — a bound [vertical] on an instance still wins.',
+          },
           {
             name: 'vertical',
             type: 'boolean',
