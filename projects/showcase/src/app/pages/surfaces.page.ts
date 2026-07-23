@@ -37,6 +37,8 @@ import {
   StrctBreadcrumbItem,
   StrctSplitter,
   StrctWatermark,
+  StrctWizardAside,
+  StrctProgress,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -79,6 +81,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctBreadcrumbItem,
     StrctSplitter,
     StrctWatermark,
+    StrctWizardAside,
+    StrctProgress,
   ],
   template: `
     <app-page-header
@@ -464,6 +468,66 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="wizard-vertical"
+      owner="wizard"
+      heading="Vertical wizard"
+      description="vertical turns the steps into a left rail: dashed-ring states (idle / active / done), a progress bar with an n/N counter, click-back navigation to visited steps, and an optional live-summary column via strctWizardAside. Resize the panel — the rail collapses to a compact vertical ring column, never a horizontal strip."
+      code='<strct-wizard vertical title="Create VM"><strct-step label="Identity" description="Name, environment">…</strct-step><aside strctWizardAside>…</aside></strct-wizard>'
+    >
+      <strct-wizard
+        vertical
+        style="width: 100%;"
+        title="Create virtual machine"
+        [(current)]="vwStep"
+        (finished)="vwDone.set(true)"
+      >
+        <strct-step label="Identity" description="Name, environment, owner">
+          <div class="vw-fields">
+            <label class="vw-f"
+              ><span>Machine name</span><input strctInput value="ist-prod-sql-07"
+            /></label>
+            <label class="vw-f"
+              ><span>Environment</span><input strctInput value="Production"
+            /></label>
+          </div>
+        </strct-step>
+        <strct-step label="Placement" description="Cluster and template">
+          <div class="vw-fields">
+            <label class="vw-f"><span>Cluster</span><input strctInput value="PROD-IST-01" /></label>
+            <label class="vw-f"
+              ><span>Template</span><input strctInput value="tpl-win2022-sql-hardened"
+            /></label>
+          </div>
+        </strct-step>
+        <strct-step label="Resources" description="CPU and memory">
+          <div class="vw-fields">
+            <label class="vw-f"><span>vCPU</span><input strctInput value="8" /></label>
+            <label class="vw-f"><span>Memory (GiB)</span><input strctInput value="32" /></label>
+          </div>
+        </strct-step>
+        <strct-step label="Review" description="Apply on finish">
+          Review the live summary, then Finish.
+          @if (vwDone()) {
+            <strct-badge status="success" style="margin-inline-start: 8px;">Queued</strct-badge>
+          }
+        </strct-step>
+        <aside strctWizardAside class="vw-aside">
+          <div class="vw-aside__h">Live summary</div>
+          <div class="vw-kv"><span>Machine</span><b>ist-prod-sql-07</b></div>
+          <div class="vw-kv"><span>Cluster</span><b>PROD-IST-01</b></div>
+          <div class="vw-kv"><span>vCPU / Mem</span><b>8 / 32 GiB</b></div>
+          <div class="vw-aside__h" style="margin-top: 14px;">Cluster impact</div>
+          <div class="vw-meter">
+            <span>CPU</span><strct-progress [value]="68" style="flex: 1;" />
+          </div>
+          <div class="vw-meter">
+            <span>Memory</span><strct-progress [value]="63" style="flex: 1;" />
+          </div>
+        </aside>
+      </strct-wizard>
+    </app-demo>
+
+    <app-demo
       anchor="divider"
       heading="Divider"
       description="A separator rule, optionally with a centered label."
@@ -521,6 +585,54 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      .vw-fields {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 260px));
+        gap: 12px;
+      }
+      .vw-f {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        font-size: 12px;
+        color: var(--t2);
+      }
+      .vw-aside {
+        display: block;
+        padding: 16px;
+      }
+      .vw-aside__h {
+        font-size: 10px;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--t3);
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      .vw-kv {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 4px 0;
+        font-size: 12px;
+        color: var(--t2);
+      }
+      .vw-kv b {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        font-weight: 500;
+        color: var(--t1);
+      }
+      .vw-meter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11.5px;
+        color: var(--t2);
+        margin-bottom: 8px;
+      }
+    `,
+    `
       .rich-cards {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -543,6 +655,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class SurfacesPage {
+  protected readonly vwStep = signal(0);
+  protected readonly vwDone = signal(false);
+
   protected readonly splitPct = signal(40);
 
   protected readonly richSelected = signal(false);

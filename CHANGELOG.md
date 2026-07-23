@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-07-22
+
+### Added — vertical wizard
+
+- **`strct-wizard vertical`** — steps become a left rail, per the approved
+  design: dashed-ring states (idle ⊙ / active ●⊙ / done ✓ in success green),
+  a rail `title`, a progress bar with an "n/N completed" counter (furthest
+  step reached, remembered across back-navigation), per-step `description`
+  sublabels revealed on the active step, and click-back navigation to
+  visited steps (`goTo(index)` public; forward moves still gate through
+  Next / `canAdvance`).
+- **`strctWizardAside`** — an optional right column beside the vertical
+  wizard for live summaries / impact meters; hides first as the component
+  narrows.
+- **Never flips horizontal** — container queries collapse the rail to a
+  56px compact vertical ring column (with connector line) under ~720px of
+  component width; the aside yields at ~800px.
+- Localizable strings completed: `cancelLabel`, `submittingLabel`,
+  `progressLabel`, `stepsLabel` (Cancel / "Submitting…" were hard-coded).
+- The horizontal default is visually and behaviorally untouched.
+
 ## [1.13.0] - 2026-07-22
 
 ### Added — consumer-reported gaps (FR-16-04…07)
