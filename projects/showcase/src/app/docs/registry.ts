@@ -1429,6 +1429,36 @@ export const DOCS: DocCategory[] = [
         lead: 'A multi-step flow with built-in Back / Next / Finish controls. Each `strct-step` carries a `label` and can gate progress with `[canAdvance]`; the wizard emits `finished` on completion and supports a busy submit state and an optional Cancel.',
         inputs: [
           {
+            name: 'vertical',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Steps become a left rail: dashed-ring states (idle / active / done ✓), a progress bar with an n/N counter, and click-back navigation to visited steps. Under ~720px of component width the rail collapses to a compact vertical ring column — it never flips horizontal.',
+          },
+          {
+            name: 'title',
+            type: 'string',
+            default: `''`,
+            description: 'Rail heading above the progress bar (vertical mode).',
+          },
+          {
+            name: 'strct-step [description]',
+            type: 'string',
+            default: `''`,
+            description: 'Rail sublabel, revealed while the step is active (vertical mode).',
+          },
+          {
+            name: '[strctWizardAside]',
+            type: 'slot',
+            description:
+              'Optional right column beside a vertical wizard — live summaries, impact meters. Hidden automatically under ~1020px of component width.',
+          },
+          {
+            name: 'progressLabel / stepsLabel / cancelLabel / submittingLabel',
+            type: 'string',
+            description: 'Localizable strings (rail counter suffix, rail aria name, buttons).',
+          },
+          {
             name: 'label',
             type: 'string',
             description: 'On `strct-step`: the step title. Required.',
@@ -1470,6 +1500,14 @@ export const DOCS: DocCategory[] = [
             name: 'stepChange',
             type: 'number',
             description: 'Emits the new step index after a Back / Next move.',
+          },
+        ],
+        methods: [
+          {
+            name: 'goTo(index)',
+            type: 'void',
+            description:
+              'Jump to a visited step (what rail clicks call). Forward moves still go through Next, so canAdvance gating holds.',
           },
         ],
         do: [
