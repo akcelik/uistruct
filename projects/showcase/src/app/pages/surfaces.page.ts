@@ -531,10 +531,17 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="wizard-dialog"
       owner="wizard"
       heading="Wizard as the dialog"
-      description="The natural composition: strct-modal chromeless (no head, no body inset, no footer) hosting a flush vertical wizard — the rail reaches the dialog edges and the wizard's own footer is the dialog footer. Keep cancelable: the head's X is gone. Size the wizard host with width/height only; never override its display."
+      description="The natural composition: strct-modal chromeless hosting a flush vertical wizard — the rail reaches the dialog edges and the wizard's own footer is the dialog footer. The dialog sizes to the wizard, whose content column has a guaranteed minimum (--strct-wiz-content-min): toggle the aside below and the form keeps the exact same width — the aside grows the dialog instead of squeezing the form. Keep cancelable: the head's X is gone."
       code='<strct-modal chromeless size="xl" [(open)]="open"><strct-wizard vertical flush cancelable title="Create VM" (cancelled)="open = false">…</strct-wizard></strct-modal>'
     >
-      <button strct-button variant="primary" (click)="wdOpen.set(true)">Open wizard dialog</button>
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <button strct-button variant="primary" (click)="wdOpen.set(true)">
+          Open wizard dialog
+        </button>
+        <strct-checkbox [ngModel]="wdAside()" (ngModelChange)="wdAside.set($event)"
+          >With summary aside</strct-checkbox
+        >
+      </div>
       <strct-modal
         [open]="wdOpen()"
         (openChange)="wdOpen.set($event)"
@@ -571,11 +578,13 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           <strct-step label="Review" description="Apply on finish"
             >Finish queues the create task.</strct-step
           >
-          <aside strctWizardAside>
-            <div class="vw-aside__h">Live summary</div>
-            <div class="vw-kv"><span>Machine</span><b>ist-prod-sql-07</b></div>
-            <div class="vw-kv"><span>Cluster</span><b>PROD-IST-01</b></div>
-          </aside>
+          @if (wdAside()) {
+            <aside strctWizardAside>
+              <div class="vw-aside__h">Live summary</div>
+              <div class="vw-kv"><span>Machine</span><b>ist-prod-sql-07</b></div>
+              <div class="vw-kv"><span>Cluster</span><b>PROD-IST-01</b></div>
+            </aside>
+          }
         </strct-wizard>
       </strct-modal>
     </app-demo>
@@ -713,6 +722,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 export class SurfacesPage {
   protected readonly vwStep = signal(0);
   protected readonly wdOpen = signal(false);
+  protected readonly wdAside = signal(true);
   protected readonly vwDone = signal(false);
 
   protected readonly splitPct = signal(40);

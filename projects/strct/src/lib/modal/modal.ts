@@ -203,6 +203,21 @@ function unlockBodyScroll(doc: Document): void {
       /* Chromeless: the hosted content (a flush vertical wizard) IS the
          dialog — no head, no body inset, no footer. Keep cancelable on the
          wizard: the head's X is gone. */
+      /* FR-17-03: a chromeless (wizard-hosting) dialog derives its width from
+         the wizard's geometry (rail + guaranteed content column [+ aside]),
+         so an aside GROWS the dialog instead of narrowing the form. Explicit
+         calc, not fit-content: the wizard is an inline-size container and
+         cannot size its own container intrinsically. The size classes'
+         max-width only caps, and when it bites the wizard's own container
+         queries degrade gracefully (aside yields, rail compacts). */
+      .strct-modal__dialog--chromeless {
+        /* +2px: the dialog's own border, so the CONTENT box (the wizard's
+           container) still measures rail + content-min exactly. */
+        width: calc(232px + var(--strct-wiz-content-min, 480px) + 2px);
+      }
+      .strct-modal__dialog--chromeless:has(.strct-wiz__layout--aside) {
+        width: calc(232px + var(--strct-wiz-content-min, 480px) + 280px + 2px);
+      }
       .strct-modal__dialog--chromeless .strct-modal__body {
         padding: 0;
         overflow: hidden;

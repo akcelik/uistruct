@@ -1172,7 +1172,7 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description:
-              'Wizard-hosting mode: no head, no body padding, no footer — the projected content (a flush vertical wizard) is the dialog surface. title still names the dialog for assistive tech; keep the wizard cancelable since the X is gone.',
+              'Wizard-hosting mode: no head, no body padding, no footer, and the dialog sizes to its content (width: fit-content) — the wizard drives the width, size only caps it. title still names the dialog for assistive tech; keep the wizard cancelable since the X is gone.',
           },
           {
             name: 'open',
@@ -1471,6 +1471,13 @@ export const DOCS: DocCategory[] = [
             type: 'slot',
             description:
               'Optional right column beside a vertical wizard — live summaries, impact meters (padded like the rail; renders only when projected). Hidden automatically as the component narrows.',
+          },
+          {
+            name: '--strct-wiz-content-min',
+            type: 'CSS token',
+            default: '480px',
+            description:
+              'Guaranteed minimum width of the vertical content column. Under a chromeless fit-content dialog the form width is IDENTICAL with or without an aside — the aside adds to the total, it never carves the form (FR-17-03).',
           },
           {
             name: 'flush',
