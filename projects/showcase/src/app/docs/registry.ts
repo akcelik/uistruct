@@ -1481,6 +1481,13 @@ export const DOCS: DocCategory[] = [
               'Optional right column beside a vertical wizard — live summaries, impact meters (padded like the rail; renders only when projected). Hidden automatically as the component narrows.',
           },
           {
+            name: '--strct-wiz-header-h',
+            type: 'CSS token',
+            default: '64px',
+            description:
+              'Shared height of the header band: the rail title band and the content header occupy the same extent, so the progress line and the header divider land on ONE baseline — step description or not (FR-18-01). A long lede truncates rather than breaking the band.',
+          },
+          {
             name: '--strct-wiz-content-min',
             type: 'CSS token',
             default: '480px',

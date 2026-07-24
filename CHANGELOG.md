@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.1] - 2026-07-24
+
+### Fixed
+
+- **FR-18-01 — the header band reads as one line across both columns**: the
+  rail's progress line and the content header's divider used to sit ~33px
+  apart (and the gap was content-dependent — a step with a description
+  shifted it further). The rail title band and the content header now share
+  one height (**`--strct-wiz-header-h`**, default 64px) with the progress
+  line bottom-aligned inside it, so both hairlines land on the SAME
+  baseline whether the step has a description or not. A long lede truncates
+  with an ellipsis rather than growing the band out of alignment; the
+  compact narrow rail is unaffected.
+
 ## [1.18.0] - 2026-07-24
 
 ### Added — content header names the active step (vertical wizard)
