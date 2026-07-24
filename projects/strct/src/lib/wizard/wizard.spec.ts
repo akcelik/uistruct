@@ -103,7 +103,42 @@ describe('StrctWizard vertical', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('.strct-wiz__rail')).toBeNull();
     expect(el.querySelector('.strct-wiz__steps')).toBeTruthy();
-    expect(getComputedStyle(el.querySelector('.strct-wiz__aside')!).display).toBe('none');
+    // No projected aside ⇒ no aside element at all (BUG-17-00).
+    expect(el.querySelector('.strct-wiz__aside')).toBeNull();
+  });
+
+  it('vertical without an aside renders no aside element (BUG-17-00)', () => {
+    @Component({
+      imports: [StrctWizard, StrctStep],
+      template: `<strct-wizard vertical>
+        <strct-step label="A">a</strct-step>
+        <strct-step label="B">b</strct-step>
+      </strct-wizard>`,
+    })
+    class NoAsideHost {}
+    const fixture = TestBed.createComponent(NoAsideHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    // The empty aside used to wrap onto an implicit grid row and steal ~24%
+    // of the layout height, floating the footer mid-dialog.
+    expect(el.querySelector('.strct-wiz__aside')).toBeNull();
+    expect(el.querySelector('.strct-wiz__layout--aside')).toBeNull();
+    expect(el.querySelector('.strct-wiz__rail')).toBeTruthy();
+  });
+
+  it('flush drops the vertical card so the wizard can BE the dialog surface', () => {
+    @Component({
+      imports: [StrctWizard, StrctStep],
+      template: `<strct-wizard vertical flush>
+        <strct-step label="A">a</strct-step>
+      </strct-wizard>`,
+    })
+    class FlushHost {}
+    const fixture = TestBed.createComponent(FlushHost);
+    fixture.detectChanges();
+    const host = (fixture.nativeElement as HTMLElement).querySelector('strct-wizard')!;
+    expect(host.classList).toContain('strct-wiz--flush');
+    expect(host.querySelector('.strct-wiz__layout--v')).toBeTruthy();
   });
 });
 

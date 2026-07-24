@@ -177,3 +177,28 @@ describe('StrctModal — draggable', () => {
     expect(dialog.style.transform).toBe('');
   });
 });
+
+describe('StrctModal chromeless (wizard-hosting mode)', () => {
+  @Component({
+    imports: [StrctModal],
+    template: `<strct-modal [open]="true" chromeless title="Create virtual machine">
+      <div class="hosted">wizard here</div>
+      <ng-container strctModalFooter><button>ignored</button></ng-container>
+    </strct-modal>`,
+  })
+  class ChromelessHost {}
+
+  it('suppresses head, body padding and footer; title still names the dialog', () => {
+    const fixture = TestBed.createComponent(ChromelessHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const dialog = el.querySelector('.strct-modal__dialog')!;
+    expect(dialog.classList).toContain('strct-modal__dialog--chromeless');
+    expect(el.querySelector('.strct-modal__head')).toBeNull();
+    expect(el.querySelector('.strct-modal__foot')).toBeNull();
+    expect(el.querySelector('.hosted')).toBeTruthy();
+    // The head (and its labelled title) is gone — aria-label carries the name.
+    expect(dialog.getAttribute('aria-label')).toBe('Create virtual machine');
+    expect(dialog.getAttribute('aria-labelledby')).toBeNull();
+  });
+});

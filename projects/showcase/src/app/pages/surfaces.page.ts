@@ -528,6 +528,59 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="wizard-dialog"
+      owner="wizard"
+      heading="Wizard as the dialog"
+      description="The natural composition: strct-modal chromeless (no head, no body inset, no footer) hosting a flush vertical wizard — the rail reaches the dialog edges and the wizard's own footer is the dialog footer. Keep cancelable: the head's X is gone. Size the wizard host with width/height only; never override its display."
+      code='<strct-modal chromeless size="xl" [(open)]="open"><strct-wizard vertical flush cancelable title="Create VM" (cancelled)="open = false">…</strct-wizard></strct-modal>'
+    >
+      <button strct-button variant="primary" (click)="wdOpen.set(true)">Open wizard dialog</button>
+      <strct-modal
+        [open]="wdOpen()"
+        (openChange)="wdOpen.set($event)"
+        chromeless
+        size="xl"
+        title="Create virtual machine"
+        panelClass="demo-wiz-dialog"
+      >
+        <strct-wizard
+          vertical
+          flush
+          cancelable
+          title="Create virtual machine"
+          (cancelled)="wdOpen.set(false)"
+          (finished)="wdOpen.set(false)"
+        >
+          <strct-step label="Identity" description="Name, environment">
+            <div class="vw-fields">
+              <label class="vw-f"
+                ><span>Machine name</span><input strctInput value="ist-prod-sql-07"
+              /></label>
+              <label class="vw-f"
+                ><span>Environment</span><input strctInput value="Production"
+              /></label>
+            </div>
+          </strct-step>
+          <strct-step label="Placement" description="Cluster and template">
+            <div class="vw-fields">
+              <label class="vw-f"
+                ><span>Cluster</span><input strctInput value="PROD-IST-01"
+              /></label>
+            </div>
+          </strct-step>
+          <strct-step label="Review" description="Apply on finish"
+            >Finish queues the create task.</strct-step
+          >
+          <aside strctWizardAside>
+            <div class="vw-aside__h">Live summary</div>
+            <div class="vw-kv"><span>Machine</span><b>ist-prod-sql-07</b></div>
+            <div class="vw-kv"><span>Cluster</span><b>PROD-IST-01</b></div>
+          </aside>
+        </strct-wizard>
+      </strct-modal>
+    </app-demo>
+
+    <app-demo
       anchor="divider"
       heading="Divider"
       description="A separator rule, optionally with a centered label."
@@ -585,6 +638,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      .demo-wiz-dialog {
+        height: min(520px, calc(100vh - 96px));
+      }
       .vw-fields {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 260px));
@@ -656,6 +712,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 })
 export class SurfacesPage {
   protected readonly vwStep = signal(0);
+  protected readonly wdOpen = signal(false);
   protected readonly vwDone = signal(false);
 
   protected readonly splitPct = signal(40);
