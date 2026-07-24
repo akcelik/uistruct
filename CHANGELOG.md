@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0] - 2026-07-24
+
+### Added — aside never squeezes the form (FR-17-03)
+
+- **`--strct-wiz-content-min` token** (default `480px`) — the vertical
+  wizard's content column now has a guaranteed minimum width the aside can
+  never encroach on.
+- **Chromeless dialogs size to the wizard's geometry** — width derives from
+  rail + content-min (+ aside) explicitly (an inline-size container cannot
+  size its own host intrinsically), so adding a summary aside GROWS the
+  dialog by exactly the aside width while the step form keeps the identical
+  width. `strct-modal size` only caps; when the cap bites, the wizard's
+  container queries degrade gracefully (aside yields, rail compacts).
+- Container-query thresholds gained tolerance for the host's borders
+  (aside yields ≤980px of component width, rail compacts ≤700px).
+- Acceptance held in-browser: content column 480px with AND without the
+  aside; dialog width differs by exactly 280px.
+
 ## [1.16.0] - 2026-07-24
 
 ### Fixed

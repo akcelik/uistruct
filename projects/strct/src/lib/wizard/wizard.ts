@@ -77,7 +77,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
  * rail — dashed-ring states (idle ⊙ / active ●⊙ / done ✓), a progress bar
  * with an “n/N” counter, and click-back navigation to visited steps — plus an
  * optional right column projected via `strctWizardAside` (live summaries).
- * The rail never flips horizontal: under ~720px of component width it
+ * The rail never flips horizontal: under ~700px of component width it
  * collapses to a compact vertical ring column (container query).
  *
  *   <strct-wizard vertical title="Create virtual machine">
@@ -284,14 +284,18 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       }
       .strct-wiz__layout--v {
         display: grid;
-        grid-template-columns: 232px minmax(0, 1fr);
+        /* FR-17-03: the content column has a guaranteed minimum
+           (--strct-wiz-content-min), so under intrinsic sizing (a chromeless
+           fit-content dialog) its width is IDENTICAL with or without an
+           aside — the aside adds to the total, it never carves the form. */
+        grid-template-columns: 232px minmax(var(--strct-wiz-content-min, 480px), 1fr);
         border: 1px solid var(--b2);
         border-radius: 12px;
         background: var(--bg-1);
         overflow: hidden;
       }
       .strct-wiz__layout--v.strct-wiz__layout--aside {
-        grid-template-columns: 232px minmax(0, 1fr) 280px;
+        grid-template-columns: 232px minmax(var(--strct-wiz-content-min, 480px), 1fr) 280px;
       }
       .strct-wiz__layout--v.strct-wiz__layout--aside .strct-wiz__aside {
         display: block;
@@ -454,17 +458,18 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         background: transparent;
       }
 
-      /* mid width: the aside yields first */
-      @container (max-width: 800px) {
+      /* mid width: the aside yields before it could squeeze the content
+         below its guaranteed minimum (232 + 480 + 280 = 992). */
+      @container (max-width: 980px) {
         .strct-wiz__layout--v.strct-wiz__layout--aside {
-          grid-template-columns: 232px minmax(0, 1fr);
+          grid-template-columns: 232px minmax(var(--strct-wiz-content-min, 480px), 1fr);
         }
         .strct-wiz__layout--v.strct-wiz__layout--aside .strct-wiz__aside {
           display: none;
         }
       }
       /* narrow: the rail STAYS vertical — compact ring column */
-      @container (max-width: 720px) {
+      @container (max-width: 700px) {
         .strct-wiz__layout--v,
         .strct-wiz__layout--v.strct-wiz__layout--aside {
           grid-template-columns: 56px minmax(0, 1fr);

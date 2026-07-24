@@ -150,3 +150,17 @@ the right of an `xl` dialog. Sizing the host with `height`/`width` only is
 correct, but the failure mode is silent and looks like a wizard bug. A note in
 the wizard docs ("size the host with width/height; do not override `display`")
 would save the next consumer the same hunt.
+
+---
+
+## FOLLOW-UP (v1.16 shipped) — chromeless `__body` grows its children but not itself
+
+`chromeless` landed as `.strct-modal__dialog--chromeless .strct-modal__body { padding:0;
+overflow:hidden; display:flex; flex-direction:column }` + `… __body > * { flex:1; min-height:0 }`.
+It stretches the body's CHILD (the flush wizard) but leaves `__body` itself at
+`flex: 0 1 auto` inside the dialog's own flex column. So a fixed-height dialog
+(e.g. an app-pinned `height` for a stable frame) is NOT filled: the body sizes to
+content and the flush wizard stops short, leaving dead space under the footer —
+measured 358px body in a 621px dialog. Adding `flex:1; min-height:0` to `__body`
+itself (not only `__body > *`) closes it. App workaround in HyperStruct:
+`.strct-wizard-modal .strct-modal__body { flex:1; min-height:0 }`.
