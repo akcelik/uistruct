@@ -104,11 +104,13 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
     >
       @if (vertical()) {
         <nav class="strct-wiz__rail" [attr.aria-label]="stepsLabel()">
-          @if (title()) {
-            <div class="strct-wiz__vtitle">{{ title() }}</div>
-          }
-          <div class="strct-wiz__pbar" aria-hidden="true">
-            <i [style.width.%]="progressPct()"></i>
+          <div class="strct-wiz__railhead">
+            @if (title()) {
+              <div class="strct-wiz__vtitle">{{ title() }}</div>
+            }
+            <div class="strct-wiz__pbar" aria-hidden="true">
+              <i [style.width.%]="progressPct()"></i>
+            </div>
           </div>
           <div class="strct-wiz__pcount">
             {{ maxVisited() }}/{{ steps().length }} {{ progressLabel() }}
@@ -333,8 +335,11 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       /* Content header: the active step names the pane — in the compact
          narrow rail it is the only place the step name appears. */
       .strct-wiz__chead {
-        padding: 18px 24px 13px;
+        box-sizing: border-box;
+        height: var(--strct-wiz-header-h, 64px);
+        padding: 15px 24px 0;
         border-bottom: 1px solid var(--b1);
+        overflow: hidden;
       }
       .strct-wiz__ctitle {
         margin: 0;
@@ -348,22 +353,40 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         margin: 2px 0 0;
         font-size: 12.5px;
         color: var(--t3);
+        /* The band height is a layout guarantee — a long lede truncates
+           instead of growing the band out of alignment. */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .strct-wiz__rail {
         display: flex;
         flex-direction: column;
-        padding: 20px 18px 16px;
+        padding: 0 18px 16px;
         background: var(--bg-2);
         border-inline-end: 1px solid var(--b1);
         min-width: 0;
+      }
+      /* FR-18-01: the rail's title band and the content header share one
+         height (--strct-wiz-header-h), and the progress line bottom-aligns
+         inside it — so the rail line and the chead divider land on the SAME
+         baseline, step description or not. */
+      .strct-wiz__railhead {
+        box-sizing: border-box;
+        height: var(--strct-wiz-header-h, 64px);
+        flex: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding-top: 18px;
       }
       .strct-wiz__vtitle {
         font-size: 15px;
         font-weight: 600;
         letter-spacing: -0.2px;
         line-height: 1.3;
-        margin-bottom: 12px;
+        margin-bottom: auto;
       }
       .strct-wiz__pbar {
         height: 4px;
@@ -384,7 +407,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         font-size: 10.5px;
         letter-spacing: 0.4px;
         color: var(--t3);
-        margin: 7px 0 16px;
+        margin: 7px 0 14px;
         font-variant-numeric: tabular-nums;
       }
       .strct-wiz__vsteps {
@@ -505,8 +528,11 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
           padding: 18px 0 12px;
           align-items: center;
         }
-        .strct-wiz__vtitle,
-        .strct-wiz__pbar,
+        .strct-wiz__chead {
+          height: auto;
+          padding: 14px 18px 11px;
+        }
+        .strct-wiz__railhead,
         .strct-wiz__pcount,
         .strct-wiz__vmeta {
           display: none;
@@ -539,9 +565,6 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         }
         .strct-wiz__layout--v .strct-wiz__foot {
           padding: 12px 18px;
-        }
-        .strct-wiz__chead {
-          padding: 14px 18px 11px;
         }
       }
       @media (prefers-reduced-motion: reduce) {
