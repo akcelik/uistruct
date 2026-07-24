@@ -1168,6 +1168,13 @@ export const DOCS: DocCategory[] = [
         lead: 'An overlay dialog with two-way `open` and a focus trap that restores focus on close. By default it closes only via its X or an action button — a click outside (or Escape) does not dismiss it; opt in with `dismissible`. Project the footer through `strctModalFooter`.',
         inputs: [
           {
+            name: 'chromeless',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Wizard-hosting mode: no head, no body padding, no footer — the projected content (a flush vertical wizard) is the dialog surface. title still names the dialog for assistive tech; keep the wizard cancelable since the X is gone.',
+          },
+          {
             name: 'open',
             type: 'boolean',
             default: 'false',
@@ -1463,7 +1470,14 @@ export const DOCS: DocCategory[] = [
             name: '[strctWizardAside]',
             type: 'slot',
             description:
-              'Optional right column beside a vertical wizard — live summaries, impact meters. Hidden automatically under ~1020px of component width.',
+              'Optional right column beside a vertical wizard — live summaries, impact meters (padded like the rail; renders only when projected). Hidden automatically as the component narrows.',
+          },
+          {
+            name: 'flush',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'The wizard IS the surface: drops the vertical card (border/radius/background) and fills its host — pair with strct-modal chromeless. Size the host with width/height only; never override its display.',
           },
           {
             name: 'progressLabel / stepsLabel / cancelLabel / submittingLabel',

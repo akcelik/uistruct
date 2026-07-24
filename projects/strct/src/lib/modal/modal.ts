@@ -63,35 +63,39 @@ function unlockBodyScroll(doc: Document): void {
           #dialog
           class="strct-modal__dialog strct-modal__dialog--{{ size() }} {{ panelClass() }}"
           [class.strct-modal__dialog--glass]="variant() === 'glass'"
+          [class.strct-modal__dialog--chromeless]="chromeless()"
           [style.transform]="dragTransform()"
           role="dialog"
           aria-modal="true"
-          [attr.aria-labelledby]="title() ? titleId : null"
+          [attr.aria-labelledby]="title() && !chromeless() ? titleId : null"
+          [attr.aria-label]="chromeless() ? title() || null : null"
           tabindex="-1"
           (click)="$event.stopPropagation()"
           (keydown.tab)="onTab($event)"
           (keydown.shift.tab)="onTab($event)"
         >
-          <div
-            class="strct-modal__head"
-            [class.strct-modal__head--drag]="draggable()"
-            (pointerdown)="onHeadPointerDown($event)"
-            (pointermove)="onHeadPointerMove($event)"
-            (pointerup)="onHeadPointerEnd()"
-            (lostpointercapture)="onHeadPointerEnd()"
-          >
-            <span class="strct-modal__title" [id]="titleId">{{ title() }}</span>
-            <button
-              type="button"
-              class="strct-modal__close"
-              [attr.aria-label]="closeLabel()"
-              (click)="close()"
+          @if (!chromeless()) {
+            <div
+              class="strct-modal__head"
+              [class.strct-modal__head--drag]="draggable()"
+              (pointerdown)="onHeadPointerDown($event)"
+              (pointermove)="onHeadPointerMove($event)"
+              (pointerup)="onHeadPointerEnd()"
+              (lostpointercapture)="onHeadPointerEnd()"
             >
-              <strct-icon name="close" [size]="14" />
-            </button>
-          </div>
+              <span class="strct-modal__title" [id]="titleId">{{ title() }}</span>
+              <button
+                type="button"
+                class="strct-modal__close"
+                [attr.aria-label]="closeLabel()"
+                (click)="close()"
+              >
+                <strct-icon name="close" [size]="14" />
+              </button>
+            </div>
+          }
           <div class="strct-modal__body"><ng-content /></div>
-          @if (!hideFooter()) {
+          @if (!hideFooter() && !chromeless()) {
             <div class="strct-modal__foot"><ng-content select="[strctModalFooter]" /></div>
           }
         </div>
@@ -196,6 +200,19 @@ function unlockBodyScroll(doc: Document): void {
         color: var(--t2);
         font-size: 13px;
       }
+      /* Chromeless: the hosted content (a flush vertical wizard) IS the
+         dialog — no head, no body inset, no footer. Keep cancelable on the
+         wizard: the head's X is gone. */
+      .strct-modal__dialog--chromeless .strct-modal__body {
+        padding: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .strct-modal__dialog--chromeless .strct-modal__body > * {
+        flex: 1;
+        min-height: 0;
+      }
       .strct-modal__foot {
         display: flex;
         align-items: center;
@@ -238,6 +255,13 @@ export class StrctModal {
   readonly size = input<StrctModalSize>('sm');
   /** Hide the footer slot. */
   readonly hideFooter = input(false, { transform: booleanAttribute });
+  /**
+   * Wizard-hosting mode: no head, no body padding, no footer — the projected
+   * content (a `flush` vertical wizard) is the dialog surface. `title` still
+   * names the dialog for assistive tech; backdrop/Escape dismissal follow
+   * `dismissible` as usual.
+   */
+  readonly chromeless = input(false, { transform: booleanAttribute });
   /** Accessible label of the X close button (localizable). */
   readonly closeLabel = input('Close');
   /**

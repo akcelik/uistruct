@@ -85,6 +85,11 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
  *     …
  *     <aside strctWizardAside>…live summary…</aside>
  *   </strct-wizard>
+ *
+ * Hosted in a dialog, the wizard IS the surface: pair `flush` here with
+ * `chromeless` on `strct-modal` (keep `cancelable` — the head's X is gone).
+ * Size the host with width/height only; overriding its `display` turns the
+ * grid into a content-sized flex item and silently breaks the layout.
  */
 @Component({
   selector: 'strct-wizard',
@@ -183,12 +188,18 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         </div>
       </div>
 
-      <aside class="strct-wiz__aside">
-        <ng-content select="[strctWizardAside]" />
-      </aside>
+      @if (asideDef()) {
+        <aside class="strct-wiz__aside">
+          <ng-content select="[strctWizardAside]" />
+        </aside>
+      }
     </div>
   `,
-  host: { class: 'strct-wiz', '[class.strct-wiz--vertical]': 'vertical()' },
+  host: {
+    class: 'strct-wiz',
+    '[class.strct-wiz--vertical]': 'vertical()',
+    '[class.strct-wiz--flush]': 'flush()',
+  },
   styles: [
     `
       .strct-wiz {
@@ -260,7 +271,9 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       .strct-wiz__cancel {
         margin-inline-end: auto;
       }
-      /* Aside only exists in vertical mode. */
+      /* Aside renders only when projected; it shows only in vertical mode
+         (BUG-17-00: an unscoped reveal once handed an empty grid row a share
+         of the height and floated the footer mid-dialog). */
       .strct-wiz__aside {
         display: none;
       }
@@ -280,8 +293,9 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       .strct-wiz__layout--v.strct-wiz__layout--aside {
         grid-template-columns: 232px minmax(0, 1fr) 280px;
       }
-      .strct-wiz__layout--v .strct-wiz__aside {
+      .strct-wiz__layout--v.strct-wiz__layout--aside .strct-wiz__aside {
         display: block;
+        padding: 20px 18px;
         background: var(--bg-2);
         border-inline-start: 1px solid var(--b1);
         overflow-y: auto;
@@ -428,12 +442,24 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         height: auto;
       }
 
+      /* Flush: the wizard IS the surface (modal hosting). */
+      .strct-wiz--flush {
+        height: 100%;
+        min-height: 0;
+      }
+      .strct-wiz--flush .strct-wiz__layout--v {
+        height: 100%;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+      }
+
       /* mid width: the aside yields first */
       @container (max-width: 800px) {
         .strct-wiz__layout--v.strct-wiz__layout--aside {
           grid-template-columns: 232px minmax(0, 1fr);
         }
-        .strct-wiz__layout--v .strct-wiz__aside {
+        .strct-wiz__layout--v.strct-wiz__layout--aside .strct-wiz__aside {
           display: none;
         }
       }
@@ -511,6 +537,13 @@ export class StrctWizard {
   readonly vertical = input(this.defaults?.vertical ?? false, {
     transform: booleanAttribute,
   });
+  /**
+   * The wizard IS the surface: drops the vertical layout's own card
+   * (border / radius / background) and fills its host — pair with
+   * `strct-modal`'s `chromeless` so the rail reaches the dialog edges.
+   * Size the host with width/height only; do not override its `display`.
+   */
+  readonly flush = input(false, { transform: booleanAttribute });
   /** Rail heading shown above the progress bar (vertical mode). */
   readonly title = input('');
   /** Label for the final-step button (default "Finish"). */

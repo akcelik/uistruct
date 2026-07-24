@@ -5,6 +5,34 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0] - 2026-07-24
+
+### Fixed
+
+- **BUG-17-00 — empty aside broke every aside-less vertical wizard**: the
+  `<aside>` rendered unconditionally while the grid only reserved two
+  columns, so the empty element wrapped onto an implicit row and took a
+  share of the height — the footer floated mid-dialog with dead space
+  below. The aside now renders only when `strctWizardAside` content is
+  projected (also removing a stray landmark), and its CSS reveal is scoped
+  to the `--aside` modifier.
+
+### Added — wizard as the dialog surface (FR-17-01/02)
+
+- **`strct-wizard` aside padding** — the aside ships a default inset
+  (`20px 18px`, same family as the rail) instead of every consumer
+  re-padding a slot the component otherwise fully styles.
+- **`strct-wizard flush`** — the wizard IS the surface: drops the vertical
+  card (border/radius/background) and fills its host.
+- **`strct-modal chromeless`** — wizard-hosting mode: no head, no body
+  padding, no footer; `title` still names the dialog via `aria-label`.
+  The natural composition is now first-class:
+  `<strct-modal chromeless><strct-wizard vertical flush cancelable …>` —
+  the rail reaches the dialog edges and the wizard's footer is the dialog
+  footer. Keep `cancelable`: the head's X is gone.
+- Docs carry the gotcha the FR hit: size the wizard host with width/height
+  only — overriding its `display` silently breaks the grid layout.
+
 ## [1.15.0] - 2026-07-22
 
 ### Added
