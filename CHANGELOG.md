@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0] - 2026-07-24
+
+### Added — content header names the active step (vertical wizard)
+
+- The content pane now opens with the active step's `label` as a heading
+  and its `description` as the lede — the piece of the approved design the
+  vertical mode was still missing, and in the compact narrow rail the only
+  visible step name. Follows Back/Next/rail navigation. On by default for
+  vertical mode; `[contentHeader]="false"` opts out. Horizontal mode is
+  untouched.
+
 ## [1.17.0] - 2026-07-24
 
 ### Added — aside never squeezes the form (FR-17-03)

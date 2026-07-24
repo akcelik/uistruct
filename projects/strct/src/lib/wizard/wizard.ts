@@ -155,6 +155,14 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       }
 
       <div class="strct-wiz__main">
+        @if (vertical() && contentHeader() && activeStep(); as step) {
+          <div class="strct-wiz__chead">
+            <h2 class="strct-wiz__ctitle">{{ step.label() }}</h2>
+            @if (step.description()) {
+              <p class="strct-wiz__clede">{{ step.description() }}</p>
+            }
+          </div>
+        }
         <div class="strct-wiz__content"><ng-content /></div>
 
         <div class="strct-wiz__foot">
@@ -321,6 +329,25 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       .strct-wiz__layout--v .strct-wiz__foot {
         padding: 13px 24px;
         border-top: 1px solid var(--b1);
+      }
+      /* Content header: the active step names the pane — in the compact
+         narrow rail it is the only place the step name appears. */
+      .strct-wiz__chead {
+        padding: 18px 24px 13px;
+        border-bottom: 1px solid var(--b1);
+      }
+      .strct-wiz__ctitle {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.2px;
+        color: var(--t1);
+        line-height: 1.3;
+      }
+      .strct-wiz__clede {
+        margin: 2px 0 0;
+        font-size: 12.5px;
+        color: var(--t3);
       }
 
       .strct-wiz__rail {
@@ -513,6 +540,9 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         .strct-wiz__layout--v .strct-wiz__foot {
           padding: 12px 18px;
         }
+        .strct-wiz__chead {
+          padding: 14px 18px 11px;
+        }
       }
       @media (prefers-reduced-motion: reduce) {
         .strct-wiz__pbar i,
@@ -551,6 +581,13 @@ export class StrctWizard {
   readonly flush = input(false, { transform: booleanAttribute });
   /** Rail heading shown above the progress bar (vertical mode). */
   readonly title = input('');
+  /**
+   * Name the content pane after the active step (vertical mode): the step's
+   * `label` as a heading, its `description` as the lede. In the compact
+   * narrow rail this is the only visible step name. On by default;
+   * `[contentHeader]="false"` opts out.
+   */
+  readonly contentHeader = input(true, { transform: booleanAttribute });
   /** Label for the final-step button (default "Finish"). */
   readonly finishLabel = input('Finish');
   /** Labels for the Back / Next / Cancel buttons (localizable). */
@@ -580,6 +617,7 @@ export class StrctWizard {
     this.steps().length ? (this.maxVisited() / this.steps().length) * 100 : 0,
   );
 
+  protected readonly activeStep = computed(() => this.steps()[this.current()] ?? null);
   protected readonly isLast = computed(() => this.current() >= this.steps().length - 1);
   /** Whether the current step permits advancing (its `canAdvance`). */
   protected readonly canAdvance = computed(

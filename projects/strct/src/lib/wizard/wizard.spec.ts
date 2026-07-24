@@ -89,6 +89,39 @@ describe('StrctWizard vertical', () => {
     expect(el.querySelector('.strct-wiz__pcount')?.textContent).toContain('1/3');
   });
 
+  it('content header names the pane after the active step and follows Next', () => {
+    const { fixture, el } = setup();
+    expect(el.querySelector('.strct-wiz__ctitle')?.textContent?.trim()).toBe('Identity');
+    expect(el.querySelector('.strct-wiz__clede')?.textContent?.trim()).toBe('Name, environment');
+    nextBtn(el).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-wiz__ctitle')?.textContent?.trim()).toBe('Placement');
+    expect(el.querySelector('.strct-wiz__clede')?.textContent?.trim()).toBe('Cluster and template');
+  });
+
+  it('contentHeader=false opts out; a description-less step renders no lede', () => {
+    @Component({
+      imports: [StrctWizard, StrctStep],
+      template: `<strct-wizard vertical [contentHeader]="header" [current]="2">
+        <strct-step label="A" description="da">a</strct-step>
+        <strct-step label="B">b</strct-step>
+        <strct-step label="C">c</strct-step>
+      </strct-wizard>`,
+    })
+    class OptHost {
+      header = false;
+    }
+    const fixture = TestBed.createComponent(OptHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-wiz__chead')).toBeNull();
+    fixture.componentInstance.header = true;
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-wiz__ctitle')?.textContent?.trim()).toBe('C');
+    expect(el.querySelector('.strct-wiz__clede')).toBeNull();
+  });
+
   it('horizontal default renders no rail and no aside', () => {
     @Component({
       imports: [StrctWizard, StrctStep],
@@ -105,6 +138,8 @@ describe('StrctWizard vertical', () => {
     expect(el.querySelector('.strct-wiz__steps')).toBeTruthy();
     // No projected aside ⇒ no aside element at all (BUG-17-00).
     expect(el.querySelector('.strct-wiz__aside')).toBeNull();
+    // The content header is a vertical-mode affordance.
+    expect(el.querySelector('.strct-wiz__chead')).toBeNull();
   });
 
   it('vertical without an aside renders no aside element (BUG-17-00)', () => {

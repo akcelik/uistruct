@@ -1464,7 +1464,15 @@ export const DOCS: DocCategory[] = [
             name: 'strct-step [description]',
             type: 'string',
             default: `''`,
-            description: 'Rail sublabel, revealed while the step is active (vertical mode).',
+            description:
+              'Rail sublabel revealed while the step is active, and the content header lede (vertical mode).',
+          },
+          {
+            name: 'contentHeader',
+            type: 'boolean',
+            default: 'true',
+            description:
+              'Name the content pane after the active step (label as heading, description as lede) — in the compact narrow rail this is the only visible step name. [contentHeader]="false" opts out.',
           },
           {
             name: '[strctWizardAside]',
