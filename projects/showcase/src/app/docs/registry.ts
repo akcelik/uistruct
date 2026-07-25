@@ -648,23 +648,56 @@ export const DOCS: DocCategory[] = [
         title: 'Combobox',
         selector: 'strct-combobox',
         importNames: ['StrctCombobox', 'StrctOption'],
-        summary: 'Type to filter, click to select.',
-        lead: 'A filterable single-select: type to narrow the list, click or press Enter to choose. ControlValueAccessor-compatible.',
+        summary: 'Type to filter; single or multiple, groups, clearable.',
+        lead: 'A filterable select: type to narrow the list — the match is emphasised in each label — and click or press Enter to choose. An aligned ✓ lead slot marks the current choice. `multiple` switches the value to an array with removable chips; options can carry `group` headers and `disabled`. ControlValueAccessor-compatible.',
         inputs: [
-          model('unknown', 'Selected option value.'),
+          model('unknown', 'Selected value — an array when `multiple` is set.'),
           {
             name: 'options',
             type: 'StrctOption[]',
             default: '[]',
-            description: 'Items to choose from. `StrctOption = { value: unknown; label: string }`.',
+            description:
+              'Items to choose from. `StrctOption = { value: unknown; label: string; disabled?: boolean; group?: string }` — disabled options gray out and are skipped; options sharing a group label render under one header.',
           },
           { name: 'placeholder', type: 'string', default: `''`, description: 'Empty-state hint.' },
+          {
+            name: 'multiple',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Multi-select: the value becomes an array, picks render as removable chips, the list stays open while picking and Backspace on an empty query removes the last chip.',
+          },
+          {
+            name: 'clearable',
+            type: 'boolean',
+            default: 'false',
+            description: 'Show an × that resets the selection (null, or [] when multiple).',
+          },
+          {
+            name: 'loading',
+            type: 'boolean',
+            default: 'false',
+            description: 'Skeleton placeholder while options load.',
+          },
+          {
+            name: 'emptyText',
+            type: 'string',
+            default: `'No matches'`,
+            description:
+              'Text when the filter matches nothing (localizable; `clearLabel` / `removeLabel` label the × buttons).',
+          },
         ],
-        do: ['Use for medium-to-large option lists where typing speeds selection.'],
-        dont: ['Do not use for a handful of options — a select is simpler.'],
+        do: [
+          'Use for medium-to-large option lists where typing speeds selection.',
+          'Use `multiple` for tag/label-style membership editing inline in a form.',
+        ],
+        dont: [
+          'Do not use for a handful of options — a select is simpler.',
+          'Do not use `multiple` for large two-sided membership editing — that is the transfer list.',
+        ],
         a11y: [
           cvaA11y,
-          'Full keyboard support: ↑/↓ move, Enter selects, Esc closes, with aria-activedescendant.',
+          'Full keyboard support: ↑/↓ move (skipping disabled options), Home/End jump, Enter picks, Esc closes, Backspace removes the last chip — with aria-activedescendant and aria-multiselectable.',
         ],
       },
       {
