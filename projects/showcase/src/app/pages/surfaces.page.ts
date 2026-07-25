@@ -393,6 +393,26 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="dropdown-select"
+      owner="dropdown"
+      heading="Select-like menu"
+      description="Bind [selected] and items become menuitemradio entries: a leading check marks the current choice, reopening focuses it, and arrows/Enter work end to end. A click on the menu's padding or a divider no longer closes it — only a real pick does."
+      code='<strct-dropdown-item [selected]="sort === opt" (click)="sort = opt">…</strct-dropdown-item>'
+    >
+      <strct-dropdown>
+        <button strct-button strctDropdownTrigger>
+          Sort: {{ ddSort() }}
+          <strct-icon strictName="chevronDown" [size]="13" />
+        </button>
+        @for (opt of ddSortOptions; track opt) {
+          <strct-dropdown-item [selected]="ddSort() === opt" (click)="ddSort.set(opt)">
+            {{ opt }}
+          </strct-dropdown-item>
+        }
+      </strct-dropdown>
+    </app-demo>
+
+    <app-demo
       anchor="dropdown-popover"
       owner="dropdown"
       heading="Popover mode — filter / settings panels"
@@ -720,6 +740,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class SurfacesPage {
+  protected readonly ddSort = signal('Name');
+  protected readonly ddSortOptions = ['Name', 'CPU usage', 'Memory', 'Uptime'];
+
   protected readonly vwStep = signal(0);
   protected readonly wdOpen = signal(false);
   protected readonly wdAside = signal(true);

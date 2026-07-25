@@ -1,6 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { StrctDropdown, StrctDropdownItem, StrctDropdownTrigger } from './dropdown';
+import {
+  StrctDropdown,
+  StrctDropdownDivider,
+  StrctDropdownItem,
+  StrctDropdownTrigger,
+} from './dropdown';
 
 @Component({
   imports: [StrctDropdown, StrctDropdownItem, StrctDropdownTrigger],
@@ -98,5 +103,130 @@ describe('StrctDropdown', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     fixture.detectChanges();
     expect(el.querySelector('[role="dialog"]')).toBeNull();
+  });
+});
+
+describe('StrctDropdown select ergonomics (v1.19)', () => {
+  @Component({
+    imports: [StrctDropdown, StrctDropdownItem, StrctDropdownDivider, StrctDropdownTrigger],
+    template: `
+      <button id="outside">out</button>
+      <strct-dropdown>
+        <button strctDropdownTrigger>Choose</button>
+        <strct-dropdown-item [selected]="pick === 'a'" (click)="pick = 'a'"
+          >Alpha</strct-dropdown-item
+        >
+        <strct-dropdown-divider />
+        <strct-dropdown-item [selected]="pick === 'b'" (click)="pick = 'b'"
+          >Beta</strct-dropdown-item
+        >
+        <strct-dropdown-item disabled>Gamma</strct-dropdown-item>
+      </strct-dropdown>
+    `,
+  })
+  class SelectHost {
+    pick = 'a';
+  }
+
+  async function setup() {
+    const fixture = TestBed.createComponent(SelectHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const trigger = el.querySelector<HTMLElement>('.strct-dd__trigger')!;
+    const openMenu = async () => {
+      trigger.click();
+      fixture.detectChanges();
+      await new Promise((r) => setTimeout(r)); // focusInitialItem
+      fixture.detectChanges();
+    };
+    return { fixture, host: fixture.componentInstance, el, trigger, openMenu };
+  }
+  const items = (el: HTMLElement) => [...el.querySelectorAll<HTMLElement>('strct-dropdown-item')];
+
+  it('a click on menu padding or a divider does NOT close; an item click does', async () => {
+    const { fixture, el, openMenu } = await setup();
+    await openMenu();
+    const menu = el.querySelector<HTMLElement>('[role="menu"]')!;
+    menu.click(); // padding
+    fixture.detectChanges();
+    expect(el.querySelector('[role="menu"]')).toBeTruthy();
+    el.querySelector<HTMLElement>('strct-dropdown-divider')!.click();
+    fixture.detectChanges();
+    expect(el.querySelector('[role="menu"]')).toBeTruthy();
+    items(el)[1].click();
+    fixture.detectChanges();
+    expect(el.querySelector('[role="menu"]')).toBeNull();
+  });
+
+  it('a disabled item click does not close the menu', async () => {
+    const { fixture, el, openMenu } = await setup();
+    await openMenu();
+    const gamma = items(el)[2];
+    // pointer-events:none in real browsers; simulate the bubbled event anyway.
+    gamma.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+    expect(el.querySelector('[role="menu"]')).toBeTruthy();
+  });
+
+  it('selected renders menuitemradio + aria-checked + a leading check', async () => {
+    const { el, openMenu } = await setup();
+    await openMenu();
+    const [alpha, beta] = items(el);
+    expect(alpha.getAttribute('role')).toBe('menuitemradio');
+    expect(alpha.getAttribute('aria-checked')).toBe('true');
+    expect(alpha.querySelector('.strct-dd__check svg')).toBeTruthy();
+    expect(beta.getAttribute('aria-checked')).toBe('false');
+    expect(beta.querySelector('.strct-dd__check svg')).toBeNull(); // aligned empty slot
+    expect(beta.querySelector('.strct-dd__check')).toBeTruthy();
+  });
+
+  it('an unbound item stays a plain menuitem without aria-checked', () => {
+    const fixture = TestBed.createComponent(StrctDropdownItem);
+    fixture.componentRef.setInput('critical', false);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.getAttribute('role')).toBe('menuitem');
+    expect(host.getAttribute('aria-checked')).toBeNull();
+    expect(host.querySelector('.strct-dd__check')).toBeNull();
+  });
+
+  it('opening focuses the SELECTED item; arrows rove skipping disabled; Enter picks', async () => {
+    const { fixture, host, el, openMenu } = await setup();
+    await openMenu();
+    const [alpha, beta] = items(el);
+    expect(document.activeElement).toBe(alpha); // selected item gets initial focus
+    alpha.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(beta);
+    beta.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(alpha); // gamma disabled — wraps past it
+    alpha.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    expect(document.activeElement).toBe(beta);
+    beta.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+    expect(host.pick).toBe('b');
+    expect(el.querySelector('[role="menu"]')).toBeNull();
+  });
+
+  it('Escape closes and restores focus to the trigger button', async () => {
+    const { fixture, el, openMenu } = await setup();
+    const btn = el.querySelector<HTMLElement>('[strctDropdownTrigger]')!;
+    btn.focus();
+    await openMenu();
+    expect(document.activeElement).not.toBe(btn); // focus moved into the menu
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect(el.querySelector('[role="menu"]')).toBeNull();
+    expect(document.activeElement).toBe(btn);
+  });
+
+  it('ArrowDown on the trigger opens the menu (APG)', async () => {
+    const { fixture, el } = await setup();
+    const btn = el.querySelector<HTMLElement>('[strctDropdownTrigger]')!;
+    btn.focus();
+    btn.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    fixture.detectChanges();
+    expect(el.querySelector('[role="menu"]')).toBeTruthy();
   });
 });

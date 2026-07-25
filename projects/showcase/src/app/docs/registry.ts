@@ -1345,6 +1345,13 @@ export const DOCS: DocCategory[] = [
             description: 'Accessible name of the popover dialog (localizable).',
           },
           {
+            name: 'selected',
+            type: 'boolean | null',
+            default: 'null',
+            description:
+              'On `strct-dropdown-item`: bind for select-like menus — the item becomes a `menuitemradio` with `aria-checked`, a leading ✓ marks the current choice (aligned lead slot), and reopening focuses it. Leave unbound for action items.',
+          },
+          {
             name: 'critical',
             type: 'boolean',
             default: 'false',
@@ -1358,10 +1365,13 @@ export const DOCS: DocCategory[] = [
           },
         ],
         do: ['Use for a short list of actions tied to a trigger.'],
-        dont: ['Do not use a dropdown for primary navigation.'],
+        dont: [
+          'Do not use a dropdown for primary navigation.',
+          'For form VALUES prefer strct-select / strct-combobox; the dropdown is an action menu — `selected` covers light view-switch choices.',
+        ],
         a11y: [
-          'Closes on outside click and Escape; the menu escapes overflow clipping.',
-          'The trigger exposes aria-haspopup (menu/dialog) + aria-expanded; popover panels are labeled dialogs.',
+          'Full APG menu keyboarding: ArrowDown on the trigger opens; arrows rove (skipping disabled), Home/End jump, Enter/Space activate, Tab closes; Escape and selection restore focus to the trigger.',
+          'A click on menu padding or a divider does NOT close the menu — only a real item activation does, so a 2px miss never throws the interaction away.',
         ],
       },
       {
