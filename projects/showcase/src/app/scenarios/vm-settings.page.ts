@@ -13,15 +13,21 @@ import {
   StrctBadge,
   StrctButton,
   StrctCheckbox,
+  StrctConfirmOutlet,
+  StrctConfirmService,
+  StrctDatetimePicker,
   StrctDrawer,
   StrctDrawerFooter,
   StrctIcon,
   StrctInput,
+  StrctNumber,
   StrctProgress,
   StrctRange,
   StrctTag,
   StrctToastService,
   StrctToggle,
+  StrctTreeNodeData,
+  StrctTreeSelect,
 } from 'strct';
 
 interface Adapter {
@@ -42,6 +48,10 @@ interface VmSettings {
   name: string;
   generation: 1 | 2;
   notes: string;
+  /** Host the VM is placed on (key in the placement tree), null = unplaced. */
+  placement: string | null;
+  /** Start of the next planned maintenance window (ISO local datetime, '' = none). */
+  maintStart: string;
   vcpu: number;
   numa: boolean;
   reservePct: number;
@@ -83,7 +93,7 @@ const SECTIONS: Section[] = [
     label: 'General',
     icon: 'options',
     group: 'Hardware',
-    keys: ['name', 'generation', 'notes'],
+    keys: ['name', 'generation', 'notes', 'placement', 'maintStart'],
   },
   {
     id: 'processor',
@@ -142,6 +152,8 @@ function seed(): VmSettings {
     name: 'web-frontend-01',
     generation: 2,
     notes: 'Front-end web tier — Prod-A cluster.',
+    placement: 'hv-prod-01',
+    maintStart: '2026-08-02T02:00',
     vcpu: 4,
     numa: false,
     reservePct: 0,
@@ -200,6 +212,10 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
     StrctAlert,
     StrctDrawer,
     StrctDrawerFooter,
+    StrctNumber,
+    StrctDatetimePicker,
+    StrctTreeSelect,
+    StrctConfirmOutlet,
   ],
   template: `
     <!-- Identity header -->
@@ -217,6 +233,11 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         <p class="vms__sub">
           Edit settings · changes to hardware marked ⟳ apply after the next restart
         </p>
+      </div>
+      <div class="vms__headactions">
+        <button strct-button variant="critical" size="sm" (click)="confirmPowerOff()">
+          <strct-icon name="power" [size]="14" /> Power off
+        </button>
       </div>
     </header>
 
@@ -317,6 +338,34 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
                   ></textarea>
                 </div>
               </div>
+              <div class="f">
+                <div class="f__l">
+                  <span class="f__n">Placement</span
+                  ><span class="f__h">Datacenter → cluster → host</span>
+                </div>
+                <div class="f__c">
+                  <strct-tree-select
+                    [nodes]="placementTree"
+                    [ngModel]="s().placement"
+                    (ngModelChange)="patch({ placement: $event })"
+                    placeholder="Select a host"
+                    clearable
+                  />
+                </div>
+              </div>
+              <div class="f">
+                <div class="f__l">
+                  <span class="f__n">Maintenance window</span
+                  ><span class="f__h">Planned downtime start · 15-minute steps</span>
+                </div>
+                <div class="f__c">
+                  <strct-datetime-picker
+                    [minuteStep]="15"
+                    [ngModel]="s().maintStart"
+                    (ngModelChange)="patch({ maintStart: $event })"
+                  />
+                </div>
+              </div>
             }
 
             <!-- PROCESSOR -->
@@ -334,12 +383,13 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
               <div class="f">
                 <div class="f__l"><span class="f__n">Virtual processors</span></div>
                 <div class="f__c">
-                  <strct-range
+                  <strct-number
                     [min]="1"
                     [max]="hostCores"
                     [ngModel]="s().vcpu"
-                    (ngModelChange)="patch({ vcpu: $event })"
-                    showValue
+                    (ngModelChange)="patch({ vcpu: $event ?? 1 })"
+                    decrementLabel="Remove one virtual processor"
+                    incrementLabel="Add one virtual processor"
                   />
                 </div>
               </div>
@@ -389,12 +439,12 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
               <div class="f">
                 <div class="f__l"><span class="f__n">Startup RAM</span></div>
                 <div class="f__c">
-                  <strct-range
+                  <strct-number
                     [min]="512"
                     [max]="65536"
                     [step]="512"
                     [ngModel]="s().startupMb"
-                    (ngModelChange)="patch({ startupMb: $event })"
+                    (ngModelChange)="patch({ startupMb: $event ?? 512 })"
                   /><span class="f__val">{{ gb(s().startupMb) }} GB</span>
                 </div>
               </div>
@@ -413,24 +463,24 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
                 <div class="f">
                   <div class="f__l"><span class="f__n">Minimum RAM</span></div>
                   <div class="f__c">
-                    <strct-range
+                    <strct-number
                       [min]="512"
                       [max]="65536"
                       [step]="512"
                       [ngModel]="s().minMb"
-                      (ngModelChange)="patch({ minMb: $event })"
+                      (ngModelChange)="patch({ minMb: $event ?? 512 })"
                     /><span class="f__val">{{ gb(s().minMb) }} GB</span>
                   </div>
                 </div>
                 <div class="f">
                   <div class="f__l"><span class="f__n">Maximum RAM</span></div>
                   <div class="f__c">
-                    <strct-range
+                    <strct-number
                       [min]="512"
                       [max]="131072"
                       [step]="512"
                       [ngModel]="s().maxMb"
-                      (ngModelChange)="patch({ maxMb: $event })"
+                      (ngModelChange)="patch({ maxMb: $event ?? 512 })"
                     /><span class="f__val">{{ gb(s().maxMb) }} GB</span>
                   </div>
                 </div>
@@ -473,14 +523,14 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
                         <strct-tag>{{ d.kind }}</strct-tag>
                       </div>
                       <div class="card__grid">
-                        <label class="mini"
-                          ><span>Size (GB)</span
-                          ><input
-                            strctInput
-                            type="number"
+                        <div class="mini">
+                          <span>Size (GB)</span
+                          ><strct-number
+                            [min]="1"
                             [ngModel]="d.sizeGb"
-                            (ngModelChange)="patchDisk(d.id, { sizeGb: +$event })"
-                        /></label>
+                            (ngModelChange)="patchDisk(d.id, { sizeGb: $event ?? 1 })"
+                          />
+                        </div>
                         <label class="mini"
                           ><span>Controller</span>
                           <select
@@ -555,16 +605,16 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
                             <option>Management</option>
                           </select>
                         </label>
-                        <label class="mini"
-                          ><span>VLAN ID</span>
-                          <input
-                            strctInput
-                            type="number"
+                        <div class="mini">
+                          <span>VLAN ID</span>
+                          <strct-number
+                            [min]="1"
+                            [max]="4094"
                             [disabled]="!a.vlanOn"
                             [ngModel]="a.vlan"
-                            (ngModelChange)="patchAdapter(a.id, { vlan: +$event })"
+                            (ngModelChange)="patchAdapter(a.id, { vlan: $event ?? 1 })"
                           />
-                        </label>
+                        </div>
                         <div class="mini mini--toggle">
                           <span>VLAN tagging</span>
                           <strct-toggle
@@ -810,6 +860,8 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         <button strct-button variant="flat" (click)="addOpen.set(false)">Cancel</button>
       </ng-container>
     </strct-drawer>
+
+    <strct-confirm-outlet />
   `,
   styles: [
     `
@@ -818,7 +870,16 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         padding-bottom: 76px;
       }
       .vms__head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
         margin-bottom: 18px;
+      }
+      .vms__headactions {
+        display: flex;
+        gap: 8px;
       }
       .vms__back {
         display: inline-flex;
@@ -1007,6 +1068,13 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
       }
       .f__c strct-range {
         flex: 1;
+      }
+      .f__c strct-number {
+        max-width: 150px;
+      }
+      .f__c strct-tree-select,
+      .f__c strct-datetime-picker {
+        width: 100%;
       }
       .f__c input,
       .f__c textarea,
@@ -1297,9 +1365,49 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
 })
 export class VmSettingsPage {
   private readonly toast = inject(StrctToastService);
+  private readonly confirm = inject(StrctConfirmService);
   protected readonly hostCores = HOST_CORES;
   protected readonly HOST_RAM = HOST_RAM_GB;
   protected readonly groups = ['Hardware', 'Management'];
+
+  /** Datacenter → cluster → host tree for the placement picker. */
+  protected readonly placementTree: StrctTreeNodeData[] = [
+    {
+      id: 'dc-east',
+      label: 'us-east-1',
+      icon: 'datacenter',
+      children: [
+        {
+          id: 'dc-east-proda',
+          label: 'Prod-A',
+          icon: 'cluster',
+          children: [
+            { id: 'hv-prod-01', label: 'hv-prod-01', icon: 'host' },
+            { id: 'hv-prod-02', label: 'hv-prod-02', icon: 'host' },
+          ],
+        },
+        {
+          id: 'dc-east-prodb',
+          label: 'Prod-B',
+          icon: 'cluster',
+          children: [{ id: 'hv-prod-03', label: 'hv-prod-03', icon: 'host' }],
+        },
+      ],
+    },
+    {
+      id: 'dc-west',
+      label: 'us-west-2',
+      icon: 'datacenter',
+      children: [
+        {
+          id: 'dc-west-dr',
+          label: 'DR',
+          icon: 'cluster',
+          children: [{ id: 'hv-dr-01', label: 'hv-dr-01', icon: 'host' }],
+        },
+      ],
+    },
+  ];
 
   protected readonly s = signal<VmSettings>(seed());
   protected readonly original = signal<VmSettings>(seed());
@@ -1370,8 +1478,34 @@ export class VmSettingsPage {
   protected patchDisk(id: string, p: Partial<Disk>): void {
     this.s.update((v) => ({ ...v, disks: v.disks.map((d) => (d.id === id ? { ...d, ...p } : d)) }));
   }
-  protected removeDisk(id: string): void {
+  protected async removeDisk(id: string): Promise<void> {
+    const disk = this.s().disks.find((d) => d.id === id);
+    const ok = await this.confirm.confirm({
+      title: `Delete ${disk?.name ?? 'disk'}?`,
+      message:
+        'The virtual disk file will be permanently deleted from the volume. This cannot be undone.',
+      confirmLabel: 'Delete disk',
+      tone: 'critical',
+    });
+    if (!ok) return;
     this.s.update((v) => ({ ...v, disks: v.disks.filter((d) => d.id !== id) }));
+    this.toast.success(`${disk?.name ?? 'Disk'} deleted`);
+  }
+
+  /** Hard power-off from the header — destructive, so it asks first. */
+  protected async confirmPowerOff(): Promise<void> {
+    const ok = await this.confirm.confirm({
+      title: `Power off ${this.original().name}?`,
+      message:
+        'This turns the VM off without a guest shutdown — unsaved data inside the guest may be lost.',
+      confirmLabel: 'Power off',
+      tone: 'critical',
+    });
+    if (!ok) return;
+    this.toast.show(`${this.original().name} is powering off`, {
+      type: 'warning',
+      title: 'Power off',
+    });
   }
 
   protected openAdd(): void {

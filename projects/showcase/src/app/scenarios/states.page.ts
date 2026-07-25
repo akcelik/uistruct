@@ -1,6 +1,13 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { StrctButton, StrctIcon, StrctSkeleton, StrctSpinner } from 'strct';
+import {
+  StrctButton,
+  StrctIcon,
+  StrctSkeleton,
+  StrctSpinner,
+  StrctStatus,
+  StrctStatusDot,
+} from 'strct';
 
 /**
  * Scenario: the empty / error / loading states every real app needs — empty
@@ -9,12 +16,23 @@ import { StrctButton, StrctIcon, StrctSkeleton, StrctSpinner } from 'strct';
 @Component({
   selector: 'app-states-scenario',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, StrctButton, StrctIcon, StrctSkeleton, StrctSpinner],
+  imports: [RouterLink, StrctButton, StrctIcon, StrctSkeleton, StrctSpinner, StrctStatusDot],
   template: `
     <header class="st__head">
       <h1 class="st__title">Empty &amp; error states</h1>
       <p class="st__sub">The states a real console needs — ready to drop into routes and panels.</p>
     </header>
+
+    <!-- Status vocabulary — the dot never relies on colour alone -->
+    <section class="st__dots" aria-label="Status dot gallery">
+      @for (d of dots; track d.status) {
+        <span class="st__dotitem">
+          <strct-status-dot [status]="d.status" [label]="d.label" />
+          <strct-status-dot [status]="d.status" size="sm" [label]="d.label" />
+          {{ d.label }}
+        </span>
+      }
+    </section>
 
     <div class="st__grid">
       <!-- Empty collection -->
@@ -92,6 +110,24 @@ import { StrctButton, StrctIcon, StrctSkeleton, StrctSpinner } from 'strct';
         margin: 4px 0 0;
         font-size: 13px;
         color: var(--t3);
+      }
+      .st__dots {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        flex-wrap: wrap;
+        padding: 14px 18px;
+        margin-bottom: 14px;
+        border: 1px solid var(--b2);
+        border-radius: 12px;
+        background: var(--bg-1);
+      }
+      .st__dotitem {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--t2);
       }
       .st__grid {
         display: grid;
@@ -181,4 +217,13 @@ import { StrctButton, StrctIcon, StrctSkeleton, StrctSpinner } from 'strct';
     `,
   ],
 })
-export class StatesPage {}
+export class StatesPage {
+  /** The canonical status vocabulary, shown at both dot sizes. */
+  protected readonly dots: { status: StrctStatus; label: string }[] = [
+    { status: 'success', label: 'Running' },
+    { status: 'warning', label: 'Degraded' },
+    { status: 'critical', label: 'Unreachable' },
+    { status: 'accent', label: 'Planned maintenance' },
+    { status: 'neutral', label: 'Unknown' },
+  ];
+}

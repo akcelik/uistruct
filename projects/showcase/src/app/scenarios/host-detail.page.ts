@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
   StrctBadge,
@@ -9,10 +10,13 @@ import {
   StrctChart,
   StrctGauge,
   StrctIcon,
+  StrctInlineEdit,
   StrctProgress,
   StrctSparkline,
   StrctStack,
   StrctStackItem,
+  StrctStatus,
+  StrctStatusDot,
   StrctTab,
   StrctTabs,
   StrctTag,
@@ -30,6 +34,7 @@ import {
   selector: 'app-host-detail-scenario',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    FormsModule,
     RouterLink,
     StrctTabs,
     StrctTab,
@@ -48,6 +53,8 @@ import {
     StrctSparkline,
     StrctTimeline,
     StrctTimelineItem,
+    StrctInlineEdit,
+    StrctStatusDot,
   ],
   template: `
     <header class="det__head">
@@ -59,7 +66,9 @@ import {
           <span class="det__avatar"
             ><strct-icon name="host" [size]="22" [strokeWidth]="1.4"
           /></span>
-          <h1 class="det__title">hv-prod-03</h1>
+          <h1 class="det__title">
+            <strct-inline-edit [(ngModel)]="hostName" editLabel="Edit host name" />
+          </h1>
           <strct-badge status="success">Running</strct-badge>
           <strct-tag status="accent">Prod-B</strct-tag>
         </div>
@@ -126,6 +135,24 @@ import {
                   </div>
                 }
               </div>
+            </strct-card-block>
+          </strct-card>
+
+          <strct-card>
+            <strct-card-header
+              ><span>Hardware sensors</span
+              ><strct-badge status="warning">1 degraded</strct-badge></strct-card-header
+            >
+            <strct-card-block>
+              <ul class="sensors">
+                @for (s of sensors; track s.name) {
+                  <li>
+                    <strct-status-dot [status]="s.status" size="sm" [label]="s.name" />
+                    <span class="sensors__name">{{ s.name }}</span>
+                    <span class="sensors__reading">{{ s.reading }}</span>
+                  </li>
+                }
+              </ul>
             </strct-card-block>
           </strct-card>
         </div>
@@ -303,10 +330,35 @@ import {
         font-size: 12px;
         color: var(--t3);
       }
+      .sensors {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .sensors li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--t2);
+      }
+      .sensors__name {
+        color: var(--t1);
+      }
+      .sensors__reading {
+        margin-left: auto;
+        color: var(--t3);
+        font-variant-numeric: tabular-nums;
+      }
     `,
   ],
 })
 export class HostDetailPage {
+  protected readonly hostName = signal('hv-prod-03');
+
   protected readonly hours = ['00', '03', '06', '09', '12', '15', '18', '21', '24'];
   protected readonly cpu24 = [54, 61, 58, 67, 79, 86, 92, 74, 68];
   protected readonly mem24 = [60, 62, 64, 68, 71, 74, 78, 77, 76];
@@ -322,6 +374,16 @@ export class HostDetailPage {
     { label: 'vCPU allocation', value: 86, status: 'critical', detail: '82 / 96 vCPU' },
     { label: 'Memory allocation', value: 78, status: 'warning', detail: '400 / 512 GB' },
     { label: 'Local volume', value: 62, status: 'success', detail: '1.2 / 2 TB' },
+  ];
+
+  /** BMC sensor + NIC link rows; the dot carries the health, the text the reading. */
+  protected readonly sensors: { name: string; status: StrctStatus; reading: string }[] = [
+    { name: 'CPU temperature', status: 'success', reading: '62 °C' },
+    { name: 'System board', status: 'success', reading: '38 °C' },
+    { name: 'Fan 2 (rear)', status: 'warning', reading: 'Degraded · 4 100 rpm' },
+    { name: 'PSU redundancy', status: 'success', reading: '2/2 online' },
+    { name: 'NIC eth0', status: 'success', reading: '10 GbE · link up' },
+    { name: 'NIC eth1', status: 'neutral', reading: 'No link' },
   ];
 
   protected readonly events: { title: string; state: StrctTimelineState; detail: string }[] = [

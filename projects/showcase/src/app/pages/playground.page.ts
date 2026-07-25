@@ -1,17 +1,37 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   StrctAlert,
   StrctAvatar,
   StrctBadge,
   StrctButton,
+  StrctCombobox,
+  StrctConfirmOutlet,
+  StrctConfirmService,
+  StrctDatetimePicker,
+  StrctHeatmap,
+  StrctHeatmapCell,
   StrctIcon,
+  StrctInlineEdit,
   StrctInput,
+  StrctKnob,
+  StrctNotificationCenter,
+  StrctNumber,
+  StrctOption,
+  StrctPopover,
+  StrctPopoverTrigger,
   StrctProgress,
   StrctRange,
+  StrctRating,
+  StrctSegmented,
+  StrctSegmentedOption,
   StrctSpinner,
+  StrctStatusDot,
   StrctTag,
+  StrctToastService,
   StrctToggle,
+  StrctTreeNodeData,
+  StrctTreeSelect,
 } from 'strct';
 
 type ControlType = 'select' | 'boolean' | 'text' | 'number';
@@ -116,6 +136,133 @@ const PLAYGROUND: PlaygroundCmp[] = [
     code: (v) =>
       `<strct-alert type="${v['type']}"${v['closable'] ? ' closable' : ''}>${v['message']}</strct-alert>`,
   },
+  {
+    id: 'status-dot',
+    label: 'Status dot',
+    controls: [
+      { prop: 'status', type: 'select', options: STATUS },
+      { prop: 'size', type: 'select', options: ['md', 'sm'] },
+      { prop: 'label', type: 'text' },
+    ],
+    defaults: { status: 'success', size: 'md', label: '' },
+    code: (v) =>
+      `<strct-status-dot status="${v['status']}" size="${v['size']}"${v['label'] ? ` label="${v['label']}"` : ''} />`,
+  },
+  {
+    id: 'segmented',
+    label: 'Segmented',
+    controls: [{ prop: 'size', type: 'select', options: ['md', 'sm'] }],
+    defaults: { size: 'md' },
+    code: (v) => `<strct-segmented [options]="options" [(ngModel)]="period" size="${v['size']}" />`,
+  },
+  {
+    id: 'rating',
+    label: 'Rating',
+    controls: [
+      { prop: 'max', type: 'number', min: 3, max: 10 },
+      { prop: 'readonly', type: 'boolean' },
+    ],
+    defaults: { max: 5, readonly: false },
+    code: (v) =>
+      `<strct-rating [max]="${v['max']}"${v['readonly'] ? ' readonly' : ''} [(ngModel)]="stars" />`,
+  },
+  {
+    id: 'number',
+    label: 'Number',
+    controls: [
+      { prop: 'min', type: 'number', min: 0, max: 50 },
+      { prop: 'max', type: 'number', min: 10, max: 100 },
+      { prop: 'step', type: 'number', min: 1, max: 10 },
+      { prop: 'disabled', type: 'boolean' },
+      { prop: 'placeholder', type: 'text' },
+    ],
+    defaults: { min: 0, max: 100, step: 1, disabled: false, placeholder: 'vCPUs' },
+    code: (v) =>
+      `<strct-number [min]="${v['min']}" [max]="${v['max']}" [step]="${v['step']}"${v['disabled'] ? ' disabled' : ''}${v['placeholder'] ? ` placeholder="${v['placeholder']}"` : ''} [(ngModel)]="count" />`,
+  },
+  {
+    id: 'knob',
+    label: 'Knob',
+    controls: [
+      { prop: 'min', type: 'number', min: 0, max: 50 },
+      { prop: 'max', type: 'number', min: 10, max: 100 },
+      { prop: 'step', type: 'number', min: 1, max: 10 },
+      { prop: 'status', type: 'select', options: SEMANTIC },
+    ],
+    defaults: { min: 0, max: 100, step: 5, status: 'accent' },
+    code: (v) =>
+      `<strct-knob [min]="${v['min']}" [max]="${v['max']}" [step]="${v['step']}" status="${v['status']}" [(ngModel)]="level" />`,
+  },
+  {
+    id: 'inline-edit',
+    label: 'Inline edit',
+    controls: [
+      { prop: 'placeholder', type: 'text' },
+      { prop: 'disabled', type: 'boolean' },
+    ],
+    defaults: { placeholder: 'Unnamed VM', disabled: false },
+    code: (v) =>
+      `<strct-inline-edit [(ngModel)]="vmName" placeholder="${v['placeholder']}"${v['disabled'] ? ' disabled' : ''} />`,
+  },
+  {
+    id: 'combobox',
+    label: 'Combobox',
+    controls: [
+      { prop: 'clearable', type: 'boolean' },
+      { prop: 'multiple', type: 'boolean' },
+      { prop: 'allowCustomValue', type: 'boolean' },
+    ],
+    defaults: { clearable: true, multiple: false, allowCustomValue: false },
+    code: (v) =>
+      `<strct-combobox [options]="cities" [(ngModel)]="city"${v['clearable'] ? ' clearable' : ''}${v['multiple'] ? ' multiple' : ''}${v['allowCustomValue'] ? ' allowCustomValue' : ''} />`,
+  },
+  {
+    id: 'tree-select',
+    label: 'Tree select',
+    controls: [{ prop: 'clearable', type: 'boolean' }],
+    defaults: { clearable: true },
+    code: (v) =>
+      `<strct-tree-select [nodes]="nodes" [(ngModel)]="hostId"${v['clearable'] ? ' clearable' : ''} />`,
+  },
+  {
+    id: 'datetime-picker',
+    label: 'Datetime picker',
+    controls: [{ prop: 'minuteStep', type: 'select', options: ['1', '5', '15', '30'] }],
+    defaults: { minuteStep: '15' },
+    code: (v) => `<strct-datetime-picker [(ngModel)]="stamp" [minuteStep]="${v['minuteStep']}" />`,
+  },
+  {
+    id: 'popover',
+    label: 'Popover',
+    controls: [{ prop: 'trap', type: 'boolean' }],
+    defaults: { trap: false },
+    code: (v) =>
+      `<strct-popover${v['trap'] ? ' trap' : ''}><button strct-button strctPopoverTrigger>Open</button>…</strct-popover>`,
+  },
+  {
+    id: 'confirm',
+    label: 'Confirm',
+    controls: [{ prop: 'tone', type: 'select', options: ['default', 'critical'] }],
+    defaults: { tone: 'default' },
+    code: (v) =>
+      `await inject(StrctConfirmService).confirm({ title: 'Delete cluster?', message: '…', tone: '${v['tone']}' })`,
+  },
+  {
+    id: 'notification-center',
+    label: 'Notification center',
+    controls: [{ prop: 'maxItems', type: 'number', min: 3, max: 20 }],
+    defaults: { maxItems: 5 },
+    code: (v) =>
+      `<strct-notification-center [maxItems]="${v['maxItems']}" />  +  toast.success('Snapshot completed')`,
+  },
+  {
+    id: 'heatmap',
+    label: 'Heatmap',
+    controls: [{ prop: 'status', type: 'select', options: SEMANTIC }],
+    defaults: { status: 'accent' },
+    code: (v) =>
+      `<strct-heatmap [data]="cells" [rows]="rows" [cols]="cols" [max]="100" status="${v['status']}" />`,
+  },
 ];
 
 /** Interactive props playground — pick a component, tweak its inputs live, copy the code. */
@@ -135,6 +282,20 @@ const PLAYGROUND: PlaygroundCmp[] = [
     StrctToggle,
     StrctRange,
     StrctIcon,
+    StrctStatusDot,
+    StrctSegmented,
+    StrctRating,
+    StrctNumber,
+    StrctKnob,
+    StrctInlineEdit,
+    StrctCombobox,
+    StrctTreeSelect,
+    StrctDatetimePicker,
+    StrctPopover,
+    StrctPopoverTrigger,
+    StrctConfirmOutlet,
+    StrctNotificationCenter,
+    StrctHeatmap,
   ],
   template: `
     <header class="pg__head">
@@ -202,6 +363,114 @@ const PLAYGROUND: PlaygroundCmp[] = [
               }}</strct-alert>
             </div>
           }
+          @case ('status-dot') {
+            <strct-status-dot
+              [status]="$any(v('status'))"
+              [size]="$any(v('size'))"
+              [label]="$any(v('label'))"
+            />
+          }
+          @case ('segmented') {
+            <strct-segmented [options]="segOptions" [size]="$any(v('size'))" />
+          }
+          @case ('rating') {
+            <strct-rating [max]="n('max')" [readonly]="b('readonly')" />
+          }
+          @case ('number') {
+            <div style="width: 100%; max-width: 220px;">
+              <strct-number
+                [min]="n('min')"
+                [max]="n('max')"
+                [step]="n('step')"
+                [disabled]="b('disabled')"
+                [placeholder]="$any(v('placeholder'))"
+              />
+            </div>
+          }
+          @case ('knob') {
+            <strct-knob
+              [min]="n('min')"
+              [max]="n('max')"
+              [step]="n('step')"
+              [status]="$any(v('status'))"
+              label="Level"
+            />
+          }
+          @case ('inline-edit') {
+            <strct-inline-edit
+              [ngModel]="ieValue()"
+              (ngModelChange)="ieValue.set($event)"
+              [placeholder]="$any(v('placeholder'))"
+              [disabled]="b('disabled')"
+            />
+          }
+          @case ('combobox') {
+            <div style="width: 100%; max-width: 280px;">
+              <strct-combobox
+                [options]="cbxOptions"
+                [clearable]="b('clearable')"
+                [multiple]="b('multiple')"
+                [allowCustomValue]="b('allowCustomValue')"
+                placeholder="Pick a city…"
+              />
+            </div>
+          }
+          @case ('tree-select') {
+            <div style="width: 100%; max-width: 280px;">
+              <strct-tree-select
+                [nodes]="tsNodes"
+                [clearable]="b('clearable')"
+                placeholder="Pick a host…"
+              />
+            </div>
+          }
+          @case ('datetime-picker') {
+            <div style="width: 100%; max-width: 280px;">
+              <strct-datetime-picker [minuteStep]="n('minuteStep')" />
+            </div>
+          }
+          @case ('popover') {
+            <strct-popover [trap]="b('trap')" ariaLabel="Host details">
+              <button strct-button size="sm" strctPopoverTrigger>Host details</button>
+              <h4 style="margin: 0 0 4px;">hv-02.fra.corp</h4>
+              <p style="margin: 0;">cluster-01 · 128 vCPUs · 768 GiB</p>
+            </strct-popover>
+          }
+          @case ('confirm') {
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <button
+                strct-button
+                [variant]="v('tone') === 'critical' ? 'critical' : 'primary'"
+                (click)="askConfirm()"
+              >
+                Delete cluster…
+              </button>
+              @if (confirmResult() !== null) {
+                <span style="font-size: 12px; color: var(--t3);"
+                  >confirmed: {{ confirmResult() }}</span
+                >
+              }
+            </div>
+          }
+          @case ('notification-center') {
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <strct-notification-center [maxItems]="n('maxItems')" />
+              <button strct-button (click)="toast.success('Snapshot completed')">
+                Fire a toast
+              </button>
+            </div>
+          }
+          @case ('heatmap') {
+            <div style="width: 100%; max-width: 480px;">
+              <strct-heatmap
+                [data]="heatCells"
+                [rows]="heatRows"
+                [cols]="heatCols"
+                [max]="100"
+                [status]="$any(v('status'))"
+              />
+            </div>
+          }
         }
       </div>
 
@@ -249,6 +518,8 @@ const PLAYGROUND: PlaygroundCmp[] = [
       </div>
       <pre class="pg__code-pre"><code>{{ code() }}</code></pre>
     </div>
+
+    <strct-confirm-outlet />
   `,
   styles: [
     `
@@ -358,6 +629,59 @@ export class PlaygroundPage {
   protected readonly selected = signal('button');
   protected readonly values = signal<Record<string, unknown>>({ ...PLAYGROUND[0].defaults });
   protected readonly copied = signal(false);
+
+  protected readonly toast = inject(StrctToastService);
+  private readonly confirm = inject(StrctConfirmService);
+  protected readonly confirmResult = signal<boolean | null>(null);
+  protected readonly ieValue = signal('web-frontend-01');
+
+  protected readonly segOptions: StrctSegmentedOption[] = [
+    { value: 'day', label: 'Day' },
+    { value: 'week', label: 'Week' },
+    { value: 'month', label: 'Month' },
+  ];
+  protected readonly cbxOptions: StrctOption[] = [
+    { value: 'ist', label: 'Istanbul' },
+    { value: 'ams', label: 'Amsterdam' },
+    { value: 'ber', label: 'Berlin' },
+    { value: 'lon', label: 'London' },
+    { value: 'par', label: 'Paris' },
+  ];
+  protected readonly tsNodes: StrctTreeNodeData[] = [
+    {
+      id: 'dc-east',
+      label: 'dc-east',
+      children: [
+        { id: 'hv-01', label: 'hv-01', icon: 'host' },
+        { id: 'hv-02', label: 'hv-02', icon: 'host' },
+      ],
+    },
+    {
+      id: 'dc-west',
+      label: 'dc-west',
+      children: [{ id: 'hv-03', label: 'hv-03', icon: 'host' }],
+    },
+  ];
+  protected readonly heatRows = ['hv-01', 'hv-02', 'hv-03'];
+  protected readonly heatCols = ['00', '04', '08', '12', '16', '20'];
+  protected readonly heatCells: StrctHeatmapCell[] = this.heatRows.flatMap((row, r) =>
+    this.heatCols.map((col, h) => ({
+      row,
+      col,
+      value: Math.round(15 + 60 * Math.abs(Math.sin(h / 2 + r * 1.3))),
+    })),
+  );
+
+  protected async askConfirm(): Promise<void> {
+    this.confirmResult.set(
+      await this.confirm.confirm({
+        title: 'Delete cluster?',
+        message: 'Deleting "Edge Cluster" removes its hosts and VMs. This cannot be undone.',
+        confirmLabel: 'Delete',
+        tone: this.v('tone') === 'critical' ? 'critical' : 'default',
+      }),
+    );
+  }
 
   protected readonly current = computed(
     () => PLAYGROUND.find((p) => p.id === this.selected()) ?? PLAYGROUND[0],

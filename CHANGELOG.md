@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-07-25
+
+### Fixed
+
+- **Typography tokens scoped to arctic/dark** — `--font` and `--mono`
+  were declared only inside `[data-palette='arctic'][data-theme='dark']`,
+  so every light theme (and the ember/sage palettes) lost the bundled
+  typeface and fell back to the browser default on theme switch. Both
+  tokens now live in the scheme-independent `:root` block.
+
 ## [2.0.0] - 2026-07-25
 
 A full-library UI/UX audit, applied: ~40 functional bugs fixed, a shared

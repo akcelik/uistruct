@@ -30,7 +30,10 @@
 // Stacking ladder + overlay backdrop: scheme-independent, so they live on
 // :root instead of the per-scheme blocks. Values preserve the historical
 // hard-coded stacking order; components derive sub-layers with calc() offsets.
+// Typography lives here too — fonts are palette- and theme-independent.
 :root {
+  --font: 'DM Sans', -apple-system, system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
   --backdrop: rgba(0, 0, 0, 0.5);
   --z-base: 1;
   --z-raised: 5;
@@ -45,8 +48,6 @@
 }
 
 [data-palette='arctic'][data-theme='dark'] {
-  --font: 'DM Sans', -apple-system, system-ui, sans-serif;
-  --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
   --bg-0: #0e1015;
   /* Categorical data palette (FR-CHART-15): fixed slot order per palette
      (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade

@@ -4135,6 +4135,7 @@ export const SCENARIOS: { id: string; label: string; icon: string; items: GuideL
     { label: 'Host detail', path: '/scenarios/host' },
     { label: 'VM settings', path: '/scenarios/vm-settings' },
     { label: 'New cluster', path: '/scenarios/new-cluster' },
+    { label: 'Alerts', path: '/scenarios/alerts' },
     { label: 'Empty & errors', path: '/scenarios/states' },
   ],
 };
