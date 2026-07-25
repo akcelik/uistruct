@@ -268,16 +268,51 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="combobox"
       heading="Combobox"
-      description="Type to filter, click to select. ControlValueAccessor-compatible."
-      code='<strct-combobox [options]="cities" [(ngModel)]="city" />'
+      description="Type to filter — the match is emphasised in each label, ✓ marks the current choice, and clearable adds an × reset. ControlValueAccessor-compatible."
+      code='<strct-combobox [options]="cities" [(ngModel)]="city" clearable />'
     >
       <strct-combobox
         [options]="cities"
         [ngModel]="city()"
         (ngModelChange)="city.set($event)"
         placeholder="Search a city…"
+        clearable
       />
       <span class="echo">value: {{ city() ?? '—' }}</span>
+    </app-demo>
+
+    <app-demo
+      anchor="combobox-groups"
+      owner="combobox"
+      heading="Combobox — groups"
+      description="Options carrying a group label render under headers; disabled options gray out and keyboard navigation skips them."
+      code='<strct-combobox [options]="hosts" [(ngModel)]="host" />
+// StrctOption = { value; label; disabled?; group? }'
+    >
+      <strct-combobox
+        [options]="hostOptions"
+        [ngModel]="host()"
+        (ngModelChange)="host.set($event)"
+        placeholder="Search a host…"
+      />
+      <span class="echo">value: {{ host() ?? '—' }}</span>
+    </app-demo>
+
+    <app-demo
+      anchor="combobox-multiple"
+      owner="combobox"
+      heading="Combobox — multiple"
+      description="Multi-select: the value is an array, picks render as removable chips, the list stays open while picking and Backspace removes the last chip."
+      code='<strct-combobox [options]="tags" [(ngModel)]="vmTags" multiple />'
+    >
+      <strct-combobox
+        [options]="tagOptions"
+        [ngModel]="vmTags()"
+        (ngModelChange)="vmTags.set($event)"
+        placeholder="Add labels…"
+        multiple
+      />
+      <span class="echo">value: {{ vmTags().length ? vmTags().join(', ') : '—' }}</span>
     </app-demo>
 
     <app-demo
@@ -582,5 +617,23 @@ export class FormsPage {
     { value: 'par', label: 'Paris' },
     { value: 'mad', label: 'Madrid' },
     { value: 'rom', label: 'Rome' },
+  ];
+
+  protected readonly host = signal<string | null>(null);
+  protected readonly hostOptions: StrctOption[] = [
+    { value: 'hv-01', label: 'hv-01.fra.corp', group: 'Frankfurt' },
+    { value: 'hv-02', label: 'hv-02.fra.corp', group: 'Frankfurt' },
+    { value: 'hv-03', label: 'hv-03.fra.corp (maintenance)', group: 'Frankfurt', disabled: true },
+    { value: 'hv-10', label: 'hv-10.ist.corp', group: 'Istanbul' },
+    { value: 'hv-11', label: 'hv-11.ist.corp', group: 'Istanbul' },
+  ];
+
+  protected readonly vmTags = signal<unknown[]>(['prod']);
+  protected readonly tagOptions: StrctOption[] = [
+    { value: 'prod', label: 'production' },
+    { value: 'stage', label: 'staging' },
+    { value: 'db', label: 'database' },
+    { value: 'gpu', label: 'gpu-passthrough' },
+    { value: 'ha', label: 'high-availability' },
   ];
 }

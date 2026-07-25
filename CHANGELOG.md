@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.21.0] - 2026-07-25
+
+### Added — combobox expansion
+
+The combobox catches up with the v1.19/1.20 select ergonomics and gains
+variants:
+
+- **Select ergonomics parity** — aligned ✓ lead slot on the current
+  choice, opening (or clicking the focused input) highlights it, 9px
+  option rows, list-padding clicks never blur or discard, Home/End jump.
+- **`StrctOption.disabled` honoured** — grayed out, skipped by arrows,
+  not committable. **`StrctOption.group`** renders group headers.
+- **Match emphasis** — the typed query is bolded inside each label.
+- **`clearable`** — an × resets the selection (null, or [] when
+  multiple).
+- **`multiple`** — the value becomes an array: picks render as
+  removable chips in the control, the list stays open while picking,
+  Backspace on an empty query removes the last chip;
+  `aria-multiselectable` listbox semantics.
+- Localizable `emptyText`, `clearLabel`, `removeLabel` inputs.
+
+Defaults reproduce the previous single-select behaviour.
+
 ## [1.20.0] - 2026-07-25
 
 ### Added — `strct-select`: a real select component
