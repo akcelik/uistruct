@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0] - 2026-07-25
+
+### Added — dropdown select ergonomics
+
+Driven by a hands-on behavioral analysis ("changing a selection after
+reopening is hard"): the difficulty was a compound of near-miss clicks
+silently discarding the menu, no visible current choice, and a dead
+keyboard path. All four fixed:
+
+- **A click closes the menu ONLY on a real item activation** — menu
+  padding and divider clicks keep it open, so a 2px miss no longer throws
+  the whole interaction away. (Menu-mode panels should project
+  `strct-dropdown-item`s; arbitrary content belongs in `popover` mode.)
+- **`strct-dropdown-item [selected]`** — bind it for select-like menus:
+  the item becomes a `menuitemradio` with `aria-checked`, a leading ✓ in
+  an aligned lead slot marks the current choice, and reopening focuses it.
+- **Full APG menu keyboarding** — ArrowDown on the trigger opens with
+  focus inside; arrows rove (skipping disabled, wrapping), Home/End jump,
+  Enter/Space activate, Tab closes; Escape and selection restore focus to
+  the trigger.
+- **Bigger hit targets** — item rows 7→9px vertical padding (~31px).
+
 ## [1.18.1] - 2026-07-24
 
 ### Fixed

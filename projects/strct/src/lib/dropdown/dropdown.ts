@@ -10,6 +10,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { StrctIcon } from '../icon/icon';
 import { StrctOverlay } from '../overlay/overlay';
 
 /**
@@ -58,9 +59,8 @@ import { StrctOverlay } from '../overlay/overlay';
         [attr.role]="popover() ? 'dialog' : 'menu'"
         [attr.aria-label]="popover() ? popoverLabel() : null"
         [attr.tabindex]="popover() ? -1 : 0"
-        (click)="onInnerActivate()"
-        (keydown.enter)="onInnerActivate()"
-        (keydown.space)="onInnerActivate()"
+        (click)="onInnerActivate($event)"
+        (keydown)="onMenuKeydown($event)"
       >
         <ng-content />
       </div>
@@ -109,7 +109,7 @@ import { StrctOverlay } from '../overlay/overlay';
   ],
 })
 export class StrctDropdown {
-  private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   /** Horizontal alignment of the menu. */
   readonly align = input<'start' | 'end'>('start');
   /**
@@ -130,17 +130,81 @@ export class StrctDropdown {
     this.host.nativeElement.removeAttribute('popover');
   }
 
+  /** Where focus was when the menu opened — restored on Escape/selection. */
+  private lastFocused: HTMLElement | null = null;
+
   toggle(): void {
-    this.open.update((v) => !v);
+    const willOpen = !this.open();
+    if (willOpen) this.lastFocused = document.activeElement as HTMLElement | null;
+    this.open.set(willOpen);
+    if (willOpen && !this.popover()) this.focusInitialItem();
   }
 
-  close(): void {
+  /** Open (if closed) and move focus into the menu — ArrowDown on the trigger. */
+  openMenu(): void {
+    if (this.open()) return;
+    this.lastFocused = document.activeElement as HTMLElement | null;
+    this.open.set(true);
+    if (!this.popover()) this.focusInitialItem();
+  }
+
+  close(restoreFocus = false): void {
     this.open.set(false);
+    if (restoreFocus) this.lastFocused?.focus?.();
   }
 
-  /** Menu items close on activation; popover form controls never do. */
-  protected onInnerActivate(): void {
-    if (!this.popover()) this.close();
+  /**
+   * Menu mode closes ONLY on a real item activation — a click that lands on
+   * the menu's padding or a divider (a 2px miss) keeps it open instead of
+   * throwing the whole interaction away. Popover form controls never close.
+   */
+  protected onInnerActivate(event: Event): void {
+    if (this.popover()) return;
+    const item = (event.target as HTMLElement | null)?.closest('strct-dropdown-item');
+    if (item && item.getAttribute('aria-disabled') !== 'true') this.close(true);
+  }
+
+  /** APG menu keyboarding: arrows rove, Home/End jump, Enter/Space activate. */
+  protected onMenuKeydown(event: KeyboardEvent): void {
+    if (this.popover()) return;
+    const items = this.enabledItems();
+    if (!items.length) return;
+    const idx = items.indexOf(event.target as HTMLElement);
+    const key = event.key;
+    if (key === 'ArrowDown' || key === 'ArrowUp') {
+      event.preventDefault();
+      const next =
+        idx === -1
+          ? key === 'ArrowDown'
+            ? 0
+            : items.length - 1
+          : (idx + (key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+      items[next].focus();
+    } else if (key === 'Home' || key === 'End') {
+      event.preventDefault();
+      items[key === 'Home' ? 0 : items.length - 1].focus();
+    } else if (key === 'Enter' || key === ' ') {
+      event.preventDefault();
+      (event.target as HTMLElement).click();
+    } else if (key === 'Tab') {
+      this.close();
+    }
+  }
+
+  private enabledItems(): HTMLElement[] {
+    return [
+      ...this.host.nativeElement.querySelectorAll<HTMLElement>(
+        'strct-dropdown-item:not([aria-disabled="true"])',
+      ),
+    ];
+  }
+
+  /** Focus the selected item if there is one, else the first — after render. */
+  private focusInitialItem(): void {
+    setTimeout(() => {
+      const items = this.enabledItems();
+      (items.find((i) => i.getAttribute('aria-checked') === 'true') ?? items[0])?.focus();
+    });
   }
 
   @HostListener('document:click', ['$event'])
@@ -152,7 +216,7 @@ export class StrctDropdown {
 
   @HostListener('document:keydown.escape')
   protected onEscape(): void {
-    this.close();
+    if (this.open()) this.close(true);
   }
 }
 
@@ -166,10 +230,17 @@ export class StrctDropdown {
   host: {
     '[attr.aria-haspopup]': "dd ? (dd.popover() ? 'dialog' : 'menu') : null",
     '[attr.aria-expanded]': 'dd ? dd.open() : null',
+    '(keydown.arrowdown)': 'onArrowDown($event)',
   },
 })
 export class StrctDropdownTrigger {
   protected readonly dd = inject(StrctDropdown, { optional: true });
+
+  protected onArrowDown(event: Event): void {
+    if (!this.dd || this.dd.popover()) return;
+    event.preventDefault();
+    this.dd.openMenu();
+  }
 }
 
 /** A selectable row inside a `<strct-dropdown>`. */
@@ -177,11 +248,22 @@ export class StrctDropdownTrigger {
   selector: 'strct-dropdown-item',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  template: `<ng-content />`,
+  imports: [StrctIcon],
+  template: `@if (selected() !== null) {
+      <span class="strct-dd__check" aria-hidden="true">
+        @if (selected()) {
+          <strct-icon strictName="check" [size]="12" [strokeWidth]="1.8" />
+        }
+      </span>
+    }
+    <ng-content />`,
   host: {
     class: 'strct-dd__item',
-    role: 'menuitem',
+    '[attr.role]': "selected() === null ? 'menuitem' : 'menuitemradio'",
+    '[attr.aria-checked]': 'selected()',
+    '[attr.tabindex]': 'disabled() ? null : -1',
     '[class.strct-dd__item--critical]': 'critical()',
+    '[class.strct-dd__item--selected]': 'selected() === true',
     '[attr.aria-disabled]': 'disabled() || null',
   },
   styles: [
@@ -190,14 +272,29 @@ export class StrctDropdownTrigger {
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 7px 10px;
+        padding: 9px 10px;
         border-radius: 5px;
         cursor: pointer;
         font-size: 13px;
         color: var(--t1);
       }
-      .strct-dd__item:hover {
+      .strct-dd__item:hover,
+      .strct-dd__item:focus-visible {
         background: var(--bg-3);
+        outline: none;
+      }
+      /* Selectable items (selected bound): a fixed lead slot keeps labels
+         aligned; the check marks the current choice when reopening. */
+      .strct-dd__check {
+        display: inline-flex;
+        width: 14px;
+        flex: none;
+        color: var(--acc);
+      }
+      .strct-dd__item--selected {
+        color: var(--t1);
+        font-weight: 600;
+        background: var(--acc-s);
       }
       .strct-dd__item--critical {
         color: var(--critical);
@@ -213,6 +310,13 @@ export class StrctDropdownTrigger {
   ],
 })
 export class StrctDropdownItem {
+  /**
+   * Select-like usage: bind `selected` and the item becomes a
+   * `menuitemradio` with `aria-checked`, a leading ✓ on the current choice
+   * and an aligned lead slot — so reopening the menu shows what is chosen.
+   * Leave unbound for plain action items.
+   */
+  readonly selected = input<boolean | null>(null);
   /** Danger. */
   readonly critical = input(false, { transform: booleanAttribute });
   /** Static disable flag. */
