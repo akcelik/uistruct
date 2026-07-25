@@ -21,6 +21,7 @@ import {
   signal,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
+import { restoreFocus, saveFocusedElement } from '../overlay/focus';
 
 /** A single entry in a data-driven menu. */
 export interface StrctMenuItem {
@@ -112,7 +113,7 @@ export interface StrctMenuItem {
     class: 'strct-menu-host',
     '[style.position]': "submenu() ? null : 'fixed'",
     '[style.left.px]': 'submenu() ? null : posX()',
-    '[style.top.px]': 'submenu() ? null : posY()',
+    '[style.top.px]': 'submenu() ? subTop() : posY()',
     '[style.zIndex]': 'submenu() ? null : 1100',
   },
   styles: [
@@ -125,7 +126,7 @@ export interface StrctMenuItem {
         padding: 4px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 7px;
+        border-radius: var(--radius-md);
         box-shadow: var(--shh);
         animation: strct-menu-in 0.1s ease;
       }
@@ -197,15 +198,19 @@ export interface StrctMenuItem {
       .strct-menu__subpanel {
         position: absolute;
         top: -5px;
-        left: 100%;
+        inset-inline-start: 100%;
         margin-inline-start: 2px;
-        z-index: 1;
+        z-index: var(--z-base);
       }
       .strct-menu__subpanel--flip {
-        left: auto;
-        right: 100%;
+        inset-inline-start: auto;
+        inset-inline-end: 100%;
         margin-inline-start: 0;
         margin-inline-end: 2px;
+      }
+      /* RTL: point the submenu arrow toward the fly-out. */
+      [dir='rtl'] .strct-menu__arrow {
+        transform: rotate(180deg);
       }
       @keyframes strct-menu-in {
         from {
@@ -239,6 +244,8 @@ export class StrctMenuPanel {
 
   protected readonly posX = signal(0);
   protected readonly posY = signal(0);
+  /** Vertical offset of a submenu fly-out (matches the CSS `top: -5px` default). */
+  protected readonly subTop = signal(-5);
   protected readonly flipLeft = signal(false);
   protected readonly activeIndex = signal(0);
   protected readonly openSubIndex = signal<number | null>(null);
@@ -254,26 +261,36 @@ export class StrctMenuPanel {
     this.posY.set(this.y());
     afterNextRender(() => {
       this.activeIndex.set(this.navIndices()[0] ?? 0);
-      if (!this.submenu()) this.clampToViewport();
+      this.clampToViewport();
       this.focusItem(this.activeIndex());
     });
   }
 
   private clampToViewport(): void {
     const host = this.host.nativeElement;
+    const vh = window.innerHeight;
+    const m = 6;
+    if (this.submenu()) {
+      // Fly-outs are CSS-anchored to their item; lift them when they would
+      // overflow the bottom of the viewport (never past the top edge).
+      const rect = host.getBoundingClientRect();
+      const shift = Math.min(rect.bottom + m - vh, rect.top - m);
+      if (shift > 0) this.subTop.set(this.subTop() - shift);
+      return;
+    }
     const w = host.offsetWidth;
     const h = host.offsetHeight;
     const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const m = 6;
     let nx = this.x();
     let ny = this.y();
     if (nx + w > vw - m) nx = Math.max(m, Math.min(this.x() - w, vw - w - m));
     if (ny + h > vh - m) ny = Math.max(m, vh - h - m);
     this.posX.set(nx);
     this.posY.set(ny);
-    // Submenus of a panel near the right edge open to the left.
-    this.flipLeft.set(nx + w > vw - 220);
+    // Submenus open toward the inline end (right in LTR, left in RTL);
+    // flip them when that side of the panel is near the viewport edge.
+    const rtl = getComputedStyle(host).direction === 'rtl';
+    this.flipLeft.set(rtl ? nx < 220 : nx + w > vw - 220);
   }
 
   protected focusItem(i: number): void {
@@ -368,6 +385,11 @@ export class StrctMenuPanel {
         event.stopPropagation();
         this.close.emit();
         break;
+      case 'Tab':
+        // APG: Tab closes the menu — no preventDefault, so focus moves on
+        // naturally once the panel (and the focus inside it) is gone.
+        this.close.emit();
+        break;
     }
   }
 }
@@ -397,10 +419,13 @@ export class StrctMenuService {
   private readonly zone = inject(NgZone);
   private readonly doc = inject(DOCUMENT);
   private ref: ComponentRef<StrctMenuPanel> | null = null;
+  /** Element focused before opening — focus returns here on close. */
+  private restoreTo: HTMLElement | null = null;
 
   open(opts: StrctMenuOpenOptions): void {
     this.close();
     if (!opts.items?.length) return;
+    this.restoreTo = saveFocusedElement();
     const ref = createComponent(StrctMenuPanel, { environmentInjector: this.envInjector });
     ref.setInput('items', opts.items);
     ref.setInput('data', opts.data);
@@ -442,6 +467,9 @@ export class StrctMenuService {
     this.appRef.detachView(this.ref.hostView);
     this.ref.destroy();
     this.ref = null;
+    // Hand focus back to the trigger (selection, Escape, Tab, outside click).
+    restoreFocus(this.restoreTo);
+    this.restoreTo = null;
   }
 }
 

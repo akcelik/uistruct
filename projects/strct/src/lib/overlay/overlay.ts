@@ -4,18 +4,14 @@ import {
   NgZone,
   OnDestroy,
   afterNextRender,
+  booleanAttribute,
   inject,
   input,
 } from '@angular/core';
 
 /** Overlay positioning strategies. */
 export type StrctOverlayPlacement =
-  | 'bottom-start'
-  | 'bottom-end'
-  | 'top-start'
-  | 'top-end'
-  | 'right'
-  | 'left';
+  'bottom-start' | 'bottom-end' | 'top-start' | 'top-end' | 'right' | 'left';
 
 /**
  * Positions an overlay panel with `position: fixed` relative to an anchor
@@ -37,12 +33,19 @@ export class StrctOverlay implements OnDestroy {
 
   /** Anchor element for positioning. */
   readonly anchor = input.required<HTMLElement>({ alias: 'strctOverlay' });
-  /** Preferred placement relative to the anchor. */
+  /**
+   * Preferred placement relative to the anchor. `start`/`end` follow the
+   * anchor's text direction (mirrored under RTL); `left`/`right` are
+   * physical sides in every direction.
+   */
   readonly placement = input<StrctOverlayPlacement>('bottom-start', {
     alias: 'strctOverlayPlacement',
   });
   /** Match the panel width to the anchor (combobox / date / cascade fields). */
-  readonly matchWidth = input(false, { alias: 'strctOverlayMatchWidth' });
+  readonly matchWidth = input(false, {
+    alias: 'strctOverlayMatchWidth',
+    transform: booleanAttribute,
+  });
   /** Gap between anchor and panel in pixels. */
   readonly gap = input(5, { alias: 'strctOverlayGap' });
 
@@ -104,7 +107,9 @@ export class StrctOverlay implements OnDestroy {
       } else if (!below && top < margin && a.bottom + gap + h < vh - margin) {
         top = a.bottom + gap;
       }
-      left = p.endsWith('end') ? a.right - w : a.left;
+      // 'start'/'end' are logical: mirror the anchored edge under RTL.
+      const rtl = getComputedStyle(anchor).direction === 'rtl';
+      left = p.endsWith('end') !== rtl ? a.right - w : a.left;
     }
 
     left = Math.max(margin, Math.min(left, vw - w - margin));

@@ -181,20 +181,16 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
           <button strct-button variant="flat" [disabled]="current() === 0" (click)="back()">
             {{ backLabel() }}
           </button>
-          @if (isLast()) {
-            <button
-              strct-button
-              variant="primary"
-              [disabled]="submitting() || !canAdvance()"
-              (click)="finish()"
-            >
-              {{ submitting() ? submittingLabel() : finishLabel() }}
-            </button>
-          } @else {
-            <button strct-button variant="primary" [disabled]="!canAdvance()" (click)="next()">
-              {{ nextLabel() }}
-            </button>
-          }
+          <!-- One button for Next and Finish: an @if swap on the last step
+               dropped the focused Next from the DOM and focus fell to <body>. -->
+          <button
+            strct-button
+            variant="primary"
+            [disabled]="!canAdvance() || (isLast() && submitting())"
+            (click)="isLast() ? finish() : next()"
+          >
+            {{ isLast() ? (submitting() ? submittingLabel() : finishLabel()) : nextLabel() }}
+          </button>
         </div>
       </div>
 

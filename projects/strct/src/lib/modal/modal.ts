@@ -14,25 +14,21 @@ import {
   signal,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
+import { lockBodyScroll, unlockBodyScroll } from '../overlay/scroll-lock';
 
 /** Fixed modal width presets: sm 480 · md 640 · lg 860 · xl 1080 (px). */
 export type StrctModalSize = 'sm' | 'md' | 'lg' | 'xl';
 
 let modalCounter = 0;
 
-// Body scroll-lock shared across any number of simultaneously open modals.
-let scrollLockCount = 0;
-let savedBodyOverflow = '';
-function lockBodyScroll(doc: Document): void {
-  if (scrollLockCount === 0) {
-    savedBodyOverflow = doc.body.style.overflow;
-    doc.body.style.overflow = 'hidden';
-  }
-  scrollLockCount++;
+// Currently open modals in opening order; Escape dismisses only the topmost.
+const openModalStack: StrctModal[] = [];
+function removeOpenModal(modal: StrctModal): void {
+  const i = openModalStack.indexOf(modal);
+  if (i >= 0) openModalStack.splice(i, 1);
 }
-function unlockBodyScroll(doc: Document): void {
-  scrollLockCount = Math.max(0, scrollLockCount - 1);
-  if (scrollLockCount === 0) doc.body.style.overflow = savedBodyOverflow;
+function isTopmostModal(modal: StrctModal): boolean {
+  return openModalStack[openModalStack.length - 1] === modal;
 }
 
 /**
@@ -110,12 +106,12 @@ function unlockBodyScroll(doc: Document): void {
       .strct-modal__overlay {
         position: fixed;
         inset: 0;
-        z-index: 1000;
+        z-index: var(--z-modal);
         display: flex;
         align-items: center;
         justify-content: center;
         padding: var(--space-5);
-        background: rgba(0, 0, 0, 0.5);
+        background: var(--backdrop);
         backdrop-filter: blur(2px);
         animation: strct-modal-fade 0.12s ease;
       }
@@ -313,11 +309,13 @@ export class StrctModal {
         this.dragStart = null;
         lockBodyScroll(this.doc);
         this.previousActive = this.doc.activeElement as HTMLElement | null;
+        openModalStack.push(this);
         // Move focus into the dialog once it has rendered.
         setTimeout(() => this.focusInitial());
       } else if (!open && this.locked) {
         this.locked = false;
         unlockBodyScroll(this.doc);
+        removeOpenModal(this);
         if (this.previousActive) {
           this.previousActive.focus?.();
           this.previousActive = null;
@@ -327,6 +325,7 @@ export class StrctModal {
 
     // Release the lock if the modal is destroyed while still open.
     inject(DestroyRef).onDestroy(() => {
+      removeOpenModal(this);
       if (this.locked) {
         this.locked = false;
         unlockBodyScroll(this.doc);
@@ -348,7 +347,8 @@ export class StrctModal {
   }
 
   protected onEscape(): void {
-    if (this.open() && this.dismissible()) this.close();
+    // With several modals open, only the topmost one reacts to Escape.
+    if (this.open() && this.dismissible() && isTopmostModal(this)) this.close();
   }
 
   /** Wrap Tab focus within the dialog. */

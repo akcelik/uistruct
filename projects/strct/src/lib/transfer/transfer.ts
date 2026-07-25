@@ -49,12 +49,13 @@ export interface StrctTransferItem {
         [value]="sourceQuery()"
         (valueChange)="sourceQuery.set($event)"
       />
-      <ul class="strct-tf__list" role="listbox" [attr.aria-label]="sourceLabel()">
+      <ul class="strct-tf__list" role="list" [attr.aria-label]="sourceLabel()">
         @for (item of sourceItems(); track item.id) {
           <li class="strct-tf__item" [class.strct-tf__item--disabled]="item.disabled">
             <strct-checkbox
               [checked]="sourceChecked().has(item.id)"
               [disabled]="item.disabled ?? false"
+              [ariaLabel]="item.label + ', ' + sourceLabel()"
               (checkedChange)="toggle(sourceChecked, item.id)"
             >
               @if (item.icon) {
@@ -103,12 +104,13 @@ export interface StrctTransferItem {
         [value]="targetQuery()"
         (valueChange)="targetQuery.set($event)"
       />
-      <ul class="strct-tf__list" role="listbox" [attr.aria-label]="targetLabel()">
+      <ul class="strct-tf__list" role="list" [attr.aria-label]="targetLabel()">
         @for (item of targetItems(); track item.id) {
           <li class="strct-tf__item" [class.strct-tf__item--disabled]="item.disabled">
             <strct-checkbox
               [checked]="targetChecked().has(item.id)"
               [disabled]="item.disabled ?? false"
+              [ariaLabel]="item.label + ', ' + targetLabel()"
               (checkedChange)="toggle(targetChecked, item.id)"
             >
               @if (item.icon) {
@@ -206,6 +208,10 @@ export interface StrctTransferItem {
         justify-content: center;
         gap: 8px;
       }
+      /* RTL: mirror the move chevrons so they keep pointing at the target column. */
+      [dir='rtl'] .strct-tf__mid strct-icon {
+        transform: rotate(180deg);
+      }
     `,
   ],
 })
@@ -236,9 +242,19 @@ export class StrctTransfer {
       (i) => !this.assignedSet().has(i.id) && this.matches(i, this.sourceQuery()),
     ),
   );
-  protected readonly targetItems = computed(() =>
-    this.items().filter((i) => this.assignedSet().has(i.id) && this.matches(i, this.targetQuery())),
-  );
+  protected readonly targetItems = computed(() => {
+    const byId = new Map(this.items().map((i) => [i.id, i]));
+    const known = this.items().filter(
+      (i) => this.assignedSet().has(i.id) && this.matches(i, this.targetQuery()),
+    );
+    // Assigned ids missing from `items` are kept as orphans (label = id) so
+    // data never silently vanishes from the target list.
+    const orphans = this.assigned()
+      .filter((id) => !byId.has(id))
+      .map((id): StrctTransferItem => ({ id, label: id }))
+      .filter((i) => this.matches(i, this.targetQuery()));
+    return [...known, ...orphans];
+  });
 
   private matches(item: StrctTransferItem, q: string): boolean {
     return !q.trim() || item.label.toLowerCase().includes(q.trim().toLowerCase());

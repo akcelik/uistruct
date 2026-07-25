@@ -7,6 +7,7 @@ import {
   input,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
+import { StrctSkeleton } from '../skeleton/skeleton';
 import { StrctChartStatus, StrctSparkline } from '../charts/sparkline';
 
 /** Accent colour for a metric tile. */
@@ -23,52 +24,58 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
   selector: 'strct-metric-tile',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon, StrctSparkline],
+  imports: [StrctIcon, StrctSkeleton, StrctSparkline],
   template: `
-    <div class="strct-mt__top">
-      @if (icon()) {
-        <span class="strct-mt__icon"><strct-icon [name]="icon()" [size]="16" /></span>
-      }
-      <span class="strct-mt__label">{{ label() }}</span>
-      @if (hasDelta()) {
-        <span class="strct-mt__delta strct-mt__delta--{{ deltaTone() }}">
-          <strct-icon
-            [name]="delta()! >= 0 ? 'arrowUp' : 'arrowDown'"
-            [size]="11"
-            [strokeWidth]="2"
-          />
-          {{ absDelta() }}{{ deltaSuffix() }}
-        </span>
-      }
-    </div>
-
-    <div class="strct-mt__value strct-mt__value--{{ status() }}">
-      {{ value() }}
-      @if (unit()) {
-        <span class="strct-mt__unit">{{ unit() }}</span>
-      }
-    </div>
-
-    @if (caption()) {
-      <div class="strct-mt__caption">{{ caption() }}</div>
-    }
-
-    @if (data().length) {
-      <div class="strct-mt__spark">
-        <strct-sparkline [data]="data()" [status]="sparkStatus()" area [height]="28" />
+    @if (loading()) {
+      <strct-skeleton width="45%" height="12px" />
+      <strct-skeleton width="65%" height="28px" />
+    } @else {
+      <div class="strct-mt__top">
+        @if (icon()) {
+          <span class="strct-mt__icon"><strct-icon [name]="icon()" [size]="16" /></span>
+        }
+        <span class="strct-mt__label">{{ label() }}</span>
+        @if (hasDelta()) {
+          <span class="strct-mt__delta strct-mt__delta--{{ deltaTone() }}">
+            <strct-icon [name]="deltaIcon()" [size]="11" [strokeWidth]="2" />
+            <span aria-hidden="true">{{ absDelta() }}{{ deltaSuffix() }}</span>
+            <span class="strct-mt__sr">{{ deltaText() }}</span>
+          </span>
+        }
       </div>
+
+      <div class="strct-mt__value strct-mt__value--{{ status() }}">
+        {{ value() }}
+        @if (unit()) {
+          <span class="strct-mt__unit">{{ unit() }}</span>
+        }
+      </div>
+
+      @if (caption()) {
+        <div class="strct-mt__caption">{{ caption() }}</div>
+      }
+
+      @if (data().length) {
+        <div class="strct-mt__spark">
+          <strct-sparkline [data]="data()" [status]="sparkStatus()" area [height]="28" />
+        </div>
+      }
     }
   `,
-  host: { class: 'strct-mt' },
+  host: {
+    class: 'strct-mt',
+    '[class.strct-mt--loading]': 'loading()',
+    '[attr.aria-busy]': 'loading() ? "true" : null',
+  },
   styles: [
     `
       .strct-mt {
         display: flex;
         flex-direction: column;
         gap: 6px;
-        padding: 13px 15px;
+        padding: var(--space-3) var(--space-4);
         border: 1px solid var(--b2);
-        border-radius: 10px;
+        border-radius: var(--radius-lg);
         background: var(--bg-1);
         min-width: 0;
       }
@@ -108,6 +115,15 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
       }
       .strct-mt__delta--flat {
         color: var(--t3);
+      }
+      /* Visually hidden direction text — the arrow + colour alone don't carry it. */
+      .strct-mt__sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
       }
       .strct-mt__value {
         display: flex;
@@ -167,8 +183,21 @@ export class StrctMetricTile {
   readonly delta = input<number | null>(null);
   /** Suffix for the delta number. */
   readonly deltaSuffix = input('%');
+  /**
+   * Accessible text for the delta (rendered visually-hidden next to the number);
+   * receives the signed delta and the suffix.
+   */
+  readonly deltaAriaLabel = input<(delta: number, suffix: string) => string>((delta, suffix) =>
+    delta > 0
+      ? `increased by ${Math.abs(delta)}${suffix}`
+      : delta < 0
+        ? `decreased by ${Math.abs(delta)}${suffix}`
+        : 'unchanged',
+  );
   /** Treat a positive delta as bad (e.g. error rate, latency). */
   readonly invertDelta = input(false, { transform: booleanAttribute });
+  /** Skeleton placeholder + aria-busy while the metric loads. */
+  readonly loading = input(false, { transform: booleanAttribute });
   /** Small sub-text under the value (e.g. "of 256 GB"). */
   readonly caption = input('');
   /** Sparkline series; empty hides the chart. */
@@ -176,6 +205,13 @@ export class StrctMetricTile {
 
   protected readonly hasDelta = computed(() => this.delta() !== null);
   protected readonly absDelta = computed(() => Math.abs(this.delta() ?? 0));
+  protected readonly deltaIcon = computed(() => {
+    const d = this.delta() ?? 0;
+    return d === 0 ? 'minus' : d > 0 ? 'arrowUp' : 'arrowDown';
+  });
+  protected readonly deltaText = computed(() =>
+    this.deltaAriaLabel()(this.delta() ?? 0, this.deltaSuffix()),
+  );
   protected readonly deltaTone = computed<'up' | 'down' | 'flat'>(() => {
     const d = this.delta() ?? 0;
     if (d === 0) return 'flat';

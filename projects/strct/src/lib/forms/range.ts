@@ -4,7 +4,6 @@ import {
   ViewEncapsulation,
   booleanAttribute,
   computed,
-  effect,
   forwardRef,
   input,
   signal,
@@ -46,7 +45,6 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         align-items: center;
         gap: 10px;
         width: 100%;
-        max-width: 280px;
       }
       .strct-range__input {
         flex: 1;
@@ -56,6 +54,15 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         cursor: pointer;
         background: linear-gradient(
           to right,
+          var(--acc) 0 var(--strct-range-fill, 0%),
+          var(--bg-3) var(--strct-range-fill, 0%) 100%
+        );
+      }
+      /* RTL: the native thumb travels from the right, so the fill paints from the right too.
+         (Plain [dir='rtl'] because this component uses ViewEncapsulation.None.) */
+      [dir='rtl'] .strct-range__input {
+        background: linear-gradient(
+          to left,
           var(--acc) 0 var(--strct-range-fill, 0%),
           var(--bg-3) var(--strct-range-fill, 0%) 100%
         );
@@ -106,11 +113,13 @@ export class StrctRange implements ControlValueAccessor {
   readonly step = input(1);
   /** Display the current numeric value. */
   readonly showValue = input(false, { transform: booleanAttribute });
-  /** Static disable flag. */
+  /** Static disable; forms' setDisabledState also drives the disabled state. */
   readonly disabled = input(false, { transform: booleanAttribute });
 
   readonly value = signal(0);
-  readonly isDisabled = signal(false);
+  /** Disabled state pushed by the forms API (setDisabledState). */
+  private readonly cvaDisabled = signal(false);
+  readonly isDisabled = computed(() => this.disabled() || this.cvaDisabled());
 
   protected readonly fillPercent = computed(() => {
     const span = this.max() - this.min();
@@ -119,10 +128,6 @@ export class StrctRange implements ControlValueAccessor {
 
   private onChange: (value: number) => void = () => {};
   protected onTouched: () => void = () => {};
-
-  constructor() {
-    effect(() => this.isDisabled.set(this.disabled()));
-  }
 
   onInput(event: Event): void {
     const value = Number((event.target as HTMLInputElement).value);
@@ -140,6 +145,6 @@ export class StrctRange implements ControlValueAccessor {
     this.onTouched = fn;
   }
   setDisabledState(isDisabled: boolean): void {
-    this.isDisabled.set(isDisabled);
+    this.cvaDisabled.set(isDisabled);
   }
 }

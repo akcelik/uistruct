@@ -222,3 +222,175 @@ describe('StrctCombobox extensions (v1.21)', () => {
     expect(el.querySelector('.strct-cbx__empty')?.textContent).toContain('Sonuç yok');
   });
 });
+
+describe('StrctCombobox extensions (v1.22)', () => {
+  const RICH: StrctOption[] = [
+    { value: 'vm-01', label: 'web-01', icon: 'vm', description: '4 vCPU · 8 GiB' },
+    { value: 'hv-01', label: 'esx-01', icon: 'host', description: 'Frankfurt rack 3' },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctCombobox);
+    fixture.componentRef.setInput('options', RICH);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance;
+    const el = fixture.nativeElement as HTMLElement;
+    return { fixture, cmp, el };
+  }
+
+  it('renders the option icon and the description line', () => {
+    const { fixture, cmp, el } = make();
+    cmp.openList();
+    fixture.detectChanges();
+    const first = el.querySelector<HTMLElement>('.strct-cbx__opt')!;
+    expect(first.querySelector('.strct-cbx__opt-icon svg')).toBeTruthy();
+    expect(first.querySelector('.strct-cbx__opt-desc')?.textContent).toContain('4 vCPU');
+  });
+
+  it('renders the icon on chips in multiple mode', () => {
+    const { fixture, cmp, el } = make({ multiple: true });
+    cmp.writeValue(['vm-01']);
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-cbx__chip .strct-cbx__chip-icon svg')).toBeTruthy();
+  });
+
+  it('allowCustomValue: the free-form row appears and Enter commits the typed text', () => {
+    const { fixture, cmp, el } = make({ allowCustomValue: true });
+    let emitted: unknown;
+    cmp.registerOnChange((v) => (emitted = v));
+    cmp.openList();
+    cmp.onType({ target: { value: 'db-99' } } as unknown as Event);
+    fixture.detectChanges();
+    const custom = el.querySelector<HTMLElement>('.strct-cbx__opt--custom')!;
+    expect(custom.textContent).toContain('Use "db-99"');
+    expect(el.querySelector('.strct-cbx__empty')).toBeNull(); // row replaces the empty text
+    // No options match → the custom row is the only navigable target.
+    cmp.onKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(emitted).toBe('db-99');
+    expect(cmp.open()).toBe(false);
+    expect(cmp.query()).toBe('db-99');
+  });
+
+  it('allowCustomValue: hidden on an exact label match and uses the localizable verb', () => {
+    const { fixture, cmp, el } = make({ allowCustomValue: true, customText: 'Ekle' });
+    cmp.openList();
+    cmp.onType({ target: { value: 'WEB-01' } } as unknown as Event); // exact, case-insensitive
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-cbx__opt--custom')).toBeNull();
+    cmp.onType({ target: { value: 'web-02' } } as unknown as Event);
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-cbx__opt--custom')?.textContent).toContain('Ekle "web-02"');
+  });
+
+  it('allowCustomValue + multiple: appends the text and keeps picking; dupes suppressed', () => {
+    const { fixture, cmp, el } = make({ allowCustomValue: true, multiple: true });
+    let emitted: unknown;
+    cmp.registerOnChange((v) => (emitted = v));
+    cmp.openList();
+    cmp.onType({ target: { value: 'db-99' } } as unknown as Event);
+    cmp.onKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(emitted).toEqual(['db-99']);
+    expect(cmp.open()).toBe(true);
+    cmp.onType({ target: { value: 'db-99' } } as unknown as Event);
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-cbx__opt--custom')).toBeNull(); // already picked
+  });
+
+  it('keyboard: the custom row is reachable by arrows and skipped from End without it', () => {
+    const { cmp } = make({ allowCustomValue: true });
+    cmp.openList(); // activeIndex -> 0 (web-01)
+    cmp.onType({ target: { value: 'z' } } as unknown as Event); // no matches, custom row at 0
+    cmp.onKeydown(new KeyboardEvent('keydown', { key: 'End' }));
+    expect(cmp.activeIndex()).toBe(0); // custom row is the last (and only) target
+    cmp.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowDown' })); // wraps, stays
+    expect(cmp.activeIndex()).toBe(0);
+  });
+
+  it('a committed custom value survives close/reopen (query echoes the raw text)', () => {
+    const { fixture, cmp } = make({ allowCustomValue: true });
+    cmp.openList();
+    cmp.onType({ target: { value: 'db-99' } } as unknown as Event);
+    cmp.onKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+    cmp.openList();
+    cmp.onKeydown(new KeyboardEvent('keydown', { key: 'Escape' })); // close → sync query
+    expect(cmp.query()).toBe('db-99');
+    fixture.detectChanges();
+  });
+
+  it('Escape on an open list stops propagation (a host modal must stay open)', () => {
+    const { cmp } = make();
+    cmp.openList();
+    const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+    cmp.onKeydown(event);
+    expect(cmp.open()).toBe(false);
+    expect(event.cancelBubble).toBe(true); // stopPropagation ran
+    expect(event.defaultPrevented).toBe(true);
+
+    // A closed list does not consume Escape — it bubbles up to the host.
+    const bubbling = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+    cmp.onKeydown(bubbling);
+    expect(bubbling.cancelBubble).toBe(false);
+  });
+});
+
+describe('StrctCombobox compareWith + disabled', () => {
+  const OBJ: StrctOption[] = [
+    { value: { id: 1 }, label: 'One' },
+    { value: { id: 2 }, label: 'Two' },
+  ];
+  const byId = (a: unknown, b: unknown) =>
+    (a as { id: number } | null)?.id === (b as { id: number } | null)?.id;
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctCombobox);
+    fixture.componentRef.setInput('options', OBJ);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance;
+    const el = fixture.nativeElement as HTMLElement;
+    return { fixture, cmp, el };
+  }
+
+  it('compareWith matches object values that are not reference-equal', () => {
+    const { fixture, cmp, el } = make({ compareWith: byId });
+    cmp.writeValue({ id: 2 }); // a fresh object, never one of the option values
+    fixture.detectChanges();
+    expect(cmp.query()).toBe('Two'); // writeValue sync resolves the label
+    cmp.openList();
+    fixture.detectChanges();
+    const two = [...el.querySelectorAll<HTMLElement>('.strct-cbx__opt')][1];
+    expect(two.getAttribute('aria-selected')).toBe('true');
+    expect(el.querySelector('.strct-cbx__opt--highlight')?.textContent).toContain('Two');
+  });
+
+  it('compareWith drives chip labels and toggle-off in multiple mode', () => {
+    const { fixture, cmp, el } = make({ compareWith: byId, multiple: true });
+    cmp.writeValue([{ id: 1 }]);
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-cbx__chip')?.textContent).toContain('One');
+    // Picking "One" from the list toggles it off despite different references.
+    cmp.openList();
+    cmp.onKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(cmp.values()).toEqual([]);
+  });
+
+  it('merges the static disabled input with the CVA disabled state', () => {
+    const { fixture, cmp, el } = make({ disabled: true });
+    expect(cmp.isDisabled()).toBe(true);
+    expect(el.querySelector<HTMLInputElement>('.strct-cbx__input')!.disabled).toBe(true);
+    cmp.openList();
+    expect(cmp.open()).toBe(false);
+
+    // Static disable stays even if the form re-enables.
+    cmp.setDisabledState(false);
+    expect(cmp.isDisabled()).toBe(true);
+
+    // A static input change must not clobber the forms-driven disabled state.
+    cmp.setDisabledState(true);
+    fixture.componentRef.setInput('disabled', false);
+    fixture.detectChanges();
+    expect(cmp.isDisabled()).toBe(true);
+    expect(el.querySelector<HTMLInputElement>('.strct-cbx__input')!.disabled).toBe(true);
+  });
+});

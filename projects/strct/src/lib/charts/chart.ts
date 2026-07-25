@@ -30,14 +30,7 @@ export type StrctChartCurve = 'smooth' | 'linear' | 'step';
  * reserved for health/threshold meaning.
  */
 export type StrctChartSlot =
-  | 'chart-1'
-  | 'chart-2'
-  | 'chart-3'
-  | 'chart-4'
-  | 'chart-5'
-  | 'chart-6'
-  | 'chart-7'
-  | 'chart-8';
+  'chart-1' | 'chart-2' | 'chart-3' | 'chart-4' | 'chart-5' | 'chart-6' | 'chart-7' | 'chart-8';
 
 /** A series color role: a semantic status, or a categorical palette slot. */
 export type StrctChartColor = StrctChartStatus | StrctChartSlot;
@@ -101,6 +94,18 @@ export interface StrctChartThreshold {
   status?: StrctChartStatus;
   /** Dashed line; default true. */
   dashed?: boolean;
+}
+
+/** Facts handed to `summaryFormat` to build the role="img" aria summary. */
+export interface StrctChartSummaryInfo {
+  /** Series count (multi) or data point count (single). */
+  count: number;
+  /** Per-series label + formatted latest value (multi only). */
+  series?: { label: string; latest: string }[];
+  /** Formatted min / max / latest values (single-series only). */
+  min?: string;
+  max?: string;
+  latest?: string;
 }
 
 interface Pt {
@@ -327,7 +332,7 @@ interface SeriesRender {
           class="strct-chart__svg"
           role="img"
           [attr.aria-label]="chartAria()"
-          [attr.tabindex]="interactive() && type() !== 'bar' ? 0 : null"
+          [attr.tabindex]="interactive() ? 0 : null"
           [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
           [attr.width]="width()"
           [attr.height]="height()"
@@ -618,7 +623,7 @@ interface SeriesRender {
           }
         }
 
-        @if (interactive() && type() !== 'bar') {
+        @if (interactive()) {
           <span class="strct-chart__sr" aria-live="polite">{{ srText() }}</span>
         }
       </div>
@@ -767,7 +772,7 @@ interface SeriesRender {
         position: absolute;
         top: 6px;
         right: 8px;
-        z-index: 3;
+        z-index: calc(var(--z-base) + 2);
         display: inline-flex;
         align-items: center;
         gap: 5px;
@@ -849,7 +854,7 @@ interface SeriesRender {
         font-weight: 600;
         color: var(--t2);
         font-variant-numeric: tabular-nums;
-        z-index: 2;
+        z-index: calc(var(--z-base) + 1);
       }
       .strct-chart__label--active {
         color: var(--t1);
@@ -891,7 +896,7 @@ interface SeriesRender {
         border: 1px solid var(--b2);
         box-shadow: var(--shadow-elevated);
         white-space: nowrap;
-        z-index: 2;
+        z-index: calc(var(--z-base) + 1);
       }
       .strct-chart__tip--multi {
         top: 6px;
@@ -1083,6 +1088,13 @@ export class StrctChart {
   readonly gapText = input('no data');
   /** Accessible label of the reset-zoom chip (localizable). */
   readonly resetLabel = input('Reset zoom');
+  /** Live-mode tooltip text for the most recent point (localizable). */
+  readonly nowLabel = input('now');
+  /**
+   * Factory for the role="img" aria summary (localizable); receives the
+   * computed facts. When null, a default English summary is generated.
+   */
+  readonly summaryFormat = input<((info: StrctChartSummaryInfo) => string) | null>(null);
 
   /** Emits the hovered point index (or null on leave) — wire cross-chart sync with it. */
   readonly hoverIndex = output<number | null>();
@@ -1445,10 +1457,12 @@ export class StrctChart {
   });
 
   // ── Axes ───────────────────────────────────────────────────────
+  /** Horizontal gridlines — one per y tick, so they line up with the axis labels. */
   protected readonly gridY = computed(() => {
     const top = PAD.t;
     const bottom = this.height() - PAD.b;
-    return [top, (top + bottom) / 2, bottom];
+    const n = Math.max(2, this.yTicks());
+    return Array.from({ length: n }, (_, i) => top + ((bottom - top) * i) / (n - 1));
   });
 
   private fmtAxis(v: number): string {
@@ -1614,35 +1628,33 @@ export class StrctChart {
       const ago = Math.round(((this.nx() - 1 - i) * this.interval()) / 1000);
       const fmt = this.agoFormat();
       if (fmt) return fmt(ago);
-      return ago <= 0 ? 'now' : `${ago}s ago`;
+      return ago <= 0 ? this.nowLabel() : `${ago}s ago`;
     }
     const l = this.labels();
     return i >= 0 && i < l.length ? l[i] : '';
   });
 
-  /** Per-series value at the hovered index (multi-series tooltip; bands as `avg (min–max)`). */
+  /** Per-series value at the hovered index (multi-series tooltip; bands as `avg (min–max)`).
+   *  Gap slots stay listed with `gapText`, like the single-series gap tip. */
   protected readonly hoverRows = computed(() => {
     const i = this.dispIdx();
     const s = this.multiSeries();
     if (i == null || !s.length) return [];
     const f = this.valueFormat();
     const fmt = (v: number) => (f ? f(v) : String(v));
-    return s
-      .map((x) => {
-        const li = i - x.offset;
-        const raw = li >= 0 && li < x.data.length ? x.data[li] : null;
-        const v = isVal(raw) ? raw : null;
-        const lo = x.lower?.[li];
-        const hi = x.upper?.[li];
-        const band = isVal(lo) && isVal(hi) ? ` (${fmt(lo)}–${fmt(hi)})` : '';
-        return {
-          label: x.label,
-          color: x.color,
-          value: v,
-          text: v == null ? '' : fmt(v) + band,
-        };
-      })
-      .filter((r) => r.value !== null);
+    return s.map((x) => {
+      const li = i - x.offset;
+      const raw = li >= 0 && li < x.data.length ? x.data[li] : null;
+      const v = isVal(raw) ? raw : null;
+      const lo = x.lower?.[li];
+      const hi = x.upper?.[li];
+      const band = isVal(lo) && isVal(hi) ? ` (${fmt(lo)}–${fmt(hi)})` : '';
+      return {
+        label: x.label,
+        color: x.color,
+        text: v == null ? this.gapText() : fmt(v) + band,
+      };
+    });
   });
 
   /** Per-series hover dots (multi-series). */
@@ -1700,18 +1712,30 @@ export class StrctChart {
   /** Screen-reader summary of the whole chart (role="img" name). */
   protected readonly chartAria = computed(() => {
     const f = this.valueFormat() ?? ((v: number) => String(Math.round(v * 100) / 100));
+    const custom = this.summaryFormat();
     if (this.isMulti()) {
-      const parts = this.multiSeries().map((s) => {
+      const series = this.multiSeries().map((s) => {
         const reals = s.data.filter(isVal);
-        const last = reals.length ? f(reals[reals.length - 1]) : '';
-        return `${s.label || 'series'} latest ${last}`;
+        return {
+          label: s.label || 'series',
+          latest: reals.length ? f(reals[reals.length - 1]) : '',
+        };
       });
-      return `Chart, ${this.multiSeries().length} series: ${parts.join('; ')}`;
+      if (custom) return custom({ count: series.length, series });
+      const parts = series.map((p) => `${p.label} latest ${p.latest}`);
+      return `Chart, ${series.length} series: ${parts.join('; ')}`;
     }
     const d = this.data();
     const reals = d.filter(isVal);
     if (!reals.length) return this.emptyText();
-    return `Chart, ${d.length} points. Min ${f(Math.min(...reals))}, max ${f(Math.max(...reals))}, latest ${f(reals[reals.length - 1])}`;
+    const info: StrctChartSummaryInfo = {
+      count: d.length,
+      min: f(Math.min(...reals)),
+      max: f(Math.max(...reals)),
+      latest: f(reals[reals.length - 1]),
+    };
+    if (custom) return custom(info);
+    return `Chart, ${info.count} points. Min ${info.min}, max ${info.max}, latest ${info.latest}`;
   });
 
   /** aria-live text announcing the hovered / keyboard-selected point. */
@@ -1766,7 +1790,7 @@ export class StrctChart {
       }
       return;
     }
-    if (!this.interactive() || this.type() === 'bar') return;
+    if (!this.interactive()) return;
     const [s, e] = this.domain();
     const cur = this.hoverIdx();
     let next: number | null = null;

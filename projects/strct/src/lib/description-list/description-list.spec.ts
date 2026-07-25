@@ -36,6 +36,18 @@ describe('StrctDescriptionList', () => {
     expect(host.textContent).toContain('172.16.75.2');
   });
 
+  it('uses real description-list semantics (dl/dt/dd)', () => {
+    const host = setup();
+    const list = host.querySelector('dl.strct-dl__list');
+    expect(list).toBeTruthy();
+    const row = list!.querySelector('div.strct-desc')!;
+    expect(row.querySelector('dt.strct-desc__label')?.textContent).toContain('Gateway');
+    expect(row.querySelector('dd.strct-desc__value')?.textContent).toContain('172.16.75.2');
+    const projected = list!.querySelector('strct-desc')!;
+    expect(projected.querySelector('dt.strct-desc__label')?.textContent).toContain('Projected');
+    expect(projected.querySelector('dd.strct-desc__value')).toBeTruthy();
+  });
+
   it('marks mono / muted item rows', () => {
     const host = setup();
     const rows = host.querySelectorAll('div.strct-desc');

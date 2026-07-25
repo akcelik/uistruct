@@ -34,7 +34,7 @@ import { StrctIcon } from '../icon/icon';
             [attr.aria-label]="
               (collapsed() ? expandLabel() : collapseLabel()) +
               ' ' +
-              (title() || language() || 'code')
+              (title() || language() || regionLabel())
             "
             (click)="collapsed.set(!collapsed())"
           >
@@ -64,7 +64,7 @@ import { StrctIcon } from '../icon/icon';
         [class.strct-code__scroll--wrap]="wrap()"
         tabindex="0"
         role="region"
-        [attr.aria-label]="title() || language() || 'code'"
+        [attr.aria-label]="title() || language() || regionLabel()"
         [style.max-height.px]="maxHeight()"
       >
         <pre class="strct-code__pre"><!--
@@ -84,7 +84,7 @@ import { StrctIcon } from '../icon/icon';
       .strct-code {
         display: block;
         border: 1px solid var(--b2);
-        border-radius: 9px;
+        border-radius: var(--radius-lg);
         background: var(--bg-2);
         overflow: hidden;
       }
@@ -216,9 +216,12 @@ export class StrctCode {
   /** Localizable labels for the collapse toggle. */
   readonly collapseLabel = input('Collapse');
   readonly expandLabel = input('Expand');
+  /** Fallback accessible label when neither `title` nor `language` is set. */
+  readonly regionLabel = input('code');
 
   protected readonly lineNos = computed(() => {
-    const n = this.code().split('\n').length;
+    // A trailing newline terminates the last line; it does not add a new one.
+    const n = this.code().replace(/\n$/, '').split('\n').length;
     return Array.from({ length: n }, (_, i) => i + 1);
   });
 }

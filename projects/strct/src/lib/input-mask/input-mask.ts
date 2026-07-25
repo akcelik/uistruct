@@ -52,7 +52,6 @@ export const STRCT_MASKS = {
       .strct-mask__input {
         display: block;
         width: 100%;
-        max-width: 280px;
       }
     `,
   ],
@@ -100,7 +99,7 @@ export class StrctInputMask implements ControlValueAccessor {
     }
     let out = '';
     let di = 0;
-    for (let mi = 0; mi < mask.length && di < data.length; ) {
+    for (let mi = 0; mi < mask.length && di < data.length;) {
       const m = mask[mi];
       if (this.isToken(m)) {
         if (this.matches(data[di], m)) {

@@ -43,9 +43,37 @@ describe('StrctFilterBar', () => {
     expect(searched).toEqual(['hv']);
   });
 
-  it('hides clear-all with a single filter and the count when null', () => {
+  it('shows clear-all with a single filter; hides it and the count when empty/null', () => {
     const { el } = make({ filters: [CHIPS[0]] });
-    expect(el.querySelector('.strct-fb__clear')).toBeNull();
+    expect(el.querySelector('.strct-fb__clear')).toBeTruthy();
     expect(el.querySelector('.strct-fb__count')).toBeNull();
+    const empty = make({ filters: [] });
+    expect(empty.el.querySelector('.strct-fb__clear')).toBeNull();
+  });
+
+  it('moves focus to the next chip × when the focused chip is removed', () => {
+    const { fixture, el, cmp } = make({ filters: CHIPS });
+    cmp.removed.subscribe((c) =>
+      fixture.componentRef.setInput(
+        'filters',
+        CHIPS.filter((x) => x.id !== c.id),
+      ),
+    );
+    const first = el.querySelectorAll<HTMLButtonElement>('.strct-fb__chip-x')[0];
+    first.focus();
+    first.click();
+    fixture.detectChanges();
+    expect(el.querySelectorAll('.strct-fb__chip-x')).toHaveLength(1);
+    expect(document.activeElement).toBe(el.querySelector('.strct-fb__chip-x'));
+  });
+
+  it('moves focus to the search field when the last chip is removed', () => {
+    const { fixture, el, cmp } = make({ filters: [CHIPS[0]] });
+    cmp.removed.subscribe(() => fixture.componentRef.setInput('filters', []));
+    const x = el.querySelector<HTMLButtonElement>('.strct-fb__chip-x')!;
+    x.focus();
+    x.click();
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(el.querySelector('.strct-sb__input'));
   });
 });

@@ -4,6 +4,7 @@ import {
   ViewEncapsulation,
   booleanAttribute,
   computed,
+  effect,
   input,
   signal,
 } from '@angular/core';
@@ -164,7 +165,12 @@ export function strctComputeDiff(before: string, after: string): StrctDiffRow[] 
               @if (row.kind === 'skip') {
                 <tr class="strct-diff__skip-row">
                   <td colspan="4">
-                    <button type="button" class="strct-diff__skip" (click)="expand(row.startIndex)">
+                    <button
+                      type="button"
+                      class="strct-diff__skip"
+                      [attr.aria-expanded]="isExpanded(row.startIndex)"
+                      (click)="toggle(row.startIndex)"
+                    >
                       · {{ row.count }} {{ unchangedLabel() }} ·
                     </button>
                   </td>
@@ -187,7 +193,12 @@ export function strctComputeDiff(before: string, after: string): StrctDiffRow[] 
               @if (row.kind === 'skip') {
                 <tr class="strct-diff__skip-row">
                   <td colspan="6">
-                    <button type="button" class="strct-diff__skip" (click)="expand(row.startIndex)">
+                    <button
+                      type="button"
+                      class="strct-diff__skip"
+                      [attr.aria-expanded]="isExpanded(row.startIndex)"
+                      (click)="toggle(row.startIndex)"
+                    >
                       · {{ row.count }} {{ unchangedLabel() }} ·
                     </button>
                   </td>
@@ -389,9 +400,13 @@ export class StrctDiff {
 
   protected readonly unifiedRows = computed<AnyRow[]>(() => {
     const out: AnyRow[] = [];
+    const expanded = this.expanded();
     for (const chunk of this.chunks()) {
-      if (chunk.skip) out.push({ kind: 'skip', count: chunk.rows.length, startIndex: chunk.start });
-      else for (const r of chunk.rows) out.push({ kind: 'row', ...r });
+      if (chunk.skip) {
+        out.push({ kind: 'skip', count: chunk.rows.length, startIndex: chunk.start });
+        if (!expanded.has(chunk.start)) continue;
+      }
+      for (const r of chunk.rows) out.push({ kind: 'row', ...r });
     }
     return out;
   });
@@ -401,7 +416,7 @@ export class StrctDiff {
     for (const chunk of this.chunks()) {
       if (chunk.skip) {
         out.push({ kind: 'skip', count: chunk.rows.length, startIndex: chunk.start });
-        continue;
+        if (!this.expanded().has(chunk.start)) continue;
       }
       // Pair del-runs with the add-run that follows them (classic split view).
       let i = 0;
@@ -445,7 +460,6 @@ export class StrctDiff {
     () => {
       const rows = this.rows();
       const ctx = this.context();
-      const expanded = this.expanded();
       if (ctx <= 0) return [{ skip: false, start: 0, rows }];
 
       // Mark rows within `ctx` of any change as visible.
@@ -461,9 +475,9 @@ export class StrctDiff {
       const out: { skip: boolean; start: number; rows: StrctDiffRow[] }[] = [];
       let i = 0;
       while (i < rows.length) {
-        const vis = visible[i] || expanded.has(startOfRun(visible, i));
+        const vis = visible[i];
         const start = i;
-        while (i < rows.length && (visible[i] || expanded.has(startOfRun(visible, i))) === vis) i++;
+        while (i < rows.length && visible[i] === vis) i++;
         const slice = rows.slice(start, i);
         // Tiny hidden runs are not worth a fold row.
         if (!vis && slice.length <= 2) out.push({ skip: false, start, rows: slice });
@@ -473,19 +487,28 @@ export class StrctDiff {
     },
   );
 
-  protected expand(startIndex: number): void {
+  constructor() {
+    // Expansion indices are per-diff — drop them when the inputs change,
+    // otherwise a stale index expands an arbitrary run in the next diff.
+    effect(() => {
+      this.before();
+      this.after();
+      this.expanded.set(new Set());
+    });
+  }
+
+  protected isExpanded(startIndex: number): boolean {
+    return this.expanded().has(startIndex);
+  }
+
+  protected toggle(startIndex: number): void {
     const next = new Set(this.expanded());
-    next.add(startIndex);
+    if (next.has(startIndex)) next.delete(startIndex);
+    else next.add(startIndex);
     this.expanded.set(next);
   }
 
   protected sign(type: string): string {
     return type === 'add' ? '+' : type === 'del' ? '−' : '';
   }
-}
-
-function startOfRun(visible: boolean[], i: number): number {
-  let s = i;
-  while (s > 0 && visible[s - 1] === visible[i]) s--;
-  return s;
 }

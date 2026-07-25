@@ -11,6 +11,7 @@
 //   --acc + acc-*   accent and its translucent tints
 //   --success/--warning/--critical semantic (success / warning / critical) + *-bg fills
 //   --sh/--shh      resting / raised shadows             --sb scrollbar thumb
+//   --z-*           stacking ladder (base -> toast)      --backdrop overlay dim
 
 // Default scheme (arctic / dark) so the library renders before any attribute is set.
 :root,
@@ -24,6 +25,23 @@
 }
 [data-theme='light'] {
   color-scheme: light;
+}
+
+// Stacking ladder + overlay backdrop: scheme-independent, so they live on
+// :root instead of the per-scheme blocks. Values preserve the historical
+// hard-coded stacking order; components derive sub-layers with calc() offsets.
+:root {
+  --backdrop: rgba(0, 0, 0, 0.5);
+  --z-base: 1;
+  --z-raised: 5;
+  --z-sticky: 10;
+  --z-dropdown: 200;
+  --z-popover: 250;
+  --z-nav: 300;
+  --z-tour: 400;
+  --z-modal: 1000;
+  --z-overlay: 1100;
+  --z-toast: 1200;
 }
 
 [data-palette='arctic'][data-theme='dark'] {

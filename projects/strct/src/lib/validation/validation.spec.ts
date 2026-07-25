@@ -29,6 +29,18 @@ describe('StrctCellStatus', () => {
     expect(host.querySelector('.strct-vstate__msg')?.textContent).toContain('Checking…');
   });
 
+  it('labels the checking spinner with a localizable default', () => {
+    const fixture = TestBed.createComponent(StrctCellStatus);
+    fixture.componentRef.setInput('state', { status: 'checking' });
+    fixture.detectChanges();
+    const spinner = (fixture.nativeElement as HTMLElement).querySelector('strct-spinner')!;
+    expect(spinner.getAttribute('aria-label')).toBe('Loading');
+
+    fixture.componentRef.setInput('loadingLabel', 'Prüfung läuft');
+    fixture.detectChanges();
+    expect(spinner.getAttribute('aria-label')).toBe('Prüfung läuft');
+  });
+
   it('renders an icon + message for ok / warning / error', () => {
     expect(setup({ status: 'ok' }).querySelector('.strct-vstate--ok strct-icon')).toBeTruthy();
     expect(

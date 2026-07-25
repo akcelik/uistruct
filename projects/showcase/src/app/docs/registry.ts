@@ -355,6 +355,45 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not rely on the status dot alone to convey critical state.'],
       },
       {
+        id: 'status-dot',
+        title: 'Status dot',
+        selector: 'strct-status-dot',
+        importNames: ['StrctStatusDot'],
+        summary: 'State dot that never relies on color alone.',
+        lead: 'A small status dot whose tone is painted in CSS while the state is also rendered as visually-hidden text — screen readers (and anyone copying text) get "Warning", not just a yellow circle. Uses the canonical `StrctStatus` vocabulary: OK maps to `success`, info to `accent` (there is no `ok` / `info`).',
+        inputs: [
+          {
+            name: 'status',
+            type: STATUS_VALUES,
+            default: `'neutral'`,
+            description: 'Status tone.',
+          },
+          {
+            name: 'label',
+            type: 'string',
+            default: `''`,
+            description:
+              'Accessible state text (localizable); empty falls back to a per-status default ("OK", "Warning", …).',
+          },
+          {
+            name: 'size',
+            type: `'sm' | 'md'`,
+            default: `'md'`,
+            description: 'Dot size; `sm` for dense rows (tables, menus).',
+          },
+        ],
+        do: [
+          'Use inside avatars, menu rows and metric tiles — anywhere a bare colored dot would carry meaning.',
+          'Pass a specific `label` when the state needs context ("Node unreachable").',
+        ],
+        dont: [
+          'Do not stretch a dot into a status pill — use a badge when a label should be visible.',
+        ],
+        a11y: [
+          'The state is always exposed as (visually hidden) text, so the dot is never color-only.',
+        ],
+      },
+      {
         id: 'progress',
         title: 'Progress',
         selector: 'strct-progress',
@@ -486,6 +525,46 @@ export const DOCS: DocCategory[] = [
         lead: 'The same `strctInput` directive on a `<textarea>`, vertically resizable. Set `rows` natively.',
         do: ['Set a sensible rows value for the expected content length.'],
         dont: ['Do not disable resizing unless the layout truly requires it.'],
+      },
+      {
+        id: 'inline-edit',
+        title: 'Inline edit',
+        selector: 'strct-inline-edit',
+        importNames: ['StrctInlineEdit'],
+        summary: 'Click-to-edit text.',
+        lead: 'Display text that swaps to an input on click (or via the pencil affordance that appears on hover/focus). Enter commits, Escape cancels, blur commits; the committed value is announced in a live region. ControlValueAccessor-compatible over `string`.',
+        inputs: [
+          model('string', 'Committed value.'),
+          {
+            name: 'placeholder',
+            type: 'string',
+            default: `'Empty'`,
+            description: 'Muted text shown when the value is empty (localizable).',
+          },
+          {
+            name: 'editLabel',
+            type: 'string',
+            default: `'Edit'`,
+            description: 'Accessible label of the edit button and the input (localizable).',
+          },
+          {
+            name: 'announcement',
+            type: '(value: string) => string',
+            default: `'Changed to …'`,
+            description: 'Builds the live-region announcement after a commit (localizable).',
+          },
+          disabledRow,
+        ],
+        do: [
+          'Use for rename-style edits — VM names, descriptions — where a full form is overkill.',
+        ],
+        dont: [
+          'Do not use for values that need validation before commit — use a field with error messaging.',
+        ],
+        a11y: [
+          cvaA11y,
+          'The display value is a real button; Escape cancels without bubbling to an enclosing dialog; a commit is announced via a live region and focus returns to the display value.',
+        ],
       },
       {
         id: 'select',
@@ -644,12 +723,55 @@ export const DOCS: DocCategory[] = [
         a11y: [cvaA11y, 'Arrow keys adjust by step; built on a native range input.'],
       },
       {
+        id: 'number',
+        title: 'Number',
+        selector: 'strct-number',
+        importNames: ['StrctNumber'],
+        summary: 'Numeric stepper with − / + buttons.',
+        lead: 'A numeric stepper: − / + buttons flanking a text field, with a `number | null` value (null = empty). Typing is free-form — intermediate states like "-" are kept and clamped to `min`/`max` on blur; the buttons and keyboard clamp immediately. ControlValueAccessor-compatible.',
+        inputs: [
+          model('number | null', 'Current value; null means empty.'),
+          {
+            name: 'min',
+            type: 'number | null',
+            default: 'null',
+            description: 'Lower bound; null = unbounded.',
+          },
+          {
+            name: 'max',
+            type: 'number | null',
+            default: 'null',
+            description: 'Upper bound; null = unbounded.',
+          },
+          {
+            name: 'step',
+            type: 'number',
+            default: '1',
+            description: 'Increment for the buttons and Arrow keys (PageUp/Down use 10×).',
+          },
+          { name: 'placeholder', type: 'string', default: `''`, description: 'Empty-state hint.' },
+          {
+            name: 'incrementLabel / decrementLabel',
+            type: 'string',
+            default: `'Increment' / 'Decrement'`,
+            description: 'Accessible labels of the ± buttons (localizable).',
+          },
+          disabledRow,
+        ],
+        do: ['Set min / max / step to the unit the value is measured in (vCPUs, GB, replicas).'],
+        dont: ['Do not use for approximate continuous values — a slider fits those better.'],
+        a11y: [
+          cvaA11y,
+          'The field exposes role="spinbutton" with aria-valuemin/max/now; ArrowUp/Down step, PageUp/Down step ×10, Home/End jump to min/max; the ± buttons disable at the bounds.',
+        ],
+      },
+      {
         id: 'combobox',
         title: 'Combobox',
         selector: 'strct-combobox',
         importNames: ['StrctCombobox', 'StrctOption'],
-        summary: 'Type to filter; single or multiple, groups, clearable.',
-        lead: 'A filterable select: type to narrow the list — the match is emphasised in each label — and click or press Enter to choose. An aligned ✓ lead slot marks the current choice. `multiple` switches the value to an array with removable chips; options can carry `group` headers and `disabled`. ControlValueAccessor-compatible.',
+        summary: 'Type to filter; single or multiple, groups, icons, custom values.',
+        lead: 'A filterable select: type to narrow the list — the match is emphasised in each label — and click or press Enter to choose. An aligned ✓ lead slot marks the current choice. `multiple` switches the value to an array with removable chips; options can carry `group` headers, `disabled`, a leading `icon` and a secondary `description` line. `allowCustomValue` lets the typed text itself be committed as a free-form value. ControlValueAccessor-compatible.',
         inputs: [
           model('unknown', 'Selected value — an array when `multiple` is set.'),
           {
@@ -657,7 +779,7 @@ export const DOCS: DocCategory[] = [
             type: 'StrctOption[]',
             default: '[]',
             description:
-              'Items to choose from. `StrctOption = { value: unknown; label: string; disabled?: boolean; group?: string }` — disabled options gray out and are skipped; options sharing a group label render under one header.',
+              'Items to choose from. `StrctOption = { value: unknown; label: string; disabled?: boolean; group?: string; icon?: StrctIconName; description?: string }` — disabled options gray out and are skipped; options sharing a group label render under one header; `icon` leads the row (and the chip) and `description` adds a secondary line.',
           },
           { name: 'placeholder', type: 'string', default: `''`, description: 'Empty-state hint.' },
           {
@@ -680,11 +802,18 @@ export const DOCS: DocCategory[] = [
             description: 'Skeleton placeholder while options load.',
           },
           {
+            name: 'allowCustomValue',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Pin a `Use "…"` row to the list end while typing: Enter or click commits the raw text as a free-form value (appended to the array when `multiple`). Hidden on an exact label match or an already-picked text.',
+          },
+          {
             name: 'emptyText',
             type: 'string',
             default: `'No matches'`,
             description:
-              'Text when the filter matches nothing (localizable; `clearLabel` / `removeLabel` label the × buttons).',
+              'Text when the filter matches nothing (localizable; `clearLabel` / `removeLabel` label the × buttons, `customText` is the verb of the free-form row).',
           },
         ],
         do: [
@@ -697,7 +826,7 @@ export const DOCS: DocCategory[] = [
         ],
         a11y: [
           cvaA11y,
-          'Full keyboard support: ↑/↓ move (skipping disabled options), Home/End jump, Enter picks, Esc closes, Backspace removes the last chip — with aria-activedescendant and aria-multiselectable.',
+          'Full keyboard support: ↑/↓ move (skipping disabled options), Home/End jump, Enter picks, Esc closes, Backspace removes the last chip — with aria-activedescendant and aria-multiselectable. The free-form `Use "…"` row joins the arrow-key order at the list end.',
         ],
       },
       {
@@ -719,6 +848,57 @@ export const DOCS: DocCategory[] = [
         do: ['Use ISO strings end-to-end to avoid timezone surprises.'],
         dont: ['Do not use for free-form approximate dates — use a text input.'],
         a11y: [cvaA11y, 'Calendar is keyboard navigable (arrows / PageUp-Down / Enter).'],
+      },
+      {
+        id: 'datetime-picker',
+        title: 'Date-time picker',
+        selector: 'strct-datetime-picker',
+        importNames: ['StrctDatetimePicker'],
+        summary: 'Date + time in one control; ISO local value.',
+        lead: 'A composition over `strct-datepicker` plus hour/minute selects sharing one field skin. The value is an ISO local datetime string (`YYYY-MM-DDTHH:mm`); picking a time before a date keeps the value empty until a date is picked. ControlValueAccessor-compatible.',
+        inputs: [
+          model('string', 'Selected date + time as an ISO local string.'),
+          {
+            name: 'placeholder',
+            type: 'string',
+            default: `'Select a date'`,
+            description: 'Empty-state hint of the date input.',
+          },
+          {
+            name: 'minuteStep',
+            type: 'number',
+            default: '1',
+            description: 'Minute granularity of the minute select (1 = every minute).',
+          },
+          {
+            name: 'weekStart',
+            type: 'number',
+            default: '0',
+            description: 'First day of the week: 0 = Sunday, 1 = Monday.',
+          },
+          {
+            name: 'monthNames / weekdayNames / weekdayNamesFull',
+            type: 'string[]',
+            default: 'English',
+            description: 'Calendar localization, passed through to the embedded datepicker.',
+          },
+          {
+            name: 'hourLabel / minuteLabel',
+            type: 'string',
+            default: `'Hour' / 'Minute'`,
+            description: 'Accessible labels of the time selects (localizable).',
+          },
+          disabledRow,
+        ],
+        do: [
+          'Use ISO local strings end-to-end; convert to UTC only at the API boundary.',
+          'Set minuteStep to the granularity your backend actually accepts (e.g. 15).',
+        ],
+        dont: ['Do not use for date-only values — use the date picker.'],
+        a11y: [
+          cvaA11y,
+          'The calendar keeps the date picker’s keyboard grid; each time select is a labelled native control.',
+        ],
       },
       {
         id: 'password',
@@ -816,6 +996,53 @@ export const DOCS: DocCategory[] = [
         do: ['Use when options have a natural one-to-two-level hierarchy.'],
         dont: ['Do not nest more than a couple of levels — it gets hard to scan.'],
         a11y: [cvaA11y],
+      },
+      {
+        id: 'tree-select',
+        title: 'Tree select',
+        selector: 'strct-tree-select',
+        importNames: ['StrctTreeSelect'],
+        summary: 'Tree picker in a dropdown.',
+        lead: 'A trigger button that opens an overlay panel hosting a data-driven `strct-tree`. Single-selects a node key (`id`, falling back to `label`); the trigger shows the selected node’s full label path (`Parent / Child`). ControlValueAccessor-compatible.',
+        inputs: [
+          model('string | null', 'Selected node key; null means empty.'),
+          {
+            name: 'nodes',
+            type: 'StrctTreeNodeData[]',
+            default: '[]',
+            description: 'Root nodes rendered by the embedded tree.',
+          },
+          {
+            name: 'placeholder',
+            type: 'string',
+            default: `'Select…'`,
+            description: 'Empty-state hint.',
+          },
+          {
+            name: 'clearable',
+            type: 'boolean',
+            default: 'false',
+            description: 'Show an × that resets the selection.',
+          },
+          {
+            name: 'emptyText',
+            type: 'string',
+            default: `'No items'`,
+            description: 'Shown when `nodes` is empty (localizable).',
+          },
+          disabledRow,
+        ],
+        do: [
+          'Use for deep hierarchies — datacenter / cluster / host — where the path matters.',
+          'Add `clearable` when the selection is optional.',
+        ],
+        dont: [
+          'Do not use it for one-to-two-level groups — the cascade select is easier to scan there.',
+        ],
+        a11y: [
+          cvaA11y,
+          'ArrowDown/Enter/Space open from the trigger; inside, the tree’s ARIA pattern applies (arrows rove, Right/Left expand/collapse, typeahead jumps, Enter picks); Escape closes and focus returns to the trigger.',
+        ],
       },
       {
         id: 'rating',
@@ -1343,6 +1570,45 @@ export const DOCS: DocCategory[] = [
         ],
       },
       {
+        id: 'confirm',
+        title: 'Confirm',
+        selector: 'strct-confirm-outlet',
+        importNames: ['StrctConfirmService', 'StrctConfirmOutlet'],
+        summary: 'Promise-based confirm dialog.',
+        lead: 'Ask "are you sure?" from anywhere and `await` the answer: `StrctConfirmService.confirm()` returns a promise that resolves `true` on confirm and `false` on cancel, the X, Escape or a backdrop click. Render `<strct-confirm-outlet />` once near the app root — without it nothing shows. One dialog at a time: a new call cancels (resolves `false`) the pending one.',
+        inputs: [
+          {
+            name: 'confirmLabel / cancelLabel / closeLabel',
+            type: 'string',
+            default: `'Confirm' / 'Cancel' / 'Close'`,
+            description:
+              'On the outlet: default labels, so an app localizes every confirm() call in one place.',
+          },
+        ],
+        methods: [
+          {
+            name: 'confirm(options)',
+            type: '(StrctConfirmOptions) => Promise<boolean>',
+            description:
+              'Ask the user; `{ title; message; confirmLabel?; cancelLabel?; tone? }` — tone "critical" renders the confirm button as destructive.',
+          },
+          {
+            name: 'settle(result)',
+            type: '(result: boolean) => void',
+            description: 'Resolve the pending confirmation and close the dialog.',
+          },
+        ],
+        do: [
+          'Render the outlet once, just inside the app shell.',
+          'Use tone "critical" and a message that spells out the consequences for destructive actions.',
+        ],
+        dont: ['Do not chain confirms — one dialog at a time; a second call cancels the first.'],
+        a11y: [
+          'Built on strct-modal: focus trap, Escape / backdrop dismissal and focus restore included.',
+          'Initial focus lands on Cancel — the safe default, never the destructive action.',
+        ],
+      },
+      {
         id: 'drawer',
         title: 'Drawer',
         selector: 'strct-drawer',
@@ -1447,6 +1713,58 @@ export const DOCS: DocCategory[] = [
         a11y: [
           'Full APG menu keyboarding: ArrowDown on the trigger opens; arrows rove (skipping disabled), Home/End jump, Enter/Space activate, Tab closes; Escape and selection restore focus to the trigger.',
           'A click on menu padding or a divider does NOT close the menu — only a real item activation does, so a 2px miss never throws the interaction away.',
+        ],
+      },
+      {
+        id: 'popover',
+        title: 'Popover',
+        selector: 'strct-popover, [strctPopoverTrigger]',
+        importNames: ['StrctPopover', 'StrctPopoverTrigger'],
+        summary: 'Anchored overlay panel for arbitrary content.',
+        lead: 'The generic anchored overlay primitive behind menus, signposts and rich pickers: project any content and mark a native `<button>` with `strctPopoverTrigger`. `open` is two-way, so the panel can also be driven from the outside. Positioning, edge-flip and scroll/resize tracking come from `strctOverlay`; the panel is `position: fixed`, so it escapes ancestor overflow clipping.',
+        inputs: [
+          {
+            name: 'open',
+            type: 'boolean',
+            default: 'false',
+            description: 'Open state, two-way (`[(open)]`).',
+          },
+          {
+            name: 'placement',
+            type: 'StrctOverlayPlacement',
+            default: `'bottom-start'`,
+            description: 'Panel placement relative to the trigger; edge-flip is automatic.',
+          },
+          {
+            name: 'ariaLabel',
+            type: 'string',
+            default: `'Details'`,
+            description: 'Accessible name of the popover dialog (localizable).',
+          },
+          {
+            name: 'trap',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Modal-ish usage: move focus into the panel on open, trap Tab inside, hand focus back on close. Off by default — a plain popover never steals focus.',
+          },
+        ],
+        methods: [
+          { name: 'toggle()', type: '() => void', description: 'Flip the open state.' },
+          {
+            name: 'close(restore?)',
+            type: '(restore?: boolean) => void',
+            description: 'Close; with `restore` (or under `trap`) focus returns to the trigger.',
+          },
+        ],
+        do: [
+          'Put the trigger directive on a native <button> — Enter/Space then fire a single click.',
+          'Turn on `trap` when the panel holds a form the user must complete.',
+        ],
+        dont: ['Do not use it for action menus — the dropdown already wires the menu semantics.'],
+        a11y: [
+          'The real trigger button carries aria-haspopup="dialog" / aria-expanded; the panel is a labelled role="dialog".',
+          'Escape closes (without bubbling to a host modal); outside click closes; under `trap` Tab wraps inside the panel.',
         ],
       },
       {
@@ -1727,6 +2045,62 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not use it for site navigation \u2014 that is the header / rail\u2019s job.'],
         a11y: [
           'role="menubar" with roving tabindex; menus are labeled role="menu"; Escape and outside click close.',
+        ],
+      },
+      {
+        id: 'toolbar',
+        title: 'Toolbar',
+        selector: 'strct-toolbar, strct-toolbar-spacer',
+        importNames: ['StrctToolbar', 'StrctToolbarSpacer'],
+        summary: 'Action bar with a selection chip.',
+        lead: 'An action bar for datagrid / card tops: left-aligned projected actions with an optional "N selected" chip and a × that emits `(cleared)`. Drop `strct-toolbar-spacer` between actions to push the following ones to the far end.',
+        inputs: [
+          {
+            name: 'ariaLabel',
+            type: 'string',
+            default: `'Toolbar'`,
+            description: 'Accessible name of the bar (localizable).',
+          },
+          {
+            name: 'orientation',
+            type: `'horizontal' | 'vertical'`,
+            default: `'horizontal'`,
+            description: 'Roving axis: horizontal bars use Left/Right, vertical use Up/Down.',
+          },
+          {
+            name: 'selectionCount',
+            type: 'number',
+            default: '0',
+            description: 'Selected row/item count; > 0 shows the selection chip + clear ×.',
+          },
+          {
+            name: 'divided',
+            type: 'boolean',
+            default: 'false',
+            description: 'Subtle bottom divider — the classic "actions above the grid" look.',
+          },
+          {
+            name: 'selectionLabel',
+            type: '(n: number) => string',
+            default: '`${n} selected`',
+            description: 'Builds the selection-chip label from the count (localizable).',
+          },
+        ],
+        outputs: [
+          {
+            name: 'cleared',
+            type: 'void',
+            description: 'The × was pressed — clear your selection state.',
+          },
+        ],
+        do: [
+          'Bind `selectionCount` to the grid selection and handle `(cleared)` to reset it.',
+          'Keep actions to icon buttons and short labels; overflow belongs in a dropdown.',
+        ],
+        dont: ['Do not use it for site or app navigation — that is the menubar / rail’s job.'],
+        a11y: [
+          'role="toolbar" with APG roving: Arrow keys move across the projected controls (mirrored in RTL), Home/End jump to the ends.',
+          'The selection count is announced via a polite live region; the clear × has an accessible label.',
         ],
       },
       {
@@ -3238,6 +3612,68 @@ export const DOCS: DocCategory[] = [
           'Renders role="img" with an aria-label summarizing the flow; honours prefers-reduced-motion (packets drop to a static gradient).',
         ],
       },
+      {
+        id: 'heatmap',
+        title: 'Heatmap',
+        selector: 'strct-heatmap',
+        importNames: ['StrctHeatmap', 'StrctHeatmapCell'],
+        summary: 'SVG density grid.',
+        lead: 'An SVG grid heatmap for density data (host × hour, queue × weekday …). Each cell’s fill is a single-hue intensity ramp — `color-mix` between the status token and the surface — so luminance, not hue, carries the value and the scale stays readable under color-vision deficiency. Rows and columns follow the explicit `rows` / `cols` arrays when given, else first-seen order in `data`; intersections without data render as empty cells. Dependency-free, measured 1:1 so cells stay crisp at any width; hover a cell for its value.',
+        inputs: [
+          {
+            name: 'data',
+            type: 'StrctHeatmapCell[]',
+            default: '[]',
+            description:
+              'Density values `{ row; col; value }`; a missing row × col intersection renders as an empty cell.',
+          },
+          {
+            name: 'rows / cols',
+            type: 'string[] | null',
+            default: 'null',
+            description:
+              'Explicit axis order (top→bottom / left→right); absent: first-seen order in `data`.',
+          },
+          {
+            name: 'max',
+            type: 'number | null',
+            default: 'null',
+            description:
+              'Scale ceiling — the value that maps to full intensity. Auto (data max) when null.',
+          },
+          {
+            name: 'status',
+            type: CHART_STATUS,
+            default: `'accent'`,
+            description: 'Base color of the intensity ramp.',
+          },
+          {
+            name: 'cellHeight / gap / rowLabelWidth',
+            type: 'number',
+            default: '18 / 3 / 96',
+            description:
+              'Cell height, inter-cell gap and row-label gutter in pixels; cell widths flex to the container.',
+          },
+          {
+            name: 'ariaLabel / summaryFormat',
+            type: `string / ((info) => string) | null`,
+            default: `'Heatmap' / null`,
+            description:
+              'Accessible name and custom factory for the role="img" summary (localizable).',
+          },
+        ],
+        do: [
+          'Pass explicit `rows` / `cols` when the axis order is meaningful (weekdays, hours).',
+          'Set `max` when comparing several grids on the same scale.',
+        ],
+        dont: [
+          'Do not use it for exact lookups — a heatmap shows density patterns; use a table for values.',
+        ],
+        a11y: [
+          'Renders role="img" with an aria-label summarizing the grid ("N rows by M columns. Min …, max …").',
+          'Intensity is a luminance ramp on a single hue, so the scale survives color-vision deficiency; each cell carries a native <title> tooltip.',
+        ],
+      },
     ],
   },
   {
@@ -3471,6 +3907,59 @@ export const DOCS: DocCategory[] = [
         ],
         dont: [
           'Do not use toasts for critical errors that need a decision — use a modal or alert.',
+        ],
+      },
+      {
+        id: 'notification-center',
+        title: 'Notification center',
+        selector: 'strct-notification-center',
+        importNames: ['StrctNotificationCenter'],
+        summary: 'Bell + history panel over the toast history.',
+        lead: 'A bell button with an unread badge that opens an anchored panel listing the recent notifications recorded by `StrctToastService` — every shown toast is kept in a capped shared history, so the center is the persistent view of what the toasts announced transiently. Clicking an entry marks it read and emits it through `(activated)`; "mark all read" / "clear all" act on the shared history.',
+        inputs: [
+          {
+            name: 'title',
+            type: 'string',
+            default: `'Notifications'`,
+            description: 'Panel heading and dialog accessible name (localizable).',
+          },
+          {
+            name: 'maxItems',
+            type: 'number',
+            default: '20',
+            description: 'Maximum entries rendered in the panel (the newest ones).',
+          },
+          {
+            name: 'markAllReadLabel / clearLabel / emptyText',
+            type: 'string',
+            default: `'Mark all read' / 'Clear all' / 'No notifications'`,
+            description: 'Localizable strings.',
+          },
+          {
+            name: 'bellLabelFormat / timeFormat',
+            type: '((…) => string) | null',
+            default: 'null',
+            description:
+              'Factories for the bell aria-label and entry timestamps (localizable); null uses English defaults / the locale’s short time.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'activated',
+            type: 'StrctNotification',
+            description: 'An entry was clicked (also marked read); the panel closes.',
+          },
+        ],
+        do: [
+          'Place one instance in the app header; raise notifications through StrctToastService as usual.',
+          'Wire `(activated)` to navigation so clicking an entry goes to the relevant view.',
+        ],
+        dont: [
+          'Do not maintain a parallel notification store — the center reads the toast service’s shared history.',
+        ],
+        a11y: [
+          'The bell carries aria-haspopup="dialog" / aria-expanded and an aria-label with the unread count; the badge itself is aria-hidden.',
+          'Focus moves into the panel on open, Escape closes (without bubbling to a host modal) and focus returns to the bell; unread entries use weight plus a marker dot, not color alone.',
         ],
       },
       {

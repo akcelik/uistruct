@@ -1,4 +1,5 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, OnDestroy, PLATFORM_ID, inject } from '@angular/core';
 
 /**
  * Screen-reader announcements for state changes that have no visible text —
@@ -13,16 +14,21 @@ import { Injectable, OnDestroy } from '@angular/core';
 @Injectable({ providedIn: 'root' })
 export class StrctAnnouncer implements OnDestroy {
   private regions = new Map<'polite' | 'assertive', HTMLElement>();
-  private clearTimer: ReturnType<typeof setTimeout> | undefined;
+  private clearTimers = new Map<'polite' | 'assertive', ReturnType<typeof setTimeout>>();
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   announce(message: string, politeness: 'polite' | 'assertive' = 'polite'): void {
+    if (!this.isBrowser) return;
     const region = this.regionFor(politeness);
     // Clear first so identical consecutive messages still fire.
     region.textContent = '';
     setTimeout(() => (region.textContent = message));
-    clearTimeout(this.clearTimer);
+    clearTimeout(this.clearTimers.get(politeness));
     // Stale announcements should not linger for the next SR user to stumble on.
-    this.clearTimer = setTimeout(() => (region.textContent = ''), 10_000);
+    this.clearTimers.set(
+      politeness,
+      setTimeout(() => (region.textContent = ''), 10_000),
+    );
   }
 
   private regionFor(politeness: 'polite' | 'assertive'): HTMLElement {
@@ -41,7 +47,8 @@ export class StrctAnnouncer implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    clearTimeout(this.clearTimer);
+    for (const timer of this.clearTimers.values()) clearTimeout(timer);
+    this.clearTimers.clear();
     for (const region of this.regions.values()) region.remove();
     this.regions.clear();
   }

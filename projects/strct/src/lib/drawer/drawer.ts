@@ -1,15 +1,22 @@
 import {
+  DOCUMENT,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   Directive,
+  ElementRef,
   ViewEncapsulation,
   booleanAttribute,
   computed,
   contentChild,
+  effect,
+  inject,
   input,
   model,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
+import { focusFirstIn, keepTabInside, restoreFocus, saveFocusedElement } from '../overlay/focus';
+import { lockBodyScroll, unlockBodyScroll } from '../overlay/scroll-lock';
 
 /** Marks the drawer's footer action area: `<ng-container strctDrawerFooter>…`. */
 @Directive({ selector: '[strctDrawerFooter]' })
@@ -38,18 +45,22 @@ export type StrctDrawerSize = 'sm' | 'md' | 'lg';
   imports: [StrctIcon],
   template: `
     @if (open()) {
+      <!-- Backdrop: pointer-only dismiss target (click-through when not
+           dismissable). Keyboard users dismiss via Escape. -->
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <div
         class="strct-drawer__backdrop"
         [class.strct-drawer__backdrop--bare]="!dismissable()"
         (click)="onBackdrop()"
-        (keydown.escape)="onEscape()"
-        tabindex="-1"
       ></div>
       <aside
         class="strct-drawer strct-drawer--{{ side() }} strct-drawer--{{ size() }}"
         role="dialog"
         aria-modal="true"
-        [attr.aria-label]="title() || 'Panel'"
+        tabindex="-1"
+        [attr.aria-label]="title() || ariaLabel()"
+        (keydown.tab)="onTab($event)"
+        (keydown.shift.tab)="onTab($event)"
       >
         @if (title() || dismissable()) {
           <header class="strct-drawer__head">
@@ -58,7 +69,7 @@ export type StrctDrawerSize = 'sm' | 'md' | 'lg';
               <button
                 type="button"
                 class="strct-drawer__close"
-                aria-label="Close"
+                [attr.aria-label]="closeLabel()"
                 (click)="close()"
               >
                 <strct-icon name="close" [size]="15" />
@@ -73,24 +84,29 @@ export type StrctDrawerSize = 'sm' | 'md' | 'lg';
       </aside>
     }
   `,
-  host: { class: 'strct-drawer-host' },
+  host: {
+    class: 'strct-drawer-host',
+    '(document:keydown.escape)': 'onEscape($event)',
+  },
   styles: [
     `
       .strct-drawer__backdrop {
         position: fixed;
         inset: 0;
-        z-index: 1100;
-        background: rgba(0, 0, 0, 0.44);
+        z-index: var(--z-overlay);
+        background: var(--backdrop);
         backdrop-filter: blur(1px);
         animation: strct-drawer-fade 0.16s ease;
       }
       .strct-drawer__backdrop--bare {
         background: transparent;
         backdrop-filter: none;
+        /* Not dismissable: the transparent backdrop must not swallow clicks. */
+        pointer-events: none;
       }
       .strct-drawer {
         position: fixed;
-        z-index: 1101;
+        z-index: calc(var(--z-overlay) + 1);
         display: flex;
         flex-direction: column;
         background: var(--bg-1);
@@ -247,6 +263,9 @@ export type StrctDrawerSize = 'sm' | 'md' | 'lg';
   ],
 })
 export class StrctDrawer {
+  private readonly elementRef = inject(ElementRef<HTMLElement>);
+  private readonly doc = inject(DOCUMENT);
+
   /** Open state (two-way). */
   readonly open = model(false);
   /** Edge to anchor to. Defaults to `end` (right in LTR). */
@@ -257,17 +276,74 @@ export class StrctDrawer {
   readonly title = input('');
   /** Show the close button and allow backdrop/Esc dismissal. */
   readonly dismissable = input(true, { transform: booleanAttribute });
+  /** Accessible name of the dialog when no `title` is set (localizable). */
+  readonly ariaLabel = input('Panel');
+  /** Accessible label of the X close button (localizable). */
+  readonly closeLabel = input('Close');
 
   protected readonly footerDef = contentChild(StrctDrawerFooter);
   protected readonly hasFooter = computed(() => !!this.footerDef());
 
+  /** Element that had focus before the drawer opened, restored on close. */
+  private previousActive: HTMLElement | null = null;
+  /** Whether this instance currently holds a scroll lock. */
+  private locked = false;
+
+  constructor() {
+    effect(() => {
+      const open = this.open();
+      if (open && !this.locked) {
+        this.locked = true;
+        lockBodyScroll(this.doc);
+        this.previousActive = saveFocusedElement();
+        // Move focus into the panel once it has rendered.
+        setTimeout(() => this.focusInitial());
+      } else if (!open && this.locked) {
+        this.locked = false;
+        unlockBodyScroll(this.doc);
+        restoreFocus(this.previousActive);
+        this.previousActive = null;
+      }
+    });
+
+    // Release the lock if the drawer is destroyed while still open.
+    inject(DestroyRef).onDestroy(() => {
+      if (this.locked) {
+        this.locked = false;
+        unlockBodyScroll(this.doc);
+      }
+    });
+  }
+
   protected onBackdrop(): void {
     if (this.dismissable()) this.close();
   }
-  protected onEscape(): void {
-    if (this.dismissable()) this.close();
+
+  protected onEscape(event: Event): void {
+    if (!this.open() || !this.dismissable()) return;
+    // A host modal/drawer must not also close on the same keypress.
+    event.stopPropagation();
+    this.close();
   }
+
+  /** Wrap Tab focus within the panel. */
+  protected onTab(event: Event): void {
+    const panel = this.panel();
+    if (panel) keepTabInside(event as KeyboardEvent, panel);
+  }
+
   close(): void {
     this.open.set(false);
+  }
+
+  private panel(): HTMLElement | null {
+    return this.elementRef.nativeElement.querySelector('.strct-drawer');
+  }
+
+  private focusInitial(): void {
+    const panel = this.panel();
+    if (!panel) return;
+    // Nothing tabbable (empty body, dismissable=false) → focus the panel itself.
+    if (!focusFirstIn(panel)) panel.focus();
   }
 }

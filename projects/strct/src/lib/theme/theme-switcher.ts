@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewEncapsulation,
+  inject,
+  input,
+} from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 import { StrctThemeService } from './theme.service';
 
@@ -29,8 +35,9 @@ import { StrctThemeService } from './theme.service';
         type="button"
         class="strct-ts__pbtn"
         [class.strct-ts__pbtn--on]="!theme.isDark()"
-        title="Light"
-        aria-label="Light theme"
+        [title]="lightLabel()"
+        [attr.aria-label]="lightLabel()"
+        [attr.aria-pressed]="!theme.isDark()"
         (click)="theme.setMode('light')"
       >
         <strct-icon name="sun" [size]="16" [strokeWidth]="1.5" />
@@ -39,8 +46,9 @@ import { StrctThemeService } from './theme.service';
         type="button"
         class="strct-ts__pbtn"
         [class.strct-ts__pbtn--on]="theme.isDark()"
-        title="Dark"
-        aria-label="Dark theme"
+        [title]="darkLabel()"
+        [attr.aria-label]="darkLabel()"
+        [attr.aria-pressed]="theme.isDark()"
         (click)="theme.setMode('dark')"
       >
         <strct-icon name="moon" [size]="16" [strokeWidth]="1.5" />
@@ -69,7 +77,7 @@ import { StrctThemeService } from './theme.service';
         padding: 0;
         cursor: pointer;
         background: transparent;
-        border: 1.5px solid rgba(255, 255, 255, 0.35);
+        border: 1.5px solid color-mix(in srgb, var(--hdr-fg) 40%, transparent);
         transition:
           transform 0.15s ease,
           border-color 0.15s ease;
@@ -85,7 +93,7 @@ import { StrctThemeService } from './theme.service';
       }
       .strct-ts__dot--on {
         border-color: var(--hdr-fg);
-        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--hdr-fg) 28%, transparent);
       }
 
       .strct-ts__pill {
@@ -93,7 +101,7 @@ import { StrctThemeService } from './theme.service';
         padding: 2px;
         gap: 2px;
         border-radius: 7px;
-        background: rgba(255, 255, 255, 0.1);
+        background: color-mix(in srgb, var(--hdr-fg) 12%, transparent);
       }
       .strct-ts__pbtn {
         display: inline-flex;
@@ -105,18 +113,27 @@ import { StrctThemeService } from './theme.service';
         border-radius: 5px;
         cursor: pointer;
         background: transparent;
-        color: rgba(255, 255, 255, 0.6);
+        color: color-mix(in srgb, var(--hdr-fg) 65%, transparent);
         transition:
           background 0.14s ease,
           color 0.14s ease;
       }
       .strct-ts__pbtn--on {
-        background: rgba(255, 255, 255, 0.18);
+        background: color-mix(in srgb, var(--hdr-fg) 20%, transparent);
         color: var(--hdr-fg);
+      }
+      .strct-ts__dot:focus-visible,
+      .strct-ts__pbtn:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: 1px;
       }
     `,
   ],
 })
 export class StrctThemeSwitcher {
   protected readonly theme = inject(StrctThemeService);
+
+  /** Labels for the Light / Dark mode buttons (localizable). */
+  readonly lightLabel = input('Light');
+  readonly darkLabel = input('Dark');
 }

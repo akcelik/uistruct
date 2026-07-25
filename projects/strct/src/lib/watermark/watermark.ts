@@ -37,7 +37,7 @@ import { inject } from '@angular/core';
         inset: 0;
         pointer-events: none;
         background-repeat: repeat;
-        z-index: 5;
+        z-index: var(--z-raised);
       }
     `,
   ],

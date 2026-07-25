@@ -3,13 +3,18 @@ import {
   Component,
   ViewEncapsulation,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 
+let shellCounter = 0;
+
 /** Shared layout state between shell parts. */
 export class StrctShellService {
   readonly mobileNavOpen = signal(false);
+  /** Id of the vertical nav controlled by the header drawer toggle. */
+  readonly navId = `strct-vnav-${++shellCounter}`;
 }
 
 /**
@@ -60,7 +65,9 @@ export class StrctShell {}
     <button
       type="button"
       class="strct-header__drawer-toggle"
-      aria-label="Toggle navigation"
+      [attr.aria-label]="drawerToggleAriaLabel()"
+      [attr.aria-expanded]="shell.mobileNavOpen()"
+      [attr.aria-controls]="shell.mobileNavOpen() ? shell.navId : null"
       (click)="shell.mobileNavOpen.update((v) => !v)"
     >
       <strct-icon name="menu" [size]="18" />
@@ -78,7 +85,7 @@ export class StrctShell {}
         padding: 0 18px;
         background: var(--hdr);
         border-bottom: 1px solid var(--b2);
-        color: rgba(255, 255, 255, 0.92);
+        color: var(--hdr-fg);
       }
       .strct-header__drawer-toggle {
         display: none;
@@ -88,7 +95,7 @@ export class StrctShell {}
         border: 0;
         border-radius: 5px;
         background: transparent;
-        color: rgba(255, 255, 255, 0.85);
+        color: color-mix(in srgb, var(--hdr-fg) 85%, transparent);
         cursor: pointer;
       }
       .strct-header__drawer-toggle:hover {
@@ -104,6 +111,9 @@ export class StrctShell {}
   ],
 })
 export class StrctHeader {
+  /** Accessible label of the mobile drawer toggle. */
+  readonly drawerToggleAriaLabel = input('Toggle navigation');
+
   protected readonly shell = inject(StrctShellService);
 }
 

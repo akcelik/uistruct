@@ -1,9 +1,11 @@
 import { TestBed } from '@angular/core/testing';
+import { Component } from '@angular/core';
 import {
   StrctDatagrid,
   StrctDatagridColumn,
   StrctDatagridColumnState,
   StrctDatagridLazyState,
+  StrctRowDetailDef,
 } from './datagrid';
 import { StrctRow } from '../table/table';
 
@@ -377,6 +379,32 @@ describe('StrctDatagrid column filters', () => {
     expect(bodyNames(fixture).length).toBe(3);
   });
 
+  it('moves focus into the filter input on open and back to the button on Escape', async () => {
+    const fixture = make();
+    const btn = fixture.nativeElement.querySelector('.strct-dg__filterbtn') as HTMLButtonElement;
+    btn.focus();
+    btn.click();
+    fixture.detectChanges();
+    // Focus moves once the panel has rendered (setTimeout in toggleFilterPanel).
+    await new Promise((r) => setTimeout(r, 0));
+    const input = fixture.nativeElement.querySelector('.strct-dg__filterinput') as HTMLInputElement;
+    expect(input).toBeTruthy();
+    expect(document.activeElement).toBe(input);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.strct-dg__filterpanel')).toBeNull();
+    expect(document.activeElement).toBe(btn);
+  });
+
+  it('the text filter input has an aria-label, not just a placeholder', () => {
+    const fixture = make();
+    (fixture.nativeElement.querySelector('.strct-dg__filterbtn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('.strct-dg__filterinput') as HTMLInputElement;
+    expect(input.getAttribute('aria-label')).toBe('Filter: Name');
+  });
+
   it('filter button click does not sort, and filters ride on lazyLoad', () => {
     let last: StrctDatagridLazyState | null = null;
     const fixture = TestBed.createComponent(StrctDatagrid);
@@ -463,6 +491,44 @@ describe('StrctDatagrid tree-grid', () => {
       filters: { name: 'vm-a' },
     });
     expect(names(fixture)).toEqual(['cluster-01', 'hv-02', 'vm-a']);
+  });
+
+  it('row keyboard: roving tabindex, ArrowUp/Down move, ArrowRight/Left expand/collapse', async () => {
+    const fixture = make();
+    const trs = () => [...fixture.nativeElement.querySelectorAll('tbody tr')] as HTMLElement[];
+    const key = (tr: HTMLElement, k: string) =>
+      tr.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
+
+    // Roving tabindex: exactly one row is tabbable.
+    expect(trs().map((t) => t.tabIndex)).toEqual([0, -1]);
+
+    // ArrowDown moves the tabindex and focus to the next row.
+    key(trs()[0], 'ArrowDown');
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(trs().map((t) => t.tabIndex)).toEqual([-1, 0]);
+    expect(document.activeElement).toBe(trs()[1]);
+
+    // ArrowUp moves back.
+    key(trs()[1], 'ArrowUp');
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(trs().map((t) => t.tabIndex)).toEqual([0, -1]);
+    expect(document.activeElement).toBe(trs()[0]);
+
+    // ArrowRight expands the collapsed parent, ArrowLeft collapses it again.
+    key(trs()[0], 'ArrowRight');
+    fixture.detectChanges();
+    expect(names(fixture)).toEqual(['cluster-01', 'hv-02', 'hv-01', 'cluster-02']);
+    expect(trs()[0].getAttribute('aria-expanded')).toBe('true');
+    key(trs()[0], 'ArrowLeft');
+    fixture.detectChanges();
+    expect(names(fixture)).toEqual(['cluster-01', 'cluster-02']);
+
+    // ArrowRight on a leaf row does nothing (no crash, no expansion).
+    key(trs()[1], 'ArrowRight');
+    fixture.detectChanges();
+    expect(names(fixture)).toEqual(['cluster-01', 'cluster-02']);
   });
 });
 
@@ -663,5 +729,257 @@ describe('StrctDatagrid singleLine truncation reveal', () => {
     setWidths(td, 500, 360);
     td.dispatchEvent(new Event('mouseover', { bubbles: true }));
     expect(td.getAttribute('title')).toBeNull();
+  });
+});
+
+describe('StrctDatagrid transient surfaces (focus lifecycle)', () => {
+  const cols: StrctDatagridColumn[] = [
+    { key: 'a', label: 'A' },
+    { key: 'b', label: 'B' },
+  ];
+  const rows: StrctRow[] = [{ a: '1', b: '2' }];
+
+  function makeChooser() {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('columnChooser', true);
+    fixture.componentRef.setInput('pageSize', 10);
+    fixture.detectChanges();
+    return fixture;
+  }
+  const chooserBtn = (f: ReturnType<typeof makeChooser>) =>
+    f.nativeElement.querySelector('.strct-dg__actions button') as HTMLButtonElement;
+  const chooserMenu = (f: ReturnType<typeof makeChooser>) =>
+    f.nativeElement.querySelector('.strct-dg__chooser-menu') as HTMLElement | null;
+
+  it('closes the column chooser on outside click', () => {
+    const fixture = makeChooser();
+    chooserBtn(fixture).click();
+    fixture.detectChanges();
+    expect(chooserMenu(fixture)).toBeTruthy();
+
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+    expect(chooserMenu(fixture)).toBeNull();
+  });
+
+  it('Escape closes the chooser, restores focus to its button and stops propagation', () => {
+    const fixture = makeChooser();
+    const btn = chooserBtn(fixture);
+    btn.focus();
+    btn.click();
+    fixture.detectChanges();
+    expect(chooserMenu(fixture)).toBeTruthy();
+
+    const event = new KeyboardEvent('keydown', { key: 'Escape' });
+    const stopSpy = vi.spyOn(event, 'stopPropagation');
+    document.dispatchEvent(event);
+    fixture.detectChanges();
+
+    expect(stopSpy).toHaveBeenCalled();
+    expect(chooserMenu(fixture)).toBeNull();
+    expect(document.activeElement).toBe(btn);
+  });
+
+  it('clicking a chooser row toggles the column; the checkbox toggles exactly once', () => {
+    const fixture = makeChooser();
+    chooserBtn(fixture).click();
+    fixture.detectChanges();
+    const items = fixture.nativeElement.querySelectorAll(
+      '.strct-dg__chooser-item',
+    ) as NodeListOf<HTMLElement>;
+
+    // Click the row (outside the checkbox) to hide column B.
+    items[1].click();
+    fixture.detectChanges();
+    expect([...fixture.nativeElement.querySelectorAll('thead th')].length).toBe(1);
+    // The menu stays open while the user flips columns.
+    expect(chooserMenu(fixture)).toBeTruthy();
+
+    // Clicking the checkbox itself flips it back — once, not twice.
+    (items[1].querySelector('input') as HTMLInputElement).click();
+    fixture.detectChanges();
+    expect([...fixture.nativeElement.querySelectorAll('thead th')].length).toBe(2);
+  });
+});
+
+describe('StrctDatagrid detail pane (focus lifecycle)', () => {
+  @Component({
+    imports: [StrctDatagrid, StrctRowDetailDef],
+    template: `
+      <strct-datagrid [columns]="cols" [rows]="rows" detailPane>
+        <ng-template strctRowDetail let-row>{{ row['n'] }} detail</ng-template>
+      </strct-datagrid>
+    `,
+  })
+  class PaneHost {
+    cols: StrctDatagridColumn[] = [{ key: 'n', label: 'N' }];
+    rows: StrctRow[] = [{ n: 'a' }, { n: 'b' }];
+  }
+
+  function makePane() {
+    const fixture = TestBed.createComponent(PaneHost);
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.strct-dg__detailbtn') as HTMLButtonElement;
+    btn.focus();
+    btn.click();
+    fixture.detectChanges();
+    return { fixture, btn };
+  }
+
+  it('Escape closes the pane and focus returns to the row » button', () => {
+    const { fixture, btn } = makePane();
+    expect(fixture.nativeElement.querySelector('.strct-dg__pane')).toBeTruthy();
+    (fixture.nativeElement.querySelector('.strct-dg__pane-close') as HTMLButtonElement).focus();
+
+    const event = new KeyboardEvent('keydown', { key: 'Escape' });
+    const stopSpy = vi.spyOn(event, 'stopPropagation');
+    document.dispatchEvent(event);
+    fixture.detectChanges();
+
+    expect(stopSpy).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.strct-dg__pane')).toBeNull();
+    expect(document.activeElement).toBe(btn);
+  });
+
+  it('the pane close button returns focus to the row » button', () => {
+    const { fixture, btn } = makePane();
+    const closeBtn = fixture.nativeElement.querySelector(
+      '.strct-dg__pane-close',
+    ) as HTMLButtonElement;
+    closeBtn.focus();
+    closeBtn.click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.strct-dg__pane')).toBeNull();
+    expect(document.activeElement).toBe(btn);
+  });
+});
+
+describe('StrctDatagrid selection integrity', () => {
+  it('groupBy + pageSize: select-all covers every rendered row, not the page slice', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [
+      { key: 'vm', label: 'VM' },
+      { key: 'owner', label: 'Owner' },
+    ] satisfies StrctDatagridColumn[]);
+    fixture.componentRef.setInput('rows', [
+      { vm: 'a', owner: 'ops' },
+      { vm: 'b', owner: 'dev' },
+      { vm: 'c', owner: 'ops' },
+    ]);
+    fixture.componentRef.setInput('groupBy', 'owner');
+    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('rowId', 'vm');
+    fixture.componentRef.setInput('pageSize', 2);
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance;
+    let emitted: StrctRow[] = [];
+    cmp.selectionChange.subscribe((s) => (emitted = s));
+
+    // Group mode renders all three rows (paging is bypassed); select-all must
+    // match what is on screen, not the two-row page slice.
+    cmp.toggleAll();
+    fixture.detectChanges();
+    expect(emitted.map((r) => r['vm'])).toEqual(['a', 'b', 'c']);
+    expect(fixture.nativeElement.querySelectorAll('.strct-dg__row--selected').length).toBe(3);
+
+    // Collapse 'ops': its rows leave the DOM, so the next select-all cycle
+    // toggles only the still-rendered row and leaves the collapsed ones alone.
+    cmp.toggleGroup('ops');
+    fixture.detectChanges();
+    cmp.toggleAll();
+    fixture.detectChanges();
+    expect(emitted.map((r) => r['vm'])).toEqual(['a', 'c']);
+    expect(fixture.nativeElement.querySelectorAll('.strct-dg__row--selected').length).toBe(0);
+  });
+
+  it('lazy mode: selections from other pages stay in the payload, count and payload agree', () => {
+    const page1 = [{ n: 'a' }];
+    const page2 = [{ n: 'b' }];
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', COLS);
+    fixture.componentRef.setInput('rows', page1);
+    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('rowId', 'n');
+    fixture.componentRef.setInput('lazy', true);
+    fixture.componentRef.setInput('pageSize', 1);
+    fixture.componentRef.setInput('total', 2);
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance;
+    let emitted: StrctRow[] = [];
+    cmp.selectionChange.subscribe((s) => (emitted = s));
+
+    cmp.toggleRow(page1[0]);
+    expect(emitted.map((r) => r['n'])).toEqual(['a']);
+
+    // The server hands over page 2 — 'a' is gone from the data but stays selected.
+    fixture.componentRef.setInput('rows', page2);
+    fixture.detectChanges();
+    cmp.toggleRow(page2[0]);
+    fixture.detectChanges();
+
+    expect(emitted.length).toBe(2);
+    expect(emitted.map((r) => r['n']).sort()).toEqual(['a', 'b']);
+    // The footer count reads from the same identity set — no disagreement.
+    expect(fixture.nativeElement.querySelector('.strct-dg__count-sel')?.textContent?.trim()).toBe(
+      '2 selected',
+    );
+
+    // Deselecting the on-page row keeps the off-page one in the payload.
+    cmp.toggleRow(page2[0]);
+    expect(emitted.map((r) => r['n'])).toEqual(['a']);
+    cmp.clearSelection();
+    expect(emitted).toEqual([]);
+  });
+
+  it('labels each row checkbox with its row identifier (localizable factory)', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', COLS);
+    fixture.componentRef.setInput('rows', ROWS);
+    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('rowId', 'n');
+    fixture.detectChanges();
+    const ariaLabels = () =>
+      [...fixture.nativeElement.querySelectorAll('tbody strct-checkbox input')].map((i) =>
+        (i as HTMLElement).getAttribute('aria-label'),
+      );
+    expect(ariaLabels()).toEqual(['Select row gamma', 'Select row alpha', 'Select row beta']);
+
+    fixture.componentRef.setInput('labels', { selectRowFor: (id: string) => `Zeile ${id} wählen` });
+    fixture.detectChanges();
+    expect(ariaLabels()).toEqual(['Zeile gamma wählen', 'Zeile alpha wählen', 'Zeile beta wählen']);
+  });
+
+  it('falls back to the 1-based row index when no rowId is set', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', COLS);
+    fixture.componentRef.setInput('rows', ROWS);
+    fixture.componentRef.setInput('selectable', true);
+    fixture.detectChanges();
+    const labels = [...fixture.nativeElement.querySelectorAll('tbody strct-checkbox input')].map(
+      (i) => (i as HTMLElement).getAttribute('aria-label'),
+    );
+    expect(labels).toEqual(['Select row 1', 'Select row 2', 'Select row 3']);
+  });
+});
+
+describe('StrctDatagrid column resize lifecycle', () => {
+  it('destroying the grid mid-drag removes the document resize listeners', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [{ key: 'n', label: 'N' }]);
+    fixture.componentRef.setInput('rows', [{ n: 1 }]);
+    fixture.componentRef.setInput('resizable', true);
+    fixture.detectChanges();
+
+    const removeSpy = vi.spyOn(document, 'removeEventListener');
+    const handle = fixture.nativeElement.querySelector('.strct-dg__resize') as HTMLElement;
+    handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+
+    fixture.destroy();
+    expect(removeSpy).toHaveBeenCalledWith('mousemove', expect.any(Function));
+    expect(removeSpy).toHaveBeenCalledWith('mouseup', expect.any(Function));
+    removeSpy.mockRestore();
   });
 });

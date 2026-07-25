@@ -78,7 +78,7 @@ import {
       }
       .strct-login__aside-inner {
         position: relative;
-        z-index: 1;
+        z-index: var(--z-base);
         height: 100%;
         display: flex;
         flex-direction: column;

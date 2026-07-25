@@ -56,4 +56,22 @@ describe('StrctSplitter', () => {
     const pane = el.querySelector<HTMLElement>('.strct-split__pane')!;
     expect(pane.style.flexBasis).toBe('50%');
   });
+
+  it('parses vertical="false" as false (booleanAttribute)', () => {
+    @Component({
+      imports: [StrctSplitter],
+      template: `
+        <strct-splitter vertical="false">
+          <div strctPaneStart>list</div>
+          <div strctPaneEnd>detail</div>
+        </strct-splitter>
+      `,
+    })
+    class VerticalHost {}
+
+    const fixture = TestBed.createComponent(VerticalHost);
+    fixture.detectChanges();
+    const gutter = (fixture.nativeElement as HTMLElement).querySelector('.strct-split__gutter')!;
+    expect(gutter.getAttribute('aria-orientation')).toBe('vertical');
+  });
 });

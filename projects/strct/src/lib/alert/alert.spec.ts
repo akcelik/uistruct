@@ -23,4 +23,14 @@ describe('StrctAlert', () => {
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).classList).toContain('strct-alert--critical');
   });
+
+  it('uses role="status" normally and role="alert" for critical', () => {
+    const fixture = TestBed.createComponent(StrctAlert);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).getAttribute('role')).toBe('status');
+
+    fixture.componentRef.setInput('type', 'critical');
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).getAttribute('role')).toBe('alert');
+  });
 });

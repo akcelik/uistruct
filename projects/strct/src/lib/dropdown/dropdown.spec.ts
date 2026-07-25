@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { StrctSubmenu } from '../context-menu/submenu';
 import {
   StrctDropdown,
   StrctDropdownDivider,
@@ -228,5 +229,58 @@ describe('StrctDropdown select ergonomics (v1.19)', () => {
     btn.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
     fixture.detectChanges();
     expect(el.querySelector('[role="menu"]')).toBeTruthy();
+  });
+});
+
+describe('StrctDropdown with a nested StrctSubmenu', () => {
+  @Component({
+    imports: [StrctDropdown, StrctDropdownItem, StrctDropdownTrigger, StrctSubmenu],
+    template: `
+      <strct-dropdown>
+        <button strctDropdownTrigger>Choose</button>
+        <strct-dropdown-item>Alpha</strct-dropdown-item>
+        <strct-submenu label="More">
+          <strct-dropdown-item>Sub A</strct-dropdown-item>
+        </strct-submenu>
+        <strct-dropdown-item>Beta</strct-dropdown-item>
+      </strct-dropdown>
+    `,
+  })
+  class SubmenuHost {}
+
+  async function setup() {
+    const fixture = TestBed.createComponent(SubmenuHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    el.querySelector<HTMLElement>('.strct-dd__trigger')!.click();
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r)); // focusInitialItem
+    fixture.detectChanges();
+    const submenuTrigger = el.querySelector<HTMLElement>('.strct-submenu__trigger')!;
+    const key = (target: HTMLElement, key: string) =>
+      target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    return { fixture, el, submenuTrigger, key };
+  }
+
+  it('arrow roving reaches the submenu trigger between plain items', async () => {
+    const { el, submenuTrigger, key } = await setup();
+    const [alpha, beta] = [...el.querySelectorAll<HTMLElement>('strct-dropdown-item')];
+    expect(document.activeElement).toBe(alpha);
+    key(alpha, 'ArrowDown');
+    expect(document.activeElement).toBe(submenuTrigger);
+    key(submenuTrigger, 'ArrowDown');
+    expect(document.activeElement).toBe(beta);
+  });
+
+  it('→ on the roved trigger opens the fly-out and focuses its first item', async () => {
+    const { fixture, el, submenuTrigger, key } = await setup();
+    key(submenuTrigger, 'ArrowRight');
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r)); // focus moves after render
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-submenu__panel')).toBeTruthy();
+    expect(document.activeElement).toBe(
+      el.querySelector('.strct-submenu__panel strct-dropdown-item'),
+    );
   });
 });

@@ -87,6 +87,36 @@ describe('StrctModal — backdrop close guard', () => {
   });
 });
 
+describe('StrctModal — body scroll lock', () => {
+  it('locks body scroll while open and restores it after close', () => {
+    const fixture = TestBed.createComponent(StrctModal);
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    expect(document.body.style.overflow).toBe('hidden');
+
+    fixture.componentRef.setInput('open', false);
+    fixture.detectChanges();
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('keeps the lock until the last of two stacked modals closes', () => {
+    const first = TestBed.createComponent(StrctModal);
+    first.componentRef.setInput('open', true);
+    first.detectChanges();
+    const second = TestBed.createComponent(StrctModal);
+    second.componentRef.setInput('open', true);
+    second.detectChanges();
+
+    first.componentRef.setInput('open', false);
+    first.detectChanges();
+    expect(document.body.style.overflow).toBe('hidden');
+
+    second.componentRef.setInput('open', false);
+    second.detectChanges();
+    expect(document.body.style.overflow).toBe('');
+  });
+});
+
 describe('StrctModal — styling hooks', () => {
   it('appends panelClass / backdropClass and defaults to no extra classes', () => {
     const fixture = TestBed.createComponent(StrctModal);
@@ -175,6 +205,39 @@ describe('StrctModal — draggable', () => {
     drag(head, [100, 100], [160, 160]);
     fixture.detectChanges();
     expect(dialog.style.transform).toBe('');
+  });
+});
+
+describe('StrctModal — stacked Escape', () => {
+  @Component({
+    imports: [StrctModal],
+    template: `
+      <strct-modal [(open)]="firstOpen" dismissible>first</strct-modal>
+      <strct-modal [(open)]="secondOpen" dismissible>second</strct-modal>
+    `,
+  })
+  class StackedHostComponent {
+    firstOpen = true;
+    secondOpen = true;
+  }
+
+  function escape() {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  }
+
+  it('Escape closes only the topmost modal, then the next one', () => {
+    const fixture = TestBed.createComponent(StackedHostComponent);
+    const host = fixture.componentInstance;
+    fixture.detectChanges();
+
+    escape();
+    fixture.detectChanges();
+    expect(host.firstOpen).toBe(true);
+    expect(host.secondOpen).toBe(false);
+
+    escape();
+    fixture.detectChanges();
+    expect(host.firstOpen).toBe(false);
   });
 });
 

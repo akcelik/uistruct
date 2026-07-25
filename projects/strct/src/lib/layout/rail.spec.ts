@@ -1,3 +1,4 @@
+import { Component } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { StrctRail, StrctRailItem } from './rail';
@@ -124,5 +125,41 @@ describe('StrctRail', () => {
     const host = f.nativeElement as HTMLElement;
     expect(host.querySelector('.strct-rail__dot--warning')).toBeTruthy();
     expect(host.querySelector('.strct-rail__trailing')).toBeTruthy();
+  });
+
+  it('localizes the collapse-toggle labels via inputs', () => {
+    const f = TestBed.createComponent(StrctRail);
+    f.componentRef.setInput('items', items);
+    f.detectChanges();
+    const toggle = (f.nativeElement as HTMLElement).querySelector(
+      '.strct-rail__toggle',
+    ) as HTMLElement;
+    expect(toggle.getAttribute('aria-label')).toBe('Collapse navigation');
+    expect(toggle.textContent).toContain('Collapse');
+
+    f.componentRef.setInput('expandAriaLabel', 'Navigation ausklappen');
+    f.componentRef.setInput('collapseAriaLabel', 'Navigation einklappen');
+    f.componentRef.setInput('collapseText', 'Einklappen');
+    f.detectChanges();
+    expect(toggle.getAttribute('aria-label')).toBe('Navigation einklappen');
+    expect(toggle.textContent).toContain('Einklappen');
+
+    f.componentRef.setInput('collapsed', true);
+    f.detectChanges();
+    expect(toggle.getAttribute('aria-label')).toBe('Navigation ausklappen');
+  });
+
+  it('parses collapsible="false" as false (booleanAttribute)', () => {
+    @Component({
+      imports: [StrctRail],
+      template: `<strct-rail [items]="railItems" collapsible="false" />`,
+    })
+    class HostComponent {
+      railItems = items;
+    }
+
+    const f = TestBed.createComponent(HostComponent);
+    f.detectChanges();
+    expect((f.nativeElement as HTMLElement).querySelector('.strct-rail__toggle')).toBeNull();
   });
 });

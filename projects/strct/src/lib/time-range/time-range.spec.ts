@@ -88,4 +88,46 @@ describe('StrctTimeRangePicker', () => {
     expect(el.querySelector('[role="dialog"]')).toBeNull(); // closed on apply
     expect(el.querySelector('.strct-tr__label')?.textContent).toContain('→');
   });
+
+  it('seeds the absolute editor from the current range whenever the popover opens', () => {
+    const { fixture, host, el, openPanel } = setup();
+    host.range.set({ from: new Date(2026, 6, 20, 10, 30), to: new Date(2026, 6, 20, 12, 45) });
+    fixture.detectChanges();
+    openPanel();
+    const [from, to] = [...el.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
+    expect(from.value).toBe('2026-07-20T10:30');
+    expect(to.value).toBe('2026-07-20T12:45');
+
+    // Editing then reopening re-seeds from the (unchanged) range.
+    from.value = '2026-07-21T09:00';
+    from.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    el.querySelector<HTMLElement>('.strct-dd__trigger')!.click();
+    fixture.detectChanges();
+    openPanel();
+    const [fromAgain] = [...el.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
+    expect(fromAgain.value).toBe('2026-07-20T10:30');
+  });
+
+  it('keeps Apply disabled until both drafts parse to valid dates', () => {
+    const { fixture, el, openPanel } = setup();
+    openPanel();
+    const apply = () =>
+      [...el.querySelectorAll<HTMLButtonElement>('button')].find(
+        (b) => b.textContent!.trim() === 'Apply',
+      )!;
+    expect(apply().disabled).toBe(true); // both empty
+    const [from, to] = [...el.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')];
+    const type = (input: HTMLInputElement, value: string) => {
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    };
+    type(from, '2026-07-20T10:00');
+    expect(apply().disabled).toBe(true); // "to" still empty
+    type(to, '2026-07-20T08:00');
+    expect(apply().disabled).toBe(true); // from after to
+    type(to, '2026-07-20T12:00');
+    expect(apply().disabled).toBe(false);
+  });
 });

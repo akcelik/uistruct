@@ -11,15 +11,20 @@ import {
   selector: 'strct-breadcrumb',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  template: `<ng-content />`,
-  host: { class: 'strct-bc', role: 'navigation', 'aria-label': 'Breadcrumb' },
+  template: `<ol class="strct-bc__list">
+    <ng-content />
+  </ol>`,
+  host: { class: 'strct-bc', role: 'navigation', '[attr.aria-label]': 'regionLabel()' },
   styles: [
     `
-      .strct-bc {
+      .strct-bc__list {
         display: flex;
         align-items: center;
         flex-wrap: wrap;
         gap: 2px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
         font-size: 13px;
       }
       .strct-bc__item:not(:last-child)::after {
@@ -31,7 +36,10 @@ import {
     `,
   ],
 })
-export class StrctBreadcrumb {}
+export class StrctBreadcrumb {
+  /** Accessible label for the navigation region (localizable). */
+  readonly regionLabel = input('Breadcrumb');
+}
 
 /** One crumb. Mark the final one `current`. */
 @Component({
@@ -41,6 +49,7 @@ export class StrctBreadcrumb {}
   template: `<ng-content />`,
   host: {
     class: 'strct-bc__item',
+    role: 'listitem',
     '[class.strct-bc__item--current]': 'current()',
     '[attr.aria-current]': "current() ? 'page' : null",
   },

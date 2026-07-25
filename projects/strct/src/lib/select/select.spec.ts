@@ -179,4 +179,29 @@ describe('StrctSelect', () => {
     fixture.detectChanges();
     expect(el.querySelector('.strct-sel__empty')?.textContent).toContain('No options');
   });
+
+  it('compareWith matches object values that are not reference-equal', () => {
+    const fixture = TestBed.createComponent(StrctSelect);
+    fixture.componentRef.setInput('options', [
+      { value: { id: 1 }, label: 'One' },
+      { value: { id: 2 }, label: 'Two' },
+    ]);
+    fixture.componentRef.setInput(
+      'compareWith',
+      (a: unknown, b: unknown) =>
+        (a as { id: number } | null)?.id === (b as { id: number } | null)?.id,
+    );
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance;
+    cmp.writeValue({ id: 2 }); // a fresh object, never one of the option values
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-sel__value')!.textContent).toContain('Two');
+    cmp.openList();
+    fixture.detectChanges();
+    const two = [...el.querySelectorAll<HTMLElement>('.strct-sel__opt')][1];
+    expect(two.getAttribute('aria-selected')).toBe('true');
+    expect(two.querySelector('.strct-sel__check svg')).toBeTruthy();
+    expect(el.querySelector('.strct-sel__opt--highlight')?.textContent).toContain('Two');
+  });
 });

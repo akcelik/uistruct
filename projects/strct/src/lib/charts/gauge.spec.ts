@@ -8,6 +8,28 @@ describe('StrctGauge', () => {
     expect((fixture.nativeElement as HTMLElement).classList).toContain('strct-gauge');
   });
 
+  it('exposes a role="meter" with value bounds and an accessible name', () => {
+    const fixture = TestBed.createComponent(StrctGauge);
+    fixture.componentRef.setInput('value', 72);
+    fixture.detectChanges();
+    const meter = (fixture.nativeElement as HTMLElement).querySelector('[role="meter"]')!;
+    expect(meter.getAttribute('aria-valuenow')).toBe('72');
+    expect(meter.getAttribute('aria-valuemin')).toBe('0');
+    expect(meter.getAttribute('aria-valuemax')).toBe('100');
+    expect(meter.getAttribute('aria-label')).toBe('Gauge');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('svg')!.getAttribute('aria-hidden'),
+    ).toBe('true');
+  });
+
+  it('honours a custom ariaLabel', () => {
+    const fixture = TestBed.createComponent(StrctGauge);
+    fixture.componentRef.setInput('ariaLabel', 'CPU usage');
+    fixture.detectChanges();
+    const meter = (fixture.nativeElement as HTMLElement).querySelector('[role="meter"]')!;
+    expect(meter.getAttribute('aria-label')).toBe('CPU usage');
+  });
+
   describe('thresholds', () => {
     function valueStroke(value: number, thresholds: unknown, status?: string): string | null {
       const fixture = TestBed.createComponent(StrctGauge);

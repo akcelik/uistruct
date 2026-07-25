@@ -10,26 +10,47 @@ import {
   signal,
 } from '@angular/core';
 
+let tabsCounter = 0;
+
 /** A single tab. Place inside `<strct-tabs>`; `label` names its button. */
 @Component({
   selector: 'strct-tab',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `@if (active()) {
+  template: `@if (active() || keepAlive()) {
     <ng-content />
   }`,
-  host: { class: 'strct-tab', role: 'tabpanel', '[hidden]': '!active()' },
+  host: {
+    class: 'strct-tab',
+    role: 'tabpanel',
+    '[id]': 'panelId',
+    '[attr.aria-labelledby]': 'buttonId',
+    '[hidden]': '!active()',
+  },
 })
 export class StrctTab {
   /** Label text. */
   readonly label = input.required<string>();
   /** Static disable flag. */
   readonly disabled = input(false, { transform: booleanAttribute });
+  private readonly _id = ++tabsCounter;
+  /** Id of this tab's panel element. */
+  readonly panelId = `strct-tab-panel-${this._id}`;
+  /** Id of this tab's button element. */
+  readonly buttonId = `strct-tab-btn-${this._id}`;
   private readonly _active = signal(false);
   readonly active = this._active.asReadonly();
+  private readonly _keepAlive = signal(false);
+  /** Whether inactive content stays in the DOM (hidden) instead of being destroyed. */
+  readonly keepAlive = this._keepAlive.asReadonly();
 
   /** @internal called by the parent tab group */
   setActive(value: boolean): void {
     this._active.set(value);
+  }
+
+  /** @internal called by the parent tab group */
+  setKeepAlive(value: boolean): void {
+    this._keepAlive.set(value);
   }
 }
 
@@ -39,20 +60,16 @@ export class StrctTab {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
-    <div
-      class="strct-tabs__bar"
-      role="tablist"
-      tabindex="0"
-      #bar
-      (keydown)="onKeydown($event, bar)"
-    >
+    <div class="strct-tabs__bar" role="tablist" #bar (keydown)="onKeydown($event, bar)">
       @for (tab of tabs(); track tab; let i = $index) {
         <button
           type="button"
           role="tab"
           class="strct-tabs__btn"
+          [id]="tab.buttonId"
           [class.strct-tabs__btn--active]="i === selectedIndex()"
           [attr.aria-selected]="i === selectedIndex()"
+          [attr.aria-controls]="tab.panelId"
           [attr.tabindex]="i === selectedIndex() ? 0 : -1"
           [disabled]="tab.disabled()"
           (click)="select(i)"
@@ -107,18 +124,30 @@ export class StrctTab {
       .strct-tabs__panels {
         padding-top: 16px;
       }
+      .strct-tab[hidden] {
+        display: none;
+      }
     `,
   ],
 })
 export class StrctTabs {
   readonly tabs = contentChildren(StrctTab);
   readonly selectedIndex = model(0);
+  /**
+   * Keep inactive panels in the DOM with the `hidden` attribute instead of
+   * destroying them, preserving their state (e.g. form values) across switches.
+   */
+  readonly keepAlive = input(false, { transform: booleanAttribute });
 
   constructor() {
     // Keep each child panel's visibility in sync with the selected index.
     effect(() => {
       const idx = this.selectedIndex();
-      this.tabs().forEach((tab, i) => tab.setActive(i === idx));
+      const keepAlive = this.keepAlive();
+      this.tabs().forEach((tab, i) => {
+        tab.setActive(i === idx);
+        tab.setKeepAlive(keepAlive);
+      });
     });
   }
 
@@ -140,7 +169,9 @@ export class StrctTabs {
       idx = count - 1;
       while (idx >= 0 && this.tabs()[idx].disabled()) idx--;
     } else {
-      const step = key === 'ArrowRight' ? 1 : -1;
+      // APG: horizontal arrows mirror under RTL — read the effective direction.
+      const rtl = getComputedStyle(bar).direction === 'rtl';
+      const step = (key === 'ArrowRight') !== rtl ? 1 : -1;
       for (let n = 0; n < count; n++) {
         idx = (idx + step + count) % count;
         if (!this.tabs()[idx].disabled()) break;

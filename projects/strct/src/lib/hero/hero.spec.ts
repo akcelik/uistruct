@@ -7,7 +7,7 @@ import { StrctHero } from './hero';
 @Component({
   imports: [StrctHero],
   template: `
-    <strct-hero [status]="status" [icon]="icon" heading="All systems healthy">
+    <strct-hero [status]="status" [icon]="icon" [live]="live" heading="All systems healthy">
       Everything is responding.
       <div strctHeroMeta>meta</div>
       <div strctHeroActions>actions</div>
@@ -17,6 +17,7 @@ import { StrctHero } from './hero';
 class HostComponent {
   status: StrctStatus = 'success';
   icon = '';
+  live = false;
 }
 
 function setup(patch: Partial<HostComponent> = {}) {
@@ -48,8 +49,16 @@ describe('StrctHero', () => {
     expect(heading?.textContent).toContain('All systems healthy');
   });
 
-  it('uses role="status" normally and role="alert" for critical', () => {
-    expect(setup({ status: 'success' }).host.getAttribute('role')).toBe('status');
+  it('renders the accessible name source as a real heading', () => {
+    const { host } = setup();
+    const heading = host.querySelector('h2.strct-hero__heading');
+    expect(heading).not.toBeNull();
+    expect(heading?.textContent).toContain('All systems healthy');
+  });
+
+  it('has no live region by default; live opts into role="status", critical stays role="alert"', () => {
+    expect(setup({ status: 'success' }).host.getAttribute('role')).toBeNull();
+    expect(setup({ status: 'success', live: true }).host.getAttribute('role')).toBe('status');
     expect(setup({ status: 'critical' }).host.getAttribute('role')).toBe('alert');
   });
 

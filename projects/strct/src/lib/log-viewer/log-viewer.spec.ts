@@ -4,11 +4,19 @@ import { StrctLogLine, StrctLogViewer, parseAnsi } from './log-viewer';
 
 @Component({
   imports: [StrctLogViewer],
-  template: `<strct-log-viewer [lines]="lines()" [(follow)]="follow" [height]="200" />`,
+  template: `<strct-log-viewer
+    [lines]="lines()"
+    [(follow)]="follow"
+    [(wrapMode)]="wrap"
+    [live]="live()"
+    [height]="200"
+  />`,
 })
 class HostComponent {
   lines = signal<(string | StrctLogLine)[]>([]);
   follow = signal(true);
+  wrap = signal(false);
+  live = signal(true);
 }
 
 function setup(lines: (string | StrctLogLine)[]) {
@@ -35,6 +43,12 @@ describe('parseAnsi', () => {
     expect(segs[0].cls.split(' strct-lv__seg-').sort()).toEqual(['b', 'c32']);
     expect(segs[1].cls).toContain('c33');
     expect(segs[1].cls).not.toContain('c32');
+  });
+
+  it('strips non-SGR CSI sequences (erase-in-line, cursor moves)', () => {
+    const segs = parseAnsi('[2K\r[1Aok [31mFAIL[0m[K');
+    expect(segs.map((s) => s.text)).toEqual(['\rok ', 'FAIL']);
+    expect(segs[1].cls).toBe('c31');
   });
 });
 
@@ -85,5 +99,44 @@ describe('StrctLogViewer', () => {
       .click();
     fixture.detectChanges();
     expect(el.querySelector('.strct-lv__window--wrap')).toBeTruthy();
+  });
+
+  it('wrap mode disables virtualization and renders all lines', () => {
+    const { fixture, host, el } = setup(
+      Array.from({ length: 500 }, (_, i) => `line ${i} ` + 'x'.repeat(300)),
+    );
+    host.wrap.set(true);
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-lv__window--wrap')).toBeTruthy();
+    // Unvirtualized: every line is in the DOM, the spacer carries no fixed
+    // height and the window sits at offset 0 — scrolling uses real content.
+    expect(el.querySelectorAll('.strct-lv__line').length).toBe(500);
+    const spacer = el.querySelector<HTMLElement>('.strct-lv__spacer')!;
+    expect(spacer.style.height).toBe('');
+    const win = el.querySelector<HTMLElement>('.strct-lv__window')!;
+    expect(win.style.transform).toBe('translateY(0px)');
+  });
+
+  it('wrap mode past the line cap falls back to virtualized nowrap', () => {
+    const { fixture, host, el } = setup(Array.from({ length: 10_001 }, (_, i) => `line ${i}`));
+    host.wrap.set(true);
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-lv__window--wrap')).toBeNull();
+    expect(el.querySelectorAll('.strct-lv__line').length).toBeLessThan(60);
+    const spacer = el.querySelector<HTMLElement>('.strct-lv__spacer')!;
+    expect(parseInt(spacer.style.height)).toBe(10_001 * 20);
+    const wrapBtn = [...el.querySelectorAll<HTMLButtonElement>('button')].find((b) =>
+      b.textContent!.includes('Wrap'),
+    )!;
+    expect(wrapBtn.getAttribute('title')).toContain('wrapping disabled');
+  });
+
+  it('exposes aria-live="off" only when live is false', () => {
+    const { fixture, host, el } = setup(['a']);
+    const region = el.querySelector('.strct-lv__scroll')!;
+    expect(region.getAttribute('aria-live')).toBeNull();
+    host.live.set(false);
+    fixture.detectChanges();
+    expect(region.getAttribute('aria-live')).toBe('off');
   });
 });

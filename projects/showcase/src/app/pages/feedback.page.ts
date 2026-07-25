@@ -3,10 +3,16 @@ import {
   StrctAlert,
   StrctBadge,
   StrctButton,
+  StrctConfirmOutlet,
+  StrctConfirmService,
   StrctEmptyState,
   StrctHero,
   StrctMetricTile,
+  StrctNotificationCenter,
+  StrctPopover,
+  StrctPopoverTrigger,
   StrctSignpost,
+  StrctSignpostTrigger,
   StrctSkeleton,
   StrctToastService,
   StrctTooltip,
@@ -27,10 +33,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctAlert,
     StrctBadge,
     StrctButton,
+    StrctConfirmOutlet,
     StrctHero,
     StrctMetricTile,
+    StrctNotificationCenter,
+    StrctPopover,
+    StrctPopoverTrigger,
     StrctTooltip,
     StrctSignpost,
+    StrctSignpostTrigger,
     StrctSkeleton,
     StrctEmptyState,
     StrctTour,
@@ -98,6 +109,19 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="confirm"
+      heading="Confirm"
+      description="Promise-based confirmation for destructive actions — render the outlet once, then await the service from anywhere; a new call cancels the pending one, and Cancel / X / Escape / backdrop all resolve false. The critical tone styles the confirm button as destructive and focus lands on Cancel, never on the destructive action."
+      code='if (await inject(StrctConfirmService).confirm({ title: "…", message: "…", tone: "critical" })) { … }'
+    >
+      <button strct-button variant="critical" (click)="askDelete()">Delete cluster…</button>
+      @if (confirmResult() !== null) {
+        <span class="echo">confirmed: {{ confirmResult() }}</span>
+      }
+      <strct-confirm-outlet />
+    </app-demo>
+
+    <app-demo
       anchor="tooltip"
       heading="Tooltip"
       description="Hover or focus the buttons. Position is configurable."
@@ -132,6 +156,26 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="popover"
+      heading="Popover"
+      description="The generic anchored panel behind menus, signposts and rich pickers — a trigger button plus any projected content, edge-flipped and scroll-tracked by the overlay. Plain popovers never steal focus; the trap variant moves focus inside on open, cycles Tab and hands focus back on close."
+      code='<strct-popover placement="bottom-start"><button strctPopoverTrigger>…</button>…</strct-popover>'
+    >
+      <strct-popover placement="bottom-start" ariaLabel="Host details">
+        <button strct-button size="sm" strctPopoverTrigger>Host details</button>
+        <h4>hv-02.fra.corp</h4>
+        <p>cluster-01 · 128 vCPUs · 768 GiB — any projected content fits here.</p>
+      </strct-popover>
+
+      <strct-popover placement="bottom-end" ariaLabel="Edit tags" trap>
+        <button strct-button size="sm" strctPopoverTrigger>Edit tags (trap)</button>
+        <h4>Tags</h4>
+        <p>Focus is trapped — Tab cycles the controls, Escape closes.</p>
+        <button strct-button size="sm" variant="primary">Save</button>
+      </strct-popover>
+    </app-demo>
+
+    <app-demo
       anchor="toast"
       heading="Toast"
       description="Transient notifications queued through a service, auto-dismissed after a few seconds."
@@ -141,6 +185,21 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       <button strct-button (click)="toast.success('Deployment complete')">Success</button>
       <button strct-button (click)="toast.warning('Disk space low')">Warning</button>
       <button strct-button (click)="toast.critical('Connection lost')">Danger</button>
+    </app-demo>
+
+    <app-demo
+      anchor="notification-center"
+      heading="Notification center"
+      description="A bell with an unread badge that opens the persistent view of what the toasts announced transiently — every toast fired through StrctToastService lands in its capped history. Clicking an entry marks it read and emits it through (activated); 'mark all read' / 'clear all' act on the shared history."
+      code='<strct-notification-center (activated)="open($event)" />  +  toast.success("Saved")'
+    >
+      <strct-notification-center (activated)="ncLast.set($event.message)" />
+      <button strct-button (click)="toast.success('Snapshot completed')">Fire success</button>
+      <button strct-button (click)="toast.warning('Datastore above 80%')">Fire warning</button>
+      <button strct-button (click)="toast.critical('Host not responding')">Fire critical</button>
+      @if (ncLast()) {
+        <span class="echo">activated: "{{ ncLast() }}"</span>
+      }
     </app-demo>
 
     <app-demo
@@ -318,4 +377,20 @@ export class FeedbackPage {
 
   protected readonly showDanger = signal(true);
   protected readonly toast = inject(StrctToastService);
+
+  private readonly confirm = inject(StrctConfirmService);
+  protected readonly confirmResult = signal<boolean | null>(null);
+  protected readonly ncLast = signal('');
+
+  protected async askDelete(): Promise<void> {
+    this.confirmResult.set(
+      await this.confirm.confirm({
+        title: 'Delete cluster?',
+        message:
+          'Deleting "Edge Cluster" removes its 3 hosts and all of their VMs. This cannot be undone.',
+        confirmLabel: 'Delete',
+        tone: 'critical',
+      }),
+    );
+  }
 }

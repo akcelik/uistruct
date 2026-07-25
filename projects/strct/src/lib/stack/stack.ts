@@ -5,7 +5,7 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation, input } from '@a
   selector: 'strct-stack',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  template: `<ng-content />`,
+  template: `<dl class="strct-stack__list"><ng-content /></dl>`,
   host: { class: 'strct-stack' },
   styles: [
     `
@@ -14,6 +14,9 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation, input } from '@a
         border: 1px solid var(--b2);
         border-radius: 8px;
         overflow: hidden;
+      }
+      .strct-stack__list {
+        margin: 0;
       }
     `,
   ],
@@ -26,8 +29,8 @@ export class StrctStack {}
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
-    <span class="strct-stack__label">{{ label() }}</span>
-    <span class="strct-stack__value"><ng-content /></span>
+    <dt class="strct-stack__label">{{ label() }}</dt>
+    <dd class="strct-stack__value"><ng-content /></dd>
   `,
   host: { class: 'strct-stack__item' },
   styles: [
@@ -50,6 +53,7 @@ export class StrctStack {}
         color: var(--t2);
       }
       .strct-stack__value {
+        margin: 0;
         color: var(--t1);
       }
     `,

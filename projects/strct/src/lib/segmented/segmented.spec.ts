@@ -65,10 +65,59 @@ describe('StrctSegmented', () => {
     expect(fixture.componentInstance.value).toBe('all');
   });
 
+  it('mirrors horizontal arrows under RTL', async () => {
+    const { fixture, host } = await setup({
+      options: [
+        { value: 'a', label: 'A' },
+        { value: 'b', label: 'B' },
+        { value: 'c', label: 'C' },
+      ],
+      value: 'b',
+    });
+    host.style.direction = 'rtl';
+    // RTL: ArrowLeft moves forward, ArrowRight moves backward.
+    host.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value).toBe('c');
+
+    host.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value).toBe('b');
+  });
+
   it('does not select a disabled option on click', async () => {
     const { fixture, buttons } = await setup({ value: 'all' });
     buttons[2].click();
     fixture.detectChanges();
     expect(fixture.componentInstance.value).toBe('all');
+  });
+
+  it('merges the static disabled input with the CVA disabled state', () => {
+    const fixture = TestBed.createComponent(StrctSegmented);
+    fixture.componentRef.setInput('options', [
+      { value: 'a', label: 'A' },
+      { value: 'b', label: 'B' },
+    ]);
+    fixture.componentRef.setInput('disabled', true);
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance;
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(cmp.isDisabled()).toBe(true);
+    expect(host.classList).toContain('strct-seg--disabled');
+    expect(host.querySelectorAll('button[disabled]').length).toBe(2);
+
+    // Static disable stays even if the form re-enables.
+    cmp.setDisabledState(false);
+    expect(cmp.isDisabled()).toBe(true);
+
+    // A static input change must not clobber the forms-driven disabled state.
+    cmp.setDisabledState(true);
+    fixture.componentRef.setInput('disabled', false);
+    fixture.detectChanges();
+    expect(cmp.isDisabled()).toBe(true);
+    expect(host.classList).toContain('strct-seg--disabled');
   });
 });

@@ -78,7 +78,7 @@ export type StrctAvatarStatus = 'none' | 'online' | 'busy' | 'offline';
       }
       .strct-av__status {
         position: absolute;
-        right: -1px;
+        inset-inline-end: -1px;
         bottom: -1px;
         width: 30%;
         height: 30%;

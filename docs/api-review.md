@@ -54,3 +54,26 @@ alias-then-remove candidates for 2.0:
   within the taxonomy above; the four deviations are documented and frozen.
 - The conventions section of [CONTRIBUTING.md](../CONTRIBUTING.md) plus this
   document are the review bar for every new API.
+
+## Conventions checklist (enforced)
+
+Mechanical rules codified by the boolean/localization/focus/RTL sweeps.
+Every new component is checked against this list in review:
+
+- **Every boolean input carries `booleanAttribute`** — bare attributes
+  (`<strct-x virtual>`) and `virtual="false"` both parse to the intended
+  boolean; a plain `input(false)` would treat the string `'false'` as truthy.
+- **Every user-facing string is a localizable input** — labels, aria text,
+  empty states, announcements; nothing hard-coded in templates.
+- **Every CVA control exposes a static `disabled` input** alongside the
+  `setDisabledState` path, so template-driven and reactive-forms consumers
+  both work.
+- **Every transient surface** (modal, drawer, palette, menus) **saves and
+  restores focus and stops Escape propagation**, via the helpers in
+  `overlay/focus.ts` — never hand-rolled per component.
+- **`ViewEncapsulation.None` components use logical CSS properties**
+  (`margin-inline-start`, `inset-inline-end`, …) and are verified under
+  `[dir='rtl']`; physical `left`/`right` only where mirroring is explicitly
+  wrong.
+- **z-index, radius, and spacing come from tokens only** (`--radius-*`, the
+  documented z-index layers, the spacing scale) — no magic numbers in styles.

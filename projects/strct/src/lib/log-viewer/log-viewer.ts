@@ -55,6 +55,10 @@ const ANSI_CLASSES: Record<number, string> = {
 
 const LEVEL_RE = /\b(ERROR|ERR|FATAL|WARN(?:ING)?|INFO|DEBUG|TRACE)\b/;
 
+/** Non-SGR CSI sequences (erase-in-line ESC[K, cursor moves, …) — stripped
+ * before SGR parsing so they never leak into the rendered text. */
+const NON_SGR_CSI_RE = /\u001b\[[0-9;]*[A-LN-Za-ln-z]/g;
+
 /**
  * Virtualized log tail — the `kubectl logs -f` surface as a component:
  *
@@ -67,7 +71,16 @@ const LEVEL_RE = /\b(ERROR|ERR|FATAL|WARN(?:ING)?|INFO|DEBUG|TRACE)\b/;
  *   resumes it — the Grafana/Loki convention.
  * - **ANSI SGR colors** (16-color + bold) parsed into safe spans — no
  *   innerHTML — and severity tinting from `StrctLogLine.level` or, for plain
- *   strings, auto-detected ERROR/WARN/INFO/DEBUG tokens.
+ *   strings, auto-detected ERROR/WARN/INFO/DEBUG tokens. Non-SGR CSI
+ *   sequences (erase-in-line, cursor moves) are stripped before parsing.
+ * - **Wrap mode disables virtualization**: wrapped lines have variable
+ *   height, which fixed-height windowing cannot compute. While wrapping is
+ *   active the viewer renders all lines and sizes itself from content. Past
+ *   `WRAP_CAP` lines wrapping falls back to nowrap (virtualization stays
+ *   correct) and the wrap button exposes `wrapLimitNote` as its title.
+ * - **`role="log"`** announces streamed lines (implicit `aria-live="polite"`)
+ *   and virtualization removes off-screen lines from the a11y tree. For
+ *   follow-heavy streams set `[live]="false"` to force `aria-live="off"`.
  */
 @Component({
   selector: 'strct-log-viewer',
@@ -82,8 +95,9 @@ const LEVEL_RE = /\b(ERROR|ERR|FATAL|WARN(?:ING)?|INFO|DEBUG|TRACE)\b/;
       <button
         strct-button
         size="sm"
-        [variant]="wrapMode() ? 'primary' : 'flat'"
-        [attr.aria-pressed]="wrapMode()"
+        [variant]="wrapActive() ? 'primary' : 'flat'"
+        [attr.aria-pressed]="wrapActive()"
+        [attr.title]="wrapCapped() ? wrapLimitNote() : null"
         (click)="wrapMode.set(!wrapMode())"
       >
         {{ wrapLabel() }}
@@ -105,13 +119,14 @@ const LEVEL_RE = /\b(ERROR|ERR|FATAL|WARN(?:ING)?|INFO|DEBUG|TRACE)\b/;
       role="log"
       tabindex="0"
       [attr.aria-label]="title()"
+      [attr.aria-live]="live() ? null : 'off'"
       [style.height.px]="height()"
       (scroll)="onScroll()"
     >
-      <div class="strct-lv__spacer" [style.height.px]="totalHeight()">
+      <div class="strct-lv__spacer" [style.height.px]="virtualized() ? totalHeight() : null">
         <div
           class="strct-lv__window"
-          [class.strct-lv__window--wrap]="wrapMode()"
+          [class.strct-lv__window--wrap]="wrapActive()"
           [style.transform]="'translateY(' + offsetY() + 'px)'"
         >
           @for (line of window(); track line.index) {
@@ -186,6 +201,10 @@ const LEVEL_RE = /\b(ERROR|ERR|FATAL|WARN(?:ING)?|INFO|DEBUG|TRACE)\b/;
         font-size: 12px;
         color: var(--t1);
         white-space: pre;
+      }
+      .strct-lv__window--wrap {
+        /* Unvirtualized: flow normally so the spacer sizes from content. */
+        position: static;
       }
       .strct-lv__window--wrap .strct-lv__line {
         height: auto;
@@ -262,14 +281,19 @@ export class StrctLogViewer {
   readonly height = input(320);
   /** Follow the tail as new lines arrive (two-way; pauses on scroll-up). */
   readonly follow = model(true);
-  /** Soft-wrap long lines instead of horizontal scrolling (two-way). */
+  /** Soft-wrap long lines instead of horizontal scrolling (two-way). Disables
+   * virtualization; past `WRAP_CAP` lines it falls back to nowrap. */
   readonly wrapMode = model(false);
+  /** Announce streamed lines (role="log" implies aria-live="polite"). Set
+   * false on follow-heavy streams to force `aria-live="off"`. */
+  readonly live = input(true, { transform: booleanAttribute });
   /** Auto-detect ERROR/WARN/INFO/DEBUG tokens on plain-string lines. */
   readonly autoLevel = input(true, { transform: booleanAttribute });
   /** Localizable strings. */
   readonly title = input('Logs');
   readonly followLabel = input('Follow');
   readonly wrapLabel = input('Wrap');
+  readonly wrapLimitNote = input('Line limit reached — wrapping disabled');
   readonly linesLabel = input('lines');
   readonly emptyLabel = input('No log lines.');
 
@@ -279,16 +303,30 @@ export class StrctLogViewer {
 
   private static readonly LINE_H = 20;
   private static readonly OVERSCAN = 10;
+  /** Max line count for which wrap mode renders all lines unvirtualized. */
+  private static readonly WRAP_CAP = 10_000;
 
   protected readonly normalized = computed<StrctLogLine[]>(() =>
     this.lines().map((l) => (typeof l === 'string' ? { text: l } : l)),
   );
+
+  /** Wrapping requested but over the cap — falls back to nowrap. */
+  protected readonly wrapCapped = computed(
+    () => this.wrapMode() && this.normalized().length > StrctLogViewer.WRAP_CAP,
+  );
+
+  /** Wrapping actually applied: variable-height lines, virtualization off. */
+  protected readonly wrapActive = computed(() => this.wrapMode() && !this.wrapCapped());
+
+  /** Fixed-height windowing is only valid while lines cannot wrap. */
+  protected readonly virtualized = computed(() => !this.wrapActive());
 
   protected readonly totalHeight = computed(
     () => this.normalized().length * StrctLogViewer.LINE_H || StrctLogViewer.LINE_H,
   );
 
   private readonly windowStart = computed(() => {
+    if (!this.virtualized()) return 0;
     const start = Math.floor(this.scrollTop() / StrctLogViewer.LINE_H) - StrctLogViewer.OVERSCAN;
     return Math.max(0, start);
   });
@@ -298,7 +336,9 @@ export class StrctLogViewer {
   protected readonly window = computed<RenderLine[]>(() => {
     const all = this.normalized();
     const start = this.windowStart();
-    const visible = Math.ceil(this.height() / StrctLogViewer.LINE_H) + StrctLogViewer.OVERSCAN * 2;
+    const visible = this.virtualized()
+      ? Math.ceil(this.height() / StrctLogViewer.LINE_H) + StrctLogViewer.OVERSCAN * 2
+      : all.length;
     return all.slice(start, start + visible).map((line, i) => ({
       index: start + i,
       level: line.level ?? (this.autoLevel() ? detectLevel(line.text) : 'none'),
@@ -356,9 +396,11 @@ function detectLevel(text: string): string {
   return 'info';
 }
 
-/** Parse ANSI SGR sequences into class-tagged segments (16-color + bold). */
+/** Parse ANSI SGR sequences into class-tagged segments (16-color + bold).
+ * Non-SGR CSI sequences (ESC[K, cursor moves, …) are stripped first. */
 export function parseAnsi(text: string): LogSegment[] {
   if (!text.includes('\u001b[')) return [{ text, cls: 'c37' }];
+  text = text.replace(NON_SGR_CSI_RE, '');
   const segments: LogSegment[] = [];
   const re = /\u001b\[([0-9;]*)m/g;
   let last = 0;

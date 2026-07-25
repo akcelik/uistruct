@@ -51,6 +51,23 @@ describe('StrctInputOtp FR-16-05/06', () => {
     expect(document.activeElement).toBe(boxes[0]);
   });
 
+  it('masked with a bare attribute (empty string) renders password boxes', () => {
+    const fixture = TestBed.createComponent(StrctInputOtp);
+    fixture.componentRef.setInput('masked', '');
+    fixture.detectChanges();
+    const boxes = fixture.nativeElement.querySelectorAll('.strct-otp__box');
+    expect(boxes.length).toBeGreaterThan(0);
+    for (const box of boxes) {
+      expect((box as HTMLInputElement).type).toBe('password');
+    }
+
+    fixture.componentRef.setInput('masked', false);
+    fixture.detectChanges();
+    for (const box of fixture.nativeElement.querySelectorAll('.strct-otp__box')) {
+      expect((box as HTMLInputElement).type).toBe('text');
+    }
+  });
+
   it('groupSize renders aria-hidden separators between groups only', () => {
     const fixture = TestBed.createComponent(StrctInputOtp);
     fixture.componentRef.setInput('length', 6);

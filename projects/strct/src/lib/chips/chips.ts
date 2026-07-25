@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ViewEncapsulation,
+  booleanAttribute,
   forwardRef,
   input,
   signal,
@@ -31,8 +32,10 @@ import { StrctTag } from '../tag/tag';
       (keydown.enter)="input.focus()"
       (keydown.space)="input.focus()"
     >
-      @for (chip of value(); track chip) {
-        <strct-tag status="accent" removable (removed)="remove(chip)">{{ chip }}</strct-tag>
+      @for (chip of value(); track $index) {
+        <strct-tag status="accent" removable [disabled]="isDisabled()" (removed)="remove($index)">{{
+          chip
+        }}</strct-tag>
       }
       <input
         #input
@@ -55,7 +58,6 @@ import { StrctTag } from '../tag/tag';
         align-items: center;
         gap: 6px;
         width: 100%;
-        max-width: 360px;
         min-height: 38px;
         padding: 5px 8px;
         background: var(--bg-2);
@@ -92,7 +94,7 @@ export class StrctChips implements ControlValueAccessor {
   /** Placeholder text when empty. */
   readonly placeholder = input('');
   /** Allow duplicate tags. */
-  readonly allowDuplicates = input(false);
+  readonly allowDuplicates = input(false, { transform: booleanAttribute });
 
   readonly value = signal<string[]>([]);
   readonly draft = signal('');
@@ -121,8 +123,8 @@ export class StrctChips implements ControlValueAccessor {
     this.draft.set('');
   }
 
-  remove(chip: string): void {
-    this.value.update((v) => v.filter((c) => c !== chip));
+  remove(index: number): void {
+    this.value.update((v) => v.filter((_, i) => i !== index));
     this.emit();
   }
 

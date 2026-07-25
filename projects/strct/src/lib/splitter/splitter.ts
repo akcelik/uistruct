@@ -1,12 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   ViewEncapsulation,
+  booleanAttribute,
   computed,
   inject,
   input,
   model,
+  signal,
 } from '@angular/core';
 
 /**
@@ -38,7 +41,7 @@ import {
       [attr.aria-valuenow]="clamped()"
       [attr.aria-valuemin]="min()"
       [attr.aria-valuemax]="max()"
-      (mousedown)="onDragStart($event)"
+      (pointerdown)="onDragStart($event)"
       (keydown)="onKeydown($event)"
     >
       <span class="strct-split__grip" aria-hidden="true"></span>
@@ -50,7 +53,7 @@ import {
   host: {
     class: 'strct-split',
     '[class.strct-split--vertical]': 'vertical()',
-    '[class.strct-split--dragging]': 'dragging',
+    '[class.strct-split--dragging]': 'dragging()',
   },
   styles: [
     `
@@ -119,7 +122,7 @@ export class StrctSplitter {
   readonly min = input(15);
   readonly max = input(85);
   /** Stack panes vertically (gutter drags up/down). */
-  readonly vertical = input(false);
+  readonly vertical = input(false, { transform: booleanAttribute });
   /** Accessible name of the separator (localizable). */
   readonly gutterLabel = input('Resize panes');
   /** Keyboard nudge step in percent. */
@@ -129,34 +132,56 @@ export class StrctSplitter {
     Math.min(this.max(), Math.max(this.min(), this.split())),
   );
 
-  protected dragging = false;
-  private moveHandler = (e: MouseEvent) => this.onDragMove(e);
+  protected readonly dragging = signal(false);
+  private moveHandler = (e: PointerEvent) => this.onDragMove(e);
   private upHandler = () => this.onDragEnd();
 
-  protected onDragStart(event: MouseEvent): void {
-    event.preventDefault();
-    this.dragging = true;
-    document.addEventListener('mousemove', this.moveHandler);
-    document.addEventListener('mouseup', this.upHandler);
+  constructor() {
+    // Remove document drag listeners if the component is destroyed mid-drag.
+    inject(DestroyRef).onDestroy(() => this.removeDragListeners());
   }
 
-  private onDragMove(event: MouseEvent): void {
+  protected onDragStart(event: PointerEvent): void {
+    event.preventDefault();
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    this.dragging.set(true);
+    document.addEventListener('pointermove', this.moveHandler);
+    document.addEventListener('pointerup', this.upHandler);
+    document.addEventListener('pointercancel', this.upHandler);
+  }
+
+  private onDragMove(event: PointerEvent): void {
     const rect = this.host.nativeElement.getBoundingClientRect();
-    const ratio = this.vertical()
+    // clientX/clientY are physical, but the start pane sits at the inline
+    // start: in RTL a horizontal drag is measured from the rect's right edge.
+    let ratio = this.vertical()
       ? (event.clientY - rect.top) / rect.height
       : (event.clientX - rect.left) / rect.width;
+    if (!this.vertical() && this.isRtl()) ratio = 1 - ratio;
     this.split.set(Math.min(this.max(), Math.max(this.min(), Math.round(ratio * 100))));
   }
 
   private onDragEnd(): void {
-    this.dragging = false;
-    document.removeEventListener('mousemove', this.moveHandler);
-    document.removeEventListener('mouseup', this.upHandler);
+    this.dragging.set(false);
+    this.removeDragListeners();
+  }
+
+  private removeDragListeners(): void {
+    document.removeEventListener('pointermove', this.moveHandler);
+    document.removeEventListener('pointerup', this.upHandler);
+    document.removeEventListener('pointercancel', this.upHandler);
+  }
+
+  /** Document direction — pointer coordinates and arrow keys are physical, panes are logical. */
+  private isRtl(): boolean {
+    return getComputedStyle(this.host.nativeElement).direction === 'rtl';
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    const dec = this.vertical() ? 'ArrowUp' : 'ArrowLeft';
-    const inc = this.vertical() ? 'ArrowDown' : 'ArrowRight';
+    let dec = this.vertical() ? 'ArrowUp' : 'ArrowLeft';
+    let inc = this.vertical() ? 'ArrowDown' : 'ArrowRight';
+    // RTL: the start pane extends to the left, so Left grows and Right shrinks.
+    if (!this.vertical() && this.isRtl()) [dec, inc] = [inc, dec];
     let next: number | null = null;
     if (event.key === dec) next = this.clamped() - this.step();
     else if (event.key === inc) next = this.clamped() + this.step();

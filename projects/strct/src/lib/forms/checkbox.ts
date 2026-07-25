@@ -2,10 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   booleanAttribute,
-  effect,
+  computed,
   forwardRef,
   input,
   model,
+  signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
@@ -77,6 +78,20 @@ import { StrctIcon } from '../icon/icon';
         border-color: transparent;
         color: var(--inv);
       }
+      .strct-cb__native:indeterminate + .strct-cb__box {
+        background: var(--acc);
+        border-color: transparent;
+      }
+      .strct-cb__native:indeterminate + .strct-cb__box strct-icon {
+        visibility: hidden;
+      }
+      .strct-cb__native:indeterminate + .strct-cb__box::after {
+        content: '';
+        width: 9px;
+        height: 2px;
+        border-radius: 1px;
+        background: var(--inv);
+      }
       .strct-cb__native:focus-visible + .strct-cb__box {
         box-shadow: 0 0 0 3px var(--acc18);
       }
@@ -85,7 +100,9 @@ import { StrctIcon } from '../icon/icon';
 })
 export class StrctCheckbox implements ControlValueAccessor {
   readonly checked = model(false);
-  readonly isDisabled = model(false);
+  /** Disabled state pushed by the forms API (setDisabledState). */
+  private readonly cvaDisabled = signal(false);
+  readonly isDisabled = computed(() => this.disabled() || this.cvaDisabled());
   /** Static disable; forms' setDisabledState also drives the disabled state. */
   readonly disabled = input(false, { transform: booleanAttribute });
   /** Tri-state visual indicator for a parent / intermediate state. */
@@ -95,10 +112,6 @@ export class StrctCheckbox implements ControlValueAccessor {
 
   private onChange: (value: boolean) => void = () => {};
   protected onTouched: () => void = () => {};
-
-  constructor() {
-    effect(() => this.isDisabled.set(this.disabled()));
-  }
 
   onToggle(event: Event): void {
     const value = (event.target as HTMLInputElement).checked;
@@ -116,6 +129,6 @@ export class StrctCheckbox implements ControlValueAccessor {
     this.onTouched = fn;
   }
   setDisabledState(isDisabled: boolean): void {
-    this.isDisabled.set(isDisabled);
+    this.cvaDisabled.set(isDisabled);
   }
 }

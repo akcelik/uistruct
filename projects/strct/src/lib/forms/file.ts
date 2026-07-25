@@ -31,13 +31,15 @@ import { StrctIcon } from '../icon/icon';
       tabindex="0"
       (click)="!isDisabled() && input.click()"
       (keydown.enter)="!isDisabled() && input.click()"
+      (keydown.space)="$event.preventDefault(); !isDisabled() && input.click()"
       (dragover)="onDragOver($event)"
       (dragleave)="dragging.set(false)"
       (drop)="onDrop($event)"
     >
       <strct-icon name="upload" [size]="20" />
       <div class="strct-file__prompt">
-        <strong>Drag files here</strong> or <span class="strct-file__browse">browse</span>
+        <strong>{{ dropLabel() }}</strong> or
+        <span class="strct-file__browse">{{ browseLabel() }}</span>
       </div>
       <input
         #input
@@ -60,7 +62,7 @@ import { StrctIcon } from '../icon/icon';
             <button
               type="button"
               class="strct-file__remove"
-              aria-label="Remove"
+              [attr.aria-label]="removeLabel()"
               (click)="remove(file)"
             >
               <strct-icon name="close" [size]="12" />
@@ -76,7 +78,6 @@ import { StrctIcon } from '../icon/icon';
       .strct-file {
         display: block;
         width: 100%;
-        max-width: 360px;
       }
       .strct-file__zone {
         display: flex;
@@ -176,6 +177,12 @@ export class StrctFile implements ControlValueAccessor {
   readonly accept = input('');
   /** Static disable flag. */
   readonly disabled = input(false, { transform: booleanAttribute });
+  /** Localized prompt text above the "browse" link. */
+  readonly dropLabel = input('Drag files here');
+  /** Localized text of the "browse" link. */
+  readonly browseLabel = input('browse');
+  /** aria-label of the per-file remove button. */
+  readonly removeLabel = input('Remove');
 
   readonly files = signal<File[]>([]);
   readonly dragging = signal(false);
@@ -185,8 +192,11 @@ export class StrctFile implements ControlValueAccessor {
   protected onTouched: () => void = () => {};
 
   onSelect(event: Event): void {
-    const list = (event.target as HTMLInputElement).files;
+    const target = event.target as HTMLInputElement;
+    const list = target.files;
     if (list) this.setFiles(Array.from(list));
+    // Reset so re-picking the same file fires change again.
+    target.value = '';
   }
 
   onDragOver(event: DragEvent): void {
@@ -200,7 +210,10 @@ export class StrctFile implements ControlValueAccessor {
     event.preventDefault();
     this.dragging.set(false);
     const dropped = event.dataTransfer?.files;
-    if (dropped?.length) this.setFiles(Array.from(dropped));
+    if (dropped?.length) {
+      const accepted = this.filterAccepted(Array.from(dropped));
+      if (accepted.length) this.setFiles(accepted);
+    }
   }
 
   remove(file: File): void {
@@ -218,6 +231,22 @@ export class StrctFile implements ControlValueAccessor {
     this.files.set(next);
     this.onChange(next);
     this.onTouched();
+  }
+
+  /** Keep only files matching `accept` (extension or mime pattern), like the native picker. */
+  private filterAccepted(files: File[]): File[] {
+    const patterns = this.accept()
+      .split(',')
+      .map((p) => p.trim().toLowerCase())
+      .filter(Boolean);
+    if (!patterns.length) return files;
+    return files.filter((file) =>
+      patterns.some((pattern) => {
+        if (pattern.startsWith('.')) return file.name.toLowerCase().endsWith(pattern);
+        if (pattern.endsWith('/*')) return file.type.toLowerCase().startsWith(pattern.slice(0, -1));
+        return file.type.toLowerCase() === pattern;
+      }),
+    );
   }
 
   writeValue(value: File[]): void {

@@ -47,7 +47,7 @@ const DEFAULT_ICON: Record<StrctStatus, string> = {
     </span>
 
     <div class="strct-hero__text">
-      <div class="strct-hero__heading" [id]="headingId">{{ heading() }}</div>
+      <h2 class="strct-hero__heading" [id]="headingId">{{ heading() }}</h2>
       <div class="strct-hero__desc"><ng-content /></div>
     </div>
 
@@ -63,7 +63,7 @@ const DEFAULT_ICON: Record<StrctStatus, string> = {
     '[class.strct-hero--warning]': "status() === 'warning'",
     '[class.strct-hero--critical]': "status() === 'critical'",
     '[class.strct-hero--dense]': 'dense()',
-    '[attr.role]': "status() === 'critical' ? 'alert' : 'status'",
+    '[attr.role]': "status() === 'critical' ? 'alert' : live() ? 'status' : null",
     '[attr.aria-labelledby]': 'headingId',
   },
   styles: [
@@ -110,6 +110,7 @@ const DEFAULT_ICON: Record<StrctStatus, string> = {
         gap: 3px;
       }
       .strct-hero__heading {
+        margin: 0;
         font-size: var(--text-xl);
         font-weight: 650;
         letter-spacing: -0.01em;
@@ -207,6 +208,12 @@ export class StrctHero {
   readonly heading = input.required<string>();
   /** Tighter padding for secondary placements. */
   readonly dense = input(false, { transform: booleanAttribute });
+  /**
+   * Opt into a polite live region (role="status") for banners whose content
+   * updates after load; static banners should leave this off. Critical heroes
+   * are always role="alert" regardless.
+   */
+  readonly live = input(false, { transform: booleanAttribute });
 
   protected readonly headingId = `strct-hero-${++heroCounter}`;
   protected readonly resolvedIcon = computed(() => this.icon() || DEFAULT_ICON[this.status()]);

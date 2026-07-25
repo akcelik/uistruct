@@ -3,6 +3,7 @@ import {
   Component,
   ViewEncapsulation,
   computed,
+  effect,
   input,
   model,
 } from '@angular/core';
@@ -39,6 +40,7 @@ type PageToken = number | 'dots';
           class="strct-pg__btn"
           [class.strct-pg__btn--active]="token === page()"
           [attr.aria-current]="token === page() ? 'page' : null"
+          [attr.aria-label]="pageLabel() + ' ' + token"
           (click)="go(token)"
         >
           {{ token }}
@@ -117,6 +119,8 @@ export class StrctPagination {
   readonly prevLabel = input('Previous page');
   readonly nextLabel = input('Next page');
   readonly regionLabel = input('Pagination');
+  /** Label prefix for the numbered page buttons, e.g. "Page 3". */
+  readonly pageLabel = input('Page');
 
   /** Total number of items. */
   readonly total = input.required<number>();
@@ -128,6 +132,16 @@ export class StrctPagination {
   readonly pageCount = computed(() =>
     Math.max(1, Math.ceil(this.total() / Math.max(1, this.pageSize()))),
   );
+
+  constructor() {
+    // Pull the page back into range when total/pageSize shrink the page count.
+    effect(() => {
+      const count = this.pageCount();
+      const current = this.page();
+      const clamped = Math.max(1, Math.min(count, current));
+      if (clamped !== current) this.page.set(clamped);
+    });
+  }
 
   protected readonly pages = computed<PageToken[]>(() => {
     const count = this.pageCount();
