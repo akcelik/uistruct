@@ -64,13 +64,13 @@ describe('StrctDonut', () => {
     expect(label).toContain('Running 36 (75%)');
   });
 
-  it('legend rows are keyboard-focusable and drive the center readout', () => {
+  it('legend rows carry no fake interactive affordances (hover only)', () => {
     const fixture = build({ segments: SEGS, legend: true, centerValue: 48 });
     const el = fixture.nativeElement as HTMLElement;
     const row = el.querySelector('.strct-donut__leg') as HTMLElement;
-    expect(row.getAttribute('tabindex')).toBe('0');
+    expect(row.hasAttribute('tabindex')).toBe(false);
     row.dispatchEvent(new Event('focus'));
     fixture.detectChanges();
-    expect(el.querySelector('.strct-donut__value')?.textContent).toContain('36');
+    expect(el.querySelector('.strct-donut__value')?.textContent).toContain('48');
   });
 });

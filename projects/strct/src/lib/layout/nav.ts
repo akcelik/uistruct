@@ -1,7 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   ViewEncapsulation,
+  booleanAttribute,
   input,
   inject,
 } from '@angular/core';
@@ -16,7 +18,7 @@ import { StrctShellService } from './layout';
     @if (shell.mobileNavOpen()) {
       <div
         class="strct-vnav__backdrop"
-        tabindex="0"
+        tabindex="-1"
         role="button"
         aria-label="Close navigation"
         (click)="shell.mobileNavOpen.set(false)"
@@ -28,7 +30,9 @@ import { StrctShellService } from './layout';
   `,
   host: {
     class: 'strct-vnav',
+    '[id]': 'shell.navId',
     '[class.strct-vnav--open]': 'shell.mobileNavOpen()',
+    '(document:keydown.escape)': 'onEscape()',
   },
   styles: [
     `
@@ -47,7 +51,7 @@ import { StrctShellService } from './layout';
           top: 0;
           inset-inline-start: 0;
           bottom: 0;
-          z-index: 300;
+          z-index: var(--z-nav);
           transform: translateX(-100%);
           transition: transform 0.2s ease;
         }
@@ -61,8 +65,8 @@ import { StrctShellService } from './layout';
         .strct-vnav__backdrop {
           position: fixed;
           inset: 0;
-          z-index: 299;
-          background: rgba(0, 0, 0, 0.5);
+          z-index: calc(var(--z-nav) - 1);
+          background: var(--backdrop);
           animation: strct-vnav-backdrop-in 0.2s ease;
         }
       }
@@ -81,6 +85,11 @@ import { StrctShellService } from './layout';
 })
 export class StrctVerticalNav {
   protected readonly shell = inject(StrctShellService);
+
+  /** Closes the mobile nav on Escape. */
+  protected onEscape(): void {
+    if (this.shell.mobileNavOpen()) this.shell.mobileNavOpen.set(false);
+  }
 }
 
 /** Horizontal strip of icon tabs (e.g. section switcher at the top of a sidebar). */
@@ -118,6 +127,8 @@ export class StrctNav {}
     '[attr.title]': 'label() || null',
     '[attr.aria-label]': 'label() || null',
     '[attr.aria-pressed]': 'active()',
+    '(keydown.enter)': 'activate($event)',
+    '(keydown.space)': 'activate($event)',
   },
   styles: [
     `
@@ -151,7 +162,15 @@ export class StrctNav {}
 })
 export class StrctNavItem {
   /** Whether the item is active / selected. */
-  readonly active = input(false);
+  readonly active = input(false, { transform: booleanAttribute });
   /** Label text. */
   readonly label = input('');
+
+  private readonly host = inject(ElementRef<HTMLElement>);
+
+  /** Activates the item from the keyboard, like a native button. */
+  protected activate(event: Event): void {
+    event.preventDefault();
+    this.host.nativeElement.click();
+  }
 }

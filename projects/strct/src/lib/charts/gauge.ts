@@ -24,8 +24,18 @@ const COLOR: Record<StrctChartStatus, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
-    <div class="strct-gauge__wrap" [style.width.px]="size()" [style.height.px]="size()">
+    <div
+      class="strct-gauge__wrap"
+      role="meter"
+      [attr.aria-label]="ariaLabel()"
+      [attr.aria-valuenow]="clamped()"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      [style.width.px]="size()"
+      [style.height.px]="size()"
+    >
       <svg
+        aria-hidden="true"
         [attr.viewBox]="'0 0 ' + size() + ' ' + size()"
         [style.width.px]="size()"
         [style.height.px]="size()"
@@ -74,8 +84,10 @@ const COLOR: Record<StrctChartStatus, string> = {
       .strct-gauge__track {
         stroke: var(--bg-3);
       }
-      .strct-gauge__value {
-        transition: stroke-dasharray 0.4s ease;
+      @media (prefers-reduced-motion: no-preference) {
+        .strct-gauge__value {
+          transition: stroke-dasharray 0.4s ease;
+        }
       }
       .strct-gauge__center {
         position: absolute;
@@ -119,6 +131,8 @@ export class StrctGauge {
   readonly thresholds = input<StrctThresholds | null>(null);
   /** Label text. */
   readonly label = input('');
+  /** Accessible name for the gauge (role="meter"). */
+  readonly ariaLabel = input('Gauge');
   /** Size variant. */
   readonly size = input(120);
   /** Stroke thickness in pixels. */

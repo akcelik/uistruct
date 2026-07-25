@@ -11,12 +11,12 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
 
-const LEVELS = [
-  { label: 'Weak', color: 'var(--critical)' },
-  { label: 'Weak', color: 'var(--critical)' },
-  { label: 'Fair', color: 'var(--warning)' },
-  { label: 'Good', color: 'var(--acc)' },
-  { label: 'Strong', color: 'var(--success)' },
+const LEVEL_COLORS = [
+  'var(--critical)',
+  'var(--critical)',
+  'var(--warning)',
+  'var(--acc)',
+  'var(--success)',
 ];
 
 /**
@@ -39,14 +39,14 @@ const LEVELS = [
         [placeholder]="placeholder()"
         [value]="value()"
         [disabled]="isDisabled()"
-        autocomplete="off"
+        [attr.autocomplete]="autocomplete()"
         (input)="onInput($event)"
         (blur)="onTouched()"
       />
       <button
         type="button"
         class="strct-pw__toggle"
-        [attr.aria-label]="revealed() ? 'Hide password' : 'Show password'"
+        [attr.aria-label]="revealed() ? hideLabel() : showLabel()"
         [disabled]="isDisabled()"
         (click)="revealed.set(!revealed())"
       >
@@ -54,7 +54,7 @@ const LEVELS = [
       </button>
     </div>
     @if (meter() && value()) {
-      <div class="strct-pw__meter">
+      <div class="strct-pw__meter" role="status" aria-live="polite">
         <div class="strct-pw__bars">
           @for (i of [0, 1, 2, 3]; track i) {
             <span
@@ -73,7 +73,6 @@ const LEVELS = [
       .strct-pw {
         display: block;
         width: 100%;
-        max-width: 280px;
       }
       .strct-pw__field {
         position: relative;
@@ -83,7 +82,7 @@ const LEVELS = [
       }
       .strct-pw__toggle {
         position: absolute;
-        right: 4px;
+        inset-inline-end: 4px;
         top: 50%;
         transform: translateY(-50%);
         display: inline-flex;
@@ -131,6 +130,14 @@ export class StrctPassword implements ControlValueAccessor {
   readonly meter = input(false, { transform: booleanAttribute });
   /** Static disable flag. */
   readonly disabled = input(false, { transform: booleanAttribute });
+  /** Localized strength labels, weakest to strongest. */
+  readonly strengthLabels = input(['Weak', 'Fair', 'Good', 'Strong']);
+  /** aria-label of the reveal toggle when the password is hidden. */
+  readonly showLabel = input('Show password');
+  /** aria-label of the reveal toggle when the password is visible. */
+  readonly hideLabel = input('Hide password');
+  /** Autocomplete hint; the default lets password managers work. */
+  readonly autocomplete = input('current-password');
 
   readonly value = signal('');
   readonly revealed = signal(false);
@@ -146,7 +153,13 @@ export class StrctPassword implements ControlValueAccessor {
     if (/[^A-Za-z0-9]/.test(v)) s++;
     return s;
   });
-  protected readonly level = computed(() => LEVELS[this.score()]);
+  protected readonly level = computed(() => {
+    const s = this.score();
+    const labels = this.strengthLabels();
+    // Scores 0-1 share the weakest label; clamp so custom arrays of any size work.
+    const idx = Math.max(0, Math.min(s - 1, labels.length - 1));
+    return { label: labels[idx] ?? '', color: LEVEL_COLORS[s] };
+  });
 
   private onChange: (value: string) => void = () => {};
   protected onTouched: () => void = () => {};

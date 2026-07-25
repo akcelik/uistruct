@@ -1,10 +1,26 @@
-import { Directive, ElementRef, HostListener, inject, input, output, signal } from '@angular/core';
+import {
+  DOCUMENT,
+  Directive,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  Renderer2,
+  booleanAttribute,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { StrctAnnouncer } from '../a11y/announcer';
 
 /** A completed reorder: move the item at `from` to `to` in your array. */
 export interface StrctReorderEvent {
   from: number;
   to: number;
 }
+
+let reorderCounter = 0;
 
 /**
  * List drag-reorder primitive — the consumer owns the array:
@@ -22,17 +38,53 @@ export interface StrctReorderEvent {
  * Items are HTML5-draggable; keyboard reorder is Alt+ArrowUp / Alt+ArrowDown
  * on the focused item (items get `tabindex="0"` unless they already manage
  * focus). Indexes are positions among the `strctReorderItem` siblings.
+ * Completed moves are announced in a live region (see `announcement`) and
+ * items reference the sr-only `instructions` via `aria-describedby`.
  */
 @Directive({ selector: '[strctReorder]' })
-export class StrctReorder {
+export class StrctReorder implements OnDestroy {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly renderer = inject(Renderer2);
+  private readonly doc = inject(DOCUMENT);
+  private readonly announcer = inject(StrctAnnouncer);
   /** Emits when a drag or keyboard move completes. */
   readonly reordered = output<StrctReorderEvent>();
   /** Disable all reordering (display-only mode). */
-  readonly reorderDisabled = input(false);
+  readonly reorderDisabled = input(false, { transform: booleanAttribute });
+  /**
+   * Keyboard instructions (localizable), rendered sr-only and referenced by
+   * every item's `aria-describedby`. Set to '' to opt out.
+   */
+  readonly instructions = input('Press Alt+ArrowUp or Alt+ArrowDown to move this item');
+  /**
+   * Builds the live-region announcement after a move (localizable):
+   * (moved item's text, new 1-based position, item count).
+   */
+  readonly announcement = input(
+    (label: string, position: number, total: number) =>
+      `Moved ${label} to position ${position} of ${total}`,
+  );
 
   readonly dragIndex = signal<number | null>(null);
   readonly overIndex = signal<number | null>(null);
+  /** Id of the sr-only instructions element the items point to. */
+  readonly instructionsId = `strct-reorder-hint-${++reorderCounter}`;
+  private hint: HTMLElement | null = null;
+
+  constructor() {
+    // Keep the sr-only instructions element in sync with the input.
+    effect(() => {
+      const text = this.instructions();
+      if (text && !this.hint) {
+        this.hint = this.renderer.createElement('span') as HTMLElement;
+        this.renderer.setAttribute(this.hint, 'id', this.instructionsId);
+        this.hint.style.cssText =
+          'position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;';
+        this.renderer.appendChild(this.doc.body, this.hint);
+      }
+      if (this.hint) this.hint.textContent = text;
+    });
+  }
 
   items(): HTMLElement[] {
     return [...this.host.nativeElement.querySelectorAll<HTMLElement>('[strctReorderItem]')];
@@ -46,7 +98,44 @@ export class StrctReorder {
     this.dragIndex.set(null);
     this.overIndex.set(null);
     if (from < 0 || to < 0 || from === to) return;
+    const label = this.items()[from]?.textContent?.trim() ?? '';
     this.reordered.emit({ from, to });
+    this.announcer.announce(this.announcement()(label, to + 1, this.items().length));
+  }
+
+  @HostListener('dragover', ['$event'])
+  protected onContainerDragOver(event: DragEvent): void {
+    // Only the container's own empty space (below the last item); drags over
+    // items are handled by the items themselves.
+    if (this.dragIndex() == null) return;
+    if ((event.target as HTMLElement).closest('[strctReorderItem]')) return;
+    event.preventDefault();
+  }
+
+  @HostListener('drop', ['$event'])
+  protected onContainerDrop(event: DragEvent): void {
+    const from = this.dragIndex();
+    if (from == null) return; // an item already consumed this drop
+    if ((event.target as HTMLElement).closest('[strctReorderItem]')) return;
+    event.preventDefault();
+    // Drop into empty space moves the item to the end.
+    this.commit(from, this.items().length - 1);
+  }
+
+  @HostListener('dragleave', ['$event'])
+  protected onDragLeave(event: DragEvent): void {
+    // dragleave also fires when moving between children; only clear the
+    // highlight when the drag truly leaves the container.
+    const next = event.relatedTarget as Node | null;
+    if (next && this.host.nativeElement.contains(next)) return;
+    this.overIndex.set(null);
+  }
+
+  ngOnDestroy(): void {
+    if (this.hint) {
+      this.renderer.removeChild(this.doc.body, this.hint);
+      this.hint = null;
+    }
   }
 }
 
@@ -59,6 +148,10 @@ export class StrctReorder {
     '[class.strct-reorder--dragging]': 'isDragging()',
     '[class.strct-reorder--over]': 'isOver()',
     '[attr.aria-roledescription]': "'sortable'",
+    '[attr.aria-keyshortcuts]': "'Alt+ArrowUp Alt+ArrowDown'",
+    '[attr.aria-posinset]': 'index() + 1',
+    '[attr.aria-setsize]': 'list.items().length',
+    '[attr.aria-describedby]': 'list.instructions() ? list.instructionsId : null',
   },
 })
 export class StrctReorderItem {
@@ -78,7 +171,7 @@ export class StrctReorderItem {
     return this.list.overIndex() === this.index() && this.list.dragIndex() !== this.index();
   }
 
-  private index(): number {
+  protected index(): number {
     return this.list.indexOf(this.el.nativeElement);
   }
 

@@ -60,7 +60,7 @@ export function strctValidationIcon(status: StrctValidationStatus): string {
     @if (state().status !== 'idle') {
       <span class="strct-vstate strct-vstate--{{ state().status }}">
         @if (state().status === 'checking') {
-          <strct-spinner size="sm" />
+          <strct-spinner size="sm" [label]="loadingLabel()" />
         } @else if (icon()) {
           <strct-icon [name]="icon()" [size]="16" />
         }
@@ -101,5 +101,7 @@ export function strctValidationIcon(status: StrctValidationStatus): string {
 export class StrctCellStatus {
   /** The validation state to render. */
   readonly state = input.required<StrctValidationState>();
+  /** Accessible label for the 'checking' spinner (localizable). */
+  readonly loadingLabel = input('Loading');
   protected readonly icon = computed(() => strctValidationIcon(this.state().status));
 }

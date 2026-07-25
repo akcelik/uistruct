@@ -133,12 +133,12 @@ export interface StrctCommandItem {
       .strct-cmdp__backdrop {
         position: fixed;
         inset: 0;
-        z-index: 1200;
+        z-index: var(--z-toast);
         display: flex;
         justify-content: center;
         align-items: flex-start;
         padding: 14vh 16px 16px;
-        background: rgba(0, 0, 0, 0.5);
+        background: var(--backdrop);
         backdrop-filter: blur(2px);
         animation: strct-cmdp-fade 0.12s ease;
       }

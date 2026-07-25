@@ -7,6 +7,12 @@ describe('StrctTimeline', () => {
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).classList).toContain('strct-tl');
   });
+
+  it('wraps items in an ordered list', () => {
+    const fixture = TestBed.createComponent(StrctTimeline);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('ol.strct-tl__list')).toBeTruthy();
+  });
 });
 
 describe('StrctTimelineItem', () => {
@@ -15,6 +21,13 @@ describe('StrctTimelineItem', () => {
     fixture.componentRef.setInput('title', 'Step');
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).classList).toContain('strct-tli');
+  });
+
+  it('exposes listitem semantics', () => {
+    const fixture = TestBed.createComponent(StrctTimelineItem);
+    fixture.componentRef.setInput('title', 'Step');
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).getAttribute('role')).toBe('listitem');
   });
 
   it('applies state modifier classes', () => {

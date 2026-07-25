@@ -20,9 +20,12 @@ import {
   StrctRowDetailDef,
   StrctStack,
   StrctStackItem,
+  StrctStatusDot,
   StrctTable,
   StrctTimeline,
   StrctTimelineItem,
+  StrctToolbar,
+  StrctToolbarSpacer,
   StrctCode,
   StrctFilterBar,
   StrctFilterChip,
@@ -53,12 +56,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctTimelineItem,
     StrctStack,
     StrctStackItem,
+    StrctStatusDot,
     StrctDescriptionList,
     StrctDesc,
     StrctCode,
     StrctFilterBar,
     StrctReorder,
     StrctReorderItem,
+    StrctToolbar,
+    StrctToolbarSpacer,
   ],
   template: `
     <app-page-header title="Data" subtitle="Declarative, token-styled data display." />
@@ -93,6 +99,22 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           ><strct-badge status="neutral">hyperstruct01</strct-badge></strct-desc
         >
       </strct-description-list>
+    </app-demo>
+
+    <app-demo
+      anchor="status-dot"
+      heading="Status dot"
+      description="A presence dot that never relies on colour alone: the tone is painted by CSS while the state also renders as visually-hidden text ('OK', 'Warning', …), overridable via label. sm for dense rows, md standalone."
+      code='<strct-status-dot status="success" />  ·  <strct-status-dot status="critical" size="sm" label="Node unreachable" />'
+    >
+      <span class="dot-row"><strct-status-dot status="neutral" /> Neutral</span>
+      <span class="dot-row"><strct-status-dot status="accent" /> Info</span>
+      <span class="dot-row"><strct-status-dot status="success" /> OK</span>
+      <span class="dot-row"><strct-status-dot status="warning" /> Warning</span>
+      <span class="dot-row"><strct-status-dot status="critical" /> Critical</span>
+      <span class="dot-row"
+        ><strct-status-dot status="success" size="sm" /> sm, for dense rows</span
+      >
     </app-demo>
 
     <app-demo
@@ -162,6 +184,35 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       code='<strct-table [columns]="cols" [rows]="rows" striped hover />'
     >
       <strct-table style="width: 100%;" [columns]="cols" [rows]="rows" striped hover />
+    </app-demo>
+
+    <app-demo
+      anchor="toolbar"
+      heading="Toolbar"
+      description="Action bar for datagrid/card tops: projected actions, a spacer pushing the rest to the far end, and — once selectionCount > 0 — a 'N selected' chip with a × clear affordance that emits (cleared). APG keyboard: arrows rove focus across the controls, Home/End jump to the ends."
+      code='<strct-toolbar [selectionCount]="sel().length" (cleared)="sel.set([])">…<strct-toolbar-spacer />…</strct-toolbar>'
+    >
+      <div class="dg-wrap">
+        <strct-toolbar
+          ariaLabel="Host actions"
+          divided
+          [selectionCount]="tbSelected()"
+          (cleared)="tbClear()"
+        >
+          <button strct-button size="sm" variant="primary">Restart</button>
+          <button strct-button size="sm">Enter maintenance</button>
+          <strct-toolbar-spacer />
+          <button strct-button iconOnly size="sm" aria-label="Export">
+            <strct-icon name="download" [size]="14" />
+          </button>
+        </strct-toolbar>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button strct-button size="sm" variant="flat" (click)="tbSimulate()">
+            Simulate: 3 rows selected
+          </button>
+          <span class="echo">{{ tbEcho() }}</span>
+        </div>
+      </div>
     </app-demo>
 
     <app-demo
@@ -528,6 +579,16 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         width: 100%;
         align-items: flex-start;
       }
+      .dg-wrap strct-toolbar {
+        width: 100%;
+      }
+      .dot-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12.5px;
+        color: var(--t2);
+      }
     `,
   ],
 })
@@ -543,6 +604,18 @@ export class DataPage {
 
   protected readonly dense = signal(false);
   protected readonly oneLine = signal(true);
+
+  // Toolbar demo: a simulated row selection driving the selection chip.
+  protected readonly tbSelected = signal(0);
+  protected readonly tbEcho = signal('no selection');
+  protected tbSimulate(): void {
+    this.tbSelected.set(3);
+    this.tbEcho.set('3 rows selected');
+  }
+  protected tbClear(): void {
+    this.tbSelected.set(0);
+    this.tbEcho.set('selection cleared');
+  }
 
   // Code demo
   protected readonly cloudInit = `#cloud-config

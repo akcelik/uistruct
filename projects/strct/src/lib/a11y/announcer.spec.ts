@@ -30,4 +30,22 @@ describe('StrctAnnouncer', () => {
     // …then repopulated, which is what makes SRs speak it again.
     expect(region.textContent).toBe('saved');
   });
+
+  it('cleans up the polite region even after a later assertive announce', () => {
+    vi.useFakeTimers();
+    try {
+      const announcer = TestBed.inject(StrctAnnouncer);
+      announcer.announce('12 rows loaded');
+      announcer.announce('disk failure', 'assertive');
+      vi.advanceTimersByTime(1); // let both messages land
+      const regions = document.querySelectorAll('.strct-announcer');
+      expect(regions[0].textContent).toBe('12 rows loaded');
+      vi.advanceTimersByTime(10_000);
+      // Each region has its own cleanup timer, so both go stale-free.
+      expect(regions[0].textContent).toBe('');
+      expect(regions[1].textContent).toBe('');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

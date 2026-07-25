@@ -113,7 +113,7 @@ export class StrctCellDef {
     class: 'strct-table-host',
     tabindex: '0',
     role: 'region',
-    'aria-label': 'Table',
+    '[attr.aria-label]': 'label()',
     '[class.strct-table-host--striped]': 'striped()',
     '[class.strct-table-host--hover]': 'hover()',
   },
@@ -128,7 +128,7 @@ export class StrctCellDef {
         border-collapse: collapse;
         font-size: 13px;
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: var(--radius-lg);
         overflow: hidden;
       }
       .strct-table th,
@@ -219,6 +219,8 @@ export class StrctTable {
   readonly emptyText = input('No data');
   /** Show skeleton rows while data is loading. */
   readonly loading = input(false, { transform: booleanAttribute });
+  /** Accessible label for the scrollable region (localizable). */
+  readonly label = input('Table');
 
   private readonly cellDefs = contentChildren(StrctCellDef);
   private readonly cellMap = computed(() => {

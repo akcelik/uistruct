@@ -5,7 +5,6 @@ import {
   ViewEncapsulation,
   booleanAttribute,
   computed,
-  effect,
   forwardRef,
   input,
   signal,
@@ -151,15 +150,13 @@ export class StrctSegmented implements ControlValueAccessor {
   readonly disabled = input(false, { transform: booleanAttribute });
 
   readonly value = signal<unknown>(null);
-  readonly isDisabled = signal(false);
+  /** Disabled state pushed by the forms API (setDisabledState). */
+  private readonly cvaDisabled = signal(false);
+  readonly isDisabled = computed(() => this.disabled() || this.cvaDisabled());
   private readonly segs = viewChildren('seg', { read: ElementRef });
 
   private onChange: (value: unknown) => void = () => {};
   protected onTouched: () => void = () => {};
-
-  constructor() {
-    effect(() => this.isDisabled.set(this.disabled()));
-  }
 
   protected isSelected(opt: StrctSegmentedOption): boolean {
     return this.value() === opt.value;
@@ -188,8 +185,10 @@ export class StrctSegmented implements ControlValueAccessor {
 
   protected onKeydown(event: KeyboardEvent): void {
     if (this.isDisabled()) return;
-    const forward = event.key === 'ArrowRight' || event.key === 'ArrowDown';
-    const backward = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
+    // APG: horizontal arrows mirror under RTL — read the effective direction.
+    const rtl = getComputedStyle(event.currentTarget as HTMLElement).direction === 'rtl';
+    const forward = event.key === (rtl ? 'ArrowLeft' : 'ArrowRight') || event.key === 'ArrowDown';
+    const backward = event.key === (rtl ? 'ArrowRight' : 'ArrowLeft') || event.key === 'ArrowUp';
     const home = event.key === 'Home';
     const end = event.key === 'End';
     if (!forward && !backward && !home && !end) return;
@@ -224,6 +223,6 @@ export class StrctSegmented implements ControlValueAccessor {
     this.onTouched = fn;
   }
   setDisabledState(isDisabled: boolean): void {
-    this.isDisabled.set(isDisabled);
+    this.cvaDisabled.set(isDisabled);
   }
 }

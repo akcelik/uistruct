@@ -99,7 +99,7 @@ let fieldCounter = 0;
       .strct-field__adorn {
         position: absolute;
         top: 50%;
-        right: 10px;
+        inset-inline-end: 10px;
         transform: translateY(-50%);
         display: inline-flex;
         align-items: center;

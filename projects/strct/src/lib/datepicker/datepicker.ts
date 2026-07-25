@@ -4,6 +4,7 @@ import {
   ViewEncapsulation,
   ElementRef,
   HostListener,
+  booleanAttribute,
   computed,
   effect,
   forwardRef,
@@ -22,7 +23,8 @@ interface DayCell {
   inMonth: boolean;
 }
 
-const MONTHS = [
+/** Default month names, January first — the `monthNames` input default (also reused by strct-datetime-picker). */
+export const STRCT_DP_MONTHS = [
   'January',
   'February',
   'March',
@@ -36,10 +38,29 @@ const MONTHS = [
   'November',
   'December',
 ];
-const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-const DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const pad = (n: number) => String(n).padStart(2, '0');
+/** Default short weekday column labels, Sunday first — the `weekdayNames` input default. */
+export const STRCT_DP_DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+/** Default full weekday names for accessible labels, Sunday first — the `weekdayNamesFull` input default. */
+export const STRCT_DP_DOW_FULL = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+];
+/** Zero-pad to two digits ("4" → "04"). */
+export const strctDpPad = (n: number) => String(n).padStart(2, '0');
+const MONTHS = STRCT_DP_MONTHS;
+const DOW = STRCT_DP_DOW;
+const DOW_FULL = STRCT_DP_DOW_FULL;
+const pad = strctDpPad;
 const toIso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
+const rotate = <T>(arr: T[], offset: number): T[] => {
+  const ws = ((offset % 7) + 7) % 7;
+  return arr.slice(ws).concat(arr.slice(0, ws));
+};
 
 let dpUid = 0;
 
@@ -90,7 +111,7 @@ let dpUid = 0;
           <button
             type="button"
             class="strct-dp__nav"
-            aria-label="Previous month"
+            [attr.aria-label]="prevMonthLabel()"
             (click)="shiftMonth(-1)"
           >
             <strct-icon name="chevronLeft" [size]="14" [strokeWidth]="1.7" />
@@ -99,7 +120,7 @@ let dpUid = 0;
           <button
             type="button"
             class="strct-dp__nav"
-            aria-label="Next month"
+            [attr.aria-label]="nextMonthLabel()"
             (click)="shiftMonth(1)"
           >
             <strct-icon name="chevronRight" [size]="14" [strokeWidth]="1.7" />
@@ -109,10 +130,13 @@ let dpUid = 0;
              cells; the input regains focus on close. -->
         <div class="strct-dp__gridwrap" role="grid" [attr.aria-labelledby]="titleId">
           <div class="strct-dp__dow" role="row">
-            @for (d of dow; track d; let i = $index) {
-              <span role="columnheader" [attr.aria-label]="dowFull[i]" [attr.abbr]="dowFull[i]">{{
-                d
-              }}</span>
+            @for (d of dow(); track $index; let i = $index) {
+              <span
+                role="columnheader"
+                [attr.aria-label]="dowFull()[i]"
+                [attr.abbr]="dowFull()[i]"
+                >{{ d }}</span
+              >
             }
           </div>
           @for (week of weeks(); track $index) {
@@ -150,7 +174,6 @@ let dpUid = 0;
         position: relative;
         display: inline-block;
         width: 100%;
-        max-width: 240px;
       }
       .strct-dp__field {
         position: relative;
@@ -161,7 +184,7 @@ let dpUid = 0;
       }
       .strct-dp__icon {
         position: absolute;
-        right: 4px;
+        inset-inline-end: 4px;
         top: 50%;
         transform: translateY(-50%);
         display: inline-flex;
@@ -179,8 +202,8 @@ let dpUid = 0;
       .strct-dp__panel {
         position: absolute;
         top: calc(100% + 5px);
-        left: 0;
-        z-index: 250;
+        inset-inline-start: 0;
+        z-index: var(--z-popover);
         width: 250px;
         padding: 10px;
         background: var(--bg-1);
@@ -269,13 +292,26 @@ export class StrctDatepicker implements ControlValueAccessor {
 
   /** Placeholder text when empty. */
   readonly placeholder = input('Select a date');
-  protected readonly dow = DOW;
-  protected readonly dowFull = DOW_FULL;
+  /** Month names, January first (localizable). */
+  readonly monthNames = input(MONTHS);
+  /** Short weekday column labels, Sunday first (localizable). */
+  readonly weekdayNames = input(DOW);
+  /** Full weekday names used in accessible labels, Sunday first (localizable). */
+  readonly weekdayNamesFull = input(DOW_FULL);
+  /** First day of the week: 0 = Sunday, 1 = Monday, … 6 = Saturday. */
+  readonly weekStart = input(0);
+  /** Accessible labels of the month navigation buttons (localizable). */
+  readonly prevMonthLabel = input('Previous month');
+  readonly nextMonthLabel = input('Next month');
   protected readonly titleId = `strct-dp-title-${++dpUid}`;
 
   readonly value = signal('');
   readonly open = signal(false);
-  readonly isDisabled = signal(false);
+  /** Static disable; forms' setDisabledState also drives the disabled state. */
+  readonly disabled = input(false, { transform: booleanAttribute });
+  /** Disabled state pushed by the forms API (setDisabledState). */
+  private readonly cvaDisabled = signal(false);
+  readonly isDisabled = computed(() => this.disabled() || this.cvaDisabled());
   /** Keyboard cursor within the open calendar. */
   readonly focusedIso = signal('');
   private readonly view = signal(this.startOfMonth(new Date()));
@@ -287,19 +323,24 @@ export class StrctDatepicker implements ControlValueAccessor {
 
   protected readonly monthLabel = computed(() => {
     const v = this.view();
-    return `${MONTHS[v.m]} ${v.y}`;
+    return `${this.monthNames()[v.m]} ${v.y}`;
   });
 
   protected readonly displayLabel = computed(() => {
     const iso = this.value();
     if (!iso) return '';
     const [y, m, d] = iso.split('-').map(Number);
-    return `${MONTHS[m - 1].slice(0, 3)} ${d}, ${y}`;
+    return `${this.monthNames()[m - 1].slice(0, 3)} ${d}, ${y}`;
   });
+
+  /** Weekday column labels rotated so `weekStart` leads. */
+  protected readonly dow = computed(() => rotate(this.weekdayNames(), this.weekStart()));
+  protected readonly dowFull = computed(() => rotate(this.weekdayNamesFull(), this.weekStart()));
 
   protected readonly cells = computed<DayCell[]>(() => {
     const { y, m } = this.view();
-    const firstDow = new Date(y, m, 1).getDay();
+    const ws = ((this.weekStart() % 7) + 7) % 7;
+    const firstDow = (new Date(y, m, 1).getDay() - ws + 7) % 7;
     const start = new Date(y, m, 1 - firstDow);
     return Array.from({ length: 42 }, (_, i) => {
       const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
@@ -320,8 +361,8 @@ export class StrctDatepicker implements ControlValueAccessor {
   /** Accessible name of one day cell: "Tuesday, March 4, 2026". */
   protected cellAria(cell: DayCell): string {
     const [y, m, d] = cell.iso.split('-').map(Number);
-    const dow = DOW_FULL[new Date(y, m - 1, d).getDay()];
-    return `${dow}, ${MONTHS[m - 1]} ${d}, ${y}`;
+    const dow = this.weekdayNamesFull()[new Date(y, m - 1, d).getDay()];
+    return `${dow}, ${this.monthNames()[m - 1]} ${d}, ${y}`;
   }
 
   private onChange: (value: string) => void = () => {};
@@ -396,12 +437,12 @@ export class StrctDatepicker implements ControlValueAccessor {
       case 'Home': {
         // Start of the focused week (APG grid pattern).
         event.preventDefault();
-        this.shiftFocus(-this.focusedDow());
+        this.shiftFocus(-this.focusedWeekOffset());
         break;
       }
       case 'End': {
         event.preventDefault();
-        this.shiftFocus(6 - this.focusedDow());
+        this.shiftFocus(6 - this.focusedWeekOffset());
         break;
       }
       case 'PageUp':
@@ -419,15 +460,19 @@ export class StrctDatepicker implements ControlValueAccessor {
         break;
       case 'Escape':
         event.preventDefault();
+        // Consumed here — a host modal/drawer must not close with the panel.
+        event.stopPropagation();
         this.close();
         break;
     }
   }
 
-  /** Day-of-week (0–6) of the keyboard cursor. */
-  private focusedDow(): number {
+  /** Day-of-week of the keyboard cursor relative to `weekStart` (0–6). */
+  private focusedWeekOffset(): number {
     const [y, m, d] = (this.focusedIso() || this.today).split('-').map(Number);
-    return new Date(y, m - 1, d).getDay();
+    const dow = new Date(y, m - 1, d).getDay();
+    const ws = ((this.weekStart() % 7) + 7) % 7;
+    return (dow - ws + 7) % 7;
   }
 
   /** Close the panel and hand focus back to the input. */
@@ -459,8 +504,12 @@ export class StrctDatepicker implements ControlValueAccessor {
     }
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEscape(event: Event): void {
+    if (!this.open()) return;
+    // Document-level: stopImmediatePropagation so a host modal/drawer with its
+    // own document listener doesn't also see the Escape the panel consumed.
+    event.stopImmediatePropagation();
     this.open.set(false);
   }
 
@@ -482,6 +531,6 @@ export class StrctDatepicker implements ControlValueAccessor {
     this.onTouched = fn;
   }
   setDisabledState(isDisabled: boolean): void {
-    this.isDisabled.set(isDisabled);
+    this.cvaDisabled.set(isDisabled);
   }
 }

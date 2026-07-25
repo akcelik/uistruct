@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ViewEncapsulation,
   computed,
   forwardRef,
@@ -41,6 +42,7 @@ const COLOR: Record<StrctKnobStatus, string> = {
       [style.height.px]="size()"
       role="slider"
       tabindex="0"
+      [attr.aria-label]="label() || null"
       [attr.aria-valuemin]="min()"
       [attr.aria-valuemax]="max()"
       [attr.aria-valuenow]="value()"
@@ -192,10 +194,20 @@ export class StrctKnob implements ControlValueAccessor {
     this.setValue(this.dragStartValue + delta * span);
   };
   private readonly onUp = () => {
-    window.removeEventListener('pointermove', this.onMove);
-    window.removeEventListener('pointerup', this.onUp);
+    this.endDrag();
     this.onTouched();
   };
+
+  constructor() {
+    // Remove window drag listeners if the component is destroyed mid-drag.
+    inject(DestroyRef).onDestroy(() => this.endDrag());
+  }
+
+  private endDrag(): void {
+    window.removeEventListener('pointermove', this.onMove);
+    window.removeEventListener('pointerup', this.onUp);
+    window.removeEventListener('pointercancel', this.onUp);
+  }
 
   protected onPointerDown(event: PointerEvent): void {
     if (this.isDisabled()) return;
@@ -205,6 +217,7 @@ export class StrctKnob implements ControlValueAccessor {
     this.dragStartValue = this.value();
     window.addEventListener('pointermove', this.onMove);
     window.addEventListener('pointerup', this.onUp);
+    window.addEventListener('pointercancel', this.onUp);
   }
 
   @HostListener('keydown', ['$event'])
@@ -246,7 +259,8 @@ export class StrctKnob implements ControlValueAccessor {
 
   private setValue(raw: number): void {
     const step = this.step();
-    const snapped = Math.round(raw / step) * step;
+    // Guard against non-positive or non-finite steps (raw/step would be NaN).
+    const snapped = Number.isFinite(step) && step > 0 ? Math.round(raw / step) * step : raw;
     const clamped = Math.max(this.min(), Math.min(this.max(), snapped));
     if (clamped !== this.value()) {
       this.value.set(clamped);

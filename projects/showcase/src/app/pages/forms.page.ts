@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
   StrctButton,
   StrctCascadeOption,
@@ -9,12 +9,15 @@ import {
   StrctColorPicker,
   StrctCombobox,
   StrctDatepicker,
+  StrctDatetimePicker,
   StrctField,
   StrctFile,
+  StrctInlineEdit,
   StrctInput,
   StrctInputMask,
   StrctInputOtp,
   StrctKnob,
+  StrctNumber,
   StrctOption,
   StrctPassword,
   StrctRadio,
@@ -28,6 +31,8 @@ import {
   StrctValidationState,
   StrctTransfer,
   StrctTransferItem,
+  StrctTreeNodeData,
+  StrctTreeSelect,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -38,6 +43,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     PageHeader,
     DemoBlock,
     FormsModule,
+    ReactiveFormsModule,
     StrctButton,
     StrctField,
     StrctInput,
@@ -60,6 +66,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctKnob,
     StrctInputMask,
     StrctTransfer,
+    StrctNumber,
+    StrctDatetimePicker,
+    StrctTreeSelect,
+    StrctInlineEdit,
   ],
   template: `
     <app-page-header
@@ -316,6 +326,78 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="combobox-rich"
+      owner="combobox"
+      heading="Combobox — icons & descriptions"
+      description="Options may carry a leading icon and a secondary description line — richer rows for pickers where the label alone is not enough."
+      code='<strct-combobox [options]="images" [(ngModel)]="image" />
+// StrctOption = { value; label; icon?; description? }'
+    >
+      <strct-combobox
+        [options]="vmImages"
+        [ngModel]="vmImage()"
+        (ngModelChange)="vmImage.set($event)"
+        placeholder="Pick a guest OS image…"
+      />
+      <span class="echo">value: {{ vmImage() ?? '—' }}</span>
+    </app-demo>
+
+    <app-demo
+      anchor="combobox-custom"
+      owner="combobox"
+      heading="Combobox — custom values"
+      description="allowCustomValue pins a Use “…” row to the list end while typing, so free-form text can be committed alongside the presets — Enter or click. The row hides on an exact label match."
+      code='<strct-combobox [options]="dnsPresets" [(ngModel)]="dns" allowCustomValue clearable />'
+    >
+      <strct-combobox
+        [options]="dnsPresets"
+        [ngModel]="dns()"
+        (ngModelChange)="dns.set($event)"
+        placeholder="Pick or type a DNS server…"
+        allowCustomValue
+        clearable
+      />
+      <span class="echo">value: {{ dns() ?? '—' }}</span>
+    </app-demo>
+
+    <app-demo
+      anchor="combobox-loading"
+      owner="combobox"
+      heading="Combobox — loading"
+      description="The loading input shows a skeleton while options arrive — here a simulated fetch fills the datastore list ~2s after page load."
+      code='<strct-combobox [options]="datastores()" [loading]="dsLoading()" [(ngModel)]="ds" />'
+    >
+      <strct-combobox
+        [options]="dsOptions()"
+        [loading]="dsLoading()"
+        [ngModel]="datastore()"
+        (ngModelChange)="datastore.set($event)"
+        placeholder="Pick a datastore…"
+      />
+      <span class="echo">value: {{ datastore() ?? '—' }}</span>
+    </app-demo>
+
+    <app-demo
+      anchor="combobox-states"
+      owner="combobox"
+      heading="Combobox — states"
+      description="Disabled via the form control, and a localized emptyText when the filter matches nothing — try typing “xyz”."
+      code='<strct-combobox [options]="cities" [formControl]="disabledCity" />
+<strct-combobox [options]="cities" [(ngModel)]="city2" emptyText="Eşleşme yok" />'
+    >
+      <div class="stack" style="width: 100%; max-width: 320px;">
+        <strct-combobox [options]="cities" [formControl]="disabledCity" />
+        <strct-combobox
+          [options]="cities"
+          [ngModel]="city2()"
+          (ngModelChange)="city2.set($event)"
+          placeholder="Şehir ara — örn. “xyz”…"
+          emptyText="Eşleşme yok"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="datepicker"
       heading="Date picker"
       description="Calendar popover; value is an ISO date string."
@@ -480,6 +562,74 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="number"
+      heading="Number"
+      description="Numeric stepper — −/+ buttons flanking a free-form field; ArrowUp/Down step, PageUp/Down jump 10×, Home/End hit the bounds. Committed values clamp to min/max. CVA-compatible."
+      code='<strct-number [min]="1" [max]="16" [step]="2" [(ngModel)]="vcpus" />'
+    >
+      <div class="field">
+        <strct-number
+          [min]="1"
+          [max]="16"
+          [step]="2"
+          [ngModel]="vcpus()"
+          (ngModelChange)="vcpus.set($event)"
+        />
+        <span class="echo">value: {{ vcpus() ?? '—' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="datetime-picker"
+      heading="Datetime picker"
+      description="Date + time in one control: the calendar popover plus hour/minute selects under a shared field skin. minuteStep sets the minute granularity; the value is an ISO local datetime string."
+      code='<strct-datetime-picker [(ngModel)]="start" [minuteStep]="15" />'
+    >
+      <div class="field">
+        <strct-datetime-picker
+          [minuteStep]="15"
+          [ngModel]="maintStart()"
+          (ngModelChange)="maintStart.set($event)"
+        />
+        <span class="echo">value: {{ maintStart() || '—' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="tree-select"
+      heading="Tree select"
+      description="A tree picker in a dropdown: the trigger button opens a panel hosting the data-driven tree, and the picked node's full label path shows in the field. CVA-compatible single-select of the node key."
+      code='<strct-tree-select [nodes]="inventory" [(ngModel)]="hostId" clearable />'
+    >
+      <div class="field">
+        <strct-tree-select
+          [nodes]="tsNodes"
+          [ngModel]="tsHost()"
+          (ngModelChange)="tsHost.set($event)"
+          placeholder="Pick a host…"
+          clearable
+        />
+        <span class="echo">value: {{ tsHost() ?? '—' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="inline-edit"
+      heading="Inline edit"
+      description="Click-to-edit text: a pencil affordance appears on hover/focus and swaps in an input — Enter or blur commits, Escape cancels. The committed value is announced in a live region. CVA-compatible."
+      code='<strct-inline-edit [(ngModel)]="vmName" placeholder="Unnamed VM" />'
+    >
+      <div class="field">
+        <strct-inline-edit
+          [ngModel]="vmName()"
+          (ngModelChange)="vmName.set($event)"
+          placeholder="Unnamed VM"
+        />
+        <span class="echo">value: {{ vmName() || '—' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="transfer"
       heading="Transfer"
       description="Dual-list picklist for membership editing — assign hosts to a cluster. Checkbox multi-select, move buttons, a searchbox per side; [(assigned)] is the two-way id set."
@@ -584,6 +734,46 @@ export class FormsPage {
   protected readonly mac = signal('');
   protected readonly wwpn = signal('');
 
+  protected readonly vcpus = signal<number | null>(4);
+  protected readonly maintStart = signal('');
+  protected readonly tsHost = signal<string | null>(null);
+  protected readonly tsNodes: StrctTreeNodeData[] = [
+    {
+      id: 'dc-east',
+      label: 'dc-east',
+      children: [
+        {
+          id: 'cl-east-01',
+          label: 'cluster-01',
+          children: [
+            { id: 'hv-01', label: 'hv-01', icon: 'host' },
+            { id: 'hv-02', label: 'hv-02', icon: 'host' },
+          ],
+        },
+        {
+          id: 'cl-east-02',
+          label: 'cluster-02',
+          children: [{ id: 'hv-03', label: 'hv-03', icon: 'host' }],
+        },
+      ],
+    },
+    {
+      id: 'dc-west',
+      label: 'dc-west',
+      children: [
+        {
+          id: 'cl-west-01',
+          label: 'cluster-01',
+          children: [
+            { id: 'hv-10', label: 'hv-10', icon: 'host' },
+            { id: 'hv-11', label: 'hv-11 (maintenance)', icon: 'host' },
+          ],
+        },
+      ],
+    },
+  ];
+  protected readonly vmName = signal('web-01');
+
   protected readonly switches: StrctCascadeOption[] = [
     {
       label: 'Switch-A',
@@ -636,4 +826,54 @@ export class FormsPage {
     { value: 'gpu', label: 'gpu-passthrough' },
     { value: 'ha', label: 'high-availability' },
   ];
+
+  protected readonly vmImage = signal<unknown>(null);
+  protected readonly vmImages: StrctOption[] = [
+    {
+      value: 'ubuntu',
+      label: 'Ubuntu 24.04 LTS',
+      icon: 'vm',
+      description: 'Cloud image · 2.1 GiB',
+    },
+    { value: 'debian', label: 'Debian 12', icon: 'vm', description: 'netinst · 640 MiB' },
+    {
+      value: 'photon',
+      label: 'Photon OS 5',
+      icon: 'container',
+      description: 'Minimal Linux · 420 MiB',
+    },
+    {
+      value: 'win2025',
+      label: 'Windows Server 2025',
+      icon: 'monitor',
+      description: 'Evaluation — license required',
+      disabled: true,
+    },
+  ];
+
+  protected readonly dns = signal<unknown>('dns-cf');
+  protected readonly dnsPresets: StrctOption[] = [
+    { value: 'dns-cf', label: '1.1.1.1', description: 'Cloudflare' },
+    { value: 'dns-g', label: '8.8.8.8', description: 'Google' },
+    { value: 'dns-q9', label: '9.9.9.9', description: 'Quad9' },
+  ];
+
+  protected readonly datastore = signal<unknown>(null);
+  protected readonly dsLoading = signal(true);
+  protected readonly dsOptions = signal<StrctOption[]>([]);
+
+  protected readonly disabledCity = new FormControl({ value: 'ist', disabled: true });
+  protected readonly city2 = signal<unknown>(null);
+
+  constructor() {
+    // Simulated fetch — the loading skeleton shows until options arrive.
+    setTimeout(() => {
+      this.dsOptions.set([
+        { value: 'ds-ssd-01', label: 'ssd-01 (NVMe)', group: 'Cluster A' },
+        { value: 'ds-ssd-02', label: 'ssd-02 (NVMe)', group: 'Cluster A' },
+        { value: 'ds-hdd-01', label: 'hdd-01 (SAS)', group: 'Cluster B' },
+      ]);
+      this.dsLoading.set(false);
+    }, 2000);
+  }
 }

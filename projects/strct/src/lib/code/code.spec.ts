@@ -38,6 +38,22 @@ describe('StrctCode', () => {
     expect(gutter.getAttribute('aria-hidden')).toBe('true');
   });
 
+  it('a trailing newline does not add a phantom gutter number', () => {
+    const { el } = make({ code: 'one\ntwo\n', lineNumbers: true });
+    const gutter = el.querySelector('.strct-code__gutter')!;
+    expect(gutter.querySelectorAll('.strct-code__ln').length).toBe(2);
+  });
+
+  it('falls back to a localizable region label when no title/language', () => {
+    const { el } = make({ code: 'x' });
+    expect(el.querySelector('.strct-code__scroll')!.getAttribute('aria-label')).toBe('code');
+
+    const localized = make({ code: 'x', regionLabel: 'Codequelle' });
+    expect(localized.el.querySelector('.strct-code__scroll')!.getAttribute('aria-label')).toBe(
+      'Codequelle',
+    );
+  });
+
   it('wrap applies the soft-wrap class (default stays nowrap)', () => {
     const { el } = make({ code: 'x'.repeat(500) });
     expect(el.querySelector('.strct-code__scroll--wrap')).toBeNull();

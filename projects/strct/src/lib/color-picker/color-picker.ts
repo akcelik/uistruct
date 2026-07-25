@@ -4,6 +4,8 @@ import {
   ViewEncapsulation,
   ElementRef,
   HostListener,
+  booleanAttribute,
+  computed,
   forwardRef,
   inject,
   input,
@@ -11,6 +13,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctOverlay } from '../overlay/overlay';
+import { restoreFocus, saveFocusedElement } from '../overlay/focus';
 
 const DEFAULT_SWATCHES = [
   '#7b9ec8',
@@ -122,7 +125,7 @@ const HEX = /^#([0-9a-f]{6})$/i;
         position: absolute;
         top: calc(100% + 5px);
         left: 0;
-        z-index: 250;
+        z-index: var(--z-popover);
         width: 196px;
         padding: 10px;
         background: var(--bg-1);
@@ -169,14 +172,22 @@ export class StrctColorPicker implements ControlValueAccessor {
   readonly value = signal('');
   readonly draft = signal('');
   readonly open = signal(false);
-  readonly isDisabled = signal(false);
+  /** Static disable; forms' setDisabledState also drives the disabled state. */
+  readonly disabled = input(false, { transform: booleanAttribute });
+  /** Disabled state pushed by the forms API (setDisabledState). */
+  private readonly cvaDisabled = signal(false);
+  readonly isDisabled = computed(() => this.disabled() || this.cvaDisabled());
 
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
 
+  /** Where focus was when the panel opened — restored on pick/Escape. */
+  private lastFocused: HTMLElement | null = null;
+
   toggle(): void {
     if (this.isDisabled()) return;
     this.draft.set(this.value());
+    if (!this.open()) this.lastFocused = saveFocusedElement();
     this.open.update((v) => !v);
   }
 
@@ -187,6 +198,8 @@ export class StrctColorPicker implements ControlValueAccessor {
   pick(color: string): void {
     this.commit(color);
     this.open.set(false);
+    // The focused swatch is destroyed with the panel — hand focus back.
+    restoreFocus(this.lastFocused);
   }
 
   onHex(event: Event): void {
@@ -209,9 +222,14 @@ export class StrctColorPicker implements ControlValueAccessor {
     }
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEscape(event: Event): void {
+    if (!this.open()) return;
+    // Document-level: stopImmediatePropagation so a host modal/drawer with its
+    // own document listener doesn't also see the Escape the panel consumed.
+    event.stopImmediatePropagation();
     this.open.set(false);
+    restoreFocus(this.lastFocused);
   }
 
   writeValue(value: string): void {
@@ -225,6 +243,6 @@ export class StrctColorPicker implements ControlValueAccessor {
     this.onTouched = fn;
   }
   setDisabledState(isDisabled: boolean): void {
-    this.isDisabled.set(isDisabled);
+    this.cvaDisabled.set(isDisabled);
   }
 }

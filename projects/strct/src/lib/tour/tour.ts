@@ -1,16 +1,19 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   HostListener,
   ViewEncapsulation,
   computed,
   effect,
+  inject,
   input,
   model,
   output,
   signal,
 } from '@angular/core';
 import { StrctButton } from '../button/button';
+import { focusFirstIn, keepTabInside, restoreFocus, saveFocusedElement } from '../overlay/focus';
 
 /** One coach-mark step. `target` is a CSS selector; null centers the card. */
 export interface StrctTourStep {
@@ -19,15 +22,19 @@ export interface StrctTourStep {
   body: string;
 }
 
+let tourCounter = 0;
+
 /**
  * Feature tour (coach marks) — "what's new" onboarding over live UI:
  *
  *   <strct-tour [(open)]="tourOpen" [steps]="steps" (finished)="done()" />
  *
  * Each step spotlights its `target` selector with a ring cut out of a dimmed
- * backdrop and anchors a card next to it. Arrows / buttons step, Escape
- * closes, and the card is a labeled dialog. Purely DOM-driven: targets are
- * looked up when the step shows, so it works over any page.
+ * backdrop and anchors a card next to it. Arrows (mirrored in RTL) / buttons
+ * step, Home/End jump to the ends, Escape closes, and the card is a labeled
+ * dialog: focus moves into it (Tab is trapped) and returns to the trigger on
+ * close. Purely DOM-driven: targets are looked up when the step shows, so it
+ * works over any page.
  */
 @Component({
   selector: 'strct-tour',
@@ -54,12 +61,19 @@ export interface StrctTourStep {
       <div
         class="strct-tour__card"
         role="dialog"
-        [attr.aria-label]="step.title"
+        [attr.aria-labelledby]="titleId"
         [style.top.px]="cardPos().top"
         [style.left.px]="cardPos().left"
+        (keydown.tab)="onTab($event)"
+        (keydown.shift.tab)="onTab($event)"
+        (keydown.escape)="onEscapeKey($event)"
+        (keydown.arrowleft)="onArrow($event, 'left')"
+        (keydown.arrowright)="onArrow($event, 'right')"
+        (keydown.home)="onHomeEnd($event, false)"
+        (keydown.end)="onHomeEnd($event, true)"
       >
         <div class="strct-tour__step">{{ index() + 1 }} / {{ steps().length }}</div>
-        <div class="strct-tour__title">{{ step.title }}</div>
+        <div class="strct-tour__title" [id]="titleId">{{ step.title }}</div>
         <div class="strct-tour__body">{{ step.body }}</div>
         <div class="strct-tour__nav">
           <button strct-button size="sm" variant="flat" (click)="close()">
@@ -83,25 +97,25 @@ export interface StrctTourStep {
       .strct-tour__backdrop {
         position: fixed;
         inset: 0;
-        z-index: 400;
+        z-index: var(--z-tour);
         background: transparent;
       }
       .strct-tour__backdrop--dim {
-        background: rgba(0, 0, 0, 0.45);
+        background: var(--backdrop);
       }
       .strct-tour__ring {
         position: fixed;
-        z-index: 401;
+        z-index: calc(var(--z-tour) + 1);
         border: 2px solid var(--acc);
         border-radius: 9px;
         box-shadow:
           0 0 0 4px var(--acc30),
-          0 0 0 9999px rgba(0, 0, 0, 0.45);
+          0 0 0 9999px var(--backdrop);
         pointer-events: none;
       }
       .strct-tour__card {
         position: fixed;
-        z-index: 402;
+        z-index: calc(var(--z-tour) + 2);
         width: 300px;
         padding: 14px 16px;
         background: var(--bg-1);
@@ -141,6 +155,8 @@ export interface StrctTourStep {
   ],
 })
 export class StrctTour {
+  private readonly elementRef = inject(ElementRef<HTMLElement>);
+
   /** Whether the tour is showing (two-way). */
   readonly open = model(false);
   /** The steps, in order. */
@@ -157,6 +173,9 @@ export class StrctTour {
   protected readonly index = signal(0);
   /** Bumped on open/step/resize to re-measure the target. */
   private readonly measureTick = signal(0);
+  protected readonly titleId = `strct-tour-title-${++tourCounter}`;
+  /** Element that had focus before the tour opened, restored on close. */
+  private previousActive: HTMLElement | null = null;
 
   protected readonly current = computed(() => this.steps()[this.index()] ?? null);
 
@@ -191,8 +210,13 @@ export class StrctTour {
     // Restart from step 0 on open; scroll the first target into view.
     effect(() => {
       if (this.open()) {
+        this.previousActive = saveFocusedElement();
         this.index.set(0);
         this.scrollToTarget();
+        this.focusNextButton();
+      } else {
+        restoreFocus(this.previousActive);
+        this.previousActive = null;
       }
     });
   }
@@ -205,16 +229,50 @@ export class StrctTour {
     }
     this.index.update((i) => i + 1);
     this.scrollToTarget();
+    this.focusNextButton();
   }
 
   protected prev(): void {
     this.index.update((i) => Math.max(0, i - 1));
     this.scrollToTarget();
+    this.focusNextButton();
   }
 
   protected close(): void {
     this.open.set(false);
     this.dismissed.emit();
+  }
+
+  /** Wrap Tab focus within the card. */
+  protected onTab(event: Event): void {
+    const card = this.card();
+    if (card) keepTabInside(event as KeyboardEvent, card);
+  }
+
+  /** Escape closes; stopPropagation so a host modal/drawer does not also close. */
+  protected onEscapeKey(event: Event): void {
+    event.stopPropagation();
+    this.close();
+  }
+
+  /**
+   * Arrow keys step through the tour, mirrored under RTL. No shared direction
+   * helper exists (other components handle RTL in CSS only), so read the
+   * card's computed direction here.
+   */
+  protected onArrow(event: Event, dir: 'left' | 'right'): void {
+    event.preventDefault();
+    const rtl = getComputedStyle(event.currentTarget as HTMLElement).direction === 'rtl';
+    if ((dir === 'right') !== rtl) this.next();
+    else this.prev();
+  }
+
+  /** Home/End jump to the first/last step. */
+  protected onHomeEnd(event: Event, last: boolean): void {
+    event.preventDefault();
+    this.index.set(last ? this.steps().length - 1 : 0);
+    this.scrollToTarget();
+    this.focusNextButton();
   }
 
   private scrollToTarget(): void {
@@ -225,9 +283,21 @@ export class StrctTour {
     });
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    if (this.open()) this.close();
+  private card(): HTMLElement | null {
+    return this.elementRef.nativeElement.querySelector('.strct-tour__card');
+  }
+
+  /** Move focus to the step's primary (Next/Done) action once the card has rendered. */
+  private focusNextButton(): void {
+    setTimeout(() => {
+      if (!this.open()) return;
+      const card = this.card();
+      if (!card) return;
+      const nav = card.querySelectorAll<HTMLElement>('.strct-tour__nav button');
+      const primary = nav[nav.length - 1];
+      if (primary) primary.focus();
+      else focusFirstIn(card);
+    });
   }
 
   @HostListener('window:resize')

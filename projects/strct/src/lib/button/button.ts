@@ -201,17 +201,17 @@ export class StrctButton {
         margin-inline-start: -1px;
       }
       .strct-btn-group > .strct-btn:first-child {
-        border-top-left-radius: var(--radius-md);
-        border-bottom-left-radius: var(--radius-md);
+        border-start-start-radius: var(--radius-md);
+        border-end-start-radius: var(--radius-md);
       }
       .strct-btn-group > .strct-btn:last-child {
-        border-top-right-radius: var(--radius-md);
-        border-bottom-right-radius: var(--radius-md);
+        border-start-end-radius: var(--radius-md);
+        border-end-end-radius: var(--radius-md);
       }
       .strct-btn-group > .strct-btn:hover,
       .strct-btn-group > .strct-btn:focus-visible {
         position: relative;
-        z-index: 1;
+        z-index: var(--z-base);
       }
     `,
   ],

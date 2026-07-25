@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { StrctChart } from './chart';
+import { StrctChart, StrctChartSummaryInfo } from './chart';
 
 function build(inputs: Record<string, unknown>) {
   const fixture = TestBed.createComponent(StrctChart);
@@ -124,6 +124,23 @@ describe('StrctChart', () => {
     expect(rows[1].textContent).toContain('15');
   });
 
+  it('keeps gap rows in the multi-series tooltip with the gapText', () => {
+    const fixture = TestBed.createComponent(StrctChart);
+    fixture.componentRef.setInput('series', [
+      { data: [10, 20, 30], label: 'In' },
+      { data: [5, null, 25], label: 'Out' },
+    ]);
+    fixture.detectChanges();
+    (fixture.componentInstance as unknown as { hoverIdx: { set(i: number): void } }).hoverIdx.set(
+      1,
+    );
+    fixture.detectChanges();
+    const rows = (fixture.nativeElement as HTMLElement).querySelectorAll('.strct-chart__tip-row');
+    expect(rows.length).toBe(2);
+    expect(rows[0].textContent).toContain('20');
+    expect(rows[1].textContent).toContain('no data');
+  });
+
   it('renders no legend when series are unlabeled or legend is false', () => {
     const noLabel = build({ series: [{ data: [1, 2] }, { data: [2, 1] }], legend: true });
     expect(noLabel.querySelectorAll('.strct-chart__leg').length).toBe(0);
@@ -144,6 +161,17 @@ describe('StrctChart', () => {
     expect(ticks).toContain('0%');
     expect(ticks).toContain('100%');
     expect(build({ data: [1, 2, 3] }).querySelector('.strct-chart__ytick')).toBeNull();
+  });
+
+  it('draws one gridline per yTicks tick', () => {
+    expect(build({ data: [1, 2, 3] }).querySelectorAll('.strct-chart__grid').length).toBe(3);
+    expect(
+      build({ data: [1, 2, 3], yTicks: 5 }).querySelectorAll('.strct-chart__grid').length,
+    ).toBe(5);
+    expect(
+      build({ data: [1, 2, 3], yTicks: 5, grid: false }).querySelectorAll('.strct-chart__grid')
+        .length,
+    ).toBe(0);
   });
 
   // FR-CHART-03: threshold lines
@@ -195,6 +223,39 @@ describe('StrctChart', () => {
     expect(label).toContain('30');
   });
 
+  it('summaryFormat localizes the role="img" summary', () => {
+    const el = build({
+      data: [10, 30, 20],
+      summaryFormat: (i: StrctChartSummaryInfo) => `Grafik, ${i.count} Punkte, max ${i.max}`,
+    });
+    expect(el.querySelector('svg')?.getAttribute('aria-label')).toBe('Grafik, 3 Punkte, max 30');
+    const multi = build({
+      series: [
+        { data: [1, 2], label: 'In' },
+        { data: [2, 1], label: 'Out' },
+      ],
+      summaryFormat: (i: StrctChartSummaryInfo) => `${i.count} Serien`,
+    });
+    expect(multi.querySelector('svg')?.getAttribute('aria-label')).toBe('2 Serien');
+  });
+
+  it('nowLabel localizes the live "now" fallback', () => {
+    const fixture = TestBed.createComponent(StrctChart);
+    fixture.componentRef.setInput('data', [10, 20, 30]);
+    fixture.componentRef.setInput('live', true);
+    fixture.detectChanges();
+    (fixture.componentInstance as unknown as { hoverIdx: { set(i: number): void } }).hoverIdx.set(
+      2,
+    );
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.strct-chart__tip-l')?.textContent,
+    ).toContain('now');
+
+    const de = build({ data: [10, 20, 30], live: true, nowLabel: 'jetzt', activeIndex: 2 });
+    expect(de.querySelector('.strct-chart__tip-l')?.textContent).toContain('jetzt');
+  });
+
   it('is keyboard-focusable and arrows move the crosshair point', () => {
     const fixture = TestBed.createComponent(StrctChart);
     fixture.componentRef.setInput('data', [10, 20, 30]);
@@ -205,6 +266,20 @@ describe('StrctChart', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.strct-chart__tip')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.strct-chart__sr')?.textContent).toContain('10');
+  });
+
+  it('bar charts are keyboard-focusable and arrows walk the bars', () => {
+    const fixture = TestBed.createComponent(StrctChart);
+    fixture.componentRef.setInput('data', [10, 20, 30]);
+    fixture.componentRef.setInput('type', 'bar');
+    fixture.detectChanges();
+    const svg = fixture.nativeElement.querySelector('svg') as SVGElement;
+    expect(svg.getAttribute('tabindex')).toBe('0');
+    svg.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-chart__tip')).toBeTruthy();
+    expect(el.querySelector('.strct-chart__sr')?.textContent).toContain('10');
   });
 
   it('renders a dashed line + dashed legend swatch for dash series', () => {

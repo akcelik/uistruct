@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  Directive,
   ViewEncapsulation,
   ElementRef,
   HostListener,
@@ -9,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { StrctOverlay, StrctOverlayPlacement } from '../overlay/overlay';
+import { restoreFocus, saveFocusedElement } from '../overlay/focus';
 
 /** Signpost popover placement. */
 export type StrctSignpostPosition = 'top' | 'bottom' | 'left' | 'right';
@@ -27,15 +29,14 @@ export type StrctSignpostPosition = 'top' | 'bottom' | 'left' | 'right';
   encapsulation: ViewEncapsulation.None,
   imports: [StrctOverlay],
   template: `
-    <div
-      #trigger
-      class="strct-sp__trigger"
-      role="button"
-      tabindex="0"
-      (click)="toggle()"
-      (keydown.enter)="toggle()"
-      (keydown.space)="toggle()"
-    >
+    <!--
+      The wrapper is intentionally inert: the projected trigger should be a
+      real button (nesting interactives fails axe). Its native click —
+      pointer or Enter/Space — is wired by the strctSignpostTrigger
+      directive, which also puts aria-haspopup/aria-expanded on the button
+      itself. No role/tabindex here: one tab stop, one activation.
+    -->
+    <div #trigger class="strct-sp__trigger">
       <ng-content select="[strctSignpostTrigger]" />
     </div>
     @if (open()) {
@@ -43,6 +44,7 @@ export type StrctSignpostPosition = 'top' | 'bottom' | 'left' | 'right';
         class="strct-sp__panel"
         [class]="'strct-sp__panel--' + position()"
         role="dialog"
+        [attr.aria-label]="ariaLabel()"
         [strctOverlay]="trigger"
         [strctOverlayPlacement]="overlayPlacement()"
       >
@@ -62,7 +64,7 @@ export type StrctSignpostPosition = 'top' | 'bottom' | 'left' | 'right';
       }
       .strct-sp__panel {
         position: absolute;
-        z-index: 300;
+        z-index: var(--z-nav);
         width: max-content;
         max-width: 280px;
         padding: 12px 14px;
@@ -142,13 +144,20 @@ export class StrctSignpost {
   private readonly host = inject(ElementRef<HTMLElement>);
   /** Popover placement relative to the trigger. */
   readonly position = input<StrctSignpostPosition>('bottom');
+  /** Accessible name of the signpost dialog (localizable). */
+  readonly ariaLabel = input('Details');
   readonly open = signal(false);
 
+  /** Where focus was when the popover opened — restored on Escape. */
+  private lastFocused: HTMLElement | null = null;
+
   toggle(): void {
+    if (!this.open()) this.lastFocused = saveFocusedElement();
     this.open.update((v) => !v);
   }
-  close(): void {
+  close(restore = false): void {
     this.open.set(false);
+    if (restore) restoreFocus(this.lastFocused);
   }
 
   protected overlayPlacement(): StrctOverlayPlacement {
@@ -171,8 +180,31 @@ export class StrctSignpost {
     }
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    this.close();
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEscape(event: Event): void {
+    if (!this.open()) return;
+    // Document-level: stopImmediatePropagation so a host modal/drawer with its
+    // own document listener doesn't also see the Escape the panel consumed.
+    event.stopImmediatePropagation();
+    this.close(true);
   }
+}
+
+/**
+ * Marks (and upgrades) the signpost's trigger element. The attribute alone is
+ * enough for content projection; importing the directive additionally wires
+ * the toggle and `aria-haspopup` / `aria-expanded` onto the real button.
+ * Put it on a native `<button>`: Enter/Space then fire a single click —
+ * no keydown handlers, no double-toggle, one tab stop.
+ */
+@Directive({
+  selector: '[strctSignpostTrigger]',
+  host: {
+    '[attr.aria-haspopup]': "sp ? 'dialog' : null",
+    '[attr.aria-expanded]': 'sp ? sp.open() : null',
+    '(click)': 'sp?.toggle()',
+  },
+})
+export class StrctSignpostTrigger {
+  protected readonly sp = inject(StrctSignpost, { optional: true });
 }

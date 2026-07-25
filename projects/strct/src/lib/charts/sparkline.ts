@@ -27,6 +27,8 @@ const STROKE: Record<StrctChartStatus, string> = {
   template: `
     <svg
       class="strct-spark__svg"
+      role="img"
+      [attr.aria-label]="ariaLabel()"
       viewBox="0 0 100 30"
       preserveAspectRatio="none"
       [style.width.px]="width()"
@@ -73,6 +75,8 @@ export class StrctSparkline {
   readonly width = input(100);
   /** Height in pixels. */
   readonly height = input(30);
+  /** Accessible name for the chart (role="img"). */
+  readonly ariaLabel = input('Sparkline chart');
 
   protected readonly color = computed(() => STROKE[this.status()]);
 

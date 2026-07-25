@@ -8,13 +8,22 @@ export type StrctTimelineState = 'default' | 'current' | 'success' | 'warning' |
   selector: 'strct-timeline',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  template: `<ng-content />`,
+  template: `<ol class="strct-tl__list">
+    <ng-content />
+  </ol>`,
   host: { class: 'strct-tl' },
   styles: [
     `
       .strct-tl {
         display: flex;
         flex-direction: column;
+      }
+      .strct-tl__list {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+        list-style: none;
       }
     `,
   ],
@@ -38,6 +47,7 @@ export class StrctTimeline {}
   `,
   host: {
     class: 'strct-tli',
+    role: 'listitem',
     '[class.strct-tli--current]': "state() === 'current'",
     '[class.strct-tli--success]': "state() === 'success'",
     '[class.strct-tli--warning]': "state() === 'warning'",
@@ -107,7 +117,7 @@ export class StrctTimeline {}
   ],
 })
 export class StrctTimelineItem {
-  /** Dialog title. */
+  /** Title shown at the top of the entry. */
   readonly title = input.required<string>();
   /** State. */
   readonly state = input<StrctTimelineState>('default');

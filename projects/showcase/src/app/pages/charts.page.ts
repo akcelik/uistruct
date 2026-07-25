@@ -12,6 +12,8 @@ import {
   StrctFlow,
   StrctFlowNode,
   StrctGauge,
+  StrctHeatmap,
+  StrctHeatmapCell,
   StrctIcon,
   StrctMetricTile,
   StrctSegmented,
@@ -34,6 +36,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctDonut,
     StrctFlow,
     StrctGauge,
+    StrctHeatmap,
     StrctIcon,
     StrctMetricTile,
   ],
@@ -364,6 +367,23 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       code='<strct-donut [segments]="states" centerValue="48" centerLabel="VMs" legend />'
     >
       <strct-donut [segments]="vmStates" [centerValue]="48" centerLabel="VMs" [size]="150" legend />
+    </app-demo>
+
+    <app-demo
+      anchor="heatmap"
+      heading="Heatmap"
+      description="A density grid — host × hour CPU here. Each cell is a single-hue luminance ramp off the status token, so the scale stays readable under color-vision deficiency; missing intersections render as empty cells. Hover a cell for its value."
+      code='<strct-heatmap [data]="cells" [rows]="hosts" [cols]="hours24" [max]="100" />'
+    >
+      <div class="chart-box">
+        <strct-heatmap
+          [data]="heatCells"
+          [rows]="heatHosts"
+          [cols]="heatHours"
+          [max]="100"
+          ariaLabel="Host CPU by hour"
+        />
+      </div>
     </app-demo>
 
     <app-demo
@@ -734,6 +754,21 @@ export class ChartsPage implements OnDestroy {
 
   protected readonly hostNames = ['hv-01', 'hv-02', 'hv-03', 'hv-04', 'hv-05'];
   protected readonly perHost = [18, 24, 12, 30, 21];
+
+  // Heatmap demo: host × hour CPU utilisation (%), busier during work hours.
+  protected readonly heatHosts = ['hv-01', 'hv-02', 'hv-03', 'hv-04'];
+  protected readonly heatHours = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'));
+  protected readonly heatCells: StrctHeatmapCell[] = this.heatHosts.flatMap((row, r) =>
+    this.heatHours
+      .filter((_, h) => !(r === 2 && h >= 3 && h <= 5)) // hv-03: an agent outage
+      .map((col, h) => ({
+        row,
+        col,
+        value: Math.round(
+          18 + 52 * Math.abs(Math.sin(h / 3.2 + r * 1.4)) + (h >= 9 && h <= 17 ? 14 : 0),
+        ),
+      })),
+  );
 
   protected readonly vmStates: StrctDonutSegment[] = [
     { value: 36, label: 'Running', color: 'var(--success)' },

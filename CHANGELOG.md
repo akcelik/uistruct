@@ -5,6 +5,118 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-07-25
+
+A full-library UI/UX audit, applied: ~40 functional bugs fixed, a shared
+focus-lifecycle helper rolled out to every transient surface, an RTL
+sweep, a localization pass, ARIA-semantics corrections, design-token
+consolidation — and ten new components.
+
+### Added — new components
+
+- **`strct-number`** — numeric stepper input (± buttons, Arrow/PageUp/Down,
+  Home/End, min/max clamp, `role="spinbutton"`). CVA.
+- **`strct-status-dot`** — status primitive whose state is never
+  color-only (visually-hidden label, per-status defaults).
+- **`strct-popover` + `[strctPopoverTrigger]`** — public anchored-overlay
+  primitive: `[(open)]`, `placement`, optional focus `trap`, full focus
+  lifecycle.
+- **`strct-confirm-outlet` + `StrctConfirmService`** — promise-based
+  confirmation (`confirm({...}): Promise<boolean>`) on top of the modal;
+  initial focus on Cancel.
+- **`strct-tree-select`** — hierarchical picker: the existing `strct-tree`
+  in an anchored panel, label-path trigger, `clearable`. CVA.
+- **`strct-datetime-picker`** — date + time in one control composing the
+  datepicker; ISO local `YYYY-MM-DDTHH:mm`, `minuteStep`, calendar
+  localization pass-through. CVA.
+- **`strct-toolbar` (+ spacer)** — action bar with selection chip and
+  `(cleared)` output; APG toolbar arrow roving.
+- **`strct-inline-edit`** — click-to-edit text; Enter/blur commit, Escape
+  cancel, committed value announced via the announcer. CVA.
+- **`strct-notification-center`** — bell + history panel over the toast
+  service's new shared history (`StrctToastService.history`,
+  `unreadCount`, `markAllRead`, `clearHistory`).
+- **`strct-heatmap`** — SVG density grid (`{row, col, value}` cells,
+  luminance ramp, `role="img"` summary).
+- **`overlay/focus.ts`** (public) — `saveFocusedElement`, `restoreFocus`,
+  `focusFirstIn`, `keepTabInside`; **`overlay/scroll-lock.ts`** — the
+  refcounted body scroll-lock extracted from the modal.
+
+### Added — capabilities
+
+- Datepicker localization: `monthNames`, `weekdayNames`,
+  `weekdayNamesFull`, `weekStart`, `prevMonthLabel`/`nextMonthLabel`.
+- `compareWith` on combobox/select/cascade-select (object values).
+- Static `disabled` input on every CVA control, OR-merged with
+  `setDisabledState` (no more clobbering).
+- Tabs `keepAlive`; tree typeahead + `aria-owns`/`setsize`/`posinset`;
+  datagrid treegrid row keyboard (arrows + expand/collapse); chart bar
+  keyboard access; rating rebuilt as a radiogroup; password manager
+  support (`autocomplete` input) + strength-meter live region.
+- Localization inputs across file/password/breadcrumb/table/code/tree/
+  rail/layout/theme-switcher/chart/toast/validation/metric-tile/pagination.
+- Design tokens: `--z-*` ladder and `--backdrop`; all radii/spacing
+  consolidated to tokens; arbitrary control width caps removed.
+
+### Fixed — selected bugs
+
+- Hotkeys: `shift+<printable>` combos never matched and shadowed their
+  unshifted twins (register `shift+?` for the help overlay now).
+- Log-viewer wrap mode broke virtualization (scroll/follow); ANSI
+  non-SGR sequences leaked as garbage; `live` opt-out added.
+- Drawer Escape was dead code; drawer now has focus trap/restore and
+  scroll-lock. Cascade-select nested options were keyboard-unreachable —
+  rebuilt on the menu pattern. Legacy context menu rebuilt (keyboard,
+  misclick tolerance, real clamping) and deprecated in favor of the menu
+  service.
+- Datagrid: group-mode select-all under-selected; lazy cross-page
+  selection payload/count disagreement; resize listener leak; per-row
+  selection labels.
+- Modal: one Escape closed every stacked modal. Wizard: focus dropped
+  when Next swapped to Finish. Tooltip: leaked into `<body>` on host
+  removal, no `role`/Escape/`aria-describedby`. Signpost: double-toggle
+  with its own demo markup — trigger directive rewired. Splitter: stuck
+  dragging state (zoneless), no touch drag, listener leak. File: same
+  file couldn't be re-picked. Checkbox indeterminate had no visual. OTP
+  `masked` and six other boolean inputs missed `booleanAttribute`.
+- Escape no longer leaks from popups into a hosting modal/drawer
+  (combobox, select, datepicker, color-picker, cascade, drawer, tour,
+  speed-dial, signpost, datagrid popups, menubar, menus).
+- RTL sweep: physical `left/right` converted to logical properties
+  across ~25 components; overlay `start`/`end` placements are now
+  direction-aware.
+
+### Changed — possibly breaking
+
+- Hero no longer implicitly announces on mount: `role="status"` is now
+  opt-in via `live`; critical stays `role="alert"`. The accessible-name
+  element is now a real `h2`.
+- Alert/toast escalate `critical` to `role="alert"` (assertive).
+- Donut legend rows are no longer focusable (they had no action).
+- `StrctCascadeNode` (internal implementation detail) removed.
+- Checkbox `isDisabled` is now a read-only computed (was a model).
+- Width caps removed from password/range/input-mask/chips/file/
+  datepicker/cascade-select — controls are full-width like combobox.
+- Radii standardized to tokens (7px→`--radius-md`, 9/10px→`--radius-lg`)
+  and backdrops unified to `--backdrop` (0.44/0.45→0.5).
+
+## [1.22.0] - 2026-07-25
+
+### Added — combobox: rich options and free-form values
+
+- **`StrctOption.icon`** — a leading icon in the option row (and on the
+  chip in `multiple` mode).
+- **`StrctOption.description`** — a secondary, muted line under the label
+  for pickers where the name alone is not enough.
+- **`allowCustomValue`** — while the typed query has no exact label match,
+  a `Use "…"` row pinned to the list end (Enter or click) commits the raw
+  text as a free-form value; in `multiple` mode it is appended to the
+  array and already-picked text is suppressed. The row joins the
+  arrow-key order and carries `aria-activedescendant` like any option.
+  The verb is localizable via the new `customText` input.
+- A committed custom value no longer blanks on close — the raw text is
+  echoed when it matches no option label.
+
 ## [1.21.0] - 2026-07-25
 
 ### Added — combobox expansion

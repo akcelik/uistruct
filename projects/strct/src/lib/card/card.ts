@@ -113,7 +113,7 @@ import { StrctStatus } from '../status';
         width: 40%;
         background: var(--acc);
         animation: strct-card-load 1.1s ease-in-out infinite;
-        z-index: 1;
+        z-index: var(--z-base);
       }
       .strct-card--loading > strct-card-block,
       .strct-card--loading > strct-card-footer {

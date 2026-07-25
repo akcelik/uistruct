@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ViewEncapsulation,
+  booleanAttribute,
   computed,
   input,
   model,
@@ -146,13 +147,13 @@ export interface StrctRailItem {
       <button
         type="button"
         class="strct-rail__toggle"
-        [attr.aria-label]="collapsed() ? 'Expand navigation' : 'Collapse navigation'"
+        [attr.aria-label]="collapsed() ? expandAriaLabel() : collapseAriaLabel()"
         [attr.aria-expanded]="!collapsed()"
         (click)="collapsed.set(!collapsed())"
       >
         <strct-icon class="strct-rail__toggle-icon" name="chevronRight" [size]="16" />
         @if (!collapsed()) {
-          <span class="strct-rail__toggle-label">Collapse</span>
+          <span class="strct-rail__toggle-label">{{ collapseText() }}</span>
         }
       </button>
     }
@@ -371,9 +372,15 @@ export class StrctRail {
   /** Collapsed (icon-only) state (two-way). */
   readonly collapsed = model(false);
   /** Show the collapse toggle at the foot of the rail. */
-  readonly collapsible = input(true);
+  readonly collapsible = input(true, { transform: booleanAttribute });
   /** Accessible label for the nav landmark. */
   readonly ariaLabel = input('Primary');
+  /** Accessible label of the foot toggle when the rail is collapsed. */
+  readonly expandAriaLabel = input('Expand navigation');
+  /** Accessible label of the foot toggle when the rail is expanded. */
+  readonly collapseAriaLabel = input('Collapse navigation');
+  /** Visible text of the foot toggle (expanded state). */
+  readonly collapseText = input('Collapse');
   /** Emitted when an item is chosen. */
   readonly select = output<StrctRailItem>();
 

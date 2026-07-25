@@ -3,10 +3,12 @@ import {
   Component,
   ViewEncapsulation,
   computed,
+  effect,
   input,
   model,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { StrctButton } from '../button/button';
@@ -111,7 +113,7 @@ export const STRCT_TIME_RANGE_PRESETS: StrctTimeRangePreset[] = [
             variant="primary"
             size="sm"
             class="strct-tr__apply"
-            [disabled]="draftError()"
+            [disabled]="applyDisabled()"
             (click)="applyAbsolute() && dd.close()"
           >
             {{ applyLabel() }}
@@ -236,6 +238,15 @@ export class StrctTimeRangePicker {
     return new Date(f).getTime() >= new Date(t).getTime();
   });
 
+  /** Apply stays off until both drafts parse to valid, ordered dates. */
+  protected readonly applyDisabled = computed(() => {
+    const f = this.draftFrom();
+    const t = this.draftTo();
+    if (!f || !t) return true;
+    if (Number.isNaN(new Date(f).getTime()) || Number.isNaN(new Date(t).getTime())) return true;
+    return this.draftError();
+  });
+
   protected readonly triggerLabel = computed(() => {
     const r = this.range();
     if (!r) return this.placeholderLabel();
@@ -243,6 +254,23 @@ export class StrctTimeRangePicker {
     if (preset) return preset.label;
     return `${this.formatStamp(r.from)} → ${this.formatStamp(r.to)}`;
   });
+
+  constructor() {
+    // Re-seed the absolute editor from the current range on every open, so an
+    // externally-set (or previously applied) range populates the drafts too.
+    effect(() => {
+      if (!this.dd().open()) return;
+      // Untracked: only the open transition re-seeds — an external range
+      // change mid-edit must not clobber the drafts being typed.
+      const r = untracked(() => this.range());
+      if (r) {
+        this.seedDraft(r);
+      } else {
+        this.draftFrom.set('');
+        this.draftTo.set('');
+      }
+    });
+  }
 
   protected pickPreset(p: StrctTimeRangePreset): void {
     const to = new Date();
@@ -253,10 +281,8 @@ export class StrctTimeRangePicker {
   }
 
   protected applyAbsolute(): boolean {
-    const f = this.draftFrom();
-    const t = this.draftTo();
-    if (!f || !t || this.draftError()) return false;
-    const next: StrctTimeRange = { from: new Date(f), to: new Date(t) };
+    if (this.applyDisabled()) return false;
+    const next: StrctTimeRange = { from: new Date(this.draftFrom()), to: new Date(this.draftTo()) };
     this.range.set(next);
     this.applied.emit(next);
     return true;

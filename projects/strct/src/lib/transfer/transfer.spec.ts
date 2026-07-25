@@ -71,4 +71,29 @@ describe('StrctTransfer', () => {
     expect(labels(lists()[0])).toEqual(['hv-02']);
     expect(labels(lists()[1])).toEqual(['hv-03']); // right side untouched
   });
+
+  it('exposes plain list semantics, not listbox', () => {
+    const { lists } = setup();
+    for (const list of lists()) {
+      expect(list.getAttribute('role')).toBe('list');
+      expect(list.querySelector('[role="option"]')).toBeNull();
+    }
+  });
+
+  it('names each checkbox with the item label and its side', () => {
+    const { lists } = setup();
+    const sourceInput = lists()[0].querySelector('strct-checkbox input')!;
+    expect(sourceInput.getAttribute('aria-label')).toBe('hv-01, Available');
+    const targetInput = lists()[1].querySelector('strct-checkbox input')!;
+    expect(targetInput.getAttribute('aria-label')).toBe('hv-03, Assigned');
+  });
+
+  it('renders assigned ids missing from items as orphans labelled by id', () => {
+    const { fixture, host, lists, labels } = setup();
+    host.assigned.set(['hv-03', 'ghost-9']);
+    fixture.detectChanges();
+    expect(labels(lists()[1])).toEqual(['hv-03', 'ghost-9']);
+    const orphan = lists()[1].querySelectorAll('strct-checkbox input')[1];
+    expect(orphan.getAttribute('aria-label')).toBe('ghost-9, Assigned');
+  });
 });

@@ -40,13 +40,13 @@ export type StrctProgressStatus = 'accent' | 'success' | 'warning' | 'critical';
       }
       .strct-progress__track {
         height: 6px;
-        border-radius: 4px;
+        border-radius: var(--radius-sm);
         background: var(--bg-3);
         overflow: hidden;
       }
       .strct-progress__fill {
         height: 100%;
-        border-radius: 4px;
+        border-radius: var(--radius-sm);
         background: var(--acc);
         transition: width 0.3s ease;
       }

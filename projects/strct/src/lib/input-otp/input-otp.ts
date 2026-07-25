@@ -93,7 +93,7 @@ export class StrctInputOtp implements ControlValueAccessor {
   /** Number of OTP boxes. */
   readonly length = input(6);
   /** Mask each box as a password dot. */
-  readonly masked = input(false);
+  readonly masked = input(false, { transform: booleanAttribute });
   /**
    * Focus box 0 on first render — the "second-factor step just appeared"
    * case, declaratively.

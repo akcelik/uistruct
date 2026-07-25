@@ -23,6 +23,8 @@ import { StrctIcon } from '../icon/icon';
 })
 export class StrctAccordion {}
 
+let accordionCounter = 0;
+
 /** Collapsible panel with a header. `expanded` is two-way bindable. */
 @Component({
   selector: 'strct-accordion-panel',
@@ -33,7 +35,9 @@ export class StrctAccordion {}
     <button
       type="button"
       class="strct-acc__head"
+      [id]="headId"
       [attr.aria-expanded]="expanded()"
+      [attr.aria-controls]="bodyId"
       (click)="toggle()"
     >
       <span class="strct-acc__chevron" [class.strct-acc__chevron--open]="expanded()">
@@ -42,7 +46,9 @@ export class StrctAccordion {}
       <span class="strct-acc__title">{{ heading() }}</span>
     </button>
     @if (expanded()) {
-      <div class="strct-acc__body"><ng-content /></div>
+      <div class="strct-acc__body" [id]="bodyId" role="region" [attr.aria-labelledby]="headId">
+        <ng-content />
+      </div>
     }
   `,
   host: { class: 'strct-acc' },
@@ -82,11 +88,17 @@ export class StrctAccordion {}
         transform: rotate(90deg);
         color: var(--acc);
       }
+      /* RTL: the collapsed chevron points toward the inline end (left).
+         (Plain [dir='rtl'] because this component uses ViewEncapsulation.None.) */
+      [dir='rtl'] .strct-acc__chevron:not(.strct-acc__chevron--open) {
+        transform: rotate(180deg);
+      }
       .strct-acc__title {
         flex: 1;
       }
       .strct-acc__body {
-        padding: 4px 14px 14px 32px;
+        padding: 4px 14px 14px;
+        padding-inline-start: 32px;
         color: var(--t2);
         font-size: 13px;
         border-top: 1px solid var(--b1);
@@ -99,6 +111,9 @@ export class StrctAccordionPanel {
   readonly heading = input.required<string>();
   /** Whether the panel is open (two-way). */
   readonly expanded = model(false);
+
+  protected readonly bodyId = `strct-acc-${++accordionCounter}`;
+  protected readonly headId = `${this.bodyId}-head`;
 
   toggle(): void {
     this.expanded.update((v) => !v);

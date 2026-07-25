@@ -32,4 +32,34 @@ describe('StrctCopy', () => {
     expect(el.querySelector('.strct-copy--done')).toBeTruthy();
     expect(el.querySelector('.strct-copy__label')?.textContent).toContain('Copied');
   });
+
+  it('shows the error state and does not emit when the write rejects', async () => {
+    Object.assign(navigator, {
+      clipboard: { writeText: () => Promise.reject(new Error('denied')) },
+    });
+    const { fixture, el, cmp } = make({ text: 'uuid-42', label: 'Copy ID' });
+    const emitted: string[] = [];
+    cmp.copied.subscribe((t) => emitted.push(t));
+    el.querySelector<HTMLButtonElement>('button')!.click();
+    await Promise.resolve(); // clipboard promise
+    await Promise.resolve(); // .then -> .catch hop
+    fixture.detectChanges();
+    expect(emitted).toEqual([]);
+    expect(el.querySelector('.strct-copy--done')).toBeNull();
+    expect(el.querySelector('.strct-copy--error')).toBeTruthy();
+    expect(el.querySelector('.strct-copy__label')?.textContent).toContain('Copy failed');
+    expect(el.querySelector('button')!.getAttribute('aria-label')).toBe('Copy failed');
+  });
+
+  it('shows the error state when the clipboard API is unavailable', () => {
+    Object.assign(navigator, { clipboard: undefined });
+    const { fixture, el, cmp } = make({ text: 'uuid-42', label: 'Copy ID' });
+    const emitted: string[] = [];
+    cmp.copied.subscribe((t) => emitted.push(t));
+    el.querySelector<HTMLButtonElement>('button')!.click();
+    fixture.detectChanges();
+    expect(emitted).toEqual([]);
+    expect(el.querySelector('.strct-copy--error')).toBeTruthy();
+    expect(el.querySelector('.strct-copy__label')?.textContent).toContain('Copy failed');
+  });
 });

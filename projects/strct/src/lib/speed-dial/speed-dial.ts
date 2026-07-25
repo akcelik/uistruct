@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
+import { restoreFocus, saveFocusedElement } from '../overlay/focus';
 
 /** Direction the speed-dial actions expand. */
 export type StrctSpeedDialDirection = 'up' | 'down' | 'left' | 'right';
@@ -29,14 +30,14 @@ export type StrctSpeedDialDirection = 'up' | 'down' | 'left' | 'right';
   template: `
     <div class="strct-sd" [class]="'strct-sd--' + direction()">
       @if (open()) {
-        <div class="strct-sd__actions"><ng-content /></div>
+        <div class="strct-sd__actions" (click)="onActionClick()"><ng-content /></div>
       }
       <button
         type="button"
         class="strct-sd__fab"
         [class.strct-sd__fab--open]="open()"
         [attr.aria-expanded]="open()"
-        aria-haspopup="menu"
+        [attr.aria-label]="ariaLabel()"
         (click)="toggle()"
       >
         <strct-icon [name]="icon()" [size]="18" [strokeWidth]="1.5" />
@@ -79,7 +80,7 @@ export type StrctSpeedDialDirection = 'up' | 'down' | 'left' | 'right';
         position: absolute;
         display: flex;
         gap: 10px;
-        z-index: 10;
+        z-index: var(--z-sticky);
         animation: strct-sd-in 0.14s ease;
       }
       /* The projected icon buttons get a round, raised look. */
@@ -124,12 +125,23 @@ export class StrctSpeedDial {
   private readonly host = inject(ElementRef<HTMLElement>);
   /** Icon name. */
   readonly icon = input('ellipsis');
+  /** Accessible name for the icon-only FAB. */
+  readonly ariaLabel = input('Actions');
   /** Direction the actions fan out. */
   readonly direction = input<StrctSpeedDialDirection>('up');
   readonly open = signal(false);
 
+  /** Trigger to hand focus back to on Escape close. */
+  private trigger: HTMLElement | null = null;
+
   toggle(): void {
+    if (!this.open()) this.trigger = saveFocusedElement();
     this.open.update((v) => !v);
+  }
+
+  /** Activating a projected action closes the dial (the FAB toggles itself). */
+  protected onActionClick(): void {
+    this.open.set(false);
   }
 
   @HostListener('document:click', ['$event'])
@@ -139,8 +151,12 @@ export class StrctSpeedDial {
     }
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEscape(event: Event): void {
+    if (!this.open()) return;
+    // A host modal/drawer must not also close on the same Escape.
+    event.stopPropagation();
     this.open.set(false);
+    restoreFocus(this.trigger);
   }
 }

@@ -81,15 +81,15 @@ let selectCounter = 0;
             class="strct-sel__opt"
             [id]="listId + '-' + i"
             [class.strct-sel__opt--highlight]="i === activeIndex()"
-            [class.strct-sel__opt--selected]="opt.value === value()"
+            [class.strct-sel__opt--selected]="isSelected(opt.value)"
             role="option"
-            [attr.aria-selected]="opt.value === value()"
+            [attr.aria-selected]="isSelected(opt.value)"
             [attr.aria-disabled]="opt.disabled || null"
             (mousedown)="pick(opt, $event)"
             (mousemove)="!opt.disabled && activeIndex.set(i)"
           >
             <span class="strct-sel__check" aria-hidden="true">
-              @if (opt.value === value()) {
+              @if (isSelected(opt.value)) {
                 <strct-icon strictName="check" [size]="12" [strokeWidth]="1.8" />
               }
             </span>
@@ -137,7 +137,7 @@ let selectCounter = 0;
       }
       /* Positioned by StrctOverlay (position: fixed, set inline). */
       .strct-sel__list {
-        z-index: 200;
+        z-index: var(--z-dropdown);
         max-height: 240px;
         overflow-y: auto;
         padding: 4px;
@@ -199,6 +199,11 @@ export class StrctSelect implements ControlValueAccessor {
   readonly emptyText = input('No options');
   /** Static disable flag (forms also drive it via setDisabledState). */
   readonly disabled = input(false, { transform: booleanAttribute });
+  /**
+   * Value identity check — override to match object values coming from a form
+   * (e.g. by id) instead of the default reference equality.
+   */
+  readonly compareWith = input<(a: unknown, b: unknown) => boolean>((a, b) => a === b);
 
   readonly value = signal<unknown>(null);
   readonly open = signal(false);
@@ -206,8 +211,12 @@ export class StrctSelect implements ControlValueAccessor {
   readonly isDisabled = signal(false);
 
   protected readonly selectedOption = computed(() =>
-    this.options().find((o) => o.value === this.value()),
+    this.options().find((o) => this.compareWith()(o.value, this.value())),
   );
+
+  protected isSelected(v: unknown): boolean {
+    return this.compareWith()(v, this.value());
+  }
 
   /** Typeahead buffer — clears half a second after the last keystroke. */
   private typed = '';
@@ -251,6 +260,8 @@ export class StrctSelect implements ControlValueAccessor {
     } else if (key === 'Escape') {
       if (this.open()) {
         event.preventDefault();
+        // Consumed here — a host modal/drawer must not close with the list.
+        event.stopPropagation();
         this.close();
       }
     } else if (key === 'Tab') {
@@ -335,7 +346,7 @@ export class StrctSelect implements ControlValueAccessor {
   /** Highlight starts on the selected option — or the first enabled one. */
   private initialIndex(): number {
     const opts = this.options();
-    const sel = opts.findIndex((o) => o.value === this.value() && !o.disabled);
+    const sel = opts.findIndex((o) => this.compareWith()(o.value, this.value()) && !o.disabled);
     if (sel >= 0) return sel;
     const first = opts.findIndex((o) => !o.disabled);
     return first < 0 ? 0 : first;

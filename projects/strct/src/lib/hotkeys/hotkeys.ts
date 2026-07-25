@@ -2,21 +2,25 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   HostListener,
   Injectable,
   OnDestroy,
   ViewEncapsulation,
   computed,
+  effect,
   inject,
   input,
   model,
   signal,
 } from '@angular/core';
+import { StrctIcon } from '../icon/icon';
 import { StrctKbd } from '../kbd/kbd';
+import { focusFirstIn, restoreFocus, saveFocusedElement } from '../overlay/focus';
 
 /** A registered application hotkey. */
 export interface StrctHotkey {
-  /** Combo like `'ctrl+k'`, `'meta+shift+p'`, `'?'` — `mod` = Ctrl/⌘. */
+  /** Combo like `'ctrl+k'`, `'meta+shift+p'`, `'shift+?'` — `mod` = Ctrl/⌘. */
   combo: string;
   /** Human description shown in the help overlay. */
   description: string;
@@ -39,7 +43,7 @@ function comboOf(event: KeyboardEvent): string {
   if (event.ctrlKey) parts.push('ctrl');
   if (event.metaKey) parts.push('meta');
   if (event.altKey) parts.push('alt');
-  if (event.shiftKey && event.key.length > 1) parts.push('shift');
+  if (event.shiftKey) parts.push('shift');
   parts.push(event.key.toLowerCase());
   return parts.sort().join('+');
 }
@@ -60,7 +64,7 @@ function expand(combo: string): string[] {
  *     { combo: 'mod+k', description: 'Open command palette', group: 'Global',
  *       handler: () => this.palette.open() }); }
  *
- * Combos: `'a'`, `'?'`, `'ctrl+k'`, `'meta+shift+p'`, `'mod+k'` (mod = Ctrl/⌘).
+ * Combos: `'a'`, `'shift+?'`, `'ctrl+k'`, `'meta+shift+p'`, `'mod+k'` (mod = Ctrl/⌘).
  * Plain-key combos are suppressed while typing in inputs / textareas /
  * contenteditable; modifier combos always fire. Pair with
  * `<strct-hotkeys-help/>` for the ⌘/ ("?") cheatsheet overlay.
@@ -114,7 +118,7 @@ function isTyping(event: KeyboardEvent): boolean {
 
 /**
  * The hotkey cheatsheet overlay. Mount once near the app root; it registers
- * `?` itself and lists everything in the service, grouped:
+ * `shift+?` (typed as `?`) itself and lists everything in the service, grouped:
  *
  *   <strct-hotkeys-help />
  */
@@ -122,14 +126,24 @@ function isTyping(event: KeyboardEvent): boolean {
   selector: 'strct-hotkeys-help',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctKbd],
+  imports: [StrctIcon, StrctKbd],
   template: `
     @if (open()) {
       <div class="strct-hkh__backdrop" (click)="open.set(false)"></div>
-      <div class="strct-hkh" role="dialog" [attr.aria-label]="title()">
+      <div class="strct-hkh" role="dialog" aria-modal="true" [attr.aria-label]="title()">
         <div class="strct-hkh__head">
           <span class="strct-hkh__title">{{ title() }}</span>
-          <strct-kbd>?</strct-kbd>
+          <span class="strct-hkh__headside">
+            <strct-kbd>?</strct-kbd>
+            <button
+              type="button"
+              class="strct-hkh__close"
+              [attr.aria-label]="closeLabel()"
+              (click)="open.set(false)"
+            >
+              <strct-icon name="close" [size]="14" />
+            </button>
+          </span>
         </div>
         @for (group of grouped(); track group.name) {
           <div class="strct-hkh__group">
@@ -156,12 +170,12 @@ function isTyping(event: KeyboardEvent): boolean {
       .strct-hkh__backdrop {
         position: fixed;
         inset: 0;
-        z-index: 400;
-        background: rgba(0, 0, 0, 0.45);
+        z-index: var(--z-tour);
+        background: var(--backdrop);
       }
       .strct-hkh {
         position: fixed;
-        z-index: 401;
+        z-index: calc(var(--z-tour) + 1);
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
@@ -184,6 +198,24 @@ function isTyping(event: KeyboardEvent): boolean {
         font-size: 13.5px;
         font-weight: 650;
         color: var(--t1);
+      }
+      .strct-hkh__headside {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .strct-hkh__close {
+        display: inline-flex;
+        padding: 4px;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--t3);
+        cursor: pointer;
+      }
+      .strct-hkh__close:hover {
+        color: var(--t1);
+        background: var(--bg-3);
       }
       .strct-hkh__group {
         margin-bottom: 12px;
@@ -220,11 +252,17 @@ function isTyping(event: KeyboardEvent): boolean {
 })
 export class StrctHotkeysHelp {
   private readonly service = inject(StrctHotkeysService);
+  private readonly host = inject(ElementRef<HTMLElement>);
   /** Overlay visibility (two-way; `?` toggles it too). */
   readonly open = model(false);
   /** Localizable strings. */
   readonly title = input('Keyboard shortcuts');
   readonly emptyText = input('No shortcuts registered.');
+  /** Accessible label of the × close button (localizable). */
+  readonly closeLabel = input('Close');
+
+  /** Element that had focus before the overlay opened, restored on close. */
+  private previousActive: HTMLElement | null = null;
 
   protected readonly grouped = computed(() => {
     const groups = new Map<string, StrctHotkey[]>();
@@ -239,19 +277,38 @@ export class StrctHotkeysHelp {
 
   constructor() {
     const dispose = this.service.register({
-      combo: '?',
+      combo: 'shift+?',
       description: 'Show this help',
       group: 'General',
       handler: () => this.open.update((v) => !v),
     });
     inject(DestroyRef).onDestroy(dispose);
+
+    // Focus lifecycle: remember the trigger, move focus into the dialog once
+    // it has rendered, and hand focus back on close.
+    effect(() => {
+      if (this.open()) {
+        this.previousActive = saveFocusedElement();
+        setTimeout(() => {
+          const dialog: HTMLElement | null = this.host.nativeElement.querySelector('.strct-hkh');
+          if (dialog) focusFirstIn(dialog);
+        });
+      } else {
+        restoreFocus(this.previousActive);
+        this.previousActive = null;
+      }
+    });
   }
 
   // Escape is handled locally — registering it in the service would swallow
   // every Escape in the app (the service preventDefaults on match).
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    if (this.open()) this.open.set(false);
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEscape(event: Event): void {
+    if (!this.open()) return;
+    // Document-level: stopImmediatePropagation so a host modal/drawer with its
+    // own document listener doesn't also see the Escape the overlay consumed.
+    event.stopImmediatePropagation();
+    this.open.set(false);
   }
 
   protected parts(combo: string): string[] {

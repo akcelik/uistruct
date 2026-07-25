@@ -23,6 +23,33 @@ describe('StrctDatepicker', () => {
     expect(emitted).toBe('2024-06-04');
   });
 
+  it('merges the static disabled input with the CVA disabled state', () => {
+    const fixture = TestBed.createComponent(StrctDatepicker);
+    fixture.componentRef.setInput('disabled', true);
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance;
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(cmp.isDisabled()).toBe(true);
+    expect(el.querySelector<HTMLInputElement>('.strct-dp__input')!.disabled).toBe(true);
+    cmp.toggle();
+    expect(cmp.open()).toBe(false);
+
+    // A static input change must not clobber the forms-driven disabled state.
+    cmp.setDisabledState(true);
+    fixture.componentRef.setInput('disabled', false);
+    fixture.detectChanges();
+    expect(cmp.isDisabled()).toBe(true);
+    expect(el.querySelector<HTMLInputElement>('.strct-dp__input')!.disabled).toBe(true);
+  });
+
+  it('accepts a boolean attribute for disabled', () => {
+    const fixture = TestBed.createComponent(StrctDatepicker);
+    fixture.componentRef.setInput('disabled', '');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.isDisabled()).toBe(true);
+  });
+
   // APG date-picker dialog: ARIA grid semantics + full keyboard grid
   function openAt(iso: string) {
     const fixture = TestBed.createComponent(StrctDatepicker);
@@ -76,5 +103,74 @@ describe('StrctDatepicker', () => {
     cmp.onKeydown(key('Enter'));
     expect(emitted).toBe('2026-03-26');
     expect(cmp.open()).toBe(false);
+  });
+
+  it('renders custom monthNames and honors weekStart in the grid', () => {
+    const fixture = TestBed.createComponent(StrctDatepicker);
+    fixture.componentRef.setInput('monthNames', [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ]);
+    fixture.componentRef.setInput('weekStart', 1); // Monday
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance;
+    cmp.writeValue('2026-03-15');
+    cmp.toggle();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('.strct-dp__title')!.textContent).toContain('Marzo 2026');
+    const headers = [...el.querySelectorAll('[role="columnheader"]')];
+    expect(headers[0].textContent!.trim()).toBe('Mo');
+    expect(headers[6].textContent!.trim()).toBe('Su');
+    // March 1, 2026 is a Sunday: with weekStart=1 the grid leads with the
+    // previous Monday instead of March 1 itself.
+    const cells = el.querySelectorAll('[role="gridcell"]');
+    expect(cells[0].getAttribute('data-iso')).toBe('2026-02-23');
+    expect(cells[41].getAttribute('data-iso')).toBe('2026-04-05');
+  });
+
+  it('keeps the Sunday-first grid by default', () => {
+    const { el } = openAt('2026-03-15');
+    const headers = [...el.querySelectorAll('[role="columnheader"]')];
+    expect(headers[0].textContent!.trim()).toBe('Su');
+    expect(el.querySelector('[role="gridcell"]')!.getAttribute('data-iso')).toBe('2026-03-01');
+  });
+
+  it('uses localizable prev/next month labels', () => {
+    const fixture = TestBed.createComponent(StrctDatepicker);
+    fixture.componentRef.setInput('prevMonthLabel', 'Mes anterior');
+    fixture.componentRef.setInput('nextMonthLabel', 'Mes siguiente');
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance;
+    cmp.toggle();
+    fixture.detectChanges();
+    const navs = (fixture.nativeElement as HTMLElement).querySelectorAll('.strct-dp__nav');
+    expect(navs[0].getAttribute('aria-label')).toBe('Mes anterior');
+    expect(navs[1].getAttribute('aria-label')).toBe('Mes siguiente');
+  });
+
+  it('Home/End respect weekStart', () => {
+    const fixture = TestBed.createComponent(StrctDatepicker);
+    fixture.componentRef.setInput('weekStart', 1); // Monday
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance;
+    cmp.writeValue('2026-03-18'); // a Wednesday
+    cmp.toggle();
+    fixture.detectChanges();
+    cmp.onKeydown(key('Home'));
+    expect(cmp.focusedIso()).toBe('2026-03-16'); // Monday
+    cmp.onKeydown(key('End'));
+    expect(cmp.focusedIso()).toBe('2026-03-22'); // Sunday
   });
 });

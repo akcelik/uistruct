@@ -2,7 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   booleanAttribute,
-  effect,
+  computed,
   forwardRef,
   input,
   signal,
@@ -97,16 +97,14 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class StrctToggle implements ControlValueAccessor {
   readonly checked = signal(false);
-  readonly isDisabled = signal(false);
+  /** Disabled state pushed by the forms API (setDisabledState). */
+  private readonly cvaDisabled = signal(false);
+  readonly isDisabled = computed(() => this.disabled() || this.cvaDisabled());
   /** Static disable; forms' setDisabledState also drives the disabled state. */
   readonly disabled = input(false, { transform: booleanAttribute });
 
   private onChange: (value: boolean) => void = () => {};
   protected onTouched: () => void = () => {};
-
-  constructor() {
-    effect(() => this.isDisabled.set(this.disabled()));
-  }
 
   onToggle(event: Event): void {
     const value = (event.target as HTMLInputElement).checked;
@@ -124,6 +122,6 @@ export class StrctToggle implements ControlValueAccessor {
     this.onTouched = fn;
   }
   setDisabledState(isDisabled: boolean): void {
-    this.isDisabled.set(isDisabled);
+    this.cvaDisabled.set(isDisabled);
   }
 }

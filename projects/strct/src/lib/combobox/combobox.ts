@@ -13,7 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { StrctIcon } from '../icon/icon';
+import { StrctIcon, StrctIconName } from '../icon/icon';
 import { StrctOverlay } from '../overlay/overlay';
 
 /** One option in a combobox or similar list. */
@@ -24,6 +24,10 @@ export interface StrctOption {
   disabled?: boolean;
   /** Options sharing a group label render under one header (combobox). */
   group?: string;
+  /** Leading icon in the option row (and on the chip in multiple mode). */
+  icon?: StrctIconName;
+  /** Secondary line under the label in the option row (combobox). */
+  description?: string;
 }
 
 /** A render row of the option list: a group header or an option. */
@@ -49,8 +53,10 @@ let comboboxCounter = 0;
  * Variants: `clearable` adds an × that resets the selection; `multiple`
  * switches the value to an array and renders the picks as removable chips —
  * the list stays open while picking and Backspace on an empty query removes
- * the last chip. Options may carry `group` labels (rendered as headers) and
- * `disabled`.
+ * the last chip. Options may carry `group` labels (rendered as headers),
+ * `disabled`, a leading `icon` and a secondary `description` line.
+ * `allowCustomValue` appends a "Use \"…\"" row while typing so the typed
+ * text itself can be committed as a free-form value.
  */
 @Component({
   selector: 'strct-combobox',
@@ -71,6 +77,9 @@ let comboboxCounter = 0;
       @if (multiple()) {
         @for (v of values(); track $index) {
           <span class="strct-cbx__chip">
+            @if (optionOf(v)?.icon; as chipIcon) {
+              <strct-icon class="strct-cbx__chip-icon" [name]="chipIcon" [size]="11" />
+            }
             {{ labelOf(v) }}
             <button
               type="button"
@@ -94,7 +103,7 @@ let comboboxCounter = 0;
         autocomplete="off"
         [attr.aria-expanded]="open()"
         [attr.aria-controls]="listId"
-        [attr.aria-activedescendant]="open() && flat().length ? listId + '-' + activeIndex() : null"
+        [attr.aria-activedescendant]="open() && navCount() ? listId + '-' + activeIndex() : null"
         [placeholder]="multiple() && values().length ? '' : placeholder()"
         [value]="query()"
         [disabled]="isDisabled()"
@@ -152,15 +161,40 @@ let comboboxCounter = 0;
                     <strct-icon strictName="check" [size]="12" [strokeWidth]="1.8" />
                   }
                 </span>
+                @if (row.opt!.icon) {
+                  <strct-icon class="strct-cbx__opt-icon" [name]="row.opt!.icon" [size]="14" />
+                }
                 @let seg = segments(row.opt!.label);
-                <span class="strct-cbx__label"
-                  >{{ seg.pre }}<span class="strct-cbx__match">{{ seg.match }}</span
-                  >{{ seg.post }}</span
-                >
+                <span class="strct-cbx__opt-text">
+                  <span class="strct-cbx__label"
+                    >{{ seg.pre }}<span class="strct-cbx__match">{{ seg.match }}</span
+                    >{{ seg.post }}</span
+                  >
+                  @if (row.opt!.description) {
+                    <span class="strct-cbx__opt-desc">{{ row.opt!.description }}</span>
+                  }
+                </span>
               </div>
             }
           } @empty {
-            <div class="strct-cbx__empty">{{ emptyText() }}</div>
+            @if (!customRow()) {
+              <div class="strct-cbx__empty">{{ emptyText() }}</div>
+            }
+          }
+          @if (customRow(); as customQuery) {
+            <div
+              class="strct-cbx__opt strct-cbx__opt--custom"
+              [id]="listId + '-' + flat().length"
+              [class.strct-cbx__opt--highlight]="activeIndex() === flat().length"
+              role="option"
+              aria-selected="false"
+              (mousedown)="commitCustom($event)"
+              (mousemove)="activeIndex.set(flat().length)"
+            >
+              <span class="strct-cbx__check" aria-hidden="true"></span>
+              <strct-icon class="strct-cbx__opt-icon" strictName="plus" [size]="13" />
+              <span class="strct-cbx__label">{{ customText() }} "{{ customQuery }}"</span>
+            </div>
           }
         }
       </div>
@@ -236,7 +270,7 @@ let comboboxCounter = 0;
       }
       .strct-cbx__clear {
         position: absolute;
-        right: 26px;
+        inset-inline-end: 26px;
         top: 50%;
         transform: translateY(-50%);
         display: inline-flex;
@@ -253,7 +287,7 @@ let comboboxCounter = 0;
       }
       .strct-cbx__caret {
         position: absolute;
-        right: 9px;
+        inset-inline-end: 9px;
         top: 50%;
         transform: translateY(-50%);
         color: var(--t3);
@@ -262,7 +296,7 @@ let comboboxCounter = 0;
       /* Positioned by StrctOverlay (position: fixed, set inline) — only the
        surface styling lives here. */
       .strct-cbx__menu {
-        z-index: 200;
+        z-index: var(--z-dropdown);
         max-height: 240px;
         overflow-y: auto;
         padding: 4px;
@@ -309,6 +343,37 @@ let comboboxCounter = 0;
         width: 14px;
         flex: none;
         color: var(--acc);
+      }
+      .strct-cbx__opt-icon {
+        display: inline-flex;
+        flex: none;
+        color: var(--t3);
+      }
+      .strct-cbx__opt--selected .strct-cbx__opt-icon {
+        color: var(--t1);
+      }
+      .strct-cbx__opt-text {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .strct-cbx__opt-desc {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 11px;
+        font-weight: 400;
+        color: var(--t3);
+      }
+      /* Free-form value row (allowCustomValue) — pinned to the list end. */
+      .strct-cbx__opt--custom {
+        border-top: 1px solid var(--b2);
+        border-radius: 0 0 5px 5px;
+        color: var(--t2);
+      }
+      .strct-cbx__chip-icon {
+        display: inline-flex;
+        color: var(--t3);
       }
       .strct-cbx__label {
         min-width: 0;
@@ -370,6 +435,21 @@ export class StrctCombobox implements ControlValueAccessor {
   readonly clearLabel = input('Clear selection');
   /** Accessible label prefix of a chip's × button (localizable). */
   readonly removeLabel = input('Remove');
+  /**
+   * Allow committing the typed text itself: while the query has no exact
+   * label match, a "Use \"…\"" row pinned to the list end (Enter or click)
+   * commits the raw text as the value — appended to the array in `multiple`.
+   */
+  readonly allowCustomValue = input(false, { transform: booleanAttribute });
+  /** Verb prefix of the free-form row (localizable) — renders `Use "query"`. */
+  readonly customText = input('Use');
+  /** Static disable; forms' setDisabledState also drives the disabled state. */
+  readonly disabled = input(false, { transform: booleanAttribute });
+  /**
+   * Value identity check — override to match object values coming from a form
+   * (e.g. by id) instead of the default reference equality.
+   */
+  readonly compareWith = input<(a: unknown, b: unknown) => boolean>((a, b) => a === b);
 
   readonly query = signal('');
   readonly value = signal<unknown>(null);
@@ -377,7 +457,9 @@ export class StrctCombobox implements ControlValueAccessor {
   readonly values = signal<unknown[]>([]);
   readonly open = signal(false);
   readonly activeIndex = signal(0);
-  readonly isDisabled = signal(false);
+  /** Disabled state pushed by the forms API (setDisabledState). */
+  private readonly cvaDisabled = signal(false);
+  readonly isDisabled = computed(() => this.disabled() || this.cvaDisabled());
   /** True while the user is typing a filter that hasn't been committed yet. */
   private readonly dirty = signal(false);
 
@@ -389,6 +471,24 @@ export class StrctCombobox implements ControlValueAccessor {
 
   /** Flat option list (no headers) — keyboard navigation and ids live here. */
   protected readonly flat = computed(() => this.filtered());
+
+  /**
+   * The free-form query committable right now (allowCustomValue): a trimmed
+   * dirty query with no exact label match — and, in multiple mode, not
+   * already picked. Rendered as an extra row at index `flat().length`.
+   */
+  protected readonly customRow = computed(() => {
+    if (!this.allowCustomValue() || !this.dirty()) return null;
+    const q = this.query().trim();
+    if (!q) return null;
+    const ql = q.toLowerCase();
+    if (this.options().some((o) => o.label.toLowerCase() === ql)) return null;
+    if (this.multiple() && this.values().some((v) => this.compareWith()(v, q))) return null;
+    return q;
+  });
+
+  /** Navigable row count: options plus the custom row when shown. */
+  protected readonly navCount = computed(() => this.flat().length + (this.customRow() ? 1 : 0));
 
   /** Render rows: group headers interleaved with their options. */
   protected readonly rows = computed<CbxRow[]>(() => {
@@ -412,11 +512,16 @@ export class StrctCombobox implements ControlValueAccessor {
   protected onTouched: () => void = () => {};
 
   protected isSelected(v: unknown): boolean {
-    return this.multiple() ? this.values().includes(v) : this.value() === v;
+    const cw = this.compareWith();
+    return this.multiple() ? this.values().some((x) => cw(x, v)) : cw(this.value(), v);
+  }
+
+  protected optionOf(v: unknown): StrctOption | undefined {
+    return this.options().find((o) => this.compareWith()(o.value, v));
   }
 
   protected labelOf(v: unknown): string {
-    return this.options().find((o) => o.value === v)?.label ?? String(v);
+    return this.optionOf(v)?.label ?? String(v);
   }
 
   /** The typed match emphasised inside a label (first occurrence). */
@@ -469,7 +574,12 @@ export class StrctCombobox implements ControlValueAccessor {
       case 'Enter': {
         if (!this.open()) return;
         event.preventDefault();
-        const opt = this.flat()[this.activeIndex()];
+        const i = this.activeIndex();
+        if (i >= this.flat().length) {
+          this.commitCustom();
+          return;
+        }
+        const opt = this.flat()[i];
         if (opt && !opt.disabled) this.commit(opt);
         break;
       }
@@ -484,6 +594,8 @@ export class StrctCombobox implements ControlValueAccessor {
       case 'Escape':
         if (this.open()) {
           event.preventDefault();
+          // Consumed here — a host modal/drawer must not close with the list.
+          event.stopPropagation();
           this.close();
         }
         break;
@@ -492,12 +604,14 @@ export class StrctCombobox implements ControlValueAccessor {
 
   private move(delta: number): void {
     const opts = this.flat();
-    if (!opts.length) return;
+    const n = this.navCount();
+    if (!n) return;
     let i = this.activeIndex();
-    let guard = opts.length;
+    let guard = n;
     do {
-      i = (i + delta + opts.length) % opts.length;
-    } while (opts[i].disabled && --guard > 0);
+      i = (i + delta + n) % n;
+      // The custom row (index ≥ opts.length) is always enabled.
+    } while (i < opts.length && opts[i].disabled && --guard > 0);
     this.activeIndex.set(i);
     this.scrollActiveIntoView();
   }
@@ -505,11 +619,12 @@ export class StrctCombobox implements ControlValueAccessor {
   private firstEnabled(from: number): number {
     const opts = this.flat();
     for (let i = from; i < opts.length; i++) if (!opts[i].disabled) return i;
-    return 0;
+    return this.customRow() ? opts.length : 0;
   }
 
   private lastEnabled(): number {
     const opts = this.flat();
+    if (this.customRow()) return opts.length; // custom row is always last & enabled
     for (let i = opts.length - 1; i >= 0; i--) if (!opts[i].disabled) return i;
     return 0;
   }
@@ -530,8 +645,9 @@ export class StrctCombobox implements ControlValueAccessor {
 
   private commit(opt: StrctOption): void {
     if (this.multiple()) {
-      const next = this.values().includes(opt.value)
-        ? this.values().filter((v) => v !== opt.value)
+      const cw = this.compareWith();
+      const next = this.values().some((v) => cw(v, opt.value))
+        ? this.values().filter((v) => !cw(v, opt.value))
         : [...this.values(), opt.value];
       this.values.set(next);
       this.query.set('');
@@ -549,9 +665,36 @@ export class StrctCombobox implements ControlValueAccessor {
     this.onTouched();
   }
 
+  /**
+   * Commit the typed text itself as a free-form value (allowCustomValue).
+   * Multiple mode appends it and keeps picking; single mode takes it and
+   * closes.
+   */
+  protected commitCustom(event?: Event): void {
+    event?.preventDefault();
+    const q = this.customRow();
+    if (!q) return;
+    if (this.multiple()) {
+      const next = [...this.values(), q];
+      this.values.set(next);
+      this.query.set('');
+      this.dirty.set(false);
+      this.onChange([...next]);
+      this.onTouched();
+      return; // the list stays open while picking
+    }
+    this.value.set(q);
+    this.query.set(q);
+    this.dirty.set(false);
+    this.open.set(false);
+    this.onChange(q);
+    this.onTouched();
+  }
+
   protected removeValue(v: unknown, event?: Event): void {
     event?.stopPropagation();
-    const next = this.values().filter((x) => x !== v);
+    const cw = this.compareWith();
+    const next = this.values().filter((x) => !cw(x, v));
     this.values.set(next);
     this.onChange([...next]);
     this.onTouched();
@@ -599,8 +742,10 @@ export class StrctCombobox implements ControlValueAccessor {
       this.query.set('');
       return;
     }
-    const match = this.options().find((o) => o.value === this.value());
-    this.query.set(match?.label ?? '');
+    const v = this.value();
+    const match = this.optionOf(v);
+    // A custom value matches no option — echo the raw text instead of blanking.
+    this.query.set(match?.label ?? (v == null ? '' : String(v)));
   }
 
   writeValue(value: unknown): void {
@@ -618,6 +763,6 @@ export class StrctCombobox implements ControlValueAccessor {
     this.onTouched = fn;
   }
   setDisabledState(isDisabled: boolean): void {
-    this.isDisabled.set(isDisabled);
+    this.cvaDisabled.set(isDisabled);
   }
 }

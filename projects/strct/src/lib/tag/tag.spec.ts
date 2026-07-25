@@ -21,4 +21,21 @@ describe('StrctTag', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.strct-tag__remove')).toBeNull();
   });
+
+  it('hides the remove button when disabled', () => {
+    const fixture = TestBed.createComponent(StrctTag);
+    fixture.componentRef.setInput('removable', true);
+    fixture.componentRef.setInput('disabled', true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.strct-tag__remove')).toBeNull();
+  });
+
+  it('uses removeLabel as the remove button aria-label', () => {
+    const fixture = TestBed.createComponent(StrctTag);
+    fixture.componentRef.setInput('removable', true);
+    fixture.componentRef.setInput('removeLabel', 'Entfernen');
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('.strct-tag__remove') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe('Entfernen');
+  });
 });

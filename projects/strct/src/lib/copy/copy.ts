@@ -13,7 +13,9 @@ import { StrctIcon } from '../icon/icon';
 /**
  * Click-to-copy chip with built-in feedback: an icon (or icon + label) button
  * that writes `text` to the clipboard and flips to a ✓ "Copied" state for a
- * moment. The console workhorse for UUIDs, IPs, serials and snippets:
+ * moment; a failed write (rejection or insecure context) shows a localized
+ * error state instead. The console workhorse for UUIDs, IPs, serials and
+ * snippets:
  *
  *   <strct-copy text="172.16.75.100" />
  *   <strct-copy [text]="host.id" label="Copy ID" />
@@ -28,14 +30,21 @@ import { StrctIcon } from '../icon/icon';
       type="button"
       class="strct-copy"
       [class.strct-copy--done]="done()"
-      [attr.aria-label]="done() ? copiedLabel() : ariaLabel() || copyLabel()"
+      [class.strct-copy--error]="error()"
+      [attr.aria-label]="
+        done() ? copiedLabel() : error() ? failedLabel() : ariaLabel() || copyLabel()
+      "
       (click)="copy()"
     >
       <strct-icon [name]="done() ? 'check' : 'copy'" [size]="13" [strokeWidth]="1.6" />
       @if (label()) {
-        <span class="strct-copy__label">{{ done() ? copiedLabel() : label() }}</span>
+        <span class="strct-copy__label">{{
+          done() ? copiedLabel() : error() ? failedLabel() : label()
+        }}</span>
       }
-      <span class="strct-copy__sr" aria-live="polite">{{ done() ? copiedLabel() : '' }}</span>
+      <span class="strct-copy__sr" aria-live="polite">{{
+        done() ? copiedLabel() : error() ? failedLabel() : ''
+      }}</span>
     </button>
   `,
   host: { class: 'strct-copy-host' },
@@ -50,7 +59,7 @@ import { StrctIcon } from '../icon/icon';
         gap: 5px;
         padding: 3px 6px;
         border: 0;
-        border-radius: 5px;
+        border-radius: var(--radius-md);
         background: transparent;
         color: var(--t3);
         font-family: var(--font);
@@ -73,6 +82,12 @@ import { StrctIcon } from '../icon/icon';
       }
       .strct-copy--done:hover {
         color: var(--success);
+      }
+      .strct-copy--error {
+        color: var(--critical);
+      }
+      .strct-copy--error:hover {
+        color: var(--critical);
       }
       .strct-copy__sr {
         position: absolute;
@@ -102,10 +117,12 @@ export class StrctCopy {
   /** Localizable strings. */
   readonly copyLabel = input('Copy');
   readonly copiedLabel = input('Copied');
+  readonly failedLabel = input('Copy failed');
   /** Emitted after a successful copy, with the copied text. */
   readonly copied = output<string>();
 
   protected readonly done = signal(false);
+  protected readonly error = signal(false);
   private timer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
@@ -117,11 +134,25 @@ export class StrctCopy {
   /** Write `text` to the clipboard and show the ✓ feedback. */
   copy(): void {
     const value = this.text();
-    void navigator.clipboard?.writeText(value).then(() => {
-      this.copied.emit(value);
-      this.done.set(true);
-      if (this.timer) clearTimeout(this.timer);
-      this.timer = setTimeout(() => this.done.set(false), 1600);
-    });
+    if (!navigator.clipboard) {
+      this.fail();
+      return;
+    }
+    void navigator.clipboard
+      .writeText(value)
+      .then(() => {
+        this.copied.emit(value);
+        this.done.set(true);
+        if (this.timer) clearTimeout(this.timer);
+        this.timer = setTimeout(() => this.done.set(false), 1600);
+      })
+      .catch(() => this.fail());
+  }
+
+  /** Surface a failed write (rejection or unavailable clipboard API). */
+  private fail(): void {
+    this.error.set(true);
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.error.set(false), 1600);
   }
 }

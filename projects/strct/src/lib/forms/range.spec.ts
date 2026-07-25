@@ -21,4 +21,26 @@ describe('StrctRange', () => {
     expect(typeof cmp.registerOnChange).toBe('function');
     expect(typeof cmp.registerOnTouched).toBe('function');
   });
+
+  it('merges the static disabled input with the CVA disabled state', () => {
+    const fixture = TestBed.createComponent(StrctRange);
+    fixture.componentRef.setInput('disabled', true);
+    fixture.detectChanges();
+    const cmp = fixture.componentInstance;
+    const native = fixture.nativeElement.querySelector('.strct-range__input') as HTMLInputElement;
+
+    expect(cmp.isDisabled()).toBe(true);
+    expect(native.disabled).toBe(true);
+
+    // Static disable stays even if the form re-enables.
+    cmp.setDisabledState(false);
+    expect(cmp.isDisabled()).toBe(true);
+
+    // A static input change must not clobber the forms-driven disabled state.
+    cmp.setDisabledState(true);
+    fixture.componentRef.setInput('disabled', false);
+    fixture.detectChanges();
+    expect(cmp.isDisabled()).toBe(true);
+    expect(native.disabled).toBe(true);
+  });
 });

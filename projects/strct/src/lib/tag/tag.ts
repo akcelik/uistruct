@@ -22,8 +22,13 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
   imports: [StrctIcon],
   template: `
     <span class="strct-tag__text"><ng-content /></span>
-    @if (removable()) {
-      <button type="button" class="strct-tag__remove" aria-label="Remove" (click)="removed.emit()">
+    @if (removable() && !disabled()) {
+      <button
+        type="button"
+        class="strct-tag__remove"
+        [attr.aria-label]="removeLabel()"
+        (click)="removed.emit()"
+      >
         <strct-icon name="close" [size]="11" [strokeWidth]="1.6" />
       </button>
     }
@@ -41,7 +46,8 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
         display: inline-flex;
         align-items: center;
         gap: 5px;
-        padding: 3px 4px 3px 9px;
+        padding-block: 3px;
+        padding-inline: 9px 4px;
         border-radius: 4px;
         font-size: 12px;
         font-weight: 500;
@@ -82,7 +88,8 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
         opacity: 0.65;
         cursor: pointer;
       }
-      .strct-tag__remove:hover {
+      .strct-tag__remove:hover,
+      .strct-tag__remove:focus-visible {
         opacity: 1;
         background: var(--dn);
       }
@@ -94,6 +101,10 @@ export class StrctTag {
   readonly status = input<StrctTagStatus>('neutral');
   /** Show a remove button. */
   readonly removable = input(false, { transform: booleanAttribute });
+  /** Hide the remove button (e.g. when the parent control is disabled). */
+  readonly disabled = input(false, { transform: booleanAttribute });
+  /** Accessible label for the remove button. */
+  readonly removeLabel = input('Remove');
   /** Emitted when the user clicks the remove button. */
   readonly removed = output<void>();
 }

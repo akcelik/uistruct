@@ -80,13 +80,13 @@ import { StrctOverlay } from '../overlay/overlay';
         position: absolute;
         top: calc(100% + 4px);
         left: 0;
-        z-index: 200;
+        z-index: var(--z-dropdown);
         min-width: 170px;
         max-width: calc(100vw - 24px);
         padding: 4px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 7px;
+        border-radius: var(--radius-md);
         box-shadow: var(--shh);
         animation: strct-dd-in 0.1s ease;
       }
@@ -194,7 +194,7 @@ export class StrctDropdown {
   private enabledItems(): HTMLElement[] {
     return [
       ...this.host.nativeElement.querySelectorAll<HTMLElement>(
-        'strct-dropdown-item:not([aria-disabled="true"])',
+        'strct-dropdown-item:not([aria-disabled="true"]), strct-submenu .strct-submenu__trigger',
       ),
     ];
   }

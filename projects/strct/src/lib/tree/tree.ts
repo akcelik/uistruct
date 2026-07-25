@@ -4,6 +4,7 @@ import {
   DestroyRef,
   ElementRef,
   ViewEncapsulation,
+  booleanAttribute,
   computed,
   contentChildren,
   forwardRef,
@@ -47,6 +48,12 @@ export interface StrctTreeMenuEvent {
   item: StrctMenuItem;
 }
 
+/** Default chevron aria-label factory — mirrors the `chevronAriaLabel` input default. */
+const defaultChevronAriaLabel = (expanded: boolean, label: string): string =>
+  `${expanded ? 'Collapse' : 'Expand'} ${label}`;
+
+let treeNodeCounter = 0;
+
 /**
  * Tree node. Two modes:
  *  - **Content:** nest `<strct-tree-node>` children manually.
@@ -69,8 +76,11 @@ export interface StrctTreeMenuEvent {
       role="treeitem"
       [attr.tabindex]="rowTabindex()"
       [attr.aria-level]="level"
+      [attr.aria-setsize]="setSize()"
+      [attr.aria-posinset]="posInSet()"
       [attr.aria-selected]="displayActive()"
       [attr.aria-expanded]="hasChildren() ? isOpen() : null"
+      [attr.aria-owns]="hasChildren() && isOpen() ? groupId : null"
       [strctContextMenu]="menuItems()"
       [strctContextMenuData]="node()"
       (menuSelect)="onMenuSelect($event)"
@@ -85,11 +95,11 @@ export interface StrctTreeMenuEvent {
           class="strct-tnode__chevron"
           [class.strct-tnode__chevron--open]="isOpen()"
           role="button"
-          [attr.aria-label]="(isOpen() ? 'Collapse ' : 'Expand ') + displayLabel()"
+          [attr.aria-label]="chevronAriaLabel()"
           [attr.tabindex]="tree ? -1 : 0"
           (click)="$event.stopPropagation(); toggle()"
           (keydown.enter)="$event.stopPropagation(); toggle()"
-          (keydown.space)="$event.stopPropagation(); toggle()"
+          (keydown.space)="$event.preventDefault(); $event.stopPropagation(); toggle()"
         >
           <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.5" />
         </span>
@@ -109,7 +119,7 @@ export interface StrctTreeMenuEvent {
       <ng-content select="[strctTreeTrailing]" />
     </div>
     @if (hasChildren() && isOpen()) {
-      <div class="strct-tnode__children" role="group">
+      <div class="strct-tnode__children" role="group" [id]="groupId">
         @if (node()) {
           @for (child of node()!.children ?? []; track child.id ?? child.label) {
             <strct-tree-node
@@ -127,6 +137,9 @@ export interface StrctTreeMenuEvent {
   `,
   host: {
     class: 'strct-tnode',
+    // Presentational wrapper: the treeitem row and its children group are
+    // siblings in the DOM, so the host must not appear in the a11y tree.
+    role: 'none',
     '[attr.data-node-id]': 'node()?.id ?? null',
   },
   styles: [
@@ -177,6 +190,10 @@ export interface StrctTreeMenuEvent {
       .strct-tnode__chevron--open {
         transform: rotate(90deg);
       }
+      /* RTL: the collapsed chevron points toward the inline end (left). */
+      [dir='rtl'] .strct-tnode__chevron:not(.strct-tnode__chevron--open) {
+        transform: rotate(180deg);
+      }
       .strct-tnode__spacer {
         width: 14px;
         flex-shrink: 0;
@@ -212,7 +229,7 @@ export class StrctTreeNode {
   /** Status dot variant. */
   readonly badge = input<StrctIconBadge>('none');
   /** Whether the item is active / selected. */
-  readonly active = input(false);
+  readonly active = input(false, { transform: booleanAttribute });
   /** Whether the panel is open (two-way). */
   readonly expanded = model(false);
   /** Per-node menu resolver (data mode); bubbles down the recursion. */
@@ -243,8 +260,13 @@ export class StrctTreeNode {
   /** 1-based depth, exposed as aria-level. */
   readonly level: number = (this.parent?.level ?? 0) + 1;
   private readonly hostEl = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly _id = ++treeNodeCounter;
+  /** Id of the children group container — the row's aria-owns target. */
+  protected readonly groupId = `strct-tnode-group-${this._id}`;
 
   private readonly childNodes = contentChildren(StrctTreeNode);
+  /** Direct projected children only (descendants would skew the sibling count). */
+  private readonly directChildNodes = contentChildren(StrctTreeNode, { descendants: false });
   /** Data-mode expansion fallback when there is no owning tree (seeded from node.expanded). */
   private readonly dataExpanded = signal<boolean | null>(null);
 
@@ -254,6 +276,37 @@ export class StrctTreeNode {
     () => this.node()?.badge ?? this.badge(),
   );
   protected readonly displayActive = computed(() => this.node()?.active ?? this.active());
+
+  /** Data-mode siblings (null in content mode): the parent's children, else the tree roots. */
+  private readonly siblingData = computed<StrctTreeNodeData[] | null>(() => {
+    const n = this.node();
+    if (!n) return null;
+    return this.parent?.node()?.children ?? this.tree?.nodes() ?? [n];
+  });
+  /** Content-mode siblings: the parent's (or owning tree's) direct projected nodes. */
+  private readonly contentSiblings = computed<readonly StrctTreeNode[]>(() =>
+    this.parent ? this.parent.contentChildNodes() : (this.tree?.contentChildNodes() ?? [this]),
+  );
+  /** Sibling count, exposed as aria-setsize. */
+  protected readonly setSize = computed(
+    () => this.siblingData()?.length ?? this.contentSiblings().length,
+  );
+  /** 1-based position among the siblings, exposed as aria-posinset. */
+  protected readonly posInSet = computed(() => {
+    const data = this.siblingData();
+    if (data) return data.indexOf(this.node()!) + 1;
+    return this.contentSiblings().indexOf(this) + 1;
+  });
+
+  /** Direct projected child nodes (content mode) — sibling source for aria-setsize/posinset. */
+  contentChildNodes(): readonly StrctTreeNode[] {
+    return this.directChildNodes();
+  }
+
+  /** Visible label text — matched by the owning tree's typeahead. */
+  typeaheadLabel(): string {
+    return this.displayLabel();
+  }
 
   constructor() {
     // Register with the owning tree for roving focus / keyboard navigation.
@@ -273,18 +326,36 @@ export class StrctTreeNode {
     this.tree ? (this.tree.isRovingActive(this) ? 0 : -1) : 0,
   );
 
+  /** Accessible label of the chevron toggle (factory from the owning tree). */
+  protected readonly chevronAriaLabel = computed(() =>
+    (this.tree?.chevronAriaLabel() ?? defaultChevronAriaLabel)(this.isOpen(), this.displayLabel()),
+  );
+
   protected onRowFocus(): void {
     this.tree?.setActive(this);
   }
 
   protected onRowKeydown(event: KeyboardEvent): void {
     if (!this.tree) return;
-    if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+    if (['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.tree.navigate(this, event.key);
       return;
     }
-    event.preventDefault();
-    event.stopPropagation();
-    this.tree.navigate(this, event.key);
+    // APG typeahead: a printable character jumps to the next matching visible
+    // node. Space is excluded — it activates the row (keydown.space above).
+    if (
+      event.key.length === 1 &&
+      event.key !== ' ' &&
+      !event.ctrlKey &&
+      !event.altKey &&
+      !event.metaKey
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.tree.typeahead(this, event.key);
+    }
   }
 
   readonly hasChildren = computed(() => {
@@ -393,6 +464,9 @@ export class StrctTree {
   readonly density = input<'compact' | 'comfortable'>('compact');
   /** Per-node right-click menu resolver. */
   readonly nodeMenu = input<StrctTreeNodeMenuFn | null>(null);
+  /** Accessible label of each node's chevron toggle; receives the expanded state and the node label. */
+  readonly chevronAriaLabel =
+    input<(expanded: boolean, label: string) => string>(defaultChevronAriaLabel);
   /** Emitted when any data-driven node is clicked. */
   readonly nodeActivated = output<StrctTreeNodeData>();
   /** Emitted when a data-driven node's right-click menu item is chosen. */
@@ -451,23 +525,42 @@ export class StrctTree {
   // ── Roving focus / keyboard navigation (ARIA tree pattern) ─────
   private readonly registeredNodes = signal<StrctTreeNode[]>([]);
   private readonly activeRoving = signal<StrctTreeNode | null>(null);
+  /** Direct projected root nodes (content mode) — sibling source for aria-setsize/posinset. */
+  private readonly projectedNodes = contentChildren(StrctTreeNode, { descendants: false });
+  /** Document-ordered cache of the visible nodes; null = stale. */
+  private orderedCache: StrctTreeNode[] | null = null;
+  /** `nodes` identity the cache was built for (data-mode `@for` can reorder in place). */
+  private orderedCacheNodes: StrctTreeNodeData[] | null = null;
 
   registerNode(node: StrctTreeNode): void {
     this.registeredNodes.update((list) => [...list, node]);
+    this.orderedCache = null;
   }
   unregisterNode(node: StrctTreeNode): void {
     this.registeredNodes.update((list) => list.filter((n) => n !== node));
     if (this.activeRoving() === node) this.activeRoving.set(null);
+    this.orderedCache = null;
+  }
+
+  /** Direct projected root nodes (content mode); empty in data mode. */
+  contentChildNodes(): readonly StrctTreeNode[] {
+    return this.projectedNodes();
   }
 
   /** Visible nodes in document order (collapsed subtrees are never registered). */
   private ordered(): StrctTreeNode[] {
-    return [...this.registeredNodes()].sort((a, b) => {
+    // Data-mode `@for` moves views in place on reorder (no register/unregister),
+    // so the node-list identity is part of the cache key.
+    const ns = this.nodes();
+    if (this.orderedCache && this.orderedCacheNodes === ns) return this.orderedCache;
+    this.orderedCache = [...this.registeredNodes()].sort((a, b) => {
       const ra = a.rowEl();
       const rb = b.rowEl();
       if (!ra || !rb) return 0;
       return ra.compareDocumentPosition(rb) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
     });
+    this.orderedCacheNodes = ns;
+    return this.orderedCache;
   }
 
   /** Whether this node currently holds the roving tabindex (0). */
@@ -515,6 +608,37 @@ export class StrctTree {
         if (node.hasChildren() && node.isOpen()) node.toggle();
         else if (node.parent) this.focusNode(node.parent);
         break;
+    }
+  }
+
+  /** Idle gap after which the accumulated typeahead search string resets (ms). */
+  private static readonly TYPEAHEAD_TIMEOUT = 500;
+  private typeaheadQuery = '';
+  private typeaheadStamp = 0;
+
+  /**
+   * APG typeahead: move focus to the next visible node whose label starts with
+   * the typed prefix. Repeating one character cycles through its matches;
+   * different characters accumulate into a search string (reset after a pause).
+   */
+  typeahead(from: StrctTreeNode, key: string): void {
+    const list = this.ordered();
+    const start = list.indexOf(from);
+    if (start < 0) return;
+    const char = key.toLowerCase();
+    const now = Date.now();
+    const fresh = now - this.typeaheadStamp > StrctTree.TYPEAHEAD_TIMEOUT;
+    this.typeaheadStamp = now;
+    const cycling =
+      !fresh && this.typeaheadQuery.length > 0 && [...this.typeaheadQuery].every((c) => c === char);
+    this.typeaheadQuery = fresh || cycling ? char : this.typeaheadQuery + char;
+    const query = this.typeaheadQuery;
+    for (let step = 1; step <= list.length; step++) {
+      const candidate = list[(start + step) % list.length];
+      if (candidate.typeaheadLabel().toLowerCase().startsWith(query)) {
+        this.focusNode(candidate);
+        return;
+      }
     }
   }
 

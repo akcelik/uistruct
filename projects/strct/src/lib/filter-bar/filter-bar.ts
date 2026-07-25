@@ -1,10 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  Injector,
   ViewEncapsulation,
+  afterNextRender,
+  inject,
   input,
   model,
   output,
+  viewChild,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 import { StrctSearchbox } from '../searchbox/searchbox';
@@ -46,13 +51,13 @@ export interface StrctFilterChip {
           type="button"
           class="strct-fb__chip-x"
           [attr.aria-label]="removeLabel() + ' ' + chip.label"
-          (click)="removed.emit(chip)"
+          (click)="removeChip(chip, $index)"
         >
           <strct-icon name="close" [size]="10" [strokeWidth]="1.9" />
         </button>
       </span>
     }
-    @if (filters().length > 1) {
+    @if (filters().length > 0) {
       <button type="button" class="strct-fb__clear" (click)="cleared.emit()">
         {{ clearLabel() }}
       </button>
@@ -157,4 +162,24 @@ export class StrctFilterBar {
   readonly removed = output<StrctFilterChip>();
   /** "Clear filters" was clicked. */
   readonly cleared = output<void>();
+
+  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly injector = inject(Injector);
+  private readonly searchbox = viewChild(StrctSearchbox);
+
+  /** Chip × clicked: announce, then re-home the focus the removal destroys. */
+  protected removeChip(chip: StrctFilterChip, index: number): void {
+    this.removed.emit(chip);
+    // The parent drops the chip (and this button) on the next render — park
+    // focus on the × sliding into this slot, else on the search field.
+    afterNextRender(
+      () => {
+        const xs = this.host.nativeElement.querySelectorAll<HTMLButtonElement>('.strct-fb__chip-x');
+        const next = xs[Math.min(index, xs.length - 1)];
+        if (next) next.focus();
+        else this.searchbox()?.focus();
+      },
+      { injector: this.injector },
+    );
+  }
 }

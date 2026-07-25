@@ -36,13 +36,14 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
         font-weight: 600;
         line-height: 1;
         letter-spacing: 0.2px;
-        padding: 3px 7px 3px 9px;
+        padding-block: 3px;
+        padding-inline: 9px 7px;
         border-radius: var(--radius-sm);
         white-space: nowrap;
         color: var(--t2);
         background: transparent;
         border: 1px solid var(--b3);
-        /* Thicker left rail gives badges a distinct "tag" identity vs. buttons. */
+        /* Thicker start rail gives badges a distinct "tag" identity vs. buttons. */
         border-inline-start-width: 3px;
       }
       .strct-badge--accent {
@@ -62,7 +63,7 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
         border-color: var(--critical);
       }
 
-      /* Opt-in filled badge — uniform edges (no left rail). */
+      /* Opt-in filled badge — uniform edges (no start rail). */
       .strct-badge--solid {
         color: var(--t1);
         background: var(--bg-a);

@@ -106,20 +106,21 @@ import { StrctMenuItem } from '../context-menu/menu';
         background: transparent;
         color: var(--acc);
         font-family: var(--font);
-        font-size: 12.5px;
+        font-size: 13px;
         font-weight: 600;
+        line-height: 1;
         cursor: pointer;
-        padding: 5px 12px;
+        padding: var(--space-2) var(--space-4);
       }
       .strct-sbt__main {
-        border-start-start-radius: 7px;
-        border-end-start-radius: 7px;
+        border-start-start-radius: var(--radius-md);
+        border-end-start-radius: var(--radius-md);
         border-inline-end: 0;
       }
       .strct-sbt__chev {
-        padding: 5px 6px;
-        border-start-end-radius: 7px;
-        border-end-end-radius: 7px;
+        padding: var(--space-2);
+        border-start-end-radius: var(--radius-md);
+        border-end-end-radius: var(--radius-md);
         border-inline-start: 1px solid var(--acc50);
       }
       .strct-sbt--solid .strct-sbt__main,
@@ -149,7 +150,7 @@ import { StrctMenuItem } from '../context-menu/menu';
         outline: 2px solid var(--acc50);
         outline-offset: 1px;
         position: relative;
-        z-index: 1;
+        z-index: var(--z-base);
       }
     `,
   ],

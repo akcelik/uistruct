@@ -47,11 +47,43 @@ describe('StrctDiff', () => {
     const { fixture, el } = make({ before, after, context: 2 });
     const skip = el.querySelector<HTMLButtonElement>('.strct-diff__skip')!;
     expect(skip.textContent).toContain('37 unchanged lines');
+    expect(skip.getAttribute('aria-expanded')).toBe('false');
     const rowsBefore = el.querySelectorAll('.strct-diff__row').length;
     skip.click();
     fixture.detectChanges();
-    expect(el.querySelector('.strct-diff__skip')).toBeNull();
+    const expandedSkip = el.querySelector<HTMLButtonElement>('.strct-diff__skip')!;
+    expect(expandedSkip.getAttribute('aria-expanded')).toBe('true');
     expect(el.querySelectorAll('.strct-diff__row').length).toBeGreaterThan(rowsBefore);
+  });
+
+  it('re-collapses an expanded run on a second click', () => {
+    const before = Array.from({ length: 40 }, (_, i) => `line ${i}`).join('\n');
+    const after = before.replace('line 0', 'line zero');
+    const { fixture, el } = make({ before, after, context: 2 });
+    const rowsCollapsed = el.querySelectorAll('.strct-diff__row').length;
+    el.querySelector<HTMLButtonElement>('.strct-diff__skip')!.click();
+    fixture.detectChanges();
+    el.querySelector<HTMLButtonElement>('.strct-diff__skip')!.click();
+    fixture.detectChanges();
+    const skip = el.querySelector<HTMLButtonElement>('.strct-diff__skip')!;
+    expect(skip.getAttribute('aria-expanded')).toBe('false');
+    expect(el.querySelectorAll('.strct-diff__row').length).toBe(rowsCollapsed);
+  });
+
+  it('forgets expansions when before/after change (no stale index expands the next diff)', () => {
+    const before = Array.from({ length: 40 }, (_, i) => `line ${i}`).join('\n');
+    const after = before.replace('line 0', 'line zero');
+    const { fixture, el } = make({ before, after, context: 2 });
+    el.querySelector<HTMLButtonElement>('.strct-diff__skip')!.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-diff__skip')?.getAttribute('aria-expanded')).toBe('true');
+    // Next diff keeps a hidden run at the stale index 3 — it must stay collapsed.
+    fixture.componentRef.setInput('after', after.replace('line 20', 'line twenty'));
+    fixture.detectChanges();
+    fixture.detectChanges();
+    const skips = [...el.querySelectorAll<HTMLButtonElement>('.strct-diff__skip')];
+    expect(skips.length).toBe(2);
+    expect(skips.every((s) => s.getAttribute('aria-expanded') === 'false')).toBe(true);
   });
 
   it('split mode pairs a del-run with its add-run side by side', () => {

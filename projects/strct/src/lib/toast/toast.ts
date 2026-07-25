@@ -3,6 +3,7 @@ import {
   Component,
   Injectable,
   ViewEncapsulation,
+  computed,
   inject,
   input,
   signal,
@@ -25,7 +26,29 @@ export interface StrctToast {
 export interface StrctToastOptions {
   type?: StrctToastType;
   duration?: number;
+  /** Optional bold lead-in; kept in the history entry shown by the notification center. */
+  title?: string;
 }
+
+/**
+ * A persistent notification entry. Every shown toast is also recorded here
+ * (capped ring buffer) so `<strct-notification-center>` can offer a history
+ * view — toasts stay transient, the center is the persistent view. Shares the
+ * toast's `id`, so callers can correlate the two.
+ */
+export interface StrctNotification {
+  id: number;
+  type: StrctToastType;
+  /** Bold lead-in; '' when the toast had no title. */
+  title: string;
+  message: string;
+  /** Epoch ms when the notification was recorded. */
+  timestamp: number;
+  read: boolean;
+}
+
+/** History ring-buffer capacity: only the newest entries survive a burst. */
+export const STRCT_NOTIFICATION_HISTORY_LIMIT = 50;
 
 /**
  * Queues transient notifications. Render `<strct-toast-outlet />` once near the
@@ -36,17 +59,29 @@ export interface StrctToastOptions {
 export class StrctToastService {
   private counter = 0;
   private readonly _toasts = signal<StrctToast[]>([]);
+  private readonly _history = signal<StrctNotification[]>([]);
+  private readonly timers = new Map<number, ReturnType<typeof setTimeout>>();
   readonly toasts = this._toasts.asReadonly();
+  /** Persistent entries, oldest → newest, capped at STRCT_NOTIFICATION_HISTORY_LIMIT. */
+  readonly history = this._history.asReadonly();
+  /** Unread history entries — drives the notification-center badge. */
+  readonly unreadCount = computed(() =>
+    this._history().reduce((n, item) => n + (item.read ? 0 : 1), 0),
+  );
 
   show(message: string, options: StrctToastOptions = {}): number {
     const id = ++this.counter;
     const duration = options.duration ?? 4000;
-    this._toasts.update((list) => [
-      ...list,
-      { id, type: options.type ?? 'info', message, duration },
-    ]);
+    const type = options.type ?? 'info';
+    this._toasts.update((list) => [...list, { id, type, message, duration }]);
+    this._history.update((list) =>
+      [
+        ...list,
+        { id, type, title: options.title ?? '', message, timestamp: Date.now(), read: false },
+      ].slice(-STRCT_NOTIFICATION_HISTORY_LIMIT),
+    );
     if (duration > 0) {
-      setTimeout(() => this.dismiss(id), duration);
+      this.startTimer(id, duration);
     }
     return id;
   }
@@ -64,12 +99,63 @@ export class StrctToastService {
     return this.show(message, { type: 'critical', duration });
   }
 
+  /**
+   * Pause the auto-dismiss countdown (WCAG 2.2.1), e.g. while the toast is
+   * hovered or focus is inside it.
+   */
+  pause(id: number): void {
+    const timer = this.timers.get(id);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      this.timers.delete(id);
+    }
+  }
+
+  /** Resume the auto-dismiss countdown; it restarts from the full duration. */
+  resume(id: number): void {
+    const toast = this._toasts().find((t) => t.id === id);
+    if (toast && toast.duration > 0) {
+      this.startTimer(id, toast.duration);
+    }
+  }
+
   dismiss(id: number): void {
+    this.pause(id);
     this._toasts.update((list) => list.filter((t) => t.id !== id));
   }
 
   clear(): void {
+    for (const timer of this.timers.values()) {
+      clearTimeout(timer);
+    }
+    this.timers.clear();
     this._toasts.set([]);
+  }
+
+  /** Flag one history entry as read (id is the one `show` returned). */
+  markRead(id: number): void {
+    this._history.update((list) => list.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  }
+
+  /** Flag every history entry as read — empties the center's unread badge. */
+  markAllRead(): void {
+    this._history.update((list) => list.map((n) => (n.read ? n : { ...n, read: true })));
+  }
+
+  /** Drop the whole history (transient toasts are not affected). */
+  clearHistory(): void {
+    this._history.set([]);
+  }
+
+  private startTimer(id: number, duration: number): void {
+    this.pause(id);
+    this.timers.set(
+      id,
+      setTimeout(() => {
+        this.timers.delete(id);
+        this.dismiss(id);
+      }, duration),
+    );
   }
 }
 
@@ -80,7 +166,13 @@ const TOAST_ICON: Record<StrctToastType, string> = {
   critical: 'critical',
 };
 
-/** Renders the toast stack. Place once, typically just inside the app shell. */
+/** Maximum number of toasts rendered at once; a burst shows only the newest. */
+const MAX_VISIBLE_TOASTS = 5;
+
+/**
+ * Renders the toast stack, capped at the newest 5 toasts so a burst cannot
+ * grow off-viewport. Place once, typically just inside the app shell.
+ */
 @Component({
   selector: 'strct-toast-outlet',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -88,19 +180,24 @@ const TOAST_ICON: Record<StrctToastType, string> = {
   imports: [StrctIcon],
   template: `
     <div class="strct-toasts" role="region" [attr.aria-label]="regionLabel()" aria-live="polite">
-      @for (toast of service.toasts(); track toast.id) {
+      @for (toast of toasts(); track toast.id) {
         <div
           class="strct-toast"
           [class.strct-toast--success]="toast.type === 'success'"
           [class.strct-toast--warning]="toast.type === 'warning'"
           [class.strct-toast--critical]="toast.type === 'critical'"
+          [attr.role]="toast.type === 'critical' ? 'alert' : null"
+          (mouseenter)="service.pause(toast.id)"
+          (mouseleave)="service.resume(toast.id)"
+          (focusin)="service.pause(toast.id)"
+          (focusout)="service.resume(toast.id)"
         >
           <strct-icon [name]="icon(toast.type)" [size]="16" />
           <span class="strct-toast__msg">{{ toast.message }}</span>
           <button
             type="button"
             class="strct-toast__close"
-            aria-label="Dismiss"
+            [attr.aria-label]="dismissLabel()"
             (click)="service.dismiss(toast.id)"
           >
             <strct-icon name="close" [size]="13" />
@@ -114,8 +211,8 @@ const TOAST_ICON: Record<StrctToastType, string> = {
       .strct-toasts {
         position: fixed;
         top: var(--space-4);
-        right: var(--space-4);
-        z-index: 1200;
+        inset-inline-end: var(--space-4);
+        z-index: var(--z-toast);
         display: flex;
         flex-direction: column;
         gap: var(--space-2);
@@ -196,7 +293,10 @@ const TOAST_ICON: Record<StrctToastType, string> = {
 export class StrctToastOutlet {
   /** Accessible name of the notifications region (localizable). */
   readonly regionLabel = input('Notifications');
+  /** Accessible label of the dismiss button (localizable). */
+  readonly dismissLabel = input('Dismiss');
   protected readonly service = inject(StrctToastService);
+  protected readonly toasts = computed(() => this.service.toasts().slice(-MAX_VISIBLE_TOASTS));
   protected icon(type: StrctToastType): string {
     return TOAST_ICON[type];
   }

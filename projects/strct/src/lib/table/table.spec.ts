@@ -43,6 +43,19 @@ describe('StrctTable', () => {
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).classList).toContain('strct-table-host--hover');
   });
+
+  it('has a localizable region label (defaults to "Table")', () => {
+    const fixture = TestBed.createComponent(StrctTable);
+    fixture.componentRef.setInput('columns', [{ key: 'a', label: 'A' }]);
+    fixture.componentRef.setInput('rows', [{ a: 1 }]);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.getAttribute('aria-label')).toBe('Table');
+
+    fixture.componentRef.setInput('label', 'Deployments');
+    fixture.detectChanges();
+    expect(host.getAttribute('aria-label')).toBe('Deployments');
+  });
 });
 
 describe('StrctCellDef', () => {

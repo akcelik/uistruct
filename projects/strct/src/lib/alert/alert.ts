@@ -34,7 +34,8 @@ export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
   `,
   host: {
     class: 'strct-alert',
-    role: 'status',
+    // role="alert" implies aria-live="assertive" for critical alerts.
+    '[attr.role]': "type() === 'critical' ? 'alert' : 'status'",
     '[class.strct-alert--success]': "type() === 'success'",
     '[class.strct-alert--warning]': "type() === 'warning'",
     '[class.strct-alert--critical]': "type() === 'critical'",
@@ -68,12 +69,13 @@ export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
         flex-shrink: 0;
         display: inline-flex;
         padding: 2px;
-        margin: -2px -2px 0 0;
+        margin-block-start: -2px;
+        margin-inline-end: -2px;
         border: 0;
         background: transparent;
         color: var(--t3);
         cursor: pointer;
-        border-radius: 4px;
+        border-radius: var(--radius-sm);
       }
       .strct-alert__close:hover {
         color: var(--t1);

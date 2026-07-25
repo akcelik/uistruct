@@ -39,17 +39,19 @@ export type StrctDescAlign = 'between' | 'start';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
-    @for (item of items(); track $index) {
-      <div
-        class="strct-desc"
-        [class.strct-desc--mono]="item.mono"
-        [class.strct-desc--muted]="item.muted"
-      >
-        <span class="strct-desc__label">{{ item.label }}</span>
-        <span class="strct-desc__value">{{ item.value }}</span>
-      </div>
-    }
-    <ng-content />
+    <dl class="strct-dl__list">
+      @for (item of items(); track $index) {
+        <div
+          class="strct-desc"
+          [class.strct-desc--mono]="item.mono"
+          [class.strct-desc--muted]="item.muted"
+        >
+          <dt class="strct-desc__label">{{ item.label }}</dt>
+          <dd class="strct-desc__value">{{ item.value }}</dd>
+        </div>
+      }
+      <ng-content />
+    </dl>
   `,
   host: {
     class: 'strct-dl',
@@ -63,7 +65,14 @@ export type StrctDescAlign = 'between' | 'start';
         flex-direction: column;
         min-width: 0;
       }
-      .strct-dl--inline {
+      .strct-dl__list {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+        min-width: 0;
+      }
+      .strct-dl--inline .strct-dl__list {
         flex-direction: row;
         flex-wrap: wrap;
         gap: var(--space-3) var(--space-5);
@@ -106,6 +115,7 @@ export type StrctDescAlign = 'between' | 'start';
         white-space: nowrap;
       }
       .strct-desc__value {
+        margin: 0;
         color: var(--t1);
         min-width: 0;
         text-align: end;
@@ -146,8 +156,8 @@ export class StrctDescriptionList {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
-    <span class="strct-desc__label">{{ label() }}</span>
-    <span class="strct-desc__value"><ng-content /></span>
+    <dt class="strct-desc__label">{{ label() }}</dt>
+    <dd class="strct-desc__value"><ng-content /></dd>
   `,
   host: {
     class: 'strct-desc',

@@ -21,7 +21,7 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
         padding: 3px 6px;
         border: 1px solid var(--b2);
         border-bottom-width: 2px;
-        border-radius: 4px;
+        border-radius: var(--radius-sm);
         color: var(--t3);
         background: var(--bg-2);
         font-family: var(--mono);

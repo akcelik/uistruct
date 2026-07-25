@@ -26,6 +26,26 @@ describe('StrctHotkeysService', () => {
     expect(svc.hotkeys().length).toBe(0);
   });
 
+  it('records shift with printable keys so ctrl+shift+k does not fire ctrl+k', () => {
+    const svc = TestBed.inject(StrctHotkeysService);
+    let plain = 0;
+    let shifted = 0;
+    const d1 = svc.register({ combo: 'ctrl+k', description: 'Plain', handler: () => plain++ });
+    const d2 = svc.register({
+      combo: 'ctrl+shift+k',
+      description: 'Shifted',
+      handler: () => shifted++,
+    });
+    key({ key: 'k', ctrlKey: true, shiftKey: true });
+    expect(shifted).toBe(1);
+    expect(plain).toBe(0);
+    key({ key: 'k', ctrlKey: true });
+    expect(plain).toBe(1);
+    expect(shifted).toBe(1);
+    d1();
+    d2();
+  });
+
   it('suppresses plain-key combos while typing but lets modifier combos through', () => {
     const svc = TestBed.inject(StrctHotkeysService);
     let plain = 0;
@@ -68,6 +88,8 @@ describe('StrctHotkeysHelp', () => {
     const el = fixture.nativeElement as HTMLElement;
     const dialog = el.querySelector('.strct-hkh')!;
     expect(dialog.getAttribute('role')).toBe('dialog');
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
+    expect(dialog.getAttribute('aria-label')).toBe('Keyboard shortcuts');
     expect(dialog.textContent).toContain('Open palette');
     expect(dialog.textContent).toContain('Global');
     expect(dialog.textContent).toContain('Show this help');
@@ -76,5 +98,38 @@ describe('StrctHotkeysHelp', () => {
     fixture.detectChanges();
     expect(el.querySelector('.strct-hkh')).toBeNull();
     dispose();
+  });
+
+  it('has a visible, labeled close button that closes the overlay', () => {
+    const fixture = TestBed.createComponent(HostComponent);
+    fixture.detectChanges();
+    key({ key: '?', shiftKey: true });
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const close = el.querySelector<HTMLButtonElement>('.strct-hkh__close')!;
+    expect(close.getAttribute('aria-label')).toBe('Close');
+    close.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-hkh')).toBeNull();
+  });
+
+  it('moves focus into the dialog on open and restores it on close', async () => {
+    const fixture = TestBed.createComponent(HostComponent);
+    fixture.detectChanges();
+    const opener = document.createElement('button');
+    document.body.appendChild(opener);
+    opener.focus();
+    key({ key: '?', shiftKey: true });
+    fixture.detectChanges();
+    // focusFirstIn runs after the dialog has rendered.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const el = fixture.nativeElement as HTMLElement;
+    const dialog = el.querySelector('.strct-hkh')!;
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    (dialog.querySelector('.strct-hkh__close') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-hkh')).toBeNull();
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
   });
 });

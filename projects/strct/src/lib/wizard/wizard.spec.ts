@@ -75,6 +75,19 @@ describe('StrctWizard vertical', () => {
     expect(railSteps(el)[1].classList).toContain('strct-wiz__vstep--active');
   });
 
+  it('advancing to the last step keeps focus on the (now Finish) button', () => {
+    const { fixture, el } = setup();
+    const btn = nextBtn(el);
+    btn.focus();
+    btn.click();
+    fixture.detectChanges();
+    btn.click();
+    fixture.detectChanges();
+    // Next and Finish are one element — the swap cannot drop focus to <body>.
+    expect(nextBtn(el).textContent).toContain('Finish');
+    expect(document.activeElement).toBe(nextBtn(el));
+  });
+
   it('rail click jumps back to a visited step but never forward past visited', () => {
     const { fixture, host, el } = setup();
     nextBtn(el).click();

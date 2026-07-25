@@ -6,6 +6,7 @@ import {
   computed,
   contentChild,
   contentChildren,
+  DestroyRef,
   Directive,
   effect,
   ElementRef,
@@ -28,7 +29,12 @@ export interface StrctDatagridLabels {
   rows: string;
   selected: string;
   selectAll: string;
+  /** Base row-checkbox label; superseded by {@link selectRowFor}, which
+   *  appends the row's identifier. Kept for existing overrides. */
   selectRow: string;
+  /** Row-checkbox label factory: receives the row's id (`rowId`) or its
+   *  1-based index, so every row's checkbox gets a distinct name. */
+  selectRowFor: (id: string) => string;
   openDetail: string;
   toggleDetail: string;
   closeDetail: string;
@@ -50,6 +56,7 @@ const DG_LABELS: StrctDatagridLabels = {
   selected: 'selected',
   selectAll: 'Select all rows on this page',
   selectRow: 'Select row',
+  selectRowFor: (id: string) => `Select row ${id}`,
   openDetail: 'Open detail',
   toggleDetail: 'Toggle detail',
   closeDetail: 'Close detail',
@@ -69,6 +76,7 @@ import { StrctButton, StrctButtonGroup } from '../button/button';
 import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
 import { StrctMenuItem, StrctMenuService } from '../context-menu/menu';
 import { StrctOverlay } from '../overlay/overlay';
+import { focusFirstIn, restoreFocus } from '../overlay/focus';
 import { StrctSearchbox } from '../searchbox/searchbox';
 import { XlsxValue, buildXlsx } from './xlsx';
 
@@ -309,6 +317,7 @@ export class StrctDatagridActionBar {}
                               class="strct-dg__filterinput"
                               type="text"
                               [attr.placeholder]="L().filterPlaceholder"
+                              [attr.aria-label]="L().filterColumn + ': ' + col.label"
                               [value]="textFilter(col.key)"
                               (input)="setTextFilter(col.key, $any($event.target).value)"
                             />
@@ -406,6 +415,8 @@ export class StrctDatagridActionBar {}
                     [attr.aria-expanded]="
                       childrenKey() && treeHasChildren(row) ? treeExpanded(row) : null
                     "
+                    [attr.tabindex]="childrenKey() ? treeRowTabindex(row) : null"
+                    (keydown)="childrenKey() && onTreeRowKeydown(row, $event)"
                   >
                     @if (canDetail()) {
                       <td
@@ -450,7 +461,7 @@ export class StrctDatagridActionBar {}
                         [style.insetInlineStart.px]="utilLeft('sel')"
                       >
                         <strct-checkbox
-                          [ariaLabel]="L().selectRow"
+                          [ariaLabel]="selectRowLabel(row)"
                           [checked]="isSelected(row)"
                           (checkedChange)="toggleRow(row)"
                         />
@@ -591,7 +602,7 @@ export class StrctDatagridActionBar {}
                     [class.is-open]="chooserOpen()"
                     [disabled]="footerActionsDisabled()"
                     [attr.aria-label]="L().chooseColumns"
-                    (click)="chooserOpen.set(!chooserOpen())"
+                    (click)="toggleChooser($event)"
                   >
                     <strct-icon name="settings" [size]="16" />
                   </button>
@@ -611,10 +622,17 @@ export class StrctDatagridActionBar {}
               @if (columnChooser() && chooserOpen()) {
                 <div class="strct-dg__chooser-menu">
                   @for (col of columns(); track col.key) {
-                    <div class="strct-dg__chooser-item">
+                    <!-- The whole row toggles; the checkbox's own click must not
+                         reach the row or the column would flip twice. -->
+                    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+                    <div
+                      class="strct-dg__chooser-item"
+                      (click)="toggleColumn(col.key, hiddenColumns().has(col.key))"
+                    >
                       <strct-checkbox
                         [checked]="!hiddenColumns().has(col.key)"
                         (checkedChange)="toggleColumn(col.key, $event)"
+                        (click)="$event.stopPropagation()"
                       />
                       <span>{{ col.label }}</span>
                     </div>
@@ -653,7 +671,7 @@ export class StrctDatagridActionBar {}
       .strct-dg-host {
         display: block;
         border: 1px solid var(--b2);
-        border-radius: 10px;
+        border-radius: var(--radius-lg);
         background: var(--bg-2);
         box-shadow: var(--shadow-rest);
       }
@@ -670,7 +688,7 @@ export class StrctDatagridActionBar {}
       .strct-dg-host--virtual .strct-dg thead th {
         position: sticky;
         top: 0;
-        z-index: 5;
+        z-index: var(--z-raised);
       }
       .strct-dg__vspacer td {
         padding: 0;
@@ -757,13 +775,13 @@ export class StrctDatagridActionBar {}
       /* Frozen columns: pinned against horizontal scroll, opaque over content. */
       .strct-dg .strct-dg__cell--sticky {
         position: sticky;
-        z-index: 3;
+        z-index: calc(var(--z-base) + 2);
       }
       /* th.….--sticky (0-2-2) must beat the virtual-mode "thead th" rule of the
          same specificity by source order, so corner cells paint above both the
          scrolled header cells and the frozen body cells. */
       .strct-dg thead th.strct-dg__cell--sticky {
-        z-index: 6;
+        z-index: calc(var(--z-raised) + 1);
       }
       .strct-dg .strct-dg__cell--sticky-last::after {
         content: '';
@@ -901,7 +919,7 @@ export class StrctDatagridActionBar {}
         width: 4px;
         cursor: col-resize;
         background: transparent;
-        z-index: 2;
+        z-index: calc(var(--z-base) + 1);
       }
       .strct-dg__resize:hover {
         background: var(--acc);
@@ -1026,8 +1044,8 @@ export class StrctDatagridActionBar {}
         min-width: 260px;
         max-width: 260px;
         flex-shrink: 0;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
+        border-start-end-radius: 0;
+        border-end-end-radius: 0;
       }
       .strct-dg__row--clickable {
         cursor: pointer;
@@ -1043,7 +1061,7 @@ export class StrctDatagridActionBar {}
       .strct-dg__layout--paned .strct-dg__row--active td:last-child::after {
         content: '';
         position: absolute;
-        right: 11px;
+        inset-inline-end: 11px;
         top: 50%;
         width: 6px;
         height: 6px;
@@ -1059,8 +1077,8 @@ export class StrctDatagridActionBar {}
         border: 1px solid var(--b2);
         border-inline-start: 2px solid var(--acc);
         border-radius: 8px;
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
+        border-start-start-radius: 0;
+        border-end-start-radius: 0;
         overflow: hidden;
         animation: strct-dg-pane-in 0.14s ease;
       }
@@ -1199,8 +1217,8 @@ export class StrctDatagridActionBar {}
       .strct-dg__chooser-menu {
         position: absolute;
         bottom: calc(100% + 6px);
-        left: 0;
-        z-index: 10;
+        inset-inline-start: 0;
+        z-index: var(--z-sticky);
         min-width: 180px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
@@ -1270,7 +1288,7 @@ export class StrctDatagridActionBar {}
       }
       .strct-dg__filterpanel {
         position: absolute;
-        z-index: 210;
+        z-index: calc(var(--z-dropdown) + 10);
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -1327,6 +1345,12 @@ export class StrctDatagridActionBar {}
       }
 
       /* ── Tree-grid ─────────────────────────────────────────── */
+      /* Roving-tabindex rows (the treegrid keyboard contract) need a visible
+         focus ring — cells, not the row box, paint the backgrounds. */
+      .strct-dg tbody tr[tabindex]:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: -2px;
+      }
       .strct-dg__treepad {
         display: inline-block;
         height: 1px;
@@ -1516,6 +1540,12 @@ export class StrctDatagrid {
    * hierarchically with indent + carets; sorting applies per sibling level;
    * an active filter shows matches with their ancestors, force-expanded.
    * Not combinable with `groupBy` or `lazy`.
+   *
+   * The table claims `role="treegrid"` and honors the row-level core of the
+   * treegrid keyboard contract: rows carry a roving tabindex, ArrowUp/Down
+   * move focus between rows, ArrowRight expands a collapsed parent row and
+   * ArrowLeft collapses an expanded one. There is no cell-level navigation —
+   * Tab walks the interactive elements inside each row as usual.
    */
   readonly childrenKey = input<string | null>(null);
   /** Emitted when the selection changes. */
@@ -1702,9 +1732,29 @@ export class StrctDatagrid {
 
   // ── Column filter popover ──────────────────────────────────────
   protected readonly filterOpenKey = signal<string | null>(null);
+  /** The filter button that opened the panel — focus returns here on close. */
+  private filterTrigger: HTMLElement | null = null;
   protected toggleFilterPanel(key: string, event: Event): void {
     event.stopPropagation();
-    this.filterOpenKey.set(this.filterOpenKey() === key ? null : key);
+    const opening = this.filterOpenKey() !== key;
+    this.filterOpenKey.set(opening ? key : null);
+    if (opening) {
+      this.filterTrigger = event.currentTarget as HTMLElement;
+      // Move focus into the panel once it has rendered.
+      setTimeout(() => {
+        const panel =
+          this.hostRef.nativeElement.querySelector<HTMLElement>('.strct-dg__filterpanel');
+        if (panel) focusFirstIn(panel);
+      });
+    } else {
+      this.filterTrigger = null;
+    }
+  }
+  private closeFilterPanel(restore = false): void {
+    if (!this.filterOpenKey()) return;
+    this.filterOpenKey.set(null);
+    if (restore) restoreFocus(this.filterTrigger);
+    this.filterTrigger = null;
   }
   protected hasFilter(key: string): boolean {
     const v = this.filters()[key];
@@ -1738,15 +1788,31 @@ export class StrctDatagrid {
     });
   }
   @HostListener('document:click', ['$event'])
-  protected onDocClickFilter(event: MouseEvent): void {
-    if (!this.filterOpenKey()) return;
+  protected onDocClickOverlays(event: MouseEvent): void {
     const t = event.target as HTMLElement;
-    if (t.closest('.strct-dg__filterpanel') || t.closest('.strct-dg__filterbtn')) return;
-    this.filterOpenKey.set(null);
+    if (
+      this.filterOpenKey() &&
+      !t.closest('.strct-dg__filterpanel') &&
+      !t.closest('.strct-dg__filterbtn')
+    ) {
+      this.closeFilterPanel();
+    }
+    if (this.chooserOpen() && !t.closest('.strct-dg__chooser-menu')) this.closeChooser();
   }
-  @HostListener('document:keydown.escape')
-  protected onEscapeFilter(): void {
-    this.filterOpenKey.set(null);
+  /** Escape closes the topmost transient surface and hands focus back to its
+   *  trigger; stopPropagation keeps a host modal / drawer from also closing. */
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEscapeOverlays(event: Event): void {
+    if (this.filterOpenKey()) {
+      event.stopPropagation();
+      this.closeFilterPanel(true);
+    } else if (this.chooserOpen()) {
+      event.stopPropagation();
+      this.closeChooser(true);
+    } else if (this.paneOpen()) {
+      event.stopPropagation();
+      this.closePane();
+    }
   }
 
   // ── Tree-grid state ────────────────────────────────────────────
@@ -1767,6 +1833,66 @@ export class StrctDatagrid {
     if (next.has(key)) next.delete(key);
     else next.add(key);
     this.expandedTree.set(next);
+  }
+
+  /**
+   * Treegrid keyboard contract (row-level core; there is deliberately no
+   * cell-level navigation — Tab still walks the interactive elements inside
+   * each row): ↑/↓ move focus between rows via a roving tabindex, → expands
+   * a collapsed parent row, ← collapses an expanded one.
+   */
+  /** Roving-tabindex target (row key); defaults to the first rendered row. */
+  private readonly activeTreeRow = signal<unknown>(null);
+
+  protected treeRowTabindex(row: StrctRow): number {
+    const rows = this.renderRows();
+    if (!rows.length) return -1;
+    const active = this.activeTreeRow();
+    const current =
+      active != null && rows.some((r) => this.rowKey(r) === active) ? active : this.rowKey(rows[0]);
+    return current === this.rowKey(row) ? 0 : -1;
+  }
+
+  protected onTreeRowKeydown(row: StrctRow, event: KeyboardEvent): void {
+    // Text inputs (cell editing, the selection checkbox) own their arrow keys.
+    if ((event.target as HTMLElement | null)?.tagName === 'INPUT') return;
+    const rows = this.renderRows();
+    const idx = rows.indexOf(row);
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.focusTreeRow(idx + 1);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.focusTreeRow(idx - 1);
+        break;
+      case 'ArrowRight':
+        if (this.treeHasChildren(row) && !this.treeExpanded(row)) {
+          event.preventDefault();
+          this.toggleTreeRow(row);
+        }
+        break;
+      case 'ArrowLeft':
+        if (this.treeHasChildren(row) && this.treeExpanded(row)) {
+          event.preventDefault();
+          this.toggleTreeRow(row);
+        }
+        break;
+    }
+  }
+
+  /** Move the roving tabindex to the row at `idx` and focus its element once
+   *  the new tabindex has rendered. */
+  private focusTreeRow(idx: number): void {
+    const rows = this.renderRows();
+    if (idx < 0 || idx >= rows.length) return;
+    this.activeTreeRow.set(this.rowKey(rows[idx]));
+    setTimeout(() => {
+      // Only data rows carry a tabindex; their DOM order matches renderRows.
+      const trs = this.hostRef.nativeElement.querySelectorAll<HTMLElement>('tbody tr[tabindex]');
+      trs[idx]?.focus();
+    });
   }
 
   // ── Inline cell editing ────────────────────────────────────────
@@ -1990,12 +2116,24 @@ export class StrctDatagrid {
     return this.stickyActive() ? last : null;
   });
 
+  /** The rows the select-all checkbox operates on: what the user can actually
+   *  see — the current page, or every row under the expanded groups (group
+   *  mode bypasses paging, so `paged()` would silently under-select). */
+  private readonly selectionRows = computed(() => {
+    if (this.groupBy() && !this.virtual()) {
+      return this.displayItems().flatMap((it) => (it.row ? [it.row] : []));
+    }
+    return this.paged();
+  });
+
   protected readonly allPageSelected = computed(() => {
-    const rows = this.paged();
+    const rows = this.selectionRows();
     return rows.length > 0 && rows.every((r) => this.selected().has(this.idOf(r)));
   });
   protected readonly somePageSelected = computed(
-    () => !this.allPageSelected() && this.paged().some((r) => this.selected().has(this.idOf(r))),
+    () =>
+      !this.allPageSelected() &&
+      this.selectionRows().some((r) => this.selected().has(this.idOf(r))),
   );
 
   /** Resolve a row's stable identity (defaults to the row object itself). */
@@ -2019,6 +2157,9 @@ export class StrctDatagrid {
   private lastStateKey = '';
 
   constructor() {
+    // The resize listeners live on document — if the grid is destroyed
+    // mid-drag they must not leak (onResizeEnd is a safe no-op when idle).
+    inject(DestroyRef).onDestroy(() => this.onResizeEnd());
     // Keep the page in range when the data set shrinks (server total in lazy mode).
     effect(() => {
       const size = this.pageSize();
@@ -2190,7 +2331,13 @@ export class StrctDatagrid {
   }
 
   closePane(): void {
+    // Hand focus back to the row's » button, but only when it was inside the
+    // pane — a programmatic close leaves the user's focus alone.
+    const host = this.hostRef.nativeElement;
+    const focusInside = !!host.querySelector('.strct-dg__pane')?.contains(document.activeElement);
+    const trigger = host.querySelector<HTMLElement>('.strct-dg__detailbtn--active');
     this.activeId.set(null);
+    if (focusInside) restoreFocus(trigger);
   }
 
   /** Open the row-action menu next to the clicked kebab button. */
@@ -2238,6 +2385,20 @@ export class StrctDatagrid {
     this.sortBy(key);
   }
 
+  /** The footer button that opened the column chooser — focus returns here. */
+  private chooserTrigger: HTMLElement | null = null;
+  protected toggleChooser(event: MouseEvent): void {
+    event.stopPropagation();
+    if (!this.chooserOpen()) this.chooserTrigger = event.currentTarget as HTMLElement;
+    this.chooserOpen.set(!this.chooserOpen());
+  }
+  protected closeChooser(restore = false): void {
+    if (!this.chooserOpen()) return;
+    this.chooserOpen.set(false);
+    if (restore) restoreFocus(this.chooserTrigger);
+    this.chooserTrigger = null;
+  }
+
   toggleColumn(key: string, visible: boolean): void {
     this.hiddenColumns.update((set) => {
       const next = new Set(set);
@@ -2245,6 +2406,20 @@ export class StrctDatagrid {
       else next.add(key);
       return next;
     });
+  }
+
+  /** Distinct aria label per row checkbox: the base label + this row's
+   *  identifier (its `rowId` value, falling back to the 1-based row index). */
+  protected selectRowLabel(row: StrctRow): string {
+    return this.L().selectRowFor(this.rowIdentifier(row));
+  }
+
+  private rowIdentifier(row: StrctRow): string {
+    if (this.rowId() != null) {
+      const id = this.idOf(row);
+      if (typeof id === 'string' || typeof id === 'number') return String(id);
+    }
+    return String(this.rows().indexOf(row) + 1);
   }
 
   protected isSelected(row: StrctRow): boolean {
@@ -2279,7 +2454,7 @@ export class StrctDatagrid {
 
   toggleAll(): void {
     const next = new Set(this.selected());
-    const rows = this.paged();
+    const rows = this.selectionRows();
     if (this.allPageSelected()) {
       rows.forEach((r) => next.delete(this.idOf(r)));
     } else {
@@ -2292,11 +2467,30 @@ export class StrctDatagrid {
     this.commitSelection(new Set());
   }
 
-  /** Emit the current row objects whose id is selected (resolved against the
-   *  latest data, so consumers always get fresh references). */
+  /** Last known row object per selected id — selections made on one page stay
+   *  in the payload when the data set no longer contains them (lazy paging),
+   *  so `selectionChange` and `selectedCount` never disagree. */
+  private readonly selectedRowCache = new Map<unknown, StrctRow>();
+
+  /** Emit every selected row: fresh objects from the latest data where
+   *  available, the last known snapshot otherwise (off-page lazy rows). */
   private commitSelection(next: Set<unknown>): void {
+    // Snapshot newly selected rows before they can page away; drop deselected ids.
+    for (const r of this.rows()) {
+      const id = this.idOf(r);
+      if (next.has(id)) this.selectedRowCache.set(id, r);
+    }
+    for (const id of [...this.selectedRowCache.keys()]) {
+      if (!next.has(id)) this.selectedRowCache.delete(id);
+    }
     this.selected.set(next);
-    this.selectionChange.emit(this.rows().filter((r) => next.has(this.idOf(r))));
+    const fresh = this.rows().filter((r) => next.has(this.idOf(r)));
+    const freshIds = new Set(fresh.map((r) => this.idOf(r)));
+    const offData = [...next]
+      .filter((id) => !freshIds.has(id))
+      .map((id) => this.selectedRowCache.get(id))
+      .filter((r): r is StrctRow => !!r);
+    this.selectionChange.emit([...fresh, ...offData]);
   }
 
   private compare(a: unknown, b: unknown): number {
