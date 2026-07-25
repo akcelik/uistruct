@@ -6,12 +6,15 @@ import {
   StrctField,
   StrctIcon,
   StrctInput,
+  StrctNumber,
   StrctRadio,
   StrctRadioGroup,
   StrctStack,
   StrctStackItem,
   StrctStep,
   StrctToggle,
+  StrctTreeNodeData,
+  StrctTreeSelect,
   StrctWizard,
 } from 'strct';
 
@@ -43,6 +46,8 @@ interface HostOption {
     StrctStackItem,
     StrctAlert,
     StrctIcon,
+    StrctNumber,
+    StrctTreeSelect,
   ],
   template: `
     <header class="wiz__head">
@@ -77,11 +82,13 @@ interface HostOption {
               />
             </strct-field>
             <strct-field label="Datacenter" hint="Where the cluster will be created.">
-              <select strctInput [ngModel]="datacenter()" (ngModelChange)="datacenter.set($event)">
-                <option value="us-east-1">us-east-1</option>
-                <option value="us-west-2">us-west-2</option>
-                <option value="eu-central-1">eu-central-1</option>
-              </select>
+              <strct-tree-select
+                [nodes]="datacenterTree"
+                [ngModel]="datacenter()"
+                (ngModelChange)="datacenter.set($event ?? '')"
+                placeholder="Select a datacenter"
+                clearable
+              />
             </strct-field>
             <strct-field label="Description" hint="Optional.">
               <textarea
@@ -123,6 +130,16 @@ interface HostOption {
             <strct-toggle [ngModel]="ha()" (ngModelChange)="ha.set($event)"
               >High Availability (HA)</strct-toggle
             >
+            @if (ha()) {
+              <strct-field label="Failover hosts" hint="Hosts reserved for HA restarts.">
+                <strct-number
+                  [min]="1"
+                  [max]="4"
+                  [ngModel]="failoverHosts()"
+                  (ngModelChange)="failoverHosts.set($event ?? 1)"
+                />
+              </strct-field>
+            }
             <strct-toggle [ngModel]="drs()" (ngModelChange)="drs.set($event)"
               >Dynamic optimization</strct-toggle
             >
@@ -142,7 +159,9 @@ interface HostOption {
             <strct-stack-item label="Name">{{ name() }}</strct-stack-item>
             <strct-stack-item label="Datacenter">{{ datacenter() }}</strct-stack-item>
             <strct-stack-item label="Hosts">{{ selectedHosts().length }} selected</strct-stack-item>
-            <strct-stack-item label="HA">{{ ha() ? 'Enabled' : 'Disabled' }}</strct-stack-item>
+            <strct-stack-item label="HA">{{
+              ha() ? 'Enabled · ' + failoverHosts() + ' failover host(s)' : 'Disabled'
+            }}</strct-stack-item>
             <strct-stack-item label="Optimization">{{
               drs() ? 'Enabled · ' + automation() : 'Disabled'
             }}</strct-stack-item>
@@ -227,6 +246,7 @@ export class ClusterWizardPage {
   protected readonly description = signal('');
   protected readonly selectedHosts = signal<string[]>([]);
   protected readonly ha = signal(true);
+  protected readonly failoverHosts = signal(1);
   protected readonly drs = signal(true);
   protected readonly automation = signal('partial');
   protected readonly submitting = signal(false);
@@ -237,6 +257,37 @@ export class ClusterWizardPage {
     { id: 'h2', name: 'hv-pool-02', spec: '48 cores · 512 GB' },
     { id: 'h3', name: 'hv-pool-03', spec: '64 cores · 768 GB' },
     { id: 'h4', name: 'hv-pool-04', spec: '64 cores · 768 GB' },
+  ];
+
+  /** Datacenter → availability zone placement tree for step 1. */
+  protected readonly datacenterTree: StrctTreeNodeData[] = [
+    {
+      id: 'us-east-1',
+      label: 'us-east-1',
+      icon: 'datacenter',
+      children: [
+        { id: 'us-east-1a', label: 'Zone A' },
+        { id: 'us-east-1b', label: 'Zone B' },
+      ],
+    },
+    {
+      id: 'us-west-2',
+      label: 'us-west-2',
+      icon: 'datacenter',
+      children: [
+        { id: 'us-west-2a', label: 'Zone A' },
+        { id: 'us-west-2b', label: 'Zone B' },
+      ],
+    },
+    {
+      id: 'eu-central-1',
+      label: 'eu-central-1',
+      icon: 'datacenter',
+      children: [
+        { id: 'eu-central-1a', label: 'Zone A' },
+        { id: 'eu-central-1b', label: 'Zone B' },
+      ],
+    },
   ];
 
   protected readonly basicsValid = computed(() => this.name().trim().length > 0);

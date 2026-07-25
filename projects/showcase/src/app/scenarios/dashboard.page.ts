@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import {
   StrctBadge,
   StrctBadgeStatus,
@@ -16,15 +16,21 @@ import {
   StrctFlow,
   StrctFlowNode,
   StrctGauge,
+  StrctHeatmap,
+  StrctHeatmapCell,
   StrctHero,
   StrctIcon,
+  StrctMetricTile,
+  StrctNotificationCenter,
   StrctProgress,
   StrctRow,
   StrctSparkline,
+  StrctStatusDot,
   StrctTable,
   StrctTimeline,
   StrctTimelineItem,
   StrctTimelineState,
+  StrctToastService,
 } from 'strct';
 
 interface Kpi {
@@ -47,6 +53,15 @@ interface EventItem {
   state: StrctTimelineState;
   detail: string;
 }
+
+/** CPU % per host per 4-hour slot, in the same order as heatHosts × heatHours. */
+const HEAT: number[][] = [
+  [62, 55, 71, 78, 74, 66],
+  [41, 38, 44, 52, 47, 40],
+  [70, 74, 86, 92, 88, 76],
+  [18, 15, 22, 27, 24, 19],
+  [2, 2, 3, 3, 2, 2],
+];
 
 /**
  * Scenario: a composed datacenter overview dashboard built entirely from strct
@@ -74,6 +89,10 @@ interface EventItem {
     StrctTable,
     StrctCellDef,
     StrctButton,
+    StrctMetricTile,
+    StrctHeatmap,
+    StrctStatusDot,
+    StrctNotificationCenter,
   ],
   template: `
     <header class="dash__head">
@@ -82,7 +101,10 @@ interface EventItem {
         <p class="dash__sub">Production region · us-east-1 · last updated just now</p>
       </div>
       <div class="dash__actions">
-        <button strct-button size="sm"><strct-icon name="sync" [size]="14" /> Refresh</button>
+        <strct-notification-center />
+        <button strct-button size="sm" (click)="refresh()">
+          <strct-icon name="sync" [size]="14" /> Refresh
+        </button>
         <button strct-button variant="primary" solid size="sm">
           <strct-icon name="cluster" [size]="14" /> New cluster
         </button>
@@ -123,6 +145,17 @@ interface EventItem {
           </div>
         </div>
       }
+      <strct-metric-tile
+        label="Replication lag"
+        [value]="lag()"
+        unit="s"
+        icon="sync"
+        status="success"
+        [delta]="-12"
+        caption="us-east-1 → us-west-2 · async"
+        [data]="lagTrend"
+        [loading]="refreshing()"
+      />
     </section>
 
     <!-- Health + gauges + volumes -->
@@ -221,6 +254,24 @@ interface EventItem {
           />
         </strct-card-block>
       </strct-card>
+
+      <strct-card>
+        <strct-card-header
+          ><span>Host CPU density — last 24h</span
+          ><strct-badge status="warning">peak 92%</strct-badge></strct-card-header
+        >
+        <strct-card-block>
+          <strct-heatmap
+            [data]="heatCells"
+            [rows]="heatHosts"
+            [cols]="heatHours"
+            [max]="100"
+            status="warning"
+            ariaLabel="Host CPU usage per hour"
+            [cellHeight]="20"
+          />
+        </strct-card-block>
+      </strct-card>
     </section>
 
     <!-- Replication -->
@@ -262,7 +313,9 @@ interface EventItem {
         <strct-card-block>
           <strct-table [columns]="hostCols" [rows]="hostRows" hover>
             <ng-template strctCell="status" let-value="value">
-              <strct-badge [status]="statusBadge(value)">{{ value }}</strct-badge>
+              <span class="statuscell"
+                ><strct-status-dot [status]="statusBadge(value)" size="sm" /> {{ value }}</span
+              >
             </ng-template>
             <ng-template strctCell="cpu" let-value="value">
               <div class="cpucell">
@@ -455,6 +508,12 @@ interface EventItem {
         font-variant-numeric: tabular-nums;
       }
 
+      .statuscell {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--t1);
+      }
       .cpucell {
         display: flex;
         align-items: center;
@@ -475,6 +534,13 @@ interface EventItem {
   ],
 })
 export class DashboardPage {
+  private readonly toast = inject(StrctToastService);
+
+  /** True while a Refresh round-trip is in flight — drives the tile skeleton. */
+  protected readonly refreshing = signal(false);
+  protected readonly lag = signal(14);
+  protected readonly lagTrend = [22, 19, 20, 17, 16, 15, 14];
+
   protected readonly kpis: Kpi[] = [
     {
       icon: 'host',
@@ -533,6 +599,19 @@ export class DashboardPage {
   protected readonly clusterNames = ['Prod-A', 'Prod-B', 'Edge', 'Dev', 'DR', 'Lab'];
   protected readonly vmsPerCluster = [96, 84, 32, 58, 28, 20];
 
+  /** Host × 4h-slot CPU averages (%) for the density heatmap. */
+  protected readonly heatHosts = [
+    'hv-prod-01',
+    'hv-prod-02',
+    'hv-prod-03',
+    'hv-edge-01',
+    'hv-dr-01',
+  ];
+  protected readonly heatHours = ['00', '04', '08', '12', '16', '20'];
+  protected readonly heatCells: StrctHeatmapCell[] = this.heatHosts.flatMap((row, r) =>
+    this.heatHours.map((col, c) => ({ row, col, value: HEAT[r][c] })),
+  );
+
   protected readonly events: EventItem[] = [
     {
       title: 'Live migration completed',
@@ -581,6 +660,20 @@ export class DashboardPage {
     { id: 'p', label: 'us-east-1', role: 'PRIMARY', status: 'success' },
     { id: 'd', label: 'us-west-2', role: 'DR', status: 'accent' },
   ];
+
+  /** Fake refresh round-trip: the metric tile skeletons while it runs. */
+  protected refresh(): void {
+    if (this.refreshing()) return;
+    this.refreshing.set(true);
+    setTimeout(() => {
+      this.refreshing.set(false);
+      this.lag.set(12);
+      this.toast.show('All 42 host probes responded', {
+        type: 'success',
+        title: 'Dashboard refreshed',
+      });
+    }, 900);
+  }
 
   protected legendClass(label: string | undefined): string {
     const map: Record<string, string> = {

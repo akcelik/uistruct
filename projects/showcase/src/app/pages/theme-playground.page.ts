@@ -20,15 +20,31 @@ import {
   StrctCheckbox,
   StrctChart,
   StrctColorPicker,
+  StrctCombobox,
+  StrctDatetimePicker,
   StrctDonut,
   StrctDonutSegment,
+  StrctHeatmap,
+  StrctHeatmapCell,
+  StrctInlineEdit,
   StrctInput,
+  StrctNotificationCenter,
+  StrctNumber,
+  StrctOption,
+  StrctPopover,
+  StrctPopoverTrigger,
   StrctProgress,
   StrctRange,
+  StrctStatusDot,
   StrctTag,
   StrctThemeService,
   StrctThemeSwitcher,
+  StrctToastService,
   StrctToggle,
+  StrctToolbar,
+  StrctToolbarSpacer,
+  StrctTreeNodeData,
+  StrctTreeSelect,
 } from 'strct';
 
 // ── Palette-builder color math ──────────────────────────────────
@@ -95,10 +111,16 @@ const accentTokens = (hex: string, mode: 'dark' | 'light'): Record<string, strin
     StrctButton,
     StrctBadge,
     StrctTag,
+    StrctStatusDot,
     StrctInput,
     StrctCheckbox,
     StrctToggle,
     StrctRange,
+    StrctNumber,
+    StrctCombobox,
+    StrctTreeSelect,
+    StrctDatetimePicker,
+    StrctInlineEdit,
     StrctCard,
     StrctCardHeader,
     StrctCardBlock,
@@ -109,6 +131,12 @@ const accentTokens = (hex: string, mode: 'dark' | 'light'): Record<string, strin
     StrctChart,
     StrctColorPicker,
     StrctDonut,
+    StrctHeatmap,
+    StrctToolbar,
+    StrctToolbarSpacer,
+    StrctPopover,
+    StrctPopoverTrigger,
+    StrctNotificationCenter,
   ],
   template: `
     <header class="tp__head">
@@ -210,6 +238,13 @@ const accentTokens = (hex: string, mode: 'dark' | 'light'): Record<string, strin
             <strct-tag status="success">stable</strct-tag>
             <strct-tag>eu-west</strct-tag>
           </div>
+          <div class="row">
+            <strct-status-dot />
+            <strct-status-dot status="accent" />
+            <strct-status-dot status="success" />
+            <strct-status-dot status="warning" />
+            <strct-status-dot status="critical" />
+          </div>
         </strct-card-block>
       </strct-card>
 
@@ -240,6 +275,37 @@ const accentTokens = (hex: string, mode: 'dark' | 'light'): Record<string, strin
               (ngModelChange)="vol.set($event)"
               showValue
             />
+            <strct-number
+              [min]="1"
+              [max]="16"
+              [step]="2"
+              [ngModel]="vcpus()"
+              (ngModelChange)="vcpus.set($event)"
+            />
+            <strct-combobox
+              [options]="vmImages"
+              [ngModel]="vmImage()"
+              (ngModelChange)="vmImage.set($event)"
+              placeholder="Guest OS…"
+              clearable
+            />
+            <strct-tree-select
+              [nodes]="inventory"
+              [ngModel]="hostId()"
+              (ngModelChange)="hostId.set($event)"
+              placeholder="Pick a host…"
+              clearable
+            />
+            <strct-datetime-picker
+              [minuteStep]="15"
+              [ngModel]="maintStart()"
+              (ngModelChange)="maintStart.set($event)"
+            />
+            <strct-inline-edit
+              [ngModel]="vmName()"
+              (ngModelChange)="vmName.set($event)"
+              placeholder="Unnamed VM"
+            />
           </div>
         </strct-card-block>
       </strct-card>
@@ -253,12 +319,36 @@ const accentTokens = (hex: string, mode: 'dark' | 'light'): Record<string, strin
             <strct-alert type="warning">Storage is running low.</strct-alert>
             <strct-alert type="critical">A host is unreachable.</strct-alert>
           </div>
+          <div class="row">
+            <strct-popover placement="bottom-start" ariaLabel="Host details">
+              <button strct-button size="sm" strctPopoverTrigger>Host details</button>
+              <h4>hv-02.fra.corp</h4>
+              <p>cluster-01 · 128 vCPUs · 768 GiB — any projected content fits here.</p>
+            </strct-popover>
+            <strct-notification-center />
+            <button strct-button size="sm" (click)="toast.success('Snapshot completed')">
+              Fire toast
+            </button>
+          </div>
         </strct-card-block>
       </strct-card>
 
       <strct-card>
         <strct-card-header><span>Data visualization</span></strct-card-header>
         <strct-card-block>
+          <strct-toolbar
+            ariaLabel="Host actions"
+            divided
+            [selectionCount]="sel()"
+            (cleared)="sel.set(0)"
+          >
+            <button strct-button size="sm" variant="primary">Restart</button>
+            <button strct-button size="sm">Enter maintenance</button>
+            <strct-toolbar-spacer />
+            <button strct-button size="sm" variant="flat" (click)="sel.set(3)">
+              Simulate: 3 selected
+            </button>
+          </strct-toolbar>
           <div class="viz">
             <div class="col" style="flex:1; min-width:160px;">
               <strct-progress [value]="38" />
@@ -275,6 +365,7 @@ const accentTokens = (hex: string, mode: 'dark' | 'light'): Record<string, strin
             />
           </div>
           <strct-chart [data]="series" type="area" status="accent" [height]="120" [max]="100" />
+          <strct-heatmap [data]="heatCells" [max]="100" ariaLabel="Host CPU by hour" />
         </strct-card-block>
       </strct-card>
 
@@ -403,6 +494,10 @@ const accentTokens = (hex: string, mode: 'dark' | 'light'): Record<string, strin
         flex-wrap: wrap;
         margin-bottom: 14px;
       }
+      strct-heatmap {
+        display: block;
+        margin-top: 14px;
+      }
     `,
   ],
 })
@@ -502,6 +597,72 @@ export class ThemePlaygroundPage {
   protected readonly agree = signal(true);
   protected readonly on = signal(true);
   protected readonly vol = signal(60);
+
+  protected readonly toast = inject(StrctToastService);
+
+  // ── v2.0 preview state ──────────────────────────────────────────
+  protected readonly vcpus = signal<number | null>(4);
+  protected readonly vmName = signal('web-01');
+  protected readonly vmImage = signal<unknown>('ubuntu');
+  protected readonly vmImages: StrctOption[] = [
+    {
+      value: 'ubuntu',
+      label: 'Ubuntu 24.04 LTS',
+      icon: 'vm',
+      description: 'Cloud image · 2.1 GiB',
+    },
+    { value: 'debian', label: 'Debian 12', icon: 'vm', description: 'netinst · 640 MiB' },
+    {
+      value: 'photon',
+      label: 'Photon OS 5',
+      icon: 'container',
+      description: 'Minimal Linux · 420 MiB',
+    },
+  ];
+  protected readonly hostId = signal<string | null>('hv-01');
+  protected readonly inventory: StrctTreeNodeData[] = [
+    {
+      id: 'dc-east',
+      label: 'dc-east',
+      children: [
+        {
+          id: 'cl-east-01',
+          label: 'cluster-01',
+          children: [
+            { id: 'hv-01', label: 'hv-01', icon: 'host' },
+            { id: 'hv-02', label: 'hv-02', icon: 'host' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'dc-west',
+      label: 'dc-west',
+      children: [{ id: 'hv-03', label: 'hv-03', icon: 'host' }],
+    },
+  ];
+  protected readonly maintStart = signal('');
+  protected readonly sel = signal(3);
+  protected readonly heatCells: StrctHeatmapCell[] = [
+    { row: 'hv-01', col: '00', value: 12 },
+    { row: 'hv-01', col: '04', value: 18 },
+    { row: 'hv-01', col: '08', value: 42 },
+    { row: 'hv-01', col: '12', value: 66 },
+    { row: 'hv-01', col: '16', value: 54 },
+    { row: 'hv-01', col: '20', value: 24 },
+    { row: 'hv-02', col: '00', value: 8 },
+    { row: 'hv-02', col: '04', value: 10 },
+    { row: 'hv-02', col: '08', value: 30 },
+    { row: 'hv-02', col: '12', value: 88 },
+    { row: 'hv-02', col: '16', value: 71 },
+    { row: 'hv-02', col: '20', value: 33 },
+    { row: 'hv-03', col: '00', value: 22 },
+    { row: 'hv-03', col: '04', value: 16 },
+    { row: 'hv-03', col: '08', value: 55 },
+    { row: 'hv-03', col: '12', value: 47 },
+    { row: 'hv-03', col: '16', value: 92 },
+    { row: 'hv-03', col: '20', value: 60 },
+  ];
 
   protected readonly donut: StrctDonutSegment[] = [
     { value: 36, label: 'Running' },

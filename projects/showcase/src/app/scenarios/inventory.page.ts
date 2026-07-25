@@ -1,10 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   StrctBadge,
   StrctBadgeStatus,
   StrctButton,
   StrctCellDef,
+  StrctConfirmOutlet,
+  StrctConfirmService,
   StrctDatagrid,
   StrctDatagridActionBar,
   StrctDatagridColumn,
@@ -16,6 +25,8 @@ import {
   StrctRowDetailDef,
   StrctStack,
   StrctStackItem,
+  StrctToolbar,
+  StrctToolbarSpacer,
 } from 'strct';
 
 /**
@@ -40,6 +51,9 @@ import {
     StrctInput,
     StrctStack,
     StrctStackItem,
+    StrctToolbar,
+    StrctToolbarSpacer,
+    StrctConfirmOutlet,
   ],
   template: `
     <header class="inv__head">
@@ -52,7 +66,35 @@ import {
       }
     </header>
 
+    <strct-toolbar
+      ariaLabel="Inventory actions"
+      [selectionCount]="selected()"
+      (cleared)="grid.clearSelection()"
+      divided
+    >
+      <button strct-button size="sm" [disabled]="!selected()" (click)="batch('Migrate')">
+        <strct-icon name="sync" [size]="14" /> Migrate
+      </button>
+      <button strct-button size="sm" [disabled]="!selected()" (click)="batch('Enter maintenance')">
+        <strct-icon name="maintenance" [size]="14" /> Maintenance
+      </button>
+      <button
+        strct-button
+        variant="critical"
+        size="sm"
+        [disabled]="!selected()"
+        (click)="confirmDecommission()"
+      >
+        <strct-icon name="close" [size]="14" /> Decommission
+      </button>
+      <strct-toolbar-spacer />
+      <button strct-button variant="primary" solid size="sm">
+        <strct-icon name="host" [size]="14" /> Add host
+      </button>
+    </strct-toolbar>
+
     <strct-datagrid
+      #grid
       [columns]="cols"
       [rows]="rows()"
       rowId="id"
@@ -67,7 +109,7 @@ import {
       (syncChange)="onSync()"
       (rowAction)="onRowAction($event)"
     >
-      <!-- Persistent toolbar — filter + count, with batch actions on selection -->
+      <!-- Persistent toolbar — filter + count -->
       <div strctDatagridActionBar class="inv__toolbar">
         <input
           strctInput
@@ -77,28 +119,8 @@ import {
           [ngModel]="query()"
           (ngModelChange)="query.set($event)"
         />
-        <span class="inv__count"
-          >{{ rows().length }} objects
-          @if (selected()) {
-            · {{ selected() }} selected
-          }
-        </span>
+        <span class="inv__count">{{ rows().length }} objects </span>
         <span class="grow"></span>
-        @if (selected()) {
-          <button strct-button size="sm" (click)="batch('Migrate')">
-            <strct-icon name="sync" [size]="14" /> Migrate
-          </button>
-          <button strct-button size="sm" (click)="batch('Enter maintenance')">
-            <strct-icon name="maintenance" [size]="14" /> Maintenance
-          </button>
-          <button strct-button variant="critical" size="sm" (click)="batch('Decommission')">
-            <strct-icon name="close" [size]="14" /> Decommission
-          </button>
-        } @else {
-          <button strct-button variant="primary" solid size="sm">
-            <strct-icon name="host" [size]="14" /> Add host
-          </button>
-        }
       </div>
 
       <!-- Templated cells -->
@@ -133,6 +155,8 @@ import {
         </strct-stack>
       </ng-template>
     </strct-datagrid>
+
+    <strct-confirm-outlet />
   `,
   styles: [
     `
@@ -163,6 +187,9 @@ import {
         align-items: center;
         gap: 12px;
         width: 100%;
+      }
+      strct-toolbar {
+        margin-bottom: 10px;
       }
       .inv__filter {
         max-width: 320px;
@@ -205,6 +232,9 @@ import {
   ],
 })
 export class InventoryPage {
+  private readonly confirm = inject(StrctConfirmService);
+  private readonly grid = viewChild('grid', { read: StrctDatagrid });
+
   protected readonly query = signal('');
   protected readonly selected = signal(0);
   protected readonly lastAction = signal('');
@@ -423,11 +453,44 @@ export class InventoryPage {
     { label: 'Remove from inventory', icon: 'close', critical: true },
   ];
   protected onRowAction(e: { row: StrctRow; item: StrctMenuItem }): void {
+    if (e.item.label === 'Remove from inventory') {
+      void this.confirmRemove(e.row);
+      return;
+    }
     this.lastAction.set(`${e.item.label} · ${e.row['name']}`);
   }
   protected batch(action: string): void {
     this.lastAction.set(`${action} · ${this.selected()} object(s)`);
   }
+
+  /** Batch decommission — destructive, so it goes through the confirm dialog. */
+  protected async confirmDecommission(): Promise<void> {
+    const n = this.selected();
+    if (!n) return;
+    const ok = await this.confirm.confirm({
+      title: `Decommission ${n} object(s)?`,
+      message:
+        'The selected hosts and VMs will be evacuated and removed from all clusters. This cannot be undone.',
+      confirmLabel: 'Decommission',
+      tone: 'critical',
+    });
+    if (!ok) return;
+    this.lastAction.set(`Decommission · ${n} object(s)`);
+    this.grid()?.clearSelection();
+  }
+
+  /** Per-row removal — same destructive confirm flow as the batch action. */
+  private async confirmRemove(row: StrctRow): Promise<void> {
+    const ok = await this.confirm.confirm({
+      title: `Remove ${row['name']}?`,
+      message: `${row['name']} (${row['type']}, ${row['cluster']}) will be removed from the inventory. This cannot be undone.`,
+      confirmLabel: 'Remove',
+      tone: 'critical',
+    });
+    if (!ok) return;
+    this.lastAction.set(`Remove from inventory · ${row['name']}`);
+  }
+
   protected onSync(): void {
     this.lastAction.set('Synced just now');
   }
