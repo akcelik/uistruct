@@ -355,45 +355,6 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not rely on the status dot alone to convey critical state.'],
       },
       {
-        id: 'status-dot',
-        title: 'Status dot',
-        selector: 'strct-status-dot',
-        importNames: ['StrctStatusDot'],
-        summary: 'State dot that never relies on color alone.',
-        lead: 'A small status dot whose tone is painted in CSS while the state is also rendered as visually-hidden text — screen readers (and anyone copying text) get "Warning", not just a yellow circle. Uses the canonical `StrctStatus` vocabulary: OK maps to `success`, info to `accent` (there is no `ok` / `info`).',
-        inputs: [
-          {
-            name: 'status',
-            type: STATUS_VALUES,
-            default: `'neutral'`,
-            description: 'Status tone.',
-          },
-          {
-            name: 'label',
-            type: 'string',
-            default: `''`,
-            description:
-              'Accessible state text (localizable); empty falls back to a per-status default ("OK", "Warning", …).',
-          },
-          {
-            name: 'size',
-            type: `'sm' | 'md'`,
-            default: `'md'`,
-            description: 'Dot size; `sm` for dense rows (tables, menus).',
-          },
-        ],
-        do: [
-          'Use inside avatars, menu rows and metric tiles — anywhere a bare colored dot would carry meaning.',
-          'Pass a specific `label` when the state needs context ("Node unreachable").',
-        ],
-        dont: [
-          'Do not stretch a dot into a status pill — use a badge when a label should be visible.',
-        ],
-        a11y: [
-          'The state is always exposed as (visually hidden) text, so the dot is never color-only.',
-        ],
-      },
-      {
         id: 'progress',
         title: 'Progress',
         selector: 'strct-progress',
@@ -1570,45 +1531,6 @@ export const DOCS: DocCategory[] = [
         ],
       },
       {
-        id: 'confirm',
-        title: 'Confirm',
-        selector: 'strct-confirm-outlet',
-        importNames: ['StrctConfirmService', 'StrctConfirmOutlet'],
-        summary: 'Promise-based confirm dialog.',
-        lead: 'Ask "are you sure?" from anywhere and `await` the answer: `StrctConfirmService.confirm()` returns a promise that resolves `true` on confirm and `false` on cancel, the X, Escape or a backdrop click. Render `<strct-confirm-outlet />` once near the app root — without it nothing shows. One dialog at a time: a new call cancels (resolves `false`) the pending one.',
-        inputs: [
-          {
-            name: 'confirmLabel / cancelLabel / closeLabel',
-            type: 'string',
-            default: `'Confirm' / 'Cancel' / 'Close'`,
-            description:
-              'On the outlet: default labels, so an app localizes every confirm() call in one place.',
-          },
-        ],
-        methods: [
-          {
-            name: 'confirm(options)',
-            type: '(StrctConfirmOptions) => Promise<boolean>',
-            description:
-              'Ask the user; `{ title; message; confirmLabel?; cancelLabel?; tone? }` — tone "critical" renders the confirm button as destructive.',
-          },
-          {
-            name: 'settle(result)',
-            type: '(result: boolean) => void',
-            description: 'Resolve the pending confirmation and close the dialog.',
-          },
-        ],
-        do: [
-          'Render the outlet once, just inside the app shell.',
-          'Use tone "critical" and a message that spells out the consequences for destructive actions.',
-        ],
-        dont: ['Do not chain confirms — one dialog at a time; a second call cancels the first.'],
-        a11y: [
-          'Built on strct-modal: focus trap, Escape / backdrop dismissal and focus restore included.',
-          'Initial focus lands on Cancel — the safe default, never the destructive action.',
-        ],
-      },
-      {
         id: 'drawer',
         title: 'Drawer',
         selector: 'strct-drawer',
@@ -1713,58 +1635,6 @@ export const DOCS: DocCategory[] = [
         a11y: [
           'Full APG menu keyboarding: ArrowDown on the trigger opens; arrows rove (skipping disabled), Home/End jump, Enter/Space activate, Tab closes; Escape and selection restore focus to the trigger.',
           'A click on menu padding or a divider does NOT close the menu — only a real item activation does, so a 2px miss never throws the interaction away.',
-        ],
-      },
-      {
-        id: 'popover',
-        title: 'Popover',
-        selector: 'strct-popover, [strctPopoverTrigger]',
-        importNames: ['StrctPopover', 'StrctPopoverTrigger'],
-        summary: 'Anchored overlay panel for arbitrary content.',
-        lead: 'The generic anchored overlay primitive behind menus, signposts and rich pickers: project any content and mark a native `<button>` with `strctPopoverTrigger`. `open` is two-way, so the panel can also be driven from the outside. Positioning, edge-flip and scroll/resize tracking come from `strctOverlay`; the panel is `position: fixed`, so it escapes ancestor overflow clipping.',
-        inputs: [
-          {
-            name: 'open',
-            type: 'boolean',
-            default: 'false',
-            description: 'Open state, two-way (`[(open)]`).',
-          },
-          {
-            name: 'placement',
-            type: 'StrctOverlayPlacement',
-            default: `'bottom-start'`,
-            description: 'Panel placement relative to the trigger; edge-flip is automatic.',
-          },
-          {
-            name: 'ariaLabel',
-            type: 'string',
-            default: `'Details'`,
-            description: 'Accessible name of the popover dialog (localizable).',
-          },
-          {
-            name: 'trap',
-            type: 'boolean',
-            default: 'false',
-            description:
-              'Modal-ish usage: move focus into the panel on open, trap Tab inside, hand focus back on close. Off by default — a plain popover never steals focus.',
-          },
-        ],
-        methods: [
-          { name: 'toggle()', type: '() => void', description: 'Flip the open state.' },
-          {
-            name: 'close(restore?)',
-            type: '(restore?: boolean) => void',
-            description: 'Close; with `restore` (or under `trap`) focus returns to the trigger.',
-          },
-        ],
-        do: [
-          'Put the trigger directive on a native <button> — Enter/Space then fire a single click.',
-          'Turn on `trap` when the panel holds a form the user must complete.',
-        ],
-        dont: ['Do not use it for action menus — the dropdown already wires the menu semantics.'],
-        a11y: [
-          'The real trigger button carries aria-haspopup="dialog" / aria-expanded; the panel is a labelled role="dialog".',
-          'Escape closes (without bubbling to a host modal); outside click closes; under `trap` Tab wraps inside the panel.',
         ],
       },
       {
@@ -2045,62 +1915,6 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not use it for site navigation \u2014 that is the header / rail\u2019s job.'],
         a11y: [
           'role="menubar" with roving tabindex; menus are labeled role="menu"; Escape and outside click close.',
-        ],
-      },
-      {
-        id: 'toolbar',
-        title: 'Toolbar',
-        selector: 'strct-toolbar, strct-toolbar-spacer',
-        importNames: ['StrctToolbar', 'StrctToolbarSpacer'],
-        summary: 'Action bar with a selection chip.',
-        lead: 'An action bar for datagrid / card tops: left-aligned projected actions with an optional "N selected" chip and a × that emits `(cleared)`. Drop `strct-toolbar-spacer` between actions to push the following ones to the far end.',
-        inputs: [
-          {
-            name: 'ariaLabel',
-            type: 'string',
-            default: `'Toolbar'`,
-            description: 'Accessible name of the bar (localizable).',
-          },
-          {
-            name: 'orientation',
-            type: `'horizontal' | 'vertical'`,
-            default: `'horizontal'`,
-            description: 'Roving axis: horizontal bars use Left/Right, vertical use Up/Down.',
-          },
-          {
-            name: 'selectionCount',
-            type: 'number',
-            default: '0',
-            description: 'Selected row/item count; > 0 shows the selection chip + clear ×.',
-          },
-          {
-            name: 'divided',
-            type: 'boolean',
-            default: 'false',
-            description: 'Subtle bottom divider — the classic "actions above the grid" look.',
-          },
-          {
-            name: 'selectionLabel',
-            type: '(n: number) => string',
-            default: '`${n} selected`',
-            description: 'Builds the selection-chip label from the count (localizable).',
-          },
-        ],
-        outputs: [
-          {
-            name: 'cleared',
-            type: 'void',
-            description: 'The × was pressed — clear your selection state.',
-          },
-        ],
-        do: [
-          'Bind `selectionCount` to the grid selection and handle `(cleared)` to reset it.',
-          'Keep actions to icon buttons and short labels; overflow belongs in a dropdown.',
-        ],
-        dont: ['Do not use it for site or app navigation — that is the menubar / rail’s job.'],
-        a11y: [
-          'role="toolbar" with APG roving: Arrow keys move across the projected controls (mirrored in RTL), Home/End jump to the ends.',
-          'The selection count is announced via a polite live region; the clear × has an accessible label.',
         ],
       },
       {
@@ -2397,6 +2211,45 @@ export const DOCS: DocCategory[] = [
     loadExamples: () => import('../pages/data.page').then((m) => m.DataPage),
     components: [
       {
+        id: 'status-dot',
+        title: 'Status dot',
+        selector: 'strct-status-dot',
+        importNames: ['StrctStatusDot'],
+        summary: 'State dot that never relies on color alone.',
+        lead: 'A small status dot whose tone is painted in CSS while the state is also rendered as visually-hidden text — screen readers (and anyone copying text) get "Warning", not just a yellow circle. Uses the canonical `StrctStatus` vocabulary: OK maps to `success`, info to `accent` (there is no `ok` / `info`).',
+        inputs: [
+          {
+            name: 'status',
+            type: STATUS_VALUES,
+            default: `'neutral'`,
+            description: 'Status tone.',
+          },
+          {
+            name: 'label',
+            type: 'string',
+            default: `''`,
+            description:
+              'Accessible state text (localizable); empty falls back to a per-status default ("OK", "Warning", …).',
+          },
+          {
+            name: 'size',
+            type: `'sm' | 'md'`,
+            default: `'md'`,
+            description: 'Dot size; `sm` for dense rows (tables, menus).',
+          },
+        ],
+        do: [
+          'Use inside avatars, menu rows and metric tiles — anywhere a bare colored dot would carry meaning.',
+          'Pass a specific `label` when the state needs context ("Node unreachable").',
+        ],
+        dont: [
+          'Do not stretch a dot into a status pill — use a badge when a label should be visible.',
+        ],
+        a11y: [
+          'The state is always exposed as (visually hidden) text, so the dot is never color-only.',
+        ],
+      },
+      {
         id: 'reorder',
         title: 'Reorder',
         selector: '[strctReorder] + [strctReorderItem]',
@@ -2603,6 +2456,62 @@ export const DOCS: DocCategory[] = [
         ],
         do: ['Use for read-only, lightweight tabular data.'],
         dont: ['Do not use the simple table when you need sorting / selection — use the datagrid.'],
+      },
+      {
+        id: 'toolbar',
+        title: 'Toolbar',
+        selector: 'strct-toolbar, strct-toolbar-spacer',
+        importNames: ['StrctToolbar', 'StrctToolbarSpacer'],
+        summary: 'Action bar with a selection chip.',
+        lead: 'An action bar for datagrid / card tops: left-aligned projected actions with an optional "N selected" chip and a × that emits `(cleared)`. Drop `strct-toolbar-spacer` between actions to push the following ones to the far end.',
+        inputs: [
+          {
+            name: 'ariaLabel',
+            type: 'string',
+            default: `'Toolbar'`,
+            description: 'Accessible name of the bar (localizable).',
+          },
+          {
+            name: 'orientation',
+            type: `'horizontal' | 'vertical'`,
+            default: `'horizontal'`,
+            description: 'Roving axis: horizontal bars use Left/Right, vertical use Up/Down.',
+          },
+          {
+            name: 'selectionCount',
+            type: 'number',
+            default: '0',
+            description: 'Selected row/item count; > 0 shows the selection chip + clear ×.',
+          },
+          {
+            name: 'divided',
+            type: 'boolean',
+            default: 'false',
+            description: 'Subtle bottom divider — the classic "actions above the grid" look.',
+          },
+          {
+            name: 'selectionLabel',
+            type: '(n: number) => string',
+            default: '`${n} selected`',
+            description: 'Builds the selection-chip label from the count (localizable).',
+          },
+        ],
+        outputs: [
+          {
+            name: 'cleared',
+            type: 'void',
+            description: 'The × was pressed — clear your selection state.',
+          },
+        ],
+        do: [
+          'Bind `selectionCount` to the grid selection and handle `(cleared)` to reset it.',
+          'Keep actions to icon buttons and short labels; overflow belongs in a dropdown.',
+        ],
+        dont: ['Do not use it for site or app navigation — that is the menubar / rail’s job.'],
+        a11y: [
+          'role="toolbar" with APG roving: Arrow keys move across the projected controls (mirrored in RTL), Home/End jump to the ends.',
+          'The selection count is announced via a polite live region; the clear × has an accessible label.',
+        ],
       },
       {
         id: 'datagrid',
@@ -3789,6 +3698,58 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not use a signpost where a one-line tooltip suffices.'],
       },
       {
+        id: 'popover',
+        title: 'Popover',
+        selector: 'strct-popover, [strctPopoverTrigger]',
+        importNames: ['StrctPopover', 'StrctPopoverTrigger'],
+        summary: 'Anchored overlay panel for arbitrary content.',
+        lead: 'The generic anchored overlay primitive behind menus, signposts and rich pickers: project any content and mark a native `<button>` with `strctPopoverTrigger`. `open` is two-way, so the panel can also be driven from the outside. Positioning, edge-flip and scroll/resize tracking come from `strctOverlay`; the panel is `position: fixed`, so it escapes ancestor overflow clipping.',
+        inputs: [
+          {
+            name: 'open',
+            type: 'boolean',
+            default: 'false',
+            description: 'Open state, two-way (`[(open)]`).',
+          },
+          {
+            name: 'placement',
+            type: 'StrctOverlayPlacement',
+            default: `'bottom-start'`,
+            description: 'Panel placement relative to the trigger; edge-flip is automatic.',
+          },
+          {
+            name: 'ariaLabel',
+            type: 'string',
+            default: `'Details'`,
+            description: 'Accessible name of the popover dialog (localizable).',
+          },
+          {
+            name: 'trap',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Modal-ish usage: move focus into the panel on open, trap Tab inside, hand focus back on close. Off by default — a plain popover never steals focus.',
+          },
+        ],
+        methods: [
+          { name: 'toggle()', type: '() => void', description: 'Flip the open state.' },
+          {
+            name: 'close(restore?)',
+            type: '(restore?: boolean) => void',
+            description: 'Close; with `restore` (or under `trap`) focus returns to the trigger.',
+          },
+        ],
+        do: [
+          'Put the trigger directive on a native <button> — Enter/Space then fire a single click.',
+          'Turn on `trap` when the panel holds a form the user must complete.',
+        ],
+        dont: ['Do not use it for action menus — the dropdown already wires the menu semantics.'],
+        a11y: [
+          'The real trigger button carries aria-haspopup="dialog" / aria-expanded; the panel is a labelled role="dialog".',
+          'Escape closes (without bubbling to a host modal); outside click closes; under `trap` Tab wraps inside the panel.',
+        ],
+      },
+      {
         id: 'tour',
         title: 'Tour',
         selector: 'strct-tour',
@@ -3907,6 +3868,45 @@ export const DOCS: DocCategory[] = [
         ],
         dont: [
           'Do not use toasts for critical errors that need a decision — use a modal or alert.',
+        ],
+      },
+      {
+        id: 'confirm',
+        title: 'Confirm',
+        selector: 'strct-confirm-outlet',
+        importNames: ['StrctConfirmService', 'StrctConfirmOutlet'],
+        summary: 'Promise-based confirm dialog.',
+        lead: 'Ask "are you sure?" from anywhere and `await` the answer: `StrctConfirmService.confirm()` returns a promise that resolves `true` on confirm and `false` on cancel, the X, Escape or a backdrop click. Render `<strct-confirm-outlet />` once near the app root — without it nothing shows. One dialog at a time: a new call cancels (resolves `false`) the pending one.',
+        inputs: [
+          {
+            name: 'confirmLabel / cancelLabel / closeLabel',
+            type: 'string',
+            default: `'Confirm' / 'Cancel' / 'Close'`,
+            description:
+              'On the outlet: default labels, so an app localizes every confirm() call in one place.',
+          },
+        ],
+        methods: [
+          {
+            name: 'confirm(options)',
+            type: '(StrctConfirmOptions) => Promise<boolean>',
+            description:
+              'Ask the user; `{ title; message; confirmLabel?; cancelLabel?; tone? }` — tone "critical" renders the confirm button as destructive.',
+          },
+          {
+            name: 'settle(result)',
+            type: '(result: boolean) => void',
+            description: 'Resolve the pending confirmation and close the dialog.',
+          },
+        ],
+        do: [
+          'Render the outlet once, just inside the app shell.',
+          'Use tone "critical" and a message that spells out the consequences for destructive actions.',
+        ],
+        dont: ['Do not chain confirms — one dialog at a time; a second call cancels the first.'],
+        a11y: [
+          'Built on strct-modal: focus trap, Escape / backdrop dismissal and focus restore included.',
+          'Initial focus lands on Cancel — the safe default, never the destructive action.',
         ],
       },
       {
