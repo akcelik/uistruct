@@ -5,6 +5,34 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.0] - 2026-07-25
+
+### Added — `strct-select`: a real select component
+
+"Select" used to mean a strctInput-styled native `<select>` — the option
+popup was OS-drawn and matched neither the theme nor the v1.19 select
+ergonomics. The native form stays supported; `strct-select` is the new
+default recommendation:
+
+- **APG select-only combobox** — a real button trigger wearing the
+  shared `.strct-control` skin opens a token-styled listbox
+  (overlay-positioned, width-matched to the trigger).
+- **v1.19 select ergonomics carried over** — leading ✓ in an aligned
+  lead slot on the current choice, reopening highlights it, clicks on
+  list padding never discard the interaction, 9px option rows.
+- **Full keyboard parity with the native select** — ArrowDown/Up and
+  Enter/Space open, arrows move (skipping disabled options, wrapping),
+  Home/End jump, **typeahead** (typed prefix jumps to the matching
+  label; repeating a letter cycles its matches), Enter/Space commit,
+  Escape/Tab close without committing; aria-activedescendant keeps
+  focus on the trigger.
+- **CVA-compatible** (ngModel / reactive forms) and wired for
+  `strct-field` via the `strctField` marker — label `for`,
+  `aria-describedby` and `aria-invalid` link automatically.
+- `StrctOption` gained an optional `disabled` flag (grayed out, skipped
+  by keyboard navigation) — additive for the combobox.
+- Localizable `placeholder`, `listLabel`, `emptyText` inputs.
+
 ## [1.19.0] - 2026-07-25
 
 ### Added — dropdown select ergonomics
