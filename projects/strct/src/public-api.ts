@@ -70,6 +70,7 @@ export * from './lib/input-otp/input-otp';
 export * from './lib/knob/knob';
 export * from './lib/input-mask/input-mask';
 export * from './lib/combobox/combobox';
+export * from './lib/select/select';
 export * from './lib/datepicker/datepicker';
 export * from './lib/color-picker/color-picker';
 export * from './lib/cascade-select/cascade-select';

@@ -490,11 +490,53 @@ export const DOCS: DocCategory[] = [
       {
         id: 'select',
         title: 'Select',
+        selector: 'strct-select',
+        importNames: ['StrctSelect', 'StrctOption'],
+        summary: 'Select-only combobox with a token-styled listbox.',
+        lead: 'A single choice from a fixed list, rendered as a button trigger opening a token-styled listbox — so the options match the theme instead of the OS popup a native `<select>` shows. The current choice carries a leading ✓ and gets the highlight when reopening. ControlValueAccessor-compatible.',
+        inputs: [
+          model('unknown', 'Selected option value.'),
+          {
+            name: 'options',
+            type: 'StrctOption[]',
+            default: '[]',
+            description:
+              'Items to choose from. `StrctOption = { value: unknown; label: string; disabled?: boolean }` — disabled options gray out and are skipped by keyboard navigation.',
+          },
+          {
+            name: 'placeholder',
+            type: 'string',
+            default: `'Select…'`,
+            description: 'Muted text while no value is selected (localizable).',
+          },
+          {
+            name: 'disabled',
+            type: 'boolean',
+            default: 'false',
+            description: 'Static disable flag; forms also drive it via setDisabledState.',
+          },
+        ],
+        do: [
+          'Use for short, mutually exclusive option lists.',
+          'Wrap in strct-field — the label and hint/error aria links are wired automatically.',
+        ],
+        dont: [
+          'Do not use for searchable or large lists — reach for the combobox.',
+          'Do not use for hierarchical values — that is the cascade select.',
+        ],
+        a11y: [
+          cvaA11y,
+          'APG select-only combobox: ArrowDown/Up and Enter/Space open, arrows move (skipping disabled options), Home/End jump, typing jumps to the matching label, Enter/Space commit, Escape closes without committing — with aria-activedescendant.',
+        ],
+      },
+      {
+        id: 'native-select',
+        title: 'Native select',
         selector: 'select[strctInput]',
         importNames: ['StrctInput'],
         summary: 'Native select with a custom chevron.',
-        lead: 'A native `<select>` styled with `strctInput` and a custom chevron, keeping native keyboard and accessibility behaviour.',
-        do: ['Use for short, mutually exclusive option lists.'],
+        lead: 'A native `<select>` styled with `strctInput` and a custom chevron. The option popup is OS-drawn — keep it for dense or system-form contexts; prefer `strct-select` elsewhere.',
+        do: ['Use where native platform behaviour matters more than themed options.'],
         dont: ['Do not use for searchable or large lists — reach for the combobox.'],
       },
       {

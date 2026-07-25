@@ -19,6 +19,8 @@ import { StrctOverlay } from '../overlay/overlay';
 export interface StrctOption {
   value: unknown;
   label: string;
+  /** Grayed out and skipped by keyboard navigation (select). */
+  disabled?: boolean;
 }
 
 let comboboxCounter = 0;

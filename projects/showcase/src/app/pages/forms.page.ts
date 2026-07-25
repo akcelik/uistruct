@@ -23,6 +23,7 @@ import {
   StrctRating,
   StrctSegmented,
   StrctSegmentedOption,
+  StrctSelect,
   StrctToggle,
   StrctValidationState,
   StrctTransfer,
@@ -45,6 +46,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctRadio,
     StrctRadioGroup,
     StrctSegmented,
+    StrctSelect,
     StrctRange,
     StrctCombobox,
     StrctDatepicker,
@@ -159,8 +161,33 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       <textarea strctInput rows="3" placeholder="Notes…"></textarea>
     </app-demo>
 
-    <app-demo anchor="select" heading="Select" description="Native select with a custom chevron.">
+    <app-demo
+      anchor="select"
+      heading="Select"
+      description="Select-only combobox: a token-styled listbox instead of the OS popup — ✓ on the current choice, typeahead, full keyboard. CVA-compatible."
+      code='<strct-select [options]="regions" [(ngModel)]="region" placeholder="Pick a region" />'
+    >
+      <div class="field">
+        <strct-field label="Region">
+          <strct-select
+            [options]="regionOptions"
+            [ngModel]="region()"
+            (ngModelChange)="region.set($event)"
+            placeholder="Pick a region"
+          />
+        </strct-field>
+        <span class="echo">value: {{ region() ?? '—' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="native-select"
+      heading="Native select"
+      description="The strctInput-styled native select — the option popup is OS-drawn. Fine for dense/system contexts; prefer strct-select elsewhere."
+      code='<select strctInput [(ngModel)]="region">…</select>'
+    >
       <select strctInput [ngModel]="region()" (ngModelChange)="region.set($event)">
+        <option [ngValue]="null" disabled hidden>Pick a region</option>
         <option value="eu">Europe</option>
         <option value="us">Americas</option>
         <option value="apac">Asia Pacific</option>
@@ -485,7 +512,13 @@ export class FormsPage {
   });
 
   protected readonly name = signal('');
-  protected readonly region = signal('eu');
+  protected readonly region = signal<string | null>(null);
+  protected readonly regionOptions: StrctOption[] = [
+    { value: 'eu', label: 'Europe' },
+    { value: 'us', label: 'Americas' },
+    { value: 'apac', label: 'Asia Pacific' },
+    { value: 'moon', label: 'Moon (coming soon)', disabled: true },
+  ];
   protected readonly agree = signal(false);
   protected readonly notify = signal(true);
   protected readonly size = signal('md');
