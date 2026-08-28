@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-08-28
+
+### Added
+
+- **`strct-datagrid` — Shift-click range selection.** Shift-clicking a row
+  checkbox applies that box's new state to every row between it and the
+  last one toggled on its own: Shift-click selects a block, and
+  Shift-clicking an already-checked box clears one. The anchor stays where
+  it was set, so successive Shift-clicks re-project the range from the same
+  origin rather than walking it along.
+
+  Purely additive — an unmodified click is still a plain toggle, and
+  `toggleRow()` called programmatically is unaffected. The range spans the
+  rows the user can actually see (the current page, or every row under the
+  expanded groups), and degrades to a plain toggle if the anchor has since
+  been paged or filtered away.
+
 ## [3.0.0] - 2026-08-28
 
 Angular 22 adoption. No component API changed — the public surface is

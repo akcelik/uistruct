@@ -162,7 +162,8 @@ export class StrctRowDetailDef {
 export class StrctDatagridActionBar {}
 
 /**
- * Interactive data table: sortable columns, row selection, expandable detail
+ * Interactive data table: sortable columns, row selection (Shift-click a row
+ * checkbox to carry its new state across a whole block), expandable detail
  * rows, a batch action bar and built-in paging.
  *   <strct-datagrid [columns]="cols" [rows]="data" selectable expandable [pageSize]="10">
  *     <button strct-button strctDatagridActions size="sm">Migrate</button>
@@ -460,9 +461,12 @@ export class StrctDatagridActionBar {}
                         [class.strct-dg__cell--sticky]="stickyActive()"
                         [style.insetInlineStart.px]="utilLeft('sel')"
                       >
+                        <!-- click fires (and bubbles) before the input's change,
+                             so the modifier is recorded by the time toggleRow runs. -->
                         <strct-checkbox
                           [ariaLabel]="selectRowLabel(row)"
                           [checked]="isSelected(row)"
+                          (click)="noteRangeIntent($event)"
                           (checkedChange)="toggleRow(row)"
                         />
                       </td>
@@ -2441,14 +2445,49 @@ export class StrctDatagrid {
     this.expandedRows.set(next);
   }
 
+  /** The row a Shift-click measures its range from: the last one toggled on
+   *  its own. A range leaves it where it is, so successive Shift-clicks
+   *  re-project from the same origin instead of walking the anchor along. */
+  private rangeAnchor: unknown = null;
+  /** Set by the row checkbox's click, consumed by the `toggleRow` that the
+   *  same interaction fires immediately after. */
+  private rangeIntent = false;
+
+  protected noteRangeIntent(event: MouseEvent): void {
+    this.rangeIntent = event.shiftKey;
+  }
+
+  /**
+   * Toggle one row. Shift-clicking a row checkbox instead applies the clicked
+   * box's new state across every row between the anchor and this one — so a
+   * Shift-click selects a block, and Shift-clicking a checked box clears one.
+   */
   toggleRow(row: StrctRow): void {
     const id = this.idOf(row);
+    const select = !this.selected().has(id);
     const next = new Set(this.selected());
-    if (next.has(id)) {
-      next.delete(id);
-    } else {
-      next.add(id);
+    const ranged = this.rangeIntent;
+    this.rangeIntent = false;
+
+    if (ranged && this.rangeAnchor !== null) {
+      const rows = this.selectionRows();
+      const from = rows.findIndex((r) => this.idOf(r) === this.rangeAnchor);
+      const to = rows.findIndex((r) => this.idOf(r) === id);
+      // A vanished anchor (paged away, filtered out) degrades to a plain toggle.
+      if (from !== -1 && to !== -1) {
+        for (let i = Math.min(from, to); i <= Math.max(from, to); i++) {
+          const rid = this.idOf(rows[i]);
+          if (select) next.add(rid);
+          else next.delete(rid);
+        }
+        this.commitSelection(next);
+        return;
+      }
     }
+
+    if (select) next.add(id);
+    else next.delete(id);
+    this.rangeAnchor = id;
     this.commitSelection(next);
   }
 
@@ -2460,10 +2499,12 @@ export class StrctDatagrid {
     } else {
       rows.forEach((r) => next.add(this.idOf(r)));
     }
+    this.rangeAnchor = null;
     this.commitSelection(next);
   }
 
   clearSelection(): void {
+    this.rangeAnchor = null;
     this.commitSelection(new Set());
   }
 
