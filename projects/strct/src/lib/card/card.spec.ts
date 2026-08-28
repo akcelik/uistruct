@@ -11,10 +11,11 @@ describe('StrctCard', () => {
   });
 });
 
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   imports: [StrctCard, StrctCardHeader, StrctCardBlock, StrctCardFooter],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-card
       [status]="status"

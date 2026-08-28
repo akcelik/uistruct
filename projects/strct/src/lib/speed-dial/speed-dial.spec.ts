@@ -1,11 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { StrctSpeedDial } from './speed-dial';
 
 @Component({
   standalone: true,
   imports: [StrctSpeedDial],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-speed-dial>
       <button type="button" class="action">Snapshot</button>

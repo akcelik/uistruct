@@ -1,10 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctButton } from '../button/button';
 import { StrctPopover, StrctPopoverTrigger } from './popover';
 
 @Component({
   imports: [StrctPopover, StrctPopoverTrigger, StrctButton],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-popover
       [open]="open()"

@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctDesc, StrctDescItem, StrctDescriptionList } from './description-list';
 
 @Component({
   imports: [StrctDescriptionList, StrctDesc],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-description-list [items]="items" [inline]="inline" [align]="align">
       <strct-desc label="Projected" mono>value-here</strct-desc>

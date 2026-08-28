@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctStep, StrctWizard, StrctWizardAside, provideStrctWizardDefaults } from './wizard';
 
@@ -115,6 +115,8 @@ describe('StrctWizard vertical', () => {
   it('contentHeader=false opts out; a description-less step renders no lede', () => {
     @Component({
       imports: [StrctWizard, StrctStep],
+      // Plain field mutated mid-test — opt out of the v22 OnPush default.
+      changeDetection: ChangeDetectionStrategy.Eager,
       template: `<strct-wizard vertical [contentHeader]="header" [current]="2">
         <strct-step label="A" description="da">a</strct-step>
         <strct-step label="B">b</strct-step>

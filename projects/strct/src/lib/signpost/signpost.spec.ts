@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctButton } from '../button/button';
 import { StrctSignpost, StrctSignpostTrigger } from './signpost';
@@ -6,6 +6,7 @@ import { StrctSignpost, StrctSignpostTrigger } from './signpost';
 @Component({
   imports: [StrctSignpost, StrctSignpostTrigger, StrctButton],
   // The library's own demo markup (showcase feedback.page signpost demo).
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-signpost position="bottom">
       <button strct-button size="sm" strctSignpostTrigger>Open below</button>

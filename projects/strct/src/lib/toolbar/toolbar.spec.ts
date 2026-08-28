@@ -1,9 +1,10 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctToolbar, StrctToolbarSpacer } from './toolbar';
 
 @Component({
   imports: [StrctToolbar, StrctToolbarSpacer],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-toolbar
       [selectionCount]="count()"
@@ -107,6 +108,7 @@ describe('StrctToolbar', () => {
 
 @Component({
   imports: [StrctToolbar],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: ` <strct-toolbar [selectionCount]="1" [selectionLabel]="label" /> `,
 })
 class LocalizedHostComponent {

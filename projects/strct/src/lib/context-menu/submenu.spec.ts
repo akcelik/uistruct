@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctDropdownItem } from '../dropdown/dropdown';
 import { StrctSubmenu } from './submenu';
 
 @Component({
   imports: [StrctSubmenu, StrctDropdownItem],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-submenu label="Power">
       <strct-dropdown-item>Power on</strct-dropdown-item>

@@ -1,11 +1,12 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { StrctDropdownDivider, StrctDropdownItem } from '../dropdown/dropdown';
 import { StrctContextMenu } from './context-menu';
 import { StrctContextMenuTrigger } from './menu';
 
 @Component({
   template: `<div [strctContextMenu]="[]">Trigger</div>`,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [StrctContextMenuTrigger],
 })
 class TestHost {}
@@ -23,6 +24,7 @@ class TestHost {}
       </ng-container>
     </strct-context-menu>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [StrctContextMenu, StrctDropdownItem, StrctDropdownDivider],
 })
 class CtxHost {

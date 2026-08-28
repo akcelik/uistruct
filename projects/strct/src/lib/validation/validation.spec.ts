@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctCellStatus, StrctValidationState } from './validation';
 
 @Component({
   imports: [StrctCellStatus],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-cell-status [state]="state" />`,
 })
 class HostComponent {

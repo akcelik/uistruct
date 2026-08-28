@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctSubmenu } from '../context-menu/submenu';
 import {
@@ -10,6 +10,7 @@ import {
 
 @Component({
   imports: [StrctDropdown, StrctDropdownItem, StrctDropdownTrigger],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-dropdown [popover]="popover()" popoverLabel="Filters">
       <button strctDropdownTrigger>Open</button>

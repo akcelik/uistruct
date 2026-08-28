@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctInput } from './input';
 
 @Component({
   standalone: true,
   imports: [StrctInput],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<input strctInput data-testid="input" />`,
 })
 class InputHost {}

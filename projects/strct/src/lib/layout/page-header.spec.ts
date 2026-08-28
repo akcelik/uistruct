@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctPageHeader, StrctPageHeaderActions, StrctPageHeaderCrumbs } from './page-header';
 
 @Component({
   imports: [StrctPageHeader, StrctPageHeaderActions, StrctPageHeaderCrumbs],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-page-header title="hv-02" subtitle="Hypervisor · cluster-01" divider>
       <nav strctPageHeaderCrumbs>Compute / Hosts</nav>

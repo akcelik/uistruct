@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctButton } from './button';
 
 @Component({
   imports: [StrctButton],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<button strct-button variant="primary" size="sm">Go</button>`,
 })
 class HostComponent {}

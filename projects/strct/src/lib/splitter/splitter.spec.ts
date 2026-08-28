@@ -1,9 +1,10 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctSplitter } from './splitter';
 
 @Component({
   imports: [StrctSplitter],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-splitter style="width: 400px" [(split)]="split" [min]="20" [max]="80">
       <div strctPaneStart>list</div>

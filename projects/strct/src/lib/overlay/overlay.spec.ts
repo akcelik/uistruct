@@ -1,9 +1,10 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctOverlay, StrctOverlayPlacement } from './overlay';
 
 @Component({
   imports: [StrctOverlay],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button #anchor>Anchor</button>
     <div [strctOverlay]="anchor" [strctOverlayPlacement]="placement">Panel</div>

@@ -6,11 +6,16 @@ page before opening a PR.
 
 ## Development setup
 
+**Node `^22.22.3 || ^24.15.0 || >=26`** is required — Angular 22 refuses to
+build on anything older, and several distro packages still ship 22.22.x.
+`.nvmrc` pins the version CI uses; with nvm, `nvm use` picks it up. Check with
+`node -v` before filing a build failure.
+
 ```bash
 npm ci
 npx ng build strct      # library
 npx ng build showcase   # docs app
-npx ng test strct --watch=false
+npm test                # both projects — 783 library + 2 showcase tests
 npx ng lint
 node scripts/a11y-smoke.mjs          # axe-core gate over 8 key routes (needs Chrome)
 node scripts/visual-regression.mjs   # pixel-diff key routes vs committed baselines

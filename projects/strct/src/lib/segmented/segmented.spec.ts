@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { StrctSegmented, StrctSegmentedOption } from './segmented';
 
 @Component({
   imports: [StrctSegmented, FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-segmented [options]="options" [(ngModel)]="value" />`,
 })
 class HostComponent {

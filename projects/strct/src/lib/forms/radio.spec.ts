@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctRadioGroup, StrctRadio } from './radio';
 
 @Component({
   standalone: true,
   imports: [StrctRadioGroup, StrctRadio],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-radio-group>
       <strct-radio [value]="'a'">A</strct-radio>

@@ -1,9 +1,10 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctLogLine, StrctLogViewer, parseAnsi } from './log-viewer';
 
 @Component({
   imports: [StrctLogViewer],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-log-viewer
     [lines]="lines()"
     [(follow)]="follow"

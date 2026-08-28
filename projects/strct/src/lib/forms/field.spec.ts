@@ -1,11 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { StrctField } from './field';
 import { StrctInput } from './input';
 
 @Component({
   standalone: true,
   imports: [StrctField, StrctInput],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-field label="Name" required hint="Your full name">
       <input strctInput />

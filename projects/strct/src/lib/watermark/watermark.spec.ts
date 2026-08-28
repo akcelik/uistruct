@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctWatermark } from './watermark';
 
 @Component({
   imports: [StrctWatermark],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-watermark text="CONFIDENTIAL"><p>content</p></strct-watermark>`,
 })
 class HostComponent {}

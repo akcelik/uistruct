@@ -1,10 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { StrctInlineEdit } from './inline-edit';
 
 @Component({
   imports: [StrctInlineEdit, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-inline-edit [formControl]="ctrl" [disabled]="disabled()" />`,
 })
 class HostComponent {
