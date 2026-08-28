@@ -5,6 +5,43 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-08-28
+
+Angular 22 adoption. No component API changed — the public surface is
+byte-for-byte the same as 2.0.1. The major is the peer-dependency bump
+alone, per the versioning policy ("majors are reserved for Angular major
+adoptions").
+
+### Changed — BREAKING
+
+- **Angular 22 is now required.** `peerDependencies` moved from
+  `^21.2.0` to `^22.0.0` for `@angular/common`, `core`, `forms`,
+  `platform-browser` and `router`. The package is compiled in partial mode
+  by ng-packagr 22, so an Angular 21 application cannot link it — consumers
+  must update to Angular 22 first (`ng update @angular/core@22
+@angular/cli@22`).
+- **Node ^22.22.3 / ^24.15.0 / >=26 is now required** to build the
+  workspace, per Angular 22's own engine range. Declared in `engines` and
+  pinned in CI.
+
+### Fixed
+
+- **`strct-menubar` submenu** — dropped a redundant `?? []` in the
+  submenu `@for`; Angular 22's sharper template narrowing proves
+  `item.children` non-null inside the guarding `@if` (NG8102).
+
+### Internal
+
+- TypeScript 5.9 → 6.0, ng-packagr 21 → 22, angular-eslint 21 → 22.
+- Angular's OnPush-by-default migration marked 41 spec host components
+  across 38 files `ChangeDetectionStrategy.Eager` to preserve their pre-v22
+  behavior. Only library _test hosts_ were affected — all 112 shipped
+  components already declared `OnPush` explicitly, so the new default is a
+  no-op for consumers.
+- `npm test` now runs both projects (`strct` and `showcase`). It previously
+  resolved to a single project and ran only the showcase's 2 tests, leaving
+  the library's 783 tests out of CI and out of the pre-publish gate.
+
 ## [2.0.1] - 2026-07-25
 
 ### Fixed

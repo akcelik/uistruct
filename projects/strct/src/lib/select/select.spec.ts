@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { StrctOption } from '../combobox/combobox';
@@ -13,6 +13,7 @@ const OPTIONS: StrctOption[] = [
 
 @Component({
   imports: [StrctSelect, FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-select
     [options]="options()"
     [ngModel]="region()"

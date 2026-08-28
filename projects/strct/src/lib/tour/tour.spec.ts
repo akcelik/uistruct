@@ -1,9 +1,10 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctTour, StrctTourStep } from './tour';
 
 @Component({
   imports: [StrctTour],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button id="deploy-btn">Deploy</button>
     <strct-tour

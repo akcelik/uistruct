@@ -1,9 +1,10 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctReorder, StrctReorderEvent, StrctReorderItem } from './reorder';
 
 @Component({
   imports: [StrctReorder, StrctReorderItem],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <ul strctReorder [instructions]="hint()" [announcement]="announce()" (reordered)="move($event)">
       @for (item of items(); track item) {

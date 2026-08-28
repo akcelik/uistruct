@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctFlow, StrctFlowNode } from './flow';
 
 @Component({
   imports: [StrctFlow],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-flow
       [nodes]="nodes"

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctTree, StrctTreeNode, StrctTreeNodeData } from './tree';
 
@@ -39,6 +39,7 @@ const NODES = (): StrctTreeNodeData[] => [
 
 @Component({
   imports: [StrctTree],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-tree
       [nodes]="nodes"

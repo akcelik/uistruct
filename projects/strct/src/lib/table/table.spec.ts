@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctTable, StrctCellDef } from './table';
 
 @Component({
   imports: [StrctTable, StrctCellDef],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-table [columns]="cols" [rows]="rows" [striped]="striped" [hover]="hover">
       <ng-template strctCell="name" let-row let-value="value">{{ value }}</ng-template>

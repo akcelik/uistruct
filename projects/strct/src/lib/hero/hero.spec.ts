@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { StrctStatus } from '../status';
@@ -6,6 +6,7 @@ import { StrctHero } from './hero';
 
 @Component({
   imports: [StrctHero],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-hero [status]="status" [icon]="icon" [live]="live" heading="All systems healthy">
       Everything is responding.

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctDrawer } from './drawer';
 
@@ -38,6 +38,7 @@ describe('StrctDrawer', () => {
 
 @Component({
   imports: [StrctDrawer],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-drawer [(open)]="open" [dismissable]="dismissable" [title]="title">
       <button class="inside">Inside</button>

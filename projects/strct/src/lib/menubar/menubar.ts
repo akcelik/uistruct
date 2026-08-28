@@ -89,7 +89,7 @@ export interface StrctMenubarItem {
                     </button>
                     @if (subIdx() === i && item.children?.length) {
                       <div class="strct-mb__submenu" role="menu" [attr.aria-label]="item.label">
-                        @for (sub of item.children ?? []; track $index) {
+                        @for (sub of item.children; track $index) {
                           @if (sub.divider) {
                             <div class="strct-mb__divider" role="separator"></div>
                           } @else {

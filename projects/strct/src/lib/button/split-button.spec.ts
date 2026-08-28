@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctMenuItem } from '../context-menu/menu';
 import { StrctSplitButton } from './split-button';
 
 @Component({
   imports: [StrctSplitButton],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-split-button
     label="Deploy"
     [items]="items"

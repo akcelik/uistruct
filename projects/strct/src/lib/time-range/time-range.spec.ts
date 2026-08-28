@@ -1,9 +1,10 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctTimeRange, StrctTimeRangePicker } from './time-range';
 
 @Component({
   imports: [StrctTimeRangePicker],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-time-range [(range)]="range" (applied)="applications = applications + 1" />`,
 })
 class HostComponent {

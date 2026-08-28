@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctCommandItem, StrctCommandPalette } from './command-palette';
 
@@ -10,6 +10,7 @@ const ITEMS: StrctCommandItem[] = [
 
 @Component({
   imports: [StrctCommandPalette],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-command-palette
     [items]="items()"
     [(open)]="open"

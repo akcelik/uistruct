@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctModal } from './modal';
 
@@ -22,6 +22,7 @@ describe('StrctModal', () => {
 
 @Component({
   imports: [StrctModal],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <strct-modal [(open)]="open" [dismissible]="dismissible">
       <input class="field" />

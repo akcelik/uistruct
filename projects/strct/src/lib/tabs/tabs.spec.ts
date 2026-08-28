@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { StrctTab, StrctTabs } from './tabs';
 
 @Component({
   imports: [StrctTabs, StrctTab],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-tabs>
     <strct-tab label="A">AA</strct-tab>
     <strct-tab label="B">BB</strct-tab>
@@ -14,6 +15,7 @@ class HostComponent {}
 
 @Component({
   imports: [StrctTabs, StrctTab],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-tabs keepAlive>
     <strct-tab label="A">AA</strct-tab>
     <strct-tab label="B">BB</strct-tab>

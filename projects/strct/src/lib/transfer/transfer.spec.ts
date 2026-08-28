@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctTransfer, StrctTransferItem } from './transfer';
 
@@ -10,6 +10,7 @@ const ITEMS: StrctTransferItem[] = [
 
 @Component({
   imports: [StrctTransfer],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-transfer
     [items]="items"
     [(assigned)]="assigned"

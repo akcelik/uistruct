@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctMenuItem } from '../context-menu/menu';
 import { StrctMenubar, StrctMenubarItem } from './menubar';
 
 @Component({
   imports: [StrctMenubar],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<strct-menubar [menus]="menus" (picked)="last = $event" />`,
 })
 class HostComponent {
