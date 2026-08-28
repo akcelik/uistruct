@@ -2548,7 +2548,8 @@ export const DOCS: DocCategory[] = [
             name: 'selectable',
             type: 'boolean',
             default: 'false',
-            description: 'Show selection checkboxes + batch action bar.',
+            description:
+              'Show selection checkboxes + batch action bar. Shift-clicking a row checkbox applies that box’s new state to every row between it and the last one toggled on its own — so Shift-click selects a block, and Shift-clicking a checked box clears one.',
           },
           {
             name: 'initialSelection',

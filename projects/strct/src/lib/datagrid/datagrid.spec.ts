@@ -983,3 +983,106 @@ describe('StrctDatagrid column resize lifecycle', () => {
     removeSpy.mockRestore();
   });
 });
+
+describe('StrctDatagrid shift-range selection', () => {
+  const RANGE_ROWS: StrctRow[] = [{ n: 'r1' }, { n: 'r2' }, { n: 'r3' }, { n: 'r4' }, { n: 'r5' }];
+
+  function make() {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', COLS);
+    fixture.componentRef.setInput('rows', RANGE_ROWS);
+    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('rowId', 'n');
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  /** Click a row checkbox the way a user does — the real input, so the
+   *  bubbling click carries the modifier and the change follows it. */
+  function click(
+    fixture: ReturnType<typeof TestBed.createComponent<StrctDatagrid>>,
+    index: number,
+    shift = false,
+  ): void {
+    const inputs = fixture.nativeElement.querySelectorAll('tbody strct-checkbox input');
+    (inputs[index] as HTMLInputElement).dispatchEvent(
+      new MouseEvent('click', { bubbles: true, cancelable: true, shiftKey: shift }),
+    );
+    fixture.detectChanges();
+  }
+
+  const selectedNames = (fixture: ReturnType<typeof TestBed.createComponent<StrctDatagrid>>) =>
+    [...fixture.nativeElement.querySelectorAll('tbody tr')]
+      .filter((tr) => (tr as HTMLElement).classList.contains('strct-dg__row--selected'))
+      .map((tr) => (tr as HTMLElement).querySelector('td:nth-child(2)')!.textContent!.trim());
+
+  it('shift-click fills in every row between the anchor and the target', () => {
+    const fixture = make();
+    let emitted: StrctRow[] = [];
+    fixture.componentInstance.selectionChange.subscribe((s) => (emitted = s));
+
+    click(fixture, 1);
+    expect(selectedNames(fixture)).toEqual(['r2']);
+
+    click(fixture, 3, true);
+    expect(selectedNames(fixture)).toEqual(['r2', 'r3', 'r4']);
+    expect(emitted.map((r) => r['n'])).toEqual(['r2', 'r3', 'r4']);
+  });
+
+  it('ranges upward too — the anchor may sit below the target', () => {
+    const fixture = make();
+    click(fixture, 3);
+    click(fixture, 1, true);
+    expect(selectedNames(fixture)).toEqual(['r2', 'r3', 'r4']);
+  });
+
+  it('shift-clicking a selected row clears the range instead of filling it', () => {
+    const fixture = make();
+    click(fixture, 0);
+    click(fixture, 4, true);
+    expect(selectedNames(fixture)).toEqual(['r1', 'r2', 'r3', 'r4', 'r5']);
+
+    // r5 is checked, so the same gesture now unchecks — and takes the block with it.
+    click(fixture, 2);
+    click(fixture, 4, true);
+    expect(selectedNames(fixture)).toEqual(['r1', 'r2']);
+  });
+
+  it('the anchor stays put, so a second shift-click re-projects from the same origin', () => {
+    const fixture = make();
+    click(fixture, 0);
+    click(fixture, 4, true);
+    expect(selectedNames(fixture)).toEqual(['r1', 'r2', 'r3', 'r4', 'r5']);
+
+    // r3 is selected, so this clears the anchor..r3 block. Measured from the
+    // original anchor (r1) that is r1–r3, leaving r4/r5; had the range moved
+    // the anchor to r5, it would have cleared r3–r5 and left r1/r2 instead.
+    click(fixture, 2, true);
+    expect(selectedNames(fixture)).toEqual(['r4', 'r5']);
+  });
+
+  it('an unmodified click stays a plain toggle and re-seats the anchor', () => {
+    const fixture = make();
+    click(fixture, 0);
+    click(fixture, 2);
+    expect(selectedNames(fixture)).toEqual(['r1', 'r3']);
+
+    // The anchor moved to r3, so the range runs r3..r5 — r2 is left alone.
+    click(fixture, 4, true);
+    expect(selectedNames(fixture)).toEqual(['r1', 'r3', 'r4', 'r5']);
+  });
+
+  it('shift with no anchor yet is just a toggle', () => {
+    const fixture = make();
+    click(fixture, 2, true);
+    expect(selectedNames(fixture)).toEqual(['r3']);
+  });
+
+  it('toggleRow called programmatically is unaffected by a stale modifier', () => {
+    const fixture = make();
+    click(fixture, 0);
+    fixture.componentInstance.toggleRow(RANGE_ROWS[3]);
+    fixture.detectChanges();
+    expect(selectedNames(fixture)).toEqual(['r1', 'r4']);
+  });
+});
