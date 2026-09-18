@@ -5,6 +5,45 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-09-18
+
+The vertical wizard's content area is 80% wider. A visual change to a
+default, so a major per the versioning policy. No API changed.
+
+### Changed — BREAKING (visual)
+
+- **`strct-wizard` content column: 480px → 864px.** The default of
+  `--strct-wiz-content-min` rises 80%. A chromeless wizard dialog now
+  measures 1098px (1378px with the summary aside) instead of 714px (994px),
+  and the form keeps the same width whether or not the aside is shown.
+- **Layout breakpoints follow the new geometry.** The aside yields below a
+  1376px container (was 980px), and below 1096px the content column now
+  shrinks instead of holding its minimum. It used to hold it and overflow the
+  card, where `overflow: hidden` clipped the form (a 700–712px sliver in
+  3.x, which the wider default would have widened to 700–1096px). The rail
+  still compacts only below 700px.
+- **`strct-modal chromeless` is capped only by the viewport**, not by its
+  `size` class. Its width is derived from the wizard's geometry, and the
+  `size="xl"` cap (1080px) would otherwise have squeezed the new 1098px
+  dialog.
+
+Measured in Chrome across 600–1920px viewports: 864px content wherever it
+fits, graceful narrowing below, and no clipping at any width.
+
+### Migration
+
+To keep the 3.x width, set the token back:
+
+```css
+strct-wizard {
+  --strct-wiz-content-min: 480px;
+}
+```
+
+Container-query conditions cannot read custom properties, so the breakpoints
+stay tuned to 864px. With the override, the aside hides below a 1376px
+container rather than 980px. The form is never clipped either way.
+
 ## [3.1.1] - 2026-09-18
 
 ### Fixed

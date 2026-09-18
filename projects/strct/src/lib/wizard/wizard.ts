@@ -294,14 +294,14 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
            (--strct-wiz-content-min), so under intrinsic sizing (a chromeless
            fit-content dialog) its width is IDENTICAL with or without an
            aside — the aside adds to the total, it never carves the form. */
-        grid-template-columns: 232px minmax(var(--strct-wiz-content-min, 480px), 1fr);
+        grid-template-columns: 232px minmax(var(--strct-wiz-content-min, 864px), 1fr);
         border: 1px solid var(--b2);
         border-radius: 12px;
         background: var(--bg-1);
         overflow: hidden;
       }
       .strct-wiz__layout--v.strct-wiz__layout--aside {
-        grid-template-columns: 232px minmax(var(--strct-wiz-content-min, 480px), 1fr) 280px;
+        grid-template-columns: 232px minmax(var(--strct-wiz-content-min, 864px), 1fr) 280px;
       }
       .strct-wiz__layout--v.strct-wiz__layout--aside .strct-wiz__aside {
         display: block;
@@ -504,14 +504,28 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         background: transparent;
       }
 
+      /* Container-query conditions cannot read custom properties, so these
+         breakpoints are derived from the DEFAULT geometry by hand — keep them
+         in step with --strct-wiz-content-min (864px), the 232px rail and the
+         280px aside. */
       /* mid width: the aside yields before it could squeeze the content
-         below its guaranteed minimum (232 + 480 + 280 = 992). */
-      @container (max-width: 980px) {
+         below its guaranteed minimum (232 + 864 + 280 = 1376). */
+      @container (max-width: 1375px) {
         .strct-wiz__layout--v.strct-wiz__layout--aside {
-          grid-template-columns: 232px minmax(var(--strct-wiz-content-min, 480px), 1fr);
+          grid-template-columns: 232px minmax(var(--strct-wiz-content-min, 864px), 1fr);
         }
         .strct-wiz__layout--v.strct-wiz__layout--aside .strct-wiz__aside {
           display: none;
+        }
+      }
+      /* below rail + minimum (232 + 864 = 1096) the content column shrinks
+         instead of holding its minimum — held, it would overflow the card
+         and overflow:hidden would clip the form. The rail keeps its full
+         width until the narrow breakpoint. */
+      @container (max-width: 1095px) {
+        .strct-wiz__layout--v,
+        .strct-wiz__layout--v.strct-wiz__layout--aside {
+          grid-template-columns: 232px minmax(0, 1fr);
         }
       }
       /* narrow: the rail STAYS vertical — compact ring column */

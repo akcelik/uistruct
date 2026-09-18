@@ -203,16 +203,19 @@ function isTopmostModal(modal: StrctModal): boolean {
          the wizard's geometry (rail + guaranteed content column [+ aside]),
          so an aside GROWS the dialog instead of narrowing the form. Explicit
          calc, not fit-content: the wizard is an inline-size container and
-         cannot size its own container intrinsically. The size classes'
-         max-width only caps, and when it bites the wizard's own container
-         queries degrade gracefully (aside yields, rail compacts). */
+         cannot size its own container intrinsically. Only the viewport caps
+         it: a size-class cap below the wizard's geometry would squeeze the
+         very form this width exists to protect. When the viewport bites, the
+         wizard's own container queries degrade gracefully (aside yields,
+         content shrinks, rail compacts). */
       .strct-modal__dialog--chromeless {
         /* +2px: the dialog's own border, so the CONTENT box (the wizard's
            container) still measures rail + content-min exactly. */
-        width: calc(232px + var(--strct-wiz-content-min, 480px) + 2px);
+        width: calc(232px + var(--strct-wiz-content-min, 864px) + 2px);
+        max-width: calc(100vw - 32px);
       }
       .strct-modal__dialog--chromeless:has(.strct-wiz__layout--aside) {
-        width: calc(232px + var(--strct-wiz-content-min, 480px) + 280px + 2px);
+        width: calc(232px + var(--strct-wiz-content-min, 864px) + 280px + 2px);
       }
       .strct-modal__dialog--chromeless .strct-modal__body {
         padding: 0;
