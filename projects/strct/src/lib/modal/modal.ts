@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  Directive,
   ElementRef,
   booleanAttribute,
   computed,
@@ -12,8 +13,12 @@ import {
   model,
   output,
   signal,
+  TemplateRef,
+  contentChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { StrctIcon } from '../icon/icon';
+import { strctDevWarn } from '../util/dev-warn';
 import { lockBodyScroll, unlockBodyScroll } from '../overlay/scroll-lock';
 
 /** Fixed modal width presets: sm 480 · md 640 · lg 860 · xl 1080 (px). */
@@ -32,6 +37,23 @@ function isTopmostModal(modal: StrctModal): boolean {
 }
 
 /**
+ * Lazily rendered modal body. Plain projected content is created by the PARENT
+ * with the parent's own view, so it is instantiated — and costs — even while
+ * the modal is closed. Content inside this template is created only while the
+ * modal is open, and destroyed when it closes (state does not survive a close):
+ *
+ *   <strct-modal [(open)]="show" title="Import hosts">
+ *     <ng-template strctModalContent>
+ *       <strct-datagrid [rows]="hosts" … />
+ *     </ng-template>
+ *   </strct-modal>
+ */
+@Directive({ selector: '[strctModalContent]' })
+export class StrctModalContent {
+  readonly template = inject<TemplateRef<void>>(TemplateRef);
+}
+
+/**
  * Overlay dialog with two-way `open`:
  *   <strct-modal [(open)]="show" title="Confirm">
  *     Body…
@@ -43,7 +65,7 @@ function isTopmostModal(modal: StrctModal): boolean {
 @Component({
   selector: 'strct-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [StrctIcon],
+  imports: [StrctIcon, NgTemplateOutlet],
   template: `
     @if (open()) {
       <!-- Backdrop: pointer-only dismiss target. No role/tabindex — keyboard users
@@ -90,7 +112,12 @@ function isTopmostModal(modal: StrctModal): boolean {
               </button>
             </div>
           }
-          <div class="strct-modal__body"><ng-content /></div>
+          <div class="strct-modal__body">
+            <ng-content />
+            @if (lazyContent(); as lazy) {
+              <ng-container [ngTemplateOutlet]="lazy.template" />
+            }
+          </div>
           @if (!hideFooter() && !chromeless()) {
             <div class="strct-modal__foot"><ng-content select="[strctModalFooter]" /></div>
           }
@@ -265,7 +292,8 @@ export class StrctModal {
   readonly open = model(false);
   /** Dialog title. */
   readonly title = input('');
-  /** Size variant (fixed scale; defaults to `sm` = 480px). */
+  /** Size variant (fixed scale; defaults to `sm` = 480px). Ignored by
+   *  `chromeless`, which sizes from the wizard it hosts. */
   readonly size = input<StrctModalSize>('sm');
   /** Hide the footer slot. */
   readonly hideFooter = input(false, { transform: booleanAttribute });
@@ -274,6 +302,11 @@ export class StrctModal {
    * content (a `flush` vertical wizard) is the dialog surface. `title` still
    * names the dialog for assistive tech; backdrop/Escape dismissal follow
    * `dismissible` as usual.
+   *
+   * The dialog's width comes from the wizard's geometry, not from `size`:
+   * rail + `--strct-wiz-content-min` (default 864px) [+ aside]. To change it,
+   * set that variable on this `strct-modal` or an ancestor — the dialog reads
+   * it on itself, so setting it on the `strct-wizard` inside does not reach it.
    */
   readonly chromeless = input(false, { transform: booleanAttribute });
   /** Accessible label of the X close button (localizable). */
@@ -295,6 +328,27 @@ export class StrctModal {
   readonly variant = input<'solid' | 'glass'>('solid');
   /** Emitted when the alert is dismissed. */
   readonly closed = output<void>();
+
+  /** Lazily rendered body, if one is provided (see {@link StrctModalContent}). */
+  protected readonly lazyContent = contentChild(StrctModalContent);
+
+  // Dev mode only: `size` is accepted alongside `chromeless` but cannot apply.
+  private readonly sizeDiagnostic =
+    typeof ngDevMode !== 'undefined' && ngDevMode
+      ? effect(() => {
+          const size = this.size();
+          if (this.chromeless() && size !== 'sm') {
+            strctDevWarn(
+              `modal:chromeless-size:${size}`,
+              `[strct-modal] size="${size}" has no effect with chromeless: a chromeless ` +
+                `dialog sizes itself from the wizard it hosts (rail + --strct-wiz-content-min, ` +
+                `default 864px). To change its width, set --strct-wiz-content-min on the ` +
+                `strct-modal or an ancestor — on the strct-wizard alone it does not reach ` +
+                `the dialog.`,
+            );
+          }
+        })
+      : null;
 
   protected readonly titleId = `strct-modal-${++modalCounter}`;
   /** Element that had focus before the dialog opened, restored on close. */

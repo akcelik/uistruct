@@ -1428,14 +1428,14 @@ export const DOCS: DocCategory[] = [
         selector: 'strct-modal',
         importNames: ['StrctModal'],
         summary: 'Overlay dialog with focus trap.',
-        lead: 'An overlay dialog with two-way `open` and a focus trap that restores focus on close. By default it closes only via its X or an action button — a click outside (or Escape) does not dismiss it; opt in with `dismissible`. Project the footer through `strctModalFooter`.',
+        lead: 'An overlay dialog with two-way `open` and a focus trap that restores focus on close. By default it closes only via its X or an action button — a click outside (or Escape) does not dismiss it; opt in with `dismissible`. Project the footer through `strctModalFooter`. Plain projected content is created with the parent, so it exists — and costs — even while the modal is closed; wrap an expensive body in `<ng-template strctModalContent>` to build it only while open (destroyed on close, so state does not survive).',
         inputs: [
           {
             name: 'chromeless',
             type: 'boolean',
             default: 'false',
             description:
-              'Wizard-hosting mode: no head, no body padding, no footer, and the dialog sizes to its content (width: fit-content) — the wizard drives the width, size only caps it. title still names the dialog for assistive tech; keep the wizard cancelable since the X is gone.',
+              'Wizard-hosting mode: no head, no body padding, no footer. The dialog sizes from the wizard geometry — rail + --strct-wiz-content-min (default 864px) [+ aside] — and `size` is ignored (dev mode warns). To change the width, set --strct-wiz-content-min on the strct-modal or an ancestor: the dialog reads it on itself, so setting it on the strct-wizard inside does not reach it (dev mode warns about that too). title still names the dialog for assistive tech; keep the wizard cancelable since the X is gone.',
           },
           {
             name: 'open',
@@ -1661,7 +1661,7 @@ export const DOCS: DocCategory[] = [
             name: 'provideStrctWizardDefaults({ vertical })',
             type: 'Provider',
             description:
-              'Flip the default app-wide ("steps are always vertical" as a house rule) — a bound [vertical] on an instance still wins.',
+              'Flip the default app-wide ("steps are always vertical" as a house rule) — a bound [vertical] on an instance still wins. Tests: provide the same defaults in any spec that renders a component using strct-wizard, or it renders the horizontal layout — a different DOM, no rail, no title.',
           },
           {
             name: 'vertical',
@@ -1718,7 +1718,7 @@ export const DOCS: DocCategory[] = [
             name: 'provideStrctWizardDefaults({ vertical })',
             type: 'Provider',
             description:
-              'Flip the default app-wide ("steps are always vertical" as a house rule) — a bound [vertical] on an instance still wins.',
+              'Flip the default app-wide ("steps are always vertical" as a house rule) — a bound [vertical] on an instance still wins. Tests: provide the same defaults in any spec that renders a component using strct-wizard, or it renders the horizontal layout — a different DOM, no rail, no title.',
           },
           {
             name: 'vertical',
@@ -1731,7 +1731,8 @@ export const DOCS: DocCategory[] = [
             name: 'title',
             type: 'string',
             default: `''`,
-            description: 'Rail heading above the progress bar (vertical mode).',
+            description:
+              'Rail heading above the progress bar. Vertical mode only — the horizontal layout has no title band, and dev mode warns when a title is set there.',
           },
           {
             name: 'strct-step [description]',
@@ -1849,7 +1850,7 @@ export const DOCS: DocCategory[] = [
             name: 'provideStrctWizardDefaults({ vertical })',
             type: 'Provider',
             description:
-              'Flip the default app-wide ("steps are always vertical" as a house rule) — a bound [vertical] on an instance still wins.',
+              'Flip the default app-wide ("steps are always vertical" as a house rule) — a bound [vertical] on an instance still wins. Tests: provide the same defaults in any spec that renders a component using strct-wizard, or it renders the horizontal layout — a different DOM, no rail, no title.',
           },
           {
             name: 'vertical',
@@ -2423,7 +2424,7 @@ export const DOCS: DocCategory[] = [
         selector: 'strct-table',
         importNames: ['StrctTable', 'StrctColumn', 'StrctCellDef'],
         summary: 'Lightweight styled table.',
-        lead: 'A lightweight, token-styled table for simple tabular data. Pass `columns` and `rows`; values are looked up by column `key`. Cells render as text by default — supply a `*strctCell="key"` template (context: `let-row`, `let-value="value"`, `let-column="column"`) for custom content.',
+        lead: 'A lightweight, token-styled table for simple tabular data. Pass `columns` and `rows`; values are looked up by column `key`. Cells render as text by default — supply a `*strctCell="key"` template (context: `let-row` or `let-row="row"`, `let-value="value"`, `let-column="column"`) for custom content.',
         inputs: [
           {
             name: 'columns',

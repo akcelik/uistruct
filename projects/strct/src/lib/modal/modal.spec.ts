@@ -1,6 +1,7 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnDestroy, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { StrctModal } from './modal';
+import { StrctModal, StrctModalContent } from './modal';
+import { resetStrctDevWarnings } from '../util/dev-warn';
 
 describe('StrctModal', () => {
   it('reflects the open input binding', () => {
@@ -264,5 +265,81 @@ describe('StrctModal chromeless (wizard-hosting mode)', () => {
     // The head (and its labelled title) is gone — aria-label carries the name.
     expect(dialog.getAttribute('aria-label')).toBe('Create virtual machine');
     expect(dialog.getAttribute('aria-labelledby')).toBeNull();
+  });
+});
+
+describe('StrctModal lazy content (strctModalContent)', () => {
+  let created = 0;
+  let destroyed = 0;
+
+  @Component({ selector: 'app-expensive', template: 'expensive' })
+  class Expensive implements OnDestroy {
+    constructor() {
+      created++;
+    }
+    ngOnDestroy(): void {
+      destroyed++;
+    }
+  }
+
+  @Component({
+    imports: [StrctModal, StrctModalContent, Expensive],
+    template: `
+      <strct-modal [open]="open()" title="Lazy">
+        <ng-template strctModalContent><app-expensive /></ng-template>
+      </strct-modal>
+      <strct-modal [open]="false" title="Eager"><app-expensive /></strct-modal>
+    `,
+  })
+  class LazyHost {
+    readonly open = signal(false);
+  }
+
+  beforeEach(() => {
+    created = 0;
+    destroyed = 0;
+  });
+
+  it('builds nothing while closed, builds on open, destroys on close', () => {
+    const fixture = TestBed.createComponent(LazyHost);
+    fixture.detectChanges();
+    // Only the plainly projected copy exists: Angular instantiates projected
+    // content with the parent even though that modal is closed.
+    expect(created).toBe(1);
+
+    fixture.componentInstance.open.set(true);
+    fixture.detectChanges();
+    expect(created).toBe(2);
+    expect(document.body.textContent).toContain('expensive');
+
+    fixture.componentInstance.open.set(false);
+    fixture.detectChanges();
+    expect(destroyed).toBe(1);
+  });
+});
+
+describe('StrctModal chromeless + size diagnostic', () => {
+  beforeEach(() => resetStrctDevWarnings());
+  afterEach(() => vi.restoreAllMocks());
+
+  function render(size: string, chromeless: boolean) {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const fixture = TestBed.createComponent(StrctModal);
+    fixture.componentRef.setInput('size', size);
+    fixture.componentRef.setInput('chromeless', chromeless);
+    fixture.detectChanges();
+    return warn.mock.calls.map((c) => String(c[0]));
+  }
+
+  it('says that size is ignored and where the real width lever is', () => {
+    const [msg, ...rest] = render('xl', true);
+    expect(rest).toEqual([]);
+    expect(msg).toContain('[strct-modal] size="xl" has no effect with chromeless');
+    expect(msg).toContain('set --strct-wiz-content-min on the strct-modal or an ancestor');
+  });
+
+  it('is quiet for the default size, and for size without chromeless', () => {
+    expect(render('sm', true)).toEqual([]);
+    expect(render('xl', false)).toEqual([]);
   });
 });
