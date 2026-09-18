@@ -2536,7 +2536,7 @@ export const DOCS: DocCategory[] = [
             type: 'string | ((row) => unknown)',
             default: 'null',
             description:
-              'Stable row identity (property key or function). Set it for live-refreshing data so selection, expansion and the active detail row survive re-fetches. Defaults to object identity.',
+              'Stable row identity (property key or function). Set it for live-refreshing data so selection, expansion and the active detail row survive re-fetches. Defaults to object identity — also per row whenever `rowId` resolves to null/undefined, so rows missing the field never share one identity. 0 and "" are valid ids.',
           },
           {
             name: 'pageSize',

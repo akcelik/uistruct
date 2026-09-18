@@ -2140,11 +2140,17 @@ export class StrctDatagrid {
       this.selectionRows().some((r) => this.selected().has(this.idOf(r))),
   );
 
-  /** Resolve a row's stable identity (defaults to the row object itself). */
+  /** Resolve a row's stable identity: its `rowId` value, or the row object
+   *  itself when there is no `rowId` or it resolves to null/undefined. */
   private idOf(row: StrctRow): unknown {
     const id = this.rowId();
     if (id == null) return row;
-    return typeof id === 'function' ? id(row) : row[id];
+    const resolved = typeof id === 'function' ? id(row) : row[id];
+    // An unresolvable id must not collapse rows onto one another: a Set holds
+    // `undefined` once, so every row missing the field would share one
+    // identity — select one, select them all. `??`, not `||`: 0 and '' are
+    // legitimate ids.
+    return resolved ?? row;
   }
 
   protected rowKey(row: StrctRow): unknown {
