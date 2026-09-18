@@ -48,6 +48,12 @@ additive — no default or behaviour changes.
 
 ### Fixed
 
+- **Showcase: three icons rendered empty.** The route crawl surfaced the existing
+  `strct-icon` warning for names that do not exist: `options` (the VM
+  settings "General" section, now `settings`), `display` (the "DVD Drive"
+  option, now `opticalDisc`) and `database` (storage and pools nav items,
+  now `storage`). A development-build crawl of all 115 routes is now free of
+  warnings.
 - **Docs:** the chromeless modal description still said the dialog is
   `fit-content` and that `size` caps it; neither has been true since 4.0.
   It now documents the real width lever and where to set it.

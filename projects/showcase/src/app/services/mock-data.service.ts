@@ -13,7 +13,7 @@ export const CATEGORIES: { id: string; label: string; icon: string }[] = [
   { id: 'compute', label: 'Compute', icon: 'cpu' },
   { id: 'vm', label: 'VM', icon: 'container' },
   { id: 'network', label: 'Network', icon: 'network' },
-  { id: 'storage', label: 'Storage', icon: 'database' },
+  { id: 'storage', label: 'Storage', icon: 'storage' },
 ];
 
 const DEFAULT_APPLIANCE: DcObject = {

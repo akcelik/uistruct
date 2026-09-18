@@ -91,7 +91,7 @@ const SECTIONS: Section[] = [
   {
     id: 'general',
     label: 'General',
-    icon: 'options',
+    icon: 'settings',
     group: 'Hardware',
     keys: ['name', 'generation', 'notes', 'placement', 'maintStart'],
   },
@@ -852,7 +852,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
           <span><strong>Hard Drive</strong><em>Attach a new virtual disk</em></span>
         </button>
         <button type="button" class="addopt" (click)="add('dvd')">
-          <strct-icon name="display" [size]="18" />
+          <strct-icon name="opticalDisc" [size]="18" />
           <span><strong>DVD Drive</strong><em>Mount an ISO image</em></span>
         </button>
       </div>

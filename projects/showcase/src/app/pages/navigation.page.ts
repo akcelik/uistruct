@@ -415,7 +415,7 @@ export class NavigationPage {
       icon: 'storage',
       items: [
         { id: 'volumes', label: 'Volumes', icon: 'disk', badge: 3, badgeStatus: 'critical' },
-        { id: 'pools', label: 'Pools', icon: 'database' },
+        { id: 'pools', label: 'Pools', icon: 'storage' },
       ],
     },
     {
