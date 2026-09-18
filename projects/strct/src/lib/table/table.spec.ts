@@ -67,3 +67,28 @@ describe('StrctCellDef', () => {
     expect(cell.textContent!.trim()).toBe('A');
   });
 });
+
+describe('StrctTable cell context', () => {
+  @Component({
+    imports: [StrctTable, StrctCellDef],
+    template: `
+      <strct-table [columns]="cols" [rows]="rows">
+        <ng-template strctCell="a" let-implicit let-named="row"
+          >{{ implicit['b'] }}|{{ named['b'] }}</ng-template
+        >
+      </strct-table>
+    `,
+  })
+  class BothSpellingsHost {
+    cols = [{ key: 'a', label: 'A' }];
+    rows = [{ a: 1, b: 'same-row' }];
+  }
+
+  it('exposes the row both implicitly and as `row`', () => {
+    const fixture = TestBed.createComponent(BothSpellingsHost);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('tbody td').textContent.trim()).toBe(
+      'same-row|same-row',
+    );
+  });
+});

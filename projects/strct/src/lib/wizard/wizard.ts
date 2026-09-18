@@ -2,9 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   Directive,
+  ElementRef,
   InjectionToken,
   Provider,
   ViewEncapsulation,
+  afterNextRender,
   booleanAttribute,
   computed,
   contentChild,
@@ -18,6 +20,7 @@ import {
   untracked,
 } from '@angular/core';
 import { StrctButton } from '../button/button';
+import { strctDevWarn } from '../util/dev-warn';
 
 /** A single wizard step. `label` names it in the step header / rail. */
 @Component({
@@ -600,7 +603,10 @@ export class StrctWizard {
    * ~720px of component width — it never flips horizontal.
    *
    * The default can be flipped app-wide via `provideStrctWizardDefaults`;
-   * this input always wins when bound.
+   * this input always wins when bound. **Tests:** a spec that renders a
+   * component using `strct-wizard` must provide the same defaults the app
+   * does, or it renders the horizontal layout — a different DOM, no rail,
+   * no title.
    */
   readonly vertical = input(this.defaults?.vertical ?? false, {
     transform: booleanAttribute,
@@ -612,7 +618,8 @@ export class StrctWizard {
    * Size the host with width/height only; do not override its `display`.
    */
   readonly flush = input(false, { transform: booleanAttribute });
-  /** Rail heading shown above the progress bar (vertical mode). */
+  /** Rail heading shown above the progress bar. Vertical mode only — the
+   *  horizontal layout has no title band (a dev-mode warning says so). */
   readonly title = input('');
   /**
    * Name the content pane after the active step (vertical mode): the step's
@@ -658,12 +665,49 @@ export class StrctWizard {
   );
 
   constructor() {
+    if (typeof ngDevMode !== 'undefined' && ngDevMode) this.diagnose();
     effect(() => {
       const idx = this.current();
       this.steps().forEach((step, i) => step.setActive(i === idx));
       untracked(() => {
         if (idx > this.maxVisited()) this.maxVisited.set(idx);
       });
+    });
+  }
+
+  /** Dev-mode warnings for inputs the current layout silently ignores. */
+  private diagnose(): void {
+    if (!(typeof ngDevMode !== 'undefined' && ngDevMode)) return;
+    effect(() => {
+      const title = this.title();
+      if (title && !this.vertical()) {
+        strctDevWarn(
+          'wizard:horizontal-title',
+          `[strct-wizard] title="${title}" is not rendered: only the vertical layout ` +
+            `has a title band. Set \`vertical\` — or, if the app provides ` +
+            `provideStrctWizardDefaults({ vertical: true }), provide it here too ` +
+            `(a test that omits it renders the horizontal wizard).`,
+        );
+      }
+    });
+    // A chromeless dialog sizes itself from --strct-wiz-content-min read on the
+    // DIALOG; set on the wizard, it widens the grid but not the dialog.
+    const host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
+    afterNextRender(() => {
+      const dialog = host.closest('.strct-modal__dialog--chromeless');
+      if (!dialog) return;
+      const prop = '--strct-wiz-content-min';
+      const own = getComputedStyle(host).getPropertyValue(prop).trim();
+      const outer = getComputedStyle(dialog).getPropertyValue(prop).trim();
+      if (own !== outer) {
+        strctDevWarn(
+          'wizard:content-min-scope',
+          `[strct-wizard] ${prop} is ${own || '(unset)'} on the wizard but ` +
+            `${outer || '(unset — default 864px)'} on its chromeless dialog. The dialog ` +
+            `reads the variable on itself, so its width ignores the wizard's value. Set ` +
+            `it on the strct-modal or an ancestor instead.`,
+        );
+      }
     });
   }
 

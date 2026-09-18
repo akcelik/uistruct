@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctStep, StrctWizard, StrctWizardAside, provideStrctWizardDefaults } from './wizard';
+import { StrctModal } from '../modal/modal';
+import { resetStrctDevWarnings } from '../util/dev-warn';
 
 describe('StrctWizard', () => {
   it('applies the host class', () => {
@@ -236,5 +238,56 @@ describe('StrctWizard app-wide defaults', () => {
     const fixture = TestBed.createComponent(PlainHost);
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).querySelector('.strct-wiz__rail')).toBeNull();
+  });
+});
+
+describe('StrctWizard silent-failure diagnostics', () => {
+  beforeEach(() => resetStrctDevWarnings());
+  afterEach(() => vi.restoreAllMocks());
+  const spy = () => vi.spyOn(console, 'warn').mockImplementation(() => {});
+  const texts = (w: ReturnType<typeof spy>) => w.mock.calls.map((c) => String(c[0]));
+
+  it('warns that title is dropped by the horizontal layout, and why a test may hit it', () => {
+    const warn = spy();
+    const fixture = TestBed.createComponent(StrctWizard);
+    fixture.componentRef.setInput('title', 'Create VM');
+    fixture.detectChanges();
+    expect(texts(warn)).toEqual([
+      expect.stringContaining('[strct-wizard] title="Create VM" is not rendered'),
+    ]);
+    expect(texts(warn)[0]).toContain('provideStrctWizardDefaults({ vertical: true })');
+  });
+
+  it('is quiet when the title can render', () => {
+    const warn = spy();
+    const fixture = TestBed.createComponent(StrctWizard);
+    fixture.componentRef.setInput('title', 'Create VM');
+    fixture.componentRef.setInput('vertical', true);
+    fixture.detectChanges();
+    expect(texts(warn)).toEqual([]);
+  });
+
+  @Component({
+    imports: [StrctModal, StrctWizard, StrctStep],
+    template: `
+      <strct-modal [open]="true" chromeless title="Create VM">
+        <strct-wizard vertical flush [style]="wizStyle"
+          ><strct-step label="A">a</strct-step></strct-wizard
+        >
+      </strct-modal>
+    `,
+  })
+  class ChromelessHost {
+    wizStyle = '--strct-wiz-content-min: 480px';
+  }
+
+  it('warns when --strct-wiz-content-min is set on the wizard, where the dialog cannot see it', () => {
+    const warn = spy();
+    const fixture = TestBed.createComponent(ChromelessHost);
+    fixture.detectChanges();
+    expect(texts(warn)).toEqual([
+      expect.stringContaining('[strct-wizard] --strct-wiz-content-min is 480px on the wizard'),
+    ]);
+    expect(texts(warn)[0]).toContain('Set it on the strct-modal or an ancestor');
   });
 });

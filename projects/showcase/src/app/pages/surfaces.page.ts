@@ -552,7 +552,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       owner="wizard"
       heading="Wizard as the dialog"
       description="The natural composition: strct-modal chromeless hosting a flush vertical wizard — the rail reaches the dialog edges and the wizard's own footer is the dialog footer. The dialog sizes to the wizard, whose content column has a guaranteed minimum (--strct-wiz-content-min): toggle the aside below and the form keeps the exact same width — the aside grows the dialog instead of squeezing the form. Keep cancelable: the head's X is gone."
-      code='<strct-modal chromeless size="xl" [(open)]="open"><strct-wizard vertical flush cancelable title="Create VM" (cancelled)="open = false">…</strct-wizard></strct-modal>'
+      code='<strct-modal chromeless [(open)]="open"><strct-wizard vertical flush cancelable title="Create VM" (cancelled)="open = false">…</strct-wizard></strct-modal>'
     >
       <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
         <button strct-button variant="primary" (click)="wdOpen.set(true)">
@@ -566,7 +566,6 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         [open]="wdOpen()"
         (openChange)="wdOpen.set($event)"
         chromeless
-        size="xl"
         title="Create virtual machine"
         panelClass="demo-wiz-dialog"
       >

@@ -79,6 +79,7 @@ import { StrctOverlay } from '../overlay/overlay';
 import { focusFirstIn, restoreFocus } from '../overlay/focus';
 import { StrctSearchbox } from '../searchbox/searchbox';
 import { XlsxValue, buildXlsx } from './xlsx';
+import { strctDevWarn } from '../util/dev-warn';
 
 /** Resolves a stable identity for a row: a property key, or a function. */
 export type StrctRowId = string | ((row: StrctRow) => unknown);
@@ -150,7 +151,7 @@ const STICKY_FALLBACK_W = 120;
 
 /**
  * Marks the expandable-row detail template. The row is the template's implicit
- * context: `<ng-template strctRowDetail let-row> … {{ row['name'] }} … </ng-template>`.
+ * context (`let-row`, or `let-row="row"`): `<ng-template strctRowDetail let-row> … {{ row['name'] }} … </ng-template>`.
  */
 @Directive({ selector: '[strctRowDetail]' })
 export class StrctRowDetailDef {
@@ -520,6 +521,7 @@ export class StrctDatagridActionBar {}
                             [ngTemplateOutlet]="tpl"
                             [ngTemplateOutletContext]="{
                               $implicit: row,
+                              row,
                               value: row[col.key],
                               column: col,
                             }"
@@ -548,7 +550,7 @@ export class StrctDatagridActionBar {}
                         <div class="strct-dg__detail">
                           <ng-container
                             [ngTemplateOutlet]="detailDef()!.template"
-                            [ngTemplateOutletContext]="{ $implicit: row }"
+                            [ngTemplateOutletContext]="{ $implicit: row, row }"
                           />
                         </div>
                       </td>
@@ -586,7 +588,7 @@ export class StrctDatagridActionBar {}
           <div class="strct-dg__pane-body">
             <ng-container
               [ngTemplateOutlet]="detailDef()!.template"
-              [ngTemplateOutletContext]="{ $implicit: activeRow() }"
+              [ngTemplateOutletContext]="{ $implicit: activeRow(), row: activeRow() }"
             />
           </div>
         </aside>
@@ -2140,6 +2142,68 @@ export class StrctDatagrid {
       this.selectionRows().some((r) => this.selected().has(this.idOf(r))),
   );
 
+  /** Dev-mode check that row identities can do their job (see util/dev-warn). */
+  private diagnoseIdentity(
+    rowId: StrctRowId | null,
+    rows: readonly StrctRow[],
+    init: readonly unknown[] | null,
+    lazy: boolean,
+  ): void {
+    if (!(typeof ngDevMode !== 'undefined' && ngDevMode)) return;
+    if (rows.length === 0) return;
+    const label =
+      rowId == null ? '' : typeof rowId === 'function' ? 'rowId (function)' : `rowId="${rowId}"`;
+
+    if (rowId != null) {
+      const seen = new Set<unknown>();
+      const dupes = new Set<unknown>();
+      let unresolved = 0;
+      for (const r of rows) {
+        const raw = typeof rowId === 'function' ? rowId(r) : r[rowId];
+        if (raw == null) unresolved++;
+        else if (seen.has(raw)) dupes.add(raw);
+        else seen.add(raw);
+      }
+      if (dupes.size > 0) {
+        const sample = [...dupes]
+          .slice(0, 3)
+          .map((v) => JSON.stringify(v))
+          .join(', ');
+        strctDevWarn(
+          `datagrid:dupe:${label}`,
+          `[strct-datagrid] ${label} resolves to the same value for more than one row ` +
+            `(${sample}). Selection and expansion key on this value, so those rows ` +
+            `will behave as one. Give each row a distinct value, or drop rowId to key ` +
+            `on the row object.`,
+        );
+      }
+      if (unresolved > 0) {
+        strctDevWarn(
+          `datagrid:unresolved:${label}`,
+          `[strct-datagrid] ${label} does not resolve for ${unresolved} of ${rows.length} ` +
+            `rows. Those rows fall back to object identity, so their selection and ` +
+            `expansion will not survive a data refresh. Check the field name, or give ` +
+            `every row a value.`,
+        );
+      }
+    }
+
+    // Lazy mode seeds ids for rows on other pages, so a miss there is normal.
+    if (!lazy && init && init.length > 0) {
+      const ids = new Set(rows.map((r) => this.idOf(r)));
+      if (!init.some((v) => ids.has(v))) {
+        strctDevWarn(
+          `datagrid:init:${label}`,
+          `[strct-datagrid] initialSelection has ${init.length} value(s), none of which ` +
+            (rowId == null
+              ? `is one of the rows — with no rowId, the values must be the row objects themselves. `
+              : `matches any row's ${label}. `) +
+            `The pre-selection will be empty.`,
+        );
+      }
+    }
+  }
+
   /** Resolve a row's stable identity: its `rowId` value, or the row object
    *  itself when there is no `rowId` or it resolves to null/undefined. */
   private idOf(row: StrctRow): unknown {
@@ -2191,6 +2255,17 @@ export class StrctDatagrid {
       if (init == null) return;
       untracked(() => this.selected.set(new Set(init)));
     });
+    // Dev mode only: say so when rowId or initialSelection cannot do what they
+    // were given to do. In production the effect is never registered.
+    if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+      effect(() => {
+        const rowId = this.rowId();
+        const rows = this.rows();
+        const init = this.initialSelection();
+        const lazy = this.lazy();
+        untracked(() => this.diagnoseIdentity(rowId, rows, init, lazy));
+      });
+    }
     // Server-side mode: announce what to load whenever page / sort / pageSize
     // change (and once on init, so the consumer fetches the first page).
     effect(() => {

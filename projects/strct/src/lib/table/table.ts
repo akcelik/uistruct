@@ -24,8 +24,12 @@ export type StrctRow = Record<string, unknown>;
 
 /** Context passed to a per-column cell template. */
 export interface StrctCellContext {
-  /** The row object. */
+  /** The row object — `let-row`. */
   $implicit: StrctRow;
+  /** The row object again, by name — so `let-row="row"` works too. Without it
+   *  that spelling bound `undefined` silently, because `value` and `column`
+   *  ARE named properties and `row` looked like one of them. */
+  row: StrctRow;
   /** The raw value for this column (`row[column.key]`). */
   value: unknown;
   /** The column definition. */
@@ -36,7 +40,7 @@ export interface StrctCellContext {
  * Per-column cell template for `strct-table` / `strct-datagrid`. The column key
  * is the directive value; the row, value and column are the template context:
  *
- *   <ng-template strctCell="status" let-row let-value="value">
+ *   <ng-template strctCell="status" let-row let-value="value">   (let-row="row" also works)
  *     <strct-badge [status]="row['success'] ? 'success' : 'critical'">{{ value }}</strct-badge>
  *   </ng-template>
  */
@@ -88,6 +92,7 @@ export class StrctCellDef {
                       [ngTemplateOutlet]="tpl"
                       [ngTemplateOutletContext]="{
                         $implicit: row,
+                        row,
                         value: row[col.key],
                         column: col,
                       }"

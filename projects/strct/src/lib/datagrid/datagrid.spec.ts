@@ -7,7 +7,8 @@ import {
   StrctDatagridLazyState,
   StrctRowDetailDef,
 } from './datagrid';
-import { StrctRow } from '../table/table';
+import { StrctCellDef, StrctRow } from '../table/table';
+import { resetStrctDevWarnings } from '../util/dev-warn';
 
 const COLS: StrctDatagridColumn[] = [{ key: 'n', label: 'N', sortable: true }];
 const ROWS: StrctRow[] = [{ n: 'gamma' }, { n: 'alpha' }, { n: 'beta' }];
@@ -1209,5 +1210,97 @@ describe('StrctDatagrid unresolvable rowId', () => {
     const pane = fixture.nativeElement.querySelector('.strct-dg__pane') as HTMLElement;
     expect(pane).toBeTruthy();
     expect(pane.textContent).toContain('pnic1 detail');
+  });
+});
+
+describe('StrctDatagrid silent-failure diagnostics', () => {
+  beforeEach(() => resetStrctDevWarnings());
+  afterEach(() => vi.restoreAllMocks());
+
+  function make(inputs: Record<string, unknown>) {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [{ key: 'n', label: 'N' }]);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return { fixture, messages: () => warn.mock.calls.map((c) => String(c[0])) };
+  }
+
+  it('warns when rowId resolves to the same value for several rows', () => {
+    const { messages } = make({ rowId: 'id', rows: [{ id: 1 }, { id: 1 }, { id: 2 }] });
+    expect(messages()).toHaveLength(1);
+    expect(messages()[0]).toContain('[strct-datagrid] rowId="id" resolves to the same value');
+    expect(messages()[0]).toContain('(1)');
+  });
+
+  it('warns when rowId does not resolve, naming the count and the consequence', () => {
+    const { messages } = make({ rowId: 'id', rows: [{ n: 'a' }, { n: 'b' }, { id: 3 }] });
+    expect(messages()).toEqual([
+      expect.stringContaining('rowId="id" does not resolve for 2 of 3 rows'),
+    ]);
+    expect(messages()[0]).toContain('will not survive a data refresh');
+  });
+
+  it('warns when initialSelection matches no row', () => {
+    const { messages } = make({
+      rowId: 'id',
+      rows: [{ id: 'a' }, { id: 'b' }],
+      selectable: true,
+      initialSelection: ['x', 'y'],
+    });
+    expect(messages()).toEqual([
+      expect.stringContaining(
+        'initialSelection has 2 value(s), none of which matches any row\'s rowId="id"',
+      ),
+    ]);
+  });
+
+  it('stays quiet when identities are healthy, a seed partly matches, or rows are not loaded yet', () => {
+    expect(
+      make({
+        rowId: 'id',
+        rows: [{ id: 'a' }, { id: 0 }],
+        selectable: true,
+        initialSelection: ['a', 'gone'],
+      }).messages(),
+    ).toEqual([]);
+    expect(
+      make({ rowId: 'id', rows: [], selectable: true, initialSelection: ['a'] }).messages(),
+    ).toEqual([]);
+  });
+
+  it('lazy mode does not flag a seed for rows on other pages', () => {
+    const { messages } = make({
+      rowId: 'id',
+      rows: [{ id: 'a' }],
+      lazy: true,
+      total: 100,
+      selectable: true,
+      initialSelection: ['on-page-7'],
+    });
+    expect(messages()).toEqual([]);
+  });
+});
+
+describe('StrctDatagrid cell context', () => {
+  @Component({
+    imports: [StrctDatagrid, StrctCellDef],
+    template: `
+      <strct-datagrid [columns]="cols" [rows]="rows">
+        <ng-template strctCell="a" let-row="row" let-value="value"
+          >{{ row['b'] }}/{{ value }}</ng-template
+        >
+      </strct-datagrid>
+    `,
+  })
+  class NamedRowHost {
+    cols: StrctDatagridColumn[] = [{ key: 'a', label: 'A' }];
+    rows: StrctRow[] = [{ a: 'x', b: 'named' }];
+  }
+
+  it('let-row="row" binds the row, not undefined', () => {
+    const fixture = TestBed.createComponent(NamedRowHost);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('tbody td').textContent.trim()).toBe('named/x');
   });
 });

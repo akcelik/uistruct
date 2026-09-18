@@ -5,6 +5,56 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-09-18
+
+Implements HyperStruct's "silent failures" report: where a component is used
+in a combination it cannot honour, it now says so instead of doing something
+plausible and wrong. Every diagnostic is dev-mode only (`ngDevMode`), fires once
+per condition, and names what was ignored and what to do instead. Each is guarded
+inline, so a production build drops it entirely — checked: none of the
+messages appear in the production showcase bundle. All
+additive — no default or behaviour changes.
+
+### Added
+
+- **`<ng-template strctModalContent>` — a lazily rendered modal body.** Plain
+  projected content is created by the parent along with the parent's own
+  view, so a closed modal still instantiated everything inside it (four
+  datagrids in one consumer dialog pushed unrelated specs past their render
+  budget). Content in this template is built only while the modal is open and
+  destroyed on close.
+- **`let-row="row"` works in `strctCell` and `strctRowDetail` templates.**
+  The row was only the implicit value, so the named spelling bound
+  `undefined` without an error — and because `value` and `column` _are_
+  named, it looked right. The context now carries `row` as well. The
+  consumer that reported this hit it twice, months apart.
+- **Dev-mode diagnostics:**
+  - `strct-datagrid`: `rowId` resolving to the same value for several rows
+    (they behave as one); `rowId` not resolving for some rows (they fall
+    back to object identity, so their selection won't survive a refresh);
+    `initialSelection` matching no row at all (the pre-selection is
+    silently empty — skipped in lazy mode, where ids may be on other pages).
+  - `strct-modal`: `size` set alongside `chromeless`, where it has no
+    effect.
+  - `strct-wizard`: `title` set on the horizontal layout, which has no
+    title band — the usual cause is a test that omits the app's
+    `provideStrctWizardDefaults({ vertical: true })`; and
+    `--strct-wiz-content-min` set on the wizard inside a chromeless dialog,
+    where the dialog cannot see it.
+
+  Crawled all 115 showcase routes on a development build: no false positives.
+  The one warning that fired was correct — the showcase's own wizard-dialog
+  demo passed `size="xl"` to a chromeless modal. That demo is fixed.
+
+### Fixed
+
+- **Docs:** the chromeless modal description still said the dialog is
+  `fit-content` and that `size` caps it; neither has been true since 4.0.
+  It now documents the real width lever and where to set it.
+- **4.0.0 migration note** showed `--strct-wiz-content-min` on
+  `strct-wizard`. Measured in Chrome, that leaves a chromeless dialog at the
+  new width; it has to be set on the `strct-modal` or an ancestor.
+
 ## [4.0.0] - 2026-09-18
 
 The vertical wizard's content area is 80% wider. A visual change to a
@@ -32,9 +82,14 @@ fits, graceful narrowing below, and no clipping at any width.
 
 ### Migration
 
-To keep the 3.x width, set the token back:
+To keep the 3.x width, set the token back — **on the `strct-modal` (or an
+ancestor), not on the `strct-wizard`**. A chromeless dialog reads the
+variable on itself; set on the wizard inside, it never reaches the dialog.
+(This note originally showed `strct-wizard` as the selector, which does not
+work for the dialog case — corrected in 4.1.0.)
 
 ```css
+strct-modal,
 strct-wizard {
   --strct-wiz-content-min: 480px;
 }
