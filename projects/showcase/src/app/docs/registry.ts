@@ -1763,9 +1763,9 @@ export const DOCS: DocCategory[] = [
           {
             name: '--strct-wiz-content-min',
             type: 'CSS token',
-            default: '480px',
+            default: '864px',
             description:
-              'Guaranteed minimum width of the vertical content column. Under a chromeless fit-content dialog the form width is IDENTICAL with or without an aside — the aside adds to the total, it never carves the form (FR-17-03).',
+              'Guaranteed minimum width of the vertical content column (864px since 4.0; 480px before). Under a chromeless dialog the form width is IDENTICAL with or without an aside — the aside adds to the total, it never carves the form (FR-17-03). The layout breakpoints are tuned to the default: the aside yields below a 1376px container and the column shrinks below 1096px. Container queries cannot read custom properties, so an override keeps those breakpoints.',
           },
           {
             name: 'flush',
