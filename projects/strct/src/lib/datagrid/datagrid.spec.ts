@@ -1086,3 +1086,128 @@ describe('StrctDatagrid shift-range selection', () => {
     expect(selectedNames(fixture)).toEqual(['r1', 'r4']);
   });
 });
+
+describe('StrctDatagrid unresolvable rowId', () => {
+  type Fixture = ReturnType<typeof TestBed.createComponent<StrctDatagrid>>;
+  // rowId="id", but the rows genuinely have no `id` field.
+  const UNKEYED: StrctRow[] = [
+    { name: 'Intel X710', conn: 'pnic0' },
+    { name: 'Intel X710', conn: 'pnic1' },
+    { name: 'Intel X710', conn: 'pnic2' },
+  ];
+  const cols: StrctDatagridColumn[] = [
+    { key: 'conn', label: 'Connection' },
+    { key: 'name', label: 'Name', editable: true },
+  ];
+
+  function make(rows: StrctRow[], rowId: string | ((r: StrctRow) => unknown) = 'id'): Fixture {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('rowId', rowId);
+    fixture.componentRef.setInput('selectable', true);
+    fixture.detectChanges();
+    return fixture;
+  }
+  const rowBoxes = (f: Fixture) =>
+    [...f.nativeElement.querySelectorAll('tbody strct-checkbox input')] as HTMLInputElement[];
+  const selectAll = (f: Fixture) =>
+    f.nativeElement.querySelector('thead strct-checkbox input') as HTMLInputElement;
+
+  it('does not merge rows whose rowId field is missing', () => {
+    const fixture = make(UNKEYED);
+    let emitted: StrctRow[] = [];
+    fixture.componentInstance.selectionChange.subscribe((s) => (emitted = s));
+
+    rowBoxes(fixture)[0].click();
+    fixture.detectChanges();
+
+    expect(emitted).toEqual([UNKEYED[0]]);
+    expect(rowBoxes(fixture).map((b) => b.checked)).toEqual([true, false, false]);
+    expect(selectAll(fixture).checked).toBe(false);
+  });
+
+  it('a rowId function that returns undefined falls back the same way', () => {
+    const fixture = make(UNKEYED, () => undefined);
+    rowBoxes(fixture)[1].click();
+    fixture.detectChanges();
+    expect(rowBoxes(fixture).map((b) => b.checked)).toEqual([false, true, false]);
+  });
+
+  it('keeps 0 and "" as usable row ids', () => {
+    const rows: StrctRow[] = [
+      { id: 0, conn: 'a' },
+      { id: '', conn: 'b' },
+      { id: 1, conn: 'c' },
+    ];
+    const fixture = make(rows);
+    let emitted: StrctRow[] = [];
+    fixture.componentInstance.selectionChange.subscribe((s) => (emitted = s));
+
+    for (const i of [0, 1, 2]) {
+      fixture.componentInstance.clearSelection();
+      fixture.detectChanges();
+      rowBoxes(fixture)[i].click();
+      fixture.detectChanges();
+      expect(emitted).toEqual([rows[i]]);
+    }
+    // And the id — not the object — is still the key: a seed of 0 and '' hits.
+    fixture.componentRef.setInput('initialSelection', [0, '']);
+    fixture.detectChanges();
+    expect(rowBoxes(fixture).map((b) => b.checked)).toEqual([true, true, false]);
+  });
+
+  it('inline editing opens exactly one editor', () => {
+    const fixture = make(UNKEYED);
+    const cells = fixture.nativeElement.querySelectorAll('.strct-dg__cell--editable');
+    (cells[0] as HTMLElement).dispatchEvent(new MouseEvent('dblclick'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.strct-dg__editinput').length).toBe(1);
+  });
+
+  @Component({
+    imports: [StrctDatagrid, StrctRowDetailDef],
+    template: `
+      <strct-datagrid
+        [columns]="cols"
+        [rows]="rows"
+        rowId="id"
+        [expandable]="!pane"
+        [detailPane]="pane"
+      >
+        <ng-template strctRowDetail let-row>{{ row['conn'] }} detail</ng-template>
+      </strct-datagrid>
+    `,
+  })
+  class DetailHost {
+    cols: StrctDatagridColumn[] = [{ key: 'conn', label: 'Connection' }];
+    rows = UNKEYED;
+    pane = false;
+  }
+
+  function makeDetail(pane: boolean) {
+    const fixture = TestBed.createComponent(DetailHost);
+    fixture.componentInstance.pane = pane;
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('does not expand sibling rows when rowId is unresolvable', () => {
+    const fixture = makeDetail(false);
+    (fixture.nativeElement.querySelector('.strct-dg__expandbtn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const details = fixture.nativeElement.querySelectorAll('.strct-dg__detailrow');
+    expect(details.length).toBe(1);
+    expect((details[0] as HTMLElement).textContent).toContain('pnic0 detail');
+  });
+
+  it('the detail pane opens for an unkeyed row (it used to stay shut)', () => {
+    const fixture = makeDetail(true);
+    const btns = fixture.nativeElement.querySelectorAll('.strct-dg__detailbtn');
+    (btns[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const pane = fixture.nativeElement.querySelector('.strct-dg__pane') as HTMLElement;
+    expect(pane).toBeTruthy();
+    expect(pane.textContent).toContain('pnic1 detail');
+  });
+});

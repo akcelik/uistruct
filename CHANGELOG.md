@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2026-09-18
+
+### Fixed
+
+- **`strct-datagrid` merged rows whose `rowId` field was missing.** When
+  `rowId` named a field a row did not have (or a `rowId` function returned
+  null/undefined), every such row resolved to the same `undefined` identity.
+  Ticking one row's checkbox checked them all, lit up select-all, and
+  `selectionChange` emitted every unkeyed row. Row identity now falls back to
+  the row object — the same identity used when no `rowId` is given — so rows
+  can never merge. `0` and `''` remain valid ids.
+
+  The same identity drives more than selection, so the fix also closes:
+  expanding one row's detail expanded its siblings; double-clicking a cell
+  opened an inline editor in every sibling; and `detailPane` never opened for
+  an unkeyed row at all, since a null identity reads as "nothing open".
+  Reported by HyperStruct; its `_key` workaround keeps working but is no
+  longer needed.
+
 ## [3.1.0] - 2026-08-28
 
 ### Added
