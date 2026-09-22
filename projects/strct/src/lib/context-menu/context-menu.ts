@@ -102,7 +102,9 @@ export class StrctContextMenu {
     // guessed size) and focus can land on the first item.
     setTimeout(() => {
       this.clampToViewport();
-      this.focusItem(0);
+      // Land on the first entry that can act, not a disabled-but-hinted one.
+      const first = this.navItems().findIndex((i) => i.getAttribute('aria-disabled') !== 'true');
+      this.focusItem(Math.max(first, 0));
     });
   }
 
@@ -114,12 +116,15 @@ export class StrctContextMenu {
     this.restoreTo = null;
   }
 
-  /** Enabled `strct-dropdown-item` elements in DOM order. */
+  /** Keyboard-reachable `strct-dropdown-item` elements in DOM order: enabled
+   *  ones, plus disabled ones that carry a hint (so the reason can be read). */
   private navItems(): HTMLElement[] {
     const el = this.menuEl()?.nativeElement;
     if (!el) return [];
-    return Array.from(
-      el.querySelectorAll<HTMLElement>('.strct-dd__item:not([aria-disabled="true"])'),
+    return Array.from(el.querySelectorAll<HTMLElement>('.strct-dd__item')).filter(
+      (i) =>
+        i.getAttribute('aria-disabled') !== 'true' ||
+        i.classList.contains('strct-dd__item--hinted'),
     );
   }
 

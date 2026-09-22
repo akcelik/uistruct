@@ -196,7 +196,10 @@ export class StrctSubmenu {
       const panel = this.panel()?.nativeElement;
       // Dropdown-item rows carry tabindex=-1, outside FOCUSABLE_SELECTOR —
       // fall back to the first rovable row when nothing else is tabbable.
-      if (panel && !focusFirstIn(panel)) this.panelItems()[0]?.focus();
+      if (panel && !focusFirstIn(panel)) {
+        const items = this.panelItems();
+        (items.find((el) => el.getAttribute('aria-disabled') !== 'true') ?? items[0])?.focus();
+      }
     });
   }
 
@@ -233,11 +236,16 @@ export class StrctSubmenu {
     }
   }
 
-  /** Rovable rows of the open fly-out (dropdown items, skipping disabled). */
+  /** Rovable rows of the open fly-out: enabled dropdown items, plus disabled
+   *  ones that carry a hint (so the reason can be read). */
   private panelItems(): HTMLElement[] {
     const panel = this.panel()?.nativeElement;
     return panel
-      ? [...panel.querySelectorAll<HTMLElement>('strct-dropdown-item:not([aria-disabled="true"])')]
+      ? [...panel.querySelectorAll<HTMLElement>('strct-dropdown-item')].filter(
+          (i) =>
+            i.getAttribute('aria-disabled') !== 'true' ||
+            i.classList.contains('strct-dd__item--hinted'),
+        )
       : [];
   }
 }

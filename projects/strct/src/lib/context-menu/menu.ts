@@ -23,6 +23,8 @@ import {
 import { StrctIcon } from '../icon/icon';
 import { restoreFocus, saveFocusedElement } from '../overlay/focus';
 
+let menuPanelCounter = 0;
+
 /** A single entry in a data-driven menu. */
 export interface StrctMenuItem {
   /** Entry text. Optional — omit it for a `divider`, where a label is meaningless. */
@@ -30,7 +32,16 @@ export interface StrctMenuItem {
   icon?: string;
   /** Destructive styling. */
   critical?: boolean;
+  /** Unavailable: shown dimmed and cannot be activated. Pair with `hint` to say why. */
   disabled?: boolean;
+  /**
+   * A short explanation — typically why a disabled entry is unavailable
+   * ("VM must be powered off to clone."). Shown as the entry's tooltip and
+   * given to assistive technology as its description; never rendered inline,
+   * so it never widens the menu. A disabled entry WITH a hint stays reachable
+   * by keyboard so its reason can be read; without one it is skipped, as before.
+   */
+  hint?: string;
   /** Render a separator instead of an entry (label is ignored). */
   divider?: boolean;
   /** Nested submenu. */
@@ -59,13 +70,21 @@ export interface StrctMenuItem {
           <div class="strct-menu__sep" role="separator"></div>
         } @else {
           <div class="strct-menu__wrap" (mouseenter)="onHover(i)" (mouseleave)="onLeave(i)">
+            <!-- aria-disabled, not [disabled]: a natively disabled button takes no
+                 focus and, in some browsers, no pointer events — so neither the
+                 keyboard nor the hint's tooltip could reach it. Activation is
+                 blocked in code. The tooltip sits on the button, not the wrapper:
+                 the wrapper also holds the submenu, whose entries would otherwise
+                 inherit this entry's title. -->
             <button
               type="button"
               class="strct-menu__item"
               [attr.data-idx]="i"
               [class.strct-menu__item--critical]="item.critical"
               [class.strct-menu__item--active]="i === activeIndex()"
-              [disabled]="item.disabled"
+              [attr.aria-disabled]="item.disabled ? 'true' : null"
+              [attr.aria-describedby]="item.hint ? hintId(i) : null"
+              [attr.title]="item.hint || null"
               role="menuitem"
               [attr.aria-haspopup]="item.children?.length ? 'menu' : null"
               [attr.aria-expanded]="item.children?.length ? openSubIndex() === i : null"
@@ -92,6 +111,11 @@ export interface StrctMenuItem {
                 />
               }
             </button>
+            @if (item.hint) {
+              <!-- hidden: kept out of the entry's accessible NAME, yet still read
+                   as its description through aria-describedby. -->
+              <span [id]="hintId(i)" hidden>{{ item.hint }}</span>
+            }
             @if (openSubIndex() === i && item.children?.length) {
               <strct-menu-panel
                 submenu
@@ -151,8 +175,8 @@ export interface StrctMenuItem {
         font-family: var(--font);
         text-align: start;
       }
-      .strct-menu__item:hover:not(:disabled),
-      .strct-menu__item--active:not(:disabled) {
+      .strct-menu__item:hover:not([aria-disabled='true']),
+      .strct-menu__item--active:not([aria-disabled='true']) {
         background: var(--bg-3);
       }
       .strct-menu__item:focus-visible {
@@ -162,11 +186,11 @@ export interface StrctMenuItem {
       .strct-menu__item--critical {
         color: var(--critical);
       }
-      .strct-menu__item--critical:hover:not(:disabled),
-      .strct-menu__item--critical.strct-menu__item--active:not(:disabled) {
+      .strct-menu__item--critical:hover:not([aria-disabled='true']),
+      .strct-menu__item--critical.strct-menu__item--active:not([aria-disabled='true']) {
         background: var(--critical-bg);
       }
-      .strct-menu__item:disabled {
+      .strct-menu__item[aria-disabled='true'] {
         opacity: 0.45;
         cursor: not-allowed;
       }
@@ -250,17 +274,29 @@ export class StrctMenuPanel {
   protected readonly activeIndex = signal(0);
   protected readonly openSubIndex = signal<number | null>(null);
 
+  /** Entries the keyboard visits: not dividers, and not a disabled entry that
+   *  has nothing to say — a disabled entry WITH a hint is reachable so its
+   *  reason can be read. (Before, disabled entries were "visited" but a
+   *  natively disabled button refused focus, stranding the keyboard.) */
   private readonly navIndices = computed(() =>
     this.items()
-      .map((it, i) => (it.divider ? -1 : i))
+      .map((it, i) => (it.divider || (it.disabled && !it.hint) ? -1 : i))
       .filter((i) => i >= 0),
   );
+
+  private readonly uid = ++menuPanelCounter;
+  protected hintId(i: number): string {
+    return `strct-menu-${this.uid}-hint-${i}`;
+  }
 
   constructor() {
     this.posX.set(this.x());
     this.posY.set(this.y());
     afterNextRender(() => {
-      this.activeIndex.set(this.navIndices()[0] ?? 0);
+      // Open on the first entry that can act; a disabled-but-hinted one is
+      // reachable by arrow keys, not the landing spot.
+      const nav = this.navIndices();
+      this.activeIndex.set(nav.find((i) => !this.items()[i].disabled) ?? nav[0] ?? 0);
       this.clampToViewport();
       this.focusItem(this.activeIndex());
     });
@@ -312,7 +348,7 @@ export class StrctMenuPanel {
   protected onHover(i: number): void {
     this.activeIndex.set(i);
     const it = this.items()[i];
-    this.openSubIndex.set(it?.children?.length ? i : null);
+    this.openSubIndex.set(it?.children?.length && !it.disabled ? i : null);
   }
 
   protected onLeave(i: number): void {
@@ -359,7 +395,7 @@ export class StrctMenuPanel {
         this.focusItem(this.navIndices().at(-1) ?? 0);
         break;
       case 'ArrowRight':
-        if (item?.children?.length) {
+        if (item?.children?.length && !item.disabled) {
           event.preventDefault();
           event.stopPropagation();
           this.openSubIndex.set(this.activeIndex());

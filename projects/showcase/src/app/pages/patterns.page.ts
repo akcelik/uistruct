@@ -193,8 +193,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="contextmenu-data"
       owner="contextmenu"
       heading="Data-driven context menu (directive)"
-      description='Attach [strctContextMenu]="items" to any element. The menu portals into the body (no clipping), positions by its real size, supports keyboard (↑/↓/→/←/Enter/Esc) and nested submenus, and runs each item&apos;s action.'
-      code='<div [strctContextMenu]="items" [strctContextMenuData]="row" (menuSelect)="on($event)">…</div>'
+      description='Attach [strctContextMenu]="items" to any element. The menu portals into the body (no clipping), positions by its real size, supports keyboard (↑/↓/→/←/Enter/Esc) and nested submenus, and runs each item&apos;s action. A hint says why an entry is unavailable — rest the pointer on Maintenance mode — without putting the reason in the label, and a disabled entry with a hint stays reachable by keyboard so a screen reader can read it.'
+      code='<div [strctContextMenu]="items" [strctContextMenuData]="row" (menuSelect)="on($event)">…</div>   // { label: &apos;Clone&apos;, disabled: true, hint: &apos;VM must be powered off to clone.&apos; }'
     >
       <div
         class="ctx-target"
@@ -485,12 +485,17 @@ export class PatternsPage {
       label: 'Power',
       icon: 'power',
       children: [
-        { label: 'Power on', icon: 'power' },
+        { label: 'Power on', icon: 'power', disabled: true, hint: 'VM is already powered on.' },
         { label: 'Power off', icon: 'stopped' },
         { label: 'Restart', icon: 'sync' },
       ],
     },
-    { label: 'Maintenance mode', icon: 'maintenance', disabled: true },
+    {
+      label: 'Maintenance mode',
+      icon: 'maintenance',
+      disabled: true,
+      hint: 'Host still runs 3 VMs — migrate them first.',
+    },
     { divider: true },
     { label: 'Remove from inventory', icon: 'close', critical: true },
   ];

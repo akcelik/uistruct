@@ -156,7 +156,8 @@ export const DOCS: DocCategory[] = [
             name: 'items',
             type: 'StrctMenuItem[]',
             default: '[]',
-            description: 'Variant entries (label, icon?, critical?, disabled?, divider?).',
+            description:
+              'Variant entries (label, icon?, critical?, disabled?, hint?, divider?). hint becomes the entry tooltip and description.',
           },
           {
             name: 'icon',
@@ -1625,6 +1626,13 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description: 'On `strct-dropdown-item`: disable the entry.',
+          },
+          {
+            name: 'hint',
+            type: 'string | null',
+            default: 'null',
+            description:
+              'On `strct-dropdown-item`: a short explanation — typically why a disabled entry is unavailable. Shown as the tooltip and read as its description; never inline. A disabled item with a hint stays keyboard-reachable (and hoverable, so the tooltip can show) while activation stays blocked; without one it is skipped as before.',
           },
         ],
         do: ['Use for a short list of actions tied to a trigger.'],
@@ -4067,7 +4075,7 @@ export const DOCS: DocCategory[] = [
             name: 'strctContextMenu',
             type: 'StrctMenuItem[]',
             description:
-              'Menu data: `{ label; icon?; critical?; disabled?; divider?; children?; action? }[]`. Required (directive).',
+              "Menu data: `{ label; icon?; critical?; disabled?; hint?; divider?; children?; action? }[]`. Required (directive). `hint` is a short explanation — typically why a disabled entry is unavailable — shown as the tooltip and read as the entry's description; never inline, so the menu keeps its width. The same field works in strct-menubar and strct-split-button.",
           },
           {
             name: 'strctContextMenuData',
@@ -4086,10 +4094,15 @@ export const DOCS: DocCategory[] = [
         do: [
           'Prefer the directive for per-object, data-driven menus (e.g. one menu per tree node).',
           'Add submenus via item `children`.',
+          'Say why an entry is disabled with `hint` — keep the label the action\'s name ("Clone", not "Clone — VM must be powered off").',
         ],
-        dont: ['Do not hide the only way to perform an action behind a right-click menu.'],
+        dont: [
+          'Do not hide the only way to perform an action behind a right-click menu.',
+          "Do not put a disabled entry's reason in its label; it widens the menu and makes it hard to scan.",
+        ],
         a11y: [
           'Portaled to the body; positioned by real size; full keyboard support (↑/↓/→/←/Enter/Esc, roving tabindex); closes on outside click / Escape / scroll / resize.',
+          'Disabled entries use aria-disabled, not the native attribute. One WITH a hint stays keyboard-reachable so its reason is announced (aria-describedby); one without is skipped. Neither can be activated.',
         ],
       },
     ],

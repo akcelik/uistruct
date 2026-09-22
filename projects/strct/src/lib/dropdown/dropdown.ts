@@ -167,7 +167,7 @@ export class StrctDropdown {
   /** APG menu keyboarding: arrows rove, Home/End jump, Enter/Space activate. */
   protected onMenuKeydown(event: KeyboardEvent): void {
     if (this.popover()) return;
-    const items = this.enabledItems();
+    const items = this.navItems();
     if (!items.length) return;
     const idx = items.indexOf(event.target as HTMLElement);
     const key = event.key;
@@ -185,7 +185,8 @@ export class StrctDropdown {
       items[key === 'Home' ? 0 : items.length - 1].focus();
     } else if (key === 'Enter' || key === ' ') {
       event.preventDefault();
-      (event.target as HTMLElement).click();
+      const target = event.target as HTMLElement;
+      if (target.getAttribute('aria-disabled') !== 'true') target.click();
     } else if (key === 'Tab') {
       this.close();
     }
@@ -197,6 +198,26 @@ export class StrctDropdown {
         'strct-dropdown-item:not([aria-disabled="true"]), strct-submenu .strct-submenu__trigger',
       ),
     ];
+  }
+
+  /** What the arrow keys visit: enabled items, plus disabled ones that carry a
+   *  hint (so the reason can be read). The menu still opens on an enabled one. */
+  private navItems(): HTMLElement[] {
+    const host = this.host.nativeElement;
+    const rows = [
+      ...host.querySelectorAll<HTMLElement>('strct-dropdown-item'),
+      ...host.querySelectorAll<HTMLElement>('strct-submenu .strct-submenu__trigger'),
+    ].filter(
+      (el) =>
+        el.getAttribute('aria-disabled') !== 'true' ||
+        el.classList.contains('strct-dd__item--hinted'),
+    );
+    // Two queries, so restore DOM order explicitly. (A single comma-separated
+    // selector is DOM-ordered in browsers, but not in every DOM implementation
+    // — jsdom returns it grouped, which scrambles arrow-key order in tests.)
+    return rows.sort((a, b) =>
+      a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1,
+    );
   }
 
   /** Focus the selected item if there is one, else the first — after render. */
@@ -243,6 +264,8 @@ export class StrctDropdownTrigger {
   }
 }
 
+let dropdownItemCounter = 0;
+
 /** A selectable row inside a `<strct-dropdown>`. */
 @Component({
   selector: 'strct-dropdown-item',
@@ -256,12 +279,21 @@ export class StrctDropdownTrigger {
         }
       </span>
     }
-    <ng-content />`,
+    <ng-content />
+    @if (hint()) {
+      <!-- hidden: kept out of the item's accessible NAME, still read as its
+           description through aria-describedby. -->
+      <span [id]="hintId" hidden>{{ hint() }}</span>
+    }`,
   host: {
     class: 'strct-dd__item',
     '[attr.role]': "selected() === null ? 'menuitem' : 'menuitemradio'",
     '[attr.aria-checked]': 'selected()',
-    '[attr.tabindex]': 'disabled() ? null : -1',
+    // A disabled item is skipped — unless it has a hint to be read.
+    '[attr.tabindex]': 'disabled() && !hint() ? null : -1',
+    '[attr.title]': 'hint() || null',
+    '[attr.aria-describedby]': 'hint() ? hintId : null',
+    '[class.strct-dd__item--hinted]': '!!hint()',
     '[class.strct-dd__item--critical]': 'critical()',
     '[class.strct-dd__item--selected]': 'selected() === true',
     '[attr.aria-disabled]': 'disabled() || null',
@@ -306,6 +338,15 @@ export class StrctDropdownTrigger {
         color: var(--t4);
         pointer-events: none;
       }
+      /* A hinted disabled item must take the pointer, or its tooltip could
+         never show; clicks on it are stopped in code instead. */
+      .strct-dd__item--hinted[aria-disabled='true'] {
+        pointer-events: auto;
+        cursor: not-allowed;
+      }
+      .strct-dd__item--hinted[aria-disabled='true']:hover {
+        background: transparent;
+      }
     `,
   ],
 })
@@ -321,6 +362,32 @@ export class StrctDropdownItem {
   readonly critical = input(false, { transform: booleanAttribute });
   /** Static disable flag. */
   readonly disabled = input(false, { transform: booleanAttribute });
+  /**
+   * A short explanation — typically why a disabled item is unavailable. Shown
+   * as the tooltip and given to assistive technology as the description; never
+   * rendered inline. A disabled item with a hint stays keyboard-reachable so
+   * its reason can be read; activation stays blocked.
+   */
+  readonly hint = input<string | null | undefined>(null);
+
+  protected readonly hintId = `strct-dd-item-${++dropdownItemCounter}-hint`;
+
+  constructor() {
+    // Without pointer-events:none (see the hinted style), a disabled item
+    // would pass clicks to the consumer's (click). Capture-phase at the target
+    // runs before those listeners, and stopping here also keeps the menu's own
+    // activate-and-close handler from seeing it.
+    const host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
+    host.addEventListener(
+      'click',
+      (event) => {
+        if (!this.disabled()) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      },
+      { capture: true },
+    );
+  }
 }
 
 /** Thin separator between groups of menu items. */
