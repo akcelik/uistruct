@@ -5,6 +5,51 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2026-09-22
+
+### Added
+
+- **`StrctMenuItem.hint` — a menu entry can say why it is disabled without
+  putting it in its label** (FR-42-01). The label stays the action's name
+  ("Clone"); the reason ("VM must be powered off to clone.") is the entry's
+  tooltip and its accessible description (`aria-describedby` to a hidden
+  node — kept out of the accessible name). It is never rendered inline, so
+  the menu keeps its width: measured in Chrome at 191px with the hints and
+  191px with the hint nodes removed. Works on enabled entries too, and in
+  every place a `StrctMenuItem` renders — `[strctContextMenu]` (and so tree
+  and datagrid row menus), its submenus, `strct-menubar` and its submenus,
+  and `strct-split-button`. Adding it to only one would have left the others
+  ignoring it silently.
+- **`strct-dropdown-item` `hint` input**, the same thing for declarative
+  menus (`strct-dropdown`, `strct-context-menu`, `strct-submenu`).
+
+### Changed
+
+- **Disabled menu entries use `aria-disabled`, not the native attribute**,
+  in the context menu and menubar. A natively disabled button takes no focus
+  and, in some browsers, no pointer — so neither the keyboard nor the hint's
+  tooltip could reach it. Activation is still blocked, by click, Enter and
+  Space alike.
+- **A disabled entry WITH a hint is keyboard-reachable** so its reason can
+  be announced — Chrome's accessibility tree reports it as a focusable,
+  disabled menuitem whose description is the hint. A disabled entry WITHOUT
+  a hint is skipped exactly as before, so nothing changes for menus that do
+  not use hints. Menus still open on the first enabled entry.
+
+### Fixed
+
+- **Context menu: the arrow keys could strand focus on a disabled entry.**
+  They moved the active index onto it, but `focus()` on a natively disabled
+  button is a no-op, so focus stayed behind while Enter acted on the
+  invisible "active" entry — i.e. did nothing. Unhinted disabled entries are
+  now skipped, hinted ones really take focus.
+- **A disabled parent entry opened its submenu on hover** (and, in the
+  context menu, on ArrowRight). It no longer does.
+- **Keyboard order in menus is DOM order in every DOM implementation.** The
+  roving lists were built from comma-separated selectors, which browsers
+  return in document order but jsdom does not — scrambling arrow-key order in
+  tests. They now query one selector and filter (or sort explicitly).
+
 ## [4.1.0] - 2026-09-18
 
 Implements HyperStruct's "silent failures" report: where a component is used

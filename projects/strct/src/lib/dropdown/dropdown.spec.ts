@@ -285,3 +285,82 @@ describe('StrctDropdown with a nested StrctSubmenu', () => {
     );
   });
 });
+
+describe('StrctDropdownItem — hint (FR-42-01)', () => {
+  @Component({
+    imports: [StrctDropdown, StrctDropdownItem, StrctDropdownTrigger],
+    template: `
+      <strct-dropdown>
+        <button strctDropdownTrigger>Actions</button>
+        <strct-dropdown-item (click)="log.push('open')">Open</strct-dropdown-item>
+        <strct-dropdown-item disabled>Drain</strct-dropdown-item>
+        <strct-dropdown-item
+          disabled
+          hint="VM must be powered off to clone."
+          (click)="log.push('clone')"
+          >Clone</strct-dropdown-item
+        >
+        <strct-dropdown-item hint="Quiesces the guest first." (click)="log.push('snap')"
+          >Snapshot</strct-dropdown-item
+        >
+      </strct-dropdown>
+    `,
+  })
+  class HintHost {
+    log: string[] = [];
+  }
+
+  async function setup() {
+    const fixture = TestBed.createComponent(HintHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    el.querySelector<HTMLElement>('.strct-dd__trigger')!.click();
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    const item = (label: string) =>
+      [...el.querySelectorAll<HTMLElement>('strct-dropdown-item')].find((i) =>
+        i.textContent!.trim().startsWith(label),
+      )!;
+    const desc = (i: HTMLElement) =>
+      el.querySelector(`#${i.getAttribute('aria-describedby')}`)?.textContent;
+    return { fixture, host: fixture.componentInstance, el, item, desc };
+  }
+
+  it('exposes the hint as tooltip and description; the name stays the label', async () => {
+    const { item, desc } = await setup();
+    const clone = item('Clone');
+    expect(clone.getAttribute('title')).toBe('VM must be powered off to clone.');
+    expect(desc(clone)).toBe('VM must be powered off to clone.');
+    expect(clone.querySelector('[hidden]')).toBeTruthy(); // not rendered inline
+    expect(item('Snapshot').getAttribute('title')).toBe('Quiesces the guest first.');
+    expect(item('Open').hasAttribute('title')).toBe(false);
+    expect(item('Open').hasAttribute('aria-describedby')).toBe(false);
+  });
+
+  it('a hinted disabled item is focusable; an unhinted one keeps being skipped', async () => {
+    const { fixture, item } = await setup();
+    expect(item('Clone').getAttribute('tabindex')).toBe('-1');
+    expect(item('Drain').hasAttribute('tabindex')).toBe(false);
+    expect(document.activeElement).toBe(item('Open')); // opens on an enabled item
+    item('Open').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(item('Clone'));
+  });
+
+  it('clicking or Enter on a hinted disabled item never reaches the (click) and keeps the menu open', async () => {
+    const { fixture, host, el, item } = await setup();
+    const clone = item('Clone');
+    clone.click();
+    clone.focus();
+    clone.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+    expect(host.log).toEqual([]);
+    expect(el.querySelector('[role="menu"]')).toBeTruthy();
+    // An enabled hinted item still activates and closes.
+    item('Snapshot').click();
+    fixture.detectChanges();
+    expect(host.log).toEqual(['snap']);
+    expect(el.querySelector('[role="menu"]')).toBeNull();
+  });
+});

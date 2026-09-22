@@ -196,3 +196,53 @@ describe('StrctContextMenu', () => {
     }
   });
 });
+
+describe('StrctContextMenu — hinted items (FR-42-01)', () => {
+  @Component({
+    template: `
+      <strct-context-menu>
+        <div>Right-click here</div>
+        <ng-container strctContextMenuItems>
+          <strct-dropdown-item
+            disabled
+            hint="VM must be powered off to clone."
+            (click)="picked.set('clone')"
+            >Clone</strct-dropdown-item
+          >
+          <strct-dropdown-item disabled>Drain</strct-dropdown-item>
+          <strct-dropdown-item (click)="picked.set('open')">Open</strct-dropdown-item>
+        </ng-container>
+      </strct-context-menu>
+    `,
+    imports: [StrctContextMenu, StrctDropdownItem],
+  })
+  class HintCtxHost {
+    readonly picked = signal<string | null>(null);
+  }
+
+  it('opens on the first enabled item, reaches the hinted one, skips the unhinted, never picks disabled', async () => {
+    const fixture = TestBed.createComponent(HintCtxHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    el.querySelector<HTMLElement>('.strct-ctx__trigger')!.dispatchEvent(
+      new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 50, clientY: 50 }),
+    );
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    const menu = el.querySelector<HTMLElement>('.strct-ctx__menu')!;
+    const [clone, , open] = [...menu.querySelectorAll<HTMLElement>('.strct-dd__item')];
+    const press = (k: string) => {
+      menu.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+      fixture.detectChanges();
+    };
+    expect(document.activeElement).toBe(open);
+    press('ArrowDown'); // wraps to the top: Clone (hinted), Drain skipped
+    expect(document.activeElement).toBe(clone);
+    press('Enter');
+    clone.click();
+    expect(fixture.componentInstance.picked()).toBeNull();
+    expect(el.querySelector('.strct-ctx__menu')).toBeTruthy(); // stays open
+    expect(clone.getAttribute('title')).toBe('VM must be powered off to clone.');
+  });
+});

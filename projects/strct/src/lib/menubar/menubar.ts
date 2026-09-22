@@ -13,6 +13,8 @@ import { StrctIcon } from '../icon/icon';
 import { StrctMenuItem } from '../context-menu/menu';
 import { focusFirstIn, restoreFocus, saveFocusedElement } from '../overlay/focus';
 
+let menubarCounter = 0;
+
 /** One top-level menubar entry with its menu. */
 export interface StrctMenubarItem {
   id: string;
@@ -75,7 +77,9 @@ export interface StrctMenubarItem {
                       [class.strct-mb__item--critical]="item.critical"
                       [attr.aria-haspopup]="item.children?.length ? 'menu' : null"
                       [attr.aria-expanded]="item.children?.length ? subIdx() === i : null"
-                      [disabled]="item.disabled || null"
+                      [attr.aria-disabled]="item.disabled ? 'true' : null"
+                      [attr.aria-describedby]="item.hint ? hintId(menu.id, i) : null"
+                      [attr.title]="item.hint || null"
                       (click)="onItemClick(menu, item, i)"
                       (mouseenter)="onItemHover(item, i)"
                     >
@@ -87,9 +91,12 @@ export interface StrctMenubarItem {
                         <strct-icon class="strct-mb__caret" name="chevronRight" [size]="12" />
                       }
                     </button>
+                    @if (item.hint) {
+                      <span [id]="hintId(menu.id, i)" hidden>{{ item.hint }}</span>
+                    }
                     @if (subIdx() === i && item.children?.length) {
                       <div class="strct-mb__submenu" role="menu" [attr.aria-label]="item.label">
-                        @for (sub of item.children; track $index) {
+                        @for (sub of item.children; track $index; let j = $index) {
                           @if (sub.divider) {
                             <div class="strct-mb__divider" role="separator"></div>
                           } @else {
@@ -98,7 +105,9 @@ export interface StrctMenubarItem {
                               class="strct-mb__item strct-mb__subitem"
                               role="menuitem"
                               [class.strct-mb__item--critical]="sub.critical"
-                              [disabled]="sub.disabled || null"
+                              [attr.aria-disabled]="sub.disabled ? 'true' : null"
+                              [attr.aria-describedby]="sub.hint ? hintId(menu.id, i, j) : null"
+                              [attr.title]="sub.hint || null"
                               (click)="pick(menu, sub)"
                             >
                               @if (sub.icon) {
@@ -106,6 +115,9 @@ export interface StrctMenubarItem {
                               }
                               {{ sub.label }}
                             </button>
+                            @if (sub.hint) {
+                              <span [id]="hintId(menu.id, i, j)" hidden>{{ sub.hint }}</span>
+                            }
                           }
                         }
                       </div>
@@ -184,16 +196,16 @@ export interface StrctMenubarItem {
         cursor: pointer;
         white-space: nowrap;
       }
-      .strct-mb__item:hover:not(:disabled) {
+      .strct-mb__item:hover:not([aria-disabled='true']) {
         background: var(--bg-3);
       }
       .strct-mb__item--critical {
         color: var(--critical);
       }
-      .strct-mb__item--critical:hover:not(:disabled) {
+      .strct-mb__item--critical:hover:not([aria-disabled='true']) {
         background: var(--critical-bg);
       }
-      .strct-mb__item:disabled {
+      .strct-mb__item[aria-disabled='true'] {
         color: var(--t4);
         cursor: default;
       }
@@ -339,7 +351,7 @@ export class StrctMenubar {
         event.preventDefault();
         event.stopPropagation();
         const idx = Number(active?.getAttribute('data-idx'));
-        if (menu.items[idx]?.children?.length) {
+        if (menu.items[idx]?.children?.length && !menu.items[idx].disabled) {
           this.subIdx.set(idx);
           setTimeout(() => this.navButtons(true)[0]?.focus());
         } else {
@@ -389,18 +401,27 @@ export class StrctMenubar {
     this.trigger = null;
   }
 
+  private readonly uid = ++menubarCounter;
+  protected hintId(menuId: string, i: number, j?: number): string {
+    // menu ids are consumer data; aria-describedby splits on whitespace.
+    const menu = menuId.replace(/\s+/g, '_');
+    return `strct-mb-${this.uid}-${menu}-${i}${j == null ? '' : '-' + j}-hint`;
+  }
+
   private topButtons(): HTMLElement[] {
     return Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('.strct-mb__top'));
   }
 
-  /** Enabled item buttons of the open menu — either its items or the open submenu's. */
+  /** Keyboard-reachable item buttons of the open menu — either its items or the
+   *  open submenu's: enabled ones, plus disabled ones that carry a hint (so the
+   *  reason can be read). A disabled entry with nothing to say is skipped. */
   private navButtons(sub: boolean): HTMLElement[] {
     const menuEl = this.host.nativeElement.querySelector('.strct-mb__menu');
     if (!menuEl) return [];
-    const sel = sub
-      ? '.strct-mb__subitem:not([disabled])'
-      : '.strct-mb__item:not([disabled]):not(.strct-mb__subitem)';
-    return Array.from(menuEl.querySelectorAll<HTMLElement>(sel));
+    const sel = sub ? '.strct-mb__subitem' : '.strct-mb__item:not(.strct-mb__subitem)';
+    return Array.from(menuEl.querySelectorAll<HTMLElement>(sel)).filter(
+      (b) => b.getAttribute('aria-disabled') !== 'true' || b.hasAttribute('aria-describedby'),
+    );
   }
 
   @HostListener('document:click', ['$event'])

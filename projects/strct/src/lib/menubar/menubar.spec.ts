@@ -199,3 +199,73 @@ describe('StrctMenubar', () => {
     expect(document.activeElement).toBe(parent);
   });
 });
+
+describe('StrctMenubar — item hint (FR-42-01)', () => {
+  const MENUS: StrctMenubarItem[] = [
+    {
+      id: 'vm actions',
+      label: 'VM',
+      items: [
+        { label: 'Power on' },
+        { label: 'Drain', disabled: true },
+        { label: 'Clone', disabled: true, hint: 'VM must be powered off to clone.' },
+        {
+          label: 'Power',
+          children: [
+            { label: 'Reset', disabled: true, hint: 'Guest is suspended.' },
+            { label: 'Suspend' },
+          ],
+        },
+      ],
+    },
+  ];
+
+  it('tooltip + description on items and sub-items; the label stays the name', () => {
+    const { fixture, el } = setup(MENUS);
+    el.querySelector<HTMLButtonElement>('.strct-mb__top')!.click();
+    fixture.detectChanges();
+    const btn = (label: string) =>
+      [...el.querySelectorAll<HTMLButtonElement>('.strct-mb__item')].find(
+        (b) => b.textContent!.trim() === label,
+      )!;
+    const desc = (b: HTMLElement) =>
+      el.querySelector(`[id="${b.getAttribute('aria-describedby')}"]`)?.textContent;
+    const clone = btn('Clone');
+    expect(clone.getAttribute('title')).toBe('VM must be powered off to clone.');
+    expect(desc(clone)).toBe('VM must be powered off to clone.');
+    expect(clone.getAttribute('aria-disabled')).toBe('true');
+    expect(clone.disabled).toBe(false);
+    // The menu id has a space; the generated id must not, or aria-describedby
+    // (a whitespace-separated id list) would point at two ids that don't exist.
+    expect(clone.getAttribute('aria-describedby')).not.toMatch(/\s/);
+    expect(btn('Power on').hasAttribute('title')).toBe(false);
+    expect(btn('Power on').hasAttribute('aria-describedby')).toBe(false);
+
+    btn('Power').click();
+    fixture.detectChanges();
+    const reset = btn('Reset');
+    expect(reset.getAttribute('title')).toBe('Guest is suspended.');
+    expect(desc(reset)).toBe('Guest is suspended.');
+  });
+
+  it('arrows reach a hinted disabled item, skip an unhinted one; activating it does nothing', async () => {
+    const { fixture, host, el } = setup(MENUS);
+    const top = el.querySelector<HTMLButtonElement>('.strct-mb__top')!;
+    top.focus();
+    top.dispatchEvent(key('ArrowDown'));
+    fixture.detectChanges();
+    await flushFocus();
+    const items = () => [
+      ...el.querySelectorAll<HTMLButtonElement>('.strct-mb__item:not(.strct-mb__subitem)'),
+    ];
+    const menu = el.querySelector<HTMLElement>('[role="menu"]')!;
+    const at = () => (document.activeElement as HTMLElement).textContent!.trim();
+    const first = at();
+    menu.dispatchEvent(key('ArrowDown'));
+    fixture.detectChanges();
+    expect([first, at()]).toEqual(['Power on', 'Clone']); // Drain skipped
+    items()[2].click();
+    fixture.detectChanges();
+    expect(host.last).toBeNull();
+  });
+});

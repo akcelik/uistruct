@@ -65,6 +65,7 @@ import { StrctMenuItem } from '../context-menu/menu';
             <strct-dropdown-item
               [critical]="item.critical ?? false"
               [disabled]="item.disabled ?? false"
+              [hint]="item.hint"
               (click)="!item.disabled && picked.emit(item)"
             >
               @if (item.icon) {
@@ -158,7 +159,7 @@ import { StrctMenuItem } from '../context-menu/menu';
 export class StrctSplitButton {
   /** Main action label. */
   readonly label = input.required<string>();
-  /** Menu entries (StrctMenuItem: id, label, icon?, critical?, disabled?). */
+  /** Menu entries (StrctMenuItem: id, label, icon?, critical?, disabled?, hint?). */
   readonly items = input<StrctMenuItem[]>([]);
   /** Optional leading icon of the main segment. */
   readonly icon = input('');

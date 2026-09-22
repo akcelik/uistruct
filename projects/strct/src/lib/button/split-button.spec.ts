@@ -54,3 +54,23 @@ describe('StrctSplitButton', () => {
     expect(el.querySelector('[role="menu"]')).toBeNull();
   });
 });
+
+describe('StrctSplitButton — item hint', () => {
+  it('passes StrctMenuItem.hint through to the dropdown item', async () => {
+    const fixture = TestBed.createComponent(StrctSplitButton);
+    fixture.componentRef.setInput('label', 'Power on');
+    fixture.componentRef.setInput('items', [
+      { label: 'Reset', disabled: true, hint: 'Guest is suspended.' },
+      { label: 'Suspend' },
+    ]);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    el.querySelector<HTMLElement>('.strct-sbt__chev')!.click();
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r));
+    const [reset, suspend] = [...el.querySelectorAll<HTMLElement>('strct-dropdown-item')];
+    expect(reset.getAttribute('title')).toBe('Guest is suspended.');
+    expect(reset.getAttribute('aria-disabled')).toBe('true');
+    expect(suspend.hasAttribute('title')).toBe(false);
+  });
+});

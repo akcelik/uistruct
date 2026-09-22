@@ -103,3 +103,34 @@ describe('StrctSubmenu', () => {
     expect(panel()!.classList).not.toContain('strct-submenu__panel--flip');
   });
 });
+
+describe('StrctSubmenu — hinted items (FR-42-01)', () => {
+  @Component({
+    imports: [StrctSubmenu, StrctDropdownItem],
+    template: `
+      <strct-submenu label="Power">
+        <strct-dropdown-item disabled hint="Guest is suspended.">Reset</strct-dropdown-item>
+        <strct-dropdown-item>Power off</strct-dropdown-item>
+        <strct-dropdown-item disabled>Power nap</strct-dropdown-item>
+      </strct-submenu>
+    `,
+  })
+  class HintSubHost {}
+
+  it('opens on the first enabled entry; arrows include the hinted one and skip the unhinted', async () => {
+    const fixture = TestBed.createComponent(HintSubHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const trigger = el.querySelector<HTMLElement>('.strct-submenu__trigger')!;
+    trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r));
+    fixture.detectChanges();
+    const [reset, off] = [...el.querySelectorAll<HTMLElement>('strct-dropdown-item')];
+    expect(document.activeElement).toBe(off);
+    off.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(reset); // nap skipped, wraps to Reset
+    expect(reset.getAttribute('title')).toBe('Guest is suspended.');
+  });
+});
