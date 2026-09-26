@@ -3535,7 +3535,7 @@ export const DOCS: DocCategory[] = [
         id: 'heatmap',
         title: 'Heatmap',
         selector: 'strct-heatmap',
-        importNames: ['StrctHeatmap', 'StrctHeatmapCell'],
+        importNames: ['StrctHeatmap', 'StrctHeatmapCell', 'StrctThresholds'],
         summary: 'SVG density grid.',
         lead: 'An SVG grid heatmap for density data (host × hour, queue × weekday …). Each cell’s fill is a single-hue intensity ramp — `color-mix` between the status token and the surface — so luminance, not hue, carries the value and the scale stays readable under color-vision deficiency. Rows and columns follow the explicit `rows` / `cols` arrays when given, else first-seen order in `data`; intersections without data render as empty cells. Dependency-free, measured 1:1 so cells stay crisp at any width; hover a cell for its value.',
         inputs: [
@@ -3563,8 +3563,37 @@ export const DOCS: DocCategory[] = [
           {
             name: 'status',
             type: CHART_STATUS,
-            default: `'accent'`,
-            description: 'Base color of the intensity ramp.',
+            default: 'accent',
+            description:
+              'Base color of the intensity ramp (the band below `warning` when `thresholds` is set).',
+          },
+          {
+            name: 'colLabelEvery',
+            type: 'number',
+            default: '1',
+            description:
+              'Label every n-th column. 24 hourly columns in a narrow card leave ~26px per label, so "14:00" overlaps its neighbours; every third keeps it readable. Every cell is still drawn — only the labels thin out.',
+          },
+          {
+            name: 'colLabel',
+            type: '((col: string, index: number) => string) | null',
+            default: 'null',
+            description:
+              'Column label text, so columns can be KEYED by something unique (an ISO time) and LABELLED readably ("14:00"). Return an empty string to drop one. Labels are tracked by index, so repeats are fine — the DST fall-back really does have two 02s.',
+          },
+          {
+            name: 'valueFormat',
+            type: '((value: number, row: string, col: string) => string) | null',
+            default: 'null',
+            description:
+              'Cell tooltip text. The default `row × col: value` carries no unit; `hv-05 · 14:00 — 47% CPU` does.',
+          },
+          {
+            name: 'thresholds',
+            type: 'StrctThresholds | null',
+            default: 'null',
+            description:
+              'Colour by band instead of one hue: `status` below `warning`, the warning hue from there, critical from `critical`. Intensity scales with the value INSIDE its band (floored at 45%, so a band reads as itself and a pale cell is never mistaken for no-data). For utilisation the question is "past 80? past 95?", which one hue cannot answer.',
           },
           {
             name: 'cellHeight / gap / rowLabelWidth',

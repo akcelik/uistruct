@@ -372,8 +372,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="heatmap"
       heading="Heatmap"
-      description="A density grid — host × hour CPU here. Each cell is a single-hue luminance ramp off the status token, so the scale stays readable under color-vision deficiency; missing intersections render as empty cells. Hover a cell for its value."
-      code='<strct-heatmap [data]="cells" [rows]="hosts" [cols]="hours24" [max]="100" />'
+      description="A density grid — host × hour CPU here. Missing intersections render as empty cells. 24 hourly columns cannot all carry a readable label, so colLabelEvery thins them to every third while every cell stays drawn; valueFormat gives the tooltip its unit (hover a cell); and thresholds colour by band — accent under 60%, warning to 78%, critical above — with intensity scaled inside each band, so a 90% hour cannot be mistaken for a 70% one. Without thresholds it is a single-hue luminance ramp off the status token, which stays readable under colour-vision deficiency."
+      code='<strct-heatmap [data]="cells" [cols]="hours" [max]="100" [colLabelEvery]="3" [valueFormat]="cpuTip" [thresholds]="{ warning: 60, critical: 78 }" />'
     >
       <div class="chart-box">
         <strct-heatmap
@@ -381,6 +381,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [rows]="heatHosts"
           [cols]="heatHours"
           [max]="100"
+          [colLabelEvery]="3"
+          [valueFormat]="cpuTip"
+          [thresholds]="{ warning: 60, critical: 78 }"
           ariaLabel="Host CPU by hour"
         />
       </div>
@@ -757,7 +760,14 @@ export class ChartsPage implements OnDestroy {
 
   // Heatmap demo: host × hour CPU utilisation (%), busier during work hours.
   protected readonly heatHosts = ['hv-01', 'hv-02', 'hv-03', 'hv-04'];
-  protected readonly heatHours = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'));
+  // Columns are keyed by the hour they mean ("14:00"), not by a bare number:
+  // with colLabelEvery there is room to show it in full.
+  protected readonly heatHours = Array.from(
+    { length: 24 },
+    (_, h) => `${String(h).padStart(2, '0')}:00`,
+  );
+  protected readonly cpuTip = (value: number, row: string, col: string): string =>
+    `${row} · ${col} — ${value}% CPU`;
   protected readonly heatCells: StrctHeatmapCell[] = this.heatHosts.flatMap((row, r) =>
     this.heatHours
       .filter((_, h) => !(r === 2 && h >= 3 && h <= 5)) // hv-03: an agent outage

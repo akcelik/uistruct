@@ -11,6 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { StrctChartStatus } from '../charts/sparkline';
+import { StrctThresholds } from '../status';
 
 /** One density value at a row × column intersection. */
 export interface StrctHeatmapCell {
@@ -100,7 +101,10 @@ function uniqueOrder(values: string[]): string[] {
         [attr.width]="width()"
         [attr.height]="height()"
       >
-        @for (l of rowLabels(); track l.text) {
+        <!-- Tracked by index: label text is data and repeats legitimately (two
+             hosts with the same name, hour 02 twice at the DST fall-back), and
+             a thinned column axis repeats the empty string. -->
+        @for (l of rowLabels(); track $index) {
           <text
             class="strct-heatmap__label strct-heatmap__label--row"
             [attr.x]="l.x"
@@ -111,7 +115,7 @@ function uniqueOrder(values: string[]): string[] {
             {{ l.text }}
           </text>
         }
-        @for (l of colLabels(); track l.text) {
+        @for (l of colLabels(); track $index) {
           <text
             class="strct-heatmap__label strct-heatmap__label--col"
             [attr.x]="l.x"
@@ -193,6 +197,30 @@ export class StrctHeatmap {
   readonly cols = input<string[] | null>(null);
   /** Scale ceiling — the value that maps to full intensity. Auto (data max) when null. */
   readonly max = input<number | null>(null);
+  /**
+   * Label every n-th column (1 = every column, today's behaviour). 24 hourly
+   * columns in a narrow card cannot all carry a readable label; labelling every
+   * third keeps "14:00" legible instead of forcing it down to "14".
+   */
+  readonly colLabelEvery = input(1);
+  /**
+   * Column label text, so a column can be keyed by an ISO time and shown as
+   * "14:00". Return '' to drop a label. Applied after `colLabelEvery`.
+   */
+  readonly colLabel = input<((col: string, index: number) => string) | null>(null);
+  /**
+   * Cell tooltip text. Without it a cell reads `row × col: value`, which for a
+   * utilisation grid has no unit — `hv-05 · 14:00 — 47% CPU` is the readable form.
+   */
+  readonly valueFormat = input<((value: number, row: string, col: string) => string) | null>(null);
+  /**
+   * Colour by band instead of one hue: `status` (accent by default) below
+   * `warning`, the warning hue from there, the critical hue from `critical`.
+   * Intensity is scaled by the value's position WITHIN its band, so a 96% cell
+   * reads darker than an 81% one and both read as critical/warning at a glance.
+   * Unset: today's single-hue ramp across the whole range.
+   */
+  readonly thresholds = input<StrctThresholds | null>(null);
   /** Base color of the intensity ramp. */
   readonly status = input<StrctChartStatus>('accent');
   /** Shown when there is no data (localizable). */
@@ -286,7 +314,7 @@ export class StrctHeatmap {
           w: round(w),
           h: ch,
           fill: value === undefined ? 'var(--bg-2)' : this.fillFor(value),
-          tip: value === undefined ? null : `${row} × ${col}: ${value}`,
+          tip: value === undefined ? null : this.tipFor(value, row, col),
         });
       });
     });
@@ -308,8 +336,22 @@ export class StrctHeatmap {
     const gap = this.gap();
     const x0 = this.rowLabelWidth();
     const y = this.height() - 4;
-    return this.colOrder().map((text, c) => ({ text, x: round(x0 + c * (w + gap) + w / 2), y }));
+    const every = Math.max(1, Math.trunc(this.colLabelEvery()));
+    const format = this.colLabel();
+    const out: LabelRender[] = [];
+    this.colOrder().forEach((col, c) => {
+      if (c % every !== 0) return;
+      const text = format ? format(col, c) : col;
+      if (text === '') return;
+      out.push({ text, x: round(x0 + c * (w + gap) + w / 2), y });
+    });
+    return out;
   });
+
+  private tipFor(value: number, row: string, col: string): string {
+    const format = this.valueFormat();
+    return format ? format(value, row, col) : `${row} × ${col}: ${value}`;
+  }
 
   /** Screen-reader summary of the whole grid (role="img" name). */
   protected readonly aria = computed(() => {
@@ -327,12 +369,41 @@ export class StrctHeatmap {
   /**
    * Intensity ramp: 8% of the status hue for the smallest non-zero value up
    * to 100% at the ceiling; zero stays on the empty-cell surface.
+   *
+   * With `thresholds`, the hue comes from the value's band and the intensity
+   * from its position inside that band, floored at 45% — a band has to be
+   * recognisable as itself, and a pale cell must not read as "no data".
    */
   private fillFor(value: number): string {
     if (value <= 0) return 'var(--bg-2)';
     const maxV = this.maxVal();
-    const t = maxV > 0 ? Math.min(value / maxV, 1) : 0;
-    const pct = 8 + Math.round(t * 92);
+    const t = this.thresholds();
+    if (t) {
+      const { color, from, to } = this.bandFor(value, t, maxV);
+      const span = to - from;
+      const pos = span > 0 ? Math.min(Math.max((value - from) / span, 0), 1) : 1;
+      const pct = 45 + Math.round(pos * 55);
+      return `color-mix(in srgb, ${color} ${pct}%, var(--bg-1))`;
+    }
+    const ratio = maxV > 0 ? Math.min(value / maxV, 1) : 0;
+    const pct = 8 + Math.round(ratio * 92);
     return `color-mix(in srgb, ${this.color()} ${pct}%, var(--bg-1))`;
+  }
+
+  /** The band a value falls in: its hue and the range intensity scales over. */
+  private bandFor(
+    value: number,
+    t: StrctThresholds,
+    maxV: number,
+  ): { color: string; from: number; to: number } {
+    const ceiling = Math.max(maxV, value);
+    if (t.critical != null && value >= t.critical) {
+      return { color: COLOR.critical, from: t.critical, to: ceiling };
+    }
+    if (t.warning != null && value >= t.warning) {
+      return { color: COLOR.warning, from: t.warning, to: t.critical ?? ceiling };
+    }
+    const upper = t.warning ?? t.critical ?? ceiling;
+    return { color: this.color(), from: 0, to: upper };
   }
 }
