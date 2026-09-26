@@ -288,11 +288,27 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       }
 
       /* ── vertical ────────────────────────────────────────────── */
+      /* BUG-41-01: the footer is never clipped. The height chain runs host →
+         layout → main → content, and every link needs min-height: 0 or a
+         bounded track, or the grid grows to the step's content and whatever
+         caps the wizard (a dialog) cuts the footer off the bottom. height:
+         100% only bites when the parent has a definite height; against an
+         auto-height parent it computes to auto, so an inline wizard still
+         sizes to its content. */
       .strct-wiz--vertical {
         container-type: inline-size;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        height: 100%;
       }
       .strct-wiz__layout--v {
         display: grid;
+        flex: 1;
+        min-height: 0;
+        /* One bounded row: without it the implicit track is auto and the
+           content pane never receives a height to scroll inside. */
+        grid-template-rows: minmax(0, 1fr);
         /* FR-17-03: the content column has a guaranteed minimum
            (--strct-wiz-content-min), so under intrinsic sizing (a chromeless
            fit-content dialog) its width is IDENTICAL with or without an
@@ -317,9 +333,11 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         display: flex;
         flex-direction: column;
         min-width: 0;
+        min-height: 0;
       }
       .strct-wiz__layout--v .strct-wiz__content {
         flex: 1;
+        min-height: 0;
         margin: 0;
         padding: 20px 24px;
         border: 0;
@@ -499,6 +517,18 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       .strct-wiz--flush {
         height: 100%;
         min-height: 0;
+      }
+      /* Horizontal, hosted in a height-capped surface (flush = modal hosting):
+         the same guarantee — the step scrolls, the footer stays put. Inline
+         horizontal wizards keep their block flow (and their margins). */
+      .strct-wiz--flush:not(.strct-wiz--vertical) {
+        display: flex;
+        flex-direction: column;
+      }
+      .strct-wiz--flush:not(.strct-wiz--vertical) .strct-wiz__content {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
       }
       .strct-wiz--flush .strct-wiz__layout--v {
         height: 100%;

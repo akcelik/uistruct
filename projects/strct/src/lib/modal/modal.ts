@@ -249,6 +249,11 @@ export class StrctModalContent {
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        /* BUG-41-01: grow inside the dialog's flex column instead of sizing to
+           content, so a tall step cannot push the wizard's footer past the
+           dialog's clipped bottom edge. */
+        flex: 1;
+        min-height: 0;
       }
       .strct-modal__dialog--chromeless .strct-modal__body > * {
         flex: 1;
