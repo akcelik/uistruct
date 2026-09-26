@@ -29,6 +29,7 @@ import {
   StrctTreeNode,
   StrctTreeNodeData,
   StrctTreeNodeMenuFn,
+  StrctTreeDropEvent,
   StrctWizard,
   StrctPageHeader,
   StrctPageHeaderActions,
@@ -249,6 +250,25 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         @if (treePick()) {
           <span class="echo">{{ treePick() }}</span>
         }
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="tree-dnd"
+      owner="tree"
+      heading="Drag and drop"
+      description="The tree owns the gesture; you own the rule. canDrag says which nodes can be picked up (none by default), canDrop is asked during dragover with BOTH nodes — the browser will not let dragover read the drag's data, which is the part a consumer cannot do from outside — and (nodeDrop) fires only for a target canDrop accepted. Dropping a node on itself or into its own subtree is refused whatever canDrop says, so a folder cannot be moved into its own subfolder. Drag a VM onto a folder or a host: the source dims, an accepting row is outlined, a refusing one keeps the browser's not-allowed cursor, and hovering a collapsed folder for 700ms opens it so an unseen target can be reached."
+      code='<strct-tree [nodes]="nodes()" [canDrag]="canDrag" [canDrop]="canDrop" (nodeDrop)="move($event)" />'
+    >
+      <div class="stack">
+        <strct-tree
+          style="width: 100%; max-width: 340px;"
+          [nodes]="dndNodes()"
+          [canDrag]="dndCanDrag"
+          [canDrop]="dndCanDrop"
+          (nodeDrop)="onNodeDrop($event)"
+        />
+        <span class="echo">{{ dndLog() || 'Drag a VM onto a folder or a host.' }}</span>
       </div>
     </app-demo>
 
@@ -848,6 +868,51 @@ export class SurfacesPage {
   protected readonly step1Valid = signal(false);
   protected readonly submitting = signal(false);
   protected readonly wizMsg = signal('');
+
+  // Drag-and-drop demo: only VMs move, and only onto a folder or a host.
+  protected readonly dndNodes = signal<StrctTreeNodeData[]>([
+    {
+      id: 'dc',
+      label: 'Datacenter-01',
+      icon: 'datacenter',
+      expanded: true,
+      children: [
+        {
+          id: 'prod',
+          label: 'Production',
+          icon: 'folder',
+          expanded: true,
+          children: [
+            { id: 'vm-a', label: 'web-vm-01', icon: 'vm', badge: 'success' },
+            { id: 'vm-b', label: 'sql-vm-02', icon: 'vm', badge: 'success' },
+          ],
+        },
+        { id: 'staging', label: 'Staging', icon: 'folder', children: [] },
+        { id: 'hv-07', label: 'hv-07', icon: 'host', badge: 'success', children: [] },
+      ],
+    },
+  ]);
+  protected readonly dndLog = signal('');
+  protected readonly dndCanDrag = (node: StrctTreeNodeData): boolean => node.icon === 'vm';
+  protected readonly dndCanDrop = (
+    _source: StrctTreeNodeData,
+    target: StrctTreeNodeData,
+  ): boolean => target.icon === 'folder' || target.icon === 'host';
+
+  /** Moving things around is the consumer's business — the tree only reports it. */
+  protected onNodeDrop(event: StrctTreeDropEvent): void {
+    const move = (list: StrctTreeNodeData[]): StrctTreeNodeData[] =>
+      list
+        .filter((n) => n.id !== event.source.id)
+        .map((n) => {
+          const children = move(n.children ?? []);
+          if (n.id === event.target.id)
+            return { ...n, expanded: true, children: [...children, event.source] };
+          return n.children ? { ...n, children } : n;
+        });
+    this.dndNodes.update((roots) => move(roots));
+    this.dndLog.set(`Moved ${event.source.label} into ${event.target.label}`);
+  }
 
   protected readonly inventory: StrctTreeNodeData[] = [
     {

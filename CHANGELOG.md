@@ -5,6 +5,53 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.0] - 2026-09-26
+
+### Added
+
+- **Drag and drop in `strct-tree`** (FR-43-04). Operators expect vCenter's
+  gestures in an inventory tree — drag a VM into a folder, back out onto its
+  datacenter, onto another host to migrate it. The tree had no API for it, so the
+  consumer grafted one onto the rendered DOM (matching rows to data by
+  `data-node-id`, re-scanning on every mutation and every 2s) and the operator
+  still reported "drag-and-drop does not work in the trees".
+
+  The tree now owns the gesture, the feedback and the identity of the two nodes;
+  the consumer owns the rule:
+  - **`canDrag`** — which nodes can be picked up. Default none, so a tree
+    without it behaves exactly as before. Asked again whenever `nodes` changes,
+    because a refresh can make a node movable.
+  - **`canDrop(source, target)`** — asked during `dragover`, with both nodes. A
+    browser does not let `dragover` read the drag's data, which is precisely the
+    part a consumer cannot do cleanly from outside, so the tree keeps the source.
+    Without this input nothing accepts a drop.
+  - **`(nodeDrop)`** — `{ source, target, position: 'into' }`, for an accepted
+    drop only. `position` exists so before/after reordering can be added later
+    without changing the event's shape.
+  - **Built in whatever `canDrop` returns:** a node is never dropped on itself,
+    and never into its own subtree — a folder into its own subfolder is a cycle.
+  - **Feedback in the library's tokens:** the source row dims, an accepting row
+    is outlined, a refusing one keeps the browser's "not allowed" cursor (its
+    `dragover` is not prevented). The highlight clears on `dragleave`, `drop`
+    and `dragend`, including when the drop lands outside the tree.
+  - **Reaching a target that is not visible:** hovering a collapsed node for
+    `dragExpandDelay` (700ms) expands it, and holding near the top or bottom
+    edge of a scrolling ancestor scrolls it. Without these, a collapsed
+    thousand-VM inventory has no reachable targets at all.
+  - **Announcements:** "Dragging <label>" and "Dropped <label> on <target>" in
+    the polite live region. Rows stay `treeitem`s with their roving tabindex, so
+    the keyboard routes the consumer already has (Move to Folder…, Migrate…) are
+    untouched.
+
+  Measured in Chrome on the new showcase demo: `draggable` only on the nodes
+  `canDrag` accepts, the source at `opacity: 0.45`, an accepting target with a
+  1px outline and a prevented `dragover`, a refusing one with neither, a
+  collapsed folder still closed at 400ms and open at 850ms, a scrolling
+  container moving 0 → 228px while a drag hovers its bottom edge and stopping at
+  `dragend`, and the dropped node actually moved.
+
+  HyperStruct can delete `tree-drag-drop.directive.ts` and its spec.
+
 ## [4.3.0] - 2026-09-26
 
 ### Added

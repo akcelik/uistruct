@@ -390,3 +390,214 @@ describe('StrctTree — typeahead (APG)', () => {
     expect(document.activeElement).toBe(rootRow);
   });
 });
+
+describe('StrctTree — drag and drop (FR-43-04)', () => {
+  /** folder ▸ (vm-1, sub ▸ vm-2), plus a host outside the folder. */
+  const DND = (): StrctTreeNodeData[] => [
+    {
+      id: 'folder',
+      label: 'Folder',
+      expanded: true,
+      children: [
+        { id: 'vm-1', label: 'VM 1' },
+        { id: 'sub', label: 'Subfolder', children: [{ id: 'vm-2', label: 'VM 2' }] },
+      ],
+    },
+    { id: 'host', label: 'Host' },
+  ];
+
+  type DragFn = ((n: StrctTreeNodeData) => boolean) | null;
+  type DropFn = ((s: StrctTreeNodeData, t: StrctTreeNodeData) => boolean) | null;
+
+  @Component({
+    imports: [StrctTree],
+    template: `
+      <strct-tree
+        [nodes]="nodes()"
+        [canDrag]="canDrag()"
+        [canDrop]="canDrop()"
+        [dragExpandDelay]="delay()"
+        (nodeDrop)="drops.push($event)"
+      />
+    `,
+  })
+  class DndHost {
+    readonly nodes = signal<StrctTreeNodeData[]>(DND());
+    readonly canDrag = signal<DragFn>((n) => n.id !== 'host');
+    readonly canDrop = signal<DropFn>(() => true);
+    readonly delay = signal(700);
+    drops: { source: StrctTreeNodeData; target: StrctTreeNodeData; position: string }[] = [];
+  }
+
+  function setupDnd(patch: { canDrag?: DragFn; canDrop?: DropFn; delay?: number } = {}) {
+    const fixture = TestBed.createComponent(DndHost);
+    if ('canDrag' in patch) fixture.componentInstance.canDrag.set(patch.canDrag ?? null);
+    if ('canDrop' in patch) fixture.componentInstance.canDrop.set(patch.canDrop ?? null);
+    if (patch.delay != null) fixture.componentInstance.delay.set(patch.delay);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const row = (id: string) =>
+      el.querySelector(`[data-node-id="${id}"] > .strct-tnode__row`) as HTMLElement;
+    /** A drag event carrying a dataTransfer stub (jsdom has none). */
+    const drag = (type: string, target: HTMLElement, clientY = 0) => {
+      const event = new MouseEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        clientY,
+      }) as MouseEvent & {
+        dataTransfer: { setData: () => void; effectAllowed: string; dropEffect: string };
+      };
+      Object.defineProperty(event, 'dataTransfer', {
+        value: { setData: () => {}, effectAllowed: '', dropEffect: '' },
+      });
+      target.dispatchEvent(event);
+      fixture.detectChanges();
+      return event;
+    };
+    return { fixture, host: fixture.componentInstance, el, row, drag };
+  }
+
+  it('only canDrag nodes are draggable, and the default is none', () => {
+    const { row } = setupDnd();
+    expect(row('vm-1').getAttribute('draggable')).toBe('true');
+    expect(row('host').hasAttribute('draggable')).toBe(false);
+
+    const plain = setupDnd({ canDrag: null });
+    expect(plain.row('vm-1').hasAttribute('draggable')).toBe(false);
+  });
+
+  it('canDrag is asked again when nodes change', () => {
+    const { fixture, host, row } = setupDnd({ canDrag: () => false });
+    expect(row('vm-1').hasAttribute('draggable')).toBe(false);
+    host.canDrag.set((n) => n.id === 'vm-1');
+    host.nodes.set(DND()); // a refresh, as a re-fetch would produce
+    fixture.detectChanges();
+    expect(row('vm-1').getAttribute('draggable')).toBe('true');
+  });
+
+  it('an accepted target is highlighted and takes the drop; the source is dimmed', () => {
+    const { host, row, drag } = setupDnd();
+    drag('dragstart', row('vm-1'));
+    expect(row('vm-1').classList).toContain('strct-tnode__row--dragging');
+
+    const over = drag('dragover', row('host'));
+    expect(over.defaultPrevented).toBe(true); // prevented = "you may drop here"
+    expect(row('host').classList).toContain('strct-tnode__row--droptarget');
+
+    drag('drop', row('host'));
+    expect(host.drops).toEqual([
+      { source: host.nodes()[0].children![0], target: host.nodes()[1], position: 'into' },
+    ]);
+    // Drag state is cleared by the drop.
+    expect(row('vm-1').classList).not.toContain('strct-tnode__row--dragging');
+    expect(row('host').classList).not.toContain('strct-tnode__row--droptarget');
+  });
+
+  it('a refused target is not prevented, not highlighted, and never emits', () => {
+    const { host, row, drag } = setupDnd({ canDrop: (_s, t) => t.id === 'sub' });
+    drag('dragstart', row('vm-1'));
+    const over = drag('dragover', row('host'));
+    expect(over.defaultPrevented).toBe(false); // the browser shows "not allowed"
+    expect(row('host').classList).not.toContain('strct-tnode__row--droptarget');
+    drag('drop', row('host'));
+    expect(host.drops).toEqual([]);
+  });
+
+  it("without canDrop nothing is accepted — the rule is the consumer's", () => {
+    const { host, row, drag } = setupDnd({ canDrop: null });
+    drag('dragstart', row('vm-1'));
+    expect(drag('dragover', row('host')).defaultPrevented).toBe(false);
+    drag('drop', row('host'));
+    expect(host.drops).toEqual([]);
+  });
+
+  it('never drops a node on itself or into its own subtree, whatever canDrop says', () => {
+    const { host, row, drag } = setupDnd({ canDrop: () => true });
+    drag('dragstart', row('folder'));
+    // itself
+    expect(drag('dragover', row('folder')).defaultPrevented).toBe(false);
+    // its own descendants (a folder into its own subfolder is a cycle)
+    expect(drag('dragover', row('sub')).defaultPrevented).toBe(false);
+    expect(drag('dragover', row('vm-1')).defaultPrevented).toBe(false);
+    drag('drop', row('sub'));
+    expect(host.drops).toEqual([]);
+    // …but a node outside the subtree is still fine. (A drop ends the drag, as
+    // the browser's own dragend would, so start a fresh one.)
+    drag('dragstart', row('folder'));
+    expect(drag('dragover', row('host')).defaultPrevented).toBe(true);
+  });
+
+  it('the highlight clears on dragleave and on a drag that ends outside the tree', () => {
+    const { row, drag } = setupDnd();
+    drag('dragstart', row('vm-1'));
+    drag('dragover', row('host'));
+    expect(row('host').classList).toContain('strct-tnode__row--droptarget');
+    drag('dragleave', row('host'));
+    expect(row('host').classList).not.toContain('strct-tnode__row--droptarget');
+
+    drag('dragover', row('host'));
+    drag('dragend', row('vm-1')); // dropped on the desktop, say
+    expect(row('host').classList).not.toContain('strct-tnode__row--droptarget');
+    expect(row('vm-1').classList).not.toContain('strct-tnode__row--dragging');
+  });
+
+  it('hovering a collapsed node expands it, so an unseen target can be reached', () => {
+    vi.useFakeTimers();
+    try {
+      const { el, row, drag } = setupDnd({ delay: 700 });
+      expect(el.querySelector('[data-node-id="vm-2"]')).toBeNull(); // 'sub' is collapsed
+      drag('dragstart', row('vm-1'));
+      drag('dragover', row('sub'));
+      vi.advanceTimersByTime(699);
+      expect(el.querySelector('[data-node-id="vm-2"]')).toBeNull();
+      vi.advanceTimersByTime(1);
+      drag('dragover', row('sub'));
+      expect(el.querySelector('[data-node-id="vm-2"]')).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('leaving before the delay does not expand, and a finished drag cancels it', () => {
+    vi.useFakeTimers();
+    try {
+      const { el, row, drag } = setupDnd({ delay: 700 });
+      drag('dragstart', row('vm-1'));
+      drag('dragover', row('sub'));
+      drag('dragleave', row('sub'));
+      vi.advanceTimersByTime(1000);
+      expect(el.querySelector('[data-node-id="vm-2"]')).toBeNull();
+
+      drag('dragover', row('sub'));
+      drag('dragend', row('vm-1'));
+      vi.advanceTimersByTime(1000);
+      expect(el.querySelector('[data-node-id="vm-2"]')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('announces the drag and the drop politely', async () => {
+    const { row, drag } = setupDnd();
+    const live = () => document.querySelector('[aria-live="polite"]')?.textContent ?? '';
+    // StrctAnnouncer clears the region and writes in a macrotask, so identical
+    // consecutive messages still fire; wait for it rather than for a tick.
+    const settle = () => new Promise((r) => setTimeout(r));
+    drag('dragstart', row('vm-1'));
+    await settle();
+    expect(live()).toContain('Dragging VM 1');
+    drag('dragover', row('host'));
+    drag('drop', row('host'));
+    await settle();
+    expect(live()).toContain('Dropped VM 1 on Host');
+  });
+
+  it('rows stay treeitems, focusable and operable while drag-and-drop is wired', () => {
+    const { host, row, drag } = setupDnd();
+    expect(row('vm-1').getAttribute('role')).toBe('treeitem');
+    expect(row('vm-1').getAttribute('tabindex')).toBe('-1');
+    drag('dragstart', row('vm-1'));
+    row('host').click(); // a click during a drag still activates the row
+    expect(host.drops).toEqual([]);
+  });
+});
