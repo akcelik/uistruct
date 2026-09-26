@@ -5,6 +5,38 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.0] - 2026-09-26
+
+### Added
+
+- **`strct-heatmap` for a monitoring grid** (FR-43-01..03). Three things an
+  operator reads a host × hour utilisation grid for were impossible or needed a
+  workaround:
+  - **`colLabelEvery` and `colLabel`** — 24 hourly columns in a 700px card leave
+    ~26px per label, so "14:00" overlapped and consumers were forced down to
+    "14", which reads as a number rather than a time. Label every n-th column
+    and format the text, keying columns by something unique (an ISO time) and
+    labelling them readably. Every cell is still drawn; only the labels thin out.
+    Labels are now tracked by index, so a repeat is legitimate data — the DST
+    fall-back really does have two 02s, and a thinned axis repeats the empty
+    string. Before, that was a duplicate track key (NG0955).
+  - **`valueFormat`** — the cell tooltip was fixed to `row × col: value`, which
+    for a CPU grid reads `hv-05 × 14: 47` with no unit. `summaryFormat` existed
+    for the aria summary but nothing for cells.
+  - **`thresholds`** (the same `StrctThresholds` the gauge takes) — one hue
+    answers "how much more than the others", not "is it past 80, past 95". A cell
+    now takes its hue from its band and its intensity from the value's position
+    inside that band, floored at 45% so a band reads as itself and a pale cell is
+    never mistaken for no-data. Unset: today's single-hue ramp, unchanged.
+
+  Verified in Chrome at 1280×900 on the showcase demo: 8 labels across 24 hourly
+  columns with zero overlapping label boxes, 96 cells still drawn, the tooltip
+  reading `hv-01 · 14:00 — 81% CPU`, and all three band hues present.
+
+  HyperStruct can drop its `"HH"`-with-a-prime column labels, the "Hourly
+  average, 0–100% · hover a square for its value" line above the grid, and the
+  single `status="accent"` hue for both CPU and memory.
+
 ## [4.2.1] - 2026-09-26
 
 ### Fixed
