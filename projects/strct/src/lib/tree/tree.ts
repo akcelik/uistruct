@@ -16,6 +16,7 @@ import {
 } from '@angular/core';
 import { StrctIcon, StrctIconBadge } from '../icon/icon';
 import { StrctContextMenuTrigger, StrctMenuItem } from '../context-menu/menu';
+import { StrctAnnouncer } from '../a11y/announcer';
 
 /** A node in the data-driven tree (`<strct-tree [nodes]="...">`). */
 export interface StrctTreeNodeData {
@@ -41,6 +42,17 @@ export interface StrctTreeNodeData {
 
 /** Per-node menu resolver for the data-driven tree — returns the items for one node. */
 export type StrctTreeNodeMenuFn = (node: StrctTreeNodeData) => StrctMenuItem[];
+
+/** Payload of (nodeDrop): the dragged node and the node it was dropped on. */
+export interface StrctTreeDropEvent {
+  source: StrctTreeNodeData;
+  target: StrctTreeNodeData;
+  /**
+   * Where the drop landed. Only `'into'` today — the field exists so
+   * before/after reordering can be added without changing the event's shape.
+   */
+  position: 'into';
+}
 
 /** Payload of (nodeMenuSelect). */
 export interface StrctTreeMenuEvent {
@@ -81,9 +93,17 @@ let treeNodeCounter = 0;
       [attr.aria-selected]="displayActive()"
       [attr.aria-expanded]="hasChildren() ? isOpen() : null"
       [attr.aria-owns]="hasChildren() && isOpen() ? groupId : null"
+      [attr.draggable]="isDraggable() ? 'true' : null"
+      [class.strct-tnode__row--dragging]="isDragSource()"
+      [class.strct-tnode__row--droptarget]="isDropTarget()"
       [strctContextMenu]="menuItems()"
       [strctContextMenuData]="node()"
       (menuSelect)="onMenuSelect($event)"
+      (dragstart)="onDragStart($event)"
+      (dragend)="onDragEnd()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onDrop($event)"
       (click)="onActivate()"
       (focus)="onRowFocus()"
       (keydown)="onRowKeydown($event)"
@@ -160,6 +180,18 @@ let treeNodeCounter = 0;
       }
       .strct-tnode__row:hover {
         background: var(--bg-3);
+      }
+      /* Drag feedback, in tokens: the source dims, an accepting target is
+         outlined. A refusing target gets no class — the browser's own
+         "not-allowed" cursor says so, because dragover is not prevented. */
+      .strct-tnode__row--dragging {
+        opacity: 0.45;
+      }
+      .strct-tnode__row--droptarget,
+      .strct-tnode__row--droptarget:hover {
+        background: var(--acc-s);
+        outline: 1px solid var(--acc);
+        outline-offset: -1px;
       }
       .strct-tnode__row:focus-visible {
         outline: none;
@@ -240,6 +272,63 @@ export class StrctTreeNode {
   readonly nodeActivated = output<StrctTreeNodeData>();
   /** Data-mode right-click menu selection (bubbles to the tree). */
   readonly nodeMenuSelect = output<StrctTreeMenuEvent>();
+
+  /** Whether this row can be picked up — the tree asks the consumer's `canDrag`.
+   *  Reads `nodes()` too, so a refresh that makes a node movable is honoured. */
+  protected readonly isDraggable = computed(() => {
+    const n = this.node();
+    this.tree?.nodes();
+    return !!n && !!this.tree?.canDragNode(n);
+  });
+  protected readonly isDragSource = computed(() => {
+    const n = this.node();
+    return !!n && !!this.tree?.isDragSource(n);
+  });
+  protected readonly isDropTarget = computed(() => {
+    const n = this.node();
+    return !!n && !!this.tree?.isDropTarget(n);
+  });
+
+  protected onDragStart(event: DragEvent): void {
+    const n = this.node();
+    if (!n || !this.tree || !this.isDraggable()) return;
+    event.stopPropagation();
+    // Firefox starts no drag without data on the transfer.
+    event.dataTransfer?.setData('text/plain', n.label);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+    this.tree.beginDrag(n);
+  }
+
+  protected onDragEnd(): void {
+    this.tree?.endDrag();
+  }
+
+  protected onDragOver(event: DragEvent): void {
+    const n = this.node();
+    if (!n || !this.tree) return;
+    event.stopPropagation();
+    this.tree.dragOver(n, event.clientY);
+    if (!this.tree.acceptsDrop(n)) {
+      // No preventDefault: the pointer keeps the browser's "not allowed" cursor.
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'none';
+      return;
+    }
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  }
+
+  protected onDragLeave(): void {
+    const n = this.node();
+    if (n) this.tree?.dragLeave(n);
+  }
+
+  protected onDrop(event: DragEvent): void {
+    const n = this.node();
+    if (!n || !this.tree) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.tree.dropOn(n);
+  }
 
   /** Right-click menu items for this node ([] when no resolver / not data mode). */
   protected readonly menuItems = computed<StrctMenuItem[]>(() => {
@@ -464,6 +553,28 @@ export class StrctTree {
   readonly density = input<'compact' | 'comfortable'>('compact');
   /** Per-node right-click menu resolver. */
   readonly nodeMenu = input<StrctTreeNodeMenuFn | null>(null);
+  /**
+   * Which nodes can be picked up. Default: none, so a tree without this input
+   * behaves exactly as before. Asked again whenever `nodes` changes, because
+   * a refresh can make a node movable.
+   */
+  readonly canDrag = input<((node: StrctTreeNodeData) => boolean) | null>(null);
+  /**
+   * Where the dragged node may land, asked during `dragover`. A browser does
+   * not let `dragover` read the drag's data, so the tree keeps the source node
+   * and hands it to you here. Without this input nothing accepts a drop — the
+   * gesture belongs to the tree, the rule belongs to you.
+   *
+   * Two rules are built in whatever this returns: a node is never dropped on
+   * itself, and never into its own subtree (that would be a cycle).
+   */
+  readonly canDrop = input<
+    ((source: StrctTreeNodeData, target: StrctTreeNodeData) => boolean) | null
+  >(null);
+  /** How long a collapsed node must be hovered mid-drag before it expands (ms). */
+  readonly dragExpandDelay = input(700);
+  /** Emitted for an accepted drop only. */
+  readonly nodeDrop = output<StrctTreeDropEvent>();
   /** Accessible label of each node's chevron toggle; receives the expanded state and the node label. */
   readonly chevronAriaLabel =
     input<(expanded: boolean, label: string) => string>(defaultChevronAriaLabel);
@@ -640,6 +751,141 @@ export class StrctTree {
         return;
       }
     }
+  }
+
+  // ── Drag and drop ──────────────────────────────────────────────
+  private readonly announcer = inject(StrctAnnouncer);
+  private readonly hostEl = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly dragSourceNode = signal<StrctTreeNodeData | null>(null);
+  private readonly dropTargetNode = signal<StrctTreeNodeData | null>(null);
+  /** Pending hover-expand for a collapsed target. */
+  private expandTimer: ReturnType<typeof setTimeout> | null = null;
+  private expandTimerKey: string | null = null;
+  /** Edge auto-scroll while a drag is in flight. */
+  private scrollFrame: number | null = null;
+  private scrollStep = 0;
+
+  canDragNode(node: StrctTreeNodeData): boolean {
+    return this.canDrag()?.(node) ?? false;
+  }
+  isDragSource(node: StrctTreeNodeData): boolean {
+    const src = this.dragSourceNode();
+    return !!src && this.keyOf(src) === this.keyOf(node);
+  }
+  isDropTarget(node: StrctTreeNodeData): boolean {
+    const t = this.dropTargetNode();
+    return !!t && this.keyOf(t) === this.keyOf(node);
+  }
+
+  /** Whether the current drag may land on `target`: the built-in guards first,
+   *  then the consumer's rule. */
+  acceptsDrop(target: StrctTreeNodeData): boolean {
+    const source = this.dragSourceNode();
+    if (!source) return false;
+    if (this.keyOf(source) === this.keyOf(target)) return false;
+    if (this.containsNode(source, target)) return false;
+    return this.canDrop()?.(source, target) ?? false;
+  }
+
+  /** Whether `node` is somewhere inside `root`'s subtree. */
+  private containsNode(root: StrctTreeNodeData, node: StrctTreeNodeData): boolean {
+    const key = this.keyOf(node);
+    const walk = (list: StrctTreeNodeData[] | undefined): boolean =>
+      (list ?? []).some((n) => this.keyOf(n) === key || walk(n.children));
+    return walk(root.children);
+  }
+
+  beginDrag(node: StrctTreeNodeData): void {
+    this.dragSourceNode.set(node);
+    this.announcer.announce(`Dragging ${node.label}`);
+  }
+
+  /** Called from every `dragover` on a row: highlight, hover-expand, scroll. */
+  dragOver(target: StrctTreeNodeData, clientY: number): void {
+    if (!this.dragSourceNode()) return;
+    const accepts = this.acceptsDrop(target);
+    this.dropTargetNode.set(accepts ? target : null);
+    this.scheduleHoverExpand(target);
+    this.edgeScroll(clientY);
+  }
+
+  dragLeave(target: StrctTreeNodeData): void {
+    if (this.isDropTarget(target)) this.dropTargetNode.set(null);
+    if (this.expandTimerKey === this.keyOf(target)) this.clearExpandTimer();
+    this.stopEdgeScroll();
+  }
+
+  dropOn(target: StrctTreeNodeData): void {
+    const source = this.dragSourceNode();
+    const accepted = !!source && this.acceptsDrop(target);
+    if (source && accepted) {
+      this.nodeDrop.emit({ source, target, position: 'into' });
+      this.announcer.announce(`Dropped ${source.label} on ${target.label}`);
+    }
+    this.endDrag();
+  }
+
+  /** Always runs, including when the drop lands outside the tree (dragend). */
+  endDrag(): void {
+    this.dragSourceNode.set(null);
+    this.dropTargetNode.set(null);
+    this.clearExpandTimer();
+    this.stopEdgeScroll();
+  }
+
+  /** A collapsed node hovered long enough opens, so a target that is not yet
+   *  visible can be reached at all — the normal case in a big inventory. */
+  private scheduleHoverExpand(target: StrctTreeNodeData): void {
+    const key = this.keyOf(target);
+    if (this.expandTimerKey === key) return;
+    this.clearExpandTimer();
+    if (!target.children?.length || this.currentSet().has(key)) return;
+    this.expandTimerKey = key;
+    this.expandTimer = setTimeout(() => {
+      this.expandTimer = null;
+      this.expandTimerKey = null;
+      if (this.dragSourceNode() && !this.currentSet().has(key)) this.toggleNode(target);
+    }, this.dragExpandDelay());
+  }
+
+  private clearExpandTimer(): void {
+    if (this.expandTimer != null) clearTimeout(this.expandTimer);
+    this.expandTimer = null;
+    this.expandTimerKey = null;
+  }
+
+  /** Nearest scrolling ancestor, so a long tree can be traversed mid-drag. */
+  private scrollParent(): HTMLElement | null {
+    let el: HTMLElement | null = this.hostEl.nativeElement;
+    while (el) {
+      const canScroll = el.scrollHeight > el.clientHeight + 1;
+      if (canScroll && /auto|scroll|overlay/.test(getComputedStyle(el).overflowY)) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  private edgeScroll(clientY: number): void {
+    const box = this.scrollParent();
+    if (!box) return;
+    const r = box.getBoundingClientRect();
+    const zone = 36;
+    const step = clientY < r.top + zone ? -12 : clientY > r.bottom - zone ? 12 : 0;
+    this.scrollStep = step;
+    if (!step) return this.stopEdgeScroll();
+    if (this.scrollFrame != null) return;
+    const tick = (): void => {
+      if (!this.scrollStep || !this.dragSourceNode()) return this.stopEdgeScroll();
+      box.scrollTop += this.scrollStep;
+      this.scrollFrame = requestAnimationFrame(tick);
+    };
+    this.scrollFrame = requestAnimationFrame(tick);
+  }
+
+  private stopEdgeScroll(): void {
+    if (this.scrollFrame != null) cancelAnimationFrame(this.scrollFrame);
+    this.scrollFrame = null;
+    this.scrollStep = 0;
   }
 
   /** Toggle a node's expansion, updating state and emitting outputs. */

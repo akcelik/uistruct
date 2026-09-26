@@ -1322,7 +1322,13 @@ export const DOCS: DocCategory[] = [
         id: 'tree',
         title: 'Tree',
         selector: 'strct-tree',
-        importNames: ['StrctTree', 'StrctTreeNode', 'StrctTreeNodeData', 'StrctTreeNodeMenuFn'],
+        importNames: [
+          'StrctTree',
+          'StrctTreeNode',
+          'StrctTreeNodeData',
+          'StrctTreeNodeMenuFn',
+          'StrctTreeDropEvent',
+        ],
         summary: 'Nested, expandable nodes with icons.',
         lead: 'Nested, expandable nodes with optional icons, status badges and active state. Compose `strct-tree-node` manually, or pass `[nodes]` for a fully data-driven, self-recursing tree of any depth. Add `[nodeMenu]` for a per-node right-click menu.',
         inputs: [
@@ -1332,6 +1338,27 @@ export const DOCS: DocCategory[] = [
             default: 'null',
             description:
               'On `strct-tree`: data-driven node list (`{ id?; label; icon?; badge?; active?; expanded?; children?; data? }`). When set, projected content is ignored and the tree recurses itself. An `id` gives each node a stable key (trackBy + expansion state + a `data-node-id` attribute); it falls back to `label`.',
+          },
+          {
+            name: 'canDrag',
+            type: '((node: StrctTreeNodeData) => boolean) | null',
+            default: 'null',
+            description:
+              'Which nodes can be picked up. Default none, so a tree without it behaves exactly as before. Asked again whenever `nodes` changes, because a refresh can make a node movable.',
+          },
+          {
+            name: 'canDrop',
+            type: '((source, target) => boolean) | null',
+            default: 'null',
+            description:
+              "Where the dragged node may land, asked during `dragover` with BOTH nodes — a browser will not let `dragover` read the drag's data, so the tree keeps the source for you. Without it nothing accepts a drop: the tree owns the gesture, you own the rule. Two rules are built in whatever you return — a node is never dropped on itself, and never into its own subtree (a folder into its own subfolder is a cycle).",
+          },
+          {
+            name: 'dragExpandDelay',
+            type: 'number',
+            default: '700',
+            description:
+              'How long a collapsed node must be hovered mid-drag before it expands, so a target that is not yet visible can be reached — the normal case in a big inventory.',
           },
           {
             name: 'nodeMenu',
@@ -1387,6 +1414,12 @@ export const DOCS: DocCategory[] = [
           },
         ],
         outputs: [
+          {
+            name: 'nodeDrop',
+            type: 'StrctTreeDropEvent',
+            description:
+              "`{ source; target; position: 'into' }` for an accepted drop only. Moving the node is yours to do; `position` exists so before/after reordering can be added later without changing the event.",
+          },
           {
             name: 'nodeActivated',
             type: 'StrctTreeNodeData',
@@ -1529,6 +1562,7 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not stack modals on top of each other.'],
         a11y: [
           'role="dialog", aria-modal, aria-labelledby; focus is trapped and restored on close; Escape closes when dismissible.',
+          "Drag and drop is a pointer shortcut: every drop should also have a keyboard route (a node context menu). The tree announces 'Dragging <label>' and 'Dropped <label> on <target>' politely, and rows stay treeitems with their roving tabindex.",
         ],
       },
       {
