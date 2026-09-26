@@ -5,6 +5,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.1] - 2026-09-26
+
+### Fixed
+
+- **A tall step no longer pushes the wizard footer out of a chromeless dialog**
+  (BUG-41-01). Back / Next / Finish / Cancel stay on screen whatever a step
+  renders; the step's content pane scrolls instead. The height chain broke in
+  two places: the chromeless modal body sized to its content instead of growing
+  inside the dialog's flex column, and the vertical wizard's grid had no bounded
+  row track, so it grew to the step and the dialog's `overflow: hidden` cut the
+  footer off the bottom. `overflow-y: auto` was already on the content pane — it
+  just never received a bounded height. The horizontal layout gets the same
+  guarantee when it is hosted in a height-capped surface (`flush`); an inline
+  wizard still sizes to its content and keeps its block flow.
+
+  Measured in Chrome at 1280×720 with a 1400px step: the footer's bottom sits at
+  695px against the dialog's 696px and the pane scrolls; with the fix removed at
+  runtime the footer jumps to 1645px, well past the dialog. jsdom cannot lay out,
+  so the unit tests pin the chain (every `min-height: 0`, the `minmax(0, 1fr)`
+  row track, the body's `flex-grow`) against a silent regression.
+
+  HyperStruct can drop the "footer must never leave the dialog (O178)" block from
+  its `styles.scss`, including the `.strct-modal__body { flex: 1; min-height: 0 }`
+  half it carried as an upstream gap.
+
 ## [4.2.0] - 2026-09-22
 
 ### Added

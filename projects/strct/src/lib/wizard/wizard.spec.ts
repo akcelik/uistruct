@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctStep, StrctWizard, StrctWizardAside, provideStrctWizardDefaults } from './wizard';
-import { StrctModal } from '../modal/modal';
+import { StrctModal, StrctModalContent } from '../modal/modal';
 import { resetStrctDevWarnings } from '../util/dev-warn';
 
 describe('StrctWizard', () => {
@@ -289,5 +289,76 @@ describe('StrctWizard silent-failure diagnostics', () => {
       expect.stringContaining('[strct-wizard] --strct-wiz-content-min is 480px on the wizard'),
     ]);
     expect(texts(warn)[0]).toContain('Set it on the strct-modal or an ancestor');
+  });
+});
+
+describe('StrctWizard — the footer is never clipped (BUG-41-01)', () => {
+  @Component({
+    imports: [StrctModal, StrctModalContent, StrctWizard, StrctStep],
+    template: `
+      <strct-modal [open]="true" chromeless title="Add hosts">
+        <ng-template strctModalContent>
+          <strct-wizard [vertical]="vertical" flush title="Add hosts">
+            <strct-step label="One"><div style="height: 1400px">tall</div></strct-step>
+          </strct-wizard>
+        </ng-template>
+      </strct-modal>
+    `,
+  })
+  class DialogHost {
+    vertical = true;
+  }
+
+  /** jsdom lays nothing out, so this pins the height CHAIN instead: every link
+   *  that, if it went back to auto, lets the grid grow and the dialog clip the
+   *  footer. The real-layout check is in the PR (Chrome, 1280×720). */
+  function styles(vertical: boolean) {
+    const fixture = TestBed.createComponent(DialogHost);
+    fixture.componentInstance.vertical = vertical;
+    fixture.detectChanges();
+    return (sel: string) => {
+      const el = document.querySelector(sel);
+      return el ? getComputedStyle(el) : null;
+    };
+  }
+
+  it('vertical: the chain runs dialog → body → host → layout → main → content', () => {
+    const cs = styles(true);
+    const body = cs('.strct-modal__dialog--chromeless .strct-modal__body')!;
+    expect([body.flexGrow, body.minHeight]).toEqual(['1', '0px']);
+
+    const host = cs('strct-wizard.strct-wiz--vertical')!;
+    expect([host.display, host.flexDirection, host.minHeight]).toEqual(['flex', 'column', '0px']);
+
+    const layout = cs('.strct-wiz__layout--v')!;
+    expect(layout.flexGrow).toBe('1');
+    expect(layout.minHeight).toBe('0px');
+    // A bounded row track: 'auto' here is what let the grid grow to the step.
+    expect(layout.gridTemplateRows).toBe('minmax(0, 1fr)');
+
+    expect(cs('.strct-wiz__layout--v .strct-wiz__main')!.minHeight).toBe('0px');
+    const content = cs('.strct-wiz__layout--v .strct-wiz__content')!;
+    expect([content.flexGrow, content.minHeight, content.overflowY]).toEqual(['1', '0px', 'auto']);
+  });
+
+  it('horizontal in a height-capped surface: the step scrolls, not the dialog', () => {
+    const cs = styles(false);
+    const host = cs('strct-wizard.strct-wiz--flush')!;
+    expect([host.display, host.flexDirection]).toEqual(['flex', 'column']);
+    const content = cs('.strct-wiz__content')!;
+    expect([content.flexGrow, content.minHeight, content.overflowY]).toEqual(['1', '0px', 'auto']);
+  });
+
+  it('an inline horizontal wizard keeps its block flow (and its margins)', () => {
+    const fixture = TestBed.createComponent(StrctWizard);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(getComputedStyle(host).display).toBe('block');
+    fixture.componentRef.setInput('vertical', false);
+    fixture.detectChanges();
+    const content = host.querySelector('.strct-wiz__content');
+    // Not flush: no scroll container is imposed on an inline wizard (jsdom
+    // reports an unset property as '').
+    expect(content ? getComputedStyle(content).overflowY : '').not.toBe('auto');
   });
 });
