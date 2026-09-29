@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { StrctField } from './field';
+import { StrctField, StrctFieldHint, StrctFieldPrefix, StrctFieldSuffix } from './field';
 import { StrctInput } from './input';
 
 @Component({
@@ -14,6 +14,40 @@ import { StrctInput } from './input';
   `,
 })
 class FieldHost {}
+
+@Component({
+  standalone: true,
+  imports: [StrctField, StrctInput, StrctFieldPrefix, StrctFieldSuffix],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
+    <strct-field label="Minimum memory">
+      <input strctInput type="number" />
+      <span strctFieldSuffix>MB</span>
+    </strct-field>
+    <strct-field label="Ask">
+      <input strctInput />
+      <button strctFieldSuffix type="button" class="strct-btn">Send</button>
+    </strct-field>
+    <strct-field label="Path">
+      <span strctFieldPrefix>/var</span>
+      <input strctInput />
+    </strct-field>
+  `,
+})
+class AddonHost {}
+
+@Component({
+  standalone: true,
+  imports: [StrctField, StrctInput, StrctFieldHint],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
+    <strct-field label="Switch name" hint="plain">
+      <input strctInput />
+      <ng-template strctFieldHint>Hosts with <strong>vSwitch0</strong> join it.</ng-template>
+    </strct-field>
+  `,
+})
+class RichHintHost {}
 
 describe('StrctField', () => {
   it('applies the strct-field host class', () => {
@@ -89,6 +123,58 @@ describe('StrctField', () => {
       const el = fixture.nativeElement as HTMLElement;
       expect(el.querySelector('.strct-field__msg--error')?.textContent).toContain('Required');
       expect(el.textContent).not.toContain('looks good');
+    });
+  });
+
+  describe('layout (FR-48-05)', () => {
+    it('stacks by default and takes the label column on inline', () => {
+      const fixture = TestBed.createComponent(StrctField);
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.classList).not.toContain('strct-field--inline');
+      fixture.componentRef.setInput('layout', 'inline');
+      fixture.detectChanges();
+      expect(el.classList).toContain('strct-field--inline');
+    });
+  });
+
+  describe('addons (FR-48-06)', () => {
+    it('renders the addons in their slots and marks the side on the host', () => {
+      const fixture = TestBed.createComponent(AddonHost);
+      fixture.detectChanges();
+      const fields = fixture.nativeElement.querySelectorAll('strct-field');
+      expect(fields[0].classList).toContain('strct-field--suffix');
+      expect(fields[0].classList).not.toContain('strct-field--prefix');
+      expect(fields[0].querySelector('.strct-field__addon--suffix')?.textContent).toContain('MB');
+      expect(fields[2].classList).toContain('strct-field--prefix');
+      expect(fields[2].querySelector('.strct-field__addon--prefix')?.textContent).toContain('/var');
+    });
+
+    it('describes the control with a text addon but not with a control addon', async () => {
+      const fixture = TestBed.createComponent(AddonHost);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const fields = fixture.nativeElement.querySelectorAll('strct-field');
+      const unit = fields[0].querySelector('input') as HTMLInputElement;
+      const suffixId = fields[0].querySelector('.strct-field__addon--suffix')?.id;
+      expect(unit.getAttribute('aria-describedby')?.split(' ')).toContain(suffixId);
+
+      const ask = fields[1].querySelector('input') as HTMLInputElement;
+      const btnId = fields[1].querySelector('.strct-field__addon--suffix')?.id;
+      expect(ask.getAttribute('aria-describedby')?.split(' ') ?? []).not.toContain(btnId);
+    });
+  });
+
+  describe('projected hint (FR-48-07)', () => {
+    it('renders the template in the hint slot, with the hint id, over the string', async () => {
+      const fixture = TestBed.createComponent(RichHintHost);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const hint = fixture.nativeElement.querySelector('.strct-field__msg--hint') as HTMLElement;
+      expect(hint.querySelector('strong')?.textContent).toBe('vSwitch0');
+      expect(hint.textContent).not.toContain('plain');
+      const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+      expect(input.getAttribute('aria-describedby')?.split(' ')).toContain(hint.id);
     });
   });
 });

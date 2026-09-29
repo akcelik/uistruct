@@ -444,7 +444,13 @@ export const DOCS: DocCategory[] = [
         id: 'field',
         title: 'Form field',
         selector: 'strct-field',
-        importNames: ['StrctField'],
+        importNames: [
+          'StrctField',
+          'StrctFieldPrefix',
+          'StrctFieldSuffix',
+          'StrctFieldHint',
+          'StrctFieldGroup',
+        ],
         summary: 'Label / required / hint / error wrapper.',
         lead: 'Wraps any form control with a label (and optional required marker), a hint and an error message. It auto-links the control via `aria-describedby` and toggles `aria-invalid`, so accessibility wiring is automatic.',
         inputs: [
@@ -480,14 +486,47 @@ export const DOCS: DocCategory[] = [
             description:
               'Async-validation affordance: a trailing spinner/check/warning adornment plus its message in the hint/error slot (aria-live). An explicit error takes precedence.',
           },
+          {
+            name: 'layout',
+            type: `'stacked' | 'inline'`,
+            default: `'stacked'`,
+            description:
+              '`inline` puts the label and its hint in a fixed-width column (`--strct-field-label-w`, 220px) and the control beside them — how a long settings form reads — with a hairline between consecutive settings and the error under the control. Below 480px of field width it falls back to stacked; the width is fixed rather than a custom property because a container query cannot read one.',
+          },
+          {
+            name: '[strctFieldPrefix] / [strctFieldSuffix]',
+            type: 'slots',
+            description:
+              'Rendered inside the control’s border: the field takes the border, radius and focus ring over from the input, so one ring covers the value and its unit. A text addon joins the control’s description (“Minimum memory, MB”); an addon holding its own control, such as a send button, stays its own tab stop and is left out of the description.',
+          },
+          {
+            name: '[strctFieldHint]',
+            type: 'ng-template',
+            description:
+              'A hint with markup in it. Renders where the string `hint` renders, in the same style, and carries the same id, so it stays the control’s description. Takes precedence over `hint`.',
+          },
+          {
+            name: '[strctFieldGroup]',
+            type: 'directive (wrapper)',
+            description:
+              'On an element wrapping a run of `layout="inline"` fields: drops the hairlines between them, for settings that read as one block.',
+          },
         ],
         do: [
           'Wrap each form control in a field for consistent labels and messaging.',
           'Bind `error` to your validation state.',
+          'Use `layout="inline"` for long settings forms, and keep the stacked default for short dialogs.',
+          'Put a unit in `[strctFieldSuffix]` rather than beside the box.',
         ],
-        dont: ['Do not also set aria-describedby / aria-invalid by hand — the field manages them.'],
+        dont: [
+          'Do not also set aria-describedby / aria-invalid by hand — the field manages them.',
+          'Do not draw your own box around an input and a button — give the field a suffix instead.',
+          'Do not put a rich hint in a loose paragraph under the field; it stops being the control’s description.',
+        ],
         a11y: [
           'Links the control to its hint/error via aria-describedby and sets aria-invalid when errored.',
+          'A text prefix/suffix is added to the control’s description; one holding a control is not, and stays its own tab stop.',
+          'A projected hint carries the same id as the string hint, so it is announced the same way.',
         ],
       },
       {
