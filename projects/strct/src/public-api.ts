@@ -60,6 +60,7 @@ export * from './lib/filter-bar/filter-bar';
 export * from './lib/forms/field';
 export * from './lib/forms/input';
 export * from './lib/validation/validation';
+export * from './lib/forms/description';
 export * from './lib/forms/checkbox';
 export * from './lib/forms/toggle';
 export * from './lib/forms/radio';

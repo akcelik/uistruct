@@ -5,6 +5,38 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.11.0] - 2026-09-29
+
+### Added
+
+- **`strct-radio-group variant="card"`** (FR-48-02). A choice between a few kinds
+  of thing, each needing a sentence to explain, is a set of radio cards: radio
+  semantics with a card look. Each option becomes a tile with room for an `icon`
+  and a `description`, the tiles lay out as many `--strct-radio-card-min` (220px)
+  columns as fit and stack below that, and the selected tile takes the accent
+  border and fill. The markup stays a native radio group — one `name`, arrow keys
+  — rather than the buttons apps build, where screen readers hear unrelated
+  buttons instead of one choice.
+- **`strct-tag`: `interactive`, `shape="pill"`, `mono` and `[strctTagLeading]`**
+  (FR-48-03). A tag is also the natural control for a thing you can reopen — a
+  minimised console, a suggested question — and removing it is a separate act.
+  `interactive` makes the body activate on click, Enter or Space and emit
+  `activated`, while the × stays its own tab stop: two targets, two things to
+  say. The body carries `role="button"` rather than being a `<button>`, because
+  a template can project the same content into only one place, so branching the
+  markup on `interactive` would drop it in the other branch — the shape
+  `strct-list-item` and `strct-tree` rows use.
+- **`description` on `strct-checkbox`, `strct-toggle` and `strct-radio`**
+  (FR-48-04), plus `[strctControlDescription]` for one with markup in it. An
+  option whose consequence needs a sentence carries that sentence as its
+  description: rendered inside the control's own `<label>`, so clicking it still
+  toggles the option, and linked with `aria-describedby`. Because the sentence
+  shares the `<label>`, the accessible name is pinned to the label text — the
+  accessibility tree reads name "Network", description "The cluster networks, IP
+  addresses and Windows Firewall.", not the two run together. This replaces
+  wrapping the control in an outer `<label>`, which nests a label inside the
+  component's own.
+
 ## [4.10.0] - 2026-09-29
 
 ### Added
