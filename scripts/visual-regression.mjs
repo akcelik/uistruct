@@ -103,8 +103,16 @@ const chrome = spawn(
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Wait for Chrome's DevTools endpoint. The budget is 30s, not the 10s this
+ * used to allow: a cold CI runner regularly needs longer, and when it did the
+ * gate failed before it had compared a single pixel — four times, once on a
+ * main build. A slow start is not a visual regression, so it must not read as
+ * one.
+ */
 async function cdpTarget() {
-  for (let i = 0; i < 50; i++) {
+  const deadline = Date.now() + 30_000;
+  for (let i = 0; Date.now() < deadline; i++) {
     try {
       const list = await (await fetch(`http://127.0.0.1:${CDP}/json/list`)).json();
       const page = list.find((t) => t.type === 'page');
@@ -114,7 +122,10 @@ async function cdpTarget() {
     }
     await sleep(200);
   }
-  throw new Error('CDP endpoint unavailable');
+  throw new Error(
+    `CDP endpoint unavailable: Chrome did not answer on port ${CDP} within 30s. ` +
+      `This is a launch failure, not a visual difference — check the browser binary (${chromeBin}).`,
+  );
 }
 
 function connect(url) {
