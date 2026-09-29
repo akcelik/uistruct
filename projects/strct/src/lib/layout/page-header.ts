@@ -6,6 +6,7 @@ import {
   booleanAttribute,
   input,
 } from '@angular/core';
+import { StrctIcon } from '../icon/icon';
 
 /** Marks the breadcrumb row projected above the title. */
 @Directive({ selector: '[strctPageHeaderCrumbs]' })
@@ -14,6 +15,10 @@ export class StrctPageHeaderCrumbs {}
 /** Marks the action buttons aligned to the end of the title row. */
 @Directive({ selector: '[strctPageHeaderActions]' })
 export class StrctPageHeaderActions {}
+
+/** Sits beside the title, on its baseline — a state badge, a version. */
+@Directive({ selector: '[strctPageHeaderTitleMeta]' })
+export class StrctPageHeaderTitleMeta {}
 
 /**
  * Page header — the top of every console object page: an optional breadcrumb
@@ -29,11 +34,37 @@ export class StrctPageHeaderActions {}
   selector: 'strct-page-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
+  imports: [StrctIcon],
   template: `
     <div class="strct-ph__crumbs"><ng-content select="[strctPageHeaderCrumbs]" /></div>
     <div class="strct-ph__row">
       <div class="strct-ph__text">
-        <h1 class="strct-ph__title">{{ title() }}</h1>
+        <div class="strct-ph__titlerow">
+          @if (icon()) {
+            <strct-icon
+              class="strct-ph__icon"
+              [name]="icon()"
+              [size]="size() === 'pane' ? 18 : 22"
+              [strokeWidth]="1.4"
+            />
+          }
+          <!-- A header can be a page's h1 or a pane's h2; the level is the
+               outline, the size is the look, and they move independently. -->
+          @switch (level()) {
+            @case (2) {
+              <h2 class="strct-ph__title">{{ title() }}</h2>
+            }
+            @case (3) {
+              <h3 class="strct-ph__title">{{ title() }}</h3>
+            }
+            @default {
+              <h1 class="strct-ph__title">{{ title() }}</h1>
+            }
+          }
+          <span class="strct-ph__titlemeta">
+            <ng-content select="[strctPageHeaderTitleMeta]" />
+          </span>
+        </div>
         @if (subtitle()) {
           <p class="strct-ph__subtitle">{{ subtitle() }}</p>
         }
@@ -45,6 +76,7 @@ export class StrctPageHeaderActions {}
   host: {
     class: 'strct-ph',
     '[class.strct-ph--divider]': 'divider()',
+    '[class.strct-ph--pane]': "size() === 'pane'",
   },
   styles: [
     `
@@ -70,6 +102,32 @@ export class StrctPageHeaderActions {}
       .strct-ph__text {
         flex: 1;
         min-width: 0;
+      }
+      .strct-ph__titlerow {
+        display: flex;
+        align-items: baseline;
+        gap: var(--space-2);
+        min-width: 0;
+        flex-wrap: wrap;
+      }
+      .strct-ph__icon {
+        /* Aligned to the title's cap height rather than its baseline box. */
+        align-self: center;
+        color: var(--t2);
+        flex: none;
+      }
+      .strct-ph__titlemeta:empty {
+        display: none;
+      }
+      .strct-ph__titlemeta {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .strct-ph--pane .strct-ph__title {
+        font-size: var(--text-lg);
+        font-weight: 600;
+        letter-spacing: 0;
       }
       .strct-ph__title {
         margin: 0;
@@ -105,4 +163,10 @@ export class StrctPageHeader {
   readonly subtitle = input('');
   /** Draw a hairline divider under the header. */
   readonly divider = input(false, { transform: booleanAttribute });
+  /** Heading level — the document outline (a page's h1, a pane's h2). */
+  readonly level = input<1 | 2 | 3>(1);
+  /** `page` — as today; `pane` — the smaller header a side pane wants. */
+  readonly size = input<'page' | 'pane'>('page');
+  /** Optional leading icon, e.g. the kind of object the page is about. */
+  readonly icon = input('');
 }

@@ -1,5 +1,12 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { StrctBadge, StrctCard, StrctCardBlock, StrctCardHeader, StrctThemeSwitcher } from 'strct';
+import {
+  StrctCodeInline,
+  StrctBadge,
+  StrctCard,
+  StrctCardBlock,
+  StrctCardHeader,
+  StrctThemeSwitcher,
+} from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
 interface TokenGroup {
@@ -29,6 +36,7 @@ interface ContrastRow {
     StrctCardHeader,
     StrctCardBlock,
     StrctBadge,
+    StrctCodeInline,
   ],
   template: `
     <app-page-header
@@ -102,6 +110,27 @@ interface ContrastRow {
           >
           <span class="type-use">Data, IDs, code — tabular numerals</span>
         </div>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="text-tones"
+      heading="Text tones and inline code"
+      description="The three tones every screen uses, so an app never writes them by hand: strct-text-muted for the explanation under a thing, strct-text-hint for a small aside, strct-text-overline for the label of a group, strct-text-lede for an intro paragraph. strctCode sets a command, a path or an identifier inside a sentence — horizontal padding only, so it never changes a paragraph's leading; add copyable for a copy button."
+      code='<p class="strct-text-hint">Applies at the next boot.</p>&#10;Run <code strctCode copyable>hyperstructctl doctor</code> on the appliance.'
+    >
+      <div class="tones">
+        <p class="strct-text-lede">
+          A lede introduces the section in a slightly larger, calmer voice.
+        </p>
+        <p class="strct-text-overline">Capacity</p>
+        <p>Default body text, for comparison.</p>
+        <p class="strct-text-muted">Muted: the explanation under a thing.</p>
+        <p class="strct-text-hint">Hint: a small aside, one step down in size.</p>
+        <p>
+          Run <code strctCode>hyperstructctl doctor</code> on the appliance, then quote the id
+          <code strctCode copyable>host-01m3e2e0000000000000000001</code> in the ticket.
+        </p>
       </div>
     </app-demo>
 
@@ -185,6 +214,16 @@ interface ContrastRow {
   `,
   styles: [
     `
+      .tones {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-width: 640px;
+      }
+      .tones p {
+        margin: 0;
+      }
+
       .switch-row {
         display: flex;
         align-items: center;

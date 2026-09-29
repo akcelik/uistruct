@@ -1193,6 +1193,33 @@ export const DOCS: DocCategory[] = [
         summary: 'Console page top: crumbs, title, actions.',
         lead: 'The top of every console object page: an optional breadcrumb row (`strctPageHeaderCrumbs`), an h1 `title` + `subtitle`, actions aligned to the end (`strctPageHeaderActions`) and default content projected below (status badges, meta strips). The doc pages themselves run on it.',
         inputs: [
+          {
+            name: 'level',
+            type: '1 | 2 | 3',
+            default: '1',
+            description:
+              'Heading element — the document outline. A page header can be a page’s h1 or a pane’s h2; the level moves independently of `size`.',
+          },
+          {
+            name: 'size',
+            type: "'page' | 'pane'",
+            default: 'page',
+            description:
+              '`page` as today; `pane` is the smaller header a side pane wants (--text-lg / 600).',
+          },
+          {
+            name: 'icon',
+            type: 'string',
+            default: '',
+            description:
+              'Leading icon, e.g. the kind of object the page is about; sits before the title at its cap height.',
+          },
+          {
+            name: '[strctPageHeaderTitleMeta]',
+            type: 'slot',
+            description:
+              'Projected beside the title, on its baseline — a state badge, a version. `[strctPageHeaderActions]` still goes to the far end.',
+          },
           { name: 'title', type: 'string', description: 'Page title (an h1). Required.' },
           {
             name: 'subtitle',
@@ -1219,6 +1246,26 @@ export const DOCS: DocCategory[] = [
         summary: 'Rich surface container: status rail, selection, loading, collapse.',
         lead: 'A surface container composed from `strct-card-header`, `strct-card-block` and an optional `strct-card-footer`. Beyond plain composition it now carries rich, opt-in states: a `status` tone rail (same language as alert/hero), `interactive` hover lift for clickable cards, a `selected` ring for pickers, `dense` paddings, a `loading` bar with `aria-busy`, and `collapsible` with a two-way `collapsed` model — the header grows a chevron toggle.',
         inputs: [
+          {
+            name: 'heading',
+            type: 'string',
+            default: '',
+            description:
+              'On `strct-card-header`: the card’s title. Left empty, whatever you project renders as before.',
+          },
+          {
+            name: 'appearance',
+            type: "'title' | 'overline'",
+            default: 'title',
+            description:
+              'On `strct-card-header`: `overline` is the uppercase, letter-spaced, quieter treatment — the same word `strct-section-header` uses.',
+          },
+          {
+            name: '[strctCardHeaderMeta] / [strctCardHeaderNote] / [strctCardHeaderActions]',
+            type: 'slots',
+            description:
+              'Header row order: icon · heading · meta · flexible space · note (quiet, ellipsised) · actions. Every card in an app then lines up without consumer CSS.',
+          },
           {
             name: 'status',
             type: STATUS_VALUES,

@@ -158,6 +158,10 @@ export class StrctRowDetailDef {
   readonly template = inject(TemplateRef);
 }
 
+/** Muted note inside the action bar, before the buttons. */
+@Directive({ selector: '[strctDatagridActionBarCaption]' })
+export class StrctDatagridActionBarCaption {}
+
 /** Marks the persistent action-bar (toolbar) content shown above the grid. */
 @Directive({ selector: '[strctDatagridActionBar]' })
 export class StrctDatagridActionBar {}
@@ -205,6 +209,9 @@ export class StrctDatagridActionBar {}
             >
           }
         }
+        <span class="strct-dg__actioncaption">
+          <ng-content select="[strctDatagridActionBarCaption]" />
+        </span>
         <ng-content select="[strctDatagridActionBar]" />
       </div>
     }
@@ -672,6 +679,20 @@ export class StrctDatagridActionBar {}
   },
   styles: [
     `
+      .strct-dg__actioncaption:empty {
+        display: none;
+      }
+      .strct-dg__actioncaption {
+        display: inline-flex;
+        align-items: center;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: var(--text-sm);
+        color: var(--t3);
+      }
+
       /* Enclosed chrome: the action bar, grid and footer share one frame so the
        * whole component reads as a single object on the page. */
       .strct-dg-host {

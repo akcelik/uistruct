@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  Directive,
   ViewEncapsulation,
   booleanAttribute,
   inject,
@@ -182,10 +183,21 @@ export class StrctCard {
   encapsulation: ViewEncapsulation.None,
   imports: [StrctIcon],
   template: `
-    @if (icon()) {
-      <strct-icon class="strct-card__hicon" [name]="icon()" [size]="16" [strokeWidth]="1.4" />
-    }
-    <ng-content />
+    <span class="strct-card__hmain">
+      @if (icon()) {
+        <strct-icon class="strct-card__hicon" [name]="icon()" [size]="16" [strokeWidth]="1.4" />
+      }
+      @if (heading()) {
+        <span class="strct-card__htitle">{{ heading() }}</span>
+      }
+      <ng-content select="[strctCardHeaderMeta]" />
+      <!-- Default slot: with no heading this renders exactly as before. -->
+      <ng-content />
+    </span>
+    <span class="strct-card__hend">
+      <ng-content select="[strctCardHeaderNote]" />
+      <ng-content select="[strctCardHeaderActions]" />
+    </span>
     @if (card?.collapsible()) {
       <button
         type="button"
@@ -203,7 +215,10 @@ export class StrctCard {
       </button>
     }
   `,
-  host: { class: 'strct-card__header' },
+  host: {
+    class: 'strct-card__header',
+    '[class.strct-card__header--overline]': "appearance() === 'overline'",
+  },
   styles: [
     `
       .strct-card__header {
@@ -216,6 +231,43 @@ export class StrctCard {
         font-size: 13px;
         font-weight: 600;
         color: var(--t1);
+      }
+      .strct-card__hmain {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-width: 0;
+      }
+      .strct-card__hend {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-width: 0;
+      }
+      .strct-card__hend:empty {
+        display: none;
+      }
+      .strct-card__htitle {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .strct-card__header--overline .strct-card__htitle {
+        font-size: var(--text-xs);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--t2);
+      }
+      [strctCardHeaderNote] {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 400;
+        font-size: var(--text-sm);
+        color: var(--t3);
       }
       .strct-card__hicon {
         color: var(--t2);
@@ -262,12 +314,28 @@ export class StrctCard {
 export class StrctCardHeader {
   /** Optional leading icon (StrctIcon set). */
   readonly icon = input('');
+  /** Card title. Left empty, the default slot renders as before. */
+  readonly heading = input('');
+  /** `title` — as today; `overline` — uppercase, letter-spaced, quieter. */
+  readonly appearance = input<'title' | 'overline'>('title');
   /** Accessible labels for the collapse toggle (localizable). */
   readonly collapseLabel = input('Collapse');
   readonly expandLabel = input('Expand');
 
   protected readonly card = inject(StrctCard, { optional: true });
 }
+
+/** Follows the card's heading on its line — a badge, a count. */
+@Directive({ selector: '[strctCardHeaderMeta]' })
+export class StrctCardHeaderMeta {}
+
+/** Quiet text at the end of the header row, before the actions; ellipsised. */
+@Directive({ selector: '[strctCardHeaderNote]' })
+export class StrctCardHeaderNote {}
+
+/** Buttons at the end of the header row. */
+@Directive({ selector: '[strctCardHeaderActions]' })
+export class StrctCardHeaderActions {}
 
 /** Body section of a {@link StrctCard}. */
 @Component({

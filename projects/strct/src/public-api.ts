@@ -17,6 +17,7 @@ export * from './lib/layout/nav';
 export * from './lib/layout/rail';
 export * from './lib/layout/login';
 export * from './lib/layout/page-header';
+export * from './lib/section-header/section-header';
 
 // Buttons & indicators
 export * from './lib/button/button';
@@ -51,6 +52,7 @@ export * from './lib/kbd/kbd';
 export * from './lib/searchbox/searchbox';
 export * from './lib/copy/copy';
 export * from './lib/code/code';
+export * from './lib/code/code-inline';
 export * from './lib/filter-bar/filter-bar';
 
 // Forms
