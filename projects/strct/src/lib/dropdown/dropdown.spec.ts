@@ -5,6 +5,7 @@ import {
   StrctDropdown,
   StrctDropdownDivider,
   StrctDropdownItem,
+  StrctDropdownItemAction,
   StrctDropdownTrigger,
 } from './dropdown';
 
@@ -362,5 +363,94 @@ describe('StrctDropdownItem — hint (FR-42-01)', () => {
     fixture.detectChanges();
     expect(host.log).toEqual(['snap']);
     expect(el.querySelector('[role="menu"]')).toBeNull();
+  });
+});
+
+// FR-48-11 — a saved item in a menu can be removed from the menu.
+@Component({
+  imports: [StrctDropdown, StrctDropdownItem, StrctDropdownItemAction, StrctDropdownTrigger],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
+    <strct-dropdown>
+      <button strctDropdownTrigger>Saved views</button>
+      <strct-dropdown-item (click)="opened.set('CPU pressure')">
+        CPU pressure
+        <button
+          strctDropdownItemAction
+          type="button"
+          class="rm"
+          aria-label="Delete view"
+          (click)="deleted.set('CPU pressure')"
+        >
+          ×
+        </button>
+      </strct-dropdown-item>
+      <strct-dropdown-item (click)="opened.set('Plain')">Plain</strct-dropdown-item>
+    </strct-dropdown>
+  `,
+})
+class ActionHost {
+  opened = signal('');
+  deleted = signal('');
+}
+
+describe('StrctDropdownItem — trailing action', () => {
+  function open() {
+    const fixture = TestBed.createComponent(ActionHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('[strctDropdownTrigger]') as HTMLElement).click();
+    fixture.detectChanges();
+    return { fixture, el, host: fixture.componentInstance };
+  }
+
+  it('deletes without opening, and leaves the menu open', () => {
+    const { fixture, el, host } = open();
+    (el.querySelector('.rm') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(host.deleted()).toBe('CPU pressure');
+    expect(host.opened()).toBe('');
+    expect(el.querySelector('.strct-dd__menu')).toBeTruthy();
+  });
+
+  it('activating the item itself still opens it and closes the menu', () => {
+    const { fixture, el, host } = open();
+    (el.querySelector('strct-dropdown-item') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(host.opened()).toBe('CPU pressure');
+    expect(host.deleted()).toBe('');
+    expect(el.querySelector('.strct-dd__menu')).toBeNull();
+  });
+
+  it('right arrow reaches the action, left returns, Delete triggers it', () => {
+    const { fixture, el, host } = open();
+    const item = el.querySelector('strct-dropdown-item') as HTMLElement;
+    const action = el.querySelector('.rm') as HTMLElement;
+    expect(action.getAttribute('tabindex')).toBe('-1');
+
+    item.focus();
+    item.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(action);
+
+    action.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(item);
+
+    item.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+    fixture.detectChanges();
+    expect(host.deleted()).toBe('CPU pressure');
+    expect(host.opened()).toBe('');
+  });
+
+  it('leaves an item without the slot alone', () => {
+    const { fixture, el, host } = open();
+    const plain = el.querySelectorAll('strct-dropdown-item')[1] as HTMLElement;
+    plain.focus();
+    plain.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    plain.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(plain);
+    expect(host.deleted()).toBe('');
   });
 });

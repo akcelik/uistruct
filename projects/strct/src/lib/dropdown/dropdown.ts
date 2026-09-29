@@ -160,7 +160,9 @@ export class StrctDropdown {
    */
   protected onInnerActivate(event: Event): void {
     if (this.popover()) return;
-    const item = (event.target as HTMLElement | null)?.closest('strct-dropdown-item');
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.strct-dd__itemaction')) return; // the second action is not the item
+    const item = target?.closest('strct-dropdown-item');
     if (item && item.getAttribute('aria-disabled') !== 'true') this.close(true);
   }
 
@@ -187,9 +189,34 @@ export class StrctDropdown {
       event.preventDefault();
       const target = event.target as HTMLElement;
       if (target.getAttribute('aria-disabled') !== 'true') target.click();
+    } else if (key === 'ArrowRight' || key === 'ArrowLeft' || key === 'Delete') {
+      this.onItemActionKey(event, key);
     } else if (key === 'Tab') {
       this.close();
     }
+  }
+
+  /**
+   * An item with a trailing action has two targets: the right arrow reaches the
+   * action from its item, the left arrow returns, and Delete on the item
+   * triggers it (the WAI-ARIA pattern for a secondary action). Keys that do not
+   * apply are left alone, so submenus keep their own arrow behaviour.
+   */
+  private onItemActionKey(event: KeyboardEvent, key: string): void {
+    const target = event.target as HTMLElement;
+    if (key === 'ArrowLeft') {
+      const item = target.closest<HTMLElement>('strct-dropdown-item');
+      if (!target.classList.contains('strct-dd__itemaction') || !item) return;
+      event.preventDefault();
+      item.focus();
+      return;
+    }
+    const item = target.closest<HTMLElement>('strct-dropdown-item');
+    const action = item?.querySelector<HTMLElement>('.strct-dd__itemaction');
+    if (!item || item !== target || !action) return;
+    event.preventDefault();
+    if (key === 'ArrowRight') action.focus();
+    else action.click();
   }
 
   private enabledItems(): HTMLElement[] {
@@ -267,6 +294,27 @@ export class StrctDropdownTrigger {
 let dropdownItemCounter = 0;
 
 /** A selectable row inside a `<strct-dropdown>`. */
+/**
+ * A second action at the end of a menu item — "delete this saved view" beside
+ * "open it". It stops its own click from reaching the item, so the item is not
+ * activated and the menu stays open, and it stays out of the Tab order: the
+ * right arrow reaches it from its item, the left arrow returns, and Delete on
+ * the item triggers it.
+ */
+@Directive({
+  selector: '[strctDropdownItemAction]',
+  host: {
+    class: 'strct-dd__itemaction',
+    tabindex: '-1',
+    '(click)': 'onClick($event)',
+  },
+})
+export class StrctDropdownItemAction {
+  protected onClick(event: Event): void {
+    event.stopPropagation();
+  }
+}
+
 @Component({
   selector: 'strct-dropdown-item',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -279,6 +327,9 @@ let dropdownItemCounter = 0;
         }
       </span>
     }
+    <!-- Declared before the catch-all so its selector wins; CSS order and an
+         auto margin put it at the item's end. -->
+    <ng-content select="[strctDropdownItemAction]" />
     <ng-content />
     @if (hint()) {
       <!-- hidden: kept out of the item's accessible NAME, still read as its
@@ -314,6 +365,11 @@ let dropdownItemCounter = 0;
       .strct-dd__item:focus-visible {
         background: var(--bg-3);
         outline: none;
+      }
+      .strct-dd__itemaction {
+        order: 1;
+        margin-inline-start: auto;
+        flex: none;
       }
       /* Selectable items (selected bound): a fixed lead slot keeps labels
          aligned; the check marks the current choice when reopening. */

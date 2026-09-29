@@ -1889,6 +1889,12 @@ export const DOCS: DocCategory[] = [
             description:
               'On `strct-dropdown-item`: a short explanation — typically why a disabled entry is unavailable. Shown as the tooltip and read as its description; never inline. A disabled item with a hint stays keyboard-reachable (and hoverable, so the tooltip can show) while activation stays blocked; without one it is skipped as before.',
           },
+          {
+            name: '[strctDropdownItemAction]',
+            type: 'slot (directive)',
+            description:
+              'A second action at the end of an item — "delete this saved view" beside "open it". Its click stays with it: the item is not activated and the menu stays open. It is out of the Tab order; the right arrow reaches it from its item, the left arrow returns, and Delete on the item triggers it, as the WAI-ARIA pattern for a secondary action does.',
+          },
         ],
         do: ['Use for a short list of actions tied to a trigger.'],
         dont: [
@@ -4512,6 +4518,13 @@ export const DOCS: DocCategory[] = [
             default: 'undefined',
             description: "Payload passed to each item's `action`.",
           },
+          {
+            name: 'StrctMenuService.open({ anchor, placement, offset })',
+            type: `Element | DOMRect · 'bottom-start' | 'bottom-end' | 'top-start' | 'top-end' | 'right-start' | 'left-start' · number`,
+            default: `'bottom-start' · 4`,
+            description:
+              'A menu opened from a control never covers it. Pass `anchor` instead of `x` / `y` and the menu is measured after it renders, then placed against the control — flipping to the other side when the preferred one has no room, clamped on the cross axis, and hidden for the frame it is measured in. Focus returns to the anchor on close. `x` / `y` calls are unchanged.',
+          },
         ],
         outputs: [
           {
@@ -4531,6 +4544,7 @@ export const DOCS: DocCategory[] = [
         ],
         a11y: [
           'Portaled to the body; positioned by real size; full keyboard support (↑/↓/→/←/Enter/Esc, roving tabindex); closes on outside click / Escape / scroll / resize.',
+          'An anchored menu returns focus to the control it was opened from.',
           'Disabled entries use aria-disabled, not the native attribute. One WITH a hint stays keyboard-reachable so its reason is announced (aria-describedby); one without is skipped. Neither can be activated.',
         ],
       },

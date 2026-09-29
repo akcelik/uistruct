@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   StrctButton,
@@ -12,6 +12,8 @@ import {
   StrctInput,
   StrctLogin,
   StrctMenuItem,
+  StrctMenuPlacement,
+  StrctMenuService,
   StrctPassword,
   StrctSparkline,
   StrctSubmenu,
@@ -190,6 +192,29 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="menu-anchor"
+      owner="contextmenu"
+      heading="A menu that belongs to a button"
+      description="A menu opened from a control never covers it. Pass anchor (the element or its rect) instead of x / y, and the menu is measured after it renders and placed against the control: bottom-start by default, bottom-end to align the end edges, top-start above. It flips to the other side when the preferred one has no room — try the button in the bar at the bottom of the panel, which asks for a menu below and gets one above — and it stays hidden for the frame it is being measured in, rather than appearing in the wrong place first. Focus returns to the anchor on close."
+      code="this.menus.open({ anchor: btn, placement: 'bottom-end', offset: 6, items });"
+    >
+      <div class="anchor-stage">
+        <div class="anchor-row">
+          <button strct-button (click)="openAnchored($event, 'bottom-start')">bottom-start</button>
+          <button strct-button (click)="openAnchored($event, 'bottom-end')">bottom-end</button>
+          <button strct-button (click)="openAnchored($event, 'right-start')">right-start</button>
+        </div>
+        <div class="anchor-bar">
+          <span>status bar</span>
+          <button strct-button size="sm" (click)="openAnchored($event, 'bottom-start')">
+            asks for below — flips above
+          </button>
+        </div>
+        <span class="ctx-echo">{{ lastAction() || 'open one of the menus' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="contextmenu-data"
       owner="contextmenu"
       heading="Data-driven context menu (directive)"
@@ -212,6 +237,31 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      .anchor-stage {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+      }
+      .anchor-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      /* A bar at the bottom of its own scroll box: a menu asked for below has
+         nowhere to go and flips. */
+      .anchor-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 10px;
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-md);
+        background: var(--bg-2);
+        font-size: 12px;
+        color: var(--t3);
+      }
       .login-stage {
         width: 100%;
       }
@@ -471,6 +521,26 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class PatternsPage {
+  private readonly menus = inject(StrctMenuService);
+
+  /** FR-48-10 — the menu is placed against the button, not at a guessed point. */
+  protected openAnchored(event: Event, placement: StrctMenuPlacement): void {
+    this.menus.open({
+      anchor: event.currentTarget as HTMLElement,
+      placement,
+      offset: 6,
+      items: [
+        { label: 'Open console' },
+        { label: 'Take snapshot' },
+        { divider: true },
+        { label: 'Keyboard layout', children: [{ label: 'US' }, { label: 'TR' }] },
+        { divider: true },
+        { label: 'Power off', critical: true },
+      ],
+      onSelect: (item) => this.lastAction.set(`${placement}: ${item.label ?? ''}`),
+    });
+  }
+
   protected email = '';
   protected password = '';
   protected remember = false;

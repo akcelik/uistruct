@@ -18,6 +18,7 @@ import {
   StrctDrawerSide,
   StrctDropdown,
   StrctDropdownItem,
+  StrctDropdownItemAction,
   StrctDropdownTrigger,
   StrctField,
   StrctInput,
@@ -90,6 +91,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctSectionHeader,
     StrctSectionHeaderMeta,
     StrctSectionHeaderActions,
+    StrctDropdownItemAction,
   ],
   template: `
     <app-page-header
@@ -468,6 +470,44 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="dropdown-item-action"
+      owner="dropdown"
+      heading="A second action on a menu item"
+      description="A saved item in a menu can be removed from the menu: the row opens the view, the × deletes it. [strctDropdownItemAction] renders at the item's end and keeps its click to itself — the item is not activated and the menu stays open — while staying out of the Tab order: the right arrow reaches it from its item, the left arrow returns, and Delete on the item triggers it, as the WAI-ARIA pattern for a secondary action does."
+      code='<strct-dropdown-item (click)="open(v)"> … <button strctDropdownItemAction strct-button variant="flat" size="mini" iconOnly aria-label="Delete view" (click)="remove(v)">×</button></strct-dropdown-item>'
+    >
+      <div class="stack">
+        <strct-dropdown>
+          <button strct-button strctDropdownTrigger>
+            Saved views
+            <strct-icon strictName="chevronDown" [size]="13" />
+          </button>
+          @for (v of savedViews(); track v) {
+            <strct-dropdown-item (click)="viewEcho.set('opened ' + v)">
+              {{ v }}
+              <button
+                strctDropdownItemAction
+                strct-button
+                variant="flat"
+                size="mini"
+                iconOnly
+                [attr.aria-label]="'Delete ' + v"
+                (click)="removeView(v)"
+              >
+                <strct-icon strictName="close" [size]="12" />
+              </button>
+            </strct-dropdown-item>
+          } @empty {
+            <strct-dropdown-item disabled hint="Save a view from the monitor toolbar.">
+              No saved views
+            </strct-dropdown-item>
+          }
+        </strct-dropdown>
+        <span class="echo">{{ viewEcho() || 'open the menu, then try × or Delete' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="dropdown-popover"
       owner="dropdown"
       heading="Popover mode — filter / settings panels"
@@ -794,6 +834,14 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class SurfacesPage {
+  // FR-48-11 — the row opens the view, the × removes it.
+  protected readonly savedViews = signal(['CPU pressure', 'Storage latency', 'Network drops']);
+  protected readonly viewEcho = signal('');
+  protected removeView(name: string): void {
+    this.savedViews.update((v) => v.filter((x) => x !== name));
+    this.viewEcho.set('deleted ' + name);
+  }
+
   protected readonly ddSort = signal('Name');
   protected readonly ddSortOptions = ['Name', 'CPU usage', 'Memory', 'Uptime'];
 
