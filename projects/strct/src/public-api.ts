@@ -119,6 +119,8 @@ export * from './lib/overlay/scroll-lock';
 export * from './lib/status-dot/status-dot';
 export * from './lib/live-indicator/live-indicator';
 export * from './lib/legend/legend';
+export * from './lib/steps/steps';
+export * from './lib/change/change';
 export * from './lib/number/number';
 export * from './lib/popover/popover';
 export * from './lib/confirm/confirm';

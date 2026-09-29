@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.18.0] - 2026-09-29
+
+### Added
+
+- **`strct-steps`** (FR-48-30): a read-only status stepper for a process the
+  user _watches_ rather than drives — an update run per host, or a numbered
+  method on a landing page. A wizard's rail is the wrong control (the user did
+  not start each step and cannot go back to one) and a timeline implies history;
+  neither can say **skipped** or **blocked**. Six states with their own tones,
+  each also said in words for assistive tech ("Install, in progress"), the
+  active step pulsing its own edge and holding still under
+  `prefers-reduced-motion`. Three appearances — `pills`, `dots` for a long run,
+  `cards` for the numbered method with a description and a per-step
+  `[strctStepAction]` template — plus `orientation`, `numbered` and `dense`.
+- **`strct-change`** (FR-48-32): a value change as one phrase — the old value
+  muted, the arrow the library's, the new one emphasised — read as "from v10.27
+  to v10.28" rather than as an arrow glyph, with `mono` for versions and a
+  localisable `label`.
+
 ## [4.17.0] - 2026-09-29
 
 ### Added
