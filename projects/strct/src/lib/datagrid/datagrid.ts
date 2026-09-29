@@ -1,4 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import {
   booleanAttribute,
   ChangeDetectionStrategy,
@@ -75,6 +76,9 @@ const DG_LABELS: StrctDatagridLabels = {
   quickFilter: 'Quick filter',
 };
 import { StrctCheckbox } from '../forms/checkbox';
+import { StrctOption } from '../combobox/combobox';
+import { StrctSelect } from '../select/select';
+import { StrctNumber } from '../number/number';
 import { StrctButton, StrctButtonGroup } from '../button/button';
 import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
 import { StrctMenuItem, StrctMenuService } from '../context-menu/menu';
@@ -113,6 +117,19 @@ export interface StrctDatagridColumn {
    * change in your handler and pass the updated array back in.
    */
   editable?: boolean;
+  /**
+   * Which editor an `editable` column opens. `'text'` (the default) is the
+   * free-text box; `'number'` opens `strct-number`, and `'select'` opens
+   * `strct-select` over `editorOptions` — a value that is one of a set is
+   * chosen, not typed. The cell shows the chosen option's label at rest.
+   */
+  editor?: 'text' | 'number' | 'select';
+  /** Options for `editor: 'select'` (the library's own option shape). */
+  editorOptions?: StrctOption[];
+  /** Bounds and step for `editor: 'number'`. */
+  editorMin?: number;
+  editorMax?: number;
+  editorStep?: number;
 }
 
 /** Per-column filter state: contains-text, or the checked value set. */
@@ -193,6 +210,9 @@ export class StrctDatagridActionBar {}
     StrctButtonGroup,
     StrctOverlay,
     StrctSearchbox,
+    StrctSelect,
+    StrctNumber,
+    FormsModule,
   ],
   template: `
     @if (actionBarDef() || quickFilterable()) {
@@ -558,16 +578,47 @@ export class StrctDatagridActionBar {}
                           }
                         }
                         @if (isEditingCell(row, col)) {
-                          <input
-                            class="strct-dg__editinput"
-                            type="text"
-                            [value]="row[col.key] ?? ''"
-                            [attr.aria-label]="L().editCell + ': ' + col.label"
-                            (keydown.enter)="commitEdit(row, col, $event)"
-                            (keydown.escape)="cancelEdit($event)"
-                            (blur)="commitEdit(row, col, $event)"
-                            (click)="$event.stopPropagation()"
-                          />
+                          @switch (col.editor ?? 'text') {
+                            @case ('select') {
+                              <!-- Choosing is the commit: there is nothing to
+                                   confirm with Enter once an option is picked. -->
+                              <strct-select
+                                class="strct-dg__editselect"
+                                [options]="col.editorOptions ?? []"
+                                [listLabel]="L().editCell + ': ' + col.label"
+                                [ngModel]="row[col.key]"
+                                (ngModelChange)="commitValue(row, col, $event)"
+                                (keydown.escape)="cancelEdit($event)"
+                                (click)="$event.stopPropagation()"
+                              />
+                            }
+                            @case ('number') {
+                              <strct-number
+                                class="strct-dg__editnumber"
+                                [min]="col.editorMin ?? null"
+                                [max]="col.editorMax ?? null"
+                                [step]="col.editorStep ?? 1"
+                                [ngModel]="row[col.key]"
+                                (ngModelChange)="editDraft.set($event)"
+                                (keydown.enter)="commitDraft(row, col, $event)"
+                                (keydown.escape)="cancelEdit($event)"
+                                (focusout)="commitOnLeave(row, col, $event)"
+                                (click)="$event.stopPropagation()"
+                              />
+                            }
+                            @default {
+                              <input
+                                class="strct-dg__editinput"
+                                type="text"
+                                [value]="row[col.key] ?? ''"
+                                [attr.aria-label]="L().editCell + ': ' + col.label"
+                                (keydown.enter)="commitEdit(row, col, $event)"
+                                (keydown.escape)="cancelEdit($event)"
+                                (blur)="commitEdit(row, col, $event)"
+                                (click)="$event.stopPropagation()"
+                              />
+                            }
+                          }
                         } @else if (cellTemplate(col.key); as tpl) {
                           <ng-container
                             [ngTemplateOutlet]="tpl"
@@ -579,7 +630,7 @@ export class StrctDatagridActionBar {}
                             }"
                           />
                         } @else {
-                          {{ row[col.key] }}
+                          {{ displayValue(row, col) }}
                         }
                       </td>
                     }
@@ -1499,6 +1550,13 @@ export class StrctDatagridActionBar {}
         color: var(--t1);
         font: inherit;
       }
+      /* The editors fill the cell without pushing the row taller than a text
+         edit does. */
+      .strct-dg__editselect,
+      .strct-dg__editnumber {
+        display: block;
+        width: 100%;
+      }
       .strct-dg__editinput:focus-visible {
         outline: 2px solid var(--acc50);
         outline-offset: 1px;
@@ -1660,12 +1718,20 @@ export class StrctDatagrid {
   readonly rowAction = output<{ row: StrctRow; item: StrctMenuItem }>();
   /** Server-side data request (lazy mode): load this page / sort and set `rows`. */
   readonly lazyLoad = output<StrctDatagridLazyState>();
-  /** An editable cell was committed (Enter / blur). The grid does not mutate
-   *  rows — apply `value` to your data and pass the updated array back in. */
+  /** An editable cell was committed (Enter / blur, or choosing in a `select`
+   *  editor). The grid does not mutate rows — apply the value to your data and
+   *  pass the updated array back in. */
   readonly cellEdit = output<{
     row: StrctRow;
     column: StrctDatagridColumn;
+    /** The committed value as text — what a `text` editor produces. */
     value: string;
+    /**
+     * The same commit, typed: the number a `number` editor holds, or the
+     * option's `value` a `select` editor chose. `value` stays a string so
+     * handlers written against it keep working.
+     */
+    typedValue: unknown;
     previous: unknown;
   }>();
 
@@ -2006,18 +2072,89 @@ export class StrctDatagrid {
     const e = this.editing();
     return !!e && e.rowKey === this.rowKey(row) && e.colKey === col.key;
   }
+  /** The value a typed editor holds while it is open (committed on Enter / blur). */
+  protected readonly editDraft = signal<unknown>(null);
+
   protected startEdit(row: StrctRow, col: StrctDatagridColumn): void {
     this.editing.set({ rowKey: this.rowKey(row), colKey: col.key });
-    setTimeout(() =>
-      this.hostRef.nativeElement.querySelector<HTMLInputElement>('.strct-dg__editinput')?.focus(),
-    );
+    this.editDraft.set(row[col.key]);
+    setTimeout(() => {
+      const editor = this.hostRef.nativeElement.querySelector<HTMLElement>(
+        '.strct-dg__editinput, .strct-dg__editselect, .strct-dg__editnumber',
+      );
+      if (!editor) return;
+      // The stepper buttons come first in the DOM; the value is what the user
+      // came to change, so focus lands on the field itself.
+      (editor.matches('input')
+        ? editor
+        : (editor.querySelector<HTMLElement>('input') ??
+          editor.querySelector<HTMLElement>('button'))
+      )?.focus();
+    });
+  }
+
+  /** A select column reads as its option's label, not as the stored value. */
+  protected displayValue(row: StrctRow, col: StrctDatagridColumn): unknown {
+    const raw = row[col.key];
+    if (col.editor !== 'select') return raw;
+    return col.editorOptions?.find((o) => o.value === raw)?.label ?? raw;
+  }
+
+  /** Close the editor and emit `cellEdit` when the value actually changed. */
+  protected commitValue(row: StrctRow, col: StrctDatagridColumn, raw: unknown): void {
+    if (!this.isEditingCell(row, col)) return;
+    this.editing.set(null);
+    const value = this.clampToColumn(col, raw);
+    const previous = row[col.key];
+    if (previous === value) return;
+    this.cellEdit.emit({
+      row,
+      column: col,
+      value: value == null ? '' : String(value),
+      typedValue: value,
+      previous,
+    });
+  }
+
+  /** Enter / blur on a typed editor commits what it currently holds. */
+  protected commitDraft(row: StrctRow, col: StrctDatagridColumn, event?: Event): void {
+    event?.stopPropagation();
+    this.commitValue(row, col, this.editDraft());
+  }
+
+  /**
+   * A column that declares bounds means them: Enter commits what the field
+   * holds, and `strct-number` only clamps on blur, so the grid clamps here
+   * rather than letting an out-of-range value reach `cellEdit`.
+   */
+  private clampToColumn(col: StrctDatagridColumn, value: unknown): unknown {
+    if (col.editor !== 'number' || typeof value !== 'number' || !Number.isFinite(value))
+      return value;
+    const min = col.editorMin;
+    const max = col.editorMax;
+    let v = value;
+    if (min != null && v < min) v = min;
+    if (max != null && v > max) v = max;
+    return v;
+  }
+
+  /**
+   * A number editor is a field between two stepper buttons, so focus moves
+   * inside it — only a move that actually leaves the editor is a blur.
+   */
+  protected commitOnLeave(row: StrctRow, col: StrctDatagridColumn, event: FocusEvent): void {
+    const editor = event.currentTarget as HTMLElement;
+    const next = event.relatedTarget;
+    if (next instanceof Node && editor.contains(next)) return;
+    this.commitDraft(row, col, event);
   }
   protected commitEdit(row: StrctRow, col: StrctDatagridColumn, event: Event): void {
     if (!this.isEditingCell(row, col)) return; // Escape/Enter already closed it
     const value = (event.target as HTMLInputElement).value;
     this.editing.set(null);
     const previous = row[col.key];
-    if (String(previous ?? '') !== value) this.cellEdit.emit({ row, column: col, value, previous });
+    if (String(previous ?? '') !== value)
+      this.cellEdit.emit({ row, column: col, value, typedValue: value, previous });
   }
   protected cancelEdit(event?: Event): void {
     event?.stopPropagation();

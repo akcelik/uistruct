@@ -544,6 +544,25 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="datagrid-editors"
+      owner="datagrid"
+      heading="Select and number editors"
+      description='Rows of structured settings — firewall rules, service bindings — are edited in the grid. A column whose value is one of a set gets editor: "select" over editorOptions: the cell reads as the option&apos;s label at rest, opens strct-select on double-click, and choosing is the commit. editor: "number" opens strct-number with editorMin / editorMax / editorStep, committing on Enter or blur. (cellEdit) still carries value as text, and typedValue as the number or the option&apos;s value.'
+      code='{ key: "proto", label: "Protocol", editable: true, editor: "select",&#10;  editorOptions: [{ value: "tcp", label: "TCP" }, { value: "udp", label: "UDP" }] }'
+    >
+      <div class="dg-wrap">
+        <strct-datagrid
+          style="width: 100%;"
+          [columns]="fwCols"
+          [rows]="fwRows()"
+          rowId="id"
+          (cellEdit)="onRuleEdit($event)"
+        />
+        <span class="echo">{{ fwLast() || 'double-click a Protocol, Port or Action cell' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="detailpane"
       heading="Detail pane"
       description="A different pattern from expandable rows: click the » button to collapse the grid to a single column and open a side pane with that row's details (the » keeps row cells free to select/copy). Click it again or the × to return."
@@ -1020,6 +1039,65 @@ mtu = 9000`;
     { name: 'dc-west', kind: 'Datacenter', status: 'Idle', children: [] },
   ];
 
+  // FR-48-08 — a rule list edited in the grid: a set of values is chosen, a
+  // port is a number with bounds.
+  protected readonly fwCols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Rule' },
+    {
+      key: 'proto',
+      label: 'Protocol',
+      editable: true,
+      editor: 'select',
+      editorOptions: [
+        { value: 'tcp', label: 'TCP' },
+        { value: 'udp', label: 'UDP' },
+        { value: 'icmp', label: 'ICMP' },
+      ],
+    },
+    {
+      key: 'port',
+      label: 'Port',
+      editable: true,
+      editor: 'number',
+      editorMin: 1,
+      editorMax: 65535,
+      align: 'end',
+    },
+    {
+      key: 'action',
+      label: 'Action',
+      editable: true,
+      editor: 'select',
+      editorOptions: [
+        { value: 'allow', label: 'Allow' },
+        { value: 'drop', label: 'Drop' },
+        { value: 'reject', label: 'Reject' },
+      ],
+    },
+  ];
+  protected readonly fwRows = signal<StrctRow[]>([
+    { id: 'r1', name: 'SSH from jump host', proto: 'tcp', port: 22, action: 'allow' },
+    { id: 'r2', name: 'DNS out', proto: 'udp', port: 53, action: 'allow' },
+    { id: 'r3', name: 'Legacy RPC', proto: 'tcp', port: 135, action: 'drop' },
+  ]);
+  protected readonly fwLast = signal('');
+  protected onRuleEdit(e: {
+    row: StrctRow;
+    column: StrctDatagridColumn;
+    value: string;
+    typedValue: unknown;
+    previous: unknown;
+  }): void {
+    this.fwRows.update((rows) =>
+      rows.map((r) => (r === e.row ? { ...r, [e.column.key]: e.typedValue } : r)),
+    );
+    const label = (v: unknown) =>
+      String(e.column.editorOptions?.find((o) => o.value === v)?.label ?? v);
+    this.fwLast.set(
+      `${String(e.row['name'])}: ${e.column.label} ${label(e.previous)} \u2192 ${label(e.typedValue)}`,
+    );
+  }
+
   // Inline editing demo — the consumer owns the data.
   protected readonly dgEditCols: StrctDatagridColumn[] = [
     { key: 'name', label: 'VM' },
@@ -1036,6 +1114,7 @@ mtu = 9000`;
     row: StrctRow;
     column: StrctDatagridColumn;
     value: string;
+    typedValue: unknown;
     previous: unknown;
   }): void {
     this.dgEditRows.update((rows) =>

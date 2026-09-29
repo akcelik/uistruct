@@ -16,7 +16,20 @@
 > `aria-describedby`; the send button does not (the field leaves out an addon that holds its own
 > control, since it says nothing about the value and is already a tab stop).
 >
-> **Still open here: FR-48-08** (select and number editors for editable datagrid columns).
+> **FR-48-08 SHIPPED in 4.10.0 (2026-09-29)** — `editor: 'text' | 'number' | 'select'` with
+> `editorOptions`, plus `editorMin` / `editorMax` / `editorStep`.
+>
+> Measured in Chrome: a select column reads "TCP" at rest, opens `strct-select` on double-click and
+> commits on choosing (TCP → UDP); a number column opens `strct-number` as a spinbutton carrying
+> `aria-valuemin="1"` / `aria-valuemax="65535"`, focus lands on the field rather than on the stepper
+> button beside it, the + button keeps the editor open (8080 → 8081) and Escape cancels. Typing
+> 999999 commits **65535**: the column declares bounds, so the grid clamps before `cellEdit` —
+> `strct-number` alone only clamps on blur. A text-editable column still opens the plain input.
+>
+> `(cellEdit)` keeps `value` as the text form and adds `typedValue`, so a handler written against
+> `value: string` keeps compiling.
+>
+> **Every ask in this document has shipped.**
 
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 

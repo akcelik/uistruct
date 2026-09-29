@@ -561,8 +561,96 @@ describe('StrctDatagrid inline editing', () => {
     input.value = '8';
     input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
     fixture.detectChanges();
-    expect(edits).toEqual([{ row: rows[0], column: cols[1], value: '8', previous: '4' } as never]);
+    expect(edits).toEqual([
+      { row: rows[0], column: cols[1], value: '8', typedValue: '8', previous: '4' } as never,
+    ]);
     expect(fixture.nativeElement.querySelector('.strct-dg__editinput')).toBeNull();
+  });
+
+  // FR-48-08 — a value that is one of a set is chosen, not typed.
+  const selCols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Rule' },
+    {
+      key: 'proto',
+      label: 'Protocol',
+      editable: true,
+      editor: 'select',
+      editorOptions: [
+        { value: 'tcp', label: 'TCP' },
+        { value: 'udp', label: 'UDP' },
+      ],
+    },
+    {
+      key: 'port',
+      label: 'Port',
+      editable: true,
+      editor: 'number',
+      editorMin: 1,
+      editorMax: 65535,
+    },
+  ];
+
+  function makeTyped() {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', selCols);
+    fixture.componentRef.setInput('rows', [{ name: 'ssh', proto: 'tcp', port: 22 }]);
+    const edits: { value: string; typedValue: unknown; previous: unknown }[] = [];
+    fixture.componentInstance.cellEdit.subscribe((e) => edits.push(e));
+    fixture.detectChanges();
+    return { fixture, edits };
+  }
+
+  it('shows a select column as its option label at rest and opens strct-select', () => {
+    const { fixture } = makeTyped();
+    const cells = fixture.nativeElement.querySelectorAll('tbody td');
+    expect(cells[1].textContent?.trim()).toBe('TCP');
+    cells[1].dispatchEvent(new MouseEvent('dblclick'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('strct-select.strct-dg__editselect')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.strct-dg__editinput')).toBeNull();
+  });
+
+  it('commits a chosen option as typedValue, with value as its text form', () => {
+    const { fixture, edits } = makeTyped();
+    const row = fixture.componentInstance.rows()[0];
+    const cells = fixture.nativeElement.querySelectorAll('tbody td');
+    cells[1].dispatchEvent(new MouseEvent('dblclick'));
+    fixture.detectChanges();
+    // Open the list and choose UDP — choosing is the commit.
+    (fixture.nativeElement.querySelector('.strct-sel__btn') as HTMLElement).click();
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelectorAll('.strct-sel__opt');
+    expect(options.length).toBe(2);
+    options[1].dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+    expect(edits).toEqual([
+      { row, column: selCols[1], value: 'udp', typedValue: 'udp', previous: 'tcp' } as never,
+    ]);
+    expect(fixture.nativeElement.querySelector('strct-select.strct-dg__editselect')).toBeNull();
+  });
+
+  it('clamps a number editor to the column bounds before committing', () => {
+    const { fixture, edits } = makeTyped();
+    const row = fixture.componentInstance.rows()[0];
+    const grid = fixture.componentInstance as unknown as {
+      startEdit: (r: StrctRow, c: StrctDatagridColumn) => void;
+      commitValue: (r: StrctRow, c: StrctDatagridColumn, v: unknown) => void;
+    };
+    grid.startEdit(row, selCols[2]);
+    fixture.detectChanges();
+    grid.commitValue(row, selCols[2], 999999);
+    fixture.detectChanges();
+    expect(edits).toEqual([
+      { row, column: selCols[2], value: '65535', typedValue: 65535, previous: 22 } as never,
+    ]);
+  });
+
+  it('opens strct-number for a number column and keeps text columns on the input', () => {
+    const { fixture } = makeTyped();
+    const cells = fixture.nativeElement.querySelectorAll('tbody td');
+    cells[2].dispatchEvent(new MouseEvent('dblclick'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('strct-number.strct-dg__editnumber')).toBeTruthy();
   });
 
   it('Escape cancels without emitting; unchanged commit does not emit', () => {

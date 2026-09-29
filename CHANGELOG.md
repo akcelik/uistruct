@@ -5,6 +5,34 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.10.0] - 2026-09-29
+
+### Added
+
+- **`strct-datagrid`: select and number editors for editable columns**
+  (FR-48-08). Rows of structured settings — firewall rules, service bindings —
+  are edited in the grid, and a value that is one of a set is chosen, not typed.
+  - **`editor: 'select'`** with **`editorOptions`** (the library's own
+    `StrctOption` shape) renders `strct-select` in the cell. The cell reads as
+    the option's **label** at rest, and choosing is the commit.
+  - **`editor: 'number'`** renders `strct-number` with **`editorMin`**,
+    **`editorMax`** and **`editorStep`**, committing on Enter or blur. The
+    bounds reach assistive tech as the spinbutton's `aria-valuemin` /
+    `aria-valuemax`, and the grid **clamps a commit to them** — `strct-number`
+    alone clamps only on blur, so Enter would otherwise commit an out-of-range
+    value.
+  - Focus lands on the field rather than on the stepper button beside it, and a
+    stepper click keeps the editor open: only focus that actually leaves the
+    editor is a blur.
+  - `editor` defaults to `'text'`, so an `editable` column without it is
+    unchanged.
+
+### Changed
+
+- `(cellEdit)` now also carries **`typedValue`** — the number a `number` editor
+  holds, or the option's `value` a `select` editor chose. `value` stays the text
+  form, so a handler written against `value: string` keeps compiling.
+
 ## [4.9.0] - 2026-09-29
 
 ### Added
