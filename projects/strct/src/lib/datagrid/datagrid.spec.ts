@@ -1535,3 +1535,103 @@ describe('StrctDatagrid — single selection, row locks, group select-all (FR-48
     expect(el.querySelectorAll('.strct-dg__radio').length).toBe(0);
   });
 });
+
+// FR-48-26 / FR-48-27 — presentation as column metadata, and cursor paging.
+describe('StrctDatagrid presentation and cursor paging', () => {
+  const cols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Host', descriptionKey: 'hint' },
+    { key: 'guid', label: 'GUID', mono: true, emptyText: '—', emptyLabel: 'not read' },
+    { key: 'errors', label: 'Errors', numeric: true },
+    { key: 'note', label: 'Note', muted: true },
+  ];
+  const rows: StrctRow[] = [
+    { name: 'hv-01', hint: 'primary', guid: 'a1b2', errors: 12, note: 'quiet' },
+    { name: 'hv-02', hint: '', guid: '', errors: 0, note: '' },
+  ];
+
+  function make(extra: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    for (const [k, v] of Object.entries(extra)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('carries mono / muted / numeric on the cells and aligns a numeric column', () => {
+    const { el } = make();
+    const cells = el.querySelectorAll('tbody tr:first-child td');
+    expect(cells[1].classList).toContain('strct-dg__cell--mono');
+    expect(cells[2].classList).toContain('strct-dg__cell--numeric');
+    expect(cells[3].classList).toContain('strct-dg__cell--muted');
+    expect((cells[2] as HTMLElement).style.textAlign).toBe('end');
+    const headers = el.querySelectorAll('thead th');
+    expect((headers[2] as HTMLElement).style.textAlign).toBe('end');
+  });
+
+  it('shows emptyText for a blank value, with its own accessible text', () => {
+    const { el } = make();
+    const blank = el.querySelectorAll('tbody tr')[1].querySelectorAll('td')[1];
+    const empty = blank.querySelector('.strct-dg__empty') as HTMLElement;
+    expect(empty.textContent?.trim()).toBe('—');
+    expect(empty.getAttribute('aria-label')).toBe('not read');
+    // a value that is present is untouched
+    expect(el.querySelectorAll('tbody tr')[0].querySelectorAll('td')[1].textContent?.trim()).toBe(
+      'a1b2',
+    );
+  });
+
+  it('renders a second line from descriptionKey, and nothing when it is empty', () => {
+    const { el } = make();
+    const first = el.querySelectorAll('tbody tr')[0].querySelector('td');
+    expect(first?.querySelector('.strct-dg__celldesc')?.textContent?.trim()).toBe('primary');
+    const second = el.querySelectorAll('tbody tr')[1].querySelector('td');
+    expect(second?.querySelector('.strct-dg__celldesc')).toBeNull();
+  });
+
+  it('renders a caption that names the grid, and flushes the chrome', () => {
+    const { el } = make({ caption: 'Recent tasks', flush: true });
+    const caption = el.querySelector('caption.strct-dg__caption') as HTMLElement;
+    expect(caption.textContent?.trim()).toBe('Recent tasks');
+    expect(el.querySelector('table')?.getAttribute('aria-labelledby')).toBe(caption.id);
+    expect(el.classList).toContain('strct-dg-host--flush');
+  });
+
+  it('is unchanged without any of them', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [{ key: 'name', label: 'Host' }]);
+    fixture.componentRef.setInput('rows', [{ name: 'hv-01' }]);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('caption')).toBeNull();
+    expect(el.classList).not.toContain('strct-dg-host--flush');
+    const cell = el.querySelector('tbody td') as HTMLElement;
+    expect(cell.className).toBe('');
+    expect(cell.style.textAlign).toBe('start');
+  });
+
+  describe('paging="more"', () => {
+    it('shows the count and a Load more button that emits', () => {
+      const { fixture, el } = make({ paging: 'more', hasMore: true, moreTotal: 812 });
+      expect(el.querySelector('strct-pagination')).toBeNull();
+      expect(el.querySelector('.strct-dg__foot--more .strct-dg__count')?.textContent?.trim()).toBe(
+        'Showing the latest 2 of 812',
+      );
+      let asked = 0;
+      fixture.componentInstance.loadMore.subscribe(() => asked++);
+      (el.querySelector('.strct-dg__more') as HTMLElement).click();
+      expect(asked).toBe(1);
+    });
+
+    it('drops the button when there is no more, and waits while loading', () => {
+      const { el } = make({ paging: 'more', hasMore: false });
+      expect(el.querySelector('.strct-dg__more')).toBeNull();
+      expect(el.querySelector('.strct-dg__count')?.textContent?.trim()).toBe('Showing 2');
+
+      const { el: busy } = make({ paging: 'more', hasMore: true, loadingMore: true });
+      const button = busy.querySelector('.strct-dg__more') as HTMLButtonElement;
+      expect(button.disabled).toBe(true);
+      expect(button.querySelector('strct-spinner')).toBeTruthy();
+    });
+  });
+});

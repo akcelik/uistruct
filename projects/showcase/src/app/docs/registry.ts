@@ -3242,6 +3242,11 @@ export const DOCS: DocCategory[] = [
             description: 'Emits the selected rows when selection changes.',
           },
           {
+            name: 'loadMore',
+            type: 'void',
+            description: 'With `paging="more"`: the user asked for the next slice.',
+          },
+          {
             name: 'cellEdit',
             type: '{ row; column; value: string; typedValue: unknown; previous }',
             description:
@@ -3281,6 +3286,52 @@ export const DOCS: DocCategory[] = [
             type: '() => string / (name?) => void',
             description:
               'Export the grid as CSV: header labels + every non-hidden column, all rows in the current order (with proper quoting) — `downloadCSV` also triggers the file download.',
+          },
+          {
+            name: 'flush',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Drops the outer border, radius and shadow — for a grid inside a panel that already has them, instead of a stylesheet reaching into `.strct-dg-host`.',
+          },
+          {
+            name: 'caption',
+            type: 'string',
+            default: `''`,
+            description:
+              'The grid\u2019s title, rendered above the header as a `<caption>` and used as the table\u2019s accessible name (`aria-labelledby`).',
+          },
+          {
+            name: 'columns[].mono / muted / numeric',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'The look of a cell is column metadata, not a cell template: a GUID column is monospace, a note is `--t3`, a counter aligns to the end with tabular figures.',
+          },
+          {
+            name: 'columns[].emptyText / emptyLabel',
+            type: 'string',
+            description:
+              'What a blank cell shows (an em dash, in `--t3`) and what assistive tech hears instead of that glyph ("not read"). Without `emptyText` a blank cell stays blank, as before.',
+          },
+          {
+            name: 'columns[].descriptionKey',
+            type: 'string',
+            description: 'A quiet second line in the cell, from `row[descriptionKey]`.',
+          },
+          {
+            name: 'paging',
+            type: `'pages' | 'more'`,
+            default: `'pages'`,
+            description:
+              '`more` swaps the pager for a count and a Load more button — the shape a cursor API can answer, where `lazy` speaks page numbers. Pair with `hasMore`, `loadingMore`, `moreTotal` and `(loadMore)`; the consumer appends the rows.',
+          },
+          {
+            name: 'hasMore / loadingMore / moreTotal',
+            type: 'boolean · boolean · number | null',
+            default: 'false · false · null',
+            description:
+              'Whether another slice exists, whether one is on its way (the button waits with a spinner), and the grand total for "Showing the latest 50 of 812".',
           },
         ],
         do: [

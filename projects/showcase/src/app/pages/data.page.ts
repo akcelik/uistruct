@@ -624,6 +624,51 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="datagrid-presentation"
+      owner="datagrid"
+      heading="The look of a cell is column metadata"
+      description="A GUID column is monospace, a counter is right-aligned with tabular figures, an unread value is an em dash in --t3, and a name can carry a muted hint under it. Those are column flags — mono, muted, numeric, emptyText (with emptyLabel for what assistive tech should hear instead of the glyph) and descriptionKey — not four cell templates. caption gives the grid its own title and names it for assistive tech, and flush drops the outer border, radius and shadow for a grid inside a panel that already has them, instead of a stylesheet reaching into .strct-dg-host."
+      code='{ key: "guid", label: "GUID", mono: true, emptyText: "—", emptyLabel: "not read" }'
+    >
+      <div
+        class="dg-wrap"
+        style="border: 1px solid var(--b2); border-radius: var(--radius-lg); background: var(--bg-2);"
+      >
+        <strct-datagrid
+          style="width: 100%;"
+          caption="Recent tasks"
+          flush
+          [columns]="taskCols"
+          [rows]="taskRows"
+          rowId="id"
+          [pageSize]="0"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="datagrid-loadmore"
+      owner="datagrid"
+      heading="Cursor paging"
+      description='A feed that pages by cursor loads more at the end — an event log, an audit trail. lazy speaks page numbers, which a cursor API cannot answer, so paging="more" swaps the pager for a count and a Load more button: (loadMore) asks for the next slice, loadingMore puts a spinner in the button while it arrives, hasMore drops the button at the end, and the consumer appends the rows. moreTotal fills in “of 812” when the API knows the total.'
+      code='<strct-datagrid paging="more" [hasMore]="hasMore()" [loadingMore]="busy()" [moreTotal]="812" (loadMore)="next()" />'
+    >
+      <div class="dg-wrap">
+        <strct-datagrid
+          style="width: 100%;"
+          [columns]="eventCols"
+          [rows]="eventRows()"
+          rowId="id"
+          paging="more"
+          [hasMore]="eventsHasMore()"
+          [loadingMore]="eventsLoading()"
+          [moreTotal]="24"
+          (loadMore)="loadMoreEvents()"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="detailpane"
       heading="Detail pane"
       description="A different pattern from expandable rows: click the » button to collapse the grid to a single column and open a side pane with that row's details (the » keeps row cells free to select/copy). Click it again or the × to return."
@@ -790,6 +835,56 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class DataPage {
+  // FR-48-26 — a borderless grid inside a panel, with column presentation.
+  protected readonly taskCols: StrctDatagridColumn[] = [
+    { key: 'task', label: 'Task', descriptionKey: 'target' },
+    { key: 'id', label: 'Task ID', mono: true, emptyText: '—', emptyLabel: 'not assigned' },
+    { key: 'retries', label: 'Retries', numeric: true },
+    { key: 'started', label: 'Started', muted: true },
+  ];
+  protected readonly taskRows: StrctRow[] = [
+    {
+      task: 'Deploy VM',
+      target: 'web-07 · Cluster-A',
+      id: 'b3f1a7',
+      retries: 0,
+      started: '2 min ago',
+    },
+    { task: 'Apply updates', target: 'hv-02.dc-west', id: '', retries: 3, started: '11 min ago' },
+    {
+      task: 'Rebalance storage',
+      target: 'ds-prod-01',
+      id: '9c02de',
+      retries: 12,
+      started: '1 h ago',
+    },
+  ];
+
+  // FR-48-27 — an event feed that pages by cursor.
+  protected readonly eventCols: StrctDatagridColumn[] = [
+    { key: 'when', label: 'When', muted: true },
+    { key: 'event', label: 'Event' },
+    { key: 'actor', label: 'Actor', mono: true },
+  ];
+  private readonly allEvents: StrctRow[] = Array.from({ length: 24 }, (_, i) => ({
+    id: i,
+    when: `${i + 1} min ago`,
+    event: ['Signed in', 'Snapshot taken', 'Policy changed', 'Host entered maintenance'][i % 4],
+    actor: ['admin', 'svc-backup', 'operator'][i % 3],
+  }));
+  protected readonly eventRows = signal<StrctRow[]>(this.allEvents.slice(0, 6));
+  protected readonly eventsLoading = signal(false);
+  protected readonly eventsHasMore = computed(
+    () => this.eventRows().length < this.allEvents.length,
+  );
+  protected loadMoreEvents(): void {
+    this.eventsLoading.set(true);
+    setTimeout(() => {
+      this.eventRows.update((rows) => this.allEvents.slice(0, rows.length + 6));
+      this.eventsLoading.set(false);
+    }, 600);
+  }
+
   // FR-48-19 — the states of one live view.
   protected readonly liveStates: StrctLiveState[] = [
     'live',
