@@ -689,8 +689,15 @@ export class StrctFlow {
     }
     const base = fan.getBoundingClientRect();
     this.viewBox.set(`0 0 ${Math.round(base.width)} ${Math.round(base.height)}`);
+    // Looked up from the boxes themselves rather than through a selector: a
+    // node id is consumer data, and CSS.escape is not everywhere (jsdom).
+    const boxes = new Map<string, HTMLElement>();
+    for (const el of fan.querySelectorAll<HTMLElement>('[data-flow-node]')) {
+      const id = el.dataset['flowNode'];
+      if (id) boxes.set(id, el);
+    }
     const rect = (id: string) => {
-      const el = fan.querySelector<HTMLElement>(`[data-flow-node="${CSS.escape(id)}"]`);
+      const el = boxes.get(id);
       if (!el) return null;
       const r = el.getBoundingClientRect();
       return { x: r.left - base.left, y: r.top - base.top, w: r.width, h: r.height };
