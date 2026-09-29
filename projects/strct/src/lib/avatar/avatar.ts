@@ -5,6 +5,8 @@ import {
   computed,
   input,
 } from '@angular/core';
+import { StrctIcon } from '../icon/icon';
+import { StrctStatus } from '../status';
 
 /** Avatar size variants. */
 export type StrctAvatarSize = 'sm' | 'md' | 'lg';
@@ -19,9 +21,14 @@ export type StrctAvatarStatus = 'none' | 'online' | 'busy' | 'offline';
   selector: 'strct-avatar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
+  imports: [StrctIcon],
   template: `
     @if (src()) {
       <img class="strct-av__img" [src]="src()" [alt]="name()" />
+    } @else if (icon()) {
+      <!-- Not every avatar is a person with initials: a group, an assistant, a
+           brand mark. -->
+      <strct-icon class="strct-av__icon" [name]="icon()" [size]="iconSize()" />
     } @else {
       <span class="strct-av__initials">{{ initials() }}</span>
     }
@@ -31,6 +38,8 @@ export type StrctAvatarStatus = 'none' | 'online' | 'busy' | 'offline';
   `,
   host: {
     class: 'strct-av',
+    '[class.strct-av--square]': "shape() === 'square'",
+    '[attr.data-tone]': 'tone()',
     '[class.strct-av--sm]': "size() === 'sm'",
     '[class.strct-av--lg]': "size() === 'lg'",
     '[class.strct-av--online]': "status() === 'online'",
@@ -56,6 +65,41 @@ export type StrctAvatarStatus = 'none' | 'online' | 'busy' | 'offline';
         font-weight: 600;
         user-select: none;
         border: 1px solid var(--b2);
+      }
+      .strct-av--square {
+        border-radius: var(--radius-md);
+      }
+      .strct-av--square .strct-av__img {
+        border-radius: var(--radius-md);
+      }
+      .strct-av__icon {
+        line-height: 0;
+      }
+      /* Tone paints the tile; the default keeps today's neutral surface. */
+      .strct-av[data-tone='accent'] {
+        background: var(--acc);
+        border-color: transparent;
+        color: var(--inv);
+      }
+      .strct-av[data-tone='accent-soft'] {
+        background: var(--acc-m);
+        border-color: var(--acc30);
+        color: var(--acc);
+      }
+      .strct-av[data-tone='success'] {
+        background: var(--success);
+        border-color: transparent;
+        color: var(--inv);
+      }
+      .strct-av[data-tone='warning'] {
+        background: var(--warning);
+        border-color: transparent;
+        color: var(--inv);
+      }
+      .strct-av[data-tone='critical'] {
+        background: var(--critical);
+        border-color: transparent;
+        color: var(--inv);
       }
       .strct-av--sm {
         width: 26px;
@@ -101,6 +145,19 @@ export type StrctAvatarStatus = 'none' | 'online' | 'busy' | 'offline';
   ],
 })
 export class StrctAvatar {
+  /**
+   * An icon instead of initials — a group, an assistant, a brand mark. An
+   * `src` image still wins.
+   */
+  readonly icon = input('');
+  /** `square` for a thing rather than a person (a group, an app). */
+  readonly shape = input<'circle' | 'square'>('circle');
+  /** Surface tone. `neutral` keeps the default grey tile. */
+  readonly tone = input<StrctStatus | 'accent-soft'>('neutral');
+  /** The icon scales with the avatar. */
+  protected readonly iconSize = computed(() =>
+    this.size() === 'lg' ? 22 : this.size() === 'sm' ? 13 : 17,
+  );
   /** Image URL. */
   readonly src = input('');
   /** Display name (used for initials when src is absent). */

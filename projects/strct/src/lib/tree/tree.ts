@@ -514,11 +514,25 @@ export class StrctTreeNode {
     class: 'strct-tree',
     role: 'tree',
     '[class.strct-tree--comfortable]': "density() === 'comfortable'",
+    '[class.strct-tree--framed]': 'framed()',
+    '[style.max-height.px]': 'maxHeight()',
   },
   styles: [
     `
       .strct-tree {
         display: block;
+      }
+      /* A tree used as a picker inside a dialog sits in a frame and scrolls
+         inside it — instead of an inline-styled wrapper per dialog, with its
+         dark-theme colours hard-coded. */
+      .strct-tree--framed {
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-md);
+        background: var(--bg-1);
+        padding: var(--space-1);
+      }
+      .strct-tree[style*='max-height'] {
+        overflow: auto;
       }
 
       /* Comfortable density: larger text / icons, taller rows, wider indent.
@@ -551,6 +565,10 @@ export class StrctTree {
    * with taller rows for touch-friendly or low-density consoles.
    */
   readonly density = input<'compact' | 'comfortable'>('compact');
+  /** A bordered surface around the tree — for a picker inside a dialog. */
+  readonly framed = input(false, { transform: booleanAttribute });
+  /** Caps the height in px; the tree scrolls inside its frame. */
+  readonly maxHeight = input<number | null>(null);
   /** Per-node right-click menu resolver. */
   readonly nodeMenu = input<StrctTreeNodeMenuFn | null>(null);
   /**

@@ -5,6 +5,9 @@ import {
   booleanAttribute,
   input,
 } from '@angular/core';
+import { StrctIcon } from '../icon/icon';
+import { StrctStatus } from '../status';
+import { StrctStatusDot } from '../status-dot/status-dot';
 
 /** One row in a `StrctDescriptionList` when driven by the `items` input. */
 export interface StrctDescItem {
@@ -16,8 +19,12 @@ export interface StrctDescItem {
   muted?: boolean;
 }
 
-/** Value alignment for the stacked (non-inline) layout. */
-export type StrctDescAlign = 'between' | 'start';
+/**
+ * Value alignment for the stacked (non-inline) layout. `grid` gives the list
+ * one label column sized to its longest label, so every value starts on the
+ * same vertical line — what a hand-built `auto 1fr` grid is usually for.
+ */
+export type StrctDescAlign = 'between' | 'start' | 'grid';
 
 /**
  * Compact definition list: aligned `label : value` rows with an optional trailing
@@ -57,6 +64,8 @@ export type StrctDescAlign = 'between' | 'start';
     class: 'strct-dl',
     '[class.strct-dl--inline]': 'inline()',
     '[class.strct-dl--start]': "align() === 'start'",
+    '[class.strct-dl--grid]': "align() === 'grid'",
+    '[style.--strct-dl-label-w]': 'labelWidth()',
   },
   styles: [
     `
@@ -135,6 +144,43 @@ export type StrctDescAlign = 'between' | 'start';
       .strct-desc__value:empty {
         display: none;
       }
+
+      /* ── grid: one label column, every value on one line ─────────
+         The rows go display:contents so their dt / dd become the grid's own
+         items; the hairline moves onto them for the same reason. */
+      .strct-dl--grid .strct-dl__list {
+        display: grid;
+        grid-template-columns: var(--strct-dl-label-w, max-content) minmax(0, 1fr);
+        column-gap: var(--space-4);
+      }
+      .strct-dl--grid .strct-desc {
+        display: contents;
+      }
+      .strct-dl--grid .strct-desc__label,
+      .strct-dl--grid .strct-desc__value {
+        padding: 6px 0;
+        text-align: start;
+      }
+      .strct-dl--grid .strct-desc + .strct-desc > .strct-desc__label,
+      .strct-dl--grid .strct-desc + .strct-desc > .strct-desc__value {
+        border-top: 1px solid var(--b1);
+      }
+
+      /* ── a fact that carries its state and a short note ──────────── */
+      .strct-desc__label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .strct-desc__note {
+        display: block;
+        margin-top: 1px;
+        font-size: var(--text-sm);
+        color: var(--t3);
+      }
+      .strct-desc__note:empty {
+        display: none;
+      }
     `,
   ],
 })
@@ -145,6 +191,8 @@ export class StrctDescriptionList {
   readonly inline = input(false, { transform: booleanAttribute });
   /** Value alignment in stacked mode. */
   readonly align = input<StrctDescAlign>('between');
+  /** Fixes the label column of `align="grid"` (e.g. `'160px'`). */
+  readonly labelWidth = input<string | null>(null);
 }
 
 /**
@@ -155,9 +203,23 @@ export class StrctDescriptionList {
   selector: 'strct-desc',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
+  imports: [StrctIcon, StrctStatusDot],
   template: `
-    <dt class="strct-desc__label">{{ label() }}</dt>
-    <dd class="strct-desc__value"><ng-content /></dd>
+    <dt class="strct-desc__label">
+      @if (status()) {
+        <strct-status-dot size="sm" [status]="status()!" [label]="statusLabel()" />
+      }
+      @if (icon()) {
+        <strct-icon [name]="icon()" [size]="14" />
+      }
+      {{ label() }}
+    </dt>
+    <dd class="strct-desc__value">
+      <ng-content />
+      @if (note()) {
+        <span class="strct-desc__note">{{ note() }}</span>
+      }
+    </dd>
   `,
   host: {
     class: 'strct-desc',
@@ -172,4 +234,12 @@ export class StrctDesc {
   readonly mono = input(false, { transform: booleanAttribute });
   /** Dim the projected value. */
   readonly muted = input(false, { transform: booleanAttribute });
+  /** A status dot before the label — "Agent · connected". */
+  readonly status = input<StrctStatus | null>(null);
+  /** Accessible text for that dot; empty falls back to the per-status default. */
+  readonly statusLabel = input('');
+  /** A leading icon before the label. */
+  readonly icon = input('');
+  /** A quiet second line under the value — "last seen 12 s ago". */
+  readonly note = input('');
 }

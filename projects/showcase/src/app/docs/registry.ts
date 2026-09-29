@@ -387,6 +387,26 @@ export const DOCS: DocCategory[] = [
             default: `'none'`,
             description: 'Presence dot.',
           },
+          {
+            name: 'icon',
+            type: 'string',
+            default: `''`,
+            description:
+              'Renders an icon instead of initials — a group, an assistant, a brand mark. An `src` image still wins.',
+          },
+          {
+            name: 'shape',
+            type: `'circle' | 'square'`,
+            default: `'circle'`,
+            description: '`square` rounds to `--radius-md`, for a thing rather than a person.',
+          },
+          {
+            name: 'tone',
+            type: `StrctStatus | 'accent-soft'`,
+            default: `'neutral'`,
+            description:
+              'Surface tone. `accent-soft` is the quiet accent tile a brand mark or an assistant wants; `neutral` keeps the default grey.',
+          },
         ],
         do: ['Always pass name, even with an image, for the alt text and tooltip.'],
         dont: ['Do not rely on the status dot alone to convey critical state.'],
@@ -1668,6 +1688,20 @@ export const DOCS: DocCategory[] = [
             type: 'void',
             description: 'On `strct-tree-node`: fired when a content-mode node is clicked.',
           },
+          {
+            name: 'framed',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'A bordered surface around the tree (`--b2`, `--radius-md`, `--bg-1`) — for a picker inside a dialog, drawn from tokens instead of an inline-styled wrapper with hard-coded dark colours.',
+          },
+          {
+            name: 'maxHeight',
+            type: 'number | null',
+            default: 'null',
+            description:
+              'Caps the height in px; the tree scrolls inside its frame and keyboard navigation scrolls the focused node into view there, not the page.',
+          },
         ],
         do: [
           'Use `[nodes]` for dynamic / deep inventory trees.',
@@ -2722,6 +2756,26 @@ export const DOCS: DocCategory[] = [
             name: 'strct-desc label',
             type: 'string',
             description: 'Projected-row label. Add `mono` / `muted` to style its value.',
+          },
+          {
+            name: 'align',
+            type: `'between' | 'start' | 'grid'`,
+            default: `'between'`,
+            description:
+              '`grid` gives the list one label column sized to its longest label, so every value starts on the same vertical line — what a hand-built `auto 1fr` grid is usually for. The rows go `display: contents` so their `dt` / `dd` become the grid\u2019s own items.',
+          },
+          {
+            name: 'labelWidth',
+            type: 'string | null',
+            default: 'null',
+            description:
+              'Fixes the label column of `align="grid"` (e.g. `\'160px\'`) — for several lists that should agree.',
+          },
+          {
+            name: 'status / statusLabel / icon / note',
+            type: 'StrctStatus | null · string',
+            description:
+              'On `strct-desc`: a status dot and an icon before the label, and a quiet second line under the value — so "Agent · connected · last seen 12 s ago" is one row rather than three.',
           },
         ],
         do: [

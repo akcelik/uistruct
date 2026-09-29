@@ -155,6 +155,37 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="description-list-grid"
+      owner="description-list"
+      heading="One label column, a state and a note"
+      description='A list of facts lines its values up. align="grid" gives the list one label column sized to its longest label — what about 33 hand-built auto 1fr grids in the audited app are for — and labelWidth fixes that column when several lists should agree. A fact can carry its state and a short note too: status puts a dot before the label and note a quiet second line under the value, so “Agent · connected · last seen 12 s ago” is one row rather than three.'
+      code='<strct-description-list align="grid" labelWidth="150px">&#10;  <strct-desc label="Agent" status="success" note="last seen 12 s ago">Connected</strct-desc>&#10;</strct-description-list>'
+    >
+      <div class="dl-grid">
+        <strct-description-list align="grid">
+          <strct-desc label="Agent" status="success" note="last seen 12 s ago"
+            >Connected</strct-desc
+          >
+          <strct-desc label="Cluster membership" status="warning" note="quorum at 2 of 3">
+            Degraded
+          </strct-desc>
+          <strct-desc label="Firmware" icon="cpu" mono>4.21.0-rc2</strct-desc>
+          <strct-desc label="Uptime">14 days</strct-desc>
+        </strct-description-list>
+
+        <strct-description-list
+          align="grid"
+          labelWidth="150px"
+          [items]="[
+            { label: 'Hostname', value: 'hyperstruct01', mono: true },
+            { label: 'Serial', value: 'KX-99213-AC', mono: true },
+            { label: 'Location', value: 'Rack B12', muted: true },
+          ]"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="status-dot"
       heading="Status dot"
       description="A presence dot that never relies on colour alone: the tone is painted by CSS while the state also renders as visually-hidden text ('OK', 'Warning', …), overridable via label. sm for dense rows, md standalone."

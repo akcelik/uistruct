@@ -270,6 +270,18 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="tree-framed"
+      owner="tree"
+      heading="A framed picker"
+      description="A tree used as a picker inside a dialog sits in a frame and scrolls inside it — a destination-folder field, for instance. framed draws the surface from tokens (so it follows the theme instead of hard-coding a dark fallback) and maxHeight bounds it in px; arrow-key navigation scrolls the focused node into view inside the frame."
+      code='<strct-tree [nodes]="folders" framed [maxHeight]="220" />'
+    >
+      <div style="max-width: 320px; width: 100%;">
+        <strct-tree [nodes]="inventory" framed [maxHeight]="220" />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="tree-data"
       owner="tree"
       heading="Data-driven tree"

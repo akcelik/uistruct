@@ -600,4 +600,20 @@ describe('StrctTree — drag and drop (FR-43-04)', () => {
     row('host').click(); // a click during a drag still activates the row
     expect(host.drops).toEqual([]);
   });
+
+  // FR-48-28
+  it('frames the tree and bounds its height', () => {
+    const fixture = TestBed.createComponent(StrctTree);
+    fixture.componentRef.setInput('nodes', [{ id: 'a', label: 'A' }]);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.classList).not.toContain('strct-tree--framed');
+    expect(el.style.maxHeight).toBe('');
+
+    fixture.componentRef.setInput('framed', true);
+    fixture.componentRef.setInput('maxHeight', 260);
+    fixture.detectChanges();
+    expect(el.classList).toContain('strct-tree--framed');
+    expect(el.style.maxHeight).toBe('260px');
+  });
 });

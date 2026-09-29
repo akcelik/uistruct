@@ -10,8 +10,20 @@
 > use the role. Keyboard behaviour is the one the FR asked for — Tab reaches the row, then its
 > trailing control, verified in Chrome.
 >
-> **Still open here: FR-48-25** (description list alignment), **26** (datagrid flush / caption /
-> column modes), **27** (cursor paging), **28** (framed tree), **29** (avatar icon / shape / tone).
+> **FR-48-25, 28 and 29 SHIPPED in 4.16.0 (2026-09-29)** — `align="grid"` with `labelWidth`, plus
+> `status` / `icon` / `note` on `strct-desc`; the tree's `framed` and `maxHeight`; the avatar's
+> `icon`, `shape` and `tone`.
+>
+> Measured in Chrome: the grid list's label column takes the longest label (129.45px) and every
+> value starts at the same x (458), `labelWidth="150px"` makes it exactly 150px, the rows are
+> `display: contents` so their `dt` / `dd` are the grid's own items, and a note sits under its value
+> in `--t3`. The framed tree draws a 1px `--b2` border at `--radius-md` over `--bg-1` with
+> `overflow: auto`; bounded to 80px against 173px of content, the arrow keys scroll the **frame** to
+> 91px with the focused row still inside it and the page not moving. The avatars render as a 6px
+> square, a translucent `accent-soft` circle, a filled accent square and a critical circle, with the
+> icon scaling 13 / 17 / 22px by size — and an `src` image still wins over an icon.
+>
+> **Still open here: FR-48-26** (datagrid flush / caption / column modes) and **27** (cursor paging).
 
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
