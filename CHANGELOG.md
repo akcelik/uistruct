@@ -5,6 +5,36 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.8.0] - 2026-09-29
+
+### Added
+
+- **`strct-datagrid`: single selection, per-row locks, and select-all on a
+  group** (FR-48-01). A grid a user picks from is the grid's own selection,
+  whatever the number of picks — it should not be a column of radios the
+  consumer builds and wires outside the grid, where the arrow keys move within
+  the radio group instead of along the rows, clicking a row does nothing, and
+  `(selectionChange)` never fires.
+  - **`selectionMode="single"`** with two-way **`selectedId`**. The column is a
+    native radio group, one `name` per grid, so the arrow keys move between
+    rows and Space picks without the grid inventing its own keyboarding.
+    Clicking anywhere on the row picks it, `(selectionChange)` still fires with
+    a one-element array so existing listeners keep working, and the footer count
+    is hidden. `selectable` remains the boolean spelling of `multiple`.
+  - **`rowSelectable`** returns `false` to lock a row, or a string to lock it
+    and say why: the reason becomes the row's `title` and the control's
+    `aria-description`. A locked row keeps its normal colours — a locked
+    candidate is still worth reading — is skipped by `toggleRow` and by
+    select-all, and stays reachable so its reason can be read.
+  - **`groupSelect`** puts a tri-state checkbox on each group header: checked
+    when every selectable row of the group is selected, indeterminate when only
+    some are, and it ignores locked rows.
+
+  Rows carry `aria-selected` whenever a selection mode is on, and a locked row
+  is `aria-disabled`. Measured in Chrome: the arrow keys walk the radio group
+  and skip the locked row (0 → 2 → 3), `selectedId` follows, and clicking a
+  locked row changes nothing.
+
 ## [4.7.0] - 2026-09-29
 
 ### Added

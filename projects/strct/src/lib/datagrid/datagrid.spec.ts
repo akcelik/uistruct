@@ -1304,3 +1304,146 @@ describe('StrctDatagrid cell context', () => {
     expect(fixture.nativeElement.querySelector('tbody td').textContent.trim()).toBe('named/x');
   });
 });
+
+describe('StrctDatagrid — single selection, row locks, group select-all (FR-48-01)', () => {
+  const HOSTS: StrctRow[] = [
+    { id: 'h1', name: 'hv-01', pool: 'Prod', ready: true },
+    { id: 'h2', name: 'hv-02', pool: 'Prod', ready: false },
+    { id: 'h3', name: 'hv-03', pool: 'Edge', ready: true },
+  ];
+  const COLUMNS: StrctDatagridColumn[] = [{ key: 'name', label: 'Host' }];
+
+  function make(inputs: Record<string, unknown>) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', COLUMNS);
+    fixture.componentRef.setInput('rows', HOSTS);
+    fixture.componentRef.setInput('rowId', 'id');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      radios: () => [...el.querySelectorAll<HTMLInputElement>('.strct-dg__radio')],
+      boxes: () => [...el.querySelectorAll<HTMLInputElement>('tbody strct-checkbox input')],
+      rows: () => [...el.querySelectorAll<HTMLElement>('tbody tr')],
+    };
+  }
+
+  it('single mode draws one radio group; picking a row replaces the previous pick', () => {
+    const { fixture, el, radios, rows } = make({ selectionMode: 'single' });
+    let emitted: StrctRow[] = [];
+    fixture.componentInstance.selectionChange.subscribe((s) => (emitted = s));
+    expect(radios().length).toBe(3);
+    expect(new Set(radios().map((r) => r.name)).size).toBe(1); // one group per grid
+    // No select-all in the header: there is nothing to select all of.
+    expect(el.querySelector('thead strct-checkbox')).toBeNull();
+
+    radios()[0].click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedId()).toBe('h1');
+    expect(emitted.map((r) => r['id'])).toEqual(['h1']); // one-element array
+
+    radios()[2].click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedId()).toBe('h3');
+    expect(emitted.map((r) => r['id'])).toEqual(['h3']);
+    expect(rows()[2].getAttribute('aria-selected')).toBe('true');
+    expect(rows()[0].getAttribute('aria-selected')).toBe('false');
+  });
+
+  it('single mode: a click anywhere on the row picks it, and the footer count is hidden', () => {
+    const { fixture, el, rows } = make({ selectionMode: 'single' });
+    rows()[1].click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedId()).toBe('h2');
+    expect(el.querySelector('.strct-dg__count-sel')).toBeNull();
+  });
+
+  it('rowSelectable locks a row, says why, and refuses the pick', () => {
+    const lock = (row: StrctRow) => (row['ready'] ? true : 'Agent too old');
+    const { fixture, el, radios, rows } = make({ selectionMode: 'single', rowSelectable: lock });
+    const locked = radios()[1];
+    expect(locked.disabled).toBe(true);
+    expect(locked.getAttribute('aria-description')).toBe('Agent too old');
+    expect(rows()[1].getAttribute('aria-disabled')).toBe('true');
+    expect(rows()[1].getAttribute('title')).toBe('Agent too old');
+
+    rows()[1].click(); // clicking the locked row changes nothing
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedId()).toBeNull();
+    expect(el.querySelector('.strct-dg__row--locked')).toBeTruthy();
+  });
+
+  it('a locked row is skipped by multi-select and by select-all', () => {
+    const lock = (row: StrctRow) => row['ready'] === true;
+    const { fixture, boxes } = make({ selectable: true, rowSelectable: lock });
+    let emitted: StrctRow[] = [];
+    fixture.componentInstance.selectionChange.subscribe((s) => (emitted = s));
+    expect(boxes()[1].disabled).toBe(true);
+
+    fixture.componentInstance.toggleRow(HOSTS[1]);
+    fixture.detectChanges();
+    expect(emitted).toEqual([]);
+
+    fixture.componentInstance.toggleAll();
+    fixture.detectChanges();
+    expect(emitted.map((r) => r['id'])).toEqual(['h1', 'h3']);
+  });
+
+  it('groupSelect puts a tri-state checkbox on the group header', () => {
+    const { fixture, el } = make({
+      selectable: true,
+      groupBy: 'pool',
+      groupSelect: true,
+    });
+    const groupBox = () =>
+      el.querySelector<HTMLInputElement>('.strct-dg__grouprow strct-checkbox input')!;
+    expect(groupBox()).toBeTruthy();
+    expect(groupBox().checked).toBe(false);
+
+    // Selecting one of the group's two rows makes it indeterminate.
+    fixture.componentInstance.toggleRow(HOSTS[0]);
+    fixture.detectChanges();
+    expect(groupBox().indeterminate).toBe(true);
+
+    // The header checkbox then takes the whole group.
+    groupBox().click();
+    fixture.detectChanges();
+    expect(groupBox().checked).toBe(true);
+    expect(groupBox().indeterminate).toBe(false);
+  });
+
+  it('group select-all ignores locked rows', () => {
+    const { fixture, el } = make({
+      selectable: true,
+      groupBy: 'pool',
+      groupSelect: true,
+      rowSelectable: (row: StrctRow) => row['ready'] === true,
+    });
+    let emitted: StrctRow[] = [];
+    fixture.componentInstance.selectionChange.subscribe((s) => (emitted = s));
+    el.querySelector<HTMLInputElement>('.strct-dg__grouprow strct-checkbox input')!.click();
+    fixture.detectChanges();
+    // Prod holds h1 (ready) and h2 (locked): only h1 is taken, and the box is
+    // fully checked because every SELECTABLE row of the group is selected.
+    expect(emitted.map((r) => r['id'])).toEqual(['h1']);
+    expect(
+      el.querySelector<HTMLInputElement>('.strct-dg__grouprow strct-checkbox input')!.checked,
+    ).toBe(true);
+  });
+
+  it('defaults render exactly as before: no selection column, no radios', () => {
+    const { el } = make({});
+    expect(el.querySelector('.strct-dg__sel')).toBeNull();
+    expect(el.querySelectorAll('.strct-dg__radio').length).toBe(0);
+    expect(el.querySelector('tbody tr')!.hasAttribute('aria-selected')).toBe(false);
+  });
+
+  it('selectable stays the boolean spelling of multiple selection', () => {
+    const { el, boxes } = make({ selectable: true });
+    expect(boxes().length).toBe(3);
+    expect(el.querySelector('thead strct-checkbox')).toBeTruthy();
+    expect(el.querySelectorAll('.strct-dg__radio').length).toBe(0);
+  });
+});

@@ -1,5 +1,17 @@
 # FR-48-01 … 04 — Selection and choice
 
+> **FR-48-01 SHIPPED in 4.8.0 (2026-09-29)** — `selectionMode` (with `selectable` kept as the
+> boolean spelling of `multiple`), two-way `selectedId`, `rowSelectable` locks with a reason, and
+> `groupSelect`. All four acceptance points hold, the last of them literally: with no new inputs a
+> grid renders exactly as 4.7.0 (covered by a test).
+>
+> The keyboarding comes from the native radio group rather than new grid key handling, which is
+> what gives "arrows move, Space picks" — and, measured in Chrome, it skips a locked row on the
+> way (0 → 2 → 3).
+>
+> **Still open here: FR-48-02** (radio card variant), **03** (interactive tag), **04** (description
+> line on checkbox / toggle / radio).
+
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md),
 which also covers how these proposals follow the library's conventions.
 

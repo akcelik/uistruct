@@ -2709,6 +2709,33 @@ export const DOCS: DocCategory[] = [
         lead: 'A richer grid with sorting, selection, batch actions, pagination and expandable rows. Columns can be `sortable` and aligned. Use `*strctCell="key"` templates for custom cells (status pills, links, action buttons), and set `rowId` so selection / expansion survive live data refreshes.',
         inputs: [
           {
+            name: 'selectionMode',
+            type: "'none' | 'multiple' | 'single'",
+            default: 'none',
+            description:
+              'How many rows a user may pick. `selectable` remains the boolean spelling of `multiple`, so nothing changes for a grid that already uses it. `single` draws a native radio group (one name per grid), so the arrow keys move between rows and Space picks — instead of a radio column wired by hand outside the grid. Clicking anywhere on the row picks it, and (selectionChange) still fires with a one-element array.',
+          },
+          {
+            name: 'selectedId',
+            type: 'unknown (two-way)',
+            default: 'null',
+            description: 'The picked row id (per `rowId`) in `single` mode, or null.',
+          },
+          {
+            name: 'rowSelectable',
+            type: '((row) => boolean | string) | null',
+            default: 'null',
+            description:
+              "Whether a row may be picked. Return false to lock it, or a string to lock it AND say why: the reason becomes the row's tooltip and the control's aria-description. A locked row keeps its normal colours — a locked candidate is still worth reading — is skipped by select-all, and stays reachable so its reason can be read.",
+          },
+          {
+            name: 'groupSelect',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'With `groupBy` and multiple selection, a tri-state checkbox on each group header: checked when every selectable row of the group is selected, indeterminate when only some are, and it ignores locked rows.',
+          },
+          {
             name: 'columns',
             type: 'StrctDatagridColumn[]',
             description: '`{ key; label; sortable?; align? }[]`. Required.',
