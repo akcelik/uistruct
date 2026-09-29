@@ -3,6 +3,7 @@ import { JsonPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   StrctBadge,
+  StrctProgress,
   StrctBadgeStatus,
   StrctButton,
   StrctCellDef,
@@ -49,6 +50,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctDatagridActionBar,
     StrctCellDef,
     StrctBadge,
+    StrctProgress,
     StrctIcon,
     StrctButton,
     StrctCheckbox,
@@ -244,6 +246,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         >
           <ng-template strctCell="status" let-value="value">
             <strct-badge [status]="badgeFor(value)">{{ value }}</strct-badge>
+          </ng-template>
+          <ng-template strctCell="cpu" let-value="value">
+            <div class="dg-cpu">
+              <strct-progress [value]="$any(value)" [status]="cpuStatus($any(value))" />
+              <span class="dg-cpu__pct">{{ value }}%</span>
+            </div>
           </ng-template>
           <div strctDatagridActionBar>
             <button strct-button variant="primary" size="sm">
@@ -523,6 +531,23 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      .dg-cpu {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .dg-cpu strct-progress {
+        flex: 1;
+        min-width: 56px;
+      }
+      .dg-cpu__pct {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--t3);
+        min-width: 30px;
+        text-align: end;
+      }
+
       .ro-list {
         list-style: none;
         margin: 0;
@@ -765,35 +790,42 @@ mtu = 9000`;
   ];
 
   protected readonly rows: StrctRow[] = [
-    { name: 'Production Cluster', type: 'Failover', hosts: 8, status: 'Running' },
-    { name: 'DR Cluster', type: 'Failover', hosts: 4, status: 'Running' },
-    { name: 'Edge Cluster', type: 'Standard', hosts: 3, status: 'Degraded' },
-    { name: 'Dev Cluster', type: 'Standard', hosts: 2, status: 'Running' },
+    { name: 'Production Cluster', type: 'Failover', hosts: 8, cpu: 93, status: 'Running' },
+    { name: 'DR Cluster', type: 'Failover', hosts: 4, cpu: 37, status: 'Running' },
+    { name: 'Edge Cluster', type: 'Standard', hosts: 3, cpu: 31, status: 'Degraded' },
+    { name: 'Dev Cluster', type: 'Standard', hosts: 2, cpu: 24, status: 'Running' },
   ];
 
   protected readonly dgCols: StrctDatagridColumn[] = [
     { key: 'name', label: 'Cluster', sortable: true },
     { key: 'type', label: 'Type', sortable: true },
     { key: 'hosts', label: 'Hosts', sortable: true, align: 'end' },
+    // FR-47-01 regression case: a progress bar inside a row, where the track
+    // used to be the same colour as the row's ground in the dark theme.
+    { key: 'cpu', label: 'CPU', sortable: true, width: '140px' },
     { key: 'status', label: 'Status', sortable: true },
   ];
+
+  protected cpuStatus(v: number): 'accent' | 'warning' | 'critical' {
+    return v >= 90 ? 'critical' : v >= 70 ? 'warning' : 'accent';
+  }
 
   /** Seeds [initialSelection] — the rows the picker opens with already checked. */
   protected readonly preChecked = ['Production Cluster', 'DR Cluster'];
 
   protected readonly dgRows: StrctRow[] = [
-    { name: 'Production Cluster', type: 'Failover', hosts: 8, status: 'Running' },
-    { name: 'DR Cluster', type: 'Failover', hosts: 4, status: 'Running' },
-    { name: 'Edge Cluster', type: 'Standard', hosts: 3, status: 'Degraded' },
-    { name: 'Dev Cluster', type: 'Standard', hosts: 2, status: 'Running' },
-    { name: 'Staging Cluster', type: 'Failover', hosts: 3, status: 'Running' },
-    { name: 'Backup Cluster', type: 'Standard', hosts: 2, status: 'Idle' },
-    { name: 'Analytics Cluster', type: 'Failover', hosts: 6, status: 'Running' },
-    { name: 'Test Cluster', type: 'Standard', hosts: 1, status: 'Degraded' },
-    { name: 'AI Training Cluster', type: 'Failover', hosts: 12, status: 'Running' },
-    { name: 'Observability Cluster', type: 'Standard', hosts: 2, status: 'Running' },
-    { name: 'Archive Cluster', type: 'Standard', hosts: 2, status: 'Idle' },
-    { name: 'Management Cluster', type: 'Failover', hosts: 4, status: 'Running' },
+    { name: 'Production Cluster', type: 'Failover', hosts: 8, cpu: 93, status: 'Running' },
+    { name: 'DR Cluster', type: 'Failover', hosts: 4, cpu: 37, status: 'Running' },
+    { name: 'Edge Cluster', type: 'Standard', hosts: 3, cpu: 31, status: 'Degraded' },
+    { name: 'Dev Cluster', type: 'Standard', hosts: 2, cpu: 24, status: 'Running' },
+    { name: 'Staging Cluster', type: 'Failover', hosts: 3, cpu: 52, status: 'Running' },
+    { name: 'Backup Cluster', type: 'Standard', hosts: 2, cpu: 45, status: 'Idle' },
+    { name: 'Analytics Cluster', type: 'Failover', hosts: 6, cpu: 66, status: 'Running' },
+    { name: 'Test Cluster', type: 'Standard', hosts: 1, cpu: 31, status: 'Degraded' },
+    { name: 'AI Training Cluster', type: 'Failover', hosts: 12, cpu: 80, status: 'Running' },
+    { name: 'Observability Cluster', type: 'Standard', hosts: 2, cpu: 24, status: 'Running' },
+    { name: 'Archive Cluster', type: 'Standard', hosts: 2, cpu: 52, status: 'Idle' },
+    { name: 'Management Cluster', type: 'Failover', hosts: 4, cpu: 73, status: 'Running' },
   ];
 
   // Column filters demo

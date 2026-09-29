@@ -5,6 +5,39 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.1] - 2026-09-29
+
+### Fixed
+
+- **`strct-progress`: the track stays visible on the surface it sits on**
+  (FR-47-01). The track painted `--bg-3`, which is exactly a datagrid row's
+  ground in the dark theme — so inside a row the track disappeared and only the
+  fill was left: 37% read as a short dash with nothing to measure it against,
+  93% as a line that could have been 100%. It now paints a translucent tint of
+  the FOREGROUND, which steps off any surface the library places a bar on, plus
+  a hairline inset ring so the full length reads even where the tint is subtle.
+  `--strct-progress-track` overrides the colour.
+
+  Measured in Chrome inside a datagrid row: dark, the row is `rgb(35, 40, 47)`
+  and the old track was `#23282f` — the same colour, contrast 1.00. The track is
+  now `rgb(59, 63, 70)`, contrast 1.40. Light goes 1.11 → 1.27. The showcase
+  datagrid demo has a CPU column of progress bars, and the visual-regression
+  gate covers it in both themes (its routes can now aim at an anchor, so a case
+  below the fold can be pinned).
+
+- **`strct-heatmap` `thresholds`: intensity no longer falls as the value rises**
+  (FR-44-02). 4.3.0 scaled intensity inside each band and restarted every band
+  at the same floor, so a cell just past a threshold came out PALER than the one
+  just below it: with `{ warning: 85, critical: 95 }`, 84% mixed at ~99% and 86%
+  at ~50%. Pale squares sat between dark ones and read as the quiet hours when
+  they were the busiest. The bands now own ascending, non-overlapping intensity
+  ranges (accent 8–80%, warning 80–92%, critical 92–100%; a warning band with no
+  critical bound owns 80–100%). Crossing a threshold changes the hue and never
+  lowers the strength, and a band still darkens with the value inside it.
+
+  Verified in Chrome over 93 cells of the showcase grid: zero steps where
+  luminance rose as the value rose.
+
 ## [4.4.0] - 2026-09-26
 
 ### Added

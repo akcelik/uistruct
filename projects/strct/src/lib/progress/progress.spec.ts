@@ -61,3 +61,27 @@ describe('StrctProgress', () => {
     });
   });
 });
+
+describe('StrctProgress — the track stays visible on its surface (FR-47-01)', () => {
+  it('tints the foreground instead of painting a fixed surface token, and rings the length', () => {
+    const fixture = TestBed.createComponent(StrctProgress);
+    fixture.componentRef.setInput('value', 37);
+    fixture.detectChanges();
+    const track = fixture.nativeElement.querySelector('.strct-progress__track') as HTMLElement;
+    const style = getComputedStyle(track);
+    // --bg-3 is exactly a datagrid row's ground in the dark theme, so the track
+    // used to disappear there; a foreground tint steps off any surface.
+    expect(style.background).not.toContain('var(--bg-3)');
+    expect(style.background + style.backgroundColor).toContain('--t1');
+    expect(style.boxShadow).toContain('inset');
+  });
+
+  it('exposes --strct-progress-track as the override, with the tint as its fallback', () => {
+    const fixture = TestBed.createComponent(StrctProgress);
+    fixture.detectChanges();
+    const track = fixture.nativeElement.querySelector('.strct-progress__track') as HTMLElement;
+    // jsdom does not resolve var(); it hands back the declaration, which is
+    // what this pins. The resolved colours are measured in Chrome (see the PR).
+    expect(getComputedStyle(track).background).toContain('var(--strct-progress-track,');
+  });
+});

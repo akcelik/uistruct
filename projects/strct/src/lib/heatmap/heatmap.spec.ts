@@ -221,3 +221,58 @@ describe('StrctHeatmap — monitoring readability (FR-43-01..03)', () => {
     expect(rects[5].getAttribute('fill')).toContain('var(--acc)'); // 20
   });
 });
+
+describe('StrctHeatmap — threshold intensity is monotonic (FR-44-02)', () => {
+  const ROW = (values: number[]): StrctHeatmapCell[] =>
+    values.map((value, i) => ({ row: 'hv', col: String(i), value }));
+
+  function fills(values: number[], thresholds: Record<string, number>): string[] {
+    const fixture = TestBed.createComponent(StrctHeatmap);
+    fixture.componentRef.setInput('data', ROW(values));
+    fixture.componentRef.setInput('max', 100);
+    fixture.componentRef.setInput('thresholds', thresholds);
+    fixture.detectChanges();
+    return [...fixture.nativeElement.querySelectorAll('.strct-heatmap__cell')].map((c) =>
+      c.getAttribute('fill'),
+    );
+  }
+  const pct = (fill: string) => Number(fill.match(/ (\d+)%/)![1]);
+  const hue = (fill: string) => fill.match(/var\(--[a-z]+\)/)![0];
+
+  it('a cell just past a threshold is never paler than the one just below it', () => {
+    // HyperStruct's CPU bands: 86 used to mix at ~50% while 84 mixed at ~99%.
+    const [f84, f86, f94, f96] = fills([84, 86, 94, 96], { warning: 85, critical: 95 });
+    expect(pct(f86)).toBeGreaterThanOrEqual(pct(f84));
+    expect(pct(f96)).toBeGreaterThanOrEqual(pct(f94));
+    expect([hue(f84), hue(f86), hue(f96)]).toEqual([
+      'var(--acc)',
+      'var(--warning)',
+      'var(--critical)',
+    ]);
+  });
+
+  it('intensity never falls as the value rises, across the whole range', () => {
+    // from 2: a zero cell is deliberately the empty surface, not a ramp value.
+    const values = Array.from({ length: 50 }, (_, i) => (i + 1) * 2); // 2…100
+    const series = fills(values, { warning: 60, critical: 85 }).map(pct);
+    const drops = series
+      .map((p, i) => (i && p < series[i - 1] ? `${values[i - 1]}→${values[i]}` : null))
+      .filter(Boolean);
+    expect(drops).toEqual([]);
+  });
+
+  it('a band still reads as itself: warning and critical start where accent ends', () => {
+    const [accentTop, warnStart] = fills([59, 60], { warning: 60, critical: 85 }).map(pct);
+    expect(warnStart).toBeGreaterThanOrEqual(80);
+    expect(accentTop).toBeLessThanOrEqual(80);
+    // …and a value inside a band is still darker further up the band.
+    const [low, high] = fills([61, 84], { warning: 60, critical: 85 }).map(pct);
+    expect(high).toBeGreaterThan(low);
+  });
+
+  it('without a critical bound the warning band owns the top of the ramp', () => {
+    const [mid, top] = fills([60, 100], { warning: 60 }).map(pct);
+    expect(top).toBe(100);
+    expect(mid).toBe(80);
+  });
+});

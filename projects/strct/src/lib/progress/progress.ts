@@ -41,7 +41,15 @@ export type StrctProgressStatus = 'accent' | 'success' | 'warning' | 'critical';
       .strct-progress__track {
         height: 6px;
         border-radius: var(--radius-sm);
-        background: var(--bg-3);
+        /* FR-47-01: a fixed surface token (--bg-3) equals the ground the bar
+           sits on in some places — a datagrid row in the dark theme is exactly
+           --bg-3 — and the track vanished, leaving a dash with nothing to
+           measure it against. A tint of the FOREGROUND steps off any surface
+           the library places the bar on, and the hairline ring keeps the full
+           length readable even where the tint is subtle. Override the token to
+           pin a specific colour. */
+        background: var(--strct-progress-track, color-mix(in srgb, var(--t1) 12%, transparent));
+        box-shadow: inset 0 0 0 1px var(--b2);
         overflow: hidden;
       }
       .strct-progress__fill {
