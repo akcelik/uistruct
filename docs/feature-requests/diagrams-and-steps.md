@@ -13,7 +13,19 @@
 > for assistive tech while the glyphs stay hidden, with the old value muted and the new one at
 > weight 600.
 >
-> **Still open here: FR-48-31** (`strct-flow` fan-out layout and node templates).
+> **FR-48-31 SHIPPED in 4.19.0 (2026-09-29)** — `layout="fan-out" | "tree"`, `edges`, `columns`,
+> `nodes[].column` / `data`, and an `<ng-template strctFlowNode>`.
+>
+> Measured in Chrome: the blast-radius diagram renders as three labelled column groups (1 / 2 / 1
+> nodes) with three orthogonal edges whose paths start at the source box's real right edge (x=141)
+> and end at the target's left (x=189) — geometry measured from the boxes and re-measured on
+> resize, not guessed — coloured success / success / critical with the third dashed, over an
+> `aria-hidden` SVG whose viewBox matches the container (520×190). The topology renders as a tree
+> of four depth-derived columns (1 / 2 / 2 / 1) with six edges, one animated. At a 400px container
+> the columns stack, the SVG is `display: none` and each column takes a 2px rail. Chain mode is
+> untouched, still `role="img"` with its one summary.
+>
+> **Every ask in this document has shipped.**
 
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
