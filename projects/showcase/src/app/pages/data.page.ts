@@ -17,6 +17,10 @@ import {
   StrctListItem,
   StrctLiveIndicator,
   StrctLiveState,
+  StrctChange,
+  StrctStepAction,
+  StrctStepState,
+  StrctSteps,
   StrctList,
   StrctDatagridActionBar,
   StrctDatagridColumn,
@@ -82,6 +86,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctListItemMeta,
     StrctListItemTrailing,
     StrctLiveIndicator,
+    StrctChange,
+    StrctStepAction,
+    StrctSteps,
   ],
   template: `
     <app-page-header title="Data" subtitle="Declarative, token-styled data display." />
@@ -714,6 +721,42 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="steps"
+      heading="Steps"
+      description="A process the user watches rather than drives: an update run per host, or a numbered method on a landing page. A wizard's rail is the wrong control — the user did not start each step and cannot go back to one — and a timeline implies history; neither can say “skipped” or “blocked”. The states are done, active, failed, blocked, skipped and pending, each with its own tone, and each said in words for assistive tech (“Install, in progress”). The active step pulses its own edge, and holds still under prefers-reduced-motion. pills is the default, dots fits a long run in a dense row, and cards is the numbered method with a description and a per-step action."
+      code='<strct-steps [steps]="run" appearance="pills" dense />'
+    >
+      <div class="stack" style="gap: 20px; width: 100%;">
+        <strct-steps [steps]="runSteps" />
+        <strct-steps [steps]="runSteps" appearance="dots" />
+        <strct-steps [steps]="runSteps" numbered dense orientation="vertical" />
+        <strct-steps [steps]="methodSteps" appearance="cards">
+          <ng-template strctStepAction let-step>
+            <button strct-button size="sm" variant="flat" (click)="stepEcho.set(step.label)">
+              Run
+            </button>
+          </ng-template>
+        </strct-steps>
+        <span class="echo">{{
+          stepEcho() ? 'ran ' + stepEcho() : 'each card carries its own action'
+        }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="change"
+      heading="Change"
+      description="An upgrade or an edit states what changes as “from → to”: the old value muted, the arrow the library's, the new one emphasised. Assistive tech hears a sentence — “from v10.27 to v10.28” — rather than an arrow glyph, and label makes that sentence localisable."
+      code='<strct-change from="v10.27" to="v10.28" mono />'
+    >
+      <div class="stack">
+        <strct-change from="v10.27" to="v10.28" mono />
+        <strct-change from="26100.4351" to="26100.4652" mono />
+        <strct-change from="Maintenance" to="In service" />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="stack"
       heading="Stack view"
       description="A read-only key/value definition list."
@@ -835,6 +878,38 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class DataPage {
+  // FR-48-30 — a remediation run, and the three-step method.
+  protected readonly runSteps: StrctStepState[] = [
+    { id: 'check', label: 'Check', state: 'done' },
+    { id: 'download', label: 'Download', state: 'done' },
+    { id: 'maint', label: 'Maintenance', state: 'skipped', description: 'Host already drained' },
+    { id: 'install', label: 'Install', state: 'active' },
+    { id: 'restart', label: 'Restart', state: 'pending' },
+    { id: 'verify', label: 'Verify', state: 'blocked', description: 'Waiting for the next window' },
+    { id: 'back', label: 'Back in service', state: 'pending' },
+  ];
+  protected readonly methodSteps: StrctStepState[] = [
+    {
+      id: 'baseline',
+      label: 'Baseline',
+      state: 'done',
+      description: 'Capture what is installed on every host.',
+    },
+    {
+      id: 'check',
+      label: 'Check',
+      state: 'active',
+      description: 'Compare the estate against the catalogue.',
+    },
+    {
+      id: 'remediate',
+      label: 'Remediate',
+      state: 'pending',
+      description: 'Roll the updates out, one host at a time.',
+    },
+  ];
+  protected readonly stepEcho = signal('');
+
   // FR-48-26 — a borderless grid inside a panel, with column presentation.
   protected readonly taskCols: StrctDatagridColumn[] = [
     { key: 'task', label: 'Task', descriptionKey: 'target' },

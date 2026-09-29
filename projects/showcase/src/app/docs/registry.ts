@@ -3368,6 +3368,90 @@ export const DOCS: DocCategory[] = [
         a11y: ['The active row is marked with an accent caret tying it to the open pane.'],
       },
       {
+        id: 'steps',
+        title: 'Steps',
+        selector: 'strct-steps',
+        importNames: ['StrctSteps', 'StrctStepState', 'StrctStepAction'],
+        summary: 'A read-only status stepper for a watched process.',
+        lead: 'A process the user *watches* rather than drives: an update run per host, or a numbered method on a landing page. A wizard\u2019s rail is the wrong control \u2014 the user did not start each step and cannot go back to one \u2014 and a timeline implies history. Neither can say "skipped" or "blocked".',
+        inputs: [
+          {
+            name: 'steps',
+            type: 'StrctStepState[]',
+            description:
+              '`{ id; label; state: "pending" | "active" | "done" | "failed" | "skipped" | "blocked"; description? }[]`. Tones: done success, active accent (pulsing), failed critical, blocked warning, skipped struck through in `--t3`, pending a `--t4` outline.',
+          },
+          {
+            name: 'appearance',
+            type: `'pills' | 'dots' | 'cards'`,
+            default: `'pills'`,
+            description:
+              '`pills` joins the steps with a hairline and wraps when narrow; `dots` fits a long run in a dense row; `cards` is the numbered method \u2014 number, label, description and a per-step action.',
+          },
+          {
+            name: 'orientation / numbered / dense',
+            type: `'horizontal' | 'vertical' · boolean`,
+            default: `'horizontal' · false`,
+            description:
+              'Vertical turns the connector into a rail; `numbered` numbers the pills (cards always are); `dense` tightens them for one row per host.',
+          },
+          {
+            name: 'labels',
+            type: 'Partial<Record<StrctStepPhase, string>>',
+            default: '{}',
+            description: 'The state words read after each label, for localisation.',
+          },
+          {
+            name: '[strctStepAction]',
+            type: 'ng-template',
+            description:
+              'A per-step action for `cards`; the template\u2019s context is the step (`let-step`).',
+          },
+        ],
+        do: [
+          'Use it for a run the user follows — one row per host during a cluster update.',
+          'Say why a step was skipped or blocked in its `description`.',
+        ],
+        dont: [
+          'Do not use it where the user drives the steps — that is `strct-wizard`.',
+          'Do not use it for history in time order — that is `strct-timeline`.',
+        ],
+        a11y: [
+          'An ordered list; the active step carries aria-current="step" and every step says its state in visually hidden words ("Install, in progress").',
+          'The active step\u2019s pulse holds still under prefers-reduced-motion.',
+        ],
+      },
+      {
+        id: 'change',
+        title: 'Change',
+        selector: 'strct-change',
+        importNames: ['StrctChange'],
+        summary: 'A value change, as one phrase.',
+        lead: 'An upgrade or an edit states what changes as "from \u2192 to": the old value muted, the arrow the library\u2019s, the new one emphasised \u2014 and read as a sentence rather than an arrow glyph.',
+        inputs: [
+          {
+            name: 'from / to',
+            type: 'string',
+            description: 'The values before and after. Required.',
+          },
+          {
+            name: 'mono',
+            type: 'boolean',
+            default: 'false',
+            description: 'Monospace, for versions and identifiers.',
+          },
+          {
+            name: 'label',
+            type: '(from: string, to: string) => string',
+            default: '`from <from> to <to>`',
+            description: 'What assistive tech hears in place of the arrow (localisable).',
+          },
+        ],
+        do: ['Use it wherever an upgrade or an edit is stated.'],
+        dont: ['Do not write the arrow as text — it is not read as "to".'],
+        a11y: ['The glyphs are aria-hidden; the sentence is what is announced.'],
+      },
+      {
         id: 'timeline',
         title: 'Timeline',
         selector: 'strct-timeline, strct-timeline-item',

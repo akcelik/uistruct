@@ -1,5 +1,20 @@
 # FR-48-30 … 32 — Diagrams and steps
 
+> **FR-48-30 and FR-48-32 SHIPPED in 4.18.0 (2026-09-29)** — the new `strct-steps` and
+> `strct-change`.
+>
+> Measured in Chrome: the remediation run renders as an `<ol>` of 7 pills with the six states
+> carrying their own tones (success green, accent, warning, muted, `--t4` outline), the skipped one
+> struck through with its reason as the tooltip, exactly one `aria-current="step"`, and every step
+> saying its state in words ("in progress"). The active pill's edge runs `strct-steps-pulse` and
+> holds still at 0.5 opacity under `prefers-reduced-motion`. All four appearances render from the
+> same data — pills, dots (labels hidden), vertical + numbered + dense, and cards with descriptions
+> and a per-step action that fires ("ran Baseline"). `strct-change` reads "from v10.27 to v10.28"
+> for assistive tech while the glyphs stay hidden, with the old value muted and the new one at
+> weight 600.
+>
+> **Still open here: FR-48-31** (`strct-flow` fan-out layout and node templates).
+
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
 ---
