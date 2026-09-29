@@ -51,9 +51,16 @@ export interface StrctDatagridLabels {
   editCell: string;
   toggleChildren: string;
   quickFilter: string;
+  /** `paging="more"`: the button that asks for the next slice. */
+  loadMore: string;
+  /** `paging="more"`: what the footer says it is showing. */
+  showing: (shown: number, total?: number) => string;
 }
 
 const DG_LABELS: StrctDatagridLabels = {
+  loadMore: 'Load more',
+  showing: (shown, total) =>
+    total === undefined ? `Showing ${shown}` : `Showing the latest ${shown} of ${total}`,
   row: 'row',
   rows: 'rows',
   selected: 'selected',
@@ -78,6 +85,7 @@ const DG_LABELS: StrctDatagridLabels = {
 import { StrctCheckbox } from '../forms/checkbox';
 import { StrctOption } from '../combobox/combobox';
 import { StrctSelect } from '../select/select';
+import { StrctSpinner } from '../spinner/spinner';
 import { StrctNumber } from '../number/number';
 import { StrctButton, StrctButtonGroup } from '../button/button';
 import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
@@ -130,6 +138,17 @@ export interface StrctDatagridColumn {
   editorMin?: number;
   editorMax?: number;
   editorStep?: number;
+  /** The look of a cell is column metadata, not a cell template. */
+  mono?: boolean;
+  muted?: boolean;
+  /** Aligns to the end with tabular figures — a counter reads as a column. */
+  numeric?: boolean;
+  /** Shown in `--t3` when the value is null / undefined / '' (default: blank). */
+  emptyText?: string;
+  /** Read as the value by assistive tech in place of `emptyText`'s glyph. */
+  emptyLabel?: string;
+  /** A quiet second line in the cell, from `row[descriptionKey]`. */
+  descriptionKey?: string;
 }
 
 /** Per-column filter state: contains-text, or the checked value set. */
@@ -212,6 +231,7 @@ export class StrctDatagridActionBar {}
     StrctSearchbox,
     StrctSelect,
     StrctNumber,
+    StrctSpinner,
     FormsModule,
   ],
   template: `
@@ -250,7 +270,18 @@ export class StrctDatagridActionBar {}
         [style.max-height.px]="virtual() ? viewportHeight() : null"
         (scroll)="virtual() && onScroll($event)"
       >
-        <table class="strct-dg" [attr.role]="childrenKey() ? 'treegrid' : null">
+        <table
+          class="strct-dg"
+          [attr.role]="childrenKey() ? 'treegrid' : null"
+          [attr.aria-labelledby]="caption() ? captionId : null"
+        >
+          @if (caption()) {
+            <caption class="strct-dg__caption" [id]="captionId">
+              {{
+                caption()
+              }}
+            </caption>
+          }
           <thead>
             <tr>
               @if (canDetail()) {
@@ -285,7 +316,7 @@ export class StrctDatagridActionBar {}
               }
               @for (col of visibleColumns(); track col.key) {
                 <th
-                  [style.text-align]="col.align ?? 'start'"
+                  [style.text-align]="col.align ?? (col.numeric ? 'end' : 'start')"
                   [style.width]="colWidth(col.key) ?? col.width ?? null"
                   [class.strct-dg__th--sortable]="col.sortable"
                   [class.strct-dg__th--drop]="col.key === dropKey()"
@@ -546,7 +577,10 @@ export class StrctDatagridActionBar {}
                     }
                     @for (col of visibleColumns(); track col.key; let colIdx = $index) {
                       <td
-                        [style.text-align]="col.align ?? 'start'"
+                        [style.text-align]="col.align ?? (col.numeric ? 'end' : 'start')"
+                        [class.strct-dg__cell--mono]="col.mono"
+                        [class.strct-dg__cell--muted]="col.muted"
+                        [class.strct-dg__cell--numeric]="col.numeric"
                         [class.strct-dg__cell--sticky]="isSticky(col)"
                         [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
                         [class.strct-dg__cell--editable]="col.editable"
@@ -629,8 +663,17 @@ export class StrctDatagridActionBar {}
                               column: col,
                             }"
                           />
+                        } @else if (isBlank(row, col)) {
+                          <span
+                            class="strct-dg__empty"
+                            [attr.aria-label]="col.emptyLabel || null"
+                            >{{ col.emptyText }}</span
+                          >
                         } @else {
                           {{ displayValue(row, col) }}
+                          @if (col.descriptionKey && row[col.descriptionKey]) {
+                            <span class="strct-dg__celldesc">{{ row[col.descriptionKey] }}</span>
+                          }
                         }
                       </td>
                     }
@@ -698,7 +741,29 @@ export class StrctDatagridActionBar {}
       }
     </div>
 
-    @if ((pageSize() > 0 || virtual()) && !loading()) {
+    @if (paging() === 'more' && !loading()) {
+      <!-- A feed that pages by cursor loads more at the end: page numbers are
+           something a cursor API cannot answer. -->
+      <div class="strct-dg__foot strct-dg__foot--more">
+        <span class="strct-dg__count">{{
+          L().showing(rows().length, moreTotal() ?? undefined)
+        }}</span>
+        @if (hasMore()) {
+          <button
+            strct-button
+            size="sm"
+            class="strct-dg__more"
+            [disabled]="loadingMore()"
+            (click)="loadMore.emit()"
+          >
+            @if (loadingMore()) {
+              <strct-spinner size="sm" />
+            }
+            {{ L().loadMore }}
+          </button>
+        }
+      </div>
+    } @else if ((pageSize() > 0 || virtual()) && !loading()) {
       <div class="strct-dg__foot">
         <div class="strct-dg__foot-left">
           @if (columnChooser() || sync()) {
@@ -772,6 +837,7 @@ export class StrctDatagridActionBar {}
     '[class.strct-dg-host--singleline]': 'singleLine()',
     '[class.strct-dg-host--virtual]': 'virtual()',
     '[class.strct-dg-host--sticky]': 'stickyActive()',
+    '[class.strct-dg-host--flush]': 'flush()',
   },
   styles: [
     `
@@ -812,6 +878,52 @@ export class StrctDatagridActionBar {}
         border-radius: var(--radius-lg);
         background: var(--bg-2);
         box-shadow: var(--shadow-rest);
+      }
+      /* Inside a panel that already has a border, the grid has none of its
+         own — instead of the consumer reaching into .strct-dg-host to strip
+         them. */
+      .strct-dg-host--flush {
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+      .strct-dg__foot--more {
+        justify-content: space-between;
+      }
+      .strct-dg__more strct-spinner {
+        margin-inline-end: 4px;
+      }
+      .strct-dg__caption {
+        caption-side: top;
+        text-align: start;
+        padding: var(--space-2) var(--space-3);
+        font-size: var(--text-sm);
+        font-weight: 600;
+        color: var(--t2);
+      }
+      /* Scoped through the table, because .strct-dg td already declares a
+         colour — a bare class would lose to it. */
+      .strct-dg td.strct-dg__cell--mono {
+        font-family: var(--mono);
+        font-size: var(--text-sm);
+      }
+      .strct-dg td.strct-dg__cell--muted {
+        color: var(--t3);
+      }
+      .strct-dg td.strct-dg__cell--numeric {
+        font-variant-numeric: tabular-nums;
+      }
+      .strct-dg__empty {
+        color: var(--t3);
+      }
+      /* A name with a muted hint under it, in the row height singleLine + 1
+         line gives. */
+      .strct-dg__celldesc {
+        display: block;
+        font-size: var(--text-sm);
+        color: var(--t3);
+        line-height: 1.3;
       }
       .strct-dg__scroll {
         flex: 1 1 auto;
@@ -1618,6 +1730,23 @@ export class StrctDatagrid {
    * the control's description, following the `hint` convention.
    */
   readonly rowSelectable = input<((row: StrctRow) => boolean | string) | null>(null);
+  /** No outer border, radius or shadow — for a grid inside a bordered panel. */
+  readonly flush = input(false, { transform: booleanAttribute });
+  /** The grid's title, rendered above the header and used as its accessible name. */
+  readonly caption = input('');
+  /**
+   * `'more'` swaps the pager for a count and a Load more button — the shape a
+   * cursor API can answer. The consumer appends rows; the grid does not page.
+   */
+  readonly paging = input<'pages' | 'more'>('pages');
+  /** Whether there is another slice to ask for. */
+  readonly hasMore = input(false, { transform: booleanAttribute });
+  /** A slice is on its way: the button waits with a spinner. */
+  readonly loadingMore = input(false, { transform: booleanAttribute });
+  /** The grand total, when the API knows it — "Showing the latest 50 of 812". */
+  readonly moreTotal = input<number | null>(null);
+  /** The user asked for the next slice. */
+  readonly loadMore = output<void>();
   /** With `groupBy` and multiple selection: a tri-state checkbox per group. */
   readonly groupSelect = input(false, { transform: booleanAttribute });
   /**
@@ -2091,6 +2220,15 @@ export class StrctDatagrid {
           editor.querySelector<HTMLElement>('button'))
       )?.focus();
     });
+  }
+
+  protected readonly captionId = `strct-dg-caption-${++datagridCounter}`;
+
+  /** Whether a cell has nothing to show and the column says what to show then. */
+  protected isBlank(row: StrctRow, col: StrctDatagridColumn): boolean {
+    if (!col.emptyText) return false;
+    const v = row[col.key];
+    return v === null || v === undefined || v === '';
   }
 
   /** A select column reads as its option's label, not as the stored value. */

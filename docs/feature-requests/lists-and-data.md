@@ -23,7 +23,22 @@
 > square, a translucent `accent-soft` circle, a filled accent square and a critical circle, with the
 > icon scaling 13 / 17 / 22px by size — and an `src` image still wins over an icon.
 >
-> **Still open here: FR-48-26** (datagrid flush / caption / column modes) and **27** (cursor paging).
+> **FR-48-26 and FR-48-27 SHIPPED in 4.17.0 (2026-09-29)** — `flush`, `caption` and the column
+> flags `mono` / `muted` / `numeric` / `emptyText` / `emptyLabel` / `descriptionKey`; plus
+> `paging="more"` with `hasMore`, `loadingMore`, `moreTotal` and `(loadMore)`.
+>
+> Measured in Chrome: `flush` leaves `border: 0px`, `border-radius: 0px` and no shadow; the caption
+> reads "Recent tasks" and is the table's `aria-labelledby`; a mono cell resolves to JetBrains Mono,
+> a numeric one to `text-align: end` with `tabular-nums` (its header too), a muted one to `--t3`, a
+> blank one to "—" in `--t3` carrying `aria-label="not assigned"`, and a `descriptionKey` line sits
+> under the value as a block in `--t3`. The feed pages 6 → 12 → 18 → **24**, the button waits
+> disabled with a spinner while a slice arrives, the count follows, the scroll position is kept, and
+> the button **disappears** when `hasMore` goes false.
+>
+> The muted flag needed scoping through the table: `.strct-dg td` already declares a colour, so a
+> bare `.strct-dg__cell--muted` lost to it — the first reading showed the cell still at `--t1`.
+>
+> **Every ask in this document has shipped.**
 
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 

@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.17.0] - 2026-09-29
+
+### Added
+
+- **`strct-datagrid`: presentation as column metadata** (FR-48-26). The look of a
+  cell is column metadata, not a cell template: **`mono`** for a GUID column,
+  **`muted`** for a note, **`numeric`** for a counter (end-aligned with tabular
+  figures, header included), **`emptyText`** for what a blank cell shows (in
+  `--t3`) with **`emptyLabel`** for what assistive tech hears instead of the
+  glyph, and **`descriptionKey`** for a quiet second line from the row. Plus
+  **`caption`**, which gives the grid its own title and names the table
+  (`aria-labelledby`), and **`flush`**, which drops the outer border, radius and
+  shadow for a grid inside a panel that already has them — instead of a consumer
+  stylesheet reaching into `.strct-dg-host`.
+- **`strct-datagrid paging="more"`** (FR-48-27), with `hasMore`, `loadingMore`,
+  `moreTotal` and `(loadMore)`. A feed that pages by cursor loads more at the
+  end: `lazy` speaks page numbers, which a cursor API cannot answer. The footer
+  becomes a count and a Load more button — a spinner while the slice arrives, no
+  button once `hasMore` is false — and the consumer appends the rows, so the
+  scroll position is kept.
+
 ## [4.16.0] - 2026-09-29
 
 ### Added
