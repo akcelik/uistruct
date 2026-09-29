@@ -1,5 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { StrctCard, StrctCardHeader, StrctCardBlock, StrctCardFooter } from './card';
+import {
+  StrctCard,
+  StrctCardHeader,
+  StrctCardBlock,
+  StrctCardFooter,
+  StrctCardHeaderMeta,
+  StrctCardHeaderNote,
+  StrctCardHeaderActions,
+} from './card';
 import { StrctStatus } from '../status';
 
 describe('StrctCard', () => {
@@ -109,5 +117,62 @@ describe('StrctCardFooter', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement).toBeTruthy();
+  });
+});
+
+describe('StrctCardHeader — heading, meta, note, actions (FR-48-14)', () => {
+  @Component({
+    imports: [
+      StrctCard,
+      StrctCardHeader,
+      StrctCardHeaderMeta,
+      StrctCardHeaderNote,
+      StrctCardHeaderActions,
+    ],
+    template: `
+      <strct-card>
+        <strct-card-header icon="storage" heading="Capacity" appearance="overline">
+          <span strctCardHeaderMeta class="meta">92% used</span>
+          <span strctCardHeaderNote class="note">read 2 min ago</span>
+          <button strctCardHeaderActions class="act">Rename…</button>
+        </strct-card-header>
+      </strct-card>
+    `,
+  })
+  class SlotHost {}
+
+  it('orders icon · heading · meta, then the note and actions at the end', () => {
+    const fixture = TestBed.createComponent(SlotHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const main = el.querySelector('.strct-card__hmain')!;
+    const end = el.querySelector('.strct-card__hend')!;
+    expect(main.querySelector('.strct-card__hicon')).toBeTruthy();
+    expect(main.querySelector('.strct-card__htitle')!.textContent!.trim()).toBe('Capacity');
+    expect(main.querySelector('.meta')).toBeTruthy();
+    expect(end.querySelector('.note')).toBeTruthy();
+    expect(end.querySelector('.act')).toBeTruthy();
+    expect(el.querySelector('.strct-card__header')!.classList).toContain(
+      'strct-card__header--overline',
+    );
+  });
+
+  @Component({
+    imports: [StrctCard, StrctCardHeader],
+    template: `<strct-card
+      ><strct-card-header><span class="legacy">Hosts</span></strct-card-header></strct-card
+    >`,
+  })
+  class LegacyHost {}
+
+  it('a header that only projects content renders as before', () => {
+    const fixture = TestBed.createComponent(LegacyHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-card__hmain .legacy')).toBeTruthy();
+    expect(el.querySelector('.strct-card__htitle')).toBeNull();
+    expect(el.querySelector('.strct-card__header')!.classList).not.toContain(
+      'strct-card__header--overline',
+    );
   });
 });

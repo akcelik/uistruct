@@ -1,5 +1,15 @@
 # FR-48-13 … 17 — Headings and text
 
+> **SHIPPED in 4.5.0 (2026-09-29)** — all five. `strct-section-header` is new; `strct-card-header`
+> gained `heading` / `appearance` and the meta / note / actions slots; `strct-page-header` gained
+> `level` / `size` / `icon` and `[strctPageHeaderTitleMeta]`; the four text utilities sit next to
+> `.strct-mono`, with the caption slot on both `strct-toolbar` and the datagrid action bar; and
+> `[strctCode]` styles inline code, with `copyable` composing the existing `strct-copy`.
+>
+> The acceptance that needed measuring: the tones clear AA in all six schemes — muted on `--bg-1`
+> is 4.65–4.83:1 and overline 5.55–6.15:1, measured in Chrome with the translucent `--t2`/`--t3`
+> tokens composited over their ground (reading the token colours alone reports nonsense).
+
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
 These five are the largest source of hand-written CSS in the app: about 60 uppercase "eyebrow" rules in 40 files, and

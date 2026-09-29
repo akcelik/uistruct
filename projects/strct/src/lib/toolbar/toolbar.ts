@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  Directive,
   ElementRef,
   ViewEncapsulation,
   booleanAttribute,
@@ -28,6 +29,11 @@ import { FOCUSABLE_SELECTOR } from '../overlay/focus';
  * `selectionLabel` factory) with a × button that emits `(cleared)`.
  * `strct-toolbar-spacer` pushes following actions to the far end.
  */
+
+/** Muted note on the toolbar's row — placed before the spacer. */
+@Directive({ selector: '[strctToolbarCaption]' })
+export class StrctToolbarCaption {}
+
 @Component({
   selector: 'strct-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,12 +66,29 @@ import { FOCUSABLE_SELECTOR } from '../overlay/focus';
         </span>
         <span class="strct-tb__sep" role="separator" aria-orientation="vertical"></span>
       }
+      <span class="strct-tb__caption"><ng-content select="[strctToolbarCaption]" /></span>
       <ng-content />
     </div>
   `,
   host: { class: 'strct-toolbar-host' },
   styles: [
     `
+      /* A muted note on the button row's baseline; ellipsises before the
+         buttons wrap. */
+      .strct-tb__caption:empty {
+        display: none;
+      }
+      .strct-tb__caption {
+        display: inline-flex;
+        align-items: center;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: var(--text-sm);
+        color: var(--t3);
+      }
+
       .strct-toolbar-host {
         display: block;
       }

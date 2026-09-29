@@ -5,6 +5,40 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.5.0] - 2026-09-29
+
+### Added
+
+Headings and text (FR-48-13 … 17), the largest source of hand-written CSS in
+the app this batch came from: ~60 uppercase "eyebrow" rules across 40 files and
+147 inline muted paragraphs.
+
+- **`strct-section-header` (new).** A page is made of titled sections, and a
+  section title is a heading at the right level. `strct-page-header` is the
+  page's `h1` and `strct-card-header` needs a card; the piece between them had
+  no component. `level` (2–6) picks the element and `appearance`
+  (`title` | `overline`) picks the look, so the document outline stays right
+  whatever the section is styled like. `[strctSectionHeaderMeta]` follows the
+  heading on its line, `[strctSectionHeaderActions]` goes to the end.
+- **`strct-card-header`: `heading`, `appearance`, and meta / note / actions
+  slots.** The header row is now name · status · what you can do with the card,
+  in fixed places, so every card in an app lines up. A header that only projects
+  content renders exactly as before.
+- **`strct-page-header`: `level`, `size`, `icon` and `[strctPageHeaderTitleMeta]`.**
+  A header can be a page's `h1` or a pane's `h2`, carry the kind of object the
+  page is about, and hold a state badge beside the title. Defaults unchanged.
+- **Text utilities** next to `.strct-mono`: `.strct-text-muted`,
+  `.strct-text-hint`, `.strct-text-overline`, `.strct-text-lede`. Measured in
+  Chrome in all six schemes: muted on `--bg-1` is 4.65–4.83:1 and overline
+  5.55–6.15:1, so every tone clears AA. A `[strctToolbarCaption]` slot on
+  `strct-toolbar` and `[strctDatagridActionBarCaption]` on the grid's action bar
+  carry the same muted note on a button row.
+- **`[strctCode]` (new directive)** for a command, a path or an identifier
+  inside a sentence — `strct-code` is a block and `strct-kbd` means a key.
+  Padding is horizontal only and the line-height is inherited, so a code span
+  never changes a paragraph's leading. `copyable` appends the library's own
+  `strct-copy` button rather than re-implementing the clipboard.
+
 ## [4.4.1] - 2026-09-29
 
 ### Fixed

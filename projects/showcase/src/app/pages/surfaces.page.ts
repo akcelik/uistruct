@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+  StrctSectionHeader,
+  StrctSectionHeaderActions,
+  StrctSectionHeaderMeta,
   StrctAccordion,
   StrctAccordionPanel,
   StrctBadge,
@@ -84,6 +87,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctWatermark,
     StrctWizardAside,
     StrctProgress,
+    StrctSectionHeader,
+    StrctSectionHeaderMeta,
+    StrctSectionHeaderActions,
   ],
   template: `
     <app-page-header
@@ -213,6 +219,35 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <strct-tab label="Activity">Recent activity and an audit trail.</strct-tab>
         <strct-tab label="Settings" [disabled]="true">Disabled tab.</strct-tab>
       </strct-tabs>
+    </app-demo>
+
+    <app-demo
+      anchor="section-header"
+      heading="Section header"
+      description="A page is made of titled sections, and a section title is a heading at the right level. strct-page-header is the page's h1 and strct-card-header needs a card; this is the piece between them. level sets the element (h2–h6) and appearance sets the look, so the document outline stays right whatever the section is styled like. Meta follows the heading on its line; actions go to the end and wrap under it when narrow."
+      code='<strct-section-header heading="Proxy" description="How the appliance reaches the internet." [level]="3">&#10;  <strct-badge strctSectionHeaderMeta status="success">Tested</strct-badge>&#10;  <button strct-button strctSectionHeaderActions size="sm" variant="outline">Edit proxy…</button>&#10;</strct-section-header>'
+    >
+      <div class="stack" style="width: 100%; max-width: 560px;">
+        <strct-section-header
+          heading="Proxy"
+          description="How the appliance reaches the internet."
+          [level]="3"
+        >
+          <strct-badge strctSectionHeaderMeta status="success">Tested</strct-badge>
+          <button strct-button strctSectionHeaderActions size="sm" variant="outline">
+            Edit proxy…
+          </button>
+        </strct-section-header>
+        <strct-section-header heading="Certificates" appearance="overline" [level]="3" divider />
+        <strct-section-header
+          heading="Retention"
+          description="Older snapshots are removed first."
+          appearance="overline"
+          [level]="4"
+        >
+          <strct-badge strctSectionHeaderMeta>12 kept</strct-badge>
+        </strct-section-header>
+      </div>
     </app-demo>
 
     <app-demo
