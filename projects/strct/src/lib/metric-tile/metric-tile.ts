@@ -5,6 +5,7 @@ import {
   booleanAttribute,
   computed,
   input,
+  output,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 import { StrctSkeleton } from '../skeleton/skeleton';
@@ -51,8 +52,14 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
         }
       </div>
 
+      <!-- A number over its bar: the meter sits under the value and above the
+           caption, so "62 %" and "of 80 GB" read as one thing. -->
+      <div class="strct-mt__meter"><ng-content select="[strctMetricMeter]" /></div>
+
       @if (caption()) {
-        <div class="strct-mt__caption">{{ caption() }}</div>
+        <div class="strct-mt__caption strct-mt__caption--{{ captionStatus() ?? 'none' }}">
+          {{ caption() }}
+        </div>
       }
 
       @if (data().length) {
@@ -61,15 +68,29 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
         </div>
       }
     }
+    <!-- A KPI you can drill into is a link. The hit area covers the tile, so
+         the whole tile is the target and the focus ring is the tile's own. -->
+    @if (href()) {
+      <a class="strct-mt__hit" [href]="href()" [attr.aria-label]="hitLabel()"></a>
+    } @else if (interactive()) {
+      <button
+        type="button"
+        class="strct-mt__hit"
+        [attr.aria-label]="hitLabel()"
+        (click)="activated.emit()"
+      ></button>
+    }
   `,
   host: {
     class: 'strct-mt',
+    '[class.strct-mt--actionable]': 'href() || interactive()',
     '[class.strct-mt--loading]': 'loading()',
     '[attr.aria-busy]': 'loading() ? "true" : null',
   },
   styles: [
     `
       .strct-mt {
+        position: relative;
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -116,6 +137,28 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
       .strct-mt__delta--flat {
         color: var(--t3);
       }
+      .strct-mt__meter:empty {
+        display: none;
+      }
+      .strct-mt__hit {
+        position: absolute;
+        /* Over the border too, so the whole tile — not its padding box — is
+           the target. */
+        inset: -1px;
+        padding: 0;
+        border: 0;
+        background: none;
+        border-radius: inherit;
+        cursor: pointer;
+      }
+      .strct-mt__hit:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: 2px;
+      }
+      .strct-mt--actionable:hover {
+        border-color: var(--b3);
+        background: var(--bg-2);
+      }
       /* Visually hidden direction text — the arrow + colour alone don't carry it. */
       .strct-mt__sr {
         position: absolute;
@@ -157,6 +200,20 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
         font-size: 12px;
         color: var(--t3);
       }
+      /* "2 down" is the warning; the 14 nodes above it are not — so the tone
+         can sit on the caption instead of the value. */
+      .strct-mt__caption--accent {
+        color: var(--acc);
+      }
+      .strct-mt__caption--success {
+        color: var(--success);
+      }
+      .strct-mt__caption--warning {
+        color: var(--warning);
+      }
+      .strct-mt__caption--critical {
+        color: var(--critical);
+      }
       .strct-mt__spark {
         margin-top: 2px;
         line-height: 0;
@@ -179,6 +236,22 @@ export class StrctMetricTile {
   readonly icon = input('');
   /** Tints the value (defaults to neutral primary text). */
   readonly status = input<StrctMetricStatus>('neutral');
+  /**
+   * Tints the caption instead of the value — "2 down" is the warning, and the
+   * 14 nodes above it are not. `null` keeps the caption muted.
+   */
+  readonly captionStatus = input<StrctMetricStatus | null>(null);
+  /** Renders the tile as a link: the whole tile is the target. */
+  readonly href = input<string | null>(null);
+  /** Makes the whole tile a control that emits `activated`. */
+  readonly interactive = input(false, { transform: booleanAttribute });
+  /** Emitted when an `interactive` tile is activated. */
+  readonly activated = output<void>();
+
+  /** The link / button's name: the KPI and its value, since the tile is the target. */
+  protected readonly hitLabel = computed(() =>
+    [this.label(), `${this.value()}${this.unit()}`].filter(Boolean).join(': '),
+  );
   /** Change indicator; sign drives the arrow + colour. Null hides it. */
   readonly delta = input<number | null>(null);
   /** Suffix for the delta number. */

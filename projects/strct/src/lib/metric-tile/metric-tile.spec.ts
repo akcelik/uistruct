@@ -64,4 +64,47 @@ describe('StrctMetricTile', () => {
     const host = make({ label: 'X', value: 1 }).nativeElement as HTMLElement;
     expect(host.querySelector('.strct-mt__spark')).toBeNull();
   });
+
+  // FR-48-21
+  describe('actionable tiles, caption tone and the meter slot', () => {
+    function tile(inputs: Record<string, unknown>) {
+      const fixture = TestBed.createComponent(StrctMetricTile);
+      fixture.componentRef.setInput('label', 'Alarms');
+      fixture.componentRef.setInput('value', 7);
+      for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+      fixture.detectChanges();
+      return { fixture, el: fixture.nativeElement as HTMLElement };
+    }
+
+    it('renders a link that covers the tile and names the KPI', () => {
+      const { el } = tile({ href: '/alarms' });
+      const hit = el.querySelector('a.strct-mt__hit') as HTMLAnchorElement;
+      expect(hit).toBeTruthy();
+      expect(hit.getAttribute('href')).toBe('/alarms');
+      expect(hit.getAttribute('aria-label')).toBe('Alarms: 7');
+      expect(el.classList).toContain('strct-mt--actionable');
+    });
+
+    it('renders a button that emits activated', () => {
+      const { fixture, el } = tile({ interactive: true });
+      let n = 0;
+      fixture.componentInstance.activated.subscribe(() => n++);
+      (el.querySelector('button.strct-mt__hit') as HTMLElement).click();
+      expect(n).toBe(1);
+    });
+
+    it('tints only the caption with captionStatus', () => {
+      const { el } = tile({ caption: '2 down', captionStatus: 'warning' });
+      expect(el.querySelector('.strct-mt__caption')?.classList).toContain(
+        'strct-mt__caption--warning',
+      );
+      expect(el.querySelector('.strct-mt__value')?.classList).toContain('strct-mt__value--neutral');
+    });
+
+    it('is a plain tile by default', () => {
+      const { el } = tile({});
+      expect(el.querySelector('.strct-mt__hit')).toBeNull();
+      expect(el.classList).not.toContain('strct-mt--actionable');
+    });
+  });
 });

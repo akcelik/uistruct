@@ -16,6 +16,7 @@ import {
   StrctHeatmapCell,
   StrctIcon,
   StrctMetricTile,
+  StrctProgress,
   StrctSegmented,
   StrctSegmentedOption,
   StrctSparkline,
@@ -39,6 +40,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctHeatmap,
     StrctIcon,
     StrctMetricTile,
+    StrctProgress,
   ],
   template: `
     <app-page-header
@@ -449,6 +451,49 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="metric-tile-link"
+      owner="metric-tile"
+      heading="A tile you can drill into, a caption that carries the warning, a number over its bar"
+      description="A KPI you can drill into is a link: href makes the whole tile the target, with the tile's own focus ring and no anchor wrapped around it by hand; interactive does the same as a button and emits (activated). captionStatus tints only the caption, because “2 down” is the warning and 14 nodes is not. And [strctMetricMeter] projects a meter under the value and above the caption, for a number shown over its bar."
+      code='<strct-metric-tile href="/alarms" label="Alarms" [value]="7" caption="2 critical" captionStatus="critical" />'
+    >
+      <div class="mt-grid">
+        <strct-metric-tile
+          label="Alarms"
+          [value]="7"
+          icon="bell"
+          href="#/components/metric-tile"
+          caption="2 critical"
+          captionStatus="critical"
+        />
+        <strct-metric-tile
+          label="Nodes"
+          [value]="14"
+          icon="cluster"
+          caption="2 down"
+          captionStatus="warning"
+        />
+        <strct-metric-tile
+          label="Datastore"
+          [value]="62"
+          unit="%"
+          icon="storage"
+          caption="of 80 GB used"
+        >
+          <strct-progress strctMetricMeter [value]="62" size="sm" status="accent" />
+        </strct-metric-tile>
+        <strct-metric-tile
+          label="Snapshots"
+          [value]="23"
+          icon="layers"
+          interactive
+          (activated)="tileEcho.set('opened snapshots')"
+          [caption]="tileEcho() || 'click or tab to this tile'"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="flow"
       heading="Flow"
       description="An animated connection between endpoints — replication, sync, a pipeline. Toggle the live flow; packets stop and the connector rests when idle (and honour reduced motion)."
@@ -565,6 +610,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class ChartsPage implements OnDestroy {
+  protected readonly tileEcho = signal('');
+
   // Line & area demo controls.
   protected readonly area = signal(true);
   protected readonly glow = signal(true);

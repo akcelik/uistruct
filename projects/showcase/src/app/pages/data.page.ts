@@ -15,6 +15,8 @@ import {
   StrctListItemDescription,
   StrctListItemLeading,
   StrctListItem,
+  StrctLiveIndicator,
+  StrctLiveState,
   StrctList,
   StrctDatagridActionBar,
   StrctDatagridColumn,
@@ -79,6 +81,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctListItemDescription,
     StrctListItemMeta,
     StrctListItemTrailing,
+    StrctLiveIndicator,
   ],
   template: `
     <app-page-header title="Data" subtitle="Declarative, token-styled data display." />
@@ -165,6 +168,33 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       <span class="dot-row"
         ><strct-status-dot status="success" size="sm" /> sm, for dense rows</span
       >
+    </app-demo>
+
+    <app-demo
+      anchor="live-indicator"
+      owner="status-dot"
+      heading="Live, reconnecting, stale"
+      description='Something happening now pulses once a second; something that should be live and is not says so. pulse animates the dot&apos;s halo and never its size, so a column of dots does not jitter — and under prefers-reduced-motion the halo is a static ring. “Live · updates every 5 s”, “Reconnecting…” and “Last updated 3 min ago” are states of one indicator, not three captions beside three hand-rolled dots: strct-live-indicator switches wording and tone by state, re-renders its relative time every 30 s, and is a polite role="status" so a change is announced once — never each tick. Every string is an input.'
+      code='<strct-live-indicator state="live" [interval]="5000" />  ·  <strct-live-indicator state="stale" [updatedAt]="lastRead" />'
+    >
+      <div class="stack" style="gap: 12px;">
+        <span class="dot-row"><strct-status-dot status="success" pulse /> a task running</span>
+        <div style="display: flex; gap: 18px; flex-wrap: wrap;">
+          <strct-live-indicator state="live" [interval]="5000" />
+          <strct-live-indicator state="connecting" />
+          <strct-live-indicator state="reconnecting" />
+          <strct-live-indicator state="paused" />
+          <strct-live-indicator state="stale" [updatedAt]="lastRead" />
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          @for (st of liveStates; track st) {
+            <button strct-button size="sm" variant="flat" (click)="liveState.set(st)">
+              {{ st }}
+            </button>
+          }
+        </div>
+        <strct-live-indicator [state]="liveState()" [interval]="5000" [updatedAt]="lastRead" />
+      </div>
     </app-demo>
 
     <app-demo
@@ -729,6 +759,17 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class DataPage {
+  // FR-48-19 — the states of one live view.
+  protected readonly liveStates: StrctLiveState[] = [
+    'live',
+    'connecting',
+    'reconnecting',
+    'paused',
+    'stale',
+  ];
+  protected readonly liveState = signal<StrctLiveState>('live');
+  protected readonly lastRead = Date.now() - 3 * 60_000;
+
   protected readonly roSteps = signal(['disk', 'network (PXE)', 'optical', 'usb']);
   protected roMove(e: StrctReorderEvent): void {
     this.roSteps.update((list) => {

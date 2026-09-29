@@ -10,8 +10,26 @@
 > (`.strct-progress--neutral .strct-progress__fill`), so it never painted. Headless Chrome also
 > emulates `reduce` by default, so the first reading showed no animation in either mode.
 >
-> **Still open here: FR-48-19** (status-dot `pulse`, live indicator), **FR-48-21** (metric tile),
-> **FR-48-22** (alert icon override and layout), **FR-48-23** (`strct-legend`, donut legend).
+> **FR-48-19, 21 and 22 SHIPPED in 4.14.0 (2026-09-29)** — `pulse` and the new
+> `strct-live-indicator`; the metric tile's `href` / `interactive` / `captionStatus` /
+> `[strctMetricMeter]`; the alert's `icon` override and its inner row.
+>
+> Measured in Chrome, with the motion preference emulated both ways: the pulsing dot runs
+> `strct-dot-pulse` for 1s and stays **10×10 — the same size as a plain dot**, so the halo moves
+> and the dot does not; under `reduce` the animation is `none` and the halo is a static 3px ring.
+> The indicator reads "Live · updates every 5 s", "Connecting…", "Reconnecting…", "Paused" and
+> "Last updated 3 min ago" with success / accent / warning / neutral / warning dots, and only the
+> live one pulses.
+>
+> The tile's hit area measures **189×115 against a 189×115 tile** — it covers the border, not just
+> the padding box — Tab lands on it with `:focus-visible` and a 2px accent ring, its name is
+> "Alarms: 7", the caption tone leaves the value neutral, and a projected meter sits between the
+> value and the caption.
+>
+> The alert is `display: block` with a flex row inside: with an inline `display: block; margin-top:
+8px` — the override 124 alerts in the app carry — the icon still sits beside the text.
+>
+> **Still open here: FR-48-23** (`strct-legend`, donut legend below the ring and zero rows).
 
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 

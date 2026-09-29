@@ -5,6 +5,38 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.14.0] - 2026-09-29
+
+### Added
+
+- **`strct-status-dot pulse` and the new `strct-live-indicator`** (FR-48-19).
+  Something happening now pulses once a second; something that should be live
+  and is not says so. `pulse` animates the dot's **halo**, never its size, so a
+  column of dots does not jitter — and under `prefers-reduced-motion` the halo
+  is a static ring. `strct-live-indicator` makes "Live · updates every 5 s",
+  "Connecting…", "Reconnecting…", "Paused" and "Last updated 3 min ago" states
+  of one indicator rather than three captions beside three hand-rolled dots: it
+  picks the wording and the tone from `state`, re-renders its relative time
+  every 30 s, takes every string through `labels`, and is a polite
+  `role="status"` so a change is announced once and a tick never is.
+- **`strct-metric-tile`: `href`, `interactive`, `captionStatus` and
+  `[strctMetricMeter]`** (FR-48-21). A KPI you can drill into is a link — the
+  hit area covers the whole tile, border included, carries the tile's own focus
+  ring and is named "<label>: <value>", instead of an anchor wrapped around the
+  tile by hand. `captionStatus` tints only the caption, because "2 down" is the
+  warning and the 14 nodes above it are not. A projected meter sits under the
+  value and above the caption, for a number shown over its bar.
+- **`strct-alert [icon]`** (FR-48-22) overrides the icon derived from `type` — a
+  lock for a locked setting, a shield for a security note — when the tone alone
+  does not say what kind of note it is.
+
+### Fixed
+
+- **`strct-alert` keeps its layout when a consumer sets the host's `display`.**
+  The flex row moved to an inner element and the host is `display: block`, so
+  the `style="display:block; margin…"` an app adds for spacing no longer puts
+  the icon on its own line above the text.
+
 ## [4.13.0] - 2026-09-29
 
 ### Added
