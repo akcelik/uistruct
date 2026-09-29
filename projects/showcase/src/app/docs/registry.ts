@@ -2926,7 +2926,26 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description:
-              'Inline cell editing: double-click opens an input; Enter / blur commit via `(cellEdit)`, Escape cancels.',
+              'Inline cell editing: double-click opens an editor; Enter / blur commit via `(cellEdit)`, Escape cancels.',
+          },
+          {
+            name: 'columns[].editor',
+            type: `'text' | 'number' | 'select'`,
+            default: `'text'`,
+            description:
+              'Which editor the cell opens. `select` renders `strct-select` over `editorOptions` — the cell reads as the option’s label at rest and choosing is the commit. `number` renders `strct-number`, committing on Enter or blur, and the grid clamps to the column’s bounds (the component itself only clamps on blur).',
+          },
+          {
+            name: 'columns[].editorOptions',
+            type: 'StrctOption[]',
+            description:
+              'Options for `editor: "select"` — the library’s own `{ value, label }` shape, as `strct-select` and `strct-combobox` take.',
+          },
+          {
+            name: 'columns[].editorMin / editorMax / editorStep',
+            type: 'number',
+            description:
+              'Bounds and step for `editor: "number"`. They reach assistive tech as the spinbutton’s aria-valuemin / aria-valuemax, and a commit outside them is clamped.',
           },
           {
             name: 'emptyText',
@@ -2980,9 +2999,9 @@ export const DOCS: DocCategory[] = [
           },
           {
             name: 'cellEdit',
-            type: '{ row; column; value; previous }',
+            type: '{ row; column; value: string; typedValue: unknown; previous }',
             description:
-              'An editable cell was committed. The grid never mutates rows — apply the change and pass the updated array back in.',
+              'An editable cell was committed. `value` is the text form (what a `text` editor produces); `typedValue` is the number a `number` editor holds or the option’s `value` a `select` editor chose. The grid never mutates rows — apply the change and pass the updated array back in.',
           },
           {
             name: 'syncChange',
