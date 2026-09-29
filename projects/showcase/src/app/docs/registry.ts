@@ -364,6 +364,27 @@ export const DOCS: DocCategory[] = [
         lead: 'A horizontal value bar for completion or resource usage. The value is clamped to 0–100 and the fill takes a semantic color.',
         inputs: [
           {
+            name: 'visibleLabel / showValue / valueText / caption',
+            type: 'boolean / boolean / string / string',
+            default: 'false / false / "" / ""',
+            description:
+              'Meter mode: the label at the start of a row above the track, the value at its end (valueText, else `${value}%`), and a quiet caption under it. `label` stays the accessible name whether visible or not; `valueText` becomes aria-valuetext.',
+          },
+          {
+            name: 'segments',
+            type: 'StrctProgressSegment[] | null',
+            default: 'null',
+            description:
+              'Stack several fills — what a host runs now plus what would arrive if its neighbour failed. Widths are clamped so the total can never exceed the track, each segment carries its own tone, and their labels are joined into aria-valuetext ("Used 61%, Arriving 22%").',
+          },
+          {
+            name: 'indeterminate',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Running, with no percentage to report: a sweeping fill, no aria-valuenow, and aria-valuetext "In progress". Under prefers-reduced-motion it is a static striped fill rather than a moving one.',
+          },
+          {
             name: 'value',
             type: 'number',
             default: '0',
@@ -393,6 +414,13 @@ export const DOCS: DocCategory[] = [
         summary: 'Indeterminate loading ring in three sizes.',
         lead: 'An indeterminate loading ring for work of unknown duration. Honors prefers-reduced-motion by slowing the animation.',
         inputs: [
+          {
+            name: 'caption',
+            type: 'string',
+            default: '',
+            description:
+              'Visible text beside the ring — "Reading…". It becomes the accessible name too, so the spinner is not announced as "Loading" while it says something else. Without it the host is the ring exactly as before.',
+          },
           {
             name: 'size',
             type: `'sm' | 'md' | 'lg'`,
@@ -4112,8 +4140,15 @@ export const DOCS: DocCategory[] = [
         lead: 'A centered empty, permission or error state — an icon, a title, an optional description and a slot for call-to-action buttons. Project actions as children.',
         inputs: [
           {
+            name: 'size',
+            type: "'md' | 'sm'",
+            default: 'md',
+            description:
+              '`sm` is the inline row a small frame wants: a 16px icon with the title and description on one line, at --space-3 padding, instead of a 56px chip and 40px of padding.',
+          },
+          {
             name: 'variant',
-            type: `'empty' | 'denied' | 'error' | 'notfound'`,
+            type: `'empty' | 'denied' | 'error' | 'notfound' | 'loading'`,
             default: `'empty'`,
             description: 'Preset that supplies a default icon + tone.',
           },

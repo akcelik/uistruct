@@ -8,11 +8,20 @@ export type StrctSpinnerSize = 'sm' | 'md' | 'lg';
   selector: 'strct-spinner',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  template: '',
+  // With no caption the host IS the ring, exactly as before; a caption turns
+  // the host into a row and moves the ring inside, so nothing changes for the
+  // bare spinner that is already on hundreds of screens.
+  template: `
+    @if (caption()) {
+      <span class="strct-spinner__ring"></span>
+      <span class="strct-spinner__caption">{{ caption() }}</span>
+    }
+  `,
   host: {
     class: 'strct-spinner',
     role: 'progressbar',
-    '[attr.aria-label]': 'label()',
+    '[class.strct-spinner--captioned]': 'caption()',
+    '[attr.aria-label]': 'caption() || label()',
     '[class.strct-spinner--sm]': "size() === 'sm'",
     '[class.strct-spinner--lg]': "size() === 'lg'",
   },
@@ -55,4 +64,10 @@ export class StrctSpinner {
   readonly size = input<StrctSpinnerSize>('md');
   /** Accessible label (localizable). */
   readonly label = input('Loading');
+  /**
+   * Visible text beside the ring — "Reading…". It becomes the accessible name
+   * too, so the spinner is not announced as "Loading" while it says something
+   * else on screen.
+   */
+  readonly caption = input('');
 }

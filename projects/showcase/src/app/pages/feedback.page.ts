@@ -221,9 +221,17 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="empty-state"
       heading="Empty state"
-      description="Centered zero / permission / error states with an icon, copy and a call to action."
+      description='Centered zero / permission / error states with an icon, copy and a call to action. size="sm" is the inline row a small frame wants — a 16px icon with the title on one line — and variant="loading" swaps the icon chip for a spinner and marks the region aria-busy, so a card that is still reading says so where the content will be.'
+      code='<strct-empty-state size="sm" variant="loading" title="Reading…" />'
     >
       <div class="es-grid">
+        <strct-empty-state
+          size="sm"
+          variant="loading"
+          title="Reading…"
+          description="Fetching the host's inventory."
+        />
+        <strct-empty-state size="sm" title="No alarms" description="Nothing needs attention." />
         <strct-empty-state
           variant="empty"
           title="No virtual machines"
