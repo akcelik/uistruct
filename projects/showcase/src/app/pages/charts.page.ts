@@ -15,6 +15,8 @@ import {
   StrctHeatmap,
   StrctHeatmapCell,
   StrctIcon,
+  StrctFlowEdge,
+  StrctFlowNodeTemplate,
   StrctLegend,
   StrctLegendItem,
   StrctMetricTile,
@@ -44,6 +46,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctMetricTile,
     StrctProgress,
     StrctLegend,
+    StrctFlowNodeTemplate,
   ],
   template: `
     <app-page-header
@@ -566,6 +569,38 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         </button>
       </div>
     </app-demo>
+    <app-demo
+      anchor="flow-fanout"
+      owner="flow"
+      heading="Fan-out and tree"
+      description='Infrastructure diagrams fan out: one host lands its VMs on several others, one switch has several hosts each with its own uplinks. layout="fan-out" places the nodes in columns and draws the edges between them as orthogonal connectors, measured from the boxes&apos; real positions rather than guessed; layout="tree" derives those columns from each node&apos;s depth in the edge list. A node carries whatever an <ng-template strctFlowNode> puts in it — chips, a bar, a count — and an edge takes a status, a dashed style and an animated dash that holds still under prefers-reduced-motion. The diagram is described structurally: each column is a group with its heading, each node lists where it leads (“→ hv-02, hv-03”), and the SVG edges are hidden. Below 480px the columns stack and the connectors become a leading rail, because orthogonal edges between stacked columns say nothing. Chain mode is unchanged.'
+      code='<strct-flow layout="fan-out" [nodes]="nodes" [edges]="edges" [columns]="[&apos;This host&apos;, &apos;Lands on&apos;, &apos;Stays down&apos;]" />'
+    >
+      <div class="stack" style="gap: 28px; width: 100%;">
+        <strct-flow
+          layout="fan-out"
+          [nodes]="blastNodes"
+          [edges]="blastEdges"
+          [columns]="['This host', 'Lands on', 'Stays down']"
+          label="If hv-01 failed"
+        >
+          <ng-template strctFlowNode let-node>
+            <strong>{{ node.label }}</strong>
+            @if (node.data) {
+              <span style="font-size: var(--text-sm); color: var(--t3);">{{ node.data }}</span>
+            }
+          </ng-template>
+        </strct-flow>
+
+        <strct-flow
+          layout="tree"
+          [nodes]="topoNodes"
+          [edges]="topoEdges"
+          [columns]="['Switch', 'Hosts', 'Uplinks', 'Network']"
+          label="Switch topology"
+        />
+      </div>
+    </app-demo>
   `,
   styles: [
     `
@@ -656,6 +691,53 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class ChartsPage implements OnDestroy {
+  // FR-48-31 — the blast radius, and a two-level topology.
+  protected readonly blastNodes: StrctFlowNode[] = [
+    { id: 'src', label: 'hv-01.dc-west', column: 0, status: 'warning', data: '6 VMs running' },
+    {
+      id: 't1',
+      label: 'hv-02.dc-west',
+      column: 1,
+      status: 'success',
+      data: '4 VMs would land here',
+    },
+    {
+      id: 't2',
+      label: 'hv-03.dc-west',
+      column: 1,
+      status: 'success',
+      data: '1 VM would land here',
+    },
+    {
+      id: 'down',
+      label: 'sql-vm-02',
+      column: 2,
+      status: 'critical',
+      data: 'no host with enough memory',
+    },
+  ];
+  protected readonly blastEdges: StrctFlowEdge[] = [
+    { from: 'src', to: 't1', status: 'success' },
+    { from: 'src', to: 't2', status: 'success' },
+    { from: 'src', to: 'down', status: 'critical', style: 'dashed' },
+  ];
+  protected readonly topoNodes: StrctFlowNode[] = [
+    { id: 'sw', label: 'vSwitch0', status: 'accent' },
+    { id: 'h1', label: 'hv-01', status: 'success' },
+    { id: 'h2', label: 'hv-02', status: 'success' },
+    { id: 'u1', label: 'uplink 1', sublabel: '10 GbE' },
+    { id: 'u2', label: 'uplink 2', sublabel: '10 GbE', status: 'warning' },
+    { id: 'net', label: 'Production', status: 'accent' },
+  ];
+  protected readonly topoEdges: StrctFlowEdge[] = [
+    { from: 'sw', to: 'h1', status: 'accent' },
+    { from: 'sw', to: 'h2', status: 'accent' },
+    { from: 'h1', to: 'u1', animated: true },
+    { from: 'h2', to: 'u2', status: 'warning', style: 'dashed' },
+    { from: 'u1', to: 'net', status: 'accent' },
+    { from: 'u2', to: 'net', status: 'warning', style: 'dashed' },
+  ];
+
   // FR-48-23 — one key, three shapes.
   protected readonly edgeKey: StrctLegendItem[] = [
     { label: 'Uplink', color: 'var(--chart-1)', shape: 'line' },

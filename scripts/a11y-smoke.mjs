@@ -73,14 +73,25 @@ if (!chromeBin) {
 
 const chrome = spawn(
   chromeBin,
-  ['--headless=new', '--disable-gpu', '--no-sandbox', '--remote-debugging-port=9222', 'about:blank'],
+  [
+    '--headless=new',
+    '--disable-gpu',
+    '--no-sandbox',
+    '--remote-debugging-port=9222',
+    'about:blank',
+  ],
   { stdio: 'ignore' },
 );
 const axeSource = readFileSync('node_modules/axe-core/axe.min.js', 'utf8');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Chrome can take its time to open the port on a cold CI runner, so this waits
+// on a deadline rather than a fixed number of tries — and says what went wrong,
+// since a launch failure is not an accessibility finding. (The visual-regression
+// script waits the same way, after the same flake.)
 async function connect() {
-  for (let i = 0; i < 40; i++) {
+  const deadline = Date.now() + 30_000;
+  while (Date.now() < deadline) {
     try {
       const list = await (await fetch('http://localhost:9222/json/list')).json();
       const page = list.find((t) => t.type === 'page');
@@ -88,9 +99,12 @@ async function connect() {
     } catch {
       /* chrome not up yet */
     }
-    await sleep(300);
+    await sleep(250);
   }
-  throw new Error('CDP endpoint unavailable');
+  throw new Error(
+    `CDP endpoint unavailable: Chrome did not answer on port 9222 within 30s. ` +
+      `This is a launch failure, not an a11y finding — check the browser binary (${chromeBin}).`,
+  );
 }
 
 const ws = await connect();
@@ -219,7 +233,9 @@ writeFileSync(join(OUT, '_contrast.json'), JSON.stringify(contrasts, null, 2));
 chrome.kill();
 server.close();
 if (failures > 0) {
-  console.error(`\n${failures} a11y failure(s) — serious/critical violations or contrast below AA.`);
+  console.error(
+    `\n${failures} a11y failure(s) — serious/critical violations or contrast below AA.`,
+  );
   process.exit(1);
 }
 console.log('\nA11y smoke passed.');

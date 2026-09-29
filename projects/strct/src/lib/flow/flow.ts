@@ -1,12 +1,38 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  Directive,
+  ElementRef,
+  TemplateRef,
   ViewEncapsulation,
+  afterNextRender,
   booleanAttribute,
   computed,
+  contentChild,
+  effect,
+  inject,
   input,
+  signal,
 } from '@angular/core';
 import { StrctStatus } from '../status';
+
+/**
+ * A node's own content in a fan-out diagram — chips, a bar, a count. The
+ * template's context is the node (`let-node`), including its `data`.
+ */
+@Directive({ selector: 'ng-template[strctFlowNode]' })
+export class StrctFlowNodeTemplate {}
+
+/** An edge between two nodes, for `layout="fan-out"` / `"tree"`. */
+export interface StrctFlowEdge {
+  from: string;
+  to: string;
+  status?: StrctStatus;
+  style?: 'solid' | 'dashed';
+  animated?: boolean;
+}
 
 /** One endpoint in a `StrctFlow`. */
 export interface StrctFlowNode {
@@ -20,6 +46,10 @@ export interface StrctFlowNode {
   role?: string;
   /** Optional status dot tone for this terminal. */
   status?: StrctStatus;
+  /** Which column this node sits in (`fan-out`). Derived from depth in `tree`. */
+  column?: number;
+  /** Anything the node template needs — chips, a bar, a count. */
+  data?: unknown;
 }
 
 /** Direction of travel for the animated flow. */
@@ -46,55 +76,110 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
   selector: 'strct-flow',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
+  imports: [NgTemplateOutlet],
   template: `
-    <div class="strct-flow__row">
-      @for (node of nodes(); track node.id; let last = $last) {
-        <div class="strct-flow__node strct-flow__node--{{ node.status ?? 'neutral' }}">
-          <span class="strct-flow__dot" aria-hidden="true"></span>
-          <span class="strct-flow__node-text">
-            <span class="strct-flow__label">{{ node.label }}</span>
-            @if (node.role) {
-              <span class="strct-flow__role">{{ node.role }}</span>
+    @if (layout() !== 'chain') {
+      <div class="strct-flow__fan" #fan>
+        <!-- The edges are geometry, not content: they are measured from the
+             boxes after they render, and hidden from assistive tech, which is
+             given the structure instead. -->
+        <svg class="strct-flow__edges" aria-hidden="true" [attr.viewBox]="viewBox()">
+          @for (e of edgePaths(); track e.key) {
+            <path
+              class="strct-flow__edge strct-flow__edge--{{ e.status }}"
+              [class.strct-flow__edge--dashed]="e.dashed"
+              [class.strct-flow__edge--animated]="e.animated"
+              [attr.d]="e.d"
+              fill="none"
+            />
+          }
+        </svg>
+        @for (col of columnsView(); track col.index) {
+          <div class="strct-flow__col" role="group" [attr.aria-label]="col.heading || null">
+            @if (col.heading) {
+              <div class="strct-flow__colhead">{{ col.heading }}</div>
             }
-            @if (node.sublabel) {
-              <span class="strct-flow__sub">{{ node.sublabel }}</span>
-            }
-          </span>
-        </div>
-
-        @if (!last) {
-          <div class="strct-flow__conn" aria-hidden="true">
-            <span class="strct-flow__line"></span>
-            @if (showArrow('forward')) {
-              <span class="strct-flow__arrow strct-flow__arrow--fwd"></span>
-            }
-            @if (showArrow('reverse')) {
-              <span class="strct-flow__arrow strct-flow__arrow--rev"></span>
-            }
-            @if (animated()) {
-              @if (showArrow('forward')) {
-                <span class="strct-flow__pkt strct-flow__pkt--fwd strct-flow__pkt--1"></span>
-                <span class="strct-flow__pkt strct-flow__pkt--fwd strct-flow__pkt--2"></span>
-                <span class="strct-flow__pkt strct-flow__pkt--fwd strct-flow__pkt--3"></span>
+            <ul class="strct-flow__boxes">
+              @for (node of col.nodes; track node.id) {
+                <li
+                  class="strct-flow__box strct-flow__box--{{ node.status ?? 'neutral' }}"
+                  [attr.data-flow-node]="node.id"
+                >
+                  @if (nodeTpl(); as tpl) {
+                    <ng-container
+                      [ngTemplateOutlet]="tpl"
+                      [ngTemplateOutletContext]="{ $implicit: node, node }"
+                    />
+                  } @else {
+                    <span class="strct-flow__label">{{ node.label }}</span>
+                    @if (node.role) {
+                      <span class="strct-flow__role">{{ node.role }}</span>
+                    }
+                    @if (node.sublabel) {
+                      <span class="strct-flow__sub">{{ node.sublabel }}</span>
+                    }
+                  }
+                  <span class="strct-flow__sr">{{ nodeSummary(node) }}</span>
+                </li>
               }
-              @if (showArrow('reverse')) {
-                <span class="strct-flow__pkt strct-flow__pkt--rev strct-flow__pkt--1"></span>
-                <span class="strct-flow__pkt strct-flow__pkt--rev strct-flow__pkt--2"></span>
-                <span class="strct-flow__pkt strct-flow__pkt--rev strct-flow__pkt--3"></span>
-              }
-            }
+            </ul>
           </div>
         }
+      </div>
+      @if (label()) {
+        <div class="strct-flow__caption">{{ label() }}</div>
       }
-    </div>
+    } @else {
+      <div class="strct-flow__row">
+        @for (node of nodes(); track node.id; let last = $last) {
+          <div class="strct-flow__node strct-flow__node--{{ node.status ?? 'neutral' }}">
+            <span class="strct-flow__dot" aria-hidden="true"></span>
+            <span class="strct-flow__node-text">
+              <span class="strct-flow__label">{{ node.label }}</span>
+              @if (node.role) {
+                <span class="strct-flow__role">{{ node.role }}</span>
+              }
+              @if (node.sublabel) {
+                <span class="strct-flow__sub">{{ node.sublabel }}</span>
+              }
+            </span>
+          </div>
 
-    @if (caption()) {
-      <div class="strct-flow__caption">{{ caption() }}</div>
+          @if (!last) {
+            <div class="strct-flow__conn" aria-hidden="true">
+              <span class="strct-flow__line"></span>
+              @if (showArrow('forward')) {
+                <span class="strct-flow__arrow strct-flow__arrow--fwd"></span>
+              }
+              @if (showArrow('reverse')) {
+                <span class="strct-flow__arrow strct-flow__arrow--rev"></span>
+              }
+              @if (animated()) {
+                @if (showArrow('forward')) {
+                  <span class="strct-flow__pkt strct-flow__pkt--fwd strct-flow__pkt--1"></span>
+                  <span class="strct-flow__pkt strct-flow__pkt--fwd strct-flow__pkt--2"></span>
+                  <span class="strct-flow__pkt strct-flow__pkt--fwd strct-flow__pkt--3"></span>
+                }
+                @if (showArrow('reverse')) {
+                  <span class="strct-flow__pkt strct-flow__pkt--rev strct-flow__pkt--1"></span>
+                  <span class="strct-flow__pkt strct-flow__pkt--rev strct-flow__pkt--2"></span>
+                  <span class="strct-flow__pkt strct-flow__pkt--rev strct-flow__pkt--3"></span>
+                }
+              }
+            </div>
+          }
+        }
+      </div>
+
+      @if (caption()) {
+        <div class="strct-flow__caption">{{ caption() }}</div>
+      }
     }
   `,
   host: {
     class: 'strct-flow',
-    role: 'img',
+    '[attr.role]': "layout() === 'chain' ? 'img' : null",
+    '[class.strct-flow--fan]': "layout() !== 'chain'",
     '[class.strct-flow--vertical]': "orientation() === 'vertical'",
     '[class.strct-flow--neutral]': "status() === 'neutral'",
     '[class.strct-flow--accent]': "status() === 'accent'",
@@ -102,7 +187,7 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
     '[class.strct-flow--warning]': "status() === 'warning'",
     '[class.strct-flow--critical]': "status() === 'critical'",
     '[class.strct-flow--live]': 'animated()',
-    '[attr.aria-label]': 'ariaLabel()',
+    '[attr.aria-label]': "layout() === 'chain' ? ariaLabel() : null",
   },
   styles: [
     `
@@ -134,6 +219,123 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
       .strct-flow--vertical .strct-flow__row {
         flex-direction: column;
         align-items: stretch;
+      }
+
+      /* ── Fan-out / tree ───────────────────────────────────────────
+         Columns of boxes over an SVG underlay of orthogonal connectors. */
+      .strct-flow--fan {
+        container-type: inline-size;
+      }
+      .strct-flow__fan {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: var(--strct-flow-col-gap, 48px);
+      }
+      .strct-flow__edges {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: visible;
+      }
+      .strct-flow__edge {
+        stroke: var(--b3);
+        stroke-width: 1.5;
+      }
+      .strct-flow__edge--accent {
+        stroke: var(--acc);
+      }
+      .strct-flow__edge--success {
+        stroke: var(--success);
+      }
+      .strct-flow__edge--warning {
+        stroke: var(--warning);
+      }
+      .strct-flow__edge--critical {
+        stroke: var(--critical);
+      }
+      .strct-flow__edge--dashed {
+        stroke-dasharray: 4 3;
+      }
+      .strct-flow__edge--animated {
+        stroke-dasharray: 5 4;
+        animation: strct-flow-dash 1s linear infinite;
+      }
+      @keyframes strct-flow-dash {
+        to {
+          stroke-dashoffset: -9;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .strct-flow__edge--animated {
+          animation: none;
+        }
+      }
+      .strct-flow__col {
+        position: relative;
+        flex: 1 1 0;
+        min-width: 0;
+      }
+      .strct-flow__colhead {
+        font-size: var(--text-sm);
+        font-weight: 600;
+        color: var(--t3);
+        margin-block-end: var(--space-2);
+      }
+      .strct-flow__boxes {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+      }
+      .strct-flow__box {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        padding: var(--space-2) var(--space-3);
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-md);
+        background: var(--bg-1);
+        min-width: 0;
+      }
+      .strct-flow__box--accent {
+        border-color: var(--acc30);
+      }
+      .strct-flow__box--success {
+        border-color: var(--success);
+      }
+      .strct-flow__box--warning {
+        border-color: var(--warning);
+      }
+      .strct-flow__box--critical {
+        border-color: var(--critical);
+      }
+      .strct-flow__sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      /* Narrow: the columns stack and the connectors become a leading rail,
+         because orthogonal edges between stacked columns say nothing. */
+      @container (max-width: 480px) {
+        .strct-flow__fan {
+          flex-direction: column;
+          gap: var(--space-3);
+        }
+        .strct-flow__edges {
+          display: none;
+        }
+        .strct-flow__col {
+          padding-inline-start: var(--space-3);
+          border-inline-start: 2px solid var(--b2);
+        }
       }
 
       /* ── Terminal ─────────────────────────────────────────────── */
@@ -389,6 +591,141 @@ export class StrctFlow {
   readonly status = input<StrctStatus>('accent');
   /** Layout axis. */
   readonly orientation = input<StrctFlowOrientation>('horizontal');
+  /**
+   * `chain` (default) is the straight A → B connector. `fan-out` places nodes
+   * in columns and draws the edges between them; `tree` is `fan-out` with the
+   * columns derived from each node's depth.
+   */
+  readonly layout = input<'chain' | 'fan-out' | 'tree'>('chain');
+  /** The edges of a fan-out / tree. `null` keeps the consecutive chain. */
+  readonly edges = input<StrctFlowEdge[] | null>(null);
+  /** Column headings, in order. */
+  readonly columns = input<string[] | null>(null);
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
+  protected readonly nodeTpl = contentChild(StrctFlowNodeTemplate, { read: TemplateRef });
+
+  /** Which column each node sits in: its own, or its depth in the edge graph. */
+  private readonly columnOf = computed<Map<string, number>>(() => {
+    const nodes = this.nodes();
+    const map = new Map<string, number>();
+    if (this.layout() === 'tree') {
+      const parents = new Map<string, string>();
+      for (const e of this.edges() ?? []) parents.set(e.to, e.from);
+      const depth = (id: string, seen = new Set<string>()): number => {
+        const parent = parents.get(id);
+        if (parent === undefined || seen.has(id)) return 0;
+        seen.add(id);
+        return depth(parent, seen) + 1;
+      };
+      for (const n of nodes) map.set(n.id, n.column ?? depth(n.id));
+      return map;
+    }
+    for (const [i, n] of nodes.entries()) map.set(n.id, n.column ?? i);
+    return map;
+  });
+
+  /** The columns as rendered: a heading (when given) and the nodes in it. */
+  protected readonly columnsView = computed(() => {
+    const byColumn = new Map<number, StrctFlowNode[]>();
+    for (const n of this.nodes()) {
+      const c = this.columnOf().get(n.id) ?? 0;
+      byColumn.set(c, [...(byColumn.get(c) ?? []), n]);
+    }
+    const headings = this.columns() ?? [];
+    return [...byColumn.keys()]
+      .sort((a, b) => a - b)
+      .map((index) => ({ index, heading: headings[index] ?? '', nodes: byColumn.get(index)! }));
+  });
+
+  /** What a node says to assistive tech: itself, then where it leads. */
+  protected nodeSummary(node: StrctFlowNode): string {
+    const out = (this.edges() ?? [])
+      .filter((e) => e.from === node.id)
+      .map((e) => this.nodes().find((n) => n.id === e.to)?.label ?? e.to);
+    return out.length ? `→ ${out.join(', ')}` : '';
+  }
+
+  /** Measured edge geometry — recomputed whenever the boxes move or resize. */
+  protected readonly edgePaths = signal<
+    { key: string; d: string; status: string; dashed: boolean; animated: boolean }[]
+  >([]);
+  protected readonly viewBox = signal('0 0 0 0');
+
+  constructor() {
+    afterNextRender(() => this.observe());
+    // Re-measure when the data changes; the observer covers size changes.
+    effect(() => {
+      this.nodes();
+      this.edges();
+      this.layout();
+      queueMicrotask(() => this.measure());
+    });
+  }
+
+  private observe(): void {
+    if (this.layout() === 'chain' || typeof ResizeObserver === 'undefined') return;
+    const fan = this.host.nativeElement.querySelector<HTMLElement>('.strct-flow__fan');
+    if (!fan) return;
+    const ro = new ResizeObserver(() => this.measure());
+    ro.observe(fan);
+    for (const box of fan.querySelectorAll('.strct-flow__box')) ro.observe(box);
+    this.destroyRef.onDestroy(() => ro.disconnect());
+    this.measure();
+  }
+
+  /**
+   * Orthogonal connectors, from the boxes' real positions: out of the source's
+   * inline end, across the gap, then into the target's inline start.
+   */
+  private measure(): void {
+    if (this.layout() === 'chain') return;
+    const fan = this.host.nativeElement.querySelector<HTMLElement>('.strct-flow__fan');
+    const edges = this.edges();
+    if (!fan || !edges?.length) {
+      this.edgePaths.set([]);
+      return;
+    }
+    const base = fan.getBoundingClientRect();
+    this.viewBox.set(`0 0 ${Math.round(base.width)} ${Math.round(base.height)}`);
+    // Looked up from the boxes themselves rather than through a selector: a
+    // node id is consumer data, and CSS.escape is not everywhere (jsdom).
+    const boxes = new Map<string, HTMLElement>();
+    for (const el of fan.querySelectorAll<HTMLElement>('[data-flow-node]')) {
+      const id = el.dataset['flowNode'];
+      if (id) boxes.set(id, el);
+    }
+    const rect = (id: string) => {
+      const el = boxes.get(id);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.left - base.left, y: r.top - base.top, w: r.width, h: r.height };
+    };
+    const paths = [];
+    for (const [i, e] of edges.entries()) {
+      const a = rect(e.from);
+      const b = rect(e.to);
+      if (!a || !b) continue;
+      const x1 = a.x + a.w;
+      const y1 = a.y + a.h / 2;
+      const x2 = b.x;
+      const y2 = b.y + b.h / 2;
+      const mid = x1 + (x2 - x1) / 2;
+      const d =
+        Math.abs(y1 - y2) < 1
+          ? `M ${x1} ${y1} L ${x2} ${y2}`
+          : `M ${x1} ${y1} H ${mid} V ${y2} H ${x2}`;
+      paths.push({
+        key: `${e.from}-${e.to}-${i}`,
+        d,
+        status: e.status ?? 'neutral',
+        dashed: e.style === 'dashed',
+        animated: !!e.animated,
+      });
+    }
+    this.edgePaths.set(paths);
+  }
 
   /** A flow needs at least two terminals to animate. */
   protected readonly connected = computed(() => this.nodes().length > 1);

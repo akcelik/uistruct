@@ -4248,6 +4248,38 @@ export const DOCS: DocCategory[] = [
             default: `''`,
             description: 'Caption under the connector (e.g. "live replication", "0 lag").',
           },
+          {
+            name: 'layout',
+            type: `'chain' | 'fan-out' | 'tree'`,
+            default: `'chain'`,
+            description:
+              'Infrastructure diagrams fan out. `fan-out` places the nodes in columns (their own `column`, or their order) and draws the `edges` between them as orthogonal connectors, measured from the boxes\u2019 real positions; `tree` derives those columns from each node\u2019s depth in the edge list. `chain` is the straight A → B connector, unchanged.',
+          },
+          {
+            name: 'edges',
+            type: 'StrctFlowEdge[] | null',
+            default: 'null',
+            description:
+              '`{ from; to; status?; style?: "solid" | "dashed"; animated? }[]`. An animated edge\u2019s dash holds still under `prefers-reduced-motion`.',
+          },
+          {
+            name: 'columns',
+            type: 'string[] | null',
+            default: 'null',
+            description: 'Column headings, in order — each column is a labelled group.',
+          },
+          {
+            name: 'nodes[].column / data',
+            type: 'number · unknown',
+            description:
+              'Which column a node sits in, and whatever its template needs — chips, a bar, a count.',
+          },
+          {
+            name: '[strctFlowNode]',
+            type: 'ng-template',
+            description:
+              'A node\u2019s own content (`let-node`), for the lines a one-line terminal cannot carry.',
+          },
         ],
         do: [
           'Use it for replication / sync / pipeline relationships between two or more nodes.',
@@ -4255,6 +4287,7 @@ export const DOCS: DocCategory[] = [
         ],
         dont: ['Do not animate a static relationship — leave `live` off so the connector rests.'],
         a11y: [
+          'In fan-out / tree the diagram is described structurally: each column is a group with its heading, each node lists where it leads ("→ hv-02, hv-03"), and the SVG edges are aria-hidden. Below 480px the columns stack and the connectors become a leading rail.',
           'Renders role="img" with an aria-label summarizing the flow; honours prefers-reduced-motion (packets drop to a static gradient).',
         ],
       },

@@ -5,6 +5,33 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.19.0] - 2026-09-29
+
+### Added
+
+- **`strct-flow`: a fan-out layout, edges and node templates** (FR-48-31).
+  Infrastructure diagrams fan out — one host lands its VMs on several others,
+  one switch has several hosts each with its own uplinks — and a diagram node
+  carries more than one line. `layout="fan-out"` places the nodes in columns and
+  draws the **`edges`** between them as orthogonal connectors, measured from the
+  boxes' real positions and re-measured on resize; `layout="tree"` derives those
+  columns from each node's depth in the edge list. `columns` names each column,
+  `nodes[].data` carries whatever an `<ng-template strctFlowNode>` needs, and an
+  edge takes a `status`, a dashed `style` and an `animated` dash that holds still
+  under `prefers-reduced-motion`. `chain` — the straight A → B connector — is
+  unchanged.
+
+  The diagram is described **structurally**: each column is a labelled group,
+  each node says where it leads ("→ hv-02, hv-03"), and the SVG edges are
+  `aria-hidden`. Below 480px the columns stack and the connectors become a
+  leading rail, because orthogonal edges between stacked columns say nothing.
+
+### Fixed
+
+- **The a11y smoke no longer fails when Chrome is slow to start.** It now waits
+  on the same 30s deadline the visual-regression script uses (after the same
+  flake) and says that a launch failure is not an accessibility finding.
+
 ## [4.18.0] - 2026-09-29
 
 ### Added
