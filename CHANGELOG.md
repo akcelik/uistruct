@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.16.0] - 2026-09-29
+
+### Added
+
+- **`strct-description-list align="grid"`, with `labelWidth`** (FR-48-25). A list
+  of facts lines its values up: one label column sized to the longest label, so
+  every value starts on the same vertical line — what about 33 hand-built
+  `auto 1fr` grids in the audited app are for. The rows go `display: contents`,
+  so their `dt` / `dd` become the grid's own items and the hairline moves with
+  them.
+- **`strct-desc`: `status`, `statusLabel`, `icon` and `note`** (FR-48-25). A fact
+  can carry its state and a short note — "Agent · connected · last seen 12 s
+  ago" is one row rather than a dot, a label, a value and a caption assembled by
+  hand.
+- **`strct-tree`: `framed` and `maxHeight`** (FR-48-28). A tree used as a picker
+  inside a dialog sits in a frame and scrolls inside it, drawn from tokens
+  instead of an inline-styled wrapper whose dark-theme colours are hard-coded.
+  Keyboard navigation scrolls the focused node into view **inside the frame**,
+  not the page.
+- **`strct-avatar`: `icon`, `shape` and `tone`** (FR-48-29). Not every avatar is
+  a person with initials: a group is a square, an assistant is an icon, a brand
+  mark is an accent tile. An `src` image still wins over an icon, and the icon
+  scales with the avatar (13 / 17 / 22px).
+
 ## [4.15.0] - 2026-09-29
 
 ### Added

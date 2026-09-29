@@ -73,4 +73,45 @@ describe('StrctDescriptionList', () => {
     expect(setup({ align: 'between' }).classList).not.toContain('strct-dl--start');
     expect(setup({ align: 'start' }).classList).toContain('strct-dl--start');
   });
+
+  // FR-48-25
+  describe('grid alignment, status and a note', () => {
+    it('lays the rows out as one label column', () => {
+      const fixture = TestBed.createComponent(StrctDescriptionList);
+      fixture.componentRef.setInput('items', [
+        { label: 'IPv4', value: '172.16.75.100' },
+        { label: 'Gateway address', value: '172.16.75.2' },
+      ]);
+      fixture.componentRef.setInput('align', 'grid');
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.classList).toContain('strct-dl--grid');
+      fixture.componentRef.setInput('labelWidth', '160px');
+      fixture.detectChanges();
+      expect(el.style.getPropertyValue('--strct-dl-label-w')).toBe('160px');
+    });
+
+    it('renders a status dot, an icon and a note on a row', () => {
+      const fixture = TestBed.createComponent(StrctDesc);
+      fixture.componentRef.setInput('label', 'Agent');
+      fixture.componentRef.setInput('status', 'success');
+      fixture.componentRef.setInput('icon', 'host');
+      fixture.componentRef.setInput('note', 'last seen 12 s ago');
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector('.strct-desc__label strct-status-dot')).toBeTruthy();
+      expect(el.querySelector('.strct-desc__label strct-icon')).toBeTruthy();
+      expect(el.querySelector('.strct-desc__note')?.textContent).toContain('last seen 12 s ago');
+      expect(el.querySelector('.strct-desc__label')?.textContent).toContain('Agent');
+    });
+
+    it('is a plain row without them', () => {
+      const fixture = TestBed.createComponent(StrctDesc);
+      fixture.componentRef.setInput('label', 'IPv4');
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector('strct-status-dot')).toBeNull();
+      expect(el.querySelector('.strct-desc__note')).toBeNull();
+    });
+  });
 });

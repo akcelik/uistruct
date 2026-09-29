@@ -282,6 +282,22 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="avatar-icon"
+      owner="avatar"
+      heading="Not every avatar is a person"
+      description='A group is a square, an assistant is an icon, a brand mark is a tile. icon renders in place of initials (an src image still wins), shape="square" rounds to --radius-md instead of a circle, and tone paints the surface — accent-soft for the quiet accent tile a brand mark or an assistant wants.'
+      code='<strct-avatar icon="users" shape="square" tone="neutral" name="Platform Admins" />'
+    >
+      <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
+        <strct-avatar name="Ada Lovelace" />
+        <strct-avatar name="Platform Admins" icon="users" shape="square" />
+        <strct-avatar name="Assistant" icon="sparkles" tone="accent-soft" />
+        <strct-avatar name="UIStruct" icon="layers" shape="square" tone="accent" size="lg" />
+        <strct-avatar name="Alert owner" icon="bell" tone="critical" size="sm" />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="progress"
       heading="Progress"
       description="Value bar with a semantic status color."
