@@ -10,6 +10,7 @@ import {
   StrctCombobox,
   StrctDatepicker,
   StrctDatetimePicker,
+  StrctControlDescription,
   StrctField,
   StrctFieldHint,
   StrctFieldPrefix,
@@ -48,6 +49,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     FormsModule,
     ReactiveFormsModule,
     StrctButton,
+    StrctControlDescription,
     StrctField,
     StrctFieldHint,
     StrctFieldPrefix,
@@ -322,6 +324,72 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <strct-radio [value]="'lg'">Large</strct-radio>
       </strct-radio-group>
       <span class="echo">selected: {{ size() }}</span>
+    </app-demo>
+
+    <app-demo
+      anchor="radio-card"
+      owner="radio"
+      heading="Radio cards"
+      description='A choice between a few kinds of thing, each needing a sentence to explain, is a set of radio cards — radio semantics with a card look. variant="card" on the group turns each option into a tile with room for an icon and a description; the tiles lay themselves out as many --strct-radio-card-min (220px) columns as fit, then stack. It stays a native radio group underneath: one tab stop, arrow keys move the choice, and the selected tile takes the accent border. Without the variant, nothing changes.'
+      code='<strct-radio-group [(ngModel)]="kind" variant="card">&#10;  <strct-radio value="ldap" icon="users" description="Active Directory or any LDAP v3 directory.">LDAP</strct-radio>&#10;</strct-radio-group>'
+    >
+      <div style="width: 100%;">
+        <strct-radio-group variant="card" [ngModel]="idKind()" (ngModelChange)="idKind.set($event)">
+          <strct-radio
+            value="ldap"
+            icon="users"
+            description="Active Directory or any LDAP v3 directory."
+          >
+            LDAP
+          </strct-radio>
+          <strct-radio
+            value="oidc"
+            icon="shieldCheck"
+            description="Entra ID, Okta, Keycloak — any OpenID Connect provider."
+          >
+            OpenID Connect
+          </strct-radio>
+          <strct-radio value="local" icon="user">
+            Local accounts
+            <span strctControlDescription>
+              Kept on this appliance only. <strong>No single sign-on.</strong>
+            </span>
+          </strct-radio>
+        </strct-radio-group>
+        <span class="echo">selected: {{ idKind() }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="control-description"
+      owner="checkbox"
+      heading="A description on a checkbox, toggle or radio"
+      description="An option whose consequence needs a sentence carries that sentence as its description. It renders inside the control's own label — so clicking the sentence still toggles the option — and is tied to the control with aria-describedby rather than becoming part of its name. That replaces the wrapper pattern of an outer label with a muted span, which nests a label inside the component's own and doubles the accessible name. [strctControlDescription] projects one with markup in it."
+      code='<strct-checkbox [(ngModel)]="net" description="The cluster networks, IP addresses and Windows Firewall.">Network</strct-checkbox>'
+    >
+      <div class="stack" style="max-width: 520px;">
+        <strct-checkbox
+          [ngModel]="valNetwork()"
+          (ngModelChange)="valNetwork.set($event)"
+          description="The cluster networks, IP addresses and Windows Firewall."
+        >
+          Network
+        </strct-checkbox>
+        <strct-checkbox
+          [ngModel]="valStorage()"
+          (ngModelChange)="valStorage.set($event)"
+          description="Disks, storage pools and the resiliency settings of each volume."
+        >
+          Storage
+        </strct-checkbox>
+        <strct-toggle
+          [ngModel]="rolling()"
+          (ngModelChange)="rolling.set($event)"
+          description="Hosts are put in maintenance one at a time, so the workload keeps running."
+        >
+          Rolling update
+        </strct-toggle>
+      </div>
     </app-demo>
 
     <app-demo
@@ -774,6 +842,10 @@ export class FormsPage {
   protected readonly tfAssigned = signal<string[]>(['hv-01']);
 
   // FR-48-05 / 06 / 07 — a settings form, a unit in the box, a hint with markup.
+  protected readonly idKind = signal('ldap');
+  protected readonly valNetwork = signal(true);
+  protected readonly valStorage = signal(false);
+  protected readonly rolling = signal(true);
   protected readonly vmLabel = signal('web-01');
   protected readonly vmCpus = signal(4);
   protected readonly vmMem = signal(8192);

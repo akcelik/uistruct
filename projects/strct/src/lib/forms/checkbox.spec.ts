@@ -66,4 +66,32 @@ describe('StrctCheckbox', () => {
     expect(cmp.isDisabled()).toBe(true);
     expect(native.disabled).toBe(true);
   });
+
+  // FR-48-04 — the sentence belongs to the option, inside its own label.
+  it('renders a description inside the label and links it with aria-describedby', () => {
+    const fixture = TestBed.createComponent(StrctCheckbox);
+    fixture.componentRef.setInput('description', 'The cluster networks and the firewall.');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const desc = el.querySelector('.strct-cb__desc') as HTMLElement;
+    expect(desc.textContent).toContain('The cluster networks');
+    // inside the component's own <label>, so clicking the sentence toggles it
+    expect(desc.closest('label')).toBe(el.querySelector('label'));
+    expect(el.querySelectorAll('label').length).toBe(1);
+    expect(el.querySelector('input')?.getAttribute('aria-describedby')).toBe(desc.id);
+    expect(el.querySelector('.strct-cb')?.classList).toContain('strct-cb--described');
+    // The sentence shares the <label>, so the name is pinned to the label text
+    // rather than swallowing the description as well.
+    const labelSpan = el.querySelector('.strct-cb__label') as HTMLElement;
+    expect(el.querySelector('input')?.getAttribute('aria-labelledby')).toBe(labelSpan.id);
+  });
+
+  it('has no description element by default', () => {
+    const fixture = TestBed.createComponent(StrctCheckbox);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-cb__desc')).toBeNull();
+    expect(el.querySelector('input')?.getAttribute('aria-describedby')).toBeNull();
+    expect(el.querySelector('input')?.getAttribute('aria-labelledby')).toBeNull();
+  });
 });

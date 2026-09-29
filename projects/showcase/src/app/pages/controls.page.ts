@@ -9,7 +9,9 @@ import {
   StrctProgressSegment,
   StrctSpeedDial,
   StrctSpinner,
+  StrctStatusDot,
   StrctTag,
+  StrctTagLeading,
   StrctTooltip,
   StrctCopy,
   StrctSplitButton,
@@ -35,6 +37,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctTooltip,
     StrctCopy,
     StrctSplitButton,
+    StrctStatusDot,
+    StrctTagLeading,
   ],
   template: `
     <app-page-header title="Controls" subtitle="Buttons and at-a-glance status indicators." />
@@ -178,6 +182,45 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       @for (t of tags(); track t) {
         <strct-tag status="accent" removable (removed)="removeTag(t)">{{ t }}</strct-tag>
       }
+    </app-demo>
+
+    <app-demo
+      anchor="tag-interactive"
+      owner="tag"
+      heading="A tag as a control"
+      description='A tag is also the natural control for a thing you can reopen — a minimised console, a suggested question, a VM in a list — and removing it is a separate act. interactive makes the body activate on click, Enter or Space and emit (activated), while the × stays its own tab stop: two targets, two things to say. [strctTagLeading] projects a status dot or an icon before the text, shape="pill" rounds it fully, and mono is for names that are identifiers. The body carries role="button" rather than being a <button>, because a template can project the same content into only one place — the shape strct-list-item and strct-tree rows use.'
+      code='<strct-tag interactive removable shape="pill" (activated)="restore(c)" (removed)="close(c)" removeLabel="Close the console of APP01">&#10;  <strct-status-dot strctTagLeading status="success" size="sm" />&#10;  APP01&#10;</strct-tag>'
+    >
+      <div style="display: flex; flex-direction: column; gap: 14px; width: 100%;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          @for (c of consoles(); track c.name) {
+            <strct-tag
+              interactive
+              removable
+              shape="pill"
+              [removeLabel]="'Close the console of ' + c.name"
+              (activated)="lastTagAction.set('opened ' + c.name)"
+              (removed)="closeConsole(c.name)"
+            >
+              <strct-status-dot strctTagLeading [status]="c.status" size="sm" />
+              <strct-icon strctTagLeading strictName="monitor" [size]="13" />
+              {{ c.name }}
+            </strct-tag>
+          }
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <strct-tag mono>vm-8f3c2a1b</strct-tag>
+          <strct-tag mono status="critical">stranded: db-02</strct-tag>
+          <strct-tag
+            shape="pill"
+            interactive
+            (activated)="lastTagAction.set('asked: why is it slow?')"
+          >
+            Why is this host slow?
+          </strct-tag>
+        </div>
+        <span class="echo">{{ lastTagAction() || 'click a chip, or its ×' }}</span>
+      </div>
     </app-demo>
 
     <app-demo
@@ -334,6 +377,18 @@ export class ControlsPage {
   ];
 
   protected readonly tags = signal(['Frontend', 'Design', 'Infra']);
+
+  // FR-48-03 — minimised consoles: the body opens one, the × closes it.
+  protected readonly consoles = signal<{ name: string; status: 'success' | 'warning' }[]>([
+    { name: 'APP01', status: 'success' },
+    { name: 'DB-PRIMARY', status: 'success' },
+    { name: 'BUILD-07', status: 'warning' },
+  ]);
+  protected readonly lastTagAction = signal('');
+  protected closeConsole(name: string): void {
+    this.consoles.update((list) => list.filter((c) => c.name !== name));
+    this.lastTagAction.set('closed ' + name);
+  }
 
   protected removeTag(tag: string): void {
     this.tags.update((list) => list.filter((t) => t !== tag));

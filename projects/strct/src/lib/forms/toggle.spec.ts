@@ -52,4 +52,15 @@ describe('StrctToggle', () => {
     expect(cmp.isDisabled()).toBe(true);
     expect(native.disabled).toBe(true);
   });
+
+  it('renders a description inside its label and links it (FR-48-04)', () => {
+    const fixture = TestBed.createComponent(StrctToggle);
+    fixture.componentRef.setInput('description', 'Hosts are put in maintenance one at a time.');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const desc = el.querySelector('.strct-tg__desc') as HTMLElement;
+    expect(desc.textContent).toContain('maintenance');
+    expect(el.querySelectorAll('label').length).toBe(1);
+    expect(el.querySelector('input')?.getAttribute('aria-describedby')).toBe(desc.id);
+  });
 });

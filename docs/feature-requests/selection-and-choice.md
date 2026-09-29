@@ -9,8 +9,27 @@
 > what gives "arrows move, Space picks" — and, measured in Chrome, it skips a locked row on the
 > way (0 → 2 → 3).
 >
-> **Still open here: FR-48-02** (radio card variant), **03** (interactive tag), **04** (description
-> line on checkbox / toggle / radio).
+> **FR-48-02, 03 and 04 SHIPPED in 4.11.0 (2026-09-29)** — `variant="card"` on the radio group,
+> `interactive` / `shape` / `mono` / `[strctTagLeading]` on the tag, and `description` (plus
+> `[strctControlDescription]`) on checkbox, toggle and radio.
+>
+> Measured in Chrome. **Cards:** three tiles stay side by side down to a 448px group (2 × 220px +
+> the 8px gap) and stack at 440 — the acceptance asks for two at ≥ 460px — while the group keeps
+> `role="radiogroup"`, one `name`, and an arrow key moving the choice (0 → 1, accent border
+> following). **Descriptions:** one `<label>` per control with the sentence inside it, so clicking
+> the sentence toggles the option (measured: checked true → false), and the accessibility tree
+> reads name "Network", description "The cluster networks, IP addresses and Windows Firewall." —
+> not the two run together. Sharing the `<label>` would have doubled the name, so the name is
+> pinned to the label text with `aria-labelledby`. **Tags:** the pill measures a 999px radius
+> against the default 4px, mono resolves to JetBrains Mono, the body is `role="button"` with
+> `tabindex="0"` beside the ×'s own tab stop, Enter on the body emits `activated` ("opened APP01")
+> and the × emits only `removed` ("closed APP01").
+>
+> The tag body is a span with `role="button"` rather than a `<button>`: a template can project the
+> same content into only one place, so branching the markup on `interactive` would drop it in the
+> other branch. `strct-list-item` and `strct-tree` rows have the same shape.
+>
+> **Every ask in this document has shipped.**
 
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md),
 which also covers how these proposals follow the library's conventions.

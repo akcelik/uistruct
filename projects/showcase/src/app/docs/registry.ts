@@ -255,7 +255,7 @@ export const DOCS: DocCategory[] = [
         id: 'tag',
         title: 'Tag',
         selector: 'strct-tag',
-        importNames: ['StrctTag'],
+        importNames: ['StrctTag', 'StrctTagLeading'],
         summary: 'Compact, optionally removable chip.',
         lead: 'A compact label chip for categories, filters or applied facets. Add `removable` to show a dismiss button that emits `removed`.',
         inputs: [
@@ -271,6 +271,30 @@ export const DOCS: DocCategory[] = [
             default: 'false',
             description: 'Show a trailing remove button.',
           },
+          {
+            name: 'interactive',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'The body becomes the control for the thing the tag names: pointer, hover, focus ring, and `(activated)` on click / Enter / Space. The × stays its own tab stop, so “open it” and “remove it” are two targets. The body carries `role="button"` rather than being a `<button>`, because a template can project the same content into only one place — the shape `strct-list-item` and `strct-tree` rows use.',
+          },
+          {
+            name: 'shape',
+            type: `'default' | 'pill'`,
+            default: `'default'`,
+            description: '`pill` rounds the tag fully — a chip for a thing, not a label on one.',
+          },
+          {
+            name: 'mono',
+            type: 'boolean',
+            default: 'false',
+            description: 'Monospace text, for names that are identifiers.',
+          },
+          {
+            name: '[strctTagLeading]',
+            type: 'slot',
+            description: 'Rendered before the text, inside the body — a status dot or an icon.',
+          },
         ],
         outputs: [
           {
@@ -278,9 +302,21 @@ export const DOCS: DocCategory[] = [
             type: 'void',
             description: 'Fired when the remove button is clicked.',
           },
+          {
+            name: 'activated',
+            type: 'void',
+            description: 'An `interactive` tag’s body was activated (click / Enter / Space).',
+          },
         ],
-        do: ['Use for user-applied, removable labels.', 'Handle (removed) to update your model.'],
-        dont: ['Do not use tags to convey one-off status — prefer a badge.'],
+        do: [
+          'Use for user-applied, removable labels.',
+          'Handle (removed) to update your model.',
+          'Reach for `interactive` when the tag names something that can be reopened — a minimised console, a suggested question.',
+        ],
+        dont: [
+          'Do not use tags to convey one-off status — prefer a badge.',
+          'Do not build your own pill from a span and two buttons.',
+        ],
       },
       {
         id: 'copy',
@@ -651,33 +687,69 @@ export const DOCS: DocCategory[] = [
         id: 'checkbox',
         title: 'Checkbox',
         selector: 'strct-checkbox',
-        importNames: ['StrctCheckbox'],
+        importNames: ['StrctCheckbox', 'StrctControlDescription'],
         summary: 'Custom checkbox with form binding.',
         lead: 'A custom-drawn checkbox that is ControlValueAccessor-compatible, so it works with ngModel and reactive forms. Project the label as content.',
-        inputs: [model('boolean', 'Checked state.'), disabledRow],
-        do: ['Use for independent on/off options.'],
-        dont: ['Do not use a single checkbox where a toggle reads better (e.g. settings).'],
-        a11y: [cvaA11y, 'Space toggles the box; the projected label is clickable.'],
+        inputs: [
+          model('boolean', 'Checked state.'),
+          {
+            name: 'description',
+            type: 'string',
+            default: `''`,
+            description:
+              'A sentence under the label explaining the option’s consequence. It renders inside the component’s own `<label>` — so clicking the sentence still toggles the option — and is linked with `aria-describedby`, while the accessible name stays the label. `[strctControlDescription]` projects one with markup in it.',
+          },
+          disabledRow,
+        ],
+        do: [
+          'Use for independent on/off options.',
+          'Put the consequence in `description` rather than in a paragraph beside the control.',
+        ],
+        dont: [
+          'Do not use a single checkbox where a toggle reads better (e.g. settings).',
+          'Do not wrap the control in your own <label> to add a sentence — that nests a label inside the component’s own and doubles the accessible name.',
+        ],
+        a11y: [
+          cvaA11y,
+          'Space toggles the box; the projected label is clickable.',
+          'A description is linked with aria-describedby; the accessible name stays the label alone, although both share the `<label>`.',
+        ],
       },
       {
         id: 'toggle',
         title: 'Toggle',
         selector: 'strct-toggle',
-        importNames: ['StrctToggle'],
+        importNames: ['StrctToggle', 'StrctControlDescription'],
         summary: 'On / off switch.',
         lead: 'A binary on/off switch, ControlValueAccessor-compatible. Best for immediately-applied settings.',
-        inputs: [model('boolean', 'On/off state.'), disabledRow],
-        do: ['Use for settings that take effect immediately.'],
+        inputs: [
+          model('boolean', 'On/off state.'),
+          {
+            name: 'description',
+            type: 'string',
+            default: `''`,
+            description:
+              'A sentence under the label explaining the option’s consequence. It renders inside the component’s own `<label>` — so clicking the sentence still toggles the option — and is linked with `aria-describedby`, while the accessible name stays the label. `[strctControlDescription]` projects one with markup in it.',
+          },
+          disabledRow,
+        ],
+        do: [
+          'Use for settings that take effect immediately.',
+          'Explain what turning it on does in `description`.',
+        ],
         dont: ['Do not use a toggle inside a form that needs an explicit Save — use a checkbox.'],
-        a11y: [cvaA11y],
+        a11y: [
+          cvaA11y,
+          'A description is linked with aria-describedby; the accessible name stays the label alone.',
+        ],
       },
       {
         id: 'radio',
         title: 'Radio group',
         selector: 'strct-radio-group, strct-radio',
-        importNames: ['StrctRadioGroup', 'StrctRadio'],
-        summary: 'Single choice from a set.',
-        lead: 'A radio group for a single choice from a small set. Bind the group with ngModel; each `strct-radio` carries its own `value`.',
+        importNames: ['StrctRadioGroup', 'StrctRadio', 'StrctControlDescription'],
+        summary: 'Single choice from a set — plain or as cards.',
+        lead: 'A radio group for a single choice from a small set. Bind the group with ngModel; each `strct-radio` carries its own `value`. `variant="card"` turns each option into a tile with room for an icon and a sentence, while the markup stays a native radio group.',
         inputs: [
           model('unknown', 'Selected value (set on `strct-radio-group`).'),
           {
@@ -685,11 +757,46 @@ export const DOCS: DocCategory[] = [
             type: 'unknown',
             description: 'On `strct-radio`: the value contributed when selected. Required.',
           },
+          {
+            name: 'variant',
+            type: `'default' | 'card'`,
+            default: `'default'`,
+            description:
+              'On `strct-radio-group`: `card` renders each option as a tile — a card look over radio semantics, for a choice between a few kinds of thing that each need a sentence. The tiles lay out as many `--strct-radio-card-min` (220px) columns as fit, and stack below that (measured: two side by side down to 448px).',
+          },
+          {
+            name: 'description',
+            type: 'string',
+            default: `''`,
+            description:
+              'On `strct-radio`: a sentence under the label. It renders inside the component’s own `<label>`, so clicking it still picks the option, and is linked with `aria-describedby` while the name stays the label.',
+          },
+          {
+            name: 'icon',
+            type: 'StrctIconName',
+            description: 'On `strct-radio`, card variant only: a leading icon in the tile.',
+          },
+          {
+            name: '[strctControlDescription]',
+            type: 'slot',
+            description:
+              'A description with markup in it, in place of the `description` string. The same slot works on `strct-checkbox` and `strct-toggle`.',
+          },
           disabledRow,
         ],
-        do: ['Use for 2–5 mutually exclusive options that should all be visible.'],
-        dont: ['Do not use radios for many options — use a select or combobox.'],
-        a11y: [cvaA11y, 'Arrow keys move between options within the group.'],
+        do: [
+          'Use for 2–5 mutually exclusive options that should all be visible.',
+          'Reach for `variant="card"` when each option needs a sentence to explain it.',
+        ],
+        dont: [
+          'Do not use radios for many options — use a select or combobox.',
+          'Do not build tiles from buttons: screen readers then hear unrelated buttons instead of one choice, and the arrow keys do nothing.',
+        ],
+        a11y: [
+          cvaA11y,
+          'Arrow keys move between options within the group, cards included — the markup stays a native radio group.',
+          'A description is linked with aria-describedby; the accessible name stays the label alone, although both share the `<label>`.',
+        ],
       },
       {
         id: 'segmented',
