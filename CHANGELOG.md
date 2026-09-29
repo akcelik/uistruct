@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.12.0] - 2026-09-29
+
+### Added
+
+- **`strct-button variant="link"`** (FR-48-09). An action inside running text
+  looks like a link and behaves like a button — "Show all", a folder name in a
+  cell, "Use another method". No padding, border or background; `--acc` text
+  underlined on hover and on focus; `size` scales only the font; a disabled one
+  goes `--t4` with no underline. It stays a real `<button>` (or an `<a href>`),
+  unlike the `<a>` with a click handler and no `href` that no keyboard can
+  reach.
+- **`strct-breadcrumb-item interactive` + `(activated)`** (FR-48-09). A trail
+  that does not route — a folder path inside a view — gets crumbs that are
+  themselves the control: a tab stop answering Enter and Space. `interactive` is
+  stated rather than inferred from the output having a listener, which Angular's
+  output API does not expose.
+- **`strct-icon [count]`**, with `countMax`, `countStatus` and `countLabel`
+  (FR-48-12). A bell with seven alarms says 7. `badge` draws a status dot, so it
+  can say that something is wrong but never how many. The count sits on the
+  icon's top end corner, caps at `countMax` ("99+"), draws nothing for `0` or
+  `null`, and replaces the status badge — an icon says one thing at a time. It
+  is `aria-hidden`; `countLabel` folds it into the icon's own accessible name
+  ("Alarms, 7 new"), so a decorative icon stays decorative and the count belongs
+  to the button around it.
+
+### Changed
+
+- The a11y smoke now **gates accent-on-background contrast** in all six schemes,
+  since `variant="link"` paints `--acc` straight onto the page. Measured:
+  arctic 6.34 / 5.39, ember 6.96 / 5.78, sage 6.77 / 5.37 — all above AA.
+
 ## [4.11.0] - 2026-09-29
 
 ### Added

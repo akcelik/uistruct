@@ -265,4 +265,53 @@ describe('StrctIcon', () => {
     expect(String(warn.mock.calls[0][0])).toContain('sheildCheck');
     warn.mockRestore();
   });
+
+  // FR-48-12 — a bell with seven alarms says 7.
+  describe('count badge', () => {
+    function build(inputs: Record<string, unknown>) {
+      const fixture = TestBed.createComponent(StrctIcon);
+      fixture.componentRef.setInput('strictName', 'bell');
+      for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('renders the count, caps it at countMax and draws nothing for 0 or null', () => {
+      expect(build({ count: 7 }).querySelector('.strct-icon__count')?.textContent).toBe('7');
+      expect(build({ count: 120 }).querySelector('.strct-icon__count')?.textContent).toBe('99+');
+      expect(
+        build({ count: 120, countMax: 9 }).querySelector('.strct-icon__count')?.textContent,
+      ).toBe('9+');
+      expect(build({ count: 0 }).querySelector('.strct-icon__count')).toBeNull();
+      expect(build({ count: null }).querySelector('.strct-icon__count')).toBeNull();
+    });
+
+    it('takes the tone class and replaces the status badge', () => {
+      const warn = build({ count: 3, countStatus: 'warning' });
+      expect(warn.querySelector('.strct-icon__count')?.classList).toContain(
+        'strct-icon__count--warning',
+      );
+      const both = build({ count: 3, badge: 'success' });
+      expect(both.querySelector('.strct-icon__count')).toBeTruthy();
+      expect(both.querySelector('.strct-icon__badge')).toBeNull();
+      // and the dot is back when there is no count
+      expect(build({ badge: 'success' }).querySelector('.strct-icon__badge')).toBeTruthy();
+    });
+
+    it('appends the count to a named icon and leaves a decorative one decorative', () => {
+      const named = build({ count: 7, ariaLabel: 'Alarms' });
+      expect(named.querySelector('svg')?.getAttribute('aria-label')).toBe('Alarms, 7 new');
+      const custom = build({
+        count: 7,
+        ariaLabel: 'Alarms',
+        countLabel: (n: number) => `${n} açık`,
+      });
+      expect(custom.querySelector('svg')?.getAttribute('aria-label')).toBe('Alarms, 7 açık');
+      const decorative = build({ count: 7 });
+      expect(decorative.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+      expect(decorative.querySelector('.strct-icon__count')?.getAttribute('aria-hidden')).toBe(
+        'true',
+      );
+    });
+  });
 });

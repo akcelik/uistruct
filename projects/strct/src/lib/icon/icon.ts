@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { inject } from '@angular/core';
+import { StrctStatus } from '../status';
 
 /**
  * Inner markup (path/shape contents) for each icon, drawn on a 0 0 16 16
@@ -642,11 +643,20 @@ const warnedUnknownIcons = new Set<string>();
         [style.height.px]="size()"
         [innerHTML]="svg()"
         role="img"
-        [attr.aria-label]="ariaLabel() || null"
-        [attr.aria-hidden]="ariaLabel() ? null : 'true'"
+        [attr.aria-label]="accessibleLabel() || null"
+        [attr.aria-hidden]="accessibleLabel() ? null : 'true'"
       ></svg>
     }
-    @if (badge() !== 'none') {
+    @if (countText(); as text) {
+      <!-- A bell with seven alarms says 7: the count replaces the status dot,
+           and carries its own text for assistive tech when the icon is named. -->
+      <span
+        class="strct-icon__count strct-icon__count--{{ countStatus() }}"
+        [style.fontSize.px]="countFontSize()"
+        aria-hidden="true"
+        >{{ text }}</span
+      >
+    } @else if (badge() !== 'none') {
       <span class="strct-icon__badge strct-icon__badge--{{ badge() }}">
         @if (badge() === 'maintenance') {
           <svg
@@ -681,6 +691,39 @@ const warnedUnknownIcons = new Set<string>();
         width: 100%;
         height: 100%;
         display: block;
+      }
+      /* The count sits on the top end corner: 1.2em of the icon size, never
+         under 14px, so a single digit stays round. */
+      .strct-icon__count {
+        position: absolute;
+        inset-inline-end: -6px;
+        top: -6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 14px;
+        height: 14px;
+        padding-inline: 4px;
+        box-sizing: border-box;
+        border-radius: 999px;
+        font-family: var(--font);
+        font-weight: 600;
+        line-height: 1;
+        color: var(--inv);
+        background: var(--t2);
+        box-shadow: 0 0 0 1.5px var(--bg-1);
+      }
+      .strct-icon__count--accent {
+        background: var(--acc);
+      }
+      .strct-icon__count--success {
+        background: var(--success);
+      }
+      .strct-icon__count--warning {
+        background: var(--warning);
+      }
+      .strct-icon__count--critical {
+        background: var(--critical);
       }
       .strct-icon__badge {
         position: absolute;
@@ -855,6 +898,38 @@ export class StrctIcon {
   readonly badge = input<StrctIconBadge>('none');
   /** Accessible label for the icon. When empty the icon is hidden from assistive tech. */
   readonly ariaLabel = input<string>('');
+  /**
+   * A count on the icon's top end corner — "a bell with seven alarms says 7".
+   * `null` or `0` draws nothing, and a count replaces `badge` (an icon says one
+   * thing at a time). Above `countMax` it reads "99+".
+   */
+  readonly count = input<number | null>(null);
+  /** The highest number shown in full; above it the badge reads "<max>+". */
+  readonly countMax = input(99);
+  /** Badge tone — `--{status}` background with `--inv` text. */
+  readonly countStatus = input<StrctStatus>('critical');
+  /**
+   * How the count reads to assistive tech, appended to `ariaLabel` (so an icon
+   * with no label stays decorative and the count belongs to its button).
+   */
+  readonly countLabel = input<(n: number) => string>((n) => `${n} new`);
+
+  /** The badge's text, or null when there is nothing to say. */
+  protected readonly countText = computed(() => {
+    const n = this.count();
+    if (n == null || n <= 0) return null;
+    const max = this.countMax();
+    return n > max ? `${max}+` : String(n);
+  });
+  /** 1.2em of the icon size, floored at 14px, as the badge's box. */
+  protected readonly countFontSize = computed(() => Math.max(9, Math.round(this.size() * 0.58)));
+  /** The label the glyph carries: its own, plus the count when both are set. */
+  protected readonly accessibleLabel = computed(() => {
+    const base = this.ariaLabel();
+    const n = this.count();
+    if (!base || n == null || n <= 0) return base;
+    return `${base}, ${this.countLabel()(n)}`;
+  });
 
   /** The effective name: `strictName` wins when set. */
   protected readonly iconName = computed(() => this.strictName() ?? this.name());

@@ -58,6 +58,35 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="button-link"
+      owner="button"
+      heading="Link variant"
+      description='An action inside running text looks like a link and behaves like a button — “Show all”, a folder name in a cell, “Use another method”. A flat button is too heavy inline, and an <a> with a click handler and no href cannot be reached with Tab. variant="link" drops the padding, border and background, sits on the text baseline, underlines on hover and on focus, and scales only the font with size. It works on a real <a href> too, and a disabled one goes quiet (--t4) with no underline.'
+      code='Nothing here yet — <button strct-button variant="link">create a view</button> to start.'
+    >
+      <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+        <p style="margin: 0; font-size: 13px; color: var(--t2);">
+          3 of 47 alarms shown.
+          <button strct-button variant="link" (click)="lastLink.set('Show all')">Show all</button>
+        </p>
+        <p style="margin: 0; font-size: 13px; color: var(--t2);">
+          Signed in as admin.
+          <button
+            strct-button
+            variant="link"
+            size="sm"
+            (click)="lastLink.set('Use another method')"
+          >
+            Use another method
+          </button>
+          ·
+          <button strct-button variant="link" disabled>Disabled</button>
+        </p>
+        <span class="echo">{{ lastLink() || 'click a link' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="button-solid"
       owner="button"
       heading="Solid (opt-in)"
@@ -376,6 +405,7 @@ export class ControlsPage {
     { value: 22, status: 'warning', label: 'Arriving' },
   ];
 
+  protected readonly lastLink = signal('');
   protected readonly tags = signal(['Frontend', 'Design', 'Infra']);
 
   // FR-48-03 — minimised consoles: the body opens one, the × closes it.

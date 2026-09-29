@@ -1,0 +1,26 @@
+[
+  {
+    "scheme": "arctic/dark",
+    "ratio": 6.34
+  },
+  {
+    "scheme": "arctic/light",
+    "ratio": 5.39
+  },
+  {
+    "scheme": "ember/dark",
+    "ratio": 6.96
+  },
+  {
+    "scheme": "ember/light",
+    "ratio": 5.78
+  },
+  {
+    "scheme": "sage/dark",
+    "ratio": 6.77
+  },
+  {
+    "scheme": "sage/light",
+    "ratio": 5.37
+  }
+]

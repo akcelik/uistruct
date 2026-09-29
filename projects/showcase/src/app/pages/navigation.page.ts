@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   StrctBreadcrumb,
@@ -151,6 +151,29 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="breadcrumb-interactive"
+      owner="breadcrumb"
+      heading="A trail that does not route"
+      description="A folder path inside a view is a breadcrumb whose crumbs do not route: they move the view, not the URL. interactive makes the crumb itself the control — a tab stop that answers Enter and Space and emits (activated) — instead of an <a> with a click handler and no href, which no keyboard can reach. It is stated rather than inferred from the output having a listener, which Angular does not expose."
+      code='<strct-breadcrumb-item interactive (activated)="cd(part)">vm-images</strct-breadcrumb-item>'
+    >
+      <div class="stack">
+        <strct-breadcrumb regionLabel="Folder path">
+          @for (part of path(); track $index; let last = $last) {
+            @if (last) {
+              <strct-breadcrumb-item current>{{ part }}</strct-breadcrumb-item>
+            } @else {
+              <strct-breadcrumb-item interactive (activated)="goToFolder($index)">
+                {{ part }}
+              </strct-breadcrumb-item>
+            }
+          }
+        </strct-breadcrumb>
+        <span class="echo">{{ pathEcho() || 'click or tab to a crumb' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="pagination"
       heading="Pagination"
       description="Windowed page range with ellipsis gaps for large sets."
@@ -297,6 +320,16 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class NavigationPage {
+  // FR-48-09 — a folder path whose crumbs move the view, not the URL.
+  protected readonly fullPath = ['datastore1', 'vm-images', 'templates', 'win2025.vhdx'];
+  protected readonly depth = signal(4);
+  protected readonly path = computed(() => this.fullPath.slice(0, this.depth()));
+  protected readonly pathEcho = signal('');
+  protected goToFolder(i: number): void {
+    this.depth.set(i + 1);
+    this.pathEcho.set('opened ' + this.fullPath[i]);
+  }
+
   protected readonly mbLast = signal('');
   protected readonly mbMenus: StrctMenubarItem[] = [
     {

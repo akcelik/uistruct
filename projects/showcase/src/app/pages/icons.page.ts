@@ -5,6 +5,7 @@ import {
   StrctButtonGroup,
   StrctIcon,
   StrctIconBadge,
+  StrctIconName,
   registerStrctIcon,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
@@ -98,6 +99,29 @@ interface StateExample {
           <div class="ig-state">
             <strct-icon [name]="s.object" [size]="28" [strokeWidth]="1.3" [badge]="s.badge" />
             <span class="ig-state__label">{{ s.label }}</span>
+          </div>
+        }
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="count"
+      heading="A count on the icon"
+      description="A bell with seven alarms says 7. badge draws a status dot, so it can say that something is wrong but never how many — which is why apps position their own 15px pill over the icon. count puts the number on the icon's top end corner instead: it caps at countMax (&quot;99+&quot;), draws nothing for 0 or null, and replaces the status badge, because an icon says one thing at a time. The number is decorative in the markup; countLabel adds it to the icon's own accessible name, so a named bell reads “Alarms, 7 new” and a decorative one leaves the count to the button around it."
+      code='<strct-icon strictName="bell" [count]="7" ariaLabel="Alarms" />'
+    >
+      <div class="ig-states">
+        @for (c of counts; track c.label) {
+          <div class="ig-state">
+            <strct-icon
+              [strictName]="c.icon"
+              [size]="24"
+              [count]="c.count"
+              [countStatus]="c.status"
+              [countMax]="c.max ?? 99"
+              [ariaLabel]="c.label"
+            />
+            <span class="ig-state__label">{{ c.label }}</span>
           </div>
         }
       </div>
@@ -390,6 +414,21 @@ interface StateExample {
   ],
 })
 export class IconsPage {
+  // FR-48-12 — what a bell, a shield and a clock actually say.
+  protected readonly counts: {
+    icon: StrctIconName;
+    label: string;
+    count: number | null;
+    status: 'critical' | 'warning' | 'accent' | 'neutral';
+    max?: number;
+  }[] = [
+    { icon: 'bell', label: 'Alarms', count: 7, status: 'critical' },
+    { icon: 'shieldCheck', label: 'Drift', count: 3, status: 'warning' },
+    { icon: 'clock', label: 'Tasks', count: 120, status: 'accent' },
+    { icon: 'mail', label: 'Messages', count: 9, status: 'neutral', max: 5 },
+    { icon: 'bell', label: 'Nothing pending', count: 0, status: 'critical' },
+  ];
+
   constructor() {
     // A generic, original example of a registered full-SVG (raw) icon — this is
     // the same mechanism you use to register licensed brand logos.
@@ -414,8 +453,8 @@ export class IconsPage {
     { name: 'vm' as const, label: 'VM', icon: 'vm' },
   ];
 
-  protected readonly activeObjectData = computed(
-    () => this.interactiveObjects.find((o) => o.name === this.activeObject())!,
+  protected readonly activeObjectData = computed(() =>
+    this.interactiveObjects.find((o) => o.name === this.activeObject())!,
   );
 
   protected readonly activeStateLabel = computed(

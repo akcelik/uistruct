@@ -54,4 +54,32 @@ describe('StrctBreadcrumbItem', () => {
     fixture.detectChanges();
     expect(host.getAttribute('aria-current')).toBeNull();
   });
+
+  // FR-48-09 — a crumb that does not route is still reachable.
+  it('makes an interactive crumb a focusable control that emits activated', () => {
+    const fixture = TestBed.createComponent(StrctBreadcrumbItem);
+    fixture.componentRef.setInput('interactive', true);
+    fixture.detectChanges();
+    const crumb = fixture.nativeElement.querySelector('.strct-bc__crumb') as HTMLElement;
+    expect(crumb.getAttribute('role')).toBe('button');
+    expect(crumb.getAttribute('tabindex')).toBe('0');
+    let n = 0;
+    fixture.componentInstance.activated.subscribe(() => n++);
+    crumb.click();
+    crumb.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    crumb.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+    expect(n).toBe(3);
+  });
+
+  it('leaves a plain crumb inert', () => {
+    const fixture = TestBed.createComponent(StrctBreadcrumbItem);
+    fixture.detectChanges();
+    const crumb = fixture.nativeElement.querySelector('.strct-bc__crumb') as HTMLElement;
+    expect(crumb.getAttribute('role')).toBeNull();
+    expect(crumb.getAttribute('tabindex')).toBeNull();
+    let n = 0;
+    fixture.componentInstance.activated.subscribe(() => n++);
+    crumb.click();
+    expect(n).toBe(0);
+  });
 });
