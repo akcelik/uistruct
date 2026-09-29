@@ -35,6 +35,8 @@ export interface StrctDatagridLabels {
   /** Row-checkbox label factory: receives the row's id (`rowId`) or its
    *  1-based index, so every row's checkbox gets a distinct name. */
   selectRowFor: (id: string) => string;
+  /** Label of a group header's select-all checkbox (`groupSelect`). */
+  selectAllInGroup: (group: string) => string;
   openDetail: string;
   toggleDetail: string;
   closeDetail: string;
@@ -57,6 +59,7 @@ const DG_LABELS: StrctDatagridLabels = {
   selectAll: 'Select all rows on this page',
   selectRow: 'Select row',
   selectRowFor: (id: string) => `Select row ${id}`,
+  selectAllInGroup: (group: string) => `Select all in ${group}`,
   openDetail: 'Open detail',
   toggleDetail: 'Toggle detail',
   closeDetail: 'Close detail',
@@ -143,6 +146,8 @@ interface DgItem {
   row?: StrctRow;
   group?: { key: unknown; label: string; count: number; collapsed: boolean };
 }
+
+let datagridCounter = 0;
 
 /** Utility-column widths used when sticky columns are active (px). */
 const UTIL_W = { detail: 36, expand: 36, sel: 40 } as const;
@@ -242,18 +247,20 @@ export class StrctDatagridActionBar {}
                   [style.insetInlineStart.px]="utilLeft('expand')"
                 ></th>
               }
-              @if (selectable()) {
+              @if (hasSelectionColumn()) {
                 <th
                   class="strct-dg__sel"
                   [class.strct-dg__cell--sticky]="stickyActive()"
                   [style.insetInlineStart.px]="utilLeft('sel')"
                 >
-                  <strct-checkbox
-                    [ariaLabel]="L().selectAll"
-                    [checked]="allPageSelected()"
-                    [indeterminate]="somePageSelected()"
-                    (checkedChange)="toggleAll()"
-                  />
+                  @if (mode() === 'multiple') {
+                    <strct-checkbox
+                      [ariaLabel]="L().selectAll"
+                      [checked]="allPageSelected()"
+                      [indeterminate]="somePageSelected()"
+                      (checkedChange)="toggleAll()"
+                    />
+                  }
                 </th>
               }
               @for (col of visibleColumns(); track col.key) {
@@ -374,7 +381,7 @@ export class StrctDatagridActionBar {}
                   @if (canExpand()) {
                     <td class="strct-dg__expandcell"></td>
                   }
-                  @if (selectable()) {
+                  @if (hasSelectionColumn()) {
                     <td class="strct-dg__sel"></td>
                   }
                   @for (col of visibleColumns(); track col.key) {
@@ -397,7 +404,21 @@ export class StrctDatagridActionBar {}
                 @if (it.group; as grp) {
                   <!-- Group header: distinct value + count, collapsible. -->
                   <tr class="strct-dg__grouprow">
-                    <td [attr.colspan]="colspan()">
+                    @if (groupSelect() && mode() === 'multiple') {
+                      <td class="strct-dg__sel">
+                        <strct-checkbox
+                          [ariaLabel]="L().selectAllInGroup(grp.label)"
+                          [checked]="groupAllSelected(grp.key)"
+                          [indeterminate]="groupSomeSelected(grp.key)"
+                          (checkedChange)="toggleGroupSelection(grp.key)"
+                        />
+                      </td>
+                    }
+                    <td
+                      [attr.colspan]="
+                        groupSelect() && mode() === 'multiple' ? colspan() - 1 : colspan()
+                      "
+                    >
                       <button
                         type="button"
                         class="strct-dg__groupbtn"
@@ -419,6 +440,11 @@ export class StrctDatagridActionBar {}
                   @let row = it.row!;
                   <tr
                     [class.strct-dg__row--selected]="isSelected(row)"
+                    [class.strct-dg__row--locked]="lockedReason(row) !== null"
+                    [attr.aria-selected]="mode() === 'none' ? null : isSelected(row)"
+                    [attr.aria-disabled]="lockedReason(row) !== null ? 'true' : null"
+                    [attr.title]="lockedReason(row) || null"
+                    (click)="onRowPick(row)"
                     [class.strct-dg__row--active]="paneOpen() && row === activeRow()"
                     [attr.aria-level]="childrenKey() ? treeDepth(row) + 1 : null"
                     [attr.aria-expanded]="
@@ -463,20 +489,39 @@ export class StrctDatagridActionBar {}
                         </button>
                       </td>
                     }
-                    @if (selectable()) {
+                    @if (hasSelectionColumn()) {
                       <td
                         class="strct-dg__sel"
                         [class.strct-dg__cell--sticky]="stickyActive()"
                         [style.insetInlineStart.px]="utilLeft('sel')"
                       >
-                        <!-- click fires (and bubbles) before the input's change,
-                             so the modifier is recorded by the time toggleRow runs. -->
-                        <strct-checkbox
-                          [ariaLabel]="selectRowLabel(row)"
-                          [checked]="isSelected(row)"
-                          (click)="noteRangeIntent($event)"
-                          (checkedChange)="toggleRow(row)"
-                        />
+                        @if (mode() === 'single') {
+                          <!-- A native radio group: one name per grid, so the
+                               arrow keys move between rows and Space picks,
+                               without the grid inventing its own keyboarding. -->
+                          <input
+                            type="radio"
+                            class="strct-dg__radio"
+                            [name]="radioName"
+                            [attr.aria-label]="selectRowLabel(row)"
+                            [attr.aria-description]="lockedReason(row) || null"
+                            [checked]="isSelected(row)"
+                            [disabled]="lockedReason(row) !== null"
+                            (change)="selectSingle(row)"
+                            (click)="$event.stopPropagation()"
+                          />
+                        } @else {
+                          <!-- click fires (and bubbles) before the input's change,
+                               so the modifier is recorded by the time toggleRow runs. -->
+                          <strct-checkbox
+                            [ariaLabel]="selectRowLabel(row)"
+                            [attr.aria-description]="lockedReason(row) || null"
+                            [checked]="isSelected(row)"
+                            [disabled]="lockedReason(row) !== null"
+                            (click)="noteRangeIntent($event); $event.stopPropagation()"
+                            (checkedChange)="toggleRow(row)"
+                          />
+                        }
                       </td>
                     }
                     @for (col of visibleColumns(); track col.key; let colIdx = $index) {
@@ -656,7 +701,7 @@ export class StrctDatagridActionBar {}
           }
           <span class="strct-dg__count">
             {{ totalCount() }} {{ totalCount() === 1 ? L().row : L().rows }}
-            @if (selectedCount()) {
+            @if (selectedCount() && mode() !== 'single') {
               <span class="strct-dg__count-sep">|</span>
               <span class="strct-dg__count-sel">{{ selectedCount() }} {{ L().selected }}</span>
             }
@@ -679,6 +724,21 @@ export class StrctDatagridActionBar {}
   },
   styles: [
     `
+      .strct-dg__radio {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--acc);
+        cursor: pointer;
+      }
+      .strct-dg__radio:disabled {
+        cursor: not-allowed;
+      }
+      /* A locked row keeps its colours — it is still worth reading — and only
+         its control shows that it cannot be picked. */
+      .strct-dg__row--locked .strct-dg__sel {
+        opacity: 0.55;
+      }
+
       .strct-dg__actioncaption:empty {
         display: none;
       }
@@ -1486,6 +1546,23 @@ export class StrctDatagrid {
    */
   readonly rowId = input<StrctRowId | null>(null);
   /**
+   * How many rows a user may pick. `selectable` remains the boolean for
+   * `multiple`, so nothing changes for a grid that already uses it; picking
+   * exactly one row is grid behaviour rather than a column of radios the
+   * consumer builds and wires by hand.
+   */
+  readonly selectionMode = input<'none' | 'multiple' | 'single'>('none');
+  /** Two-way single selection: the row id (per `rowId`), or null. */
+  readonly selectedId = model<unknown>(null);
+  /**
+   * Whether a row may be picked. Return `false` to lock it, or a string to lock
+   * it AND say why — shown as the row's tooltip and given to assistive tech as
+   * the control's description, following the `hint` convention.
+   */
+  readonly rowSelectable = input<((row: StrctRow) => boolean | string) | null>(null);
+  /** With `groupBy` and multiple selection: a tri-state checkbox per group. */
+  readonly groupSelect = input(false, { transform: booleanAttribute });
+  /**
    * Per-row action menu resolver. When set, each row gets a trailing actions
    * column with a vertical-dots (kebab) button that opens this row's menu.
    *   [rowActions]="(row) => [{ label: 'Open', action: () => open(row) }, …]"
@@ -2099,7 +2176,7 @@ export class StrctDatagrid {
     () =>
       (this.canDetail() ? UTIL_W.detail : 0) +
       (this.canExpand() ? UTIL_W.expand : 0) +
-      (this.selectable() ? UTIL_W.sel : 0),
+      (this.hasSelectionColumn() ? UTIL_W.sel : 0),
   );
   /** Left offset of a frozen utility column, or null when sticky is off. */
   protected utilLeft(which: 'detail' | 'expand' | 'sel'): number | null {
@@ -2223,6 +2300,68 @@ export class StrctDatagrid {
         );
       }
     }
+  }
+
+  /** `selectionMode` wins; `selectable` is the pre-4.8 spelling of 'multiple'. */
+  protected readonly mode = computed<'none' | 'multiple' | 'single'>(() => {
+    const explicit = this.selectionMode();
+    if (explicit !== 'none') return explicit;
+    return this.selectable() ? 'multiple' : 'none';
+  });
+  protected readonly hasSelectionColumn = computed(() => this.mode() !== 'none');
+  /** One radio group per grid instance. */
+  protected readonly radioName = `strct-dg-pick-${++datagridCounter}`;
+
+  /**
+   * Why a row cannot be picked: `null` when it can, `''` when it cannot with no
+   * reason given, or the reason. A locked row keeps its normal colours — a
+   * locked candidate is still worth reading — and stays reachable, so the
+   * reason can be read.
+   */
+  lockedReason(row: StrctRow): string | null {
+    const fn = this.rowSelectable();
+    if (!fn) return null;
+    const verdict = fn(row);
+    if (verdict === true) return null;
+    return typeof verdict === 'string' ? verdict : '';
+  }
+
+  /** Click anywhere on the row picks it, in single mode only. */
+  protected onRowPick(row: StrctRow): void {
+    if (this.mode() !== 'single') return;
+    this.selectSingle(row);
+  }
+
+  /** Pick exactly this row. `selectionChange` still fires, with one element. */
+  selectSingle(row: StrctRow): void {
+    if (this.mode() !== 'single' || this.lockedReason(row) !== null) return;
+    const id = this.idOf(row);
+    this.selectedId.set(id);
+    this.commitSelection(new Set([id]));
+  }
+
+  /** Rows of one group that are actually pickable. */
+  private groupRows(key: unknown): StrctRow[] {
+    const g = this.groupBy();
+    if (!g) return [];
+    return this.sorted().filter((r) => r[g] === key && this.lockedReason(r) === null);
+  }
+  protected groupAllSelected(key: unknown): boolean {
+    const rows = this.groupRows(key);
+    return rows.length > 0 && rows.every((r) => this.selected().has(this.idOf(r)));
+  }
+  protected groupSomeSelected(key: unknown): boolean {
+    return (
+      !this.groupAllSelected(key) &&
+      this.groupRows(key).some((r) => this.selected().has(this.idOf(r)))
+    );
+  }
+  protected toggleGroupSelection(key: unknown): void {
+    const rows = this.groupRows(key);
+    const next = new Set(this.selected());
+    if (this.groupAllSelected(key)) rows.forEach((r) => next.delete(this.idOf(r)));
+    else rows.forEach((r) => next.add(this.idOf(r)));
+    this.commitSelection(next);
   }
 
   /** Resolve a row's stable identity: its `rowId` value, or the row object
@@ -2422,7 +2561,7 @@ export class StrctDatagrid {
   protected colspan(): number {
     return (
       this.visibleColumns().length +
-      (this.selectable() ? 1 : 0) +
+      (this.hasSelectionColumn() ? 1 : 0) +
       (this.canExpand() ? 1 : 0) +
       (this.canDetail() ? 1 : 0) +
       (this.canActions() ? 1 : 0)
@@ -2565,6 +2704,7 @@ export class StrctDatagrid {
    * Shift-click selects a block, and Shift-clicking a checked box clears one.
    */
   toggleRow(row: StrctRow): void {
+    if (this.lockedReason(row) !== null) return;
     const id = this.idOf(row);
     const select = !this.selected().has(id);
     const next = new Set(this.selected());
@@ -2595,7 +2735,7 @@ export class StrctDatagrid {
 
   toggleAll(): void {
     const next = new Set(this.selected());
-    const rows = this.selectionRows();
+    const rows = this.selectionRows().filter((r) => this.lockedReason(r) === null);
     if (this.allPageSelected()) {
       rows.forEach((r) => next.delete(this.idOf(r)));
     } else {

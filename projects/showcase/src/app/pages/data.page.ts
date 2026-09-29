@@ -323,6 +323,50 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="datagrid-pick"
+      owner="datagrid"
+      heading="Picking one row, and rows that cannot be picked"
+      description="selectionMode=&quot;single&quot; makes the grid its own picker: a native radio group, one name per grid, so the arrow keys move between rows and Space picks — without a radio column wired by hand outside the grid. Clicking anywhere on the row picks it, [(selectedId)] carries the row id, and (selectionChange) still fires with a one-element array so existing listeners keep working. rowSelectable locks a row and can say why: the reason becomes the row's tooltip and the control's accessible description, and a locked row keeps its normal colours because a locked candidate is still worth reading."
+      code='<strct-datagrid selectionMode="single" [(selectedId)]="targetId" [rowSelectable]="canDeploy" rowId="id" />'
+    >
+      <div class="dg-wrap">
+        <strct-datagrid
+          style="width: 100%;"
+          [columns]="pickCols"
+          [rows]="pickRows"
+          rowId="id"
+          selectionMode="single"
+          [(selectedId)]="pickedHost"
+          [rowSelectable]="canDeploy"
+        />
+        <span class="echo">Target: {{ pickedHost() ?? 'none chosen' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="datagrid-groupselect"
+      owner="datagrid"
+      heading="Select all in a group"
+      description="With groupBy and multiple selection, groupSelect puts a tri-state checkbox on each group header: checked when every selectable row of the group is selected, indeterminate when only some are, and it skips locked rows entirely."
+      code='<strct-datagrid selectable groupBy="pool" groupSelect [rowSelectable]="canDeploy" rowId="id" />'
+    >
+      <div class="dg-wrap">
+        <strct-datagrid
+          style="width: 100%;"
+          [columns]="pickCols"
+          [rows]="pickRows"
+          rowId="id"
+          selectable
+          groupBy="pool"
+          groupSelect
+          [rowSelectable]="canDeploy"
+          (selectionChange)="pickedGroup.set($event.length)"
+        />
+        <span class="echo">{{ pickedGroup() }} selected</span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="datagrid-singleline"
       owner="datagrid"
       heading="Single-line rows"
@@ -875,6 +919,24 @@ mtu = 9000`;
     },
   ];
   protected readonly memberRows = ['hv-01.dc-west', 'hv-02.dc-west', 'hv-03.dc-west'];
+
+  // FR-48-01: a "choose one target" grid, with a row that cannot be chosen.
+  protected readonly pickCols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Host', sortable: true },
+    { key: 'pool', label: 'Pool', sortable: true },
+    { key: 'agent', label: 'Agent' },
+  ];
+  protected readonly pickRows: StrctRow[] = [
+    { id: 'h1', name: 'hv-01.dc-west', pool: 'Production', agent: '4.4.1' },
+    { id: 'h2', name: 'hv-02.dc-west', pool: 'Production', agent: '3.9.0' },
+    { id: 'h3', name: 'hv-03.dc-west', pool: 'Production', agent: '4.4.1' },
+    { id: 'h4', name: 'hv-07.edge', pool: 'Edge', agent: '4.4.0' },
+  ];
+  protected readonly pickedHost = signal<unknown>('h1');
+  protected readonly pickedGroup = signal(0);
+  /** A host with an old agent cannot receive a deployment — and says so. */
+  protected readonly canDeploy = (row: StrctRow): boolean | string =>
+    String(row['agent']).startsWith('4.') ? true : 'Agent too old to deploy';
 
   protected readonly dgCols: StrctDatagridColumn[] = [
     { key: 'name', label: 'Cluster', sortable: true },
