@@ -10,6 +10,12 @@ import {
   StrctCheckbox,
   StrctColumn,
   StrctDatagrid,
+  StrctListItemTrailing,
+  StrctListItemMeta,
+  StrctListItemDescription,
+  StrctListItemLeading,
+  StrctListItem,
+  StrctList,
   StrctDatagridActionBar,
   StrctDatagridColumn,
   StrctDatagridFilters,
@@ -67,9 +73,51 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctReorderItem,
     StrctToolbar,
     StrctToolbarSpacer,
+    StrctList,
+    StrctListItem,
+    StrctListItemLeading,
+    StrctListItemDescription,
+    StrctListItemMeta,
+    StrctListItemTrailing,
   ],
   template: `
     <app-page-header title="Data" subtitle="Declarative, token-styled data display." />
+
+    <app-demo
+      anchor="list"
+      heading="List"
+      description="Short lists of things with a status are lists, not tables: a leading marker, a title, a secondary line, a quiet meta and a control at the end. A table needs a header row, a timeline implies time order, and an alert per item is too heavy. interactive makes the row itself open — click, Enter or Space — while anything in [strctListItemTrailing] stays a separate tab stop, so “open this alarm” and “acknowledge it” are two different targets. dense gives 32px rows, status draws the rail strct-card uses, and below a 360px container the meta drops under the description."
+      code='<strct-list dense label="Active alarms">&#10;  <strct-list-item interactive status="critical" (activated)="open(a)">&#10;    <strct-badge strctListItemLeading status="critical">Critical</strct-badge>&#10;    Datastore latency&#10;    <span strctListItemDescription>ds-prod-01</span>&#10;    <span strctListItemMeta>2 min ago</span>&#10;    <button strctListItemTrailing strct-button size="sm" variant="flat">Acknowledge</button>&#10;  </strct-list-item>&#10;</strct-list>'
+    >
+      <div class="stack" style="width: 100%; max-width: 560px;">
+        <strct-list label="Active alarms">
+          @for (a of alarmRows; track a.name) {
+            <strct-list-item
+              interactive
+              [status]="a.tone"
+              [selected]="a.name === selectedAlarm()"
+              (activated)="selectedAlarm.set(a.name)"
+            >
+              <strct-badge strctListItemLeading [status]="a.tone">{{ a.severity }}</strct-badge>
+              {{ a.name }}
+              <span strctListItemDescription>{{ a.object }}</span>
+              <span strctListItemMeta>{{ a.when }}</span>
+              <button strct-button strctListItemTrailing size="sm" variant="flat">
+                Acknowledge
+              </button>
+            </strct-list-item>
+          }
+        </strct-list>
+        <strct-list dense [dividers]="false" label="Cluster members" emptyText="No members">
+          @for (m of memberRows; track m) {
+            <strct-list-item>
+              <strct-status-dot strctListItemLeading status="success" />
+              {{ m }}
+            </strct-list-item>
+          }
+        </strct-list>
+      </div>
+    </app-demo>
 
     <app-demo
       anchor="description-list"
@@ -795,6 +843,38 @@ mtu = 9000`;
     { name: 'Edge Cluster', type: 'Standard', hosts: 3, cpu: 31, status: 'Degraded' },
     { name: 'Dev Cluster', type: 'Standard', hosts: 2, cpu: 24, status: 'Running' },
   ];
+
+  protected readonly selectedAlarm = signal('Datastore latency');
+  protected readonly alarmRows: {
+    severity: string;
+    name: string;
+    object: string;
+    when: string;
+    tone: 'critical' | 'warning' | 'accent';
+  }[] = [
+    {
+      severity: 'Critical',
+      name: 'Datastore latency',
+      object: 'ds-prod-01',
+      when: '2 min ago',
+      tone: 'critical',
+    },
+    {
+      severity: 'Warning',
+      name: 'Memory pressure',
+      object: 'hv-04.dc-west',
+      when: '11 min ago',
+      tone: 'warning',
+    },
+    {
+      severity: 'Info',
+      name: 'Snapshot chain long',
+      object: 'sql-vm-02',
+      when: '1 h ago',
+      tone: 'accent',
+    },
+  ];
+  protected readonly memberRows = ['hv-01.dc-west', 'hv-02.dc-west', 'hv-03.dc-west'];
 
   protected readonly dgCols: StrctDatagridColumn[] = [
     { key: 'name', label: 'Cluster', sortable: true },

@@ -5,6 +5,34 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.0] - 2026-09-29
+
+### Added
+
+- **`strct-list` + `strct-list-item` (new)** (FR-48-24). Short lists of things
+  with a status are lists, not tables: a leading marker, a title, a secondary
+  line, a quiet meta and a control at the end. A table needs a header row and
+  columns, a timeline implies time order, and an alert per item is too heavy —
+  so without a list every screen invents its own rows (ten hand-built patterns
+  in the app this came from).
+
+  `interactive` makes the row itself activate on click, Enter or Space and emit
+  `activated`, while `[strctListItemTrailing]` stays a **separate tab stop**, so
+  "open this alarm" and "acknowledge it" are two targets rather than one.
+  `selected` sets `aria-current`, `status` draws the rail `strct-card` uses,
+  `dense` gives 32px rows, `dividers` and `emptyText` cover the rest. Below a
+  360px container the meta drops under the description instead of squeezing the
+  title.
+
+  The row carries `role="button"` rather than being a `<button>` element: a
+  template can project the same content into only one place, so branching the
+  markup on `interactive` would silently drop it in the other branch.
+  `strct-tree` rows already work this way.
+
+  Measured in Chrome: `list` / `listitem` roles, the slots in order across the
+  row, the trailing control outside the activatable area, Tab reaching the row
+  and then its button, and 32px dense rows against 44px default single-line ones.
+
 ## [4.6.0] - 2026-09-29
 
 ### Added

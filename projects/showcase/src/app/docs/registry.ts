@@ -2395,6 +2395,75 @@ export const DOCS: DocCategory[] = [
         a11y: ['Rows are focusable, aria-roledescription="sortable", and fully keyboard-movable.'],
       },
       {
+        id: 'list',
+        title: 'List',
+        selector: 'strct-list',
+        importNames: [
+          'StrctList',
+          'StrctListItem',
+          'StrctListItemLeading',
+          'StrctListItemDescription',
+          'StrctListItemMeta',
+          'StrctListItemTrailing',
+        ],
+        summary: 'Short list of things with a status.',
+        lead: 'Short lists of things with a status are lists, not tables: a leading marker, a title, a secondary line, a quiet meta and a control at the end. A table needs a header row and columns, a timeline implies time order, and an alert per item is too heavy. `interactive` makes the row itself open — click, Enter or Space — while `[strctListItemTrailing]` stays a separate tab stop, so "open this alarm" and "acknowledge it" are two targets rather than one.',
+        inputs: [
+          {
+            name: 'dense',
+            type: 'boolean',
+            default: 'false',
+            description: 'On `strct-list`: 32px rows instead of 44px.',
+          },
+          {
+            name: 'dividers',
+            type: 'boolean',
+            default: 'true',
+            description: 'On `strct-list`: hairline between rows.',
+          },
+          {
+            name: 'emptyText / label',
+            type: 'string',
+            default: "''",
+            description:
+              "On `strct-list`: the line shown when there are no items, and the list's accessible name.",
+          },
+          {
+            name: 'interactive / selected',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'On `strct-list-item`: the row activates (and emits `activated`), and marks itself current with `aria-current`. The row carries `role="button"` rather than being a `<button>`, because a template can project the same content into only one place — the same shape `strct-tree` rows use.',
+          },
+          {
+            name: 'status',
+            type: 'StrctStatus | null',
+            default: 'null',
+            description:
+              'On `strct-list-item`: a leading rail, as `strct-card [status]` draws one.',
+          },
+          {
+            name: '[strctListItemLeading] / [strctListItemDescription] / [strctListItemMeta] / [strctListItemTrailing]',
+            type: 'slots',
+            description:
+              'Row layout: leading · title / description · meta · trailing. Below a 360px container the meta drops under the description instead of squeezing the title.',
+          },
+        ],
+        outputs: [
+          { name: 'activated', type: 'void', description: 'An `interactive` row was activated.' },
+        ],
+        do: [
+          'Use for a handful of rows that each carry a state — alarms, findings, members.',
+          'Put row-level actions in `[strctListItemTrailing]` so they stay their own tab stop.',
+        ],
+        dont: [
+          'Do not use it where columns need headers and sorting — that is `strct-table` or `strct-datagrid`.',
+        ],
+        a11y: [
+          'role="list" with role="listitem" rows; an interactive row is a role="button" target reachable by Tab, activated by Enter or Space, and `selected` sets aria-current.',
+        ],
+      },
+      {
         id: 'description-list',
         title: 'Description list',
         selector: 'strct-description-list, strct-desc',

@@ -17,6 +17,7 @@ export * from './lib/layout/nav';
 export * from './lib/layout/rail';
 export * from './lib/layout/login';
 export * from './lib/layout/page-header';
+export * from './lib/list/list';
 export * from './lib/section-header/section-header';
 
 // Buttons & indicators
