@@ -11,6 +11,9 @@ import {
   StrctDatepicker,
   StrctDatetimePicker,
   StrctField,
+  StrctFieldHint,
+  StrctFieldPrefix,
+  StrctFieldSuffix,
   StrctFile,
   StrctInlineEdit,
   StrctInput,
@@ -46,6 +49,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     ReactiveFormsModule,
     StrctButton,
     StrctField,
+    StrctFieldHint,
+    StrctFieldPrefix,
+    StrctFieldSuffix,
     StrctInput,
     StrctCheckbox,
     StrctToggle,
@@ -147,6 +153,83 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             Error
           </button>
         </div>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="field-inline"
+      owner="field"
+      heading="Label column (inline layout)"
+      description='A long settings form reads as two columns: what the setting is, and its value. layout="inline" puts the label and its hint in a fixed-width column (--strct-field-label-w, 220px) and the control beside them, with a hairline between consecutive settings; the error still appears under the control, not under the label. Below 480px of field width it falls back to stacked, so the same form works in a drawer. Stacked stays the default — it suits short dialogs. Wrap a run in [strctFieldGroup] when the settings belong together and the hairlines get in the way.'
+      code='<strct-field layout="inline" label="vCPUs" hint="Cores presented to the guest.">&#10;  <input strctInput type="number" [(ngModel)]="cpus" />&#10;</strct-field>'
+    >
+      <div style="width: 100%;">
+        <strct-field layout="inline" label="Display name" hint="Shown in the inventory.">
+          <input strctInput [(ngModel)]="vmLabel" />
+        </strct-field>
+        <strct-field layout="inline" label="vCPUs" hint="Cores presented to the guest.">
+          <input strctInput type="number" [(ngModel)]="vmCpus" />
+        </strct-field>
+        <strct-field
+          layout="inline"
+          label="Memory"
+          hint="Between 512 MB and 1 TB."
+          [error]="vmMemError()"
+        >
+          <input strctInput type="number" [(ngModel)]="vmMem" />
+        </strct-field>
+        <strct-field layout="inline" label="Boot firmware">
+          <select strctInput [(ngModel)]="vmFirmware">
+            <option value="uefi">UEFI</option>
+            <option value="bios">BIOS</option>
+          </select>
+        </strct-field>
+        <strct-field layout="inline" label="Notes" hint="Free text, kept with the VM.">
+          <textarea strctInput rows="2" [(ngModel)]="vmNotes"></textarea>
+        </strct-field>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="field-addons"
+      owner="field"
+      heading="Prefix and suffix"
+      description="A unit belongs to its value's box. [strctFieldPrefix] and [strctFieldSuffix] render inside the control's border: the field takes the border, radius and focus ring over from the input, so one ring covers the value and its unit. A text addon joins the control's description — a screen reader hears “Minimum memory, MB” — while an addon holding its own control, such as a send button, stays a tab stop of its own and says nothing about the value."
+      code='<strct-field label="Minimum memory">&#10;  <input strctInput type="number" [(ngModel)]="minMb" />&#10;  <span strctFieldSuffix>MB</span>&#10;</strct-field>'
+    >
+      <div class="field">
+        <strct-field label="Minimum memory">
+          <input strctInput type="number" [(ngModel)]="minMb" />
+          <span strctFieldSuffix>MB</span>
+        </strct-field>
+        <strct-field label="Log directory" hint="Relative paths are resolved from the prefix.">
+          <span strctFieldPrefix>/var/log/</span>
+          <input strctInput [(ngModel)]="logDir" />
+        </strct-field>
+        <strct-field label="Ask">
+          <input strctInput placeholder="Ask the assistant…" [(ngModel)]="askText" />
+          <button strct-button strctFieldSuffix size="sm" variant="primary">Send</button>
+        </strct-field>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="field-hint"
+      owner="field"
+      heading="A hint with markup in it"
+      description="hint is a string, so a hint that names a thing in bold or links to where to fix it ends up as a loose paragraph under the field — one that no longer belongs to it, and that a screen reader never reads as its description. An <ng-template strctFieldHint> renders where the string hint renders, in the same style, and carries the same id, so it stays the control's description. It takes precedence over hint."
+      code="<strct-field label=&quot;Switch name&quot;>&#10;  <input strctInput [(ngModel)]=&quot;switchName&quot; />&#10;  <ng-template strctFieldHint>Hosts that already have a switch named <strong>{{
+        switchName()
+      }}</strong> join it.</ng-template>&#10;</strct-field>"
+    >
+      <div class="field">
+        <strct-field label="Switch name">
+          <input strctInput [(ngModel)]="switchName" />
+          <ng-template strctFieldHint>
+            Hosts that already have a switch named <strong>{{ switchName() || 'vSwitch0' }}</strong>
+            join it instead of creating a new one.
+          </ng-template>
+        </strct-field>
       </div>
     </app-demo>
 
@@ -689,6 +772,20 @@ export class FormsPage {
     { id: 'hv-05', label: 'hv-05.dc-west', icon: 'host', disabled: true },
   ];
   protected readonly tfAssigned = signal<string[]>(['hv-01']);
+
+  // FR-48-05 / 06 / 07 — a settings form, a unit in the box, a hint with markup.
+  protected readonly vmLabel = signal('web-01');
+  protected readonly vmCpus = signal(4);
+  protected readonly vmMem = signal(8192);
+  protected readonly vmFirmware = signal('uefi');
+  protected readonly vmNotes = signal('');
+  protected readonly vmMemError = computed(() =>
+    Number(this.vmMem()) < 512 ? 'At least 512 MB.' : '',
+  );
+  protected readonly minMb = signal(1024);
+  protected readonly logDir = signal('uistruct');
+  protected readonly askText = signal('');
+  protected readonly switchName = signal('vSwitch0');
 
   protected readonly fieldEmail = signal('');
   protected readonly emailError = computed(() => {

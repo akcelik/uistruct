@@ -1,5 +1,23 @@
 # FR-48-05 … 08 — Forms
 
+> **FR-48-05, 06 and 07 SHIPPED in 4.9.0 (2026-09-29)** — `layout="inline"`, `[strctFieldPrefix]` /
+> `[strctFieldSuffix]`, and an `<ng-template strctFieldHint>`.
+>
+> Measured in Chrome on the new demos: five inline settings put every control on one line
+> (x = 545) with the labels on theirs (x = 313), the label's first line sits **0.5px** off the
+> control's centre, the hint stays in the label column and an out-of-range value puts the error
+> under the **control** (x = 545), not under the label. The fallback trips where it should: at 500px
+> of field width it is still two columns, at 400px it is stacked. The 480px breakpoint is a literal
+> rather than `--strct-field-inline-min` because a container query cannot read a custom property —
+> the label width itself stays a property (`--strct-field-label-w`).
+>
+> An addon gives the box to the field: the input measures `border: 0px` on a transparent
+> background, the box carries the border and, on focus, the single ring. "MB" joins the input's
+> `aria-describedby`; the send button does not (the field leaves out an addon that holds its own
+> control, since it says nothing about the value and is already a tab stop).
+>
+> **Still open here: FR-48-08** (select and number editors for editable datagrid columns).
+
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
 ---

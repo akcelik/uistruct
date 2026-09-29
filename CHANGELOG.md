@@ -5,6 +5,36 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.9.0] - 2026-09-29
+
+### Added
+
+- **`strct-field`: a label column, addons inside the box, and a hint with markup
+  in it** (FR-48-05, FR-48-06, FR-48-07).
+  - **`layout="inline"`** reads a long settings form as two columns: the label
+    and its hint in a fixed-width column (`--strct-field-label-w`, 220px), the
+    control beside them, a hairline between consecutive settings, and the error
+    under the control rather than under the label. Below 480px of field width it
+    falls back to stacked, so the same form works in a drawer. `[strctFieldGroup]`
+    on a wrapper drops the hairlines for settings that read as one block.
+    Stacked remains the default. The breakpoint is a literal rather than a custom
+    property because a container query cannot read one.
+  - **`[strctFieldPrefix]` / `[strctFieldSuffix]`** render inside the control's
+    border: the field takes the border, radius and focus ring over from the
+    input, so one ring covers the value and its unit, and a message box with a
+    send button stops being a box drawn by hand. A text addon joins the control's
+    description — a screen reader hears "Minimum memory, MB" — while an addon
+    holding its own control stays its own tab stop and is left out of it.
+  - **`<ng-template strctFieldHint>`** renders where the string `hint` renders,
+    in the same style, and carries the same id, so a hint that names a thing in
+    bold is still the control's description instead of a loose paragraph under
+    the field. It takes precedence over `hint`.
+
+  Measured in Chrome: five inline settings align every control on one line with
+  the label's first line 0.5px off the control's centre; at 400px of field width
+  they stack; an out-of-range value puts the error in the control's column; the
+  input inside an addon box measures `border: 0px` with the ring on the box.
+
 ## [4.8.0] - 2026-09-29
 
 ### Added
