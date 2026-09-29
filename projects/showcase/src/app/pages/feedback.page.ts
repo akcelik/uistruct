@@ -109,6 +109,26 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="alert-icon"
+      owner="alert"
+      heading="A note that says what kind of note it is"
+      description="An alert's icon says what kind of note it is when the tone alone does not: a lock for a locked setting, a shield for a security note, a filter for a scoped list. icon overrides the one derived from type and changes nothing else. The layout also moved into an inner row, so setting the host's display for spacing — display:block with a margin, as an app does when it needs the gap — no longer puts the icon on its own line above the text."
+      code='<strct-alert type="info" icon="lock">This setting is managed by the domain policy.</strct-alert>'
+    >
+      <div class="stack">
+        <strct-alert type="info" icon="lock">
+          This setting is managed by the domain policy and cannot be changed here.
+        </strct-alert>
+        <strct-alert type="warning" icon="shieldCheck">
+          Certificate-based authentication is enforced for this endpoint.
+        </strct-alert>
+        <strct-alert type="info" icon="filter" style="display: block; margin-top: 8px">
+          A host display of block, with a margin — the icon still sits beside the text.
+        </strct-alert>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="confirm"
       heading="Confirm"
       description="Promise-based confirmation for destructive actions — render the outlet once, then await the service from anywhere; a new call cancels the pending one, and Cancel / X / Escape / backdrop all resolve false. The critical tone styles the confirm button as destructive and focus lands on Cancel, never on the destructive action."

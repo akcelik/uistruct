@@ -19,18 +19,22 @@ export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
   encapsulation: ViewEncapsulation.None,
   imports: [StrctIcon],
   template: `
-    <strct-icon [name]="icon()" [size]="16" />
-    <div class="strct-alert__body"><ng-content /></div>
-    @if (closable()) {
-      <button
-        type="button"
-        class="strct-alert__close"
-        [attr.aria-label]="dismissLabel()"
-        (click)="closed.emit()"
-      >
-        <strct-icon name="close" [size]="13" />
-      </button>
-    }
+    <!-- The row carries the layout, not the host: a consumer setting
+         display:block for spacing must not put the icon on its own line. -->
+    <div class="strct-alert__row">
+      <strct-icon class="strct-alert__icon" [name]="iconName()" [size]="16" />
+      <div class="strct-alert__body"><ng-content /></div>
+      @if (closable()) {
+        <button
+          type="button"
+          class="strct-alert__close"
+          [attr.aria-label]="dismissLabel()"
+          (click)="closed.emit()"
+        >
+          <strct-icon name="close" [size]="13" />
+        </button>
+      }
+    </div>
   `,
   host: {
     class: 'strct-alert',
@@ -45,9 +49,7 @@ export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
       /* Restrained: neutral surface with a colored left rail + colored icon,
        instead of a fully tinted background. */
       .strct-alert {
-        display: flex;
-        align-items: flex-start;
-        gap: var(--space-2);
+        display: block;
         padding: var(--space-2) var(--space-3);
         border-radius: var(--radius-lg);
         font-size: 13px;
@@ -55,6 +57,11 @@ export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
         background: var(--bg-1);
         border: 1px solid var(--b2);
         border-inline-start: 3px solid var(--acc);
+      }
+      .strct-alert__row {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-2);
       }
       .strct-alert strct-icon {
         color: var(--acc);
@@ -110,10 +117,18 @@ export class StrctAlert {
   readonly closable = input(false, { transform: booleanAttribute });
   /** Accessible label of the dismiss button (localizable). */
   readonly dismissLabel = input('Dismiss');
+  /**
+   * Overrides the icon derived from `type` — a lock for a locked setting, a
+   * shield for a security note, when the tone alone does not say what kind of
+   * note this is. `null` keeps the derived one.
+   */
+  readonly icon = input<string | null>(null);
   /** Emitted when the alert is dismissed. */
   readonly closed = output<void>();
 
-  protected readonly icon = computed(() => {
+  protected readonly iconName = computed(() => this.icon() ?? this.derivedIcon());
+
+  private readonly derivedIcon = computed(() => {
     switch (this.type()) {
       case 'success':
         return 'success';

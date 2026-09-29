@@ -2530,16 +2530,70 @@ export const DOCS: DocCategory[] = [
             default: `'md'`,
             description: 'Dot size; `sm` for dense rows (tables, menus).',
           },
+          {
+            name: 'pulse',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Something happening *now* — a task running, a live chart. The halo pulses once a second and the dot itself never changes size, so a column of dots does not jitter; under `prefers-reduced-motion` the halo is a static ring.',
+          },
         ],
         do: [
           'Use inside avatars, menu rows and metric tiles — anywhere a bare colored dot would carry meaning.',
           'Pass a specific `label` when the state needs context ("Node unreachable").',
+          'Reach for `pulse` only while something is actually happening.',
         ],
         dont: [
           'Do not stretch a dot into a status pill — use a badge when a label should be visible.',
+          'Do not write a "Live · updates every 5 s" caption beside a dot by hand — that is `strct-live-indicator`.',
         ],
         a11y: [
           'The state is always exposed as (visually hidden) text, so the dot is never color-only.',
+        ],
+      },
+      {
+        id: 'live-indicator',
+        title: 'Live indicator',
+        selector: 'strct-live-indicator',
+        importNames: ['StrctLiveIndicator', 'StrctLiveState', 'StrctLiveLabels'],
+        summary: 'Live · reconnecting · paused · last updated, as one state.',
+        lead: 'A dot that is live and a dot that is merely green are different facts. "Live · updates every 5 s", "Reconnecting…" and "Last updated 3 min ago" are states of one indicator, not three captions written beside three hand-rolled dots. The relative time re-renders every 30 s on its own.',
+        inputs: [
+          {
+            name: 'state',
+            type: `'live' | 'connecting' | 'reconnecting' | 'paused' | 'stale'`,
+            default: `'live'`,
+            description:
+              'What the view is doing. It picks the wording and the tone: success (pulsing) for live, accent for connecting, warning for reconnecting and stale, neutral for paused.',
+          },
+          {
+            name: 'interval',
+            type: 'number | null',
+            default: 'null',
+            description: 'Refresh period in ms — turns "Live" into "Live · updates every 5 s".',
+          },
+          {
+            name: 'updatedAt',
+            type: 'Date | number | null',
+            default: 'null',
+            description:
+              'When the data last arrived; drives the relative time of `stale` ("just now", "3 min ago", "2 h ago").',
+          },
+          {
+            name: 'labels',
+            type: 'Partial<StrctLiveLabels>',
+            default: '{}',
+            description: 'Every string, for localisation — including the relative-time builders.',
+          },
+        ],
+        do: [
+          'Use one indicator for the whole live view, near its heading or in its footer.',
+          'Pass `interval` when the refresh period is worth saying.',
+        ],
+        dont: ['Do not pulse a dot that is not actually receiving data.'],
+        a11y: [
+          'A polite role="status": a change of state is announced once, and the relative-time tick never is.',
+          'The dot inside carries the tone; the sentence is the text, so it is not read twice.',
         ],
       },
       {
@@ -3869,6 +3923,33 @@ export const DOCS: DocCategory[] = [
             default: '[]',
             description: 'Sparkline series; empty hides the chart.',
           },
+          {
+            name: 'captionStatus',
+            type: STATUS_VALUES,
+            default: 'null',
+            description:
+              'Tints the caption instead of the value — "2 down" is the warning, and the 14 nodes above it are not.',
+          },
+          {
+            name: 'href',
+            type: 'string | null',
+            default: 'null',
+            description:
+              'Renders the tile as a link: the hit area covers the whole tile (border included), the focus ring is the tile\u2019s own, and its name is "<label>: <value>". No anchor wrapped around the tile by hand.',
+          },
+          {
+            name: 'interactive',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'The same, as a button: the whole tile is the target and emits `(activated)`.',
+          },
+          {
+            name: '[strctMetricMeter]',
+            type: 'slot',
+            description:
+              'Projected under the value and above the caption — a `strct-progress`, for a number shown over its bar.',
+          },
         ],
         do: [
           'Pair a value with its trend so direction is obvious at a glance.',
@@ -4089,6 +4170,13 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description: 'Show a dismiss button.',
+          },
+          {
+            name: 'icon',
+            type: 'string | null',
+            default: 'null',
+            description:
+              'Overrides the icon derived from `type` — a lock for a locked setting, a shield for a security note, when the tone alone does not say what kind of note it is. The layout lives in an inner row, so setting the host\u2019s `display` (for spacing) cannot put the icon on its own line.',
           },
         ],
         outputs: [{ name: 'closed', type: 'void', description: 'Fired when dismissed.' }],

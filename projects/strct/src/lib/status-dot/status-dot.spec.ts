@@ -52,4 +52,14 @@ describe('StrctStatusDot', () => {
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).classList.contains('strct-dot--sm')).toBe(true);
   });
+
+  it('marks pulse on the host and leaves it off by default (FR-48-19)', () => {
+    const fixture = TestBed.createComponent(StrctStatusDot);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.classList).not.toContain('strct-dot--pulse');
+    fixture.componentRef.setInput('pulse', true);
+    fixture.detectChanges();
+    expect(el.classList).toContain('strct-dot--pulse');
+  });
 });

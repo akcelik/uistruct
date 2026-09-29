@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ViewEncapsulation,
+  booleanAttribute,
   computed,
   input,
 } from '@angular/core';
@@ -48,6 +49,7 @@ const DEFAULT_LABEL: Record<StrctStatus, string> = {
     '[class.strct-dot--warning]': "status() === 'warning'",
     '[class.strct-dot--critical]': "status() === 'critical'",
     '[class.strct-dot--sm]': "size() === 'sm'",
+    '[class.strct-dot--pulse]': 'pulse()',
   },
   styles: [
     `
@@ -79,6 +81,53 @@ const DEFAULT_LABEL: Record<StrctStatus, string> = {
       .strct-dot--critical .strct-dot__dot {
         background: var(--critical);
       }
+      /* Something happening now pulses: a halo around the dot, never its size
+         — a dot that changes size makes a row of them jitter. */
+      .strct-dot--pulse .strct-dot__dot {
+        position: relative;
+      }
+      .strct-dot--pulse .strct-dot__dot::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: inherit;
+        animation: strct-dot-pulse 1s ease-out infinite;
+      }
+      @keyframes strct-dot-pulse {
+        from {
+          box-shadow: 0 0 0 0 currentColor;
+          opacity: 0.55;
+        }
+        to {
+          box-shadow: 0 0 0 5px transparent;
+          opacity: 0;
+        }
+      }
+      .strct-dot--pulse .strct-dot__dot {
+        color: var(--t3);
+      }
+      .strct-dot--pulse.strct-dot--accent .strct-dot__dot {
+        color: var(--acc);
+      }
+      .strct-dot--pulse.strct-dot--success .strct-dot__dot {
+        color: var(--success);
+      }
+      .strct-dot--pulse.strct-dot--warning .strct-dot__dot {
+        color: var(--warning);
+      }
+      .strct-dot--pulse.strct-dot--critical .strct-dot__dot {
+        color: var(--critical);
+      }
+      /* Reduced motion: the halo stays, as a static ring. */
+      @media (prefers-reduced-motion: reduce) {
+        .strct-dot--pulse .strct-dot__dot::after {
+          animation: none;
+          box-shadow: 0 0 0 3px currentColor;
+          opacity: 0.25;
+        }
+      }
+
       /* Visually hidden state text — the colour alone doesn't carry it. */
       .strct-dot__sr {
         position: absolute;
@@ -101,6 +150,12 @@ export class StrctStatusDot {
   readonly label = input('');
   /** Dot size: `sm` for dense rows, `md` standalone. */
   readonly size = input<StrctStatusDotSize>('md');
+  /**
+   * Something happening *now* — a task running, a live chart. The halo pulses
+   * once a second; the dot itself never changes size, so a column of dots does
+   * not jitter. Under `prefers-reduced-motion` the halo is a static ring.
+   */
+  readonly pulse = input(false, { transform: booleanAttribute });
 
   protected readonly text = computed(() => this.label() || DEFAULT_LABEL[this.status()]);
 }
