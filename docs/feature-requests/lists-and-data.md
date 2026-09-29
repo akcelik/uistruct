@@ -1,5 +1,18 @@
 # FR-48-24 … 29 — Lists and data
 
+> **FR-48-24 SHIPPED in 4.7.0 (2026-09-29)** — `strct-list` + `strct-list-item`, with the leading /
+> description / meta / trailing slots, `interactive` + `activated`, `selected`, `status`, `dense`,
+> `dividers` and `emptyText`.
+>
+> One deviation from the proposal: the row is a `role="button"` target rather than a `<button>`
+> element. A template can project the same content into only one place, so branching the markup on
+> `interactive` would drop the projected content in the unrendered branch; `strct-tree` rows already
+> use the role. Keyboard behaviour is the one the FR asked for — Tab reaches the row, then its
+> trailing control, verified in Chrome.
+>
+> **Still open here: FR-48-25** (description list alignment), **26** (datagrid flush / caption /
+> column modes), **27** (cursor paging), **28** (framed tree), **29** (avatar icon / shape / tone).
+
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
 ---
