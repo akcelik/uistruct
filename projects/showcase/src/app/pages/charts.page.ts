@@ -15,6 +15,8 @@ import {
   StrctHeatmap,
   StrctHeatmapCell,
   StrctIcon,
+  StrctLegend,
+  StrctLegendItem,
   StrctMetricTile,
   StrctProgress,
   StrctSegmented,
@@ -41,6 +43,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctIcon,
     StrctMetricTile,
     StrctProgress,
+    StrctLegend,
   ],
   template: `
     <app-page-header
@@ -372,6 +375,49 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="legend"
+      heading="Legend"
+      description="A chart's key is a component. The same swatch · label · value rows serve a line chart's series picker, a diagram's edge styles and a donut's categories — instead of 9px squares with inline backgrounds written per screen. The swatch takes a shape (square, dot, line, dash), a status tone or an explicit palette colour, and a category with nothing in it stays in the key, muted, because “0 failed” is information. With interactive each row is a toggle button carrying aria-pressed, for picking which series a chart draws."
+      code='<strct-legend [items]="series" orientation="vertical" interactive (itemToggle)="toggle($event)" />'
+    >
+      <div class="stack" style="gap: 18px; width: 100%;">
+        <strct-legend [items]="edgeKey" />
+        <strct-legend [items]="stateKey" orientation="vertical" style="max-width: 260px;" />
+        <div>
+          <strct-legend [items]="seriesKey()" interactive (itemToggle)="toggleSeries($event)" />
+          <span class="echo">{{ seriesEcho() || 'click a row to switch a series off' }}</span>
+        </div>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="donut-legend-below"
+      owner="donut"
+      heading="A legend under the ring, and a zero category"
+      description='legendPosition="below" stacks the key under the ring, for a card narrower than ring + key. A zero-value category keeps its row, muted — “0 failed” is information — and keepEmpty="false" drops those rows when the noise is not worth it.'
+      code='<strct-donut [segments]="states" legend legendPosition="below" />'
+    >
+      <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+        <strct-donut
+          [segments]="donutWithZero"
+          [centerValue]="15"
+          centerLabel="Nodes"
+          [size]="130"
+          legend
+          legendPosition="below"
+        />
+        <strct-donut
+          [segments]="donutWithZero"
+          [centerValue]="15"
+          centerLabel="Nodes"
+          [size]="130"
+          legend
+          [keepEmpty]="false"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="heatmap"
       heading="Heatmap"
       description="A density grid — host × hour CPU here. Missing intersections render as empty cells. 24 hourly columns cannot all carry a readable label, so colLabelEvery thins them to every third while every cell stays drawn; valueFormat gives the tooltip its unit (hover a cell); and thresholds colour by band — accent under 60%, warning to 78%, critical above — with intensity scaled inside each band, so a 90% hour cannot be mistaken for a 70% one. Without thresholds it is a single-hue luminance ramp off the status token, which stays readable under colour-vision deficiency."
@@ -610,6 +656,41 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class ChartsPage implements OnDestroy {
+  // FR-48-23 — one key, three shapes.
+  protected readonly edgeKey: StrctLegendItem[] = [
+    { label: 'Uplink', color: 'var(--chart-1)', shape: 'line' },
+    { label: 'Standby', color: 'var(--chart-4)', shape: 'dash' },
+    { label: 'Down', status: 'critical', shape: 'dot' },
+  ];
+  protected readonly stateKey: StrctLegendItem[] = [
+    { label: 'Running', value: 12, status: 'success', shape: 'dot' },
+    { label: 'Migrating', value: 3, status: 'accent', shape: 'dot' },
+    { label: 'Failed', value: 0, status: 'critical', shape: 'dot', muted: true },
+  ];
+  private readonly seriesOff = signal<string[]>([]);
+  protected readonly seriesKey = computed<StrctLegendItem[]>(() =>
+    ['CPU', 'Memory', 'Network'].map((label, i) => ({
+      label,
+      color: `var(--chart-${i + 1})`,
+      shape: 'line',
+      off: this.seriesOff().includes(label),
+    })),
+  );
+  protected readonly seriesEcho = signal('');
+  protected toggleSeries(label: string): void {
+    this.seriesOff.update((off) =>
+      off.includes(label) ? off.filter((l) => l !== label) : [...off, label],
+    );
+    this.seriesEcho.set(
+      this.seriesOff().length ? `off: ${this.seriesOff().join(', ')}` : 'all series on',
+    );
+  }
+  protected readonly donutWithZero = [
+    { label: 'Healthy', value: 12 },
+    { label: 'Degraded', value: 3 },
+    { label: 'Failed', value: 0 },
+  ];
+
   protected readonly tileEcho = signal('');
 
   // Line & area demo controls.

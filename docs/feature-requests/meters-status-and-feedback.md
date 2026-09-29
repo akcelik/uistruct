@@ -29,7 +29,23 @@
 > The alert is `display: block` with a flex row inside: with an inline `display: block; margin-top:
 8px` — the override 124 alerts in the app carry — the icon still sits beside the text.
 >
-> **Still open here: FR-48-23** (`strct-legend`, donut legend below the ring and zero rows).
+> **FR-48-23 SHIPPED in 4.15.0 (2026-09-29)** — the new `strct-legend`, plus the donut's
+> `legendPosition` and `keepEmpty`.
+>
+> Measured in Chrome: the three swatch shapes render as a 14×2 line, a 14×2 dashed line and a 9×9
+> dot, the palette colours resolve (`--chart-1` blue, `--chart-4` amber) and the status ones too;
+> a zero category keeps its row at 0.55 opacity; an interactive row is a toggle button that flips
+> to `aria-pressed="false"`, goes to 0.45 opacity with a line-through, and reports "off: Memory".
+> The donut's legend sits under the ring with `legendPosition="below"`, beside it otherwise, and
+> `keepEmpty="false"` drops the zero row (3 rows → 2).
+>
+> Two notes on the proposal. `status: 'accent'` maps to `--acc`, not `--accent` — the first
+> reading showed the swatch falling back to muted grey, which is how the mapping bug was caught.
+> And `keepEmpty` defaults to **true**: the library's donut already keeps a zero row (it is the
+> app's own legend that dropped it), so keeping is the existing behaviour and the input is the
+> opt-out rather than the opt-in.
+>
+> **Every ask in this document has shipped.**
 
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
