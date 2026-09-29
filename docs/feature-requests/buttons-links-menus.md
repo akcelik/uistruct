@@ -1,5 +1,28 @@
 # FR-48-09 … 12 — Buttons, links, menus
 
+> **FR-48-09 and FR-48-12 SHIPPED in 4.12.0 (2026-09-29)** — `variant="link"` (with `interactive`
+> crumbs) and the icon count badge.
+>
+> Measured in Chrome: the link variant has no padding, no border and no background, keeps `--acc`
+> text, is a real `<button>` in the tab order, underlines on hover **and** on keyboard focus
+> (`:focus-visible` matched after a Tab), and goes `--t4` with no underline when disabled. The FR's
+> contrast ask is now a CI gate rather than a claim: the a11y smoke sets each of the six schemes on
+> the root and measures `--acc` composited over `--bg-1` — **arctic 6.34 / 5.39 · ember 6.96 / 5.78
+> · sage 6.77 / 5.37**, all above AA's 4.5. It failed correctly while the reading was empty, before
+> the colour parser learned hex.
+>
+> The count badge reads 7, caps 120 at "99+" (or at any `countMax`, measured with 9 → "5+"), draws
+> nothing for 0, sits on the top end corner at 14px, and replaces the status dot — an icon says one
+> thing at a time. It is `aria-hidden`, and `countLabel` puts it in the icon's own name instead:
+> "Alarms, 7 new". A decorative icon stays decorative.
+>
+> A crumb takes `interactive` rather than the FR's "when `(activated)` is bound": Angular's output
+> API does not expose whether an output has a listener, so the intent is stated — the way
+> `strct-list-item` and `strct-tag` already read.
+>
+> **Still open here: FR-48-10** (menu anchor / placement / flip) and **FR-48-11** (a trailing
+> secondary action in a dropdown item).
+
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
 ---

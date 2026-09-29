@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 
 /** Button visual variants. */
-export type StrctButtonVariant = 'primary' | 'critical' | 'outline' | 'flat' | 'neutral';
+export type StrctButtonVariant = 'primary' | 'critical' | 'outline' | 'flat' | 'neutral' | 'link';
 /** Button size variants. */
 export type StrctButtonSize = 'md' | 'sm' | 'mini';
 
@@ -32,6 +32,7 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
     '[class.strct-btn--critical]': "variant() === 'critical'",
     '[class.strct-btn--outline]': "variant() === 'outline'",
     '[class.strct-btn--flat]': "variant() === 'flat'",
+    '[class.strct-btn--link]': "variant() === 'link'",
     '[class.strct-btn--solid]': 'solid()',
     '[class.strct-btn--sm]': "size() === 'sm'",
     '[class.strct-btn--mini]': "size() === 'mini'",
@@ -113,6 +114,41 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
       .strct-btn--flat:hover {
         background: var(--bg-3);
         color: var(--t1);
+      }
+
+      /* An action inside running text: looks like a link, behaves like a
+         button — "Show all", a folder name in a cell, "Use another method".
+         A flat button is too heavy inline, and an <a> without href cannot be
+         reached with Tab. */
+      .strct-btn--link {
+        display: inline;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: none;
+        color: var(--acc);
+        font-weight: inherit;
+        line-height: inherit;
+        white-space: normal;
+        text-align: start;
+      }
+      .strct-btn--link:hover,
+      .strct-btn--link:focus-visible {
+        background: none;
+        text-decoration: underline;
+      }
+      .strct-btn--link:active {
+        background: none;
+      }
+      .strct-btn--link:disabled,
+      .strct-btn--link[aria-disabled='true'] {
+        color: var(--t4);
+        text-decoration: none;
+      }
+      /* Size scales the text only — the link has no box to scale. */
+      .strct-btn--link.strct-btn--sm,
+      .strct-btn--link.strct-btn--mini {
+        padding: 0;
       }
 
       /* Opt-in filled call to action. */

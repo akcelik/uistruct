@@ -139,10 +139,87 @@ for (const route of ROUTES) {
   failures += serious.length;
 }
 
+// ── Accent-on-background contrast, all six schemes ────────────────────────
+// `variant="link"` paints --acc text straight onto the page, with no border or
+// fill to help it, so accent-on-background is a text contrast pair now.
+const SCHEMES = ['arctic', 'ember', 'sage'].flatMap((palette) =>
+  ['dark', 'light'].map((mode) => ({ palette, mode })),
+);
+await send('Page.navigate', { url: `http://localhost:${PORT}/components/button` });
+await sleep(2500);
+const { result: contrastResult } = await send('Runtime.evaluate', {
+  returnByValue: true,
+  expression: `(() => {
+    // Tokens come as #rgb, #rrggbb(aa) or rgb()/rgba() — all three, or the
+    // reading is silently wrong.
+    const parse = (raw) => {
+      const c = raw.trim();
+      if (c.startsWith('#')) {
+        const h = c.slice(1);
+        const full =
+          h.length === 3 || h.length === 4
+            ? [...h].map((x) => x + x).join('')
+            : h;
+        const n = (i) => parseInt(full.slice(i, i + 2), 16);
+        return { r: n(0), g: n(2), b: n(4), a: full.length === 8 ? n(6) / 255 : 1 };
+      }
+      const m = c.match(/[\d.]+/g);
+      if (!m) throw new Error('unreadable colour: ' + raw);
+      const v = m.map(Number);
+      return { r: v[0], g: v[1], b: v[2], a: v[3] ?? 1 };
+    };
+    // A translucent token is what you see over its ground, not its own value.
+    const over = (fg, bg) => ({
+      r: fg.r * fg.a + bg.r * (1 - fg.a),
+      g: fg.g * fg.a + bg.g * (1 - fg.a),
+      b: fg.b * fg.a + bg.b * (1 - fg.a),
+      a: 1,
+    });
+    const lum = ({ r, g, b }) =>
+      [r, g, b]
+        .map((v) => v / 255)
+        .map((c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)))
+        .reduce((acc, c, i) => acc + [0.2126, 0.7152, 0.0722][i] * c, 0);
+    const ratio = (a, b) => {
+      const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+      return (x + 0.05) / (y + 0.05);
+    };
+    const root = document.documentElement;
+    const before = [root.getAttribute('data-palette'), root.getAttribute('data-theme')];
+    const out = [];
+    for (const palette of ['arctic', 'ember', 'sage']) {
+      for (const mode of ['dark', 'light']) {
+        root.setAttribute('data-palette', palette);
+        root.setAttribute('data-theme', mode);
+        const cs = getComputedStyle(root);
+        const bg = parse(cs.getPropertyValue('--bg-1'));
+        const acc = over(parse(cs.getPropertyValue('--acc')), bg);
+        out.push({ scheme: palette + '/' + mode, ratio: +ratio(acc, bg).toFixed(2) });
+      }
+    }
+    if (before[0]) root.setAttribute('data-palette', before[0]); else root.removeAttribute('data-palette');
+    if (before[1]) root.setAttribute('data-theme', before[1]); else root.removeAttribute('data-theme');
+    return out;
+  })()`,
+});
+const contrasts = contrastResult?.value ?? [];
+const AA = 4.5;
+const belowAA = contrasts.filter((c) => c.ratio < AA);
+console.log(
+  `\n${belowAA.length ? '✗' : '✓'} --acc on --bg-1: ` +
+    contrasts.map((c) => `${c.scheme} ${c.ratio}`).join(' · '),
+);
+failures += belowAA.length;
+if (!contrasts.length) {
+  console.log('✗ contrast check produced no readings');
+  failures += 1;
+}
+writeFileSync(join(OUT, '_contrast.json'), JSON.stringify(contrasts, null, 2));
+
 chrome.kill();
 server.close();
 if (failures > 0) {
-  console.error(`\n${failures} serious/critical a11y violation(s).`);
+  console.error(`\n${failures} a11y failure(s) — serious/critical violations or contrast below AA.`);
   process.exit(1);
 }
 console.log('\nA11y smoke passed.');

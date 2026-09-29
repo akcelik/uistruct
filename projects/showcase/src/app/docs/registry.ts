@@ -77,15 +77,15 @@ export const DOCS: DocCategory[] = [
         title: 'Button',
         selector: 'button[strct-button], a[strct-button]',
         importNames: ['StrctButton'],
-        summary: 'Restrained, token-driven buttons in five variants and three sizes.',
+        summary: 'Restrained, token-driven buttons in six variants and three sizes.',
         lead: 'Applies button styling to a native `<button>` or `<a>`, so it stays fully accessible and form-aware. Restrained by default — outlined / ghost surfaces with color carried by a subtle border and text accent, never a loud fill. Add `solid` for a rare filled call to action.',
         inputs: [
           {
             name: 'variant',
-            type: `'primary' | 'critical' | 'outline' | 'flat' | 'neutral'`,
+            type: `'primary' | 'critical' | 'outline' | 'flat' | 'neutral' | 'link'`,
             default: `'neutral'`,
             description:
-              'Emphasis level. Primary/critical tint the border and text; outline/flat are neutral.',
+              'Emphasis level. Primary/critical tint the border and text; outline/flat are neutral. `link` is an action inside running text — no padding, border or background, `--acc` text underlined on hover and on focus, `size` scaling only the font — for “Show all” or a folder name in a cell, where a flat button is too heavy and an `<a>` without `href` cannot be reached with Tab.',
           },
           {
             name: 'size',
@@ -2139,7 +2139,7 @@ export const DOCS: DocCategory[] = [
         selector: 'strct-breadcrumb, strct-breadcrumb-item',
         importNames: ['StrctBreadcrumb', 'StrctBreadcrumbItem'],
         summary: 'Hierarchical location trail.',
-        lead: 'A trail of links showing the current location within a hierarchy. Project `strct-breadcrumb-item` entries; mark the last one `current`.',
+        lead: 'A trail of links showing the current location within a hierarchy. Project `strct-breadcrumb-item` entries; mark the last one `current`. A trail that does not route — a folder path inside a view — uses `interactive` crumbs and `(activated)` instead of links.',
         inputs: [
           {
             name: 'current',
@@ -2147,10 +2147,33 @@ export const DOCS: DocCategory[] = [
             default: 'false',
             description: 'On `strct-breadcrumb-item`: render as the non-link current page.',
           },
+          {
+            name: 'interactive',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'On `strct-breadcrumb-item`: the crumb itself is the control — a tab stop that answers Enter and Space and emits `(activated)` — for a trail that moves the view rather than the URL. It is stated rather than inferred from `(activated)` having a listener, which Angular’s output API does not expose; `strct-list-item` and `strct-tag` read the same way.',
+          },
         ],
-        do: ['Mark the final item current so it is not a link.'],
-        dont: ['Do not use a breadcrumb when the hierarchy is only one level deep.'],
-        a11y: ['Use within a nav landmark; the current item should not be a link.'],
+        outputs: [
+          {
+            name: 'activated',
+            type: 'void',
+            description: 'An `interactive` crumb was activated (click / Enter / Space).',
+          },
+        ],
+        do: [
+          'Mark the final item current so it is not a link.',
+          'Use `interactive` crumbs for a path that does not route.',
+        ],
+        dont: [
+          'Do not use a breadcrumb when the hierarchy is only one level deep.',
+          'Do not put an `<a>` with a click handler and no `href` in a crumb — no keyboard can reach it.',
+        ],
+        a11y: [
+          'Use within a nav landmark; the current item should not be a link.',
+          'An interactive crumb carries role="button" and a tab stop, so it answers Enter and Space.',
+        ],
       },
       {
         id: 'menubar',
