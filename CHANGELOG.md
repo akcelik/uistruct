@@ -5,6 +5,35 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.6.0] - 2026-09-29
+
+### Added
+
+- **`strct-progress` meter mode** (FR-48-18). A capacity bar now says what it
+  measures and how much, next to the bar: `visibleLabel` puts `label` at the
+  start of a row above the track, `showValue` puts `valueText` (default
+  `${value}%`) at its end, and `caption` adds a quiet line under it.
+  `segments` stacks more than one fill — what a host runs now plus what would
+  arrive if its neighbour failed — each with its own tone, with widths clamped
+  so the total can never overflow the track and their labels joined into
+  `aria-valuetext` ("Used 61%, Arriving 22%"). `indeterminate` is a task that
+  is running but reports no percentage: a sweeping fill, no `aria-valuenow`,
+  and a static striped fill under `prefers-reduced-motion`. `status` gained
+  `neutral` for queued / idle / unknown. Everything is off by default.
+- **`strct-spinner` `caption`** (FR-48-20). Visible text beside the ring, which
+  also becomes the accessible name, so a spinner is not announced as "Loading"
+  while it says "Reading…". Without a caption the host is still the ring itself,
+  so every existing spinner is byte-identical.
+- **`strct-empty-state` `size="sm"` and `variant="loading"`** (FR-48-20). `sm`
+  is the inline row a small frame wants — a 16px icon with the title on one
+  line — instead of a 56px chip and 40px of padding. `loading` swaps the icon
+  chip for a spinner and marks the region `aria-busy`.
+
+Measured in Chrome with the motion preference emulated both ways: the
+indeterminate bar sweeps at 35% width with `prefers-reduced-motion:
+no-preference` and becomes a static striped full-width fill under `reduce`,
+and it never carries `aria-valuenow`.
+
 ## [4.5.0] - 2026-09-29
 
 ### Added

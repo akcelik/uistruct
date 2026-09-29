@@ -6,12 +6,14 @@ import {
   input,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
+import { StrctSpinner } from '../spinner/spinner';
 
 /** Preset zero/permission/error states with a sensible icon + tone. */
-export type StrctEmptyVariant = 'empty' | 'denied' | 'error' | 'notfound';
+export type StrctEmptyVariant = 'empty' | 'denied' | 'error' | 'notfound' | 'loading';
 
 const VARIANTS: Record<StrctEmptyVariant, { icon: string; tone: string }> = {
   empty: { icon: 'folder', tone: 'neutral' },
+  loading: { icon: '', tone: 'neutral' },
   denied: { icon: 'lock', tone: 'warning' },
   error: { icon: 'warning', tone: 'critical' },
   notfound: { icon: 'search', tone: 'neutral' },
@@ -30,10 +32,18 @@ const VARIANTS: Record<StrctEmptyVariant, { icon: string; tone: string }> = {
   selector: 'strct-empty-state',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon],
+  imports: [StrctIcon, StrctSpinner],
   template: `
     <span class="strct-empty__icon strct-empty__icon--{{ toneClass() }}">
-      <strct-icon [name]="resolvedIcon()" [size]="26" [strokeWidth]="1.4" />
+      @if (variant() === 'loading') {
+        <strct-spinner [size]="size() === 'sm' ? 'sm' : 'md'" [label]="title()" />
+      } @else {
+        <strct-icon
+          [name]="resolvedIcon()"
+          [size]="size() === 'sm' ? 16 : 26"
+          [strokeWidth]="1.4"
+        />
+      }
     </span>
     <h3 class="strct-empty__title">{{ title() }}</h3>
     @if (description()) {
@@ -41,7 +51,11 @@ const VARIANTS: Record<StrctEmptyVariant, { icon: string; tone: string }> = {
     }
     <div class="strct-empty__actions"><ng-content /></div>
   `,
-  host: { class: 'strct-empty' },
+  host: {
+    class: 'strct-empty',
+    '[class.strct-empty--sm]': "size() === 'sm'",
+    '[attr.aria-busy]': "variant() === 'loading' ? 'true' : null",
+  },
   styles: [
     `
       .strct-empty {
@@ -110,6 +124,11 @@ export class StrctEmptyState {
   /** Override the preset tone (neutral / warning / critical / accent). */
   readonly tone = input<string>('');
   readonly title = input.required<string>();
+  /**
+   * `sm` is the inline row a 240px frame wants: a 16px icon with the title and
+   * description on one line. A page-sized empty state stays `md`.
+   */
+  readonly size = input<'md' | 'sm'>('md');
   readonly description = input('');
 
   protected readonly resolvedIcon = computed(() => this.icon() || VARIANTS[this.variant()].icon);

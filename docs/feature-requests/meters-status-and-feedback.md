@@ -1,5 +1,18 @@
 # FR-48-18 … 23 — Meters, status and feedback
 
+> **FR-48-18 and FR-48-20 SHIPPED in 4.6.0 (2026-09-29)** — the two this document holds that the
+> audit ranked highest. Progress gained meter mode (visible label / value / caption, segments,
+> indeterminate, a neutral tone); the spinner gained a visible caption; the empty state gained
+> `size="sm"` and a `loading` variant.
+>
+> Measured in Chrome with the motion preference emulated both ways, which caught a real defect on
+> the way: the reduced-motion striped fill was being outranked by the tone rule
+> (`.strct-progress--neutral .strct-progress__fill`), so it never painted. Headless Chrome also
+> emulates `reduce` by default, so the first reading showed no animation in either mode.
+>
+> **Still open here: FR-48-19** (status-dot `pulse`, live indicator), **FR-48-21** (metric tile),
+> **FR-48-22** (alert icon override and layout), **FR-48-23** (`strct-legend`, donut legend).
+
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
 ---
