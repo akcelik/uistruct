@@ -73,4 +73,28 @@ describe('StrctDonut', () => {
     fixture.detectChanges();
     expect(el.querySelector('.strct-donut__value')?.textContent).toContain('48');
   });
+
+  // FR-48-23
+  it('puts the legend under the ring on demand, and keeps a zero row muted', () => {
+    const fixture = TestBed.createComponent(StrctDonut);
+    fixture.componentRef.setInput('segments', [
+      { label: 'Running', value: 12 },
+      { label: 'Failed', value: 0 },
+    ]);
+    fixture.componentRef.setInput('legend', true);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.classList).not.toContain('strct-donut--legend-below');
+    let rows = el.querySelectorAll('.strct-donut__leg');
+    expect(rows.length).toBe(2);
+    expect(rows[1].classList).toContain('is-empty');
+
+    fixture.componentRef.setInput('legendPosition', 'below');
+    fixture.componentRef.setInput('keepEmpty', false);
+    fixture.detectChanges();
+    expect(el.classList).toContain('strct-donut--legend-below');
+    rows = el.querySelectorAll('.strct-donut__leg');
+    expect(rows.length).toBe(1);
+    expect(rows[0].textContent).toContain('Running');
+  });
 });

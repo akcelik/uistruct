@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.15.0] - 2026-09-29
+
+### Added
+
+- **`strct-legend`** (FR-48-23). A chart's key is a component: the same swatch ·
+  label · value rows serve a line chart's series picker, a diagram's edge styles
+  and a donut's categories, instead of 9px squares with inline backgrounds
+  written per screen. The swatch takes a `shape` (`square`, `dot`, `line`,
+  `dash`), a `status` tone or an explicit palette `color`; a category with
+  nothing in it keeps its row, muted, because "0 failed" is information. With
+  `interactive` each row is a toggle button carrying `aria-pressed`, so a
+  switched-off series is announced rather than only dimmed.
+- **`strct-donut`: `legendPosition` and `keepEmpty`** (FR-48-23). The legend can
+  sit under the ring, for a card narrower than ring + key, and a zero-value
+  category's row is muted rather than silently normal. `keepEmpty` defaults to
+  `true` — the row already stayed — so it is the opt-out for the rare case where
+  the noise is not worth it.
+
 ## [4.14.0] - 2026-09-29
 
 ### Added

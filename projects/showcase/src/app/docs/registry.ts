@@ -3787,6 +3787,50 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not use bars for continuous time data — use a line.'],
       },
       {
+        id: 'legend',
+        title: 'Legend',
+        selector: 'strct-legend',
+        importNames: ['StrctLegend', 'StrctLegendItem'],
+        summary: 'A chart key: swatch · label · value rows.',
+        lead: 'A chart\u2019s key is a component. The same swatch · label · value rows serve a line chart\u2019s series picker, a diagram\u2019s edge styles and a donut\u2019s categories — instead of 9px squares with inline backgrounds written per screen. A category with nothing in it stays in the key, muted, because "0 failed" is information.',
+        inputs: [
+          {
+            name: 'items',
+            type: 'StrctLegendItem[]',
+            description:
+              '`{ label; value?; status?; color?; shape?: "square" | "dot" | "line" | "dash"; muted?; off? }[]`. `color` (a palette entry such as `var(--chart-2)`) wins over `status`; `muted` is the quiet row of an empty category; `off` marks a switched-off series when `interactive`.',
+          },
+          {
+            name: 'orientation',
+            type: `'horizontal' | 'vertical'`,
+            default: `'horizontal'`,
+            description: 'Vertical stacks the rows and aligns their values to the end.',
+          },
+          {
+            name: 'interactive',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Each row becomes a toggle button carrying `aria-pressed`, for picking which series a chart draws.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'itemToggle',
+            type: 'string',
+            description: 'The label of the row that was toggled.',
+          },
+        ],
+        do: [
+          'Use one legend component for series pickers, edge styles and donut categories.',
+          'Keep a zero category in the key, muted.',
+        ],
+        dont: ['Do not draw swatches with inline background colours per screen.'],
+        a11y: [
+          'The rows are a list; with `interactive` each is a toggle button with aria-pressed, so "off" is announced rather than only dimmed.',
+        ],
+      },
+      {
         id: 'donut',
         title: 'Donut',
         selector: 'strct-donut',
@@ -3831,6 +3875,20 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'true',
             description: 'Hover highlight + center readout.',
+          },
+          {
+            name: 'legendPosition',
+            type: `'side' | 'below'`,
+            default: `'side'`,
+            description:
+              'Where the legend sits — under the ring for a card narrower than ring + key.',
+          },
+          {
+            name: 'keepEmpty',
+            type: 'boolean',
+            default: 'true',
+            description:
+              'A zero-value category keeps its legend row, muted — "0 failed" is information. Set false to drop those rows.',
           },
         ],
         do: [

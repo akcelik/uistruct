@@ -88,12 +88,13 @@ const round = (n: number): number => Math.round(n * 100) / 100;
 
       @if (legend()) {
         <ul class="strct-donut__legend">
-          @for (arc of arcs(); track $index) {
+          @for (arc of legendArcs(); track arc.index) {
             <li
               class="strct-donut__leg"
-              [class.is-active]="hovered() === $index"
-              [class.is-dim]="hovered() !== null && hovered() !== $index"
-              (pointerenter)="enter($index)"
+              [class.is-active]="hovered() === arc.index"
+              [class.is-dim]="hovered() !== null && hovered() !== arc.index"
+              [class.is-empty]="arc.value === 0"
+              (pointerenter)="enter(arc.index)"
               (pointerleave)="leave()"
             >
               <span class="strct-donut__swatch" [style.background]="arc.color"></span>
@@ -106,7 +107,10 @@ const round = (n: number): number => Math.round(n * 100) / 100;
       }
     </div>
   `,
-  host: { class: 'strct-donut' },
+  host: {
+    class: 'strct-donut',
+    '[class.strct-donut--legend-below]': "legendPosition() === 'below'",
+  },
   styles: [
     `
       .strct-donut {
@@ -116,6 +120,17 @@ const round = (n: number): number => Math.round(n * 100) / 100;
         display: inline-flex;
         align-items: center;
         gap: 20px;
+      }
+      /* Under the ring, for a card narrower than ring + key. */
+      .strct-donut--legend-below .strct-donut__layout {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+      /* A category with nothing in it stays in the key, quietly — "0 failed"
+         is information. */
+      .strct-donut__leg.is-empty {
+        opacity: 0.55;
       }
       .strct-donut__wrap {
         position: relative;
@@ -241,6 +256,13 @@ export class StrctDonut {
   readonly centerLabel = input('');
   /** Show a legend (color · label · value · %) beside the ring. */
   readonly legend = input(false, { transform: booleanAttribute });
+  /** Where the legend sits: beside the ring, or under it. */
+  readonly legendPosition = input<'side' | 'below'>('side');
+  /**
+   * A zero-value category keeps its legend row, muted — "0 failed" is
+   * information. Set it false to drop those rows instead.
+   */
+  readonly keepEmpty = input(true, { transform: booleanAttribute });
   /** Gap between slices, in degrees. */
   readonly gap = input(3);
   /** Hover highlight + center readout. */
@@ -277,6 +299,12 @@ export class StrctDonut {
       cursor += full;
       return arc;
     });
+  });
+
+  /** The rows the legend shows — every arc, or only the non-empty ones. */
+  protected readonly legendArcs = computed(() => {
+    const rows = this.arcs().map((arc, index) => ({ ...arc, index }));
+    return this.keepEmpty() ? rows : rows.filter((r) => r.value !== 0);
   });
 
   protected readonly centerMain = computed(() => {
