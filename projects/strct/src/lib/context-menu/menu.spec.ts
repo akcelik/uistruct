@@ -241,3 +241,96 @@ describe('StrctMenuPanel — item hint (FR-42-01)', () => {
     );
   });
 });
+
+describe('StrctMenuPanel — anchored placement (FR-48-10)', () => {
+  const W = 200;
+  const H = 160;
+
+  /** jsdom lays nothing out, so the panel is given a size to be placed by. */
+  function sized() {
+    const w = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(W);
+    const h = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(H);
+    return () => {
+      w.mockRestore();
+      h.mockRestore();
+    };
+  }
+
+  function rect(left: number, top: number, width = 90, height = 28): DOMRect {
+    return {
+      x: left,
+      y: top,
+      width,
+      height,
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+      toJSON: () => ({}),
+    } as DOMRect;
+  }
+
+  async function place(anchor: DOMRect, placement: string, offset = 4) {
+    const restore = sized();
+    try {
+      const fixture = TestBed.createComponent(StrctMenuPanel);
+      fixture.componentRef.setInput('items', [{ label: 'One' }, { label: 'Two' }]);
+      fixture.componentRef.setInput('anchorRect', anchor);
+      fixture.componentRef.setInput('placement', placement);
+      fixture.componentRef.setInput('offset', offset);
+      fixture.detectChanges();
+      const host = fixture.nativeElement as HTMLElement;
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return {
+        visibility: host.style.visibility,
+        left: parseFloat(host.style.left),
+        top: parseFloat(host.style.top),
+      };
+    } finally {
+      restore();
+    }
+  }
+
+  it('opens above an anchor near the viewport bottom, offset away from it', async () => {
+    const top = window.innerHeight - 48;
+    const r = rect(100, top);
+    const out = await place(r, 'top-start', 6);
+    // placed from its measured size, and visible once placed
+    expect(out.visibility).toBe('');
+    expect(out.left).toBe(100);
+    expect(out.top).toBe(r.top - 6 - H);
+  });
+
+  it('flips below when the preferred side has no room', async () => {
+    const r = rect(100, 4); // hard against the top edge
+    const out = await place(r, 'top-start', 6);
+    expect(out.top).toBe(r.bottom + 6);
+  });
+
+  it('aligns the end edge of a bottom-end menu with the anchor end', async () => {
+    const r = rect(400, 100);
+    const out = await place(r, 'bottom-end');
+    expect(out.left).toBe(r.right - W);
+    expect(out.top).toBe(r.bottom + 4);
+  });
+
+  it('keeps x / y placement untouched', async () => {
+    const restore = sized();
+    try {
+      const fixture = TestBed.createComponent(StrctMenuPanel);
+      fixture.componentRef.setInput('items', [{ label: 'One' }]);
+      fixture.componentRef.setInput('x', 30);
+      fixture.componentRef.setInput('y', 40);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.style.visibility).toBe('');
+      expect(host.style.left).toBe('30px');
+      expect(host.style.top).toBe('40px');
+    } finally {
+      restore();
+    }
+  });
+});

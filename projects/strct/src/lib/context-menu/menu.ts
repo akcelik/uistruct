@@ -136,6 +136,7 @@ export interface StrctMenuItem {
   host: {
     class: 'strct-menu-host',
     '[style.position]': "submenu() ? null : 'fixed'",
+    '[style.visibility]': "placed() ? null : 'hidden'",
     '[style.left.px]': 'submenu() ? null : posX()',
     '[style.top.px]': 'submenu() ? subTop() : posY()',
     '[style.zIndex]': 'submenu() ? null : 1100',
@@ -258,6 +259,12 @@ export class StrctMenuPanel {
   readonly y = input(0);
   /** Render as a nested submenu panel. */
   readonly submenu = input(false, { transform: booleanAttribute });
+  /** The anchor's viewport rect, when the menu is placed against a control. */
+  readonly anchorRect = input<DOMRect | null>(null);
+  /** Preferred side and alignment against `anchorRect`. */
+  readonly placement = input<StrctMenuPlacement>('bottom-start');
+  /** Gap between the anchor and the menu. */
+  readonly offset = input(4);
 
   /** Emitted when an item is selected. */
   readonly select = output<StrctMenuItem>();
@@ -268,6 +275,12 @@ export class StrctMenuPanel {
 
   protected readonly posX = signal(0);
   protected readonly posY = signal(0);
+  /**
+   * An anchored menu is placed from its real size, which is known only after it
+   * renders — so it stays hidden for that one frame rather than appearing in
+   * the wrong place first.
+   */
+  protected readonly placed = signal(true);
   /** Vertical offset of a submenu fly-out (matches the CSS `top: -5px` default). */
   protected readonly subTop = signal(-5);
   protected readonly flipLeft = signal(false);
@@ -292,14 +305,58 @@ export class StrctMenuPanel {
   constructor() {
     this.posX.set(this.x());
     this.posY.set(this.y());
+    if (this.anchorRect()) this.placed.set(false);
     afterNextRender(() => {
       // Open on the first entry that can act; a disabled-but-hinted one is
       // reachable by arrow keys, not the landing spot.
       const nav = this.navIndices();
       this.activeIndex.set(nav.find((i) => !this.items()[i].disabled) ?? nav[0] ?? 0);
-      this.clampToViewport();
+      if (this.anchorRect()) this.placeAgainstAnchor();
+      else this.clampToViewport();
+      this.placed.set(true);
       this.focusItem(this.activeIndex());
     });
+  }
+
+  /**
+   * Place the panel against its anchor from the panel's measured size: the
+   * preferred side when it fits, the opposite side when it does not and the
+   * opposite side does, and clamped on the cross axis either way.
+   */
+  private placeAgainstAnchor(): void {
+    const host = this.host.nativeElement;
+    const r = this.anchorRect()!;
+    const w = host.offsetWidth;
+    const h = host.offsetHeight;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const gap = this.offset();
+    const m = 6;
+    const [preferred, align] = this.placement().split('-') as [
+      'bottom' | 'top' | 'right' | 'left',
+      'start' | 'end',
+    ];
+    let side = preferred;
+
+    if (side === 'bottom' && r.bottom + gap + h > vh - m && r.top - gap - h >= m) side = 'top';
+    else if (side === 'top' && r.top - gap - h < m && r.bottom + gap + h <= vh - m) side = 'bottom';
+    else if (side === 'right' && r.right + gap + w > vw - m && r.left - gap - w >= m) side = 'left';
+    else if (side === 'left' && r.left - gap - w < m && r.right + gap + w <= vw - m) side = 'right';
+
+    let x: number;
+    let y: number;
+    if (side === 'bottom' || side === 'top') {
+      x = align === 'end' ? r.right - w : r.left;
+      y = side === 'bottom' ? r.bottom + gap : r.top - gap - h;
+    } else {
+      x = side === 'right' ? r.right + gap : r.left - gap - w;
+      y = align === 'end' ? r.bottom - h : r.top;
+    }
+    this.posX.set(Math.max(m, Math.min(x, vw - w - m)));
+    this.posY.set(Math.max(m, Math.min(y, vh - h - m)));
+
+    const rtl = getComputedStyle(host).direction === 'rtl';
+    this.flipLeft.set(rtl ? this.posX() < 220 : this.posX() + w > vw - 220);
   }
 
   private clampToViewport(): void {
@@ -431,11 +488,29 @@ export class StrctMenuPanel {
 }
 
 /** Options for {@link StrctMenuService.open}. */
+/** Where an anchored menu sits before flipping. */
+export type StrctMenuPlacement =
+  'bottom-start' | 'bottom-end' | 'top-start' | 'top-end' | 'right-start' | 'left-start';
+
 export interface StrctMenuOpenOptions {
-  /** Viewport x of the menu's top-left (clamped/flipped to stay on screen). */
-  x: number;
+  /**
+   * Viewport x of the menu's top-left (clamped/flipped to stay on screen).
+   * Optional since 4.13: pass `anchor` instead to place the menu against the
+   * control it belongs to.
+   */
+  x?: number;
   /** Viewport y of the menu's top-left. */
-  y: number;
+  y?: number;
+  /**
+   * The control the menu belongs to. The menu is measured after it renders and
+   * placed against this element (or rect), so it never covers it — only the
+   * library knows the menu's size, so only the library can place it right.
+   */
+  anchor?: Element | DOMRect;
+  /** Preferred side and alignment; flipped when it does not fit. */
+  placement?: StrctMenuPlacement;
+  /** Gap between anchor and menu, in px. */
+  offset?: number;
   items: StrctMenuItem[];
   /** Payload passed to each item's `action`. */
   data?: unknown;
@@ -465,8 +540,23 @@ export class StrctMenuService {
     const ref = createComponent(StrctMenuPanel, { environmentInjector: this.envInjector });
     ref.setInput('items', opts.items);
     ref.setInput('data', opts.data);
-    ref.setInput('x', opts.x);
-    ref.setInput('y', opts.y);
+    ref.setInput('x', opts.x ?? 0);
+    ref.setInput('y', opts.y ?? 0);
+    if (opts.anchor) {
+      const rect =
+        opts.anchor instanceof Element ? opts.anchor.getBoundingClientRect() : opts.anchor;
+      ref.setInput('anchorRect', rect);
+      ref.setInput('placement', opts.placement ?? 'bottom-start');
+      ref.setInput('offset', opts.offset ?? 4);
+      // Focus goes back to the control the menu belongs to, when that control
+      // can take it — otherwise to whatever had focus before.
+      if (
+        opts.anchor instanceof HTMLElement &&
+        opts.anchor.matches('button, a[href], input, select, textarea, [tabindex]')
+      ) {
+        this.restoreTo = opts.anchor;
+      }
+    }
     ref.instance.select.subscribe((item) => {
       item.action?.(opts.data);
       opts.onSelect?.(item);

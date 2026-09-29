@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.13.0] - 2026-09-29
+
+### Added
+
+- **`StrctMenuService.open({ anchor, placement, offset })`** (FR-48-10). A menu
+  opened from a control never covers it. Pass the control (an `Element` or a
+  `DOMRect`) instead of `x` / `y`: the menu is measured after it renders and
+  placed against the anchor — `bottom-start` by default, `bottom-end` to align
+  the end edges, `top-*`, `right-start`, `left-start` — flipping to the other
+  side when the preferred one has no room and clamping on the cross axis. It
+  stays `visibility: hidden` for the frame it is being measured in, so it never
+  appears in the wrong place first, and focus returns to the anchor on close.
+  Callers that pass `x` / `y` are unchanged; consumers no longer have to guess
+  the menu's width or estimate its height from a row count.
+- **`[strctDropdownItemAction]`** (FR-48-11): a second action at the end of a
+  menu item — "delete this saved view" beside "open it". Its click stays with
+  it, so the item is not activated and the menu stays open, and it keeps out of
+  the Tab order: the right arrow reaches it from its item, the left arrow
+  returns, and Delete on the item triggers it, as the WAI-ARIA pattern for a
+  secondary action does. Items without the slot are unchanged.
+
 ## [4.12.0] - 2026-09-29
 
 ### Added

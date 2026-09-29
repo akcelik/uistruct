@@ -20,8 +20,23 @@
 > API does not expose whether an output has a listener, so the intent is stated — the way
 > `strct-list-item` and `strct-tag` already read.
 >
-> **Still open here: FR-48-10** (menu anchor / placement / flip) and **FR-48-11** (a trailing
-> secondary action in a dropdown item).
+> **FR-48-10 and FR-48-11 SHIPPED in 4.13.0 (2026-09-29)** — `anchor` / `placement` / `offset` on
+> `StrctMenuService.open`, and `[strctDropdownItemAction]`.
+>
+> Measured in Chrome at a 700px viewport: a button 32px from the bottom asks for `bottom-start` and
+> gets its menu **above** — panel bottom 640 against anchor top 646, a 6px gap, start-aligned,
+> entirely in the viewport and not touching the button. `bottom-end` aligns the end edges,
+> `right-start` puts the panel's left edge 6px past the anchor's right with their tops level, and
+> Escape returns focus to the anchor. The panel is `visibility: hidden` for the frame it is being
+> measured in, so it never appears in the wrong place first; the unit tests pin the four acceptance
+> points against a mocked panel size, including that `x` / `y` calls are untouched.
+>
+> The dropdown action: the × deletes without opening the item and **the menu stays open** (3 items
+> → 2, echo "deleted CPU pressure"), it sits at the item's end with `tabindex="-1"`, the right
+> arrow moves focus to it, the left arrow returns to the item, and Delete on the item triggers it.
+> An item without the slot is untouched.
+>
+> **Every ask in this document has shipped.**
 
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
