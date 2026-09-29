@@ -379,10 +379,10 @@ export class StrctHeatmap {
     const maxV = this.maxVal();
     const t = this.thresholds();
     if (t) {
-      const { color, from, to } = this.bandFor(value, t, maxV);
+      const { color, from, to, floor, ceilingPct } = this.bandFor(value, t, maxV);
       const span = to - from;
       const pos = span > 0 ? Math.min(Math.max((value - from) / span, 0), 1) : 1;
-      const pct = 45 + Math.round(pos * 55);
+      const pct = floor + Math.round(pos * (ceilingPct - floor));
       return `color-mix(in srgb, ${color} ${pct}%, var(--bg-1))`;
     }
     const ratio = maxV > 0 ? Math.min(value / maxV, 1) : 0;
@@ -390,20 +390,40 @@ export class StrctHeatmap {
     return `color-mix(in srgb, ${this.color()} ${pct}%, var(--bg-1))`;
   }
 
-  /** The band a value falls in: its hue and the range intensity scales over. */
+  /**
+   * The band a value falls in: its hue, the value range intensity scales over,
+   * and the intensity range itself.
+   *
+   * FR-44-02: the bands' intensity ranges ASCEND and do not overlap, so
+   * intensity never falls as the value rises. Restarting every band at one
+   * floor (4.3.0) made a cell just past a threshold paler than the cell just
+   * below it — an 86% warning cell read quieter than an 84% accent one, which
+   * is backwards for the hours that matter most. The accent band still starts
+   * near-empty; warning and critical start where accent ends, so neither can
+   * be mistaken for no-data either.
+   */
   private bandFor(
     value: number,
     t: StrctThresholds,
     maxV: number,
-  ): { color: string; from: number; to: number } {
+  ): { color: string; from: number; to: number; floor: number; ceilingPct: number } {
     const ceiling = Math.max(maxV, value);
     if (t.critical != null && value >= t.critical) {
-      return { color: COLOR.critical, from: t.critical, to: ceiling };
+      return { color: COLOR.critical, from: t.critical, to: ceiling, floor: 92, ceilingPct: 100 };
     }
     if (t.warning != null && value >= t.warning) {
-      return { color: COLOR.warning, from: t.warning, to: t.critical ?? ceiling };
+      const to = t.critical ?? ceiling;
+      // With a critical bound above it the warning band stops short of it;
+      // without one it owns the top of the ramp.
+      return {
+        color: COLOR.warning,
+        from: t.warning,
+        to,
+        floor: 80,
+        ceilingPct: t.critical != null ? 92 : 100,
+      };
     }
     const upper = t.warning ?? t.critical ?? ceiling;
-    return { color: this.color(), from: 0, to: upper };
+    return { color: this.color(), from: 0, to: upper, floor: 8, ceilingPct: 80 };
   }
 }

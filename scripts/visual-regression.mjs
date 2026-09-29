@@ -29,10 +29,17 @@ const MAX_DIFF_RATIO = 0.005;
 
 const UPDATE = process.argv.includes('--update');
 
+/**
+ * [name, route, anchor?] — the shot is the viewport at the top of the page, or
+ * at `anchor` when one is given, for a case that lives below the fold.
+ */
 const ROUTES = [
   ['home', '/'],
   ['button', '/components/button'],
   ['datagrid', '/components/datagrid'],
+  // FR-47-01: a progress bar inside a datagrid row — the case where the track
+  // used to be the exact colour of the row behind it in the dark theme.
+  ['datagrid-progress', '/components/datagrid', '#datagrid'],
   ['line', '/components/line'],
   ['tree', '/components/tree'],
 ];
@@ -149,11 +156,15 @@ try {
         document.addEventListener('DOMContentLoaded', () => document.head.appendChild(s));
       `,
     });
-    for (const [routeName, route] of ROUTES) {
+    for (const [routeName, route, anchor] of ROUTES) {
       const name = `${routeName}--${schemeName}`;
       await send('Page.navigate', { url: `http://127.0.0.1:${PORT}${route}` });
       await sleep(2600);
-      await send('Runtime.evaluate', { expression: 'window.scrollTo(0,0)' });
+      await send('Runtime.evaluate', {
+        expression: anchor
+          ? `(() => { const el = document.querySelector('${anchor}'); if (el) el.scrollIntoView({ block: 'start' }); })()`
+          : 'window.scrollTo(0,0)',
+      });
       await sleep(300);
       const shot = await send('Page.captureScreenshot', {
         format: 'png',
