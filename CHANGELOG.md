@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.20.0] - 2026-09-30
+
+### Added
+
+- **`strct-media-frame`** (FR-48-34): a live picture — a console thumbnail, a
+  camera — sits in a fixed-ratio frame, and when there is no picture yet, or
+  none at all, the frame says why **in its own small space**, because an empty
+  state is too large for a 240px card. `state` covers content, loading, empty,
+  `off` (black, because that reads as a screen) and error; `interactive` makes
+  the whole frame one tab stop, so the thumbnail is the button that opens the
+  console.
+- **`strct-shell [skipLinkTarget]`** (FR-48-37): "Skip to main content" as the
+  shell's first focusable element, invisible until focused. It moves **focus**
+  (applying `tabindex="-1"` when needed), not only the scroll position, so the
+  next Tab resumes inside the content. Without a target nothing is rendered.
+  This site's own shell now carries one — press Tab.
+- **`strct-accordion-panel appearance="quiet"`** (FR-48-38): "How this works" is
+  a quiet fold in running text — a one-line, link-looking summary that opens in
+  place — not a boxed accordion. It reads like the 17 raw `<details>` folds it
+  replaces, while keeping the button + region semantics they never had.
+
 ## [4.19.0] - 2026-09-29
 
 ### Added

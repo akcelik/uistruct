@@ -109,4 +109,37 @@ describe('StrctVerticalNav', () => {
     const host = fixture.nativeElement as HTMLElement;
     expect(host.id).toBe(shell.navId);
   });
+
+  // FR-48-37
+  describe('skip link', () => {
+    it('renders nothing without a target', () => {
+      const fixture = TestBed.createComponent(StrctShell);
+      fixture.detectChanges();
+      expect((fixture.nativeElement as HTMLElement).querySelector('.strct-shell__skip')).toBeNull();
+    });
+
+    it("is the shell's first element and moves focus to the main region", () => {
+      const main = document.createElement('main');
+      main.id = 'main-region';
+      document.body.appendChild(main);
+      try {
+        const fixture = TestBed.createComponent(StrctShell);
+        fixture.componentRef.setInput('skipLinkTarget', 'main-region');
+        fixture.detectChanges();
+        const el = fixture.nativeElement as HTMLElement;
+        const link = el.querySelector('.strct-shell__skip') as HTMLAnchorElement;
+        expect(link).toBeTruthy();
+        expect(el.firstElementChild).toBe(link);
+        expect(link.getAttribute('href')).toBe('#main-region');
+        expect(link.textContent?.trim()).toBe('Skip to main content');
+
+        link.click();
+        // focus, not only scroll — an href alone would leave focus on the link
+        expect(main.getAttribute('tabindex')).toBe('-1');
+        expect(document.activeElement).toBe(main);
+      } finally {
+        main.remove();
+      }
+    });
+  });
 });

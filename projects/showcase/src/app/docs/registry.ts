@@ -1512,6 +1512,54 @@ export const DOCS: DocCategory[] = [
         ],
       },
       {
+        id: 'media-frame',
+        title: 'Media frame',
+        selector: 'strct-media-frame',
+        importNames: ['StrctMediaFrame', 'StrctMediaState'],
+        summary: 'A fixed-ratio frame with placeholder states.',
+        lead: 'A live picture — a console thumbnail, a camera — sits in a fixed-ratio frame; and when there is no picture yet, or none at all, the frame says why **in its own small space**, because an empty state is too large for a 240px card.',
+        inputs: [
+          {
+            name: 'ratio',
+            type: 'string',
+            default: `'4 / 3'`,
+            description: 'The frame\u2019s aspect ratio, as a CSS `aspect-ratio` value.',
+          },
+          {
+            name: 'state',
+            type: `'content' | 'loading' | 'empty' | 'off' | 'error'`,
+            default: `'content'`,
+            description:
+              'What the frame shows: the projected picture, or why there is none. `off` goes black, because that reads as a screen; `error` tints the placeholder critical.',
+          },
+          {
+            name: 'message / icon',
+            type: 'string',
+            default: `''`,
+            description:
+              'The placeholder\u2019s line, and an icon override (otherwise derived from `state`).',
+          },
+          {
+            name: 'interactive / activateLabel',
+            type: 'boolean · string',
+            default: 'false',
+            description:
+              'The whole frame becomes one tab stop that emits `(activated)` — the thumbnail is the button that opens the console. Its name falls back to `message`.',
+          },
+        ],
+        outputs: [
+          { name: 'activated', type: 'void', description: 'An `interactive` frame was activated.' },
+        ],
+        do: [
+          'Give a thumbnail a ratio so the layout does not jump when the picture arrives.',
+          'Say why there is no picture in `message`.',
+        ],
+        dont: ['Do not put a full empty state in a 240px card — that is what this frame is for.'],
+        a11y: [
+          'An interactive frame is a single button over the whole frame, named by `activateLabel` or `message`.',
+        ],
+      },
+      {
         id: 'accordion',
         title: 'Accordion',
         selector: 'strct-accordion',
@@ -1529,6 +1577,13 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description: 'On `strct-accordion-panel`: two-way open state (`[(expanded)]`).',
+          },
+          {
+            name: 'appearance',
+            type: `'boxed' | 'quiet'`,
+            default: `'boxed'`,
+            description:
+              'On `strct-accordion-panel`: `quiet` is a fold in running text — no border or background, a `--text-sm` summary in `--t2` with a chevron, the body indented. It reads like a raw `<details>` while keeping the button + region semantics.',
           },
         ],
         do: ['Use for optional or secondary detail that benefits from progressive disclosure.'],
