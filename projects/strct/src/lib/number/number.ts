@@ -47,6 +47,7 @@ import { StrctIcon } from '../icon/icon';
         inputmode="decimal"
         class="strct-control strct-num__input"
         role="spinbutton"
+        [attr.aria-label]="ariaLabel() || null"
         [attr.aria-valuemin]="min()"
         [attr.aria-valuemax]="max()"
         [attr.aria-valuenow]="value()"
@@ -123,6 +124,11 @@ export class StrctNumber implements ControlValueAccessor {
   readonly step = input(1);
   /** Placeholder text when empty. */
   readonly placeholder = input('');
+  /**
+   * The field's accessible name, for a number that is not inside a
+   * `strct-field` — in a grid cell, or beside a label it does not own.
+   */
+  readonly ariaLabel = input('');
   /** Accessible label of the + button (localizable). */
   readonly incrementLabel = input('Increment');
   /** Accessible label of the − button (localizable). */

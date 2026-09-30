@@ -1,4 +1,5 @@
 import {
+  Directive,
   afterNextRender,
   ElementRef,
   inject,
@@ -16,6 +17,10 @@ import { StrctIcon } from '../icon/icon';
 /** Alert visual types. */
 export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
 
+/** Controls at the alert's end — the fix the alert is about. */
+@Directive({ selector: '[strctAlertActions]' })
+export class StrctAlertActions {}
+
 /** Inline contextual banner. `<strct-alert type="warning">…</strct-alert>`. */
 @Component({
   selector: 'strct-alert',
@@ -27,6 +32,11 @@ export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
          display:block for spacing must not put the icon on its own line. -->
     <div class="strct-alert__row">
       <strct-icon class="strct-alert__icon" [name]="iconName()" [size]="16" />
+      <!-- Declared before the catch-all so the selector wins; it renders at
+           the row's end either way, after the body. -->
+      <span class="strct-alert__actions">
+        <ng-content select="[strctAlertActions]" />
+      </span>
       <div class="strct-alert__body"><ng-content /></div>
       @if (closable()) {
         <button
@@ -75,6 +85,20 @@ export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
       .strct-alert__body {
         flex: 1;
         color: var(--t1);
+        order: 1;
+      }
+      /* A warning that carries its own fix — "3 VMs differ from the policy ·
+         Remediate" — puts the button at the alert's end, on the body's first
+         line. */
+      .strct-alert__actions {
+        order: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        flex: none;
+      }
+      .strct-alert__actions:empty {
+        display: none;
       }
       .strct-alert__close {
         flex-shrink: 0;

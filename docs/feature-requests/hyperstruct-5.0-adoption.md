@@ -19,7 +19,20 @@
 >   selection directly so an external write emits no `selectionChange`, while a user's own pick
 >   still does.
 >
-> Still open: **FR-49-05, 06, 10 … 16, 18, 19, 20**.
+> Still open: **FR-49-05, 06, 13, 14, 15, 16, 18, 19, 20**.
+>
+> **FR-49-10, 11 and 12 SHIPPED in 5.3.0 (2026-09-30)** — the form-and-note set.
+>
+> - **10** all three: `strct-number [ariaLabel]` (measured in the accessibility tree: `spinbutton`
+>   named "vCPUs"), `[strctInput] [mono]` with the `.strct-control--mono` class (measured:
+>   JetBrains Mono + `tabular-nums`, against DM Sans for a plain control), and
+>   `strct-range [valueFormat]` (measured: the same slider reads "4 GB" while the model stays 4).
+> - **11** `[strctAlertActions]`, at the end of the alert's row. Measured: `order: 2` after the
+>   body, 13px from the alert's end, on the body's first line, before the dismiss button; an empty
+>   slot draws nothing.
+> - **12** `[strctFieldValue]`. Measured with a Range over the text, not the box: without it the
+>   value's first line sits **8.3px above** the label's — the 9px the report gave — and with it
+>   **0.5px**, which is the two line-heights differing.
 >
 > **FR-49-02, 03 and 04 SHIPPED in 5.2.0 (2026-09-30)** — the datagrid set.
 >

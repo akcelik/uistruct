@@ -5,6 +5,33 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.0] - 2026-09-30
+
+### Added
+
+- **`[strctAlertActions]`** (FR-49-11). A warning that carries its own fix —
+  _"3 VMs differ from the policy · **Remediate**"_ — puts the control at the end
+  of the alert's row, on the body's first line and before the dismiss button.
+  Measured: `order: 2` after the body, 13px from the alert's end, first line,
+  and an empty slot draws nothing.
+- **`[strctFieldValue]`** (FR-49-12). A settings form mixes editable rows with
+  values that are read-only _here_ — a name, a badge, a switch that only shows
+  state. Placed in an inline field's control column, such text sat **8.3px
+  above the label's line**, because the column centres on a 34px control; the
+  new slot puts it on the label's own line (measured: 0.5px). It stacks with
+  the rest below 480px.
+- **`strct-number [ariaLabel]`** (FR-49-10). The spinbutton had no name where
+  the control is not inside a `strct-field` — in a grid cell, or beside a label
+  it does not own. Measured in the accessibility tree: `spinbutton` named
+  _"vCPUs"_.
+- **`[strctInput] [mono]`** and `.strct-control--mono` (FR-49-10). A PEM block,
+  a `key=value` mapping or an identifier reads as code: the monospace face with
+  the tabular figures the rest of the library uses for data. Measured:
+  JetBrains Mono with `tabular-nums`, against DM Sans for a plain control.
+- **`strct-range [valueFormat]`** (FR-49-10). `showValue` printed the raw
+  number; memory is "4 GB" and a weight is "20%". The format shapes the label
+  only — the model stays the number.
+
 ## [5.2.0] - 2026-09-30
 
 ### Added

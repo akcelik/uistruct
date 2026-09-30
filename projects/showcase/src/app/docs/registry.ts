@@ -518,6 +518,12 @@ export const DOCS: DocCategory[] = [
         lead: 'Wraps any form control with a label (and optional required marker), a hint and an error message. It auto-links the control via `aria-describedby` and toggles `aria-invalid`, so accessibility wiring is automatic.',
         inputs: [
           {
+            name: '[strctFieldValue]',
+            type: 'slot',
+            description:
+              'A value that is read-only here — a name, a badge, a switch that only shows state — in an inline field’s control column, on the label’s own line. Without it the text sits 9px above it, because the column centres on a 34px control.',
+          },
+          {
             name: 'label',
             type: 'string',
             default: `''`,
@@ -626,6 +632,13 @@ export const DOCS: DocCategory[] = [
         summary: 'Click-to-edit text.',
         lead: 'Display text that swaps to an input on click (or via the pencil affordance that appears on hover/focus). Enter commits, Escape cancels, blur commits; the committed value is announced in a live region. ControlValueAccessor-compatible over `string`.',
         inputs: [
+          {
+            name: 'mono',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Monospace text with tabular figures — a PEM block, a `key=value` mapping, an identifier. `.strct-control--mono` is the class, for a control the directive does not own.',
+          },
           model('string', 'Committed value.'),
           {
             name: 'placeholder',
@@ -869,6 +882,13 @@ export const DOCS: DocCategory[] = [
         summary: 'Range input with a filled track.',
         lead: 'A range slider with a filled track and an optional live value readout. ControlValueAccessor-compatible.',
         inputs: [
+          {
+            name: 'valueFormat',
+            type: '((value: number) => string) | null',
+            default: 'null',
+            description:
+              'How the shown value reads: memory is "4 GB" and a weight is "20%", not 4 and 20. It formats the label only — the model stays the number.',
+          },
           model('number', 'Current value.'),
           { name: 'min', type: 'number', default: '0', description: 'Lower bound.' },
           { name: 'max', type: 'number', default: '100', description: 'Upper bound.' },
@@ -893,6 +913,13 @@ export const DOCS: DocCategory[] = [
         summary: 'Numeric stepper with − / + buttons.',
         lead: 'A numeric stepper: − / + buttons flanking a text field, with a `number | null` value (null = empty). Typing is free-form — intermediate states like "-" are kept and clamped to `min`/`max` on blur; the buttons and keyboard clamp immediately. ControlValueAccessor-compatible.',
         inputs: [
+          {
+            name: 'ariaLabel',
+            type: 'string',
+            default: `''`,
+            description:
+              'The spinbutton’s accessible name where the control is not inside a `strct-field` — in a grid cell, or beside a label it does not own.',
+          },
           model('number | null', 'Current value; null means empty.'),
           {
             name: 'min',
@@ -4671,10 +4698,16 @@ export const DOCS: DocCategory[] = [
         id: 'alert',
         title: 'Alert',
         selector: 'strct-alert',
-        importNames: ['StrctAlert'],
+        importNames: ['StrctAlert', 'StrctAlertActions'],
         summary: 'Inline semantic banner.',
         lead: 'An inline banner for contextual messages, in four semantic tones. Uses a neutral surface with a colored left rail; add `closable` for a dismiss button.',
         inputs: [
+          {
+            name: '[strctAlertActions]',
+            type: 'slot',
+            description:
+              'Controls at the end of the alert’s row, on the body’s first line and before the dismiss button — the fix the alert is about ("3 VMs differ from the policy · Remediate").',
+          },
           {
             name: 'type',
             type: `'info' | 'success' | 'warning' | 'critical'`,
