@@ -198,9 +198,18 @@ export class StrctDescriptionList {
 /**
  * One projected `label → value` row inside a `<strct-description-list>`. The
  * value is whatever you project, so it can host a badge, icon or formatted text.
+ *
+ * Use **`<div strctDesc>`** inside a list: `<dl>` allows only `dt` / `dd` pairs
+ * or `<div>` wrappers as children, so a `<strct-desc>` element between them is
+ * invalid and assistive tech loses the pairing. `<strct-desc>` still works for a
+ * row rendered outside a list.
  */
 @Component({
-  selector: 'strct-desc',
+  // Both spellings. `<strct-desc>` is the readable one, but a custom element
+  // between `<dl>` and its `dt` / `dd` breaks the content model — axe reports
+  // definition-list and dlitem — so inside a list, use `<div strctDesc>`, which
+  // the model does allow. (`StrctInput` gained `strct-input` the same way.)
+  selector: 'strct-desc, div[strctDesc]',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   imports: [StrctIcon, StrctStatusDot],

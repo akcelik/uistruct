@@ -2906,7 +2906,7 @@ export const DOCS: DocCategory[] = [
         selector: 'strct-description-list, strct-desc',
         importNames: ['StrctDescriptionList', 'StrctDesc', 'StrctDescItem'],
         summary: 'Aligned label → value pairs (+ inline stat strip).',
-        lead: 'A compact definition list: aligned `label : value` rows with an optional trailing slot. The `inline` variant is the horizontal "stat strip". Drive it with the `items` input, or project `<strct-desc label="…">` rows so a value can host a badge, icon or rich content.',
+        lead: 'Inside a list, write each row as **`<div strctDesc>`**: a `<dl>` allows only `dt` / `dd` pairs or `<div>` wrappers as children, so a `<strct-desc>` element between them is invalid and assistive tech loses the pairing (`<strct-desc>` still works for a row rendered outside a list). A compact definition list: aligned `label : value` rows with an optional trailing slot. The `inline` variant is the horizontal "stat strip". Drive it with the `items` input, or project `<strct-desc label="…">` rows so a value can host a badge, icon or rich content.',
         inputs: [
           {
             name: 'items',

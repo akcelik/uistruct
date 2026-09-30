@@ -2690,6 +2690,28 @@ export class StrctDatagrid {
       if (init == null) return;
       untracked(() => this.selected.set(new Set(init)));
     });
+    // Single mode: the checked row follows `selectedId`, whoever wrote it — the
+    // user picking, or a consumer restoring a pick from an earlier step. It
+    // writes `selected` directly rather than through commitSelection, so an
+    // external write never emits selectionChange (a user's own pick already
+    // emitted one).
+    effect(() => {
+      if (this.mode() !== 'single') return;
+      const id = this.selectedId();
+      untracked(() => {
+        const next = id == null ? new Set<unknown>() : new Set([id]);
+        const current = this.selected();
+        if (current.size === next.size && [...next].every((v) => current.has(v))) return;
+        this.selected.set(next);
+        // Keep the row snapshot in step when the row is loaded; a pick set
+        // before the rows arrive is cached when it is toggled later.
+        this.selectedRowCache.clear();
+        if (id != null) {
+          const row = this.rows().find((r) => this.idOf(r) === id);
+          if (row) this.selectedRowCache.set(id, row);
+        }
+      });
+    });
     // Dev mode only: say so when rowId or initialSelection cannot do what they
     // were given to do. In production the effect is never registered.
     if (typeof ngDevMode !== 'undefined' && ngDevMode) {

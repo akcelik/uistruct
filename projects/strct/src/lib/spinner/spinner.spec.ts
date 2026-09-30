@@ -50,4 +50,28 @@ describe('StrctSpinner — visible caption (FR-48-20)', () => {
     // Not announced as "Loading" while it says something else on screen.
     expect(host.getAttribute('aria-label')).toBe('Reading…');
   });
+
+  // BUG-49-02 — the caption must not sit inside the spinning ring.
+  it('gives up its box to a row when captioned, and keeps the ring its own', () => {
+    const fixture = TestBed.createComponent(StrctSpinner);
+    fixture.componentRef.setInput('caption', 'Checking reachability…');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.classList).toContain('strct-spinner--captioned');
+    const ring = el.querySelector('.strct-spinner__ring');
+    const caption = el.querySelector('.strct-spinner__caption');
+    expect(ring).toBeTruthy();
+    expect(caption?.textContent).toBe('Checking reachability…');
+    // the caption is a sibling of the ring, not inside it
+    expect(ring?.contains(caption as Node)).toBe(false);
+  });
+
+  it('is unchanged without a caption', () => {
+    const fixture = TestBed.createComponent(StrctSpinner);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.classList).not.toContain('strct-spinner--captioned');
+    expect(el.querySelector('.strct-spinner__ring')).toBeNull();
+    expect(el.textContent?.trim()).toBe('');
+  });
 });

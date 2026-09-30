@@ -75,8 +75,23 @@ export function strctCheckHostInputs(
  * way to break a flex host.
  */
 export function strctCheckHostDisplay(host: HTMLElement, selector: string, expected: string): void {
+  // A host inside a closed modal or an unshown tab is not in the document yet,
+  // so getComputedStyle reports '' — which is not an override. Warning there
+  // would be wrong twice over: the message is nonsense, and because the warning
+  // deduplicates by key it would mask a real override later on the same page.
+  // Wait for the element to be laid out instead.
+  if (!host.isConnected) {
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+      if (!host.isConnected) return;
+      ro.disconnect();
+      strctCheckHostDisplay(host, selector, expected);
+    });
+    ro.observe(host);
+    return;
+  }
   const actual = getComputedStyle(host).display;
-  if (actual === expected) return;
+  if (!actual || actual === expected) return;
   strctDevWarn(
     `host-display:${selector}`,
     `[strct] <${selector}> needs display: ${expected}, but it computes to ${actual}. ` +

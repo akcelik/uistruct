@@ -114,4 +114,30 @@ describe('StrctDescriptionList', () => {
       expect(el.querySelector('.strct-desc__note')).toBeNull();
     });
   });
+
+  // BUG-49-05 — <dl> allows only dt/dd pairs or <div> wrappers as children.
+  it('works as div[strctDesc], so a list keeps a valid content model', () => {
+    @Component({
+      imports: [StrctDescriptionList, StrctDesc],
+      changeDetection: ChangeDetectionStrategy.Eager,
+      template: `
+        <strct-description-list>
+          <div strctDesc label="IPv4" mono>172.16.75.100</div>
+          <div strctDesc label="Gateway">172.16.75.2</div>
+        </strct-description-list>
+      `,
+    })
+    class DivHost {}
+
+    const fixture = TestBed.createComponent(DivHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const dl = el.querySelector('dl') as HTMLElement;
+    // every child of the <dl> is a div — no custom element between it and its pairs
+    expect([...dl.children].every((c) => c.tagName === 'DIV')).toBe(true);
+    expect(dl.querySelectorAll('dt').length).toBe(2);
+    expect(dl.querySelectorAll('dd').length).toBe(2);
+    expect(dl.querySelector('dt')?.textContent).toContain('IPv4');
+    expect(dl.querySelector('dd')?.textContent).toContain('172.16.75.100');
+  });
 });

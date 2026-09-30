@@ -28,6 +28,9 @@ const ROUTES = [
   '/components/line',
   '/components/tree',
   '/components/datagrid',
+  // BUG-49-05 shipped because this page was not covered: a custom element
+  // between <dl> and its dt / dd is invalid, and axe says so.
+  '/components/description-list',
   '/components/time-range',
   '/scenarios/dashboard',
 ];

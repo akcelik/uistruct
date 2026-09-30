@@ -1635,3 +1635,57 @@ describe('StrctDatagrid presentation and cursor paging', () => {
     });
   });
 });
+
+// BUG-49-06 — a consumer that writes selectedId must see the row checked.
+describe('StrctDatagrid — selectedId drives the checked row', () => {
+  const cols: StrctDatagridColumn[] = [{ key: 'name', label: 'Host' }];
+  const rows: StrctRow[] = [
+    { id: 'h1', name: 'hv-01' },
+    { id: 'h2', name: 'hv-02' },
+  ];
+
+  function make() {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('rowId', 'id');
+    fixture.componentRef.setInput('selectionMode', 'single');
+    const changes: unknown[][] = [];
+    fixture.componentInstance.selectionChange.subscribe((e) => changes.push(e));
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement, changes };
+  }
+  const radios = (el: HTMLElement) => [
+    ...el.querySelectorAll<HTMLInputElement>('.strct-dg__radio'),
+  ];
+
+  it('checks the row an outside write names, and emits nothing', () => {
+    const { fixture, el, changes } = make();
+    expect(radios(el).map((r) => r.checked)).toEqual([false, false]);
+
+    fixture.componentRef.setInput('selectedId', 'h2');
+    fixture.detectChanges();
+    expect(radios(el).map((r) => r.checked)).toEqual([false, true]);
+    expect(el.querySelectorAll('tbody tr')[1].getAttribute('aria-selected')).toBe('true');
+    expect(changes).toEqual([]); // an external write is not a user pick
+  });
+
+  it('clears the pick when selectedId goes back to null', () => {
+    const { fixture, el } = make();
+    fixture.componentRef.setInput('selectedId', 'h1');
+    fixture.detectChanges();
+    expect(radios(el)[0].checked).toBe(true);
+    fixture.componentRef.setInput('selectedId', null);
+    fixture.detectChanges();
+    expect(radios(el).map((r) => r.checked)).toEqual([false, false]);
+  });
+
+  it('still emits for a user pick, and keeps selectedId in step', () => {
+    const { fixture, el, changes } = make();
+    radios(el)[1].click();
+    fixture.detectChanges();
+    expect(changes.length).toBe(1);
+    expect(fixture.componentInstance.selectedId()).toBe('h2');
+    expect(radios(el)[1].checked).toBe(true);
+  });
+});
