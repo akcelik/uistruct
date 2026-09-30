@@ -1,4 +1,7 @@
 import {
+  afterNextRender,
+  ElementRef,
+  inject,
   ChangeDetectionStrategy,
   Component,
   ViewEncapsulation,
@@ -6,6 +9,7 @@ import {
   computed,
   input,
 } from '@angular/core';
+import { strctCheckHostInputs } from '../util/host-check';
 import { StrctStatus } from '../status';
 
 /** Dot sizes: `sm` for dense rows (tables, menus), `md` standalone. */
@@ -141,6 +145,23 @@ const DEFAULT_LABEL: Record<StrctStatus, string> = {
   ],
 })
 export class StrctStatusDot {
+  private readonly hostEl = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  constructor() {
+    // Dev-only: writing this component the way a sibling is written must not
+    // fail silently. Guarded inline, so production drops the call — and with it
+    // the whole diagnostics module.
+    afterNextRender(() => {
+      if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+        const el = this.hostEl.nativeElement;
+        strctCheckHostInputs(el, 'strct-status-dot', {
+          status: 'neutral, accent, success, warning, critical',
+          size: 'sm, md',
+          label: 'accessible text',
+        });
+      }
+    });
+  }
   /** Status tone (canonical vocabulary: OK = 'success', info = 'accent'). */
   readonly status = input<StrctStatus>('neutral');
   /**

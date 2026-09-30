@@ -1,10 +1,14 @@
 import {
+  afterNextRender,
+  ElementRef,
+  inject,
   ChangeDetectionStrategy,
   Component,
   ViewEncapsulation,
   booleanAttribute,
   input,
 } from '@angular/core';
+import { strctCheckHostInputs } from '../util/host-check';
 
 /** Badge color variants. */
 export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'critical';
@@ -91,6 +95,21 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
   ],
 })
 export class StrctBadge {
+  private readonly hostEl = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  constructor() {
+    // Dev-only: writing this component the way a sibling is written must not
+    // fail silently. Guarded inline, so production drops the call — and with it
+    // the whole diagnostics module.
+    afterNextRender(() => {
+      if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+        const el = this.hostEl.nativeElement;
+        strctCheckHostInputs(el, 'strct-badge', {
+          status: 'neutral, accent, success, warning, critical',
+        });
+      }
+    });
+  }
   /** Visual status color. */
   readonly status = input<StrctBadgeStatus>('neutral');
   /** Opt-in filled style instead of the default outlined style. */

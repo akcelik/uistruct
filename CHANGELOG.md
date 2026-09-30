@@ -5,6 +5,36 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.25.0] - 2026-09-30
+
+### Added
+
+- **Dev-mode diagnostics for attributes a component does not have** (FR-48-42).
+  Writing a component the way a sibling component is written must not fail
+  silently: `<strct-alert variant="warning">` compiles, because a static
+  attribute is just an HTML attribute to Angular, renders the info-blue default,
+  and nobody finds out — it shipped nine times in the audited app. Each of
+  `strct-alert`, `strct-badge`, `strct-tag` and `strct-status-dot` now checks its
+  host once, after first render, against a **closed** list of input names that
+  exist on other strct components, and names the input that actually takes the
+  value written. Ordinary HTML, ARIA, `class`, `style` and `data-*` are never
+  flagged. `strct-alert` also warns when a consumer's `display` overrides the one
+  its layout depends on.
+
+  Every call site is guarded inline with `ngDevMode`, so production drops the
+  calls and tree-shakes the diagnostics away with them: the production bundle
+  contains no `[strct]` strings at all.
+
+- **`StrctInput` answers to `strct-input` as well as `strctInput`** (FR-48-42).
+  `<button strct-button>` is kebab-case, so that is what a consumer writes by
+  analogy — and an unstyled browser input is the silent failure that follows. The
+  alias is kinder than a warning and costs nothing.
+
+- **CI asserts the showcase logs no `[strct]` diagnostics**
+  (`scripts/dev-warnings.mjs`). The warnings are for consumers, so the library's
+  own showcase must never trigger one. It runs against the **development** build,
+  since production compiles the diagnostics out.
+
 ## [4.24.0] - 2026-09-30
 
 ### Added

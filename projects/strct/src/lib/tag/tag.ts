@@ -1,4 +1,7 @@
 import {
+  afterNextRender,
+  ElementRef,
+  inject,
   ChangeDetectionStrategy,
   Component,
   Directive,
@@ -7,6 +10,7 @@ import {
   input,
   output,
 } from '@angular/core';
+import { strctCheckHostInputs } from '../util/host-check';
 import { StrctIcon } from '../icon/icon';
 
 /** Content rendered before the tag's text — a status dot, an icon. */
@@ -156,6 +160,22 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
   ],
 })
 export class StrctTag {
+  private readonly hostEl = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  constructor() {
+    // Dev-only: writing this component the way a sibling is written must not
+    // fail silently. Guarded inline, so production drops the call — and with it
+    // the whole diagnostics module.
+    afterNextRender(() => {
+      if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+        const el = this.hostEl.nativeElement;
+        strctCheckHostInputs(el, 'strct-tag', {
+          status: 'neutral, accent, success, warning, critical',
+          shape: 'default, pill',
+        });
+      }
+    });
+  }
   /** Visual status color. */
   readonly status = input<StrctTagStatus>('neutral');
   /** Show a remove button. */

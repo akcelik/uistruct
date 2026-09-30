@@ -136,3 +136,4 @@ export * from './lib/toolbar/toolbar';
 export * from './lib/inline-edit/inline-edit';
 export * from './lib/notification-center/notification-center';
 export * from './lib/heatmap/heatmap';
+export * from './lib/util/host-check';
