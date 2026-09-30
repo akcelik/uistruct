@@ -23,8 +23,8 @@
 >
 > **Every ask in this document has shipped — and with it, all 45 asks of the audit.**
 
-**From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
-It continues the 4.1.0 work in [archive/uistruct-silent-failures-2026-09.md](archive/uistruct-silent-failures-2026-09.md)
+**From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](../hyperstruct-hand-built-audit.md).
+It continues the 4.1.0 work in [archive/uistruct-silent-failures-2026-09.md](uistruct-silent-failures-2026-09.md)
 and uses the same `util/dev-warn.ts`.
 
 ## Rule

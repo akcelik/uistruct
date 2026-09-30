@@ -10,7 +10,7 @@
 > is 4.65–4.83:1 and overline 5.55–6.15:1, measured in Chrome with the translucent `--t2`/`--t3`
 > tokens composited over their ground (reading the token colours alone reports nonsense).
 
-**From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
+**From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](../hyperstruct-hand-built-audit.md).
 
 These five are the largest source of hand-written CSS in the app: about 60 uppercase "eyebrow" rules in 40 files, and
 147 inline muted paragraphs. Each is small; together they are why no two HyperStruct pages type the same.

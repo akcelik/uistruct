@@ -31,7 +31,7 @@
 >
 > **Every ask in this document has shipped.**
 
-**From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md),
+**From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](../hyperstruct-hand-built-audit.md),
 which also covers how these proposals follow the library's conventions.
 
 ---
