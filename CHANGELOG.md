@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.22.0] - 2026-09-30
+
+### Added
+
+- **`strct-window` and `strct-window-dock`** (FR-48-33). Some work lives in a
+  window beside the page: a VM console stays open while the operator browses. It
+  can be moved (by the title bar, or Alt+arrows on it), resized from focusable
+  corner grips (arrows 16px, Shift+arrows 64px), minimised to the dock and
+  brought back from it — and it **does not block the page**, because a modal does
+  that and a drawer is pinned to an edge.
+
+  It is a `role="dialog"` with `aria-modal="false"` on a new **`--z-window`**
+  layer (500), between the tour and the modal, so a modal opened from inside a
+  window still comes up over it; the active window is raised above its
+  neighbours. Focus moves to the title bar on open and returns to the opener on
+  close, and **Escape minimises** rather than closing, because a window is not
+  dismissed like a modal. `bounds` is two-way, so a window's place can be
+  persisted; `palette="dark"` forces the dark scheme inside while keeping the
+  palette in force outside — what a console wants.
+
 ## [4.21.0] - 2026-09-30
 
 ### Added

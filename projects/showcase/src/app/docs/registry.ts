@@ -1767,6 +1767,79 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not use a tree for flat lists.'],
       },
       {
+        id: 'window',
+        title: 'Window',
+        selector: 'strct-window, strct-window-dock',
+        importNames: ['StrctWindow', 'StrctWindowDock', 'StrctWindowBounds', 'StrctWindowService'],
+        summary: 'Non-modal, draggable, resizable, minimisable.',
+        lead: 'Some work lives in a window beside the page: a VM console stays open while the operator browses. It can be moved, resized and minimised, and it comes back from the dock. A modal blocks the page and a drawer is pinned to an edge \u2014 neither is a window.',
+        inputs: [
+          {
+            name: 'open / minimized / maximized',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'All two-way. `maximized` fills the viewport (not browser fullscreen); `minimized` sends the window to the dock, and `open` survives it.',
+          },
+          {
+            name: 'bounds',
+            type: 'StrctWindowBounds | null',
+            default: 'null',
+            description:
+              '`{ x; y; width; height }` in viewport px, two-way — so a window\u2019s place can be persisted. Null lets the window place itself.',
+          },
+          {
+            name: 'heading',
+            type: 'string',
+            default: `''`,
+            description:
+              'The title-bar heading, the window\u2019s accessible name, and its dock entry.',
+          },
+          {
+            name: 'resizable / minWidth / minHeight',
+            type: 'boolean · number',
+            default: 'true · 480 · 320',
+            description:
+              'Corner grips, and the size they stop at. The grips are focusable: arrows resize by 16px, Shift+arrows by 64px.',
+          },
+          {
+            name: 'palette',
+            type: `'inherit' | 'dark' | 'light'`,
+            default: `'inherit'`,
+            description:
+              'Forces a scheme inside the window while keeping the palette in force outside — what a console wants.',
+          },
+          {
+            name: 'closeOnOutside',
+            type: `'none' | 'minimize'`,
+            default: `'none'`,
+            description:
+              'What a click beside the window does. A window is not dismissed like a modal.',
+          },
+          {
+            name: '[strctWindowTitleMeta] / [strctWindowActions] / [strctWindowStatus]',
+            type: 'slots',
+            description:
+              'A badge beside the heading, controls at the title bar\u2019s end, and a status bar under the content.',
+          },
+        ],
+        outputs: [{ name: 'closed', type: 'void', description: 'The window was closed.' }],
+        do: [
+          'Use a window for work that continues while the user browses elsewhere.',
+          'Persist `bounds` if the window should come back where it was.',
+          'Put `strct-window-dock` in a toolbar or status bar.',
+        ],
+        dont: [
+          'Do not use a window for a decision the user must make now — that is a modal.',
+          'Do not stack more than a handful; the dock is not a task manager.',
+        ],
+        a11y: [
+          'role="dialog" with aria-modal="false" on its own `--z-window` layer (500), between the tour and the modal — so a modal opened from inside a window still comes up over it.',
+          'Focus moves to the title bar on open and returns to the opener on close; Escape minimises rather than closing, because a window is not dismissed.',
+          'The title bar moves with Alt+arrows (Shift for a larger step) and every resize grip is focusable.',
+        ],
+      },
+      {
         id: 'modal',
         title: 'Modal',
         selector: 'strct-modal',

@@ -25,8 +25,19 @@
 > Alt+ArrowRight moves "Capacity" from column 1 to column 2 position 1, and the live region says
 > **"Moved Capacity to right, position 1 of 2"**.
 >
-> **Still open here: FR-48-33** (`strct-window` + dock) — the last item of this document, and the
-> largest of the audit.
+> **FR-48-33 SHIPPED in 4.22.0 (2026-09-30)** — `strct-window` and `strct-window-dock`.
+>
+> Measured in Chrome: the window is a `role="dialog"` with `aria-modal="false"` at **z-index 501**
+> (the new `--z-window` layer plus its stacking offset), with **no backdrop** — a point just outside
+> it belongs to the page (`ARTICLE.doc__main`), and clicking the page's own theme control while the
+> window is open switches the site light → dark with the window still open. `palette="dark"` puts
+> `data-theme="dark"` on the frame while carrying the outside palette (`arctic`) over, so only the
+> scheme swaps. Alt+ArrowRight then Alt+Shift+ArrowDown move it 120,140 → **136,204** (16 then 64);
+> the focused SE grip resizes 560×360 → **576×424**. Escape **minimises**: the frame goes, the dock
+> lists "APP01 · console", and focus returns to the opener. Restoring from the dock reopens it at
+> the same bounds and raises it (z 502). Closing empties the dock and returns focus again.
+>
+> **Every ask in this document has shipped.**
 
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
