@@ -449,10 +449,10 @@ export class OverviewPage {
     {
       title: 'Surfaces',
       tokens: [
-        { name: 'Base', varName: '--bg-0' },
-        { name: 'Panel', varName: '--bg-1' },
-        { name: 'Sunken', varName: '--bg-2' },
-        { name: 'Raised', varName: '--bg-3' },
+        { name: 'Page ground', varName: '--bg-0' },
+        { name: 'Raised surface', varName: '--bg-1' },
+        { name: 'Recessed fill', varName: '--bg-2' },
+        { name: 'Rest fill', varName: '--bg-3' },
         { name: 'Header', varName: '--hdr' },
       ],
     },

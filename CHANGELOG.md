@@ -5,6 +5,61 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] - 2026-09-30
+
+A major for one reason: **FR-44-01 changes how every card looks.** Nothing else in
+the API moved, and no input, output or selector was removed.
+
+### Changed
+
+- **One edge instead of two.** `--sh` no longer carries a `0 0 0 1px var(--b1)`
+  ring, so a card is its 1px border and a soft drop shadow rather than a border
+  plus a second ring — which at 2× read as two lines, and on a page of ten cards
+  as ten double outlines. `--shh` (the raised/hover shadow) keeps its ring,
+  because a raised state is a different one.
+- **A surface step, in the same direction in both themes.** The surface tokens
+  now carry **roles** rather than a single lightness direction:
+  `--bg-0` is the page ground, `--bg-1` the **raised** surface (card, menu,
+  window, modal), `--bg-2` the **recessed** fill (input, track, chip, table
+  header), `--bg-3` / `--bg-h` / `--bg-a` the rest / hover / active fills. The
+  three dark schemes had `--bg-1` _darker_ than `--bg-2`, so a card read as sunk
+  into the page; their values are swapped. The light schemes keep their
+  direction with a wider step — the card is now the palette's white.
+
+  Measured in Chrome, a card against its ground: arctic **1.026 → 1.083** in
+  light, and **sunk → raised** in dark; the same in ember and sage. Nested
+  surfaces now agree between themes as well: a card header is recessed against
+  its card, and a grid's cells sit above its frame, which sits above the page.
+  Every text tone stays at or above AA on all three surfaces in all six schemes
+  (worst: `--t3` on the raised surface in sage dark, 4.51).
+
+- **`strct-shell` paints `--bg-0`**, the ladder's page ground, instead of
+  `--bg-2`.
+- **`strct-segmented`'s moving pill keeps a hairline of its own.** It had no
+  border and took its definition from `--sh`'s ring, so it was given one
+  explicitly.
+
+### Fixed
+
+- **The visual-regression gate could not see a palette change.** `pixelmatch`'s
+  0.15 threshold tolerates antialiasing, which also means a few levels per
+  channel across a whole page count as **zero** differing pixels: this change
+  moved every surface and the gate reported every page as matching. It now also
+  measures the **mean per-channel drift** and fails above 0.6/255. Against the
+  old baselines this change measures 8.0–12.7, so it is caught; two consecutive
+  runs of identical renders measure 0.00, so it is not flaky. The twelve
+  baselines are refreshed to record the new surfaces.
+
+### Migration
+
+- If you painted a **raised** panel with `--bg-2`, switch it to `--bg-1`; if you
+  painted a **recessed** fill with `--bg-1`, switch it to `--bg-2`. In the light
+  schemes both keep their direction, so only dark-scheme work is affected.
+- If something of yours relied on `--sh` for its **only** edge, give it a border
+  (or add `0 0 0 1px var(--b1)` to its own shadow, as `strct-segmented` does).
+- If you painted your page ground with `--bg-2` to match the shell, switch to
+  `--bg-0`.
+
 ## [4.25.0] - 2026-09-30
 
 ### Added

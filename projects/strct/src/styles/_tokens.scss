@@ -5,7 +5,13 @@
 // re-skins the entire component tree.
 //
 // Token groups:
-//   --bg-0..--bg-a  surfaces (lowest -> raised/active)   --hdr header surface
+//   --bg-0..--bg-a  surfaces by ROLE, not by lightness:
+//                   --bg-0 page ground · --bg-1 raised surface (card, menu,
+//                   window) · --bg-2 recessed fill (input, track, chip) ·
+//                   --bg-3/h/a fills for rest / hover / active.
+//                   A raised surface is lighter than its ground in BOTH
+//                   themes, so a card never reads as sunk into the page.
+//                                                        --hdr header surface
 //   --b1/--b2/--b3  hairline -> strong borders
 //   --t1..--t4      text (primary -> faint)              --inv inverse text
 //   --acc + acc-*   accent and its translucent tints
@@ -61,8 +67,8 @@
   --chart-6: #d95926;
   --chart-7: #9085e9;
   --chart-8: #e66767;
-  --bg-1: #161920;
-  --bg-2: #1c2028;
+  --bg-1: #1c2028;
+  --bg-2: #161920;
   --bg-3: #23282f;
   --bg-h: #272c35;
   --bg-a: #2e343e;
@@ -88,7 +94,7 @@
   --critical-bg: rgba(184, 120, 114, 0.12);
   --hdr: #12141a;
   --hdr-fg: rgba(255, 255, 255, 0.9);
-  --sh: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--b1);
+  --sh: 0 1px 3px rgba(0, 0, 0, 0.5);
   --shh: 0 4px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--b2);
   --sb: rgba(255, 255, 255, 0.08);
   --dn: rgba(255, 255, 255, 0.06);
@@ -131,8 +137,8 @@
   --chart-6: #eb6834;
   --chart-7: #4a3aa7;
   --chart-8: #e34948;
-  --bg-1: #fbfcfd;
-  --bg-2: #f8f9fb;
+  --bg-1: #ffffff;
+  --bg-2: #f4f6f8;
   --bg-3: #eef0f3;
   --bg-h: #f0f1f4;
   --bg-a: #e6e8ec;
@@ -158,7 +164,7 @@
   --critical-bg: rgba(160, 99, 92, 0.12);
   --hdr: #1c2330;
   --hdr-fg: rgba(255, 255, 255, 0.9);
-  --sh: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--b1);
+  --sh: 0 1px 3px rgba(0, 0, 0, 0.06);
   --shh: 0 4px 14px rgba(0, 0, 0, 0.09), 0 0 0 1px var(--b2);
   --sb: rgba(0, 0, 0, 0.1);
   --dn: rgba(0, 0, 0, 0.04);
@@ -201,8 +207,8 @@
   --chart-6: #d95926;
   --chart-7: #9085e9;
   --chart-8: #e66767;
-  --bg-1: #1a1714;
-  --bg-2: #211e1a;
+  --bg-1: #211e1a;
+  --bg-2: #1a1714;
   --bg-3: #2a2621;
   --bg-h: #302b25;
   --bg-a: #37312a;
@@ -228,7 +234,7 @@
   --critical-bg: rgba(191, 126, 114, 0.12);
   --hdr: #15120f;
   --hdr-fg: rgba(255, 255, 255, 0.9);
-  --sh: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--b1);
+  --sh: 0 1px 3px rgba(0, 0, 0, 0.5);
   --shh: 0 4px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--b2);
   --sb: rgba(255, 235, 210, 0.08);
   --dn: rgba(255, 235, 210, 0.05);
@@ -271,8 +277,8 @@
   --chart-6: #eb6834;
   --chart-7: #4a3aa7;
   --chart-8: #e34948;
-  --bg-1: #fdfcfa;
-  --bg-2: #f9f7f4;
+  --bg-1: #fffefc;
+  --bg-2: #f5f2ed;
   --bg-3: #f0ece7;
   --bg-h: #eee9e3;
   --bg-a: #e5e0d8;
@@ -298,7 +304,7 @@
   --critical-bg: rgba(160, 96, 90, 0.12);
   --hdr: #2a2118;
   --hdr-fg: rgba(255, 255, 255, 0.9);
-  --sh: 0 1px 3px rgba(40, 25, 10, 0.07), 0 0 0 1px var(--b1);
+  --sh: 0 1px 3px rgba(40, 25, 10, 0.07);
   --shh: 0 4px 14px rgba(40, 25, 10, 0.1), 0 0 0 1px var(--b2);
   --sb: rgba(60, 40, 20, 0.1);
   --dn: rgba(60, 40, 20, 0.04);
@@ -341,8 +347,8 @@
   --chart-6: #d95926;
   --chart-7: #9085e9;
   --chart-8: #e66767;
-  --bg-1: #141a17;
-  --bg-2: #1a211e;
+  --bg-1: #1a211e;
+  --bg-2: #141a17;
   --bg-3: #222a26;
   --bg-h: #283530;
   --bg-a: #2f3b36;
@@ -368,7 +374,7 @@
   --critical-bg: rgba(176, 122, 116, 0.12);
   --hdr: #101815;
   --hdr-fg: rgba(255, 255, 255, 0.9);
-  --sh: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--b1);
+  --sh: 0 1px 3px rgba(0, 0, 0, 0.5);
   --shh: 0 4px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--b2);
   --sb: rgba(210, 240, 225, 0.08);
   --dn: rgba(210, 240, 225, 0.05);
@@ -411,8 +417,8 @@
   --chart-6: #eb6834;
   --chart-7: #4a3aa7;
   --chart-8: #e34948;
-  --bg-1: #fafcfb;
-  --bg-2: #f5f8f6;
+  --bg-1: #fdfffe;
+  --bg-2: #f1f5f2;
   --bg-3: #eaf0ec;
   --bg-h: #e8eeea;
   --bg-a: #dfe6e1;
@@ -438,7 +444,7 @@
   --critical-bg: rgba(154, 94, 88, 0.12);
   --hdr: #1a2820;
   --hdr-fg: rgba(255, 255, 255, 0.9);
-  --sh: 0 1px 3px rgba(10, 30, 20, 0.07), 0 0 0 1px var(--b1);
+  --sh: 0 1px 3px rgba(10, 30, 20, 0.07);
   --shh: 0 4px 14px rgba(10, 30, 20, 0.1), 0 0 0 1px var(--b2);
   --sb: rgba(20, 60, 40, 0.1);
   --dn: rgba(20, 60, 40, 0.04);

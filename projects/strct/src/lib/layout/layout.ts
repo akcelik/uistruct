@@ -53,7 +53,10 @@ export class StrctShellService {
         grid-template-rows: auto 1fr auto;
         height: 100vh;
         overflow: hidden;
-        background: var(--bg-2);
+        /* The ladder's lowest surface: the page is the ground, and a card
+           (--bg-1) sits one step above it — raised in both themes, rather than
+           3 levels apart in light and sunk in dark. */
+        background: var(--bg-0);
       }
       .strct-shell__main {
         display: flex;

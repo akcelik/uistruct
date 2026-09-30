@@ -1,9 +1,9 @@
 [
   {
-    "id": "page-has-heading-one",
+    "id": "heading-order",
     "impact": "moderate",
     "nodes": 1,
-    "help": "Page should contain a level-one heading"
+    "help": "Heading levels should only increase by one"
   },
   {
     "id": "region",
