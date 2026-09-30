@@ -106,6 +106,7 @@ export * from './lib/time-range/time-range';
 export * from './lib/log-viewer/log-viewer';
 export * from './lib/diff/diff';
 export * from './lib/splitter/splitter';
+export * from './lib/splitter/resize-handle';
 export * from './lib/transfer/transfer';
 export * from './lib/button/split-button';
 export * from './lib/watermark/watermark';

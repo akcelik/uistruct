@@ -29,7 +29,11 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
-    <div class="strct-split__pane" [style.flex-basis.%]="clamped()">
+    <div
+      class="strct-split__pane"
+      [class.strct-split__pane--collapsed]="collapsed()"
+      [style.flex-basis]="startBasis()"
+    >
       <ng-content select="[strctPaneStart]" />
     </div>
     <div
@@ -38,9 +42,10 @@ import {
       tabindex="0"
       [attr.aria-label]="gutterLabel()"
       [attr.aria-orientation]="vertical() ? 'horizontal' : 'vertical'"
-      [attr.aria-valuenow]="clamped()"
-      [attr.aria-valuemin]="min()"
-      [attr.aria-valuemax]="max()"
+      [attr.aria-valuenow]="collapsed() ? 0 : clamped()"
+      [attr.aria-valuemin]="lowerBound()"
+      [attr.aria-valuemax]="upperBound()"
+      [attr.aria-expanded]="collapsible() ? !collapsed() : null"
       (pointerdown)="onDragStart($event)"
       (keydown)="onKeydown($event)"
     >
@@ -64,6 +69,9 @@ import {
       }
       .strct-split--vertical {
         flex-direction: column;
+      }
+      .strct-split__pane--collapsed {
+        overflow: hidden;
       }
       .strct-split__pane {
         flex-grow: 0;
@@ -121,6 +129,18 @@ export class StrctSplitter {
   /** Clamp bounds for the split (percent). */
   readonly min = input(15);
   readonly max = input(85);
+  /**
+   * What `split`, `minSize` and `maxSize` are measured in. A sidebar is 280px,
+   * not 22%, so `px` sizes the start pane in pixels and drags it in pixels.
+   */
+  readonly unit = input<'percent' | 'px'>('percent');
+  /** Bounds in `unit` for the start pane; they win over `min` / `max`. */
+  readonly minSize = input<number | null>(null);
+  readonly maxSize = input<number | null>(null);
+  /** The start pane can be collapsed to nothing (Enter on the gutter). */
+  readonly collapsible = input(false, { transform: booleanAttribute });
+  /** Whether it is collapsed (two-way). */
+  readonly collapsed = model(false);
   /** Stack panes vertically (gutter drags up/down). */
   readonly vertical = input(false, { transform: booleanAttribute });
   /** Accessible name of the separator (localizable). */
@@ -128,9 +148,21 @@ export class StrctSplitter {
   /** Keyboard nudge step in percent. */
   readonly step = input(3);
 
-  protected readonly clamped = computed(() =>
-    Math.min(this.max(), Math.max(this.min(), this.split())),
+  /** The effective bounds, in whichever unit the splitter is measured in. */
+  protected readonly lowerBound = computed(
+    () => this.minSize() ?? (this.unit() === 'px' ? 0 : this.min()),
   );
+  protected readonly upperBound = computed(
+    () => this.maxSize() ?? (this.unit() === 'px' ? Number.POSITIVE_INFINITY : this.max()),
+  );
+  protected readonly clamped = computed(() =>
+    Math.min(this.upperBound(), Math.max(this.lowerBound(), this.split())),
+  );
+  /** The start pane's flex-basis: its size, or nothing while collapsed. */
+  protected readonly startBasis = computed(() => {
+    if (this.collapsed()) return '0px';
+    return this.unit() === 'px' ? `${this.clamped()}px` : `${this.clamped()}%`;
+  });
 
   protected readonly dragging = signal(false);
   private moveHandler = (e: PointerEvent) => this.onDragMove(e);
@@ -158,7 +190,10 @@ export class StrctSplitter {
       ? (event.clientY - rect.top) / rect.height
       : (event.clientX - rect.left) / rect.width;
     if (!this.vertical() && this.isRtl()) ratio = 1 - ratio;
-    this.split.set(Math.min(this.max(), Math.max(this.min(), Math.round(ratio * 100))));
+    const span = this.vertical() ? rect.height : rect.width;
+    const next = this.unit() === 'px' ? Math.round(ratio * span) : Math.round(ratio * 100);
+    if (this.collapsed()) this.collapsed.set(false);
+    this.split.set(Math.min(this.upperBound(), Math.max(this.lowerBound(), next)));
   }
 
   private onDragEnd(): void {
@@ -182,13 +217,22 @@ export class StrctSplitter {
     let inc = this.vertical() ? 'ArrowDown' : 'ArrowRight';
     // RTL: the start pane extends to the left, so Left grows and Right shrinks.
     if (!this.vertical() && this.isRtl()) [dec, inc] = [inc, dec];
+    // Enter collapses a collapsible pane, and restores it.
+    if (this.collapsible() && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      this.collapsed.update((v) => !v);
+      return;
+    }
+    const step = this.unit() === 'px' ? this.step() * 8 : this.step();
     let next: number | null = null;
-    if (event.key === dec) next = this.clamped() - this.step();
-    else if (event.key === inc) next = this.clamped() + this.step();
-    else if (event.key === 'Home') next = this.min();
-    else if (event.key === 'End') next = this.max();
+    if (event.key === dec) next = this.clamped() - step;
+    else if (event.key === inc) next = this.clamped() + step;
+    else if (event.key === 'Home') next = this.lowerBound();
+    else if (event.key === 'End')
+      next = Number.isFinite(this.upperBound()) ? this.upperBound() : this.clamped() + step * 4;
     if (next == null) return;
     event.preventDefault();
-    this.split.set(Math.min(this.max(), Math.max(this.min(), next)));
+    if (this.collapsed()) this.collapsed.set(false);
+    this.split.set(Math.min(this.upperBound(), Math.max(this.lowerBound(), next)));
   }
 }

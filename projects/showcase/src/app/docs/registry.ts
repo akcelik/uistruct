@@ -2034,6 +2034,34 @@ export const DOCS: DocCategory[] = [
             default: `'Resize panes'`,
             description: 'Accessible separator name.',
           },
+          {
+            name: 'unit',
+            type: `'percent' | 'px'`,
+            default: `'percent'`,
+            description:
+              'What `split`, `minSize` and `maxSize` are measured in. A sidebar is 280px, not 22%: `px` sizes and drags the start pane in pixels, and the arrow keys step by `step × 8`px.',
+          },
+          {
+            name: 'minSize / maxSize',
+            type: 'number | null',
+            default: 'null',
+            description:
+              'Bounds for the start pane in `unit`; they win over the percent `min` / `max`.',
+          },
+          {
+            name: 'collapsible / collapsed',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Enter (or Space) on the gutter folds the start pane away and brings it back; the gutter says which with `aria-expanded`, and `collapsed` is two-way. A drag or an arrow key restores it.',
+          },
+          {
+            name: '[strctResizeHandle]',
+            type: `'x' | 'y'`,
+            default: `'x'`,
+            description:
+              'The same gutter, standalone, for a layout the splitter does not own — a shell grid, a docked panel. It draws the grip and brings the separator semantics: `role="separator"`, a tab stop, arrows that step by `step` (Shift × 4), Home / End for the bounds, Enter to collapse. Takes `[(size)]` in px, `min`, `max`, `side` and `collapsible`; the consumer owns the size.',
+          },
         ],
         do: ['Persist `split` next to your other user preferences.'],
         dont: ['Do not nest splitters more than one level deep \u2014 use a real layout then.'],
@@ -2706,6 +2734,24 @@ export const DOCS: DocCategory[] = [
             name: 'reordered',
             type: 'StrctReorderEvent',
             description: '`{ from, to }` \u2014 splice your array accordingly.',
+          },
+          {
+            name: '[strctReorderGroup] + listId',
+            type: 'directive · string',
+            description:
+              'Connects several lists, so a card moves between the columns of a board. The group emits `(moved) { item, fromList, toList, fromIndex, toIndex }` for a move across lists; a move within one list stays on that list\u2019s `(reordered)`.',
+          },
+          {
+            name: '[strctReorderHandle]',
+            type: 'directive',
+            description:
+              'When an item contains one, only the handle starts a drag — so text selection or a chart brush inside the card cannot begin a move.',
+          },
+          {
+            name: 'moveAnnouncement',
+            type: '(label, list, position, total) => string',
+            description:
+              'What a move between lists says in the live region, with the column\u2019s name ("Moved Capacity to right, position 1 of 2").',
           },
         ],
         do: ['Keep rows homogeneous \u2014 boot orders, priority lists, pipeline steps.'],

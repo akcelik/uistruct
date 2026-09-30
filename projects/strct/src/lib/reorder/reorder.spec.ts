@@ -1,6 +1,13 @@
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { StrctReorder, StrctReorderEvent, StrctReorderItem } from './reorder';
+import {
+  StrctReorder,
+  StrctReorderEvent,
+  StrctReorderItem,
+  StrctReorderGroup,
+  StrctReorderHandle,
+  StrctReorderMoveEvent,
+} from './reorder';
 
 @Component({
   imports: [StrctReorder, StrctReorderItem],
@@ -177,5 +184,95 @@ describe('StrctReorder', () => {
     fixture.detectChanges();
     const item = fixture.nativeElement.querySelector('[strctReorderItem]') as HTMLElement;
     expect(item.getAttribute('draggable')).toBe('true');
+  });
+});
+
+// FR-48-36 — a board's cards move within a column and between columns.
+@Component({
+  imports: [StrctReorder, StrctReorderItem, StrctReorderGroup, StrctReorderHandle],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
+    <div strctReorderGroup (moved)="moves.push($event)">
+      <div strctReorder listId="left">
+        @for (c of left(); track c) {
+          <div strctReorderItem class="card">
+            <span strctReorderHandle class="grip"></span>
+            {{ c }}
+          </div>
+        }
+      </div>
+      <div strctReorder listId="right">
+        @for (c of right(); track c) {
+          <div strctReorderItem class="card">
+            <span strctReorderHandle class="grip"></span>
+            {{ c }}
+          </div>
+        }
+      </div>
+    </div>
+  `,
+})
+class BoardHost {
+  left = signal(['Capacity', 'Alarms']);
+  right = signal(['Storage']);
+  moves: StrctReorderMoveEvent[] = [];
+}
+
+describe('StrctReorder — connected lists and a handle (FR-48-36)', () => {
+  function build() {
+    const fixture = TestBed.createComponent(BoardHost);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('moves a card to the neighbouring list with Alt+ArrowRight', () => {
+    const { fixture, el } = build();
+    const card = el.querySelectorAll('.card')[0] as HTMLElement;
+    card.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true }),
+    );
+    fixture.detectChanges();
+    const moves = fixture.componentInstance.moves;
+    expect(moves.length).toBe(1);
+    expect(moves[0].fromList).toBe('left');
+    expect(moves[0].toList).toBe('right');
+    expect(moves[0].fromIndex).toBe(0);
+    expect(moves[0].toIndex).toBe(0);
+    expect(moves[0].item.textContent).toContain('Capacity');
+  });
+
+  it('has nowhere to go past the last list', () => {
+    const { fixture, el } = build();
+    const card = el.querySelectorAll('.card')[2] as HTMLElement; // in the right list
+    card.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true }),
+    );
+    fixture.detectChanges();
+    expect(fixture.componentInstance.moves.length).toBe(0);
+  });
+
+  it('advertises the sideways shortcuts only inside a group', () => {
+    const { el } = build();
+    expect((el.querySelector('.card') as HTMLElement).getAttribute('aria-keyshortcuts')).toBe(
+      'Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight',
+    );
+  });
+
+  it('starts a drag only from the handle', () => {
+    const { el } = build();
+    const card = el.querySelector('.card') as HTMLElement;
+    const grip = card.querySelector('.grip') as HTMLElement;
+
+    // pointerdown on the card body: the drag is refused
+    card.dispatchEvent(new Event('pointerdown', { bubbles: true }) as PointerEvent);
+    const refused = new Event('dragstart', { bubbles: true, cancelable: true }) as DragEvent;
+    card.dispatchEvent(refused);
+    expect(refused.defaultPrevented).toBe(true);
+
+    // pointerdown on the handle: the drag starts
+    grip.dispatchEvent(new Event('pointerdown', { bubbles: true }) as PointerEvent);
+    const allowed = new Event('dragstart', { bubbles: true, cancelable: true }) as DragEvent;
+    card.dispatchEvent(allowed);
+    expect(allowed.defaultPrevented).toBe(false);
   });
 });

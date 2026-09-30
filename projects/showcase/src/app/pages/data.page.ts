@@ -44,6 +44,9 @@ import {
   StrctFilterChip,
   StrctReorder,
   StrctReorderItem,
+  StrctReorderMoveEvent,
+  StrctReorderHandle,
+  StrctReorderGroup,
   StrctReorderEvent,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
@@ -89,6 +92,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctChange,
     StrctStepAction,
     StrctSteps,
+    StrctReorderGroup,
+    StrctReorderHandle,
   ],
   template: `
     <app-page-header title="Data" subtitle="Declarative, token-styled data display." />
@@ -788,9 +793,74 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <span class="echo">boot order: {{ roSteps().join(' → ') }}</span>
       </div>
     </app-demo>
+    <app-demo
+      anchor="reorder-board"
+      owner="reorder"
+      heading="Two columns, moved by their handle"
+      description="A dashboard's cards move within a column and between columns. [strctReorderGroup] connects the lists and emits (moved) with { item, fromList, toList, fromIndex, toIndex }; when an item contains a [strctReorderHandle], only the handle starts a drag, so text selection and a chart brush inside the card stay safe. From the keyboard, Alt+ArrowUp / Alt+ArrowDown move within a column and Alt+ArrowLeft / Alt+ArrowRight move to the neighbouring one at the same index — and every move is announced with the column's name. A single list is unchanged."
+      code='<div strctReorderGroup (moved)="onMove($event)">&#10;  <div strctReorder listId="left">…<span strctReorderHandle></span>…</div>&#10;  <div strctReorder listId="right">…</div>&#10;</div>'
+    >
+      <div class="stack" style="width: 100%;">
+        <div strctReorderGroup (moved)="onBoardMove($event)" class="board">
+          @for (col of ['left', 'right']; track col) {
+            <div strctReorder [listId]="col" class="board__col">
+              <span class="board__head">{{ col === 'left' ? 'Column 1' : 'Column 2' }}</span>
+              @for (c of boardCards()[col]; track c) {
+                <div strctReorderItem class="board__card">
+                  <span strctReorderHandle class="board__grip" aria-hidden="true"></span>
+                  {{ c }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <span class="echo">{{ boardEcho() || 'drag a card by its grip, or press Alt+→' }}</span>
+      </div>
+    </app-demo>
   `,
   styles: [
     `
+      .board {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-3);
+        width: 100%;
+        max-width: 520px;
+      }
+      .board__col {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        padding: var(--space-2);
+        border: 1px dashed var(--b2);
+        border-radius: var(--radius-md);
+        min-height: 120px;
+      }
+      .board__head {
+        font-size: var(--text-sm);
+        color: var(--t3);
+      }
+      .board__card {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-md);
+        background: var(--bg-1);
+        font-size: 13px;
+      }
+      .board__card:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: 1px;
+      }
+      .board__grip {
+        width: 8px;
+        height: 16px;
+        flex: none;
+        cursor: grab;
+        background: radial-gradient(circle, var(--t3) 1px, transparent 1px) 0 0 / 4px 4px;
+      }
       .dg-cpu {
         display: flex;
         align-items: center;
@@ -878,6 +948,23 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class DataPage {
+  // FR-48-36 — a board whose cards move between two columns.
+  protected readonly boardCards = signal<Record<string, string[]>>({
+    left: ['Capacity', 'Alarms', 'Recent tasks'],
+    right: ['Storage'],
+  });
+  protected readonly boardEcho = signal('');
+  protected onBoardMove(e: StrctReorderMoveEvent): void {
+    this.boardCards.update((cols) => {
+      const from = [...cols[e.fromList]];
+      const [card] = from.splice(e.fromIndex, 1);
+      const to = [...cols[e.toList]];
+      to.splice(e.toIndex, 0, card);
+      return { ...cols, [e.fromList]: from, [e.toList]: to };
+    });
+    this.boardEcho.set(`moved to ${e.toList}, position ${e.toIndex + 1}`);
+  }
+
   // FR-48-30 — a remediation run, and the three-step method.
   protected readonly runSteps: StrctStepState[] = [
     { id: 'check', label: 'Check', state: 'done' },
