@@ -162,3 +162,53 @@ describe('StrctProgress — meter mode (FR-48-18)', () => {
     expect(track(el).hasAttribute('aria-valuetext')).toBe(false);
   });
 });
+
+// FR-49-05 — a column of per-cluster bars was a column of "Memory".
+describe('StrctProgress — a name, a toned caption, an inline value', () => {
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctProgress);
+    fixture.componentRef.setInput('value', 62);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return { fixture, el, bar: () => el.querySelector('[role=progressbar]')! };
+  }
+
+  it('ariaLabel names the bar apart from the visible label', () => {
+    const plain = make({ label: 'Memory', visibleLabel: true });
+    expect(plain.bar().getAttribute('aria-label')).toBe('Memory');
+
+    const named = make({ label: 'Memory', visibleLabel: true, ariaLabel: 'Memory — cluster-01' });
+    expect(named.bar().getAttribute('aria-label')).toBe('Memory — cluster-01');
+    // The visible label is unchanged: the two are different jobs.
+    expect(named.el.querySelector('.strct-progress__label')!.textContent!.trim()).toBe('Memory');
+
+    expect(make().bar().getAttribute('aria-label')).toBe('Progress');
+  });
+
+  it('captionStatus tones the caption, and nothing else', () => {
+    const quiet = make({ caption: '2 GB left' });
+    const caption = (el: HTMLElement) => el.querySelector('.strct-progress__caption')!;
+    expect(caption(quiet.el).className).toContain('strct-progress__caption--none');
+
+    const loud = make({ caption: '2 GB left', captionStatus: 'critical' });
+    expect(caption(loud.el).className).toContain('strct-progress__caption--critical');
+  });
+
+  it('valuePosition "end" puts the number beside the track, not above it', () => {
+    const top = make({ showValue: true });
+    expect(top.el.querySelector('.strct-progress__row .strct-progress__value')).toBeTruthy();
+    expect(top.el.querySelector('.strct-progress__value--end')).toBeNull();
+    expect(top.el.classList).not.toContain('strct-progress--endvalue');
+
+    const end = make({ showValue: true, valuePosition: 'end' });
+    expect(end.el.querySelector('.strct-progress__row')).toBeNull();
+    expect(end.el.querySelector('.strct-progress__value--end')!.textContent!.trim()).toBe('62%');
+    expect(end.el.classList).toContain('strct-progress--endvalue');
+
+    // A visible label still gets its row, above both.
+    const both = make({ showValue: true, valuePosition: 'end', label: 'Disk', visibleLabel: true });
+    expect(both.el.querySelector('.strct-progress__row .strct-progress__label')).toBeTruthy();
+    expect(both.el.querySelector('.strct-progress__row .strct-progress__value')).toBeNull();
+  });
+});

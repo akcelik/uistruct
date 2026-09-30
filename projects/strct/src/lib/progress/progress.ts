@@ -34,12 +34,12 @@ export interface StrctProgressSegment {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
-    @if (visibleLabel() || showValue()) {
+    @if (visibleLabel() || (showValue() && valuePosition() === 'top')) {
       <div class="strct-progress__row">
         @if (visibleLabel()) {
           <span class="strct-progress__label">{{ label() }}</span>
         }
-        @if (showValue()) {
+        @if (showValue() && valuePosition() === 'top') {
           <span class="strct-progress__value">{{ valueText() || clamped() + '%' }}</span>
         }
       </div>
@@ -47,7 +47,7 @@ export interface StrctProgressSegment {
     <div
       class="strct-progress__track"
       role="progressbar"
-      [attr.aria-label]="label() || 'Progress'"
+      [attr.aria-label]="ariaLabel() || label() || 'Progress'"
       [attr.aria-valuenow]="indeterminate() ? null : clamped()"
       [attr.aria-valuetext]="valueDescription()"
       [attr.aria-valuemin]="indeterminate() ? null : 0"
@@ -66,8 +66,16 @@ export interface StrctProgressSegment {
         <div class="strct-progress__fill" [style.width.%]="clamped()"></div>
       }
     </div>
+    @if (showValue() && valuePosition() === 'end') {
+      <!-- A bar in a cell wants its number beside the track, not above it. -->
+      <span class="strct-progress__value strct-progress__value--end">{{
+        valueText() || clamped() + '%'
+      }}</span>
+    }
     @if (caption()) {
-      <p class="strct-progress__caption">{{ caption() }}</p>
+      <p class="strct-progress__caption strct-progress__caption--{{ captionStatus() ?? 'none' }}">
+        {{ caption() }}
+      </p>
     }
   `,
   host: {
@@ -76,6 +84,7 @@ export interface StrctProgressSegment {
     '[class.strct-progress--success]': "resolvedStatus() === 'success'",
     '[class.strct-progress--warning]': "resolvedStatus() === 'warning'",
     '[class.strct-progress--critical]': "resolvedStatus() === 'critical'",
+    '[class.strct-progress--endvalue]': "showValue() && valuePosition() === 'end'",
   },
   styles: [
     `
@@ -107,6 +116,40 @@ export interface StrctProgressSegment {
         font-size: var(--text-sm);
         line-height: 1.5;
         color: var(--t3);
+      }
+      .strct-progress__caption--accent {
+        color: var(--acc);
+      }
+      .strct-progress__caption--success {
+        color: var(--success);
+      }
+      .strct-progress__caption--warning {
+        color: var(--warning);
+      }
+      .strct-progress__caption--critical {
+        color: var(--critical);
+      }
+      /* valuePosition: 'end' — the host becomes a row so the number sits
+         beside the track it belongs to, in a cell that has no room above. */
+      .strct-progress--endvalue {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+      }
+      .strct-progress--endvalue .strct-progress__track {
+        flex: 1;
+        min-width: 0;
+      }
+      .strct-progress__value--end {
+        flex: none;
+        font-size: var(--text-sm);
+        color: var(--t2);
+        font-variant-numeric: tabular-nums;
+      }
+      .strct-progress--endvalue .strct-progress__caption,
+      .strct-progress--endvalue .strct-progress__row {
+        flex-basis: 100%;
       }
       .strct-progress__track {
         position: relative;
@@ -208,6 +251,22 @@ export class StrctProgress {
   readonly valueText = input('');
   /** A quiet line under the bar — "219 GB free across 2 nodes". */
   readonly caption = input('');
+  /**
+   * The caption's tone. A critical capacity line's note — "2 GB left after the
+   * tightest node" — is the warning; `--t3` says it is an aside.
+   */
+  readonly captionStatus = input<StrctProgressStatus | null>(null);
+  /**
+   * The bar's accessible name, when the visible `label` is not it: a column of
+   * per-cluster memory bars would otherwise all be named "Memory". Defaults to
+   * `label`.
+   */
+  readonly ariaLabel = input('');
+  /**
+   * Where `showValue` puts the number: on its own row above the track, or
+   * beside it — which is what a bar inside a table cell wants.
+   */
+  readonly valuePosition = input<'top' | 'end'>('top');
   /** Running, but with no percentage to report. */
   readonly indeterminate = input(false, { transform: booleanAttribute });
   /** Stack several fills (used now + what would arrive); clamped to 100 total. */

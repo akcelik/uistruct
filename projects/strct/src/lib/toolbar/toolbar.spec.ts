@@ -124,3 +124,72 @@ describe('StrctToolbar localization', () => {
     ).toContain('1 ausgewählt');
   });
 });
+
+// FR-49-20 — the bar's roving took the arrow keys from a select inside it.
+describe('StrctToolbar — an open overlay keeps its own arrow keys', () => {
+  @Component({
+    imports: [StrctToolbar],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-toolbar>
+        <button type="button" class="a">Start</button>
+        <button type="button" class="b" [attr.aria-expanded]="open()" aria-haspopup="listbox">
+          Scope
+        </button>
+        <button type="button" class="c">Stop</button>
+        <div role="listbox" class="pop">
+          <div role="option" aria-selected="false" tabindex="0" class="opt">Cluster</div>
+        </div>
+      </strct-toolbar>
+    `,
+  })
+  class Host {
+    open = signal(false);
+  }
+
+  function build() {
+    const fixture = TestBed.createComponent(Host);
+    const el = fixture.nativeElement as HTMLElement;
+    document.body.appendChild(el);
+    fixture.detectChanges();
+    return { fixture, el, host: fixture.componentInstance };
+  }
+  const right = () =>
+    new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true });
+
+  it('roves while nothing is open, and yields once the control opens one', () => {
+    const { fixture, el, host } = build();
+    const trigger = el.querySelector('.b') as HTMLElement;
+    trigger.focus();
+
+    const roving = right();
+    trigger.dispatchEvent(roving);
+    fixture.detectChanges();
+    expect(roving.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(el.querySelector('.c'));
+
+    // With the listbox open, the trigger owns the key.
+    host.open.set(true);
+    fixture.detectChanges();
+    trigger.focus();
+    const yielded = right();
+    trigger.dispatchEvent(yielded);
+    fixture.detectChanges();
+    expect(yielded.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+    el.remove();
+  });
+
+  it('leaves a key pressed inside the open list alone', () => {
+    const { fixture, el, host } = build();
+    host.open.set(true);
+    fixture.detectChanges();
+    const option = el.querySelector('.opt') as HTMLElement;
+    option.focus();
+    const e = right();
+    option.dispatchEvent(e);
+    fixture.detectChanges();
+    expect(e.defaultPrevented).toBe(false);
+    el.remove();
+  });
+});

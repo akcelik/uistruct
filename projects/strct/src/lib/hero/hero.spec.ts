@@ -73,3 +73,26 @@ describe('StrctHero', () => {
     expect(iconOf(setup({ status: 'success', icon: 'shield' }).hero)).toBe('shield');
   });
 });
+
+// FR-49-20 — a page that renders a verdict on navigation would interrupt on
+// every load.
+describe('StrctHero — live', () => {
+  function role(inputs: Record<string, unknown>) {
+    const fixture = TestBed.createComponent(StrctHero);
+    fixture.componentRef.setInput('heading', 'Cluster is degraded');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return (fixture.nativeElement as HTMLElement).getAttribute('role');
+  }
+
+  it('keeps today’s behaviour, and takes a politeness when asked', () => {
+    expect(role({ status: 'critical' })).toBe('alert');
+    expect(role({ status: 'warning' })).toBeNull();
+    expect(role({ status: 'warning', live: true })).toBe('status');
+
+    // The verdict a page renders on navigation announces politely.
+    expect(role({ status: 'critical', live: 'polite' })).toBe('status');
+    // And a banner that must interrupt can say so whatever its status.
+    expect(role({ status: 'warning', live: 'assertive' })).toBe('alert');
+  });
+});

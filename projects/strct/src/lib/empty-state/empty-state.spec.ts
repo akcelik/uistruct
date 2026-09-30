@@ -54,3 +54,24 @@ describe('StrctEmptyState — compact size and loading variant (FR-48-20)', () =
     expect(el.querySelector('.strct-empty__icon strct-icon')).toBeTruthy();
   });
 });
+
+// FR-49-20 — a loading state inside a card should not add a heading.
+describe('StrctEmptyState — titleLevel', () => {
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctEmptyState);
+    fixture.componentRef.setInput('title', 'Loading hosts');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return (fixture.nativeElement as HTMLElement).querySelector('.strct-empty__title')!;
+  }
+
+  it('is an h3 by default, any level on request, and a p for null', () => {
+    expect(make().tagName).toBe('H3');
+    for (const level of [2, 3, 4, 5, 6] as const) {
+      expect(make({ titleLevel: level }).tagName).toBe('H' + level);
+    }
+    const plain = make({ titleLevel: null });
+    expect(plain.tagName).toBe('P');
+    expect(plain.textContent!.trim()).toBe('Loading hosts');
+  });
+});

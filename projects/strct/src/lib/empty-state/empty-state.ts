@@ -45,7 +45,28 @@ const VARIANTS: Record<StrctEmptyVariant, { icon: string; tone: string }> = {
         />
       }
     </span>
-    <h3 class="strct-empty__title">{{ title() }}</h3>
+    <!-- A zero state on a page is a heading; a loading state inside a card is
+         not, and an outline that gains an h3 while data loads is noise. -->
+    @switch (titleLevel()) {
+      @case (2) {
+        <h2 class="strct-empty__title">{{ title() }}</h2>
+      }
+      @case (3) {
+        <h3 class="strct-empty__title">{{ title() }}</h3>
+      }
+      @case (4) {
+        <h4 class="strct-empty__title">{{ title() }}</h4>
+      }
+      @case (5) {
+        <h5 class="strct-empty__title">{{ title() }}</h5>
+      }
+      @case (6) {
+        <h6 class="strct-empty__title">{{ title() }}</h6>
+      }
+      @default {
+        <p class="strct-empty__title">{{ title() }}</p>
+      }
+    }
     @if (description()) {
       <p class="strct-empty__desc">{{ description() }}</p>
     }
@@ -93,6 +114,7 @@ const VARIANTS: Record<StrctEmptyVariant, { icon: string; tone: string }> = {
       }
       .strct-empty__title {
         margin: 0;
+        font: inherit;
         font-size: 15px;
         font-weight: 600;
         color: var(--t1);
@@ -159,6 +181,12 @@ export class StrctEmptyState {
   /** Override the preset tone (neutral / warning / critical / accent). */
   readonly tone = input<string>('');
   readonly title = input.required<string>();
+  /**
+   * Which heading element the title is. `null` renders a `<p>` — what a
+   * loading state inside a card wants, since it should not add a heading to
+   * the page outline.
+   */
+  readonly titleLevel = input<2 | 3 | 4 | 5 | 6 | null>(3);
   /**
    * `sm` is the inline row a 240px frame wants: a 16px icon with the title and
    * description on one line. A page-sized empty state stays `md`.

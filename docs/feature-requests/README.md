@@ -11,8 +11,7 @@ stays here until it goes quiet.
   adoption of 5.0.0 across every screen. Each bug is traced to its line in `projects/strct/src/lib`.
   **All eleven bugs are fixed** — 01, 02, 03, 05, 06 in 5.0.1 and 04, 07, 08, 09, 10, 11 in 5.0.2 —
   **FR-49-01, 07, 08, 09, 17 shipped in 5.1.0**, **FR-49-02, 03, 04 in 5.2.0** and
-  **FR-49-10, 11, 12 in 5.3.0** and **FR-49-13, 14, 15, 16 in 5.4.0**. Still open: FR-49-05, 06,
-  18, 19, 20.
+  **FR-49-10, 11, 12 in 5.3.0** and **FR-49-13, 14, 15, 16 in 5.4.0** and **FR-49-05, 20 in 5.5.0**. Still open: FR-49-06, 18, 19.
 
 ## Status ledger
 

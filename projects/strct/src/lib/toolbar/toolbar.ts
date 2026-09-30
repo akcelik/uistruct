@@ -184,6 +184,13 @@ export class StrctToolbar {
     const active = document.activeElement as HTMLElement | null;
     const idx = items.indexOf(active as HTMLElement);
     if (idx < 0) return; // focus is not on a toolbar control
+    // A control that has opened something owns its own arrow keys: a select's
+    // listbox, a menu, a tree inside a popover. The bar's roving must not take
+    // them, or the list cannot be walked from the keyboard at all.
+    if (active?.getAttribute('aria-expanded') === 'true') return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('[role=listbox], [role=menu], [role=dialog], [role=tree], [role=grid]'))
+      return;
     const vertical = this.orientation() === 'vertical';
     const prevKey = vertical ? 'ArrowUp' : 'ArrowLeft';
     const nextKey = vertical ? 'ArrowDown' : 'ArrowRight';

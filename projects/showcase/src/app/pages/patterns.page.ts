@@ -300,8 +300,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="chat"
       heading="Assistant chat"
-      description='An assistant panel is built from the library, like every other panel. strct-chat-thread is a role="log" with aria-live="polite", so a streaming reply is announced once when it finishes rather than token by token; busy shows the typing dots, and the thread keeps the newest message in view unless the reader has scrolled up. Each strct-chat-message is an article named by its author, with the assistant&apos;s icon avatar, a bubble drawn from tokens (no blur, no gradient) and room for an attachment card under it — the action the user must approve. The composer grows with the text to maxRows, sends on Enter, breaks a line on Shift+Enter, and never sends mid-composition, so an IME&apos;s Enter commits the candidate instead of the message.'
-      code='<strct-chat-thread [busy]="thinking()">…</strct-chat-thread>&#10;<strct-chat-composer [(value)]="draft" (send)="ask($event)" />'
+      description='An assistant panel is built from the library, like every other panel. strct-chat-thread is a role="log" with aria-live="polite", so a streaming reply is announced once when it finishes rather than token by token; busy shows the typing dots, and the thread keeps the newest message in view unless the reader has scrolled up. Each strct-chat-message is an article named by its author, with the assistant&apos;s icon avatar, a bubble drawn from tokens (no blur, no gradient) and room for an attachment card under it — the action the user must approve. The composer grows with the text to maxRows, sends on Enter, breaks a line on Shift+Enter, and never sends mid-composition, so an IME&apos;s Enter commits the candidate instead of the message. sendDisabled stops only the send button while a reply streams — the reader can draft the next question meanwhile — where disabled would stop the typing too.'
+      code='<strct-chat-thread [busy]="thinking()">…</strct-chat-thread>&#10;<strct-chat-composer [(value)]="draft" [sendDisabled]="thinking()" (send)="ask($event)" />'
     >
       <div class="chat-stage">
         <strct-chat-thread [busy]="chatBusy()" label="Assistant conversation">
@@ -334,7 +334,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         </strct-chat-thread>
         <strct-chat-composer
           [(value)]="chatDraft"
-          [disabled]="chatBusy()"
+          [sendDisabled]="chatBusy()"
           placeholder="Ask about this cluster…"
           (send)="ask($event)"
         />

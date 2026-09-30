@@ -283,7 +283,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="media-frame"
       heading="Media frame"
-      description="A live picture — a console thumbnail, a camera — sits in a fixed-ratio frame, and when there is no picture yet, or none at all, the frame says why in its own small space: an empty state is too large for a 240px card. state covers content, loading, empty, off and error; a screen that is off goes black, because that reads as a screen. interactive makes the whole frame one tab stop, so the thumbnail is the button that opens the console."
+      description="A live picture — a console thumbnail, a camera — sits in a fixed-ratio frame, and when there is no picture yet, or none at all, the frame says why in its own small space: an empty state is too large for a 240px card. state covers content, loading, empty, off and error; a screen that is off goes black, because that reads as a screen. interactive makes the whole frame one tab stop, so the thumbnail is the button that opens the console. fit says what a picture does with a frame it does not match: cover crops to fill, contain shows all of it — what a console thumbnail needs, since the corner cover would crop is where the error is."
       code='<strct-media-frame ratio="4 / 3" state="off" message="The VM is off" interactive (activated)="openConsole()" />'
     >
       <div style="display: flex; gap: 16px; flex-wrap: wrap;">
@@ -301,6 +301,20 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         }
       </div>
       <span class="echo">{{ frameEcho() ? 'opened: ' + frameEcho() : 'click a frame' }}</span>
+
+      <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 18px">
+        @for (fit of ['cover', 'contain']; track fit) {
+          <div style="width: 200px">
+            <strct-media-frame ratio="4 / 3" [fit]="$any(fit)">
+              <img
+                alt=""
+                src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='120'%3E%3Crect width='320' height='120' fill='%23204a6b'/%3E%3Ctext x='8' y='26' fill='%23fff' font-family='monospace' font-size='16'%3EAPP01 login:%3C/text%3E%3Ctext x='250' y='110' fill='%23ff8080' font-family='monospace' font-size='13'%3EERR 7%3C/text%3E%3C/svg%3E"
+              />
+            </strct-media-frame>
+            <span style="font-size: 12px; color: var(--t3)">fit="{{ fit }}"</span>
+          </div>
+        }
+      </div>
     </app-demo>
 
     <app-demo

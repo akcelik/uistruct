@@ -19,7 +19,22 @@
 >   selection directly so an external write emits no `selectionChange`, while a user's own pick
 >   still does.
 >
-> Still open: **FR-49-05, 06, 18, 19, 20**.
+> Still open: **FR-49-06, 18, 19**.
+>
+> **FR-49-05 and 20 SHIPPED in 5.5.0 (2026-09-30)** — the progress bar and the small ones.
+>
+> - **05** `ariaLabel` (measured: the bar is named "Capacity — cluster-03" while the visible label
+>   stays "Capacity"), `captionStatus` (measured `rgb(160, 99, 92)` against the quiet
+>   `rgba(0, 0, 0, 0.55)`) and `valuePosition="end"` (measured: the number on the track's own line,
+>   after it, with no row above).
+> - **20** all six: `strct-media-frame [fit]` (measured `object-fit: contain` against `cover` on
+>   the same 320×120 picture in a 200×150 frame); `strct-chat-composer [sendDisabled]` (measured
+>   mid-stream: the textarea takes a draft while the send button is disabled, and the button comes
+>   back when the reply ends); `strct-empty-state [titleLevel]` (measured: the loading state is a
+>   `<p>` at the same 13px/600 as its `h3` siblings); **`code[strctCode] wrap` shipped in 5.0.2**;
+>   the toolbar's roving now yields to an open overlay; and `strct-hero [live]` takes
+>   `'polite'` / `'assertive'` (measured: a critical hero reads `role="status"` with `polite`,
+>   beside another that is still `alert`).
 >
 > **FR-49-13, 14, 15 and 16 SHIPPED in 5.4.0 (2026-09-30)** — the dashboard set.
 >

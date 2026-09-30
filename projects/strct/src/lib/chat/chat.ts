@@ -359,7 +359,7 @@ export class StrctChatMessage {
         type="button"
         class="strct-composer__send"
         [attr.aria-label]="sendLabel()"
-        [disabled]="disabled() || !value().trim()"
+        [disabled]="disabled() || sendDisabled() || !value().trim()"
         (click)="submit()"
       >
         <strct-icon strictName="arrowUp" [size]="15" [strokeWidth]="1.8" />
@@ -450,6 +450,11 @@ export class StrctChatComposer {
   readonly label = input('Message');
   /** Disabled while the assistant is busy, say. */
   readonly disabled = input(false, { transform: booleanAttribute });
+  /**
+   * Only the send button is disabled: the reader may draft their next question
+   * while a reply is still streaming. `disabled` stops the typing as well.
+   */
+  readonly sendDisabled = input(false, { transform: booleanAttribute });
   /** How tall the box grows before it scrolls. */
   readonly maxRows = input(8);
   /** The send button's accessible name. */
@@ -483,7 +488,7 @@ export class StrctChatComposer {
 
   submit(): void {
     const text = this.value().trim();
-    if (!text || this.disabled()) return;
+    if (!text || this.disabled() || this.sendDisabled()) return;
     this.send.emit(text);
     this.value.set('');
     const el = this.host.nativeElement.querySelector<HTMLTextAreaElement>('textarea');
