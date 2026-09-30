@@ -276,3 +276,36 @@ describe('StrctReorder — connected lists and a handle (FR-48-36)', () => {
     expect(allowed.defaultPrevented).toBe(false);
   });
 });
+
+// BUG-49-09 — a display-only list must not announce itself as sortable.
+@Component({
+  imports: [StrctReorder, StrctReorderItem],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
+    <ul strctReorder [reorderDisabled]="disabled()">
+      <li strctReorderItem>A</li>
+      <li strctReorderItem>B</li>
+    </ul>
+  `,
+})
+class DisabledHost {
+  disabled = signal(true);
+}
+
+describe('StrctReorderItem — reorderDisabled', () => {
+  it('drops the tab stop and the sorting semantics while disabled', () => {
+    const fixture = TestBed.createComponent(DisabledHost);
+    fixture.detectChanges();
+    const item = (fixture.nativeElement as HTMLElement).querySelector('li') as HTMLElement;
+    expect(item.getAttribute('tabindex')).toBeNull();
+    expect(item.getAttribute('aria-roledescription')).toBeNull();
+    expect(item.getAttribute('aria-keyshortcuts')).toBeNull();
+    expect(item.getAttribute('aria-describedby')).toBeNull();
+    expect(item.getAttribute('draggable')).toBe('false');
+
+    fixture.componentInstance.disabled.set(false);
+    fixture.detectChanges();
+    expect(item.getAttribute('tabindex')).toBe('0');
+    expect(item.getAttribute('aria-roledescription')).toBe('sortable');
+  });
+});

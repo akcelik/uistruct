@@ -177,3 +177,61 @@ describe('StrctWindow', () => {
     );
   });
 });
+
+// BUG-49-08 — closeOnOutside was declared and never read.
+@Component({
+  imports: [StrctWindow],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
+    <button type="button" class="elsewhere">elsewhere</button>
+    <strct-window [(open)]="open" [(minimized)]="min" heading="APP01" [closeOnOutside]="mode()">
+      <p class="content">screen</p>
+    </strct-window>
+  `,
+})
+class OutsideHost {
+  open = signal(true);
+  min = signal(false);
+  mode = signal<'none' | 'minimize'>('minimize');
+}
+
+describe('StrctWindow — closeOnOutside', () => {
+  async function build() {
+    const fixture = TestBed.createComponent(OutsideHost);
+    const el = fixture.nativeElement as HTMLElement;
+    document.body.appendChild(el);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    // the listener is attached on a timeout, so the opening click cannot close it
+    await new Promise((r) => setTimeout(r));
+    return { fixture, el, host: fixture.componentInstance };
+  }
+
+  it('minimises on a click beside the window, and not on one inside it', async () => {
+    const { fixture, el, host } = await build();
+    el.querySelector('.content')?.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    fixture.detectChanges();
+    expect(host.min()).toBe(false);
+
+    (el.querySelector('.elsewhere') as HTMLElement).dispatchEvent(
+      new Event('pointerdown', { bubbles: true }),
+    );
+    fixture.detectChanges();
+    expect(host.min()).toBe(true);
+    expect(host.open()).toBe(true);
+    el.remove();
+  });
+
+  it('leaves the window alone when it is "none"', async () => {
+    const { fixture, el, host } = await build();
+    host.mode.set('none');
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r));
+    (el.querySelector('.elsewhere') as HTMLElement).dispatchEvent(
+      new Event('pointerdown', { bubbles: true }),
+    );
+    fixture.detectChanges();
+    expect(host.min()).toBe(false);
+    el.remove();
+  });
+});

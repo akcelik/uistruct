@@ -5,6 +5,49 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.2] - 2026-09-30
+
+### Fixed
+
+- **`strct-page-header size="pane"` titles were 14px** (BUG-49-04). FR-48-15's
+  acceptance says 18px and the pane icon is already 18; the implementation used
+  `--text-lg`, which is 14. The pane title is now **18px/600**. The variant had
+  no showcase demo at all — which is how the wrong size shipped — so it has one
+  now, beside the page header it is measured against.
+- **A selection outlived its rows** (BUG-49-07). Nothing removed ids whose rows
+  were gone, so after a delete the footer still said _"2 selected"_ and
+  `selectionChange` consumers still held the dead ids. The grid now prunes the
+  selection to the ids the current rows account for, emitting
+  `selectionChange` **only when the pruning removed something**. A `lazy` grid is
+  left alone: it cannot tell a deleted row from one on another page.
+- **`strct-window [closeOnOutside]` was declared and never read** (BUG-49-08).
+  `closeOnOutside="minimize"` now sends the window to the dock when the operator
+  clicks the page beside it. The listener is added outside the zone one frame
+  after opening, so the click that opened the window cannot close it, and a
+  click _inside_ the frame never does. A window is still never dismissed by an
+  outside click — only set aside.
+- **A display-only reorder list still announced itself, and the drag states had
+  no styles** (BUG-49-09). With `reorderDisabled`, items now drop the tab stop,
+  `aria-roledescription="sortable"`, `aria-keyshortcuts`, `aria-posinset` /
+  `aria-setsize` and `aria-describedby` — a list you cannot sort no longer tells
+  a screen-reader user how to sort it. `.strct-reorder--dragging` and `--over`
+  ship their styles from the tokens (`opacity .6` + `var(--shh)` on the dragged
+  row, `inset 0 0 0 2px var(--acc50)` on the target), and the affordance comes
+  with them: a draggable row shows `grab`, a row that delegates to a
+  `[strctReorderHandle]` leaves the cursor to the handle, and a disabled row
+  shows neither. Your own `.row.strct-reorder--dragging` still wins.
+- **`code[strctCode] copyable` copied the text it had at first render**
+  (BUG-49-10). A span bound to a value that resolves later — a path, a
+  thumbprint — copied the placeholder. It now follows the element's text through
+  a `MutationObserver`, and the new **`value`** input gives the button something
+  else to copy, so a span can show `AB:1F:9C:04…5E:08` and copy all 20 octets.
+  **`wrap`** lets a long id break instead of overflowing a narrow card.
+- **`strct-chat-thread` stayed put when a message arrived** (BUG-49-11). The
+  auto-scroll effect tracked only `busy()`, so a new message — or a streamed one
+  growing — left the reader looking at the message before last. The thread now
+  watches its list with a `ResizeObserver`, keeping the existing rule: it follows
+  only while the reader is at the end, and never yanks them back down.
+
 ## [5.0.1] - 2026-09-30
 
 ### Fixed

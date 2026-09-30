@@ -4,6 +4,7 @@ import {
   Component,
   ElementRef,
   Injectable,
+  NgZone,
   ViewEncapsulation,
   booleanAttribute,
   computed,
@@ -330,6 +331,7 @@ export class StrctWindow {
 
   private readonly service = inject(StrctWindowService);
   private readonly doc = inject(DOCUMENT);
+  private readonly zone = inject(NgZone);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly zOffset = signal(0);
   protected readonly zIndex = computed(() => `calc(var(--z-window) + ${this.zOffset()})`);
@@ -344,6 +346,15 @@ export class StrctWindow {
 
   private restoreTo: HTMLElement | null = null;
 
+  /** A click beside the window, when `closeOnOutside` asks for one. */
+  private readonly onOutside = (event: PointerEvent) => {
+    if (this.closeOnOutside() !== 'minimize' || !this.open() || this.minimized()) return;
+    const frame = this.host.nativeElement.querySelector('.strct-window__frame');
+    const target = event.target;
+    if (frame && target instanceof Node && frame.contains(target)) return;
+    this.zone.run(() => this.minimize());
+  };
+
   constructor() {
     this.service.register(this);
     effect(() => {
@@ -352,6 +363,22 @@ export class StrctWindow {
         this.zOffset.set(this.service.raise());
         queueMicrotask(() => this.focusTitle());
       }
+    });
+    // `closeOnOutside` was declared and never read. The listener is added only
+    // while a window asks for it, and outside the zone — a click anywhere on
+    // the page must not cost a change-detection pass for every open window.
+    effect((onCleanup) => {
+      if (this.closeOnOutside() !== 'minimize' || !this.open() || this.minimized()) return;
+      // Deferred, so the click that opened the window does not close it.
+      const timer = setTimeout(() =>
+        this.zone.runOutsideAngular(() =>
+          this.doc.addEventListener('pointerdown', this.onOutside, true),
+        ),
+      );
+      onCleanup(() => {
+        clearTimeout(timer);
+        this.doc.removeEventListener('pointerdown', this.onOutside, true);
+      });
     });
   }
 

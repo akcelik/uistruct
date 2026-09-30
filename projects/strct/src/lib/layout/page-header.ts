@@ -125,7 +125,11 @@ export class StrctPageHeaderTitleMeta {}
         gap: var(--space-2);
       }
       .strct-ph--pane .strct-ph__title {
-        font-size: var(--text-lg);
+        /* 18px, beside the 18px pane icon above — the size FR-48-15's
+           acceptance asks for. The scale jumps 16 → 22, so this one sits
+           between its steps rather than reaching for --text-lg, which is 14
+           and left a pane title smaller than the body text beside it. */
+        font-size: 18px;
         font-weight: 600;
         letter-spacing: 0;
       }

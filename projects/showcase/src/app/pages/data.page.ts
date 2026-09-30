@@ -789,6 +789,20 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           }
         </ul>
         <span class="echo">boot order: {{ roSteps().join(' → ') }}</span>
+        <div style="margin-top: 14px">
+          <p class="strct-text-hint" style="margin: 0 0 6px">
+            The same list with [reorderDisabled] — display only: no tab stop, no "sortable"
+            announcement, no drag.
+          </p>
+          <ul class="ro-list" strctReorder reorderDisabled>
+            @for (step of roSteps(); track step) {
+              <li class="ro-item ro-item--static" strctReorderItem>
+                <strct-icon name="dragHandle" [size]="13" />
+                {{ step }}
+              </li>
+            }
+          </ul>
+        </div>
       </div>
     </app-demo>
     <app-demo
@@ -895,13 +909,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         background: var(--bg-2);
         color: var(--t1);
         font-size: 12.5px;
-        cursor: grab;
       }
-      .ro-item.strct-reorder--dragging {
-        opacity: 0.5;
-      }
-      .ro-item.strct-reorder--over {
-        border-color: var(--acc);
+      .ro-item--static {
+        opacity: 0.85;
       }
       .ro-item:focus-visible {
         outline: 2px solid var(--acc50);

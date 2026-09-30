@@ -2690,6 +2690,23 @@ export class StrctDatagrid {
       if (init == null) return;
       untracked(() => this.selected.set(new Set(init)));
     });
+    // A selection must not outlive its rows: after a delete the footer said
+    // "2 selected" and selectionChange consumers held ids for rows that are
+    // gone. Prune to the ids the current rows can account for, and emit only
+    // when the pruning actually removed something. A lazy grid cannot prove a
+    // row is gone rather than on another page, so it is left alone.
+    effect(() => {
+      const rows = this.rows();
+      if (this.lazy()) return;
+      untracked(() => {
+        const selected = this.selected();
+        if (!selected.size) return;
+        const present = new Set(rows.map((r) => this.idOf(r)));
+        const kept = new Set([...selected].filter((id) => present.has(id)));
+        if (kept.size === selected.size) return;
+        this.commitSelection(kept);
+      });
+    });
     // Single mode: the checked row follows `selectedId`, whoever wrote it — the
     // user picking, or a consumer restoring a pick from an earlier step. It
     // writes `selected` directly rather than through commitSelection, so an
