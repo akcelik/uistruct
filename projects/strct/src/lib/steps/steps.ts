@@ -12,7 +12,8 @@ import {
 } from '@angular/core';
 
 /** Where one step of a watched process has got to. */
-export type StrctStepPhase = 'pending' | 'active' | 'done' | 'failed' | 'skipped' | 'blocked';
+export type StrctStepPhase =
+  'planned' | 'pending' | 'active' | 'done' | 'failed' | 'skipped' | 'blocked';
 
 /** One step of a process the user watches rather than drives. */
 export interface StrctStepState {
@@ -27,6 +28,7 @@ export interface StrctStepState {
 export type StrctStepsLabels = Record<StrctStepPhase, string>;
 
 const STEP_LABELS: StrctStepsLabels = {
+  planned: 'planned',
   pending: 'pending',
   active: 'in progress',
   done: 'done',
@@ -61,7 +63,7 @@ export class StrctStepAction {}
   encapsulation: ViewEncapsulation.None,
   imports: [NgTemplateOutlet],
   template: `
-    <ol class="strct-steps__list">
+    <ol class="strct-steps__list" [attr.aria-label]="label() || null">
       @for (step of steps(); track step.id; let i = $index) {
         <li
           class="strct-steps__step"
@@ -101,6 +103,7 @@ export class StrctStepAction {}
     '[class.strct-steps--vertical]': "orientation() === 'vertical'",
     '[class.strct-steps--numbered]': 'numbered()',
     '[class.strct-steps--dense]': 'dense()',
+    '[class.strct-steps--wrap]': 'wrap()',
   },
   styles: [
     `
@@ -182,6 +185,13 @@ export class StrctStepAction {}
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+      /* "Back in service" is a label, not an overflow: at narrow widths the
+         pill grows a line rather than cutting the word. */
+      .strct-steps--wrap .strct-steps__label {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+      }
       .strct-steps__desc {
         font-size: var(--text-sm);
         color: var(--t3);
@@ -245,6 +255,17 @@ export class StrctStepAction {}
       .strct-steps__step[data-state='pending'] {
         color: var(--t3);
         border-color: var(--t4);
+      }
+      /* A plan shown before anything runs is not greyed-out waiting: every
+         step of it is going to happen, so it reads in the body colour with a
+         plain numbered marker. */
+      .strct-steps__step[data-state='planned'] {
+        color: var(--t1);
+        border-color: var(--b2);
+      }
+      .strct-steps--dots .strct-steps__step[data-state='planned'] .strct-steps__marker {
+        background: var(--bg-3);
+        box-shadow: inset 0 0 0 1px var(--b2);
       }
 
       /* The step happening now says so by pulsing its own edge. */
@@ -336,6 +357,13 @@ export class StrctSteps {
   readonly numbered = input(false, { transform: booleanAttribute });
   /** Tighter pills, for one row per host in a long list. */
   readonly dense = input(false, { transform: booleanAttribute });
+  /**
+   * The list's accessible name — "Migration plan", "Upgrade progress". An
+   * `<ol>` of steps with no name is one of several lists on a page.
+   */
+  readonly label = input('');
+  /** Let a long pill label wrap instead of ending in an ellipsis. */
+  readonly wrap = input(false, { transform: booleanAttribute });
   /** The state words read after each label. */
   readonly labels = input<Partial<StrctStepsLabels>>({});
 

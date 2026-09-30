@@ -754,11 +754,14 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="steps"
       heading="Steps"
-      description="A process the user watches rather than drives: an update run per host, or a numbered method on a landing page. A wizard's rail is the wrong control — the user did not start each step and cannot go back to one — and a timeline implies history; neither can say “skipped” or “blocked”. The states are done, active, failed, blocked, skipped and pending, each with its own tone, and each said in words for assistive tech (“Install, in progress”). The active step pulses its own edge, and holds still under prefers-reduced-motion. pills is the default, dots fits a long run in a dense row, and cards is the numbered method with a description and a per-step action."
+      description="A process the user watches rather than drives: an update run per host, or a numbered method on a landing page. A wizard's rail is the wrong control — the user did not start each step and cannot go back to one — and a timeline implies history; neither can say “skipped” or “blocked”. The states are planned, pending, active, done, failed, skipped and blocked, each with its own tone — planned is what a plan says before anything runs, in the body colour rather than the greyed-out look pending has, and each said in words for assistive tech (“Install, in progress”). The active step pulses its own edge, and holds still under prefers-reduced-motion. pills is the default, dots fits a long run in a dense row, and cards is the numbered method with a description and a per-step action. label names the list — an ol of steps with no name is one of several lists on a page — and wrap lets a long pill keep its words instead of ending in an ellipsis."
       code='<strct-steps [steps]="run" appearance="pills" dense />'
     >
       <div class="stack" style="gap: 20px; width: 100%;">
-        <strct-steps [steps]="runSteps" />
+        <strct-steps [steps]="runSteps" label="Update run" />
+        <div style="max-width: 190px">
+          <strct-steps [steps]="planSteps" label="Migration plan" wrap />
+        </div>
         <strct-steps [steps]="runSteps" appearance="dots" />
         <strct-steps [steps]="runSteps" numbered dense orientation="vertical" />
         <strct-steps [steps]="methodSteps" appearance="cards">
@@ -1002,6 +1005,13 @@ export class DataPage {
   }
 
   // FR-48-30 — a remediation run, and the three-step method.
+  /** What will happen, before anything runs — FR-49-16's `planned`. */
+  protected readonly planSteps: StrctStepState[] = [
+    { id: 'p1', label: 'Enter maintenance', state: 'planned' },
+    { id: 'p2', label: 'Migrate 12 VMs', state: 'planned' },
+    { id: 'p3', label: 'Back in service', state: 'planned' },
+  ];
+
   protected readonly runSteps: StrctStepState[] = [
     { id: 'check', label: 'Check', state: 'done' },
     { id: 'download', label: 'Download', state: 'done' },
