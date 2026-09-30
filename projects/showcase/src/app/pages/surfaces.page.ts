@@ -24,6 +24,7 @@ import {
   StrctInput,
   StrctCheckbox,
   StrctIcon,
+  StrctMediaFrame,
   StrctModal,
   StrctModalSize,
   StrctStep,
@@ -92,6 +93,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctSectionHeaderMeta,
     StrctSectionHeaderActions,
     StrctDropdownItemAction,
+    StrctMediaFrame,
   ],
   template: `
     <app-page-header
@@ -209,6 +211,50 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           Keep destructive settings tucked away here.
         </strct-accordion-panel>
       </strct-accordion>
+    </app-demo>
+
+    <app-demo
+      anchor="accordion-quiet"
+      owner="accordion"
+      heading="A quiet fold"
+      description='“How this works” is a quiet fold in running text — a one-line, link-looking summary that opens in place — not a boxed accordion. appearance="quiet" drops the border and background and indents the body, while keeping the button + region semantics that 17 raw <details> folds in the audited app never had.'
+      code='<strct-accordion-panel appearance="quiet" heading="How backup works">…</strct-accordion-panel>'
+    >
+      <div style="max-width: 560px; width: 100%;">
+        <p style="margin: 0 0 6px; font-size: 13px; color: var(--t2);">
+          Backups run nightly and are kept for 30 days.
+        </p>
+        <strct-accordion-panel appearance="quiet" heading="How backup works">
+          A full copy is taken on Sunday and incremental copies on the other nights. Restores read
+          the last full copy plus every increment since.
+        </strct-accordion-panel>
+        <strct-accordion-panel appearance="quiet" heading="Where backups are stored">
+          On the appliance's own volume, and on any target you add under Backup targets.
+        </strct-accordion-panel>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="media-frame"
+      heading="Media frame"
+      description="A live picture — a console thumbnail, a camera — sits in a fixed-ratio frame, and when there is no picture yet, or none at all, the frame says why in its own small space: an empty state is too large for a 240px card. state covers content, loading, empty, off and error; a screen that is off goes black, because that reads as a screen. interactive makes the whole frame one tab stop, so the thumbnail is the button that opens the console."
+      code='<strct-media-frame ratio="4 / 3" state="off" message="The VM is off" interactive (activated)="openConsole()" />'
+    >
+      <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        @for (f of mediaFrames; track f.state) {
+          <div style="width: 200px;">
+            <strct-media-frame
+              [state]="f.state"
+              [message]="f.message"
+              interactive
+              activateLabel="Open the console"
+              (activated)="frameEcho.set(f.state)"
+            />
+            <span style="font-size: 12px; color: var(--t3);">{{ f.state }}</span>
+          </div>
+        }
+      </div>
+      <span class="echo">{{ frameEcho() ? 'opened: ' + frameEcho() : 'click a frame' }}</span>
     </app-demo>
 
     <app-demo
@@ -846,6 +892,18 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class SurfacesPage {
+  // FR-48-34 — the states a console thumbnail goes through.
+  protected readonly mediaFrames: {
+    state: 'content' | 'loading' | 'empty' | 'off' | 'error';
+    message: string;
+  }[] = [
+    { state: 'loading', message: 'Connecting…' },
+    { state: 'empty', message: 'No screenshot yet' },
+    { state: 'off', message: 'The VM is off' },
+    { state: 'error', message: 'Console unavailable' },
+  ];
+  protected readonly frameEcho = signal('');
+
   // FR-48-11 — the row opens the view, the × removes it.
   protected readonly savedViews = signal(['CPU pressure', 'Storage latency', 'Network drops']);
   protected readonly viewEcho = signal('');

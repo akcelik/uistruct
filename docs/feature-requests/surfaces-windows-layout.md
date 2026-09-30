@@ -1,5 +1,21 @@
 # FR-48-33 … 38 — Surfaces, windows, layout
 
+> **FR-48-34, 37 and 38 SHIPPED in 4.20.0 (2026-09-30)** — the new `strct-media-frame`, the shell's
+> skip link, and the accordion's quiet appearance.
+>
+> Measured in Chrome: the **first Tab** on the docs site lands on "Skip to main content", which
+> becomes visible (`transform: none`) and, on Enter, moves focus to `<main id="main-content">` with
+> `tabindex="-1"` applied — focus, not only scroll, so the next Tab resumes inside the content. The
+> showcase's own shell now carries it, so the site is the demo. The quiet fold is still a `<button>`
+> with `aria-expanded` over a `role="region"` body labelled by it, at 12px / weight 400 in `--t2`
+> with no borders and a 12px indent, against the boxed header's 13px / 11px 14px. The frames hold a
+> 1.33 ratio (4 / 3) at every state, `off` goes black, `loading` spins, the others show an icon with
+> their line, and the interactive hit area covers the frame exactly (border included) under one
+> accessible name.
+>
+> **Still open here: FR-48-33** (`strct-window` + dock), **35** (splitter px bounds, collapsible
+> pane, `[strctResizeHandle]`), **36** (connected reorder lists and a drag handle).
+
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
 ---

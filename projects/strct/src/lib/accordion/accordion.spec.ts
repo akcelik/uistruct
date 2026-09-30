@@ -57,4 +57,21 @@ describe('StrctAccordionPanel', () => {
     const headB = b.nativeElement.querySelector('.strct-acc__head') as HTMLElement;
     expect(headA.id).not.toBe(headB.id);
   });
+
+  it('renders a quiet fold without the box (FR-48-38)', () => {
+    const fixture = TestBed.createComponent(StrctAccordionPanel);
+    fixture.componentRef.setInput('heading', 'How backup works');
+    fixture.componentRef.setInput('appearance', 'quiet');
+    fixture.componentRef.setInput('expanded', true);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.classList).toContain('strct-acc--quiet');
+    // the semantics a raw <details> never had are unchanged
+    const head = el.querySelector('.strct-acc__head') as HTMLElement;
+    const body = el.querySelector('.strct-acc__body') as HTMLElement;
+    expect(head.tagName).toBe('BUTTON');
+    expect(head.getAttribute('aria-expanded')).toBe('true');
+    expect(body.getAttribute('role')).toBe('region');
+    expect(body.getAttribute('aria-labelledby')).toBe(head.id);
+  });
 });

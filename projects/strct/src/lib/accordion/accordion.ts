@@ -51,7 +51,10 @@ let accordionCounter = 0;
       </div>
     }
   `,
-  host: { class: 'strct-acc' },
+  host: {
+    class: 'strct-acc',
+    '[class.strct-acc--quiet]': "appearance() === 'quiet'",
+  },
   styles: [
     `
       .strct-acc {
@@ -103,6 +106,40 @@ let accordionCounter = 0;
         font-size: 13px;
         border-top: 1px solid var(--b1);
       }
+
+      /* "How this works" is a quiet fold in running text — a one-line
+         link-looking summary that opens in place, not a boxed accordion. It
+         keeps the button + region semantics a raw <details> never had. */
+      .strct-acc--quiet + .strct-acc--quiet {
+        border-top: 0;
+      }
+      .strct-acc--quiet .strct-acc__head {
+        width: auto;
+        padding: 2px 0;
+        gap: 6px;
+        font-size: var(--text-sm);
+        font-weight: 400;
+        color: var(--t2);
+      }
+      .strct-acc--quiet .strct-acc__head:hover {
+        background: none;
+        color: var(--t1);
+        text-decoration: underline;
+      }
+      .strct-acc--quiet .strct-acc__head:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: 2px;
+        border-radius: var(--radius-sm);
+      }
+      .strct-acc--quiet .strct-acc__title {
+        flex: none;
+      }
+      .strct-acc--quiet .strct-acc__body {
+        padding: 4px 0 8px;
+        padding-inline-start: var(--space-3);
+        border-top: 0;
+        font-size: var(--text-sm);
+      }
     `,
   ],
 })
@@ -111,6 +148,12 @@ export class StrctAccordionPanel {
   readonly heading = input.required<string>();
   /** Whether the panel is open (two-way). */
   readonly expanded = model(false);
+  /**
+   * `quiet` is a fold in running text — no border or background, a `--text-sm`
+   * summary in `--t2` with a chevron, the body indented. It reads like a raw
+   * `<details>` while keeping the button + region semantics.
+   */
+  readonly appearance = input<'boxed' | 'quiet'>('boxed');
 
   protected readonly bodyId = `strct-acc-${++accordionCounter}`;
   protected readonly headId = `${this.bodyId}-head`;

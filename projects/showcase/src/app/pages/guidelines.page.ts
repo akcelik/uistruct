@@ -115,6 +115,26 @@ interface Row {
       </div>
       <app-usage [do]="toastDo" [dont]="toastDont" />
     </section>
+
+    <!-- Pattern 4 · The first thing on the page -->
+    <section class="gl__pattern">
+      <div class="gl__pat-head">
+        <h2 class="gl__h2">Skip to main content</h2>
+        <p class="gl__p">
+          Every app shell has “Skip to main content” as its first focusable element, invisible until
+          focused — otherwise a keyboard user walks the whole navigation on every page. Give
+          <code class="strct-code-inline">strct-shell</code> the id of your main region and it
+          renders one, moving <em>focus</em> there (not just the scroll position) so the next Tab
+          resumes inside the content. This page has one: press Tab now.
+        </p>
+      </div>
+      <div class="gl__demo">
+        <code class="strct-code-inline"
+          >&lt;strct-shell skipLinkTarget="main-content"&gt;…&lt;/strct-shell&gt;</code
+        >
+      </div>
+      <app-usage [do]="skipDo" [dont]="skipDont" />
+    </section>
   `,
   styles: [
     `
@@ -273,6 +293,14 @@ export class GuidelinesPage {
   protected readonly bulkDont = [
     'Do not hide how many items are selected.',
     'Avoid destructive batch actions without a confirmation step.',
+  ];
+  protected readonly skipDo = [
+    'Point skipLinkTarget at the element that holds the page content.',
+    'Keep the link first in the DOM — it is the first Tab stop by being first.',
+  ];
+  protected readonly skipDont = [
+    'Do not hide it with display:none — a hidden link cannot be focused.',
+    'Do not link to an id that is not the main region; the user lands somewhere arbitrary.',
   ];
   protected readonly toastDo = [
     'Use toasts for brief, non-blocking confirmations.',

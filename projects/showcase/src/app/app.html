@@ -1,4 +1,4 @@
-<strct-shell>
+<strct-shell skipLinkTarget="main-content">
   <strct-header>
     <a class="brand" routerLink="/">
       <strct-icon name="hexagon" [size]="22" [strokeWidth]="1.4" />
@@ -67,7 +67,7 @@
     </strct-vertical-nav>
   }
 
-  <main class="content" [class.content--wide]="!showSidebar()">
+  <main id="main-content" class="content" [class.content--wide]="!showSidebar()">
     <router-outlet />
   </main>
 

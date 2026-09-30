@@ -6,6 +6,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { StrctIcon } from '../icon/icon';
 
 let shellCounter = 0;
@@ -31,6 +32,15 @@ export class StrctShellService {
   encapsulation: ViewEncapsulation.None,
   providers: [StrctShellService],
   template: `
+    @if (skipLinkTarget()) {
+      <!-- The first focusable element on the page, invisible until focused. -->
+      <a
+        class="strct-shell__skip"
+        [attr.href]="'#' + skipLinkTarget()"
+        (click)="skipToMain($event)"
+        >{{ skipLinkLabel() }}</a
+      >
+    }
     <ng-content select="strct-header" />
     <div class="strct-shell__main"><ng-content /></div>
     <ng-content select="strct-footer" />
@@ -50,10 +60,55 @@ export class StrctShellService {
         min-height: 0;
         overflow: hidden;
       }
+      /* Off-screen until focused, then the first thing on the page. */
+      .strct-shell__skip {
+        position: absolute;
+        inset-inline-start: 0;
+        top: 0;
+        z-index: 1;
+        transform: translateY(-120%);
+        padding: var(--space-2) var(--space-3);
+        border-radius: 0 0 var(--radius-md) 0;
+        background: var(--acc);
+        color: var(--inv);
+        font-size: var(--text-sm);
+        text-decoration: none;
+      }
+      .strct-shell__skip:focus-visible {
+        transform: none;
+        outline: 2px solid var(--acc50);
+        outline-offset: 2px;
+      }
     `,
   ],
 })
-export class StrctShell {}
+export class StrctShell {
+  /**
+   * Id of the main region. Given one, the shell renders "Skip to main content"
+   * as its first focusable element — invisible until focused. Null (the
+   * default) renders nothing, so existing shells are unchanged.
+   */
+  readonly skipLinkTarget = input<string | null>(null);
+  /** The link's text (localisable). */
+  readonly skipLinkLabel = input('Skip to main content');
+
+  private readonly doc = inject(DOCUMENT);
+
+  /**
+   * Moves focus rather than only the scroll position: an href alone scrolls
+   * without focusing, so the next Tab would resume from the link.
+   */
+  protected skipToMain(event: Event): void {
+    const id = this.skipLinkTarget();
+    const target = id ? this.doc.getElementById(id) : null;
+    if (!target) return;
+    event.preventDefault();
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    target.focus();
+    // Optional: not every environment implements it (jsdom does not).
+    target.scrollIntoView?.({ block: 'start' });
+  }
+}
 
 /** Top application bar. Holds brand on the left and actions on the right. */
 @Component({
