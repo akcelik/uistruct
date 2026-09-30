@@ -5,6 +5,39 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.0] - 2026-09-30
+
+### Added
+
+- **`strct-progress`: `ariaLabel`, `captionStatus`, `valuePosition`** (FR-49-05).
+  In meter mode the visible `label` was also the accessible name, so a column
+  of per-cluster memory bars was a column of _"Memory"_; `ariaLabel` names the
+  bar apart from it, defaulting to `label`. `captionStatus` tones the caption —
+  _"2 GB left after the tightest node"_ is the warning, not an aside in `--t3`.
+  `valuePosition="end"` puts `showValue`'s number **beside** the track, which is
+  what a bar inside a table cell wants.
+- **`strct-media-frame [fit]`** (FR-49-20). `contain` shows all of the picture:
+  a console thumbnail must not crop the guest's screen, since the corner
+  `cover` takes is where the error is.
+- **`strct-chat-composer [sendDisabled]`** (FR-49-20). `disabled` also stopped
+  the typing, so a reader could not draft their next question while a reply
+  streamed. `sendDisabled` stops only the send — Enter included.
+- **`strct-empty-state [titleLevel]`** (FR-49-20). The title was always an
+  `h3`, so a loading state added a heading to the page outline. `null` renders
+  a `<p>`, and the text looks exactly the same.
+- **`strct-hero [live]` takes `'polite'` / `'assertive'`** (FR-49-20). A
+  critical hero interrupts, because it usually answers something the user did;
+  a page that renders its verdict on **navigation** would interrupt on every
+  load, so `live="polite"` makes it a `status`. `true` is the old opt-in.
+
+### Fixed
+
+- **`strct-toolbar`'s roving took the arrow keys from a control inside it**
+  (FR-49-20). A `strct-select` in a popover in the toolbar could not be walked
+  from the keyboard. The bar now yields whenever the focused control says it
+  has something open (`aria-expanded="true"`), or the key came from inside a
+  `listbox` / `menu` / `dialog` / `tree` / `grid`.
+
 ## [5.4.0] - 2026-09-30
 
 ### Added

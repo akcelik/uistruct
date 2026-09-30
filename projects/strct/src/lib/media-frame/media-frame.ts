@@ -61,6 +61,7 @@ const STATE_ICON: Record<Exclude<StrctMediaState, 'content' | 'loading'>, string
     '[style.aspect-ratio]': 'ratio()',
     '[attr.data-state]': 'state()',
     '[class.strct-mf--interactive]': 'interactive()',
+    '[class.strct-mf--contain]': "fit() === 'contain'",
   },
   styles: [
     `
@@ -82,6 +83,13 @@ const STATE_ICON: Record<Exclude<StrctMediaState, 'content' | 'loading'>, string
         height: 100%;
         object-fit: cover;
         display: block;
+      }
+      /* fit="contain" — a console thumbnail shows the whole guest screen;
+         cropping it loses the corner where the error is. */
+      .strct-mf--contain > img,
+      .strct-mf--contain > video,
+      .strct-mf--contain > canvas {
+        object-fit: contain;
       }
       /* A screen that is off is black, not grey — it reads as a screen. */
       .strct-mf[data-state='off'] {
@@ -129,6 +137,12 @@ const STATE_ICON: Record<Exclude<StrctMediaState, 'content' | 'loading'>, string
 export class StrctMediaFrame {
   /** The frame's aspect ratio, as a CSS `aspect-ratio` value. */
   readonly ratio = input('4 / 3');
+  /**
+   * How the media fills the frame. `cover` crops to fill, as today; `contain`
+   * shows all of it — what a console thumbnail needs, since the corner it
+   * would crop is where the error is.
+   */
+  readonly fit = input<'cover' | 'contain'>('cover');
   /** What the frame shows: the projected picture, or why there is none. */
   readonly state = input<StrctMediaState>('content');
   /** The placeholder's line ("The VM is off"). */

@@ -63,7 +63,7 @@ const DEFAULT_ICON: Record<StrctStatus, string> = {
     '[class.strct-hero--warning]': "status() === 'warning'",
     '[class.strct-hero--critical]': "status() === 'critical'",
     '[class.strct-hero--dense]': 'dense()',
-    '[attr.role]': "status() === 'critical' ? 'alert' : live() ? 'status' : null",
+    '[attr.role]': 'liveRole()',
     '[attr.aria-labelledby]': 'headingId',
   },
   styles: [
@@ -209,11 +209,29 @@ export class StrctHero {
   /** Tighter padding for secondary placements. */
   readonly dense = input(false, { transform: booleanAttribute });
   /**
-   * Opt into a polite live region (role="status") for banners whose content
-   * updates after load; static banners should leave this off. Critical heroes
-   * are always role="alert" regardless.
+   * How the banner announces itself. `true` opts a non-critical hero into a
+   * polite live region (`role="status"`), for content that updates after load.
+   * `'polite'` and `'assertive'` say it outright, whatever the status — a page
+   * that renders its verdict on navigation wants `'polite'`, so a critical
+   * hero does not interrupt on every load.
    */
-  readonly live = input(false, { transform: booleanAttribute });
+  readonly live = input<boolean | 'assertive' | 'polite'>(false, {
+    transform: (v: unknown) =>
+      v === 'assertive' || v === 'polite' ? v : booleanAttribute(v as string | boolean),
+  });
+
+  /**
+   * A critical hero interrupts by default, because it usually appears in
+   * answer to something the user did. A page that renders a verdict on
+   * navigation would interrupt on every load instead, so `live="polite"` makes
+   * it a `status`; `live="assertive"` asks for `alert` whatever the status.
+   */
+  protected readonly liveRole = computed(() => {
+    const live = this.live();
+    if (live === 'polite') return 'status';
+    if (live === 'assertive') return 'alert';
+    return this.status() === 'critical' ? 'alert' : live ? 'status' : null;
+  });
 
   protected readonly headingId = `strct-hero-${++heroCounter}`;
   protected readonly resolvedIcon = computed(() => this.icon() || DEFAULT_ICON[this.status()]);

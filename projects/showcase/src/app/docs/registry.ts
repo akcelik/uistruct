@@ -427,6 +427,27 @@ export const DOCS: DocCategory[] = [
         lead: 'A horizontal value bar for completion or resource usage. The value is clamped to 0–100 and the fill takes a semantic color.',
         inputs: [
           {
+            name: 'ariaLabel',
+            type: 'string',
+            default: `''`,
+            description:
+              'The bar’s accessible name when the visible `label` is not it — a column of per-cluster memory bars would otherwise all be named "Memory". Defaults to `label`.',
+          },
+          {
+            name: 'captionStatus',
+            type: `'neutral' | 'accent' | 'success' | 'warning' | 'critical' | null`,
+            default: 'null',
+            description:
+              'Tones the caption, as `strct-metric-tile` does: "2 GB left after the tightest node" is the warning, not an aside in `--t3`.',
+          },
+          {
+            name: 'valuePosition',
+            type: `'top' | 'end'`,
+            default: `'top'`,
+            description:
+              'Where `showValue` puts the number: its own row above the track, or beside it — what a bar inside a table cell wants.',
+          },
+          {
             name: 'visibleLabel / showValue / valueText / caption',
             type: 'boolean / boolean / string / string',
             default: 'false / false / "" / ""',
@@ -1580,6 +1601,13 @@ export const DOCS: DocCategory[] = [
         summary: 'A fixed-ratio frame with placeholder states.',
         lead: 'A live picture — a console thumbnail, a camera — sits in a fixed-ratio frame; and when there is no picture yet, or none at all, the frame says why **in its own small space**, because an empty state is too large for a 240px card.',
         inputs: [
+          {
+            name: 'fit',
+            type: `'cover' | 'contain'`,
+            default: `'cover'`,
+            description:
+              'How the media fills the frame. `contain` shows all of it — what a console thumbnail needs, since the corner `cover` would crop is where the error is.',
+          },
           {
             name: 'ratio',
             type: 'string',
@@ -4709,6 +4737,13 @@ export const DOCS: DocCategory[] = [
         lead: 'A prominent, page-level status summary: a tone-colored surface with a leading icon chip, a heading, a description, and optional right-aligned metadata and actions. Distinct from `StrctAlert` (a dismissible inline notification) and `StrctSignpost` (a popover) — reach for it for the "Protected", "All systems healthy", "Clock synchronized" summaries.',
         inputs: [
           {
+            name: 'live',
+            type: `boolean | 'assertive' | 'polite'`,
+            default: 'false',
+            description:
+              'A critical hero is `role="alert"`, because it usually answers something the user did. A page that renders a verdict on *navigation* would interrupt on every load, so `live="polite"` makes it a `status`; `live="assertive"` asks for `alert` whatever the status; `true` is the old opt-in `status`.',
+          },
+          {
             name: 'status',
             type: STATUS_VALUES,
             default: `'neutral'`,
@@ -5114,6 +5149,13 @@ export const DOCS: DocCategory[] = [
         lead: 'A centered empty, permission or error state — an icon, a title, an optional description and a slot for call-to-action buttons. Project actions as children.',
         inputs: [
           {
+            name: 'titleLevel',
+            type: '2 | 3 | 4 | 5 | 6 | null',
+            default: '3',
+            description:
+              'Which heading element the title is. `null` renders a `<p>` — what a loading state inside a card wants, since it should not add a heading to the page outline.',
+          },
+          {
             name: 'size',
             type: "'md' | 'sm'",
             default: 'md',
@@ -5256,6 +5298,13 @@ export const DOCS: DocCategory[] = [
         summary: 'Thread, messages, typing indicator and composer.',
         lead: 'An assistant panel is built from the library, like every other panel: a thread of messages from two or more authors, a reply that streams in with a caret, a typing indicator while the assistant thinks, and a composer that grows, sends on Enter and breaks a line on Shift+Enter.',
         inputs: [
+          {
+            name: 'sendDisabled',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'On `strct-chat-composer`: only the send button is disabled, so the reader can draft their next question while a reply is still streaming. `disabled` stops the typing as well.',
+          },
           {
             name: 'busy / label / autoScroll',
             type: 'boolean · string · boolean',

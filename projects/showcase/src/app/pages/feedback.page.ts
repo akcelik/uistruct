@@ -55,7 +55,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="hero"
       heading="Hero"
-      description="A page-level status summary with a leading icon chip, heading, description and optional right-aligned metadata / actions."
+      description="A page-level status summary with a leading icon chip, heading, description and optional right-aligned metadata / actions. A critical hero is role=“alert”, because it usually answers something the user did; a page that renders its verdict on navigation would interrupt on every load, so live=“polite” makes it a status instead — and live=“assertive” asks for alert whatever the status."
       code='<strct-hero status="success" icon="shield" heading="High availability is on">…</strct-hero>'
     >
       <div class="stack stack--wide">
@@ -73,6 +73,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             <strct-metric-tile label="Version" value="1.4.2" />
             <strct-metric-tile label="Uptime" value="6d 4h" />
           </div>
+        </strct-hero>
+
+        <strct-hero status="critical" live="polite" heading="This cluster is degraded" dense>
+          Rendered on navigation, so it is announced politely rather than interrupting.
         </strct-hero>
 
         <strct-hero status="warning" dense heading="Clock drift detected">
@@ -255,7 +259,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="empty-state"
       heading="Empty state"
-      description='Centered zero / permission / error states with an icon, copy and a call to action. size="sm" is the inline row a small frame wants — a 16px icon with the title on one line — and variant="loading" swaps the icon chip for a spinner and marks the region aria-busy, so a card that is still reading says so where the content will be.'
+      description='Centered zero / permission / error states with an icon, copy and a call to action. size="sm" is the inline row a small frame wants — a 16px icon with the title on one line — and variant="loading" swaps the icon chip for a spinner and marks the region aria-busy, so a card that is still reading says so where the content will be. titleLevel says which heading element the title is; null renders a <p>, which is what a loading state inside a card wants — an outline that gains an h3 while data loads is noise.'
       code='<strct-empty-state size="sm" variant="loading" title="Reading…" />'
     >
       <div class="es-grid">
@@ -263,6 +267,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           size="sm"
           variant="loading"
           title="Reading…"
+          [titleLevel]="null"
           description="Fetching the host's inventory."
         />
         <strct-empty-state size="sm" title="No alarms" description="Nothing needs attention." />

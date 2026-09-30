@@ -244,3 +244,60 @@ describe('StrctChatThread — following a growing message', () => {
     t.restore();
   });
 });
+
+// FR-49-20 — drafting the next question while a reply streams.
+describe('StrctChatComposer — sendDisabled', () => {
+  @Component({
+    imports: [StrctChatComposer],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-chat-composer
+        [(value)]="draft"
+        [disabled]="off()"
+        [sendDisabled]="busy()"
+        (send)="sent.push($event)"
+      />
+    `,
+  })
+  class Host {
+    draft = signal('');
+    busy = signal(false);
+    off = signal(false);
+    sent: string[] = [];
+  }
+
+  it('stops the send while the typing stays open', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const area = el.querySelector('textarea') as HTMLTextAreaElement;
+    const send = el.querySelector('.strct-composer__send') as HTMLButtonElement;
+
+    fixture.componentInstance.busy.set(true);
+    area.value = 'and what about hv-03?';
+    area.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(area.disabled).toBe(false); // the draft goes on
+    expect(send.disabled).toBe(true);
+    send.click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.sent).toEqual([]);
+
+    // Enter does not sneak past it either.
+    area.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.sent).toEqual([]);
+
+    fixture.componentInstance.busy.set(false);
+    fixture.detectChanges();
+    expect(send.disabled).toBe(false);
+    send.click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.sent).toEqual(['and what about hv-03?']);
+
+    // `disabled` still stops both.
+    fixture.componentInstance.off.set(true);
+    fixture.detectChanges();
+    expect(area.disabled).toBe(true);
+  });
+});

@@ -46,3 +46,17 @@ describe('StrctMediaFrame', () => {
     expect(build().el.querySelector('.strct-mf__hit')).toBeNull();
   });
 });
+
+// FR-49-20 — a console thumbnail must not crop the guest's screen.
+describe('StrctMediaFrame — fit', () => {
+  it('covers by default and contains on request', () => {
+    const fixture = TestBed.createComponent(StrctMediaFrame);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.classList).not.toContain('strct-mf--contain');
+
+    fixture.componentRef.setInput('fit', 'contain');
+    fixture.detectChanges();
+    expect(el.classList).toContain('strct-mf--contain');
+  });
+});
