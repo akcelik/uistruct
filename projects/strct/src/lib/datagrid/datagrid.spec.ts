@@ -1688,4 +1688,31 @@ describe('StrctDatagrid — selectedId drives the checked row', () => {
     expect(fixture.componentInstance.selectedId()).toBe('h2');
     expect(radios(el)[1].checked).toBe(true);
   });
+
+  // BUG-49-07 — a selection must not outlive its rows.
+  it('prunes ids whose rows are gone, and says so once', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('rowId', 'id');
+    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('initialSelection', ['h1', 'h2']);
+    const changes: unknown[][] = [];
+    fixture.componentInstance.selectionChange.subscribe((e) => changes.push(e));
+    fixture.detectChanges();
+    const count = () => fixture.nativeElement.querySelectorAll('.strct-dg__row--selected').length;
+    expect(count()).toBe(2);
+
+    // h2 is deleted
+    fixture.componentRef.setInput('rows', [rows[0]]);
+    fixture.detectChanges();
+    expect(count()).toBe(1);
+    expect(changes.length).toBe(1);
+    expect((changes[0] as StrctRow[]).map((r) => r['id'])).toEqual(['h1']);
+
+    // rows that merely change without losing a selected id emit nothing more
+    fixture.componentRef.setInput('rows', [{ ...rows[0], name: 'hv-01b' }]);
+    fixture.detectChanges();
+    expect(changes.length).toBe(1);
+  });
 });

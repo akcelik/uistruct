@@ -170,3 +170,40 @@ kbd,
   outline: 2px solid var(--acc50);
   outline-offset: -1px;
 }
+
+// Drag states for `[strctReorderItem]`. The classes were bound from the start
+// and nothing drew them, so a drag showed no feedback at all. Tokens only, and
+// the lifted item uses the raised shadow the rest of the library uses.
+/* The affordance itself: a row that can be dragged says so, and a row that
+   delegates to a handle points at the handle instead. A display-only list
+   (reorderDisabled -> draggable="false") gets neither. */
+.strct-reorder__handle {
+  cursor: grab;
+}
+[strctReorderItem][draggable='true']:not(:has(.strct-reorder__handle)) {
+  cursor: grab;
+}
+/* Both states are scoped through the item's own attribute, so a consumer's
+   base rule for the row (.ro-item { cursor: grab }) does not swallow a state
+   that lasts only while the pointer is down. A consumer who styles the state
+   itself still wins: their .row.strct-reorder--dragging has the same weight
+   and comes later. */
+[strctReorderItem][draggable='true'].strct-reorder--dragging {
+  opacity: 0.6;
+  box-shadow: var(--shh);
+  cursor: grabbing;
+}
+[strctReorderItem][draggable='true'].strct-reorder--over {
+  box-shadow: inset 0 0 0 2px var(--acc50);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .strct-reorder--over {
+    transition: box-shadow 0.12s ease;
+  }
+}
+
+// A long id in a narrow card wraps instead of overflowing it.
+.strct-code-inline--wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

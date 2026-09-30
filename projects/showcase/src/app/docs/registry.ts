@@ -1399,7 +1399,7 @@ export const DOCS: DocCategory[] = [
             type: "'page' | 'pane'",
             default: 'page',
             description:
-              '`page` as today; `pane` is the smaller header a side pane wants (--text-lg / 600).',
+              '`page` as today; `pane` is the smaller header a side pane or dialog section wants — an 18px/600 title on one row with its actions.',
           },
           {
             name: 'icon',
@@ -2793,7 +2793,7 @@ export const DOCS: DocCategory[] = [
         importNames: ['StrctReorder', 'StrctReorderItem', 'StrctReorderEvent'],
         utility: true,
         summary: 'List drag-reorder primitive \u2014 you own the array.',
-        lead: 'Two directives: the container emits `(reordered) { from, to }` and the consumer applies the move \u2014 the primitive never touches your data. Items are HTML5-draggable and keyboard-movable (Alt+\u2191/\u2193 on the focused row); `.strct-reorder--dragging` / `--over` classes hook your styling.',
+        lead: 'Two directives: the container emits `(reordered) { from, to }` and the consumer applies the move \u2014 the primitive never touches your data. Items are HTML5-draggable and keyboard-movable (Alt+\u2191/\u2193 on the focused row); the `.strct-reorder--dragging` / `--over` states are styled from the tokens (a lifted shadow on the dragged row, an accent inset on the target), and the classes stay open for your own. `reorderDisabled` turns the list display-only: no tab stop, no `sortable` announcement, no drag.',
         inputs: [
           {
             name: 'reorderDisabled',

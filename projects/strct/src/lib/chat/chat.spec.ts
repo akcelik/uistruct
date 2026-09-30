@@ -154,3 +154,93 @@ describe('StrctChatComposer', () => {
     expect(label.getAttribute('for')).toBe(input.id);
   });
 });
+
+// BUG-49-11 — a streaming message grows without any event; only a size
+// observer notices. jsdom has no ResizeObserver, so stand one in.
+describe('StrctChatThread — following a growing message', () => {
+  @Component({
+    imports: [StrctChatThread, StrctChatMessage],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-chat-thread [autoScroll]="auto()">
+        <strct-chat-message author="assistant" name="Assistant">{{ text() }}</strct-chat-message>
+      </strct-chat-thread>
+    `,
+  })
+  class GrowHost {
+    text = signal('Checking…');
+    auto = signal(true);
+  }
+
+  async function setup() {
+    const observed: Element[] = [];
+    let fire = () => {};
+    let disconnected = false;
+    class FakeRO {
+      constructor(private cb: () => void) {
+        fire = () => this.cb();
+      }
+      observe(el: Element) {
+        observed.push(el);
+      }
+      disconnect() {
+        disconnected = true;
+      }
+    }
+    const previous = (globalThis as Record<string, unknown>)['ResizeObserver'];
+    (globalThis as Record<string, unknown>)['ResizeObserver'] = FakeRO;
+
+    const fixture = TestBed.createComponent(GrowHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const thread = (fixture.nativeElement as HTMLElement).querySelector(
+      'strct-chat-thread',
+    ) as HTMLElement;
+    // jsdom lays nothing out, so give the thread a height to scroll to.
+    Object.defineProperty(thread, 'scrollHeight', { value: 900, configurable: true });
+    Object.defineProperty(thread, 'clientHeight', { value: 300, configurable: true });
+    return {
+      fixture,
+      thread,
+      observed,
+      fire: () => fire(),
+      wasDisconnected: () => disconnected,
+      restore: () => ((globalThis as Record<string, unknown>)['ResizeObserver'] = previous),
+    };
+  }
+
+  it('watches the list and jumps to the end when it grows', async () => {
+    const t = await setup();
+    expect(t.observed.map((el) => el.className)).toContain('strct-chat__list');
+
+    t.thread.scrollTop = 0;
+    t.fire();
+    expect(t.thread.scrollTop).toBe(900);
+
+    // The reader scrolled up: growth must not yank them back down.
+    t.thread.scrollTop = 100;
+    t.thread.dispatchEvent(new Event('scroll'));
+    t.fire();
+    expect(t.thread.scrollTop).toBe(100);
+
+    // Back at the end, following resumes.
+    t.thread.scrollTop = 600;
+    t.thread.dispatchEvent(new Event('scroll'));
+    t.fire();
+    expect(t.thread.scrollTop).toBe(900);
+
+    t.fixture.destroy();
+    expect(t.wasDisconnected()).toBe(true);
+    t.restore();
+  });
+
+  it('leaves the scroll alone when autoScroll is off', async () => {
+    const t = await setup();
+    t.fixture.componentInstance.auto.set(false);
+    t.fixture.detectChanges();
+    t.thread.scrollTop = 0;
+    t.fire();
+    expect(t.thread.scrollTop).toBe(0);
+    t.restore();
+  });
+});

@@ -242,11 +242,15 @@ export class StrctReorderHandle {}
     '[attr.tabindex]': 'hostTabindex()',
     '[class.strct-reorder--dragging]': 'isDragging()',
     '[class.strct-reorder--over]': 'isOver()',
-    '[attr.aria-roledescription]': "'sortable'",
-    '[attr.aria-keyshortcuts]': 'shortcuts()',
-    '[attr.aria-posinset]': 'index() + 1',
-    '[attr.aria-setsize]': 'list.items().length',
-    '[attr.aria-describedby]': 'list.instructions() ? list.instructionsId : null',
+    // A display-only list says nothing about sorting: no roledescription, no
+    // shortcuts, no tab stop of its own, and no description pointing at
+    // instructions that do not apply.
+    '[attr.aria-roledescription]': "list.reorderDisabled() ? null : 'sortable'",
+    '[attr.aria-keyshortcuts]': 'list.reorderDisabled() ? null : shortcuts()',
+    '[attr.aria-posinset]': 'list.reorderDisabled() ? null : index() + 1',
+    '[attr.aria-setsize]': 'list.reorderDisabled() ? null : list.items().length',
+    '[attr.aria-describedby]':
+      'list.reorderDisabled() || !list.instructions() ? null : list.instructionsId',
   },
 })
 export class StrctReorderItem {
@@ -256,7 +260,8 @@ export class StrctReorderItem {
   private readonly hadOwnTabindex = this.el.nativeElement.hasAttribute('tabindex');
 
   protected hostTabindex(): number | null {
-    return this.hadOwnTabindex ? null : 0;
+    if (this.hadOwnTabindex) return null;
+    return this.list.reorderDisabled() ? null : 0;
   }
 
   /** The keys that apply: the sideways pair only when there is somewhere to go. */

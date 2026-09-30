@@ -19,7 +19,33 @@
 >   selection directly so an external write emits no `selectionChange`, while a user's own pick
 >   still does.
 >
-> Still open: **BUG-49-04, 07, 08, 09, 10, 11** and every FR-49.
+> Still open: every FR-49.
+>
+> **BUG-49-04, 07, 08, 09, 10 and 11 FIXED in 5.0.2 (2026-09-30)** — the rest of the bug list.
+>
+> - **04** the pane header's title is 18px/600, the acceptance FR-48-15 wrote. Measured in Chrome on
+>   the showcase's new pane demo: `h2` at **18px/600**, beside the page header's 22px. The variant
+>   had no demo at all, which is how the 14px shipped; it has one now.
+> - **07** an effect prunes the selection to the ids the current rows account for and emits
+>   `selectionChange` only when the pruning removed something. A lazy grid is left alone: it cannot
+>   tell a deleted row from one on another page.
+> - **08** `closeOnOutside` is read. A pointerdown beside the window minimises it — the listener is
+>   added outside the zone, one frame after opening, so the click that opened it cannot close it.
+>   Measured: outside click → frame gone, dock chip **"APP01 · console"**; with `none` and with a
+>   click _inside_ the frame, the window stays. The showcase demo carries the toggle.
+> - **09** a disabled list drops the tab stop, `aria-roledescription`, `aria-keyshortcuts`,
+>   `aria-posinset`/`setsize` and `aria-describedby`; the drag states ship their styles. Measured:
+>   at rest `cursor: grab` (the handle's, where there is a handle — the row stays `auto`), dragging
+>   `opacity .6` + `var(--shh)` + `grabbing`, target `inset 0 0 0 2px var(--acc50)`, and the
+>   display-only list `draggable="false"`, no tabindex, no roledescription, `cursor: auto`. The
+>   showcase's own copies of those two rules are deleted.
+> - **10** the copy button takes a `value` when given and otherwise follows the element's text
+>   through a `MutationObserver`; `wrap` lets a long id break. Measured by intercepting the
+>   clipboard on the showcase: a span that resolves 600ms late copies **the resolved path**, and a
+>   shortened thumbprint `AB:1F:9C:04…5E:08` copies **all 20 octets**.
+> - **11** the thread watches its list with a `ResizeObserver`. Measured: growing the last message
+>   by ~1300px scrolled to the end (`scrollTop` 0 → 1277, exactly `scrollHeight - clientHeight`),
+>   and after the reader scrolled up, the next growth left them where they were.
 
 **From:** HyperStruct (every screen) · **Version:** 5.0.0 · **Date:** 2026-09-30
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, afterNextRender, signal } from '@angular/core';
 import {
   StrctCodeInline,
   StrctBadge,
@@ -116,8 +116,8 @@ interface ContrastRow {
     <app-demo
       anchor="text-tones"
       heading="Text tones and inline code"
-      description="The three tones every screen uses, so an app never writes them by hand: strct-text-muted for the explanation under a thing, strct-text-hint for a small aside, strct-text-overline for the label of a group, strct-text-lede for an intro paragraph. strctCode sets a command, a path or an identifier inside a sentence — horizontal padding only, so it never changes a paragraph's leading; add copyable for a copy button."
-      code='<p class="strct-text-hint">Applies at the next boot.</p>&#10;Run <code strctCode copyable>hyperstructctl doctor</code> on the appliance.'
+      description="The three tones every screen uses, so an app never writes them by hand: strct-text-muted for the explanation under a thing, strct-text-hint for a small aside, strct-text-overline for the label of a group, strct-text-lede for an intro paragraph. strctCode sets a command, a path or an identifier inside a sentence — horizontal padding only, so it never changes a paragraph's leading; add copyable for a copy button. The button follows the element's text as it changes, value gives it something else to copy (a shortened thumbprint copies the whole one), and wrap lets a long id break instead of overflowing a narrow card."
+      code='<p class="strct-text-hint">Applies at the next boot.</p>&#10;Run <code strctCode copyable>hyperstructctl doctor</code> on the appliance.&#10;<code strctCode copyable wrap [value]="thumbprint">AB:1F:9C:04…5E:08</code>'
     >
       <div class="tones">
         <p class="strct-text-lede">
@@ -130,6 +130,15 @@ interface ContrastRow {
         <p>
           Run <code strctCode>hyperstructctl doctor</code> on the appliance, then quote the id
           <code strctCode copyable>host-01m3e2e0000000000000000001</code> in the ticket.
+        </p>
+        <p class="narrow">
+          The certificate's thumbprint is
+          <code strctCode copyable wrap [value]="thumbprint">{{ shortThumbprint }}</code> — the
+          button copies all 20 octets, and the span wraps rather than overflowing this 260px box.
+        </p>
+        <p>
+          A value that loads late is still the value that gets copied:
+          <code strctCode copyable>{{ resolvedPath() }}</code>
         </p>
       </div>
     </app-demo>
@@ -222,6 +231,10 @@ interface ContrastRow {
       }
       .tones p {
         margin: 0;
+      }
+      /* Deliberately narrow, so wrap has something to prove. */
+      .tones p.narrow {
+        max-width: 260px;
       }
 
       .switch-row {
@@ -445,6 +458,20 @@ interface ContrastRow {
   ],
 })
 export class OverviewPage {
+  /** The whole thumbprint is copied; the span shows only its ends. */
+  protected readonly thumbprint = 'AB:1F:9C:04:77:E2:31:5D:8A:66:C0:12:49:BE:03:F7:2D:91:5E:08';
+  protected readonly shortThumbprint = 'AB:1F:9C:04…5E:08';
+  /** Resolves a moment after the page renders — the copy button must follow it. */
+  protected readonly resolvedPath = signal('resolving…');
+
+  constructor() {
+    afterNextRender(() => {
+      setTimeout(
+        () => this.resolvedPath.set('/var/lib/hyperstruct/pools/prod-nvme/hv-01.qcow2'),
+        600,
+      );
+    });
+  }
   protected readonly groups: TokenGroup[] = [
     {
       title: 'Surfaces',

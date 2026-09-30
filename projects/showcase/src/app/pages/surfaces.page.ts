@@ -134,6 +134,16 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           <strct-badge status="neutral">vSAN member</strct-badge>
         </div>
       </strct-page-header>
+
+      <div class="ph-pane">
+        <strct-page-header size="pane" [level]="2" title="Network" subtitle="2 adapters · 1 bond">
+          <button strct-button strctPageHeaderActions size="sm" variant="neutral">Edit</button>
+        </strct-page-header>
+        <p class="strct-text-muted" style="margin: 10px 0 0; font-size: 13px">
+          size="pane" is the header a side pane or a dialog section wants: an 18px title on one row
+          with its actions, and no divider by default.
+        </p>
+      </div>
     </app-demo>
 
     <app-demo
@@ -501,13 +511,22 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="window"
       heading="Window"
-      description='Some work lives in a window beside the page: a VM console stays open while the operator browses. It can be moved (by the title bar, or Alt+arrows on it), resized from a focusable corner grip (arrows 16px, Shift+arrows 64px), minimised to a dock and brought back from it — and it does not block the page, because a modal does that and a drawer is pinned to an edge. It is a role="dialog" with aria-modal="false" on its own --z-window layer between the tour and the modal, so a modal opened from inside a window still comes up over it. Escape minimises rather than closes, since a window is not dismissed. palette="dark" forces the dark scheme inside while keeping your palette — what a console wants.'
+      description='Some work lives in a window beside the page: a VM console stays open while the operator browses. It can be moved (by the title bar, or Alt+arrows on it), resized from a focusable corner grip (arrows 16px, Shift+arrows 64px), minimised to a dock and brought back from it — and it does not block the page, because a modal does that and a drawer is pinned to an edge. closeOnOutside="minimize" sends it to the dock when the operator clicks the page beside it — a window is never dismissed by an outside click, only set aside. It is a role="dialog" with aria-modal="false" on its own --z-window layer between the tour and the modal, so a modal opened from inside a window still comes up over it. Escape minimises rather than closes, since a window is not dismissed. palette="dark" forces the dark scheme inside while keeping your palette — what a console wants.'
       code='<strct-window [(open)]="open" [(minimized)]="min" heading="APP01" palette="dark">…</strct-window>&#10;<strct-window-dock />'
     >
       <div class="stack" style="width: 100%;">
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
           <button strct-button variant="primary" (click)="consoleOpen.set(true)">
             Open console
+          </button>
+          <button
+            strct-button
+            size="sm"
+            variant="neutral"
+            [attr.aria-pressed]="dismissOutside()"
+            (click)="dismissOutside.set(!dismissOutside())"
+          >
+            closeOnOutside: {{ dismissOutside() ? 'minimize' : 'none' }}
           </button>
           <strct-window-dock />
         </div>
@@ -517,6 +536,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [(bounds)]="consoleBounds"
           heading="APP01 · console"
           palette="dark"
+          [closeOnOutside]="dismissOutside() ? 'minimize' : 'none'"
           [minWidth]="360"
           [minHeight]="240"
           (closed)="windowEcho.set('closed')"
@@ -918,6 +938,14 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      .ph-pane {
+        margin-top: 22px;
+        max-width: 340px;
+        padding: var(--space-3);
+        background: var(--bg-1);
+        border: 1px solid var(--b1);
+        border-radius: var(--r2);
+      }
       .demo-wiz-dialog {
         height: min(520px, calc(100vh - 96px));
       }
@@ -994,6 +1022,8 @@ export class SurfacesPage {
   // FR-48-33 — a console that stays open beside the page.
   protected readonly consoleOpen = signal(false);
   protected readonly consoleMin = signal(false);
+  /** Whether the console minimises when the operator clicks the page beside it. */
+  protected readonly dismissOutside = signal(true);
   protected readonly consoleBounds = signal<StrctWindowBounds | null>({
     x: 120,
     y: 140,

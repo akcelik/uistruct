@@ -3,6 +3,11 @@ import {
   ElementRef,
   ViewContainerRef,
   afterNextRender,
+  untracked,
+  signal,
+  ComponentRef,
+  effect,
+  DestroyRef,
   booleanAttribute,
   inject,
   input,
@@ -28,24 +33,61 @@ import { StrctCopy } from '../copy/copy';
   host: {
     class: 'strct-code-inline',
     '[class.strct-code-inline--copyable]': 'copyable()',
+    '[class.strct-code-inline--wrap]': 'wrap()',
   },
 })
 export class StrctCodeInline {
   /** Append a copy button that copies this element's text. */
   readonly copyable = input(false, { transform: booleanAttribute });
+  /**
+   * What the copy button puts on the clipboard, when that is not simply what
+   * the element says — a span showing a shortened thumbprint copies the whole
+   * one. Empty follows the element's own text, including later changes.
+   */
+  readonly value = input('');
+  /** Long ids wrap instead of overflowing a narrow card. */
+  readonly wrap = input(false, { transform: booleanAttribute });
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly vcr = inject(ViewContainerRef);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** The button, once it exists; and a counter the observer bumps. */
+  private readonly copyRef = signal<ComponentRef<StrctCopy> | null>(null);
+  private readonly revision = signal(0);
 
   constructor() {
     afterNextRender(() => {
       if (!this.copyable()) return;
       const el = this.host.nativeElement;
       const ref = this.vcr.createComponent(StrctCopy);
-      // The text to copy is what the element says, before the button joins it.
-      ref.setInput('text', el.textContent?.trim() ?? '');
-      ref.changeDetectorRef.detectChanges();
       el.appendChild(ref.location.nativeElement);
+      this.copyRef.set(ref);
+      // The element's text is not a signal, so watch it: a path or a thumbprint
+      // that loads later must be the text that gets copied, not the first one.
+      if (typeof MutationObserver !== 'undefined') {
+        const mo = new MutationObserver(() => this.revision.update((n) => n + 1));
+        mo.observe(el, { childList: true, characterData: true, subtree: true });
+        this.destroyRef.onDestroy(() => mo.disconnect());
+      }
     });
+    // Keeps the button's text in step with `value`, or with the element.
+    effect(() => {
+      const ref = this.copyRef();
+      if (!ref) return;
+      this.revision(); // re-read the element whenever its text changed
+      const text = this.value() || this.ownText();
+      untracked(() => {
+        ref.setInput('text', text);
+        ref.changeDetectorRef.detectChanges();
+      });
+    });
+  }
+
+  /** What the element says, without the copy button's own content. */
+  private ownText(): string {
+    const clone = this.host.nativeElement.cloneNode(true) as HTMLElement;
+    clone.querySelector('strct-copy')?.remove();
+    return clone.textContent?.trim() ?? '';
   }
 }

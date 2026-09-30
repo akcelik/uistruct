@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   Directive,
+  DestroyRef,
   ElementRef,
   ViewEncapsulation,
   afterNextRender,
@@ -128,8 +129,23 @@ export class StrctChatThread {
   /** False once the reader scrolls away from the end; true again at the end. */
   private readonly atEnd = signal(true);
 
+  private readonly destroyRef = inject(DestroyRef);
+
   constructor() {
-    afterNextRender(() => this.scrollToEnd());
+    afterNextRender(() => {
+      this.scrollToEnd();
+      // A new message, or a streaming one growing, changes the list's height —
+      // and nothing else tells the thread that. Following `busy` alone left the
+      // reader looking at the message before last.
+      if (typeof ResizeObserver === 'undefined') return;
+      const list = this.host.nativeElement.querySelector('.strct-chat__list');
+      if (!list) return;
+      const ro = new ResizeObserver(() => {
+        if (this.autoScroll() && this.atEnd()) this.scrollToEnd();
+      });
+      ro.observe(list);
+      this.destroyRef.onDestroy(() => ro.disconnect());
+    });
     effect(() => {
       this.busy();
       if (this.autoScroll() && this.atEnd()) queueMicrotask(() => this.scrollToEnd());
