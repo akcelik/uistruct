@@ -8,7 +8,12 @@ import { Directive } from '@angular/core';
  * theme entry point), so this directive only attaches the class.
  */
 @Directive({
-  selector: 'input[strctInput], textarea[strctInput], select[strctInput]',
+  // Both spellings: `<button strct-button>` is kebab-case, so `strct-input` is
+  // what a consumer writes by analogy — and an unstyled input is the silent
+  // failure that follows. The alias is kinder than a warning and costs nothing.
+  selector:
+    'input[strctInput], textarea[strctInput], select[strctInput], ' +
+    'input[strct-input], textarea[strct-input], select[strct-input]',
   host: { class: 'strct-control' },
 })
 export class StrctInput {}

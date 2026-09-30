@@ -1,5 +1,28 @@
 # FR-48-42 — Dev-mode diagnostics for attributes a component does not have
 
+> **SHIPPED in 4.25.0 (2026-09-30)** — the unknown-attribute warning, the kebab-case `strct-input`
+> alias, and a host-`display` check.
+>
+> A component now checks its host once, after first render, against a closed list of input names
+> that exist on _other_ strct components (`variant`, `size`, `tone`, `status`, `type`, `dense`,
+> `compact`, `heading`, `label`) — so ordinary HTML, ARIA, `class`, `style` and `data-*` are never
+> flagged. The warning suggests the input that actually takes the value written:
+> `<strct-alert variant="warning">` names **`type`** rather than `icon`, because "warning" is one of
+> `type`'s values. `strct-alert`, `strct-badge`, `strct-tag` and `strct-status-dot` carry the check;
+> the alert also warns when a consumer's `display` overrides the one its layout depends on.
+>
+> `StrctInput` now answers to `strct-input` as well as `strctInput`: `<button strct-button>` is
+> kebab-case, so that is what a consumer writes by analogy, and an unstyled browser input is the
+> silent failure that follows. The alias is kinder than a warning and costs nothing.
+>
+> Measured: the production bundle contains **no `[strct]` strings at all** — every call site is
+> guarded inline, so the calls go and the diagnostics module is tree-shaken with them. And the last
+> acceptance point is now a CI gate rather than a habit: `scripts/dev-warnings.mjs` drives the
+> **development** build over fourteen routes and fails on any `[strct]` console message. It passes:
+> the showcase uses the library as documented.
+>
+> **Every ask in this document has shipped — and with it, all 45 asks of the audit.**
+
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 It continues the 4.1.0 work in [archive/uistruct-silent-failures-2026-09.md](archive/uistruct-silent-failures-2026-09.md)
 and uses the same `util/dev-warn.ts`.

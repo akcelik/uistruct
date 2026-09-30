@@ -1,4 +1,7 @@
 import {
+  afterNextRender,
+  ElementRef,
+  inject,
   ChangeDetectionStrategy,
   Component,
   ViewEncapsulation,
@@ -7,6 +10,7 @@ import {
   input,
   output,
 } from '@angular/core';
+import { strctCheckHostInputs, strctCheckHostDisplay } from '../util/host-check';
 import { StrctIcon } from '../icon/icon';
 
 /** Alert visual types. */
@@ -111,6 +115,23 @@ export type StrctAlertType = 'info' | 'success' | 'warning' | 'critical';
   ],
 })
 export class StrctAlert {
+  private readonly hostEl = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  constructor() {
+    // Dev-only: writing this component the way a sibling is written must not
+    // fail silently. Guarded inline, so production drops the call — and with it
+    // the whole diagnostics module.
+    afterNextRender(() => {
+      if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+        const el = this.hostEl.nativeElement;
+        strctCheckHostInputs(el, 'strct-alert', {
+          type: 'info, success, warning, critical',
+          icon: 'an icon name',
+        });
+        strctCheckHostDisplay(el, 'strct-alert', 'block');
+      }
+    });
+  }
   /** Visual type / variant. */
   readonly type = input<StrctAlertType>('info');
   /** Show a dismiss button. */

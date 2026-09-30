@@ -56,6 +56,12 @@ jobs:
       - run: npx ng build showcase
       - name: Run axe-core a11y smoke (+ page screenshots)
         run: node scripts/a11y-smoke.mjs
+      # The library's dev-mode diagnostics are for consumers, so the library's
+      # own showcase must never trigger one. Production compiles them out, so
+      # this needs the development build.
+      - run: npx ng build showcase --configuration development
+      - name: Assert the showcase logs no [strct] diagnostics
+        run: node scripts/dev-warnings.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
