@@ -539,18 +539,24 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="datagrid-grouping"
       owner="datagrid"
       heading="Row grouping"
-      description="groupBy renders a collapsible header row per distinct value with a count — sorting still applies within groups. Click a group header to collapse it."
-      code='<strct-datagrid [columns]="cols" [rows]="rows" groupBy="type" />'
+      description="groupBy renders a collapsible header row per distinct value with a count — sorting still applies within groups. Click a group header to collapse it. maxHeight bounds the grid's own scroll box with a sticky header — what viewportHeight does for virtual, for every other grid: a grouped picker inside a dialog scrolls instead of growing the page."
+      code='<strct-datagrid [columns]="cols" [rows]="rows" groupBy="type" [maxHeight]="220" />'
     >
       <div class="dg-wrap">
-        <strct-checkbox [ngModel]="grouped()" (ngModelChange)="grouped.set($event)"
-          >Group by type</strct-checkbox
-        >
+        <div style="display: flex; gap: 18px; flex-wrap: wrap">
+          <strct-checkbox [ngModel]="grouped()" (ngModelChange)="grouped.set($event)"
+            >Group by type</strct-checkbox
+          >
+          <strct-checkbox [ngModel]="bounded()" (ngModelChange)="bounded.set($event)"
+            >maxHeight 220px</strct-checkbox
+          >
+        </div>
         <strct-datagrid
           style="width: 100%;"
           [columns]="dgCols"
           [rows]="dgRows"
           rowId="name"
+          [maxHeight]="bounded() ? 220 : null"
           [groupBy]="grouped() ? 'type' : null"
         >
           <ng-template strctCell="status" let-value="value">
@@ -609,8 +615,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="datagrid-editing"
       owner="datagrid"
       heading="Inline cell editing"
-      description="editable columns open an input on double-click; Enter or blur commit through (cellEdit) — Escape cancels. The grid never mutates your rows: apply the change and pass the array back, so your store stays the single source of truth."
-      code='<strct-datagrid [columns]="cols" [rows]="rows()" (cellEdit)="apply($event)" />'
+      description="editable columns open an input on double-click; Enter or blur commit through (cellEdit) — Escape cancels. The grid never mutates your rows: apply the change and pass the array back, so your store stays the single source of truth. A mouse is not required: the editable cells are one roving tab stop, so Tab reaches the grid, the arrow keys move between cells, Enter or F2 opens the editor and Escape closes it — focus comes back to the cell either way — and while an editor is open Tab commits it and opens the next cell, the way a spreadsheet fills a row. editHint puts a pencil on an editable cell when it is hovered or focused, because nothing else said that a cell can be edited."
+      code='<strct-datagrid [columns]="cols" [rows]="rows()" editHint (cellEdit)="apply($event)" />'
     >
       <div class="dg-wrap">
         <strct-datagrid
@@ -618,9 +624,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="dgEditCols"
           [rows]="dgEditRows()"
           rowId="name"
+          editHint
           (cellEdit)="onCellEdit($event)"
         />
-        <span class="echo">{{ dgEditLast() || 'double-click a CPU / Memory cell' }}</span>
+        <span class="echo">{{
+          dgEditLast() || 'Tab into the grid, then Enter — or double-click a CPU / Memory cell'
+        }}</span>
       </div>
     </app-demo>
 
@@ -639,7 +648,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           rowId="id"
           (cellEdit)="onRuleEdit($event)"
         />
-        <span class="echo">{{ fwLast() || 'double-click a Protocol, Port or Action cell' }}</span>
+        <span class="echo">{{
+          fwLast() || 'Tab in and press Enter, or double-click a Protocol, Port or Action cell'
+        }}</span>
       </div>
     </app-demo>
 
@@ -670,7 +681,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="datagrid-loadmore"
       owner="datagrid"
       heading="Cursor paging"
-      description='A feed that pages by cursor loads more at the end — an event log, an audit trail. lazy speaks page numbers, which a cursor API cannot answer, so paging="more" swaps the pager for a count and a Load more button: (loadMore) asks for the next slice, loadingMore puts a spinner in the button while it arrives, hasMore drops the button at the end, and the consumer appends the rows. moreTotal fills in “of 812” when the API knows the total.'
+      description='A feed that pages by cursor loads more at the end — an event log, an audit trail. lazy speaks page numbers, which a cursor API cannot answer, so paging="more" takes the pager’s place — the count, the column chooser and the sync button are the footer’s, not the pager’s, and they stay: (loadMore) asks for the next slice, loadingMore puts a spinner in the button while it arrives, hasMore drops the button at the end, and the consumer appends the rows. moreTotal fills in “of 812” when the API knows the total.'
       code='<strct-datagrid paging="more" [hasMore]="hasMore()" [loadingMore]="busy()" [moreTotal]="812" (loadMore)="next()" />'
     >
       <div class="dg-wrap">
@@ -680,11 +691,18 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [rows]="eventRows()"
           rowId="id"
           paging="more"
+          columnChooser
+          sync
           [hasMore]="eventsHasMore()"
           [loadingMore]="eventsLoading()"
           [moreTotal]="24"
           (loadMore)="loadMoreEvents()"
+          (syncChange)="eventsSynced.set(eventsSynced() + 1)"
         />
+        <span class="echo"
+          >the chooser and the sync button live in the footer, not in the pager — synced
+          {{ eventsSynced() }}×</span
+        >
       </div>
     </app-demo>
 
@@ -1137,6 +1155,9 @@ mtu = 9000`;
     this.fbChips.update((list) => list.filter((c) => c.id !== chip.id));
   }
   protected readonly grouped = signal(true);
+  protected readonly bounded = signal(false);
+  /** How many times the cursor feed's own sync button was pressed. */
+  protected readonly eventsSynced = signal(0);
 
   // Virtual scroll demo: a 20k-row inventory.
   protected readonly vCols: StrctDatagridColumn[] = [
