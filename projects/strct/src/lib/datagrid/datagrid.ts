@@ -49,6 +49,8 @@ export interface StrctDatagridLabels {
   filterPlaceholder: string;
   clearFilter: string;
   editCell: string;
+  /** How an editable cell says, to assistive tech, that it can be edited. */
+  editCellInstructions: string;
   toggleChildren: string;
   quickFilter: string;
   /** `paging="more"`: the button that asks for the next slice. */
@@ -79,6 +81,7 @@ const DG_LABELS: StrctDatagridLabels = {
   filterPlaceholder: 'Filter…',
   clearFilter: 'Clear filter',
   editCell: 'Edit',
+  editCellInstructions: 'Editable cell. Press Enter or F2 to edit, arrow keys to move.',
   toggleChildren: 'Toggle children',
   quickFilter: 'Quick filter',
 };
@@ -235,7 +238,7 @@ export class StrctDatagridActionBar {}
     FormsModule,
   ],
   template: `
-    @if (actionBarDef() || quickFilterable()) {
+    @if (actionBarDef() || quickFilterable() || actionBarCaptionDef()) {
       <div class="strct-dg__toolbar">
         @if (quickFilterable()) {
           <strct-searchbox
@@ -261,13 +264,27 @@ export class StrctDatagridActionBar {}
       </div>
     }
 
+    @if (hasEditableColumn()) {
+      <!-- What the editable cells point at with aria-describedby: a keyboard
+           user is told the cell can be edited, and how. -->
+      <!-- In flow, not absolutely positioned: an out-of-flow box whose
+           containing block is the page extends the document's scrollable area
+           from wherever the grid happens to sit. 1x1 and clipped is enough. -->
+      <span
+        class="strct-dg__hint"
+        style="display: inline-block; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap"
+        [id]="editHintId"
+        >{{ L().editCellInstructions }}</span
+      >
+    }
+
     <div class="strct-dg__layout" [class.strct-dg__layout--paned]="paneOpen()">
       <div
         class="strct-dg__scroll"
         tabindex="0"
         role="region"
         [attr.aria-label]="L().rows"
-        [style.max-height.px]="virtual() ? viewportHeight() : null"
+        [style.max-height.px]="virtual() ? viewportHeight() : maxHeight()"
         (scroll)="virtual() && onScroll($event)"
       >
         <table
@@ -585,7 +602,12 @@ export class StrctDatagridActionBar {}
                         [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
                         [class.strct-dg__cell--editable]="col.editable"
                         [style.insetInlineStart.px]="stickyLeft(col.key)"
+                        [attr.data-edit]="col.editable ? '' : null"
+                        [attr.tabindex]="col.editable ? editCellTabindex(row, col) : null"
+                        [attr.aria-describedby]="col.editable ? editHintId : null"
                         (dblclick)="col.editable && startEdit(row, col)"
+                        (focus)="col.editable && onEditCellFocus(row, col)"
+                        (keydown)="col.editable && onEditCellKeydown(row, col, $event)"
                       >
                         @if (childrenKey() && colIdx === 0) {
                           <span
@@ -675,6 +697,17 @@ export class StrctDatagridActionBar {}
                             <span class="strct-dg__celldesc">{{ row[col.descriptionKey] }}</span>
                           }
                         }
+                        <!-- The affordance a mouse never needed: a cell that
+                             can be edited says so on hover and on focus. -->
+                        @if (col.editable && editHint() && !isEditingCell(row, col)) {
+                          <strct-icon
+                            class="strct-dg__editpencil"
+                            name="pencil"
+                            [size]="12"
+                            [strokeWidth]="1.6"
+                            aria-hidden="true"
+                          />
+                        }
                       </td>
                     }
                     @if (canActions()) {
@@ -741,29 +774,7 @@ export class StrctDatagridActionBar {}
       }
     </div>
 
-    @if (paging() === 'more' && !loading()) {
-      <!-- A feed that pages by cursor loads more at the end: page numbers are
-           something a cursor API cannot answer. -->
-      <div class="strct-dg__foot strct-dg__foot--more">
-        <span class="strct-dg__count">{{
-          L().showing(rows().length, moreTotal() ?? undefined)
-        }}</span>
-        @if (hasMore()) {
-          <button
-            strct-button
-            size="sm"
-            class="strct-dg__more"
-            [disabled]="loadingMore()"
-            (click)="loadMore.emit()"
-          >
-            @if (loadingMore()) {
-              <strct-spinner size="sm" />
-            }
-            {{ L().loadMore }}
-          </button>
-        }
-      </div>
-    } @else if ((pageSize() > 0 || virtual()) && !loading()) {
+    @if (showFooter()) {
       <div class="strct-dg__foot">
         <div class="strct-dg__foot-left">
           @if (columnChooser() || sync()) {
@@ -816,7 +827,11 @@ export class StrctDatagridActionBar {}
             </div>
           }
           <span class="strct-dg__count">
-            {{ totalCount() }} {{ totalCount() === 1 ? L().row : L().rows }}
+            @if (paging() === 'more') {
+              {{ L().showing(rows().length, moreTotal() ?? undefined) }}
+            } @else {
+              {{ totalCount() }} {{ totalCount() === 1 ? L().row : L().rows }}
+            }
             @if (selectedCount() && mode() !== 'single') {
               <span class="strct-dg__count-sep">|</span>
               <span class="strct-dg__count-sel">{{ selectedCount() }} {{ L().selected }}</span>
@@ -824,7 +839,26 @@ export class StrctDatagridActionBar {}
           </span>
         </div>
         <div class="strct-dg__foot-right">
-          @if (pageSize() > 0 && !groupBy()) {
+          <!-- A feed that pages by cursor loads more at the end: page numbers
+               are something a cursor API cannot answer. It takes the pager's
+               place — the column chooser, the sync button and the count are
+               the footer's, not the pager's. -->
+          @if (paging() === 'more') {
+            @if (hasMore()) {
+              <button
+                strct-button
+                size="sm"
+                class="strct-dg__more"
+                [disabled]="loadingMore()"
+                (click)="loadMore.emit()"
+              >
+                @if (loadingMore()) {
+                  <strct-spinner size="sm" />
+                }
+                {{ L().loadMore }}
+              </button>
+            }
+          } @else if (pageSize() > 0 && !groupBy()) {
             <strct-pagination [total]="totalCount()" [pageSize]="pageSize()" [(page)]="page" />
           }
         </div>
@@ -836,6 +870,7 @@ export class StrctDatagridActionBar {}
     '[class.strct-dg-host--compact]': 'compact()',
     '[class.strct-dg-host--singleline]': 'singleLine()',
     '[class.strct-dg-host--virtual]': 'virtual()',
+    '[class.strct-dg-host--bounded]': '!virtual() && maxHeight() !== null',
     '[class.strct-dg-host--sticky]': 'stickyActive()',
     '[class.strct-dg-host--flush]': 'flush()',
   },
@@ -888,9 +923,6 @@ export class StrctDatagridActionBar {}
         background: transparent;
         box-shadow: none;
       }
-      .strct-dg__foot--more {
-        justify-content: space-between;
-      }
       .strct-dg__more strct-spinner {
         margin-inline-end: 4px;
       }
@@ -931,11 +963,14 @@ export class StrctDatagridActionBar {}
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
       }
-      /* Virtual mode: a fixed-height y-scroll viewport with a sticky header. */
-      .strct-dg-host--virtual .strct-dg__scroll {
+      /* Virtual mode — and maxHeight on any grid, grouped or not: a
+         fixed-height y-scroll viewport with a sticky header. */
+      .strct-dg-host--virtual .strct-dg__scroll,
+      .strct-dg-host--bounded .strct-dg__scroll {
         overflow-y: auto;
       }
-      .strct-dg-host--virtual .strct-dg thead th {
+      .strct-dg-host--virtual .strct-dg thead th,
+      .strct-dg-host--bounded .strct-dg thead th {
         position: sticky;
         top: 0;
         z-index: var(--z-raised);
@@ -1010,7 +1045,8 @@ export class StrctDatagridActionBar {}
          keep the visuals identical. width: max-content lets declared column
          widths win so frozen offsets stay exact. */
       .strct-dg-host--sticky .strct-dg,
-      .strct-dg-host--virtual .strct-dg {
+      .strct-dg-host--virtual .strct-dg,
+      .strct-dg-host--bounded .strct-dg {
         border-collapse: separate;
         border-spacing: 0;
         /* overflow: hidden on the table (corner rounding) would become the
@@ -1648,9 +1684,29 @@ export class StrctDatagridActionBar {}
       /* ── Inline cell editing ───────────────────────────────── */
       .strct-dg__cell--editable {
         cursor: text;
+        position: relative;
       }
       .strct-dg__cell--editable:hover {
         box-shadow: inset 0 0 0 1px var(--b2);
+      }
+      /* The cell is a tab stop of its own now, so it needs a focus ring —
+         inset, because a td cannot show an outline outside a scroll box. */
+      .strct-dg__cell--editable:focus-visible {
+        outline: none;
+        box-shadow: inset 0 0 0 2px var(--acc50);
+      }
+      .strct-dg__editpencil {
+        position: absolute;
+        top: 50%;
+        inset-inline-end: 6px;
+        transform: translateY(-50%);
+        color: var(--t3);
+        opacity: 0;
+        pointer-events: none;
+      }
+      td:hover > .strct-dg__editpencil,
+      td:focus-within > .strct-dg__editpencil {
+        opacity: 1;
       }
       .strct-dg__editinput {
         width: 100%;
@@ -1762,6 +1818,14 @@ export class StrctDatagrid {
    * selection; the user's subsequent toggles are preserved until the next change.
    */
   readonly initialSelection = input<readonly unknown[] | null>(null);
+  /**
+   * The selection itself, two-way, for `selectionMode="multiple"` — what
+   * `selectedId` is for single mode. Write it and the grid checks those rows
+   * and counts them; the user's own picks write back, in the order they were
+   * made. `null` (the default) means the consumer does not drive the
+   * selection, so a grid that only seeds with `initialSelection` is unchanged.
+   */
+  readonly selectedIds = model<readonly unknown[] | null>(null);
   /** Override any user-visible / assistive string (partial; merged over defaults). */
   readonly labels = input<Partial<StrctDatagridLabels>>({});
   /** Effective labels (defaults + overrides). */
@@ -1775,6 +1839,17 @@ export class StrctDatagrid {
   readonly virtual = input(false, { transform: booleanAttribute });
   /** Scroll viewport height in px (virtual mode). */
   readonly viewportHeight = input(360);
+  /**
+   * Bound the grid's own scroll box (px), with a sticky header — what
+   * `viewportHeight` does for `virtual`, for every other grid: a grouped
+   * picker inside a dialog scrolls instead of growing the page.
+   */
+  readonly maxHeight = input<number | null>(null);
+  /**
+   * Show a pencil on an editable cell when it is hovered or focused. A mouse
+   * user finds an editable cell by double-clicking one; nothing said so.
+   */
+  readonly editHint = input(false, { transform: booleanAttribute });
   /** Uniform row height in px (virtual mode; tune when `compact`). */
   readonly rowHeight = input(38);
   /**
@@ -1868,6 +1943,8 @@ export class StrctDatagrid {
 
   protected readonly detailDef = contentChild(StrctRowDetailDef);
   protected readonly actionBarDef = contentChild(StrctDatagridActionBar);
+  /** A read-only grid with a note needed an empty action bar to show it. */
+  protected readonly actionBarCaptionDef = contentChild(StrctDatagridActionBarCaption);
   private readonly cellDefs = contentChildren(StrctCellDef);
   private readonly cellMap = computed(() => {
     const m = new Map<string, TemplateRef<StrctCellContext>>();
@@ -2204,6 +2281,121 @@ export class StrctDatagrid {
   /** The value a typed editor holds while it is open (committed on Enter / blur). */
   protected readonly editDraft = signal<unknown>(null);
 
+  /**
+   * Keyboard access to editable cells (FR-49-02). An editable cell opened only
+   * on double-click, so a keyboard user could not reach one at all.
+   *
+   * The editable cells of a grid form one roving tab stop, as a toolbar's
+   * buttons do: Tab reaches the grid, the arrow keys move between cells,
+   * Enter or F2 opens the editor and Escape closes it — focus coming back to
+   * the cell either way, so the next key press continues from where the user
+   * was. While an editor is open, Tab commits it and opens the next cell, the
+   * way a spreadsheet fills a row.
+   */
+  protected readonly editHintId = `strct-dg-edithint-${++datagridCounter}`;
+  /** The cell that currently holds the grid's editable-cell tab stop. */
+  private readonly activeEditCell = signal<{ row: StrctRow; col: StrctDatagridColumn } | null>(
+    null,
+  );
+  private readonly editableColumns = computed(() =>
+    this.visibleColumns().filter((c) => c.editable),
+  );
+  protected readonly hasEditableColumn = computed(() => this.editableColumns().length > 0);
+
+  protected editCellTabindex(row: StrctRow, col: StrctDatagridColumn): number {
+    const active = this.activeEditCell();
+    if (active) {
+      const rows = this.renderRows();
+      // The active row may have paged away; fall back to the first cell.
+      if (rows.some((r) => this.rowKey(r) === this.rowKey(active.row))) {
+        return this.rowKey(active.row) === this.rowKey(row) && active.col.key === col.key ? 0 : -1;
+      }
+    }
+    const first = this.renderRows()[0];
+    const firstCol = this.editableColumns()[0];
+    return first && firstCol && this.rowKey(first) === this.rowKey(row) && firstCol.key === col.key
+      ? 0
+      : -1;
+  }
+
+  protected onEditCellFocus(row: StrctRow, col: StrctDatagridColumn): void {
+    this.activeEditCell.set({ row, col });
+  }
+
+  /** Every editable cell in DOM order — the order the arrows walk. */
+  private editCells(): HTMLElement[] {
+    return [...this.hostRef.nativeElement.querySelectorAll<HTMLElement>('td[data-edit]')];
+  }
+
+  /**
+   * Move focus `delta` cells along (or `delta` rows, when `byRow`). Focusing
+   * the cell runs its own focus handler, so the roving tab stop follows.
+   */
+  private moveEditFocus(from: HTMLElement, delta: number, byRow = false): boolean {
+    const cells = this.editCells();
+    const i = cells.indexOf(from);
+    if (i < 0) return false;
+    const step = byRow ? Math.max(1, this.editableColumns().length) : 1;
+    const next = cells[i + delta * step];
+    if (!next) return false;
+    next.focus();
+    return true;
+  }
+
+  /** Commit whatever the open editor holds, by the kind of editor it is. */
+  private commitOpenEditor(row: StrctRow, col: StrctDatagridColumn, event: Event): void {
+    switch (col.editor ?? 'text') {
+      case 'number':
+        this.commitDraft(row, col, event);
+        break;
+      case 'select':
+        // Choosing an option already committed; leaving only closes it.
+        this.cancelEdit();
+        break;
+      default:
+        this.commitEdit(row, col, event);
+    }
+  }
+
+  protected onEditCellKeydown(row: StrctRow, col: StrctDatagridColumn, event: KeyboardEvent): void {
+    const cell = event.currentTarget as HTMLElement;
+    if (this.isEditingCell(row, col)) {
+      // Enter and Escape belong to the editor; only Tab is the grid's.
+      if (event.key !== 'Tab') return;
+      event.preventDefault();
+      this.commitOpenEditor(row, col, event);
+      if (!this.moveEditFocus(cell, event.shiftKey ? -1 : 1)) {
+        cell.focus();
+        return;
+      }
+      const next = this.activeEditCell();
+      if (next) this.startEdit(next.row, next.col);
+      return;
+    }
+    switch (event.key) {
+      case 'Enter':
+      case 'F2':
+        event.preventDefault();
+        this.startEdit(row, col);
+        break;
+      case 'ArrowRight':
+      case 'ArrowLeft':
+        if (this.moveEditFocus(cell, event.key === 'ArrowRight' ? 1 : -1)) event.preventDefault();
+        break;
+      case 'ArrowDown':
+      case 'ArrowUp':
+        if (this.moveEditFocus(cell, event.key === 'ArrowDown' ? 1 : -1, true))
+          event.preventDefault();
+        break;
+    }
+  }
+
+  /** Put focus back on the cell an editor just left, so the keys keep working. */
+  private refocusCell(from: EventTarget | null): void {
+    const cell = (from as HTMLElement | null)?.closest?.('td[data-edit]') as HTMLElement | null;
+    if (cell) setTimeout(() => cell.focus());
+  }
+
   protected startEdit(row: StrctRow, col: StrctDatagridColumn): void {
     this.editing.set({ rowKey: this.rowKey(row), colKey: col.key });
     this.editDraft.set(row[col.key]);
@@ -2214,11 +2406,14 @@ export class StrctDatagrid {
       if (!editor) return;
       // The stepper buttons come first in the DOM; the value is what the user
       // came to change, so focus lands on the field itself.
-      (editor.matches('input')
+      const field = editor.matches('input')
         ? editor
         : (editor.querySelector<HTMLElement>('input') ??
-          editor.querySelector<HTMLElement>('button'))
-      )?.focus();
+          editor.querySelector<HTMLElement>('button'));
+      field?.focus();
+      // Opening from the keyboard, the first thing typed is meant to replace
+      // the value, not to be appended to it.
+      if (field instanceof HTMLInputElement && field.type === 'text') field.select();
     });
   }
 
@@ -2258,6 +2453,7 @@ export class StrctDatagrid {
   protected commitDraft(row: StrctRow, col: StrctDatagridColumn, event?: Event): void {
     event?.stopPropagation();
     this.commitValue(row, col, this.editDraft());
+    if (event && event.type !== 'focusout') this.refocusCell(event.target);
   }
 
   /**
@@ -2290,6 +2486,7 @@ export class StrctDatagrid {
     if (!this.isEditingCell(row, col)) return; // Escape/Enter already closed it
     const value = (event.target as HTMLInputElement).value;
     this.editing.set(null);
+    if (event.type !== 'blur') this.refocusCell(event.target);
     const previous = row[col.key];
     if (String(previous ?? '') !== value)
       this.cellEdit.emit({ row, column: col, value, typedValue: value, previous });
@@ -2297,6 +2494,7 @@ export class StrctDatagrid {
   protected cancelEdit(event?: Event): void {
     event?.stopPropagation();
     this.editing.set(null);
+    if (event) this.refocusCell(event.target);
   }
 
   /**
@@ -2408,10 +2606,27 @@ export class StrctDatagrid {
 
   protected readonly paged = computed(() => {
     const size = this.pageSize();
-    if (this.lazy() || size <= 0) return this.sorted();
+    // A cursor feed accumulates: slicing it by pageSize would hide every row
+    // past the first page behind a pager that "more" does not draw.
+    if (this.lazy() || size <= 0 || this.paging() === 'more') return this.sorted();
     const start = (this.page() - 1) * size;
     return this.sorted().slice(start, start + size);
   });
+
+  /**
+   * The footer exists for the count, the column chooser, the sync button and
+   * whichever pager applies — `paging="more"` used to replace all of it, and a
+   * chooser on a grid with no pager had nowhere to live.
+   */
+  protected readonly showFooter = computed(
+    () =>
+      !this.loading() &&
+      (this.paging() === 'more' ||
+        this.pageSize() > 0 ||
+        this.virtual() ||
+        this.columnChooser() ||
+        this.sync()),
+  );
 
   /** Full count for the pager / footer (server total in lazy mode). */
   protected readonly totalCount = computed(() =>
@@ -2705,6 +2920,26 @@ export class StrctDatagrid {
         const kept = new Set([...selected].filter((id) => present.has(id)));
         if (kept.size === selected.size) return;
         this.commitSelection(kept);
+      });
+    });
+    // Multiple mode: the checked rows follow `selectedIds`, whoever wrote them
+    // — the user picking, or a consumer that also un-ticks a member somewhere
+    // else on the screen. Like the single-mode effect, it writes `selected`
+    // directly, so an external write never emits selectionChange.
+    effect(() => {
+      if (this.mode() === 'single') return;
+      const ids = this.selectedIds();
+      if (ids == null) return;
+      untracked(() => {
+        const next = new Set(ids);
+        const current = this.selected();
+        if (current.size === next.size && [...next].every((v) => current.has(v))) return;
+        this.selected.set(next);
+        this.selectedRowCache.clear();
+        for (const row of this.rows()) {
+          const id = this.idOf(row);
+          if (next.has(id)) this.selectedRowCache.set(id, row);
+        }
       });
     });
     // Single mode: the checked row follows `selectedId`, whoever wrote it — the
@@ -3081,6 +3316,9 @@ export class StrctDatagrid {
       if (!next.has(id)) this.selectedRowCache.delete(id);
     }
     this.selected.set(next);
+    // Keep the two-way model in step with what the user did. The effect above
+    // compares sets, so writing it here cannot loop.
+    if (this.mode() !== 'single' && this.selectedIds() != null) this.selectedIds.set([...next]);
     const fresh = this.rows().filter((r) => next.has(this.idOf(r)));
     const freshIds = new Set(fresh.map((r) => this.idOf(r)));
     const offData = [...next]

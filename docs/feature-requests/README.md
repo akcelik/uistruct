@@ -10,7 +10,8 @@ stays here until it goes quiet.
 - [`hyperstruct-5.0-adoption.md`](hyperstruct-5.0-adoption.md) — **BUG-49-01 … 11, FR-49-01 … 20**, from HyperStruct's
   adoption of 5.0.0 across every screen. Each bug is traced to its line in `projects/strct/src/lib`.
   **All eleven bugs are fixed** — 01, 02, 03, 05, 06 in 5.0.1 and 04, 07, 08, 09, 10, 11 in 5.0.2 —
-  and **FR-49-01, 07, 08, 09, 17 shipped in 5.1.0**. Still open: FR-49-02 … 06, 10 … 16, 18, 19, 20.
+  **FR-49-01, 07, 08, 09, 17 shipped in 5.1.0** and **FR-49-02, 03, 04 in 5.2.0**. Still open:
+  FR-49-05, 06, 10 … 16, 18, 19, 20.
 
 ## Status ledger
 

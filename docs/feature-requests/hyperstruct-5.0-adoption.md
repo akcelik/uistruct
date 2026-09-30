@@ -19,7 +19,22 @@
 >   selection directly so an external write emits no `selectionChange`, while a user's own pick
 >   still does.
 >
-> Still open: **FR-49-02, 03, 04, 05, 06, 10 … 16, 18, 19, 20**.
+> Still open: **FR-49-05, 06, 10 … 16, 18, 19, 20**.
+>
+> **FR-49-02, 03 and 04 SHIPPED in 5.2.0 (2026-09-30)** — the datagrid set.
+>
+> - **02** the editable cells of a grid are one roving tab stop: arrows move, Enter or F2 opens with
+>   the text selected, Escape closes, focus returns to the cell, and Tab commits and opens the next
+>   cell. Measured in Chrome with nothing but key events: vCPU→↓→→→↑ walks to Memory, Enter opens,
+>   typing **replaces** (16 → 64), Enter commits and the consumer hears
+>   "web-01: Memory (GiB) 16 → 64", Shift+Tab reopens the previous cell. `editHint` draws the
+>   pencil (measured opacity 1 on the focused cell).
+> - **03** `[(selectedIds)]`, following the BUG-49-06 fix: writing it checks the rows and fires no
+>   `selectionChange`; the user's picks write back in pick order.
+> - **04** all three: "more" takes the pager's place and leaves the count, the chooser and the sync
+>   button (measured: no pager, Load more present, 2 footer buttons, "Showing the latest 6 of 24",
+>   all on one row) and no longer slices a cursor feed; the action-bar caption draws the toolbar on
+>   its own; and `maxHeight` bounds any grid (measured 608px → **222px**, scrolls, header sticky).
 >
 > **FR-49-01, 07, 08, 09 and 17 SHIPPED in 5.1.0 (2026-09-30)** — the text-and-surface set.
 >

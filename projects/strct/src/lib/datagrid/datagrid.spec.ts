@@ -1614,7 +1614,8 @@ describe('StrctDatagrid presentation and cursor paging', () => {
     it('shows the count and a Load more button that emits', () => {
       const { fixture, el } = make({ paging: 'more', hasMore: true, moreTotal: 812 });
       expect(el.querySelector('strct-pagination')).toBeNull();
-      expect(el.querySelector('.strct-dg__foot--more .strct-dg__count')?.textContent?.trim()).toBe(
+      // FR-49-04 — "more" takes the pager's place, and the footer itself stays.
+      expect(el.querySelector('.strct-dg__foot .strct-dg__count')?.textContent?.trim()).toBe(
         'Showing the latest 2 of 812',
       );
       let asked = 0;
@@ -1714,5 +1715,267 @@ describe('StrctDatagrid — selectedId drives the checked row', () => {
     fixture.componentRef.setInput('rows', [{ ...rows[0], name: 'hv-01b' }]);
     fixture.detectChanges();
     expect(changes.length).toBe(1);
+  });
+});
+
+// FR-49-02 — an editable cell opened only on double-click, so a keyboard user
+// could not reach one at all.
+describe('StrctDatagrid — keyboard access to editable cells', () => {
+  const cols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Rule' },
+    { key: 'port', label: 'Port', editable: true },
+    { key: 'note', label: 'Note', editable: true },
+  ];
+  const rows: StrctRow[] = [
+    { name: 'allow-ssh', port: '22', note: 'jump host' },
+    { name: 'allow-https', port: '443', note: 'public' },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    const edits: { value: string; previous: unknown }[] = [];
+    fixture.componentInstance.cellEdit.subscribe((e) => edits.push(e));
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    // jsdom does not move focus on .focus() for elements it thinks are not
+    // focusable; tabindex makes them so, and this is what the browser does.
+    document.body.appendChild(el);
+    return {
+      fixture,
+      el,
+      edits,
+      cells: () => [...el.querySelectorAll<HTMLElement>('td[data-edit]')],
+      input: () => el.querySelector('.strct-dg__editinput') as HTMLInputElement | null,
+    };
+  }
+  const press = (el: HTMLElement, key: string, init: KeyboardEventInit = {}) =>
+    el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, ...init }));
+
+  it('gives the editable cells one roving tab stop', () => {
+    const { fixture, cells } = make();
+    expect(cells().length).toBe(4);
+    expect(cells().map((c) => c.getAttribute('tabindex'))).toEqual(['0', '-1', '-1', '-1']);
+
+    // Focusing another cell moves the tab stop with it.
+    cells()[2].dispatchEvent(new FocusEvent('focus'));
+    fixture.detectChanges();
+    expect(cells().map((c) => c.getAttribute('tabindex'))).toEqual(['-1', '-1', '0', '-1']);
+  });
+
+  it('opens on Enter and on F2, and Escape closes it and comes back to the cell', async () => {
+    const { fixture, cells, input, el } = make();
+    const cell = cells()[0];
+    cell.focus();
+    press(cell, 'Enter');
+    fixture.detectChanges();
+    expect(input()!.value).toBe('22');
+
+    press(input()!, 'Escape');
+    fixture.detectChanges();
+    expect(input()).toBeNull();
+    await new Promise((r) => setTimeout(r));
+    expect(document.activeElement).toBe(cell);
+
+    press(cell, 'F2');
+    fixture.detectChanges();
+    expect(input()).toBeTruthy();
+    press(input()!, 'Escape');
+    fixture.detectChanges();
+    el.remove();
+  });
+
+  it('walks the cells with the arrow keys — along the row and down a column', () => {
+    const { fixture, cells } = make();
+    const at = () => cells().findIndex((c) => c.getAttribute('tabindex') === '0');
+    cells()[0].focus();
+    fixture.detectChanges();
+
+    press(cells()[0], 'ArrowRight');
+    fixture.detectChanges();
+    expect(at()).toBe(1);
+
+    press(cells()[1], 'ArrowDown');
+    fixture.detectChanges();
+    expect(at()).toBe(3); // same column, next row
+
+    press(cells()[3], 'ArrowLeft');
+    fixture.detectChanges();
+    expect(at()).toBe(2);
+
+    press(cells()[2], 'ArrowUp');
+    fixture.detectChanges();
+    expect(at()).toBe(0);
+
+    // The edges hold: nothing moves and the event is left alone.
+    const atEdge = new KeyboardEvent('keydown', {
+      key: 'ArrowUp',
+      bubbles: true,
+      cancelable: true,
+    });
+    cells()[0].dispatchEvent(atEdge);
+    fixture.detectChanges();
+    expect(at()).toBe(0);
+    expect(atEdge.defaultPrevented).toBe(false);
+  });
+
+  it('Tab commits the open editor and opens the next cell', () => {
+    const { fixture, cells, input, edits, el } = make();
+    cells()[0].focus();
+    press(cells()[0], 'Enter');
+    fixture.detectChanges();
+    input()!.value = '2222';
+    press(input()!, 'Tab');
+    fixture.detectChanges();
+
+    expect(edits.map((e) => e.value)).toEqual(['2222']);
+    // The next editable cell is open, holding its own value.
+    expect(input()!.value).toBe('jump host');
+    expect(cells()[1].getAttribute('tabindex')).toBe('0');
+    press(input()!, 'Escape');
+    fixture.detectChanges();
+    el.remove();
+  });
+
+  it('describes the cell for assistive tech, and the pencil is opt-in', () => {
+    const { fixture, cells, el } = make();
+    const hint = el.querySelector('.strct-dg__hint')!;
+    expect(hint.textContent).toContain('Press Enter or F2 to edit');
+    expect(cells()[0].getAttribute('aria-describedby')).toBe(hint.id);
+    expect(el.querySelector('.strct-dg__editpencil')).toBeNull();
+
+    fixture.componentRef.setInput('editHint', true);
+    fixture.detectChanges();
+    expect(el.querySelectorAll('.strct-dg__editpencil').length).toBe(4);
+    el.remove();
+  });
+
+  it('says nothing when no column is editable', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [{ key: 'name', label: 'Rule' }]);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-dg__hint')).toBeNull();
+    expect(el.querySelector('td[data-edit]')).toBeNull();
+  });
+});
+
+// FR-49-03 — multiple mode had only initialSelection plus (selectionChange).
+describe('StrctDatagrid — two-way selectedIds', () => {
+  const cols: StrctDatagridColumn[] = [{ key: 'name', label: 'Host' }];
+  const rows: StrctRow[] = [
+    { id: 'h1', name: 'hv-01' },
+    { id: 'h2', name: 'hv-02' },
+    { id: 'h3', name: 'hv-03' },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('rowId', 'id');
+    fixture.componentRef.setInput('selectable', true);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    const emitted: StrctRow[][] = [];
+    fixture.componentInstance.selectionChange.subscribe((s) => emitted.push(s));
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      emitted,
+      boxes: () => [...el.querySelectorAll<HTMLInputElement>('tbody strct-checkbox input')],
+    };
+  }
+
+  it('writing it checks those rows and counts them, and emits nothing', () => {
+    const { fixture, el, emitted, boxes } = make({ selectedIds: ['h1', 'h3'] });
+    expect(boxes().map((b) => b.checked)).toEqual([true, false, true]);
+    expect(el.querySelector('.strct-dg__count-sel')).toBeNull(); // no pager, no footer
+    expect(emitted).toEqual([]);
+
+    fixture.componentRef.setInput('selectedIds', ['h2']);
+    fixture.detectChanges();
+    expect(boxes().map((b) => b.checked)).toEqual([false, true, false]);
+    expect(emitted).toEqual([]);
+
+    fixture.componentRef.setInput('selectedIds', []);
+    fixture.detectChanges();
+    expect(boxes().some((b) => b.checked)).toBe(false);
+    expect(emitted).toEqual([]);
+  });
+
+  it('the user’s own picks write back, in the order they were made', () => {
+    const { fixture, emitted, boxes } = make({ selectedIds: [] });
+    const ids = () => fixture.componentInstance.selectedIds();
+    boxes()[2].click();
+    fixture.detectChanges();
+    boxes()[0].click();
+    fixture.detectChanges();
+    expect(ids()).toEqual(['h3', 'h1']);
+    // A pick is still a pick: selectionChange fires for it.
+    expect(emitted.length).toBe(2);
+
+    boxes()[2].click();
+    fixture.detectChanges();
+    expect(ids()).toEqual(['h1']);
+  });
+
+  it('is left alone when the consumer does not use it', () => {
+    const { fixture, boxes } = make({ initialSelection: ['h2'] });
+    expect(boxes().map((b) => b.checked)).toEqual([false, true, false]);
+    expect(fixture.componentInstance.selectedIds()).toBeNull();
+    boxes()[0].click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selectedIds()).toBeNull();
+  });
+});
+
+// FR-49-04 — the footer's parts are the footer's, not the pager's.
+describe('StrctDatagrid — footer and chrome combinations', () => {
+  const cols: StrctDatagridColumn[] = [{ key: 'name', label: 'Host' }];
+  const rows: StrctRow[] = Array.from({ length: 5 }, (_, i) => ({ name: 'hv-0' + (i + 1) }));
+
+  function make(inputs: Record<string, unknown>) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('paging="more" takes the pager’s place and leaves the rest of the footer', () => {
+    const { el } = make({ paging: 'more', hasMore: true, columnChooser: true, sync: true });
+    expect(el.querySelector('strct-pagination')).toBeNull();
+    expect(el.querySelector('.strct-dg__more')).toBeTruthy();
+    // The chooser and the sync button used to go with the pager.
+    expect(el.querySelectorAll('.strct-dg__actions button').length).toBe(2);
+    expect(el.querySelector('.strct-dg__count')!.textContent!.trim()).toBe('Showing 5');
+  });
+
+  it('paging="more" does not hide rows behind a pager it never draws', () => {
+    const { el } = make({ paging: 'more', pageSize: 2, hasMore: true });
+    expect(el.querySelectorAll('tbody tr').length).toBe(5);
+    expect(el.querySelector('strct-pagination')).toBeNull();
+  });
+
+  it('a chooser or a sync button is enough to draw the footer', () => {
+    expect(make({ columnChooser: true }).el.querySelector('.strct-dg__foot')).toBeTruthy();
+    expect(make({ sync: true }).el.querySelector('.strct-dg__foot')).toBeTruthy();
+    expect(make({}).el.querySelector('.strct-dg__foot')).toBeNull();
+  });
+
+  it('maxHeight bounds any grid, not only a virtual one', () => {
+    const { el } = make({ maxHeight: 320, groupBy: 'name' });
+    const scroll = el.querySelector('.strct-dg__scroll') as HTMLElement;
+    expect(scroll.style.maxHeight).toBe('320px');
+    expect(el.classList).toContain('strct-dg-host--bounded');
+    expect(
+      make({}).el.querySelector('.strct-dg__scroll')!.getAttribute('style') ?? '',
+    ).not.toContain('max-height');
   });
 });

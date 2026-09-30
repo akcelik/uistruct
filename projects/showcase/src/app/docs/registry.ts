@@ -3271,6 +3271,13 @@ export const DOCS: DocCategory[] = [
               'Seed the selected rows (values are row ids matching `rowId`); requires `selectable`. Assigning a new array re-seeds — e.g. open a picker dialog with the current members already checked — while the user’s later toggles are preserved until it changes.',
           },
           {
+            name: 'selectedIds',
+            type: 'readonly unknown[] | null',
+            default: 'null',
+            description:
+              'The selection itself, two-way (`[(selectedIds)]`), for `selectionMode="multiple"` — what `selectedId` is for single mode. Write it and the grid checks those rows and counts them, firing no `selectionChange`; the user’s own picks write back in the order they were made. `null` means the consumer does not drive the selection, so a grid that only seeds with `initialSelection` is unchanged.',
+          },
+          {
             name: 'expandable',
             type: 'boolean',
             default: 'false',
@@ -3385,7 +3392,7 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description:
-              'Inline cell editing: double-click opens an editor; Enter / blur commit via `(cellEdit)`, Escape cancels.',
+              'Inline cell editing: double-click opens an editor; Enter / blur commit via `(cellEdit)`, Escape cancels. A mouse is not required — the grid’s editable cells are one roving tab stop: the arrow keys move between them, Enter or F2 opens the editor, Escape closes it, focus comes back to the cell either way, and while an editor is open Tab commits it and opens the next cell.',
           },
           {
             name: 'columns[].editor',
@@ -3535,11 +3542,25 @@ export const DOCS: DocCategory[] = [
             description: 'A quiet second line in the cell, from `row[descriptionKey]`.',
           },
           {
+            name: 'editHint',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'A pencil on an editable cell when it is hovered or focused — nothing else says that a cell can be edited.',
+          },
+          {
+            name: 'maxHeight',
+            type: 'number | null',
+            default: 'null',
+            description:
+              'Bound the grid’s own scroll box (px) with a sticky header — what `viewportHeight` does for `virtual`, for every other grid, grouped or not.',
+          },
+          {
             name: 'paging',
             type: `'pages' | 'more'`,
             default: `'pages'`,
             description:
-              '`more` swaps the pager for a count and a Load more button — the shape a cursor API can answer, where `lazy` speaks page numbers. Pair with `hasMore`, `loadingMore`, `moreTotal` and `(loadMore)`; the consumer appends the rows.',
+              '`more` takes the **pager’s** place with a Load more button — the shape a cursor API can answer, where `lazy` speaks page numbers. The count, the column chooser and the sync button are the footer’s and stay. Pair with `hasMore`, `loadingMore`, `moreTotal` and `(loadMore)`; the consumer appends the rows.',
           },
           {
             name: 'hasMore / loadingMore / moreTotal',

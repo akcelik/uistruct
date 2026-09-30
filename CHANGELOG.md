@@ -5,6 +5,48 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - 2026-09-30
+
+### Added
+
+- **Keyboard access to editable cells** (FR-49-02). An editable cell opened
+  only on `dblclick`, so a keyboard user could not reach one at all — which is
+  why three of the reporting app's grids kept in-cell controls instead of
+  adopting the editors. A grid's editable cells are now **one roving tab stop**:
+  Tab reaches the grid, the arrow keys move between cells (along the row and
+  down the column), **Enter or F2** opens the editor with its text selected,
+  **Escape** closes it — focus returning to the cell either way — and while an
+  editor is open **Tab commits it and opens the next cell**, the way a
+  spreadsheet fills a row. The cells carry `aria-describedby` pointing at one
+  hidden line of instructions (`editCellInstructions`, localizable), and the
+  new **`editHint`** puts a pencil on an editable cell when it is hovered or
+  focused.
+- **`strct-datagrid [(selectedIds)]`** (FR-49-03). Multiple mode had only
+  `initialSelection` plus `(selectionChange)`, so a consumer that also removes
+  picks elsewhere on the screen could not tell the grid. `selectedIds` is what
+  `selectedId` is for single mode: writing it checks those rows and counts
+  them, **firing no `selectionChange`**, and the user's own picks write back in
+  the order they were made. `null` (the default) means the consumer does not
+  drive the selection, so a grid that only seeds is unchanged.
+- **`strct-datagrid [maxHeight]`** (FR-49-04). What `viewportHeight` does for
+  `virtual`, for every other grid, grouped or not: a bounded scroll box with a
+  sticky header. Measured: a grouped grid goes 608px → 222px, scrolls, and its
+  header stays put.
+
+### Fixed
+
+- **`paging="more"` replaced the whole footer** (FR-49-04). The column chooser
+  and the sync button went with the pager, and with `pageSize > 0` every row
+  past the first page became unreachable behind a pager that "more" does not
+  draw. "Load more" now takes the **pager's** place only; the count, the
+  chooser and the sync button are the footer's and stay. A cursor feed is no
+  longer sliced client-side.
+- **`[strctDatagridActionBarCaption]` rendered only alongside an action bar or
+  `quickFilterable`** (FR-49-04), so a read-only grid with a note needed an
+  empty action-bar element. The caption alone now draws the toolbar.
+- A footer exists wherever it has something to hold: a grid with a
+  `columnChooser` or `sync` but no pager had nowhere to put them.
+
 ## [5.1.0] - 2026-09-30
 
 ### Added
