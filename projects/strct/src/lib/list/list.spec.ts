@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
   StrctList,
@@ -120,5 +120,48 @@ describe('StrctList / StrctListItem (FR-48-24)', () => {
         .querySelector('.strct-list__empty')!
         .textContent!.trim(),
     ).toBe('No alarms');
+  });
+});
+
+// FR-49-01 — rows that carry a sentence must grow, not end in an ellipsis.
+describe('StrctList / StrctListItem — wrap', () => {
+  @Component({
+    imports: [StrctList, StrctListItem],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-list [wrap]="listWrap()">
+        <strct-list-item class="a" [wrap]="itemWrap()">Why hv-02 is down</strct-list-item>
+        <strct-list-item class="b">Plain row</strct-list-item>
+      </strct-list>
+    `,
+  })
+  class Host {
+    listWrap = signal(false);
+    itemWrap = signal(false);
+  }
+
+  function build() {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return { fixture, host: fixture.componentInstance, el };
+  }
+
+  it('is off by default, follows the row, and the list turns it on for every row', () => {
+    const { fixture, host, el } = build();
+    const a = el.querySelector('.a')!;
+    const b = el.querySelector('.b')!;
+    const list = el.querySelector('.strct-list')!;
+    expect(a.classList).not.toContain('strct-li--wrap');
+    expect(list.classList).not.toContain('strct-list--wrap');
+
+    host.itemWrap.set(true);
+    fixture.detectChanges();
+    expect(a.classList).toContain('strct-li--wrap');
+    expect(b.classList).not.toContain('strct-li--wrap');
+
+    host.listWrap.set(true);
+    fixture.detectChanges();
+    expect(list.classList).toContain('strct-list--wrap');
   });
 });

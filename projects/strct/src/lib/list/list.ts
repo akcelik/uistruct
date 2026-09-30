@@ -66,6 +66,7 @@ export class StrctListItemTrailing {}
     class: 'strct-li',
     role: 'listitem',
     '[class.strct-li--interactive]': 'interactive()',
+    '[class.strct-li--wrap]': 'wrap()',
     '[class.strct-li--selected]': 'selected()',
     '[class.strct-li--status]': 'status()',
     '[attr.data-status]': 'status()',
@@ -132,6 +133,34 @@ export class StrctListItemTrailing {}
       .strct-li[data-status='critical']::before {
         background: var(--critical);
       }
+      /* FR-49-01 — a row that carries a sentence (why a VM is down, what a
+         check found) grows instead of ending in an ellipsis. The leading
+         marker stays on the title's first line rather than centring itself on
+         a three-line row, so a column of rows still reads as a column. */
+      .strct-li--wrap .strct-li__main,
+      .strct-list--wrap .strct-li__main {
+        align-items: flex-start;
+      }
+      .strct-li--wrap .strct-li__leading,
+      .strct-list--wrap .strct-li__leading {
+        /* The title's own line box, so the marker centres on the first line. */
+        min-height: calc(var(--text-md) * 1.45);
+      }
+      .strct-li--wrap .strct-li__title,
+      .strct-li--wrap .strct-li__desc,
+      .strct-list--wrap .strct-li__title,
+      .strct-list--wrap .strct-li__desc {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+      }
+      .strct-li--wrap .strct-li__meta,
+      .strct-list--wrap .strct-li__meta {
+        /* The meta keeps its own line: a time or a count never wraps mid-word,
+           but it aligns with the title rather than with the row's middle. */
+        align-self: flex-start;
+        min-height: calc(var(--text-md) * 1.45);
+      }
       .strct-li__leading:empty,
       .strct-li__meta:empty,
       .strct-li__desc:empty,
@@ -197,6 +226,12 @@ export class StrctListItemTrailing {}
 export class StrctListItem {
   /** The row activates on click / Enter / Space and emits `activated`. */
   readonly interactive = input(false, { transform: booleanAttribute });
+  /**
+   * Let the title and description wrap instead of ending in an ellipsis — for
+   * rows that carry a sentence. `strct-list [wrap]` does the same for every
+   * row at once; this is the per-row form.
+   */
+  readonly wrap = input(false, { transform: booleanAttribute });
   /** Marks the current row (`aria-current`). */
   readonly selected = input(false, { transform: booleanAttribute });
   /** Optional leading rail, as `strct-card [status]`. */
@@ -241,6 +276,7 @@ export class StrctListItem {
     '[attr.aria-label]': 'label() || null',
     '[class.strct-list--dense]': 'dense()',
     '[class.strct-list--dividers]': 'dividers()',
+    '[class.strct-list--wrap]': 'wrap()',
   },
   styles: [
     `
@@ -260,6 +296,11 @@ export class StrctListItem {
 export class StrctList {
   /** 32px rows instead of 44px. */
   readonly dense = input(false, { transform: booleanAttribute });
+  /**
+   * Every row's title and description wrap instead of ending in an ellipsis.
+   * `strct-list-item [wrap]` turns it on for one row.
+   */
+  readonly wrap = input(false, { transform: booleanAttribute });
   /** Hairline between rows. */
   readonly dividers = input(true, { transform: booleanAttribute });
   /** Shown when the list has no items. */

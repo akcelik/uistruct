@@ -5,6 +5,47 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0] - 2026-09-30
+
+### Added
+
+- **`strct-list` / `strct-list-item [wrap]`** (FR-49-01). Rows often carry a
+  _sentence_ — why a VM stays down, what a check found — and both lines were
+  one line with an ellipsis. `wrap` on the list turns it on for every row, on a
+  row for that row: the title and description wrap, the row grows, and **the
+  leading marker stays on the title's first line** instead of centring itself on
+  a three-line row. Measured: a two-line row grows 51px → 69px with the marker
+  exactly on the first line's centre, and `dense` still means **32px** for a
+  one-line row.
+- **`strct-tag [activateLabel]`** (FR-49-07). An interactive tag's body was
+  named by its own text — _"Connected APP02"_, which says what the tag **is**,
+  not what pressing it does. `activateLabel` names the action; the × keeps
+  `removeLabel`. Measured in the accessibility tree: `button` named
+  _"Show the console of APP01"_.
+- **`strct-card-header [level] [wrap]` and `[strctCardHeaderLeading]`**
+  (FR-49-08). `heading` rendered as a span, so no card title was in the page
+  outline — a consumer's a11y gate saw an `h2` followed by an `h4`. `level`
+  (2…6) renders the real heading element, `null` keeps the span. `wrap` lets a
+  long title keep its words: at 250px, _"Host Update Manager"_ is clipped
+  without it and whole with it. The new leading slot puts a drag grip or a
+  status dot **before** the title.
+- **`strct-card [fill]`** (FR-49-09). The card becomes a column inside the
+  height its grid cell already gives it: the block takes the slack and the
+  footer sits on the bottom edge. Measured on a row of three cards with very
+  different bodies: the footers share one y (1102px) and the cards one height.
+- **Status text utilities** — `.strct-text-success`, `.strct-text-warning`,
+  `.strct-text-critical`, `.strct-text-accent` (FR-49-17). A status word inside
+  a grid cell ("blocked", "fits") needs its tone without the box a badge draws.
+  They use the badges' own tokens, so the vocabulary stays one vocabulary, and
+  `scripts/a11y-smoke.mjs` now gates **all four** on `--bg-1` across the six
+  schemes, as it did `--acc` alone: the worst reading is **4.59** (critical,
+  sage/dark), all above AA.
+
+### Changed
+
+- `scripts/a11y-smoke.mjs` also drives `/components/card` and `/components/list`
+  — the pages these demos live on.
+
 ## [5.0.2] - 2026-09-30
 
 ### Fixed

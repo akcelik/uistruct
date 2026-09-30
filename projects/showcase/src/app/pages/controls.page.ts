@@ -217,8 +217,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="tag-interactive"
       owner="tag"
       heading="A tag as a control"
-      description='A tag is also the natural control for a thing you can reopen — a minimised console, a suggested question, a VM in a list — and removing it is a separate act. interactive makes the body activate on click, Enter or Space and emit (activated), while the × stays its own tab stop: two targets, two things to say. [strctTagLeading] projects a status dot or an icon before the text, shape="pill" rounds it fully, and mono is for names that are identifiers. The body carries role="button" rather than being a <button>, because a template can project the same content into only one place — the shape strct-list-item and strct-tree rows use.'
-      code='<strct-tag interactive removable shape="pill" (activated)="restore(c)" (removed)="close(c)" removeLabel="Close the console of APP01">&#10;  <strct-status-dot strctTagLeading status="success" size="sm" />&#10;  APP01&#10;</strct-tag>'
+      description='A tag is also the natural control for a thing you can reopen — a minimised console, a suggested question, a VM in a list — and removing it is a separate act. interactive makes the body activate on click, Enter or Space and emit (activated), while the × stays its own tab stop: two targets, two things to say. The body’s own name is its text — "Connected APP02", which says what the tag is, not what pressing it does — so activateLabel names the action ("Show the console of APP02") while the × keeps removeLabel. [strctTagLeading] projects a status dot or an icon before the text, shape="pill" rounds it fully, and mono is for names that are identifiers. The body carries role="button" rather than being a <button>, because a template can project the same content into only one place — the shape strct-list-item and strct-tree rows use.'
+      code='<strct-tag interactive removable shape="pill" (activated)="restore(c)" (removed)="close(c)" activateLabel="Show the console of APP01" removeLabel="Close the console of APP01">&#10;  <strct-status-dot strctTagLeading status="success" size="sm" />&#10;  APP01&#10;</strct-tag>'
     >
       <div style="display: flex; flex-direction: column; gap: 14px; width: 100%;">
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -227,6 +227,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
               interactive
               removable
               shape="pill"
+              [activateLabel]="'Show the console of ' + c.name"
               [removeLabel]="'Close the console of ' + c.name"
               (activated)="lastTagAction.set('opened ' + c.name)"
               (removed)="closeConsole(c.name)"

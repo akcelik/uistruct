@@ -1,7 +1,10 @@
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { StrctBadge } from '../badge/badge';
 import {
   StrctCard,
   StrctCardHeader,
+  StrctCardHeaderLeading,
   StrctCardBlock,
   StrctCardFooter,
   StrctCardHeaderMeta,
@@ -18,8 +21,6 @@ describe('StrctCard', () => {
     expect(fixture.nativeElement).toBeTruthy();
   });
 });
-
-import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   imports: [StrctCard, StrctCardHeader, StrctCardBlock, StrctCardFooter],
@@ -174,5 +175,70 @@ describe('StrctCardHeader — heading, meta, note, actions (FR-48-14)', () => {
     expect(el.querySelector('.strct-card__header')!.classList).not.toContain(
       'strct-card__header--overline',
     );
+  });
+});
+
+// FR-49-08 / FR-49-09 — the title joins the outline, wraps, and can be led;
+// a row of cards puts its actions on one line.
+describe('StrctCard — heading level, wrap, leading slot, fill', () => {
+  @Component({
+    imports: [StrctCard, StrctCardHeader, StrctCardHeaderLeading, StrctCardHeaderMeta, StrctBadge],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-card [fill]="fill()">
+        <strct-card-header heading="Host Update Manager" [level]="level()" [wrap]="wrap()">
+          <span strctCardHeaderLeading class="grip">⠿</span>
+          <strct-badge strctCardHeaderMeta status="success">Healthy</strct-badge>
+        </strct-card-header>
+      </strct-card>
+    `,
+  })
+  class Host {
+    level = signal<2 | 3 | 4 | 5 | 6 | null>(null);
+    wrap = signal(false);
+    fill = signal(false);
+  }
+
+  function build() {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    return { fixture, host: fixture.componentInstance, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('renders a span by default and the real heading element at a level', () => {
+    const { fixture, host, el } = build();
+    const title = () => el.querySelector('.strct-card__htitle')!;
+    expect(title().tagName).toBe('SPAN');
+
+    for (const level of [2, 3, 4, 5, 6] as const) {
+      host.level.set(level);
+      fixture.detectChanges();
+      expect(title().tagName).toBe('H' + level);
+      expect(title().textContent!.trim()).toBe('Host Update Manager');
+    }
+
+    host.level.set(null);
+    fixture.detectChanges();
+    expect(title().tagName).toBe('SPAN');
+  });
+
+  it('wrap is opt-in and marks the header', () => {
+    const { fixture, host, el } = build();
+    const header = el.querySelector('.strct-card__header')!;
+    expect(header.classList).not.toContain('strct-card__header--wrap');
+    host.wrap.set(true);
+    fixture.detectChanges();
+    expect(header.classList).toContain('strct-card__header--wrap');
+  });
+
+  it('projects a leading slot before the title, and fill marks the card', () => {
+    const { fixture, host, el } = build();
+    const main = el.querySelector('.strct-card__hmain')!;
+    const kids = [...main.children].map((c) => c.className || c.tagName.toLowerCase());
+    expect(kids[0]).toContain('grip');
+    expect(el.querySelector('.strct-card')!.classList).not.toContain('strct-card--fill');
+    host.fill.set(true);
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-card')!.classList).toContain('strct-card--fill');
   });
 });

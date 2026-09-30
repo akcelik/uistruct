@@ -19,7 +19,23 @@
 >   selection directly so an external write emits no `selectionChange`, while a user's own pick
 >   still does.
 >
-> Still open: every FR-49.
+> Still open: **FR-49-02, 03, 04, 05, 06, 10 … 16, 18, 19, 20**.
+>
+> **FR-49-01, 07, 08, 09 and 17 SHIPPED in 5.1.0 (2026-09-30)** — the text-and-surface set.
+>
+> - **01** `wrap` on `strct-list` (every row) and on `strct-list-item` (one row). Measured: a
+>   two-line row grows **51px → 69px**, the leading marker sits exactly on the title's first line
+>   (offset 0), and a `dense` one-line row is still **32px**.
+> - **07** `activateLabel` names what activating an interactive tag does. Measured in the
+>   accessibility tree: role `button`, name **"Show the console of APP01"**, from the attribute.
+> - **08** `level` (2…6) renders the real heading element — measured `H3` in the outline — `wrap`
+>   keeps a long title whole (at 250px it is clipped without and whole with), and
+>   `[strctCardHeaderLeading]` projects before the title (measured: first child of the header row).
+> - **09** `fill`. Measured on three cards with very different bodies: footers share one y
+>   (**1102px**) and the cards one height (224px).
+> - **17** `.strct-text-success | -warning | -critical | -accent`, from the badges' own tokens.
+>   `scripts/a11y-smoke.mjs` now gates all four on `--bg-1` in the six schemes, as it gated `--acc`:
+>   worst **4.59** (critical, sage/dark), all above AA.
 >
 > **BUG-49-04, 07, 08, 09, 10 and 11 FIXED in 5.0.2 (2026-09-30)** — the rest of the bug list.
 >

@@ -44,6 +44,7 @@ import { StrctStatus } from '../status';
     '[class.strct-card--selected]': 'selected()',
     '[class.strct-card--dense]': 'dense()',
     '[class.strct-card--loading]': 'loading()',
+    '[class.strct-card--fill]': 'fill()',
     '[class.strct-card--collapsed]': 'collapsible() && collapsed()',
     '[attr.aria-busy]': 'loading() ? "true" : null',
   },
@@ -57,6 +58,22 @@ import { StrctStatus } from '../status';
         border-radius: var(--radius-lg);
         box-shadow: var(--sh);
         overflow: hidden;
+      }
+
+      /* FR-49-09 — in a grid row the cards already stretch, but each footer
+         sits straight under its own body, so a row of "Open …" buttons lands
+         at four different heights. fill makes the card a column: the block
+         takes the slack and the footer is pinned to the bottom edge. */
+      .strct-card--fill {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .strct-card--fill .strct-card__block {
+        flex: 1;
+      }
+      .strct-card--fill .strct-card__footer {
+        margin-block-start: auto;
       }
 
       /* Tone rail on the leading edge — same language as alert / hero. */
@@ -164,6 +181,12 @@ export class StrctCard {
   readonly selected = input(false, { transform: booleanAttribute });
   /** Tighter paddings for dense dashboards. */
   readonly dense = input(false, { transform: booleanAttribute });
+  /**
+   * Fill the height the layout gives the card (a stretched grid cell) as a
+   * column: the block takes the slack and the footer sits on the bottom edge,
+   * so a row of cards has its actions on one line.
+   */
+  readonly fill = input(false, { transform: booleanAttribute });
   /** Indeterminate top bar + aria-busy; body/footer dim and ignore input. */
   readonly loading = input(false, { transform: booleanAttribute });
   /** Allow collapsing to just the header (a chevron appears in the header). */
@@ -184,11 +207,36 @@ export class StrctCard {
   imports: [StrctIcon],
   template: `
     <span class="strct-card__hmain">
+      <!-- Declared before the catch-all so the selector wins; CSS order keeps
+           it first. A drag grip leads the title this way. -->
+      <ng-content select="[strctCardHeaderLeading]" />
       @if (icon()) {
         <strct-icon class="strct-card__hicon" [name]="icon()" [size]="16" [strokeWidth]="1.4" />
       }
       @if (heading()) {
-        <span class="strct-card__htitle">{{ heading() }}</span>
+        <!-- A card title belongs in the page outline when the consumer says
+             where: level renders the real heading element, and the default
+             stays a span so no app grows headings it did not ask for. -->
+        @switch (level()) {
+          @case (2) {
+            <h2 class="strct-card__htitle">{{ heading() }}</h2>
+          }
+          @case (3) {
+            <h3 class="strct-card__htitle">{{ heading() }}</h3>
+          }
+          @case (4) {
+            <h4 class="strct-card__htitle">{{ heading() }}</h4>
+          }
+          @case (5) {
+            <h5 class="strct-card__htitle">{{ heading() }}</h5>
+          }
+          @case (6) {
+            <h6 class="strct-card__htitle">{{ heading() }}</h6>
+          }
+          @default {
+            <span class="strct-card__htitle">{{ heading() }}</span>
+          }
+        }
       }
       <ng-content select="[strctCardHeaderMeta]" />
       <!-- Default slot: with no heading this renders exactly as before. -->
@@ -218,6 +266,7 @@ export class StrctCard {
   host: {
     class: 'strct-card__header',
     '[class.strct-card__header--overline]': "appearance() === 'overline'",
+    '[class.strct-card__header--wrap]': 'wrap()',
   },
   styles: [
     `
@@ -249,9 +298,25 @@ export class StrctCard {
       }
       .strct-card__htitle {
         min-width: 0;
+        margin: 0;
+        font: inherit;
+        color: inherit;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+      /* Beside a badge, "Host Update Manager" read "Host Update M…" in a 270px
+         card. wrap gives the title its lines back; the header grows with it. */
+      .strct-card__header--wrap {
+        align-items: flex-start;
+      }
+      .strct-card__header--wrap .strct-card__htitle {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+      }
+      .strct-card__header--wrap .strct-card__hmain {
+        flex-wrap: wrap;
       }
       .strct-card__header--overline .strct-card__htitle {
         font-size: var(--text-xs);
@@ -318,12 +383,24 @@ export class StrctCardHeader {
   readonly heading = input('');
   /** `title` — as today; `overline` — uppercase, letter-spaced, quieter. */
   readonly appearance = input<'title' | 'overline'>('title');
+  /**
+   * Render `heading` as a real heading element at this level, so the card's
+   * title joins the page outline. `null` (the default) keeps the span, which
+   * is what a card inside an already-titled section wants.
+   */
+  readonly level = input<2 | 3 | 4 | 5 | 6 | null>(null);
+  /** Let a long heading wrap instead of ending in an ellipsis. */
+  readonly wrap = input(false, { transform: booleanAttribute });
   /** Accessible labels for the collapse toggle (localizable). */
   readonly collapseLabel = input('Collapse');
   readonly expandLabel = input('Expand');
 
   protected readonly card = inject(StrctCard, { optional: true });
 }
+
+/** Leads the card's heading — a drag grip, a status dot, an avatar. */
+@Directive({ selector: '[strctCardHeaderLeading]' })
+export class StrctCardHeaderLeading {}
 
 /** Follows the card's heading on its line — a badge, a count. */
 @Directive({ selector: '[strctCardHeaderMeta]' })
