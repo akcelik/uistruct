@@ -2,6 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import {
   StrctButton,
+  StrctCard,
+  StrctChatAttachment,
+  StrctChatComposer,
+  StrctChatMessage,
+  StrctChatThread,
+  StrctStack,
   StrctCheckbox,
   StrctContextMenu,
   StrctContextMenuTrigger,
@@ -40,6 +46,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctDropdownDivider,
     StrctSparkline,
     StrctSubmenu,
+    StrctCard,
+    StrctChatAttachment,
+    StrctChatComposer,
+    StrctChatMessage,
+    StrctChatThread,
+    StrctStack,
   ],
   template: `
     <app-page-header
@@ -215,6 +227,50 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="chat"
+      heading="Assistant chat"
+      description='An assistant panel is built from the library, like every other panel. strct-chat-thread is a role="log" with aria-live="polite", so a streaming reply is announced once when it finishes rather than token by token; busy shows the typing dots, and the thread keeps the newest message in view unless the reader has scrolled up. Each strct-chat-message is an article named by its author, with the assistant&apos;s icon avatar, a bubble drawn from tokens (no blur, no gradient) and room for an attachment card under it — the action the user must approve. The composer grows with the text to maxRows, sends on Enter, breaks a line on Shift+Enter, and never sends mid-composition, so an IME&apos;s Enter commits the candidate instead of the message.'
+      code='<strct-chat-thread [busy]="thinking()">…</strct-chat-thread>&#10;<strct-chat-composer [(value)]="draft" (send)="ask($event)" />'
+    >
+      <div class="chat-stage">
+        <strct-chat-thread [busy]="chatBusy()" label="Assistant conversation">
+          @for (m of chatMessages(); track m.id) {
+            <strct-chat-message
+              [author]="m.author"
+              [name]="m.name"
+              [avatarIcon]="m.author === 'assistant' ? 'sparkles' : ''"
+              [streaming]="m.streaming ?? false"
+              [time]="m.time ?? null"
+            >
+              {{ m.text }}
+              @if (m.approval) {
+                <strct-card strctChatAttachment status="warning" dense>
+                  <strct-stack gap="2">
+                    <span>Move 4 VMs off hv-02 and put it in maintenance?</span>
+                    <div style="display: flex; gap: 8px;">
+                      <button strct-button size="sm" variant="primary" (click)="approve()">
+                        Approve
+                      </button>
+                      <button strct-button size="sm" variant="flat" (click)="approve()">
+                        Not now
+                      </button>
+                    </div>
+                  </strct-stack>
+                </strct-card>
+              }
+            </strct-chat-message>
+          }
+        </strct-chat-thread>
+        <strct-chat-composer
+          [(value)]="chatDraft"
+          [disabled]="chatBusy()"
+          placeholder="Ask about this cluster…"
+          (send)="ask($event)"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="contextmenu-data"
       owner="contextmenu"
       heading="Data-driven context menu (directive)"
@@ -237,6 +293,20 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      .chat-stage {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        width: 100%;
+        max-width: 560px;
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-lg);
+        background: var(--bg-1);
+        padding: var(--space-2);
+      }
+      .chat-stage strct-chat-thread {
+        max-height: 280px;
+      }
       .anchor-stage {
         display: flex;
         flex-direction: column;
@@ -521,6 +591,62 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class PatternsPage {
+  // FR-48-39 — the operations assistant, from the library.
+  protected readonly chatMessages = signal<
+    {
+      id: number;
+      author: 'user' | 'assistant' | 'system';
+      name: string;
+      text: string;
+      streaming?: boolean;
+      approval?: boolean;
+      time?: Date;
+    }[]
+  >([
+    { id: 1, author: 'system', name: '', text: 'Connected to cluster-a' },
+    { id: 2, author: 'user', name: 'You', text: 'Why is hv-02 slow?' },
+    {
+      id: 3,
+      author: 'assistant',
+      name: 'Assistant',
+      text: 'hv-02 is at 94% memory with two VMs ballooning. I can move them to hv-03.',
+      approval: true,
+    },
+  ]);
+  protected readonly chatDraft = signal('');
+  protected readonly chatBusy = signal(false);
+  private chatId = 4;
+  protected ask(text: string): void {
+    this.chatMessages.update((ms) => [
+      ...ms,
+      { id: this.chatId++, author: 'user' as const, name: 'You', text, time: new Date() },
+    ]);
+    this.chatBusy.set(true);
+    setTimeout(() => {
+      this.chatBusy.set(false);
+      this.chatMessages.update((ms) => [
+        ...ms,
+        {
+          id: this.chatId++,
+          author: 'assistant' as const,
+          name: 'Assistant',
+          text: 'Looking at the last hour of metrics for that host…',
+          streaming: true,
+        },
+      ]);
+      setTimeout(
+        () =>
+          this.chatMessages.update((ms) =>
+            ms.map((m) => (m.streaming ? { ...m, streaming: false } : m)),
+          ),
+        1200,
+      );
+    }, 900);
+  }
+  protected approve(): void {
+    this.chatMessages.update((ms) => ms.map((m) => ({ ...m, approval: false })));
+  }
+
   private readonly menus = inject(StrctMenuService);
 
   /** FR-48-10 — the menu is placed against the button, not at a guessed point. */

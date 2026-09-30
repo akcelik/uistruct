@@ -1,5 +1,20 @@
 # FR-48-39 — Chat: thread, message, typing indicator, composer
 
+> **SHIPPED in 4.23.0 (2026-09-30)** — `strct-chat-thread`, `strct-chat-message`,
+> `strct-chat-composer` and `[strctChatAttachment]`.
+>
+> Measured in Chrome: the thread is a `role="log"` with `aria-live="polite"` and its own name;
+> each message is an `article` named by its author — a system line reads as **"System"**, not as
+> the assistant, which the first reading caught. The user's bubble is the accent tint, the
+> assistant's `--bg-2`, the system line has no bubble at all, and the approval card sits under the
+> bubble rather than inside it. Typing into the composer enables Send, **Shift+Enter does not send**
+> and Enter does: the draft clears, the typing dots appear, and the reply arrives with the caret
+> running `strct-chat-caret` while the message is `aria-busy="true"` — `animation: none` under
+> `prefers-reduced-motion`. When the reply finishes, both the caret and `aria-busy` go, so assistive
+> tech announces it once.
+>
+> **Every ask in this document has shipped.**
+
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
 ## Rule

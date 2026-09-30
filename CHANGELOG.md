@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.23.0] - 2026-09-30
+
+### Added
+
+- **Chat: `strct-chat-thread`, `strct-chat-message`, `strct-chat-composer`**
+  (FR-48-39). An assistant panel is built from the library, like every other
+  panel. The thread is a `role="log"` with `aria-live="polite"`, so a streaming
+  reply is announced **once, when it finishes** rather than token by token;
+  `busy` shows the typing indicator, and the newest message stays in view unless
+  the reader has scrolled up. Each message is an `article` named by its author,
+  with an icon avatar, a bubble drawn from tokens — no blur, no gradient — and
+  room for a `[strctChatAttachment]` card under it, for the action the user must
+  approve. The composer grows with the text to `maxRows`, sends on Enter, breaks
+  a line on Shift+Enter, and **never sends mid-composition**, so an IME's Enter
+  commits the candidate instead of the message. The caret and the typing dots
+  hold still under `prefers-reduced-motion`.
+
 ## [4.22.0] - 2026-09-30
 
 ### Added
