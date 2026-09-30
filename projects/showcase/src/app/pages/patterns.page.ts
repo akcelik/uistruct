@@ -16,6 +16,9 @@ import {
   StrctField,
   StrctIcon,
   StrctInput,
+  StrctLiveIndicator,
+  StrctQr,
+  StrctTag,
   StrctLogin,
   StrctMenuItem,
   StrctMenuPlacement,
@@ -52,6 +55,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctChatMessage,
     StrctChatThread,
     StrctStack,
+    StrctLiveIndicator,
+    StrctQr,
+    StrctTag,
   ],
   template: `
     <app-page-header
@@ -156,6 +162,71 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             </p>
           </form>
         </strct-login>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="login-art"
+      owner="login"
+      heading="The aside, built in"
+      description='What the library shows as its login screen, a consumer can have by asking for it — art="network" renders the glow, the dot grid and the pulsing node diagram from palette tokens only, so it follows all six schemes, and it holds still under prefers-reduced-motion. brandIcon / brandName put the icon tile and product name at the top, tagline is the kicker above your own copy, and [strctLoginStatus] is projected at the aside&apos;s foot for the “is the appliance reachable” strip. art="grid" keeps the glow and grid without the diagram.'
+      code='<strct-login split art="network" brandIcon="hexagon" brandName="HYPERSTRUCT" tagline="Datacenter operations">…</strct-login>'
+    >
+      <div class="login-stage">
+        <strct-login
+          split
+          art="network"
+          brandIcon="hexagon"
+          brandName="STRUCT OPS"
+          tagline="Datacenter operations"
+          [maxWidth]="760"
+        >
+          <ng-container strctLoginAside>
+            <h2 style="margin: 0 0 12px; font-size: 22px; line-height: 1.15; font-weight: 700;">
+              Command your infrastructure.
+            </h2>
+            <p
+              style="margin: 0; font-size: 13px; line-height: 1.6; color: var(--t2); max-width: 34ch;"
+            >
+              Hosts, virtual machines, storage and alarms in one console — with the audit trail your
+              compliance team expects.
+            </p>
+          </ng-container>
+          <strct-live-indicator strctLoginStatus state="live" [interval]="5000" />
+          <ng-container strctLoginMain>
+            <strct-stack gap="3">
+              <h3 style="margin: 0; font-size: 16px;">Sign in</h3>
+              <strct-field label="Email">
+                <input strctInput type="email" placeholder="you@example.com" />
+              </strct-field>
+              <strct-field label="Password">
+                <strct-password placeholder="••••••••" />
+              </strct-field>
+              <button strct-button variant="primary" solid block>Sign in</button>
+            </strct-stack>
+          </ng-container>
+        </strct-login>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="qr"
+      heading="QR code"
+      description="Enrolling an authenticator app shows a QR code the library draws, with the quiet zone and contrast a scanner needs — not an image the consumer frames on white, which is what a hard-coded white box in a dark theme really is. The encoder ships with the library (byte mode, versions 1–10, all four correction levels) and its output is read back in the tests the way a scanner does: format bits, mask, zig-zag, de-interleaved blocks with zero Reed–Solomon syndromes, and the original text. Dark modules on a light quiet zone in every scheme is a deliberate exception to “tokens only”, because a themed QR code is an unscannable one — and the secret belongs beside it as text, for enrolment without a camera."
+      code='<strct-qr [value]="otpauthUri" label="Scan with your authenticator app" errorCorrection="Q" />'
+    >
+      <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <strct-qr
+          [value]="otpauthUri"
+          [size]="176"
+          errorCorrection="Q"
+          label="Scan with your authenticator app"
+        />
+        <strct-stack gap="2">
+          <span style="font-size: 12px; color: var(--t3);">Or enter the secret by hand</span>
+          <strct-tag mono>JBSWY3DPEHPK3PXP</strct-tag>
+          <span style="font-size: 12px; color: var(--t3);">TOTP · 6 digits · 30 s</span>
+        </strct-stack>
       </div>
     </app-demo>
 
@@ -591,6 +662,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class PatternsPage {
+  // FR-48-41 — the enrolment URI an authenticator app expects.
+  protected readonly otpauthUri =
+    'otpauth://totp/UIStruct:ada@example.com?secret=JBSWY3DPEHPK3PXP&issuer=UIStruct';
+
   // FR-48-39 — the operations assistant, from the library.
   protected readonly chatMessages = signal<
     {

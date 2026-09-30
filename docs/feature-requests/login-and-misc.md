@@ -1,5 +1,26 @@
 # FR-48-40 … 41 — Login art, QR code
 
+> **SHIPPED in 4.24.0 (2026-09-30)** — `strct-login`'s `art` / `brandIcon` / `brandName` /
+> `tagline` / `[strctLoginStatus]`, and the new `strct-qr`.
+>
+> Measured in Chrome: `art="network"` renders two glows, the dot grid and the node diagram, all
+> `aria-hidden`; the nodes run `strct-login-pulse` and go to `animation: none` under
+> `prefers-reduced-motion`; their fill follows the scheme (light `rgb(74,107,143)` → dark
+> `rgb(123,158,200)`), because the art is palette tokens only.
+>
+> The QR code is a `role="img"` with its label, 176px over a 53-module viewBox (version 7 plus the
+> 4-module quiet zone), and — **with the page in dark mode** — still black modules on a white quiet
+> zone. That is the deliberate exception to "tokens only": a themed QR code is an unscannable one.
+>
+> The encoder is dependency-free (byte mode, versions 1–10, all four levels) and is verified rather
+> than assumed: its Reed–Solomon parity matches the published 1-M vector, and a reader written from
+> the spec in the tests reads every code back — format bits, mask, zig-zag, de-interleaved blocks
+> with **zero syndromes**, and the original text, including a Unicode string at each level. Writing
+> that reader caught two real defects: the generator polynomial multiplied the wrong term by α^i,
+> and the second format copy was written one bit out, over the dark module.
+>
+> **Every ask in this document has shipped.**
+
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 
 ---

@@ -124,6 +124,8 @@ export * from './lib/steps/steps';
 export * from './lib/media-frame/media-frame';
 export * from './lib/window/window';
 export * from './lib/chat/chat';
+export * from './lib/qr/qr';
+export * from './lib/qr/encoder';
 export * from './lib/change/change';
 export * from './lib/number/number';
 export * from './lib/popover/popover';
