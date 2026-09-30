@@ -11,7 +11,14 @@
  * pixelmatch's threshold); diffs land in visual-artifacts/.
  */
 import { createServer } from 'node:http';
-import { existsSync, statSync, createReadStream, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  statSync,
+  createReadStream,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
 import { join, extname } from 'node:path';
 import { spawn, execSync } from 'node:child_process';
 import { PNG } from 'pngjs';
@@ -26,6 +33,12 @@ const WIDTH = 1280;
 const HEIGHT = 900;
 /** Fail when more than this fraction of pixels differ. */
 const MAX_DIFF_RATIO = 0.005;
+/**
+ * Mean per-channel drift, in levels out of 255, that still counts as the same
+ * screenshot. A palette change moves every pixel a little and no pixel much,
+ * so the pixel count above cannot see it; this can.
+ */
+const MAX_MEAN_DRIFT = 0.6;
 
 const UPDATE = process.argv.includes('--update');
 
@@ -110,6 +123,15 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  * main build. A slow start is not a visual regression, so it must not read as
  * one.
  */
+/** Mean absolute per-channel difference between two RGBA buffers, in levels. */
+function meanDrift(a, b) {
+  let total = 0;
+  for (let i = 0; i < a.length; i += 4) {
+    total += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]);
+  }
+  return total / ((a.length / 4) * 3);
+}
+
 async function cdpTarget() {
   const deadline = Date.now() + 30_000;
   for (let i = 0; Date.now() < deadline; i++) {
@@ -185,7 +207,10 @@ try {
       const basePath = join(BASE_DIR, `${name}.png`);
       if (UPDATE || !existsSync(basePath)) {
         writeFileSync(basePath, current);
-        rows.push([name, existsSync(basePath) && !UPDATE ? 'baseline created' : 'baseline updated']);
+        rows.push([
+          name,
+          existsSync(basePath) && !UPDATE ? 'baseline created' : 'baseline updated',
+        ]);
         continue;
       }
       const a = PNG.sync.read(readFileSync(basePath));
@@ -201,13 +226,25 @@ try {
         threshold: 0.15,
       });
       const ratio = differing / (a.width * a.height);
-      if (ratio > MAX_DIFF_RATIO) {
+      // pixelmatch's threshold tolerates antialiasing, which also makes it
+      // blind to a palette shift: a few levels per channel across the whole
+      // page counts as zero differing pixels. The mean drift catches exactly
+      // that, and is unmoved by text rendering.
+      const drift = meanDrift(a.data, b.data);
+      const failedPixels = ratio > MAX_DIFF_RATIO;
+      const failedDrift = drift > MAX_MEAN_DRIFT;
+      if (failedPixels || failedDrift) {
         failures++;
         writeFileSync(join(OUT_DIR, `${name}.current.png`), current);
         writeFileSync(join(OUT_DIR, `${name}.diff.png`), PNG.sync.write(diff));
-        rows.push([name, `FAIL ${(ratio * 100).toFixed(2)}% pixels differ`]);
+        rows.push([
+          name,
+          failedPixels
+            ? `FAIL ${(ratio * 100).toFixed(2)}% pixels differ`
+            : `FAIL mean colour drift ${drift.toFixed(2)}/255 (surfaces moved)`,
+        ]);
       } else {
-        rows.push([name, `ok (${(ratio * 100).toFixed(3)}%)`]);
+        rows.push([name, `ok (${(ratio * 100).toFixed(3)}%, drift ${drift.toFixed(2)})`]);
       }
     }
   }

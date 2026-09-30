@@ -120,7 +120,11 @@ export type StrctSegmentedSize = 'sm' | 'md';
         background: var(--bg-a);
         color: var(--t1);
         font-weight: 600;
-        box-shadow: var(--sh);
+        /* The moving pill keeps a hairline of its own: --sh no longer carries
+           one, and against the track the drop shadow alone is too quiet. */
+        box-shadow:
+          var(--sh),
+          0 0 0 1px var(--b1);
       }
       .strct-seg__opt:focus-visible {
         outline: none;

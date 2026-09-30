@@ -5,9 +5,37 @@
 > than the one below it. The FR offered a `bandFloor` input as the alternative; ascending band
 > ranges need no new input and cannot be configured into the broken state.
 >
-> **FR-44-01 is still open.** Dropping the ring from `--sh` and stepping the card surface off
-> its ground changes how every card looks, which the versioning policy makes a major — it is
-> kept out of this patch deliberately, not overlooked.
+> **FR-44-01 RESOLVED in 5.0.0 (2026-09-30)**, on the owner's approval: it changes how every card
+> looks, which the versioning policy makes a major.
+>
+> **One edge.** `--sh` lost its `0 0 0 1px var(--b1)` ring in all six schemes; the card keeps its
+> border, and `--shh` keeps its own ring because a raised state is a different one. Measured: the
+> card's computed shadow is now `rgba(0,0,0,.06) 0px 1px 3px` with **zero** `0 0 0 1px` components.
+> `strct-segmented`'s moving pill had no border of its own, so it was given one explicitly rather
+> than losing its definition.
+>
+> **A surface step, the same direction in both themes.** The tokens now carry roles rather than one
+> lightness direction: `--bg-0` is the page ground, `--bg-1` the raised surface (card, menu,
+> window), `--bg-2` the recessed fill (input, track, chip). The three dark schemes had them the
+> other way round — a card was _darker_ than its ground, i.e. sunk — so their values were swapped;
+> the light schemes kept the direction and widened the step (the card is now white, or the
+> palette's white).
+>
+> Measured in Chrome, card against its ground:
+>
+> | Scheme       | vs the page (`--bg-0`) | vs a `--bg-2` container | raised?               |
+> | ------------ | ---------------------- | ----------------------- | --------------------- |
+> | arctic dark  | 1.166                  | 1.078                   | was **sunk** → raised |
+> | arctic light | 1.101                  | 1.083                   | raised (was 1.026)    |
+> | ember dark   | 1.144                  | 1.075                   | was **sunk** → raised |
+> | ember light  | 1.107                  | 1.108                   | raised (was 1.043)    |
+> | sage dark    | 1.152                  | 1.076                   | was **sunk** → raised |
+> | sage light   | 1.093                  | 1.096                   | raised (was 1.038)    |
+>
+> Nested surfaces now read the same way in both themes too: a card header is recessed against its
+> card, and a grid's cells sit above its frame, which sits above the page. Every text tone stays at
+> or above AA on all three surfaces in all six schemes — the worst is `--t3` on the raised surface
+> in sage dark, at 4.51.
 
 **From:** HyperStruct (every Overview page and Home, O239) · **Version:** 4.4.0 ·
 **Severity:** low–medium. Both are visible on every Overview. Neither blocks a feature, and
