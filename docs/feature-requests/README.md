@@ -5,9 +5,10 @@ folder. When every item in a document has shipped, the document moves to
 [`archive/`](archive/). A living document (one still accruing new sections)
 stays here until it goes quiet.
 
-> **Nothing is open.** Every FR this folder has ever carried has shipped; the ledger below
-> is the record. New requests arrive as a new file here, and move to
-> [`archive/`](archive/) once every item in them ships.
+## Open
+
+- [`hyperstruct-5.0-adoption.md`](hyperstruct-5.0-adoption.md) — **BUG-49-01 … 11, FR-49-01 … 20**, from HyperStruct's
+  adoption of 5.0.0 across every screen. Each bug is traced to its line in `projects/strct/src/lib`.
 
 ## Status ledger
 

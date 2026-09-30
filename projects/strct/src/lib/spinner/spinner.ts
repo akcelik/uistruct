@@ -56,6 +56,49 @@ export type StrctSpinnerSize = 'sm' | 'md' | 'lg';
           animation-duration: 1.6s;
         }
       }
+
+      /* With a caption the host is a row, not the ring: it gives up its box,
+         border and animation, and the ring becomes its own element — otherwise
+         the caption sits inside the spinning circle and turns with it. */
+      .strct-spinner--captioned {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        width: auto;
+        height: auto;
+        border: 0;
+        border-radius: 0;
+        animation: none;
+      }
+      .strct-spinner__ring {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border: 2.5px solid var(--b3);
+        border-top-color: var(--acc);
+        border-radius: 50%;
+        animation: strct-spin 0.7s linear infinite;
+      }
+      .strct-spinner--sm .strct-spinner__ring {
+        width: 14px;
+        height: 14px;
+        border-width: 2px;
+      }
+      .strct-spinner--lg .strct-spinner__ring {
+        width: 34px;
+        height: 34px;
+        border-width: 3px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .strct-spinner__ring {
+          animation-duration: 1.6s;
+        }
+      }
+      .strct-spinner__caption {
+        font-size: var(--text-sm);
+        color: var(--t3);
+        line-height: 1.3;
+      }
     `,
   ],
 })

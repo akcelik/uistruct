@@ -5,6 +5,40 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.1] - 2026-09-30
+
+### Fixed
+
+- **A dev warning fired for hosts that are not in the document** (BUG-49-01). A
+  component inside a closed modal or an unshown tab is not connected, so
+  `getComputedStyle` reports `''` — and `strctCheckHostDisplay` read that as an
+  override: _"needs display: block, but it computes to ."_ It fired on 69 of the
+  reporting app's 129 screens, and because the warning deduplicates by key, each
+  false positive **masked a real override later on the same page**. It now waits
+  for the host to be connected and checks then.
+- **`strct-spinner [caption]` shipped without its CSS** (BUG-49-02). The template
+  emitted `__ring` and `__caption` while the host kept the ring's box, border and
+  animation, so the caption sat _inside the rotating circle_ and turned with it.
+  The captioned host is now a row and the ring is its own element; a spinner
+  without a caption is unchanged.
+- **`strct-empty-state size="sm"` shipped without its CSS** (BUG-49-03). It kept
+  40px padding, the 56px icon chip and the 15px title. It is now the row the
+  proposal described — 12px padding, a 16px icon inline with a 13px title —
+  which takes the block from **260px to 66px** and fits the card it was written
+  for.
+- **`strct-desc` broke the `<dl>` content model** (BUG-49-05). A custom element
+  between `<dl>` and its `dt` / `dd` is invalid, and axe reported
+  **definition-list** and **dlitem** (both serious) on every list. `strctDesc`
+  now also answers to **`div[strctDesc]`** — the way `StrctInput` gained
+  `strct-input` — and that is the form to use inside a list. The showcase's own
+  rows moved to it, and its page joined `scripts/a11y-smoke.mjs`: it was not
+  covered, which is how this shipped.
+- **`strct-datagrid [selectedId]` did not select the row it named** (BUG-49-06).
+  The grid wrote `selectedId` when the user picked but never read it back, so a
+  consumer restoring a pick saw no radio checked. It now follows `selectedId` in
+  single mode — and an external write emits no `selectionChange`, while a user's
+  own pick still does.
+
 ## [5.0.0] - 2026-09-30
 
 A major for one reason: **FR-44-01 changes how every card looks.** Nothing else in

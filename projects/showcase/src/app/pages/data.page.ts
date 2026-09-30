@@ -137,14 +137,14 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="description-list"
       heading="Description list"
-      description="Aligned label → value pairs. Project strct-desc so a value can host a badge; or pass plain pairs via items. The inline variant is a horizontal stat strip."
-      code='<strct-description-list><strct-desc label="IPv4" mono>172.16.75.100/24</strct-desc></strct-description-list>'
+      description="Aligned label → value pairs. Project a row as <div strctDesc> so a value can host a badge — a <dl> allows only dt / dd pairs or <div> wrappers as children, so a custom element between them is invalid — or pass plain pairs via items. The inline variant is a horizontal stat strip."
+      code='<strct-description-list><div strctDesc label="IPv4" mono>172.16.75.100/24</div></strct-description-list>'
     >
       <div class="dl-grid">
         <strct-description-list>
-          <strct-desc label="IPv4" mono>172.16.75.100/24</strct-desc>
-          <strct-desc label="Gateway" mono>172.16.75.2</strct-desc>
-          <strct-desc label="IPv6"><strct-badge status="success">Enabled</strct-badge></strct-desc>
+          <div strctDesc label="IPv4" mono>172.16.75.100/24</div>
+          <div strctDesc label="Gateway" mono>172.16.75.2</div>
+          <div strctDesc label="IPv6"><strct-badge status="success">Enabled</strct-badge></div>
         </strct-description-list>
 
         <strct-description-list
@@ -157,12 +157,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       </div>
 
       <strct-description-list inline class="dl-strip">
-        <strct-desc label="Access · VIP"
-          ><strct-badge status="accent" solid>172.16.75.250</strct-badge></strct-desc
-        >
-        <strct-desc label="Viewing"
-          ><strct-badge status="neutral">hyperstruct01</strct-badge></strct-desc
-        >
+        <div strctDesc label="Access · VIP">
+          <strct-badge status="accent" solid>172.16.75.250</strct-badge>
+        </div>
+        <div strctDesc label="Viewing">
+          <strct-badge status="neutral">hyperstruct01</strct-badge>
+        </div>
       </strct-description-list>
     </app-demo>
 
@@ -171,18 +171,16 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       owner="description-list"
       heading="One label column, a state and a note"
       description='A list of facts lines its values up. align="grid" gives the list one label column sized to its longest label — what about 33 hand-built auto 1fr grids in the audited app are for — and labelWidth fixes that column when several lists should agree. A fact can carry its state and a short note too: status puts a dot before the label and note a quiet second line under the value, so “Agent · connected · last seen 12 s ago” is one row rather than three.'
-      code='<strct-description-list align="grid" labelWidth="150px">&#10;  <strct-desc label="Agent" status="success" note="last seen 12 s ago">Connected</strct-desc>&#10;</strct-description-list>'
+      code='<strct-description-list align="grid" labelWidth="150px">&#10;  <div strctDesc label="Agent" status="success" note="last seen 12 s ago">Connected</div>&#10;</strct-description-list>'
     >
       <div class="dl-grid">
         <strct-description-list align="grid">
-          <strct-desc label="Agent" status="success" note="last seen 12 s ago"
-            >Connected</strct-desc
-          >
-          <strct-desc label="Cluster membership" status="warning" note="quorum at 2 of 3">
+          <div strctDesc label="Agent" status="success" note="last seen 12 s ago">Connected</div>
+          <div strctDesc label="Cluster membership" status="warning" note="quorum at 2 of 3">
             Degraded
-          </strct-desc>
-          <strct-desc label="Firmware" icon="cpu" mono>4.21.0-rc2</strct-desc>
-          <strct-desc label="Uptime">14 days</strct-desc>
+          </div>
+          <div strctDesc label="Firmware" icon="cpu" mono>4.21.0-rc2</div>
+          <div strctDesc label="Uptime">14 days</div>
         </strct-description-list>
 
         <strct-description-list

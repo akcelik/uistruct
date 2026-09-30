@@ -104,6 +104,41 @@ const VARIANTS: Record<StrctEmptyVariant, { icon: string; tone: string }> = {
         line-height: 1.5;
         color: var(--t3);
       }
+      /* size="sm": the row FR-48-20 described — a 16px icon inline with the
+         title, the description under it. It fits a 240px card, which a 40px
+         padding and a 56px icon chip never did. */
+      .strct-empty--sm {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        gap: 2px var(--space-2);
+        text-align: start;
+        padding: var(--space-3);
+      }
+      .strct-empty--sm .strct-empty__icon {
+        width: 16px;
+        height: 16px;
+        border-radius: 0;
+        margin-bottom: 0;
+        background: none;
+        grid-row: 1;
+      }
+      .strct-empty--sm .strct-empty__title {
+        font-size: 13px;
+        grid-row: 1;
+      }
+      .strct-empty--sm .strct-empty__desc,
+      .strct-empty--sm .strct-empty__actions {
+        grid-column: 2;
+      }
+      .strct-empty--sm .strct-empty__desc {
+        font-size: var(--text-sm);
+        max-width: none;
+      }
+      .strct-empty--sm .strct-empty__actions:empty {
+        display: none;
+      }
+
       .strct-empty__actions {
         display: flex;
         align-items: center;

@@ -4,6 +4,7 @@ import { StrctAlert } from '../alert/alert';
 import { StrctBadge } from '../badge/badge';
 import { StrctInput } from '../forms/input';
 import { resetStrctDevWarnings } from './dev-warn';
+import { strctCheckHostDisplay } from './host-check';
 
 /**
  * Writing a component the way a sibling component is written must not fail
@@ -93,5 +94,28 @@ describe('dev-mode host checks (FR-48-42)', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect((el.querySelector('input') as HTMLElement).classList).toContain('strct-control');
     expect((el.querySelector('select') as HTMLElement).classList).toContain('strct-control');
+  });
+
+  // BUG-49-01 — a host inside a closed modal or an unshown tab is not in the
+  // document, so getComputedStyle reports '' — which is not an override, and
+  // warning there would mask a real one later (the warning deduplicates).
+  it('says nothing about the display of a host that is not in the document', () => {
+    const detached = document.createElement('strct-alert');
+    strctCheckHostDisplay(detached, 'strct-alert', 'block');
+    expect(warnings).toEqual([]);
+  });
+
+  it('still warns about a real override on a connected host', () => {
+    const el = document.createElement('div');
+    el.style.display = 'flex';
+    document.body.appendChild(el);
+    try {
+      strctCheckHostDisplay(el, 'strct-alert', 'block');
+      expect(warnings.length).toBe(1);
+      expect(warnings[0]).toContain('needs display: block');
+      expect(warnings[0]).toContain('flex');
+    } finally {
+      el.remove();
+    }
   });
 });
