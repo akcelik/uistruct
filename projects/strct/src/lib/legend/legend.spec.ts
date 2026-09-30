@@ -77,3 +77,58 @@ describe('StrctLegend', () => {
     );
   });
 });
+
+// FR-49-13 — a counter this host does not collect must say why and must not
+// toggle; a catalogue picker is not a legend of what is drawn.
+describe('StrctLegend — disabled items and the picker appearance', () => {
+  const items: StrctLegendItem[] = [
+    { label: 'CPU ready', value: 12 },
+    { label: 'Ballooned', off: true },
+    { label: 'Swap in', disabled: true, reason: 'Not collected on this host' },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctLegend);
+    fixture.componentRef.setInput('items', items);
+    fixture.componentRef.setInput('interactive', true);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      hits: () => [...el.querySelectorAll<HTMLButtonElement>('.strct-legend__hit')],
+    };
+  }
+
+  it('a row that cannot be picked is disabled and says why', () => {
+    const { fixture, hits } = make();
+    const toggled: string[] = [];
+    fixture.componentInstance.itemToggle.subscribe((l) => toggled.push(l));
+    const [, , swap] = hits();
+    expect(swap.disabled).toBe(true);
+    expect(swap.getAttribute('title')).toBe('Not collected on this host');
+    expect(swap.getAttribute('aria-description')).toBe('Not collected on this host');
+    swap.click();
+    expect(toggled).toEqual([]);
+
+    hits()[0].click();
+    expect(toggled).toEqual(['CPU ready']);
+    expect(hits()[0].disabled).toBe(false);
+  });
+
+  it('picker marks what is picked with a check; legend keeps the pressed state', () => {
+    const legend = make();
+    expect(legend.el.querySelector('.strct-legend__check')).toBeNull();
+    expect(legend.el.classList).not.toContain('strct-legend--picker');
+    expect(legend.hits()[1].getAttribute('aria-pressed')).toBe('false');
+
+    const picker = make({ appearance: 'picker' });
+    expect(picker.el.classList).toContain('strct-legend--picker');
+    const checks = [...picker.el.querySelectorAll('.strct-legend__check')];
+    expect(checks.length).toBe(3);
+    // An off row is simply not picked: no check, and still a button.
+    expect(checks.map((c) => !!c.querySelector('strct-icon'))).toEqual([true, false, true]);
+    expect(picker.hits()[1].getAttribute('aria-pressed')).toBe('false');
+  });
+});

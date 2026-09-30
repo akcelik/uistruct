@@ -198,3 +198,51 @@ describe('StrctFlow — fan-out (FR-48-31)', () => {
     expect(el.getAttribute('aria-label')).toContain('node01');
   });
 });
+
+// FR-49-15 — a column no node lands in is still part of the answer, and a node
+// can be the finding rather than merely have a state.
+describe('StrctFlow — an empty column and a toned node', () => {
+  const nodes: StrctFlowNode[] = [
+    { id: 'vm', label: 'vm-01', column: 0 },
+    { id: 'none', label: 'Nowhere', column: 1, status: 'critical', emphasis: 'surface' },
+  ];
+
+  function make(inputs: Record<string, unknown>) {
+    const fixture = TestBed.createComponent(StrctFlow);
+    fixture.componentRef.setInput('layout', 'fan-out');
+    fixture.componentRef.setInput('nodes', nodes);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('draws a declared column with its note when nothing lands in it', () => {
+    const { el } = make({
+      columns: ['Source', 'Lands on', { heading: 'Also affected', emptyText: 'no other member' }],
+    });
+    const cols = [...el.querySelectorAll('.strct-flow__col')];
+    expect(cols.length).toBe(3);
+    expect(cols.map((c) => c.querySelector('.strct-flow__colhead')?.textContent?.trim())).toEqual([
+      'Source',
+      'Lands on',
+      'Also affected',
+    ]);
+    const empty = cols[2].querySelector('.strct-flow__colempty')!;
+    expect(empty.textContent!.trim()).toBe('no other member');
+    expect(cols[2].querySelectorAll('.strct-flow__box').length).toBe(0);
+  });
+
+  it('a plain heading still draws nothing when its column is empty', () => {
+    const { el } = make({ columns: ['Source', 'Lands on', 'Also affected'] });
+    expect(el.querySelectorAll('.strct-flow__col').length).toBe(2);
+    expect(el.querySelector('.strct-flow__colempty')).toBeNull();
+  });
+
+  it('emphasis "surface" tones the whole node, not only its border', () => {
+    const { el } = make({ columns: ['Source', 'Lands on'] });
+    const boxes = [...el.querySelectorAll('.strct-flow__box')];
+    expect(boxes[0].classList).not.toContain('strct-flow__box--surface');
+    expect(boxes[1].classList).toContain('strct-flow__box--surface');
+    expect(boxes[1].classList).toContain('strct-flow__box--critical');
+  });
+});

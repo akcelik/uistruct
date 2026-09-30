@@ -71,7 +71,12 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
     <!-- A KPI you can drill into is a link. The hit area covers the tile, so
          the whole tile is the target and the focus ring is the tile's own. -->
     @if (href()) {
-      <a class="strct-mt__hit" [href]="href()" [attr.aria-label]="hitLabel()"></a>
+      <a
+        class="strct-mt__hit"
+        [href]="href()"
+        [attr.aria-label]="hitLabel()"
+        (click)="onHrefClick($event)"
+      ></a>
     } @else if (interactive()) {
       <button
         type="button"
@@ -83,6 +88,8 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
   `,
   host: {
     class: 'strct-mt',
+    '[class.strct-mt--status]': "status() !== 'neutral'",
+    '[attr.data-status]': "status() !== 'neutral' ? status() : null",
     '[class.strct-mt--actionable]': 'href() || interactive()',
     '[class.strct-mt--loading]': 'loading()',
     '[attr.aria-busy]': 'loading() ? "true" : null',
@@ -99,6 +106,31 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
         border-radius: var(--radius-lg);
         background: var(--bg-1);
         min-width: 0;
+      }
+      /* FR-49-14 — the tone was the value's alone, so a critical tile lost its
+         edge in a row of tiles. The rail is the one strct-card draws, in the
+         same tokens: the status reads before the number does. */
+      .strct-mt--status::before {
+        content: '';
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 0;
+        width: 3px;
+        border-start-start-radius: var(--radius-lg);
+        border-end-start-radius: var(--radius-lg);
+        background: var(--t3);
+      }
+      .strct-mt[data-status='accent']::before {
+        background: var(--acc);
+      }
+      .strct-mt[data-status='success']::before {
+        background: var(--success);
+      }
+      .strct-mt[data-status='warning']::before {
+        background: var(--warning);
+      }
+      .strct-mt[data-status='critical']::before {
+        background: var(--critical);
       }
       .strct-mt__top {
         display: flex;
@@ -245,6 +277,15 @@ export class StrctMetricTile {
   readonly href = input<string | null>(null);
   /** Makes the whole tile a control that emits `activated`. */
   readonly interactive = input(false, { transform: booleanAttribute });
+  /**
+   * What a plain click on an `href` tile does. `browser` follows the link, as
+   * today. `app` belongs to a single-page app: the click is prevented and
+   * `activated` fires, so the router navigates and the page is not reloaded —
+   * while a middle click or a modified one (Ctrl / Cmd / Shift / Alt) still
+   * opens the link the way the browser would, because the tile is a real
+   * link, not a button painted like one.
+   */
+  readonly navigate = input<'browser' | 'app'>('browser');
   /** Emitted when an `interactive` tile is activated. */
   readonly activated = output<void>();
 
@@ -252,6 +293,21 @@ export class StrctMetricTile {
   protected readonly hitLabel = computed(() =>
     [this.label(), `${this.value()}${this.unit()}`].filter(Boolean).join(': '),
   );
+  /**
+   * A plain primary click on an `href` tile, when `navigate="app"`: the
+   * browser's own navigation is prevented and `activated` carries it, so a
+   * single-page app routes instead of reloading. Anything the browser treats
+   * as "open this somewhere else" — a middle click, Ctrl / Cmd / Shift / Alt,
+   * or a link with a target — is left alone.
+   */
+  protected onHrefClick(event: MouseEvent): void {
+    if (this.navigate() !== 'app') return;
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+      return;
+    event.preventDefault();
+    this.activated.emit();
+  }
+
   /** Change indicator; sign drives the arrow + colour. Null hides it. */
   readonly delta = input<number | null>(null);
   /** Suffix for the delta number. */

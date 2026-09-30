@@ -3639,10 +3639,23 @@ export const DOCS: DocCategory[] = [
         lead: 'A process the user *watches* rather than drives: an update run per host, or a numbered method on a landing page. A wizard\u2019s rail is the wrong control \u2014 the user did not start each step and cannot go back to one \u2014 and a timeline implies history. Neither can say "skipped" or "blocked".',
         inputs: [
           {
+            name: 'label',
+            type: 'string',
+            default: `''`,
+            description:
+              'The list’s accessible name — "Migration plan", "Upgrade progress". An `<ol>` of steps with no name is one of several lists on a page.',
+          },
+          {
+            name: 'wrap',
+            type: 'boolean',
+            default: 'false',
+            description: 'A long pill label wraps instead of ending in an ellipsis.',
+          },
+          {
             name: 'steps',
             type: 'StrctStepState[]',
             description:
-              '`{ id; label; state: "pending" | "active" | "done" | "failed" | "skipped" | "blocked"; description? }[]`. Tones: done success, active accent (pulsing), failed critical, blocked warning, skipped struck through in `--t3`, pending a `--t4` outline.',
+              '`{ id; label; state: "planned" | "pending" | "active" | "done" | "failed" | "skipped" | "blocked"; description? }[]`. Tones: done success, active accent (pulsing), failed critical, blocked warning, skipped struck through in `--t3`, pending a `--t4` outline, and **planned** the body colour with a plain numbered marker — what a plan says before anything runs, which is not the same as waiting.',
           },
           {
             name: 'appearance',
@@ -4247,6 +4260,19 @@ export const DOCS: DocCategory[] = [
         lead: 'A chart\u2019s key is a component. The same swatch · label · value rows serve a line chart\u2019s series picker, a diagram\u2019s edge styles and a donut\u2019s categories — instead of 9px squares with inline backgrounds written per screen. A category with nothing in it stays in the key, muted, because "0 failed" is information.',
         inputs: [
           {
+            name: 'appearance',
+            type: `'legend' | 'picker'`,
+            default: `'legend'`,
+            description:
+              '`legend` is the key of what is drawn: an off row is struck through, because it is a hidden series. `picker` is a catalogue — the counters a host *could* show — where an off row is simply not picked, so it stays plain and the picked ones carry a check.',
+          },
+          {
+            name: 'items[].disabled / items[].reason',
+            type: 'boolean / string',
+            description:
+              'A row that cannot be switched at all — a counter this host does not collect. `reason` says why, as the row’s `title` and its `aria-description`; an item that cannot be picked must say why.',
+          },
+          {
             name: 'items',
             type: 'StrctLegendItem[]',
             description:
@@ -4384,6 +4410,13 @@ export const DOCS: DocCategory[] = [
         summary: 'Dense KPI tile with sparkline.',
         lead: 'A compact dashboard tile — a label, a large value (+ unit), an optional change indicator and an inline sparkline. Built for at-a-glance metrics.',
         inputs: [
+          {
+            name: 'navigate',
+            type: `'browser' | 'app'`,
+            default: `'browser'`,
+            description:
+              'What a plain click on an `href` tile does. `app` belongs to a single-page app: the click is prevented and `(activated)` fires, so the router navigates and the page is not reloaded — while a middle click or a modified one still opens the link the way the browser would, because the tile is a real link.',
+          },
           { name: 'label', type: 'string', description: 'Caption above the value. Required.' },
           {
             name: 'value',
@@ -4475,6 +4508,20 @@ export const DOCS: DocCategory[] = [
         summary: 'Animated relationship between endpoints.',
         lead: 'Shows a connection between two (or N) endpoints with an optional animated "flow" — moving packets travelling along the connector — for live data movement such as replication, sync or a pipeline. When `live` is off (or the user prefers reduced motion) the connector is a static gradient with a direction arrow. Dependency-free.',
         inputs: [
+          {
+            name: 'columns',
+            type: '(string | { heading, emptyText })[] | null',
+            default: 'null',
+            description:
+              'Column headings, in order. A column given as `{ heading, emptyText }` is drawn even when no node lands in it — "Lands on: no other member" is the answer, and an absent column cannot say it.',
+          },
+          {
+            name: 'nodes[].emphasis',
+            type: `'border' | 'surface'`,
+            default: `'border'`,
+            description:
+              'How far a node’s `status` reaches: the outline, or the whole box — for a node that *is* the finding, like a blast radius’s "Nowhere".',
+          },
           {
             name: 'nodes',
             type: 'StrctFlowNode[]',

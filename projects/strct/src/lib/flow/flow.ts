@@ -34,6 +34,17 @@ export interface StrctFlowEdge {
   animated?: boolean;
 }
 
+/**
+ * A column of a `fan-out` / `tree`, when a heading alone is not enough: a
+ * column that no node lands in is still part of the answer — "Lands on: no
+ * other member" — so it is drawn with its note in it.
+ */
+export interface StrctFlowColumn {
+  heading: string;
+  /** What the column says when nothing is in it. Empty keeps it undrawn. */
+  emptyText?: string;
+}
+
 /** One endpoint in a `StrctFlow`. */
 export interface StrctFlowNode {
   /** Stable identity (used as the @for track key). */
@@ -48,6 +59,12 @@ export interface StrctFlowNode {
   status?: StrctStatus;
   /** Which column this node sits in (`fan-out`). Derived from depth in `tree`. */
   column?: number;
+  /**
+   * How far the node's `status` reaches. `border` (the default) tints the
+   * outline; `surface` tints the whole box — for a node that *is* the finding,
+   * like a blast radius's "Nowhere".
+   */
+  emphasis?: 'border' | 'surface';
   /** Anything the node template needs — chips, a bar, a count. */
   data?: unknown;
 }
@@ -99,10 +116,14 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
             @if (col.heading) {
               <div class="strct-flow__colhead">{{ col.heading }}</div>
             }
+            @if (!col.nodes.length && col.emptyText) {
+              <p class="strct-flow__colempty">{{ col.emptyText }}</p>
+            }
             <ul class="strct-flow__boxes">
               @for (node of col.nodes; track node.id) {
                 <li
                   class="strct-flow__box strct-flow__box--{{ node.status ?? 'neutral' }}"
+                  [class.strct-flow__box--surface]="node.emphasis === 'surface'"
                   [attr.data-flow-node]="node.id"
                 >
                   @if (nodeTpl(); as tpl) {
@@ -313,6 +334,38 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
       }
       .strct-flow__box--critical {
         border-color: var(--critical);
+      }
+      /* emphasis: 'surface' — the node is the finding, not a node that merely
+         has a state, so the tone fills it. The tints are the same ones the
+         alerts and badges use. */
+      .strct-flow__box--surface.strct-flow__box--accent {
+        background: var(--acc-m);
+        color: var(--acc);
+      }
+      .strct-flow__box--surface.strct-flow__box--success {
+        background: var(--success-bg);
+        color: var(--success);
+      }
+      .strct-flow__box--surface.strct-flow__box--warning {
+        background: var(--warning-bg);
+        color: var(--warning);
+      }
+      .strct-flow__box--surface.strct-flow__box--critical {
+        background: var(--critical-bg);
+        color: var(--critical);
+      }
+      .strct-flow__box--surface .strct-flow__sub,
+      .strct-flow__box--surface .strct-flow__role {
+        color: inherit;
+        opacity: 0.85;
+      }
+      .strct-flow__colempty {
+        margin: 0;
+        padding: var(--space-2) var(--space-3);
+        border: 1px dashed var(--b2);
+        border-radius: var(--radius-md);
+        font-size: var(--text-sm);
+        color: var(--t3);
       }
       .strct-flow__sr {
         position: absolute;
@@ -599,8 +652,15 @@ export class StrctFlow {
   readonly layout = input<'chain' | 'fan-out' | 'tree'>('chain');
   /** The edges of a fan-out / tree. `null` keeps the consecutive chain. */
   readonly edges = input<StrctFlowEdge[] | null>(null);
-  /** Column headings, in order. */
-  readonly columns = input<string[] | null>(null);
+  /**
+   * Column headings, in order — a string, or a `{ heading, emptyText }` for a
+   * column that must be drawn even when no node lands in it.
+   */
+  readonly columns = input<readonly (string | StrctFlowColumn)[] | null>(null);
+  /** The columns as declared, normalised. */
+  private readonly columnDefs = computed(() =>
+    (this.columns() ?? []).map((c) => (typeof c === 'string' ? { heading: c } : c)),
+  );
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -633,10 +693,18 @@ export class StrctFlow {
       const c = this.columnOf().get(n.id) ?? 0;
       byColumn.set(c, [...(byColumn.get(c) ?? []), n]);
     }
-    const headings = this.columns() ?? [];
-    return [...byColumn.keys()]
+    const defs = this.columnDefs();
+    // A column with an emptyText is drawn even with nothing in it: "no other
+    // member" is the answer, and an absent column cannot say it.
+    const declared = defs.map((d, i) => (d.emptyText ? i : -1)).filter((i) => i >= 0);
+    return [...new Set([...byColumn.keys(), ...declared])]
       .sort((a, b) => a - b)
-      .map((index) => ({ index, heading: headings[index] ?? '', nodes: byColumn.get(index)! }));
+      .map((index) => ({
+        index,
+        heading: defs[index]?.heading ?? '',
+        emptyText: defs[index]?.emptyText ?? '',
+        nodes: byColumn.get(index) ?? [],
+      }));
   });
 
   /** What a node says to assistive tech: itself, then where it leads. */

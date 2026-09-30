@@ -106,3 +106,49 @@ describe('StrctSteps', () => {
     expect(build().el.classList).not.toContain('strct-steps--cards');
   });
 });
+
+// FR-49-16 — a plan shown before anything runs is not "pending".
+describe('StrctSteps — planned, a name and wrapping pills', () => {
+  const plan: StrctStepState[] = [
+    { id: 'a', label: 'Enter maintenance', state: 'planned' },
+    { id: 'b', label: 'Migrate 12 VMs', state: 'planned' },
+    { id: 'c', label: 'Back in service', state: 'planned' },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctSteps);
+    fixture.componentRef.setInput('steps', plan);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('renders the planned state and says the word', () => {
+    const { el } = make();
+    const steps = [...el.querySelectorAll('.strct-steps__step')];
+    expect(steps.map((s) => s.getAttribute('data-state'))).toEqual([
+      'planned',
+      'planned',
+      'planned',
+    ]);
+    expect(steps[0].querySelector('.strct-steps__sr')!.textContent!.trim()).toBe('planned');
+    // It is its own state, not a rename of pending.
+    expect(steps[0].getAttribute('aria-current')).toBeNull();
+  });
+
+  it('takes a name for the list, and it is the ol that carries it', () => {
+    const { el } = make({ label: 'Migration plan' });
+    expect(el.querySelector('ol')!.getAttribute('aria-label')).toBe('Migration plan');
+    expect(make().el.querySelector('ol')!.getAttribute('aria-label')).toBeNull();
+  });
+
+  it('wrap is opt-in', () => {
+    expect(make().el.classList).not.toContain('strct-steps--wrap');
+    expect(make({ wrap: true }).el.classList).toContain('strct-steps--wrap');
+  });
+
+  it('the localizable word can be overridden', () => {
+    const { el } = make({ labels: { planned: 'planlandı' } });
+    expect(el.querySelector('.strct-steps__sr')!.textContent!.trim()).toBe('planlandı');
+  });
+});

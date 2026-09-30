@@ -5,6 +5,39 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0] - 2026-09-30
+
+### Added
+
+- **`strct-legend [appearance="picker"]` and `items[].disabled` / `items[].reason`**
+  (FR-49-13). A catalogue picker is not a legend of what is drawn: in `picker`
+  an off row is **simply not picked**, so it stays plain instead of struck
+  through, and a check marks the picked ones. A counter this host does not
+  collect takes `disabled` with a `reason`, which becomes the row's `title` and
+  its `aria-description` — an item that cannot be picked must say why.
+- **`strct-metric-tile [navigate="app"]`** (FR-49-14). `href` rendered a plain
+  link, so a drill-down reloaded the whole single-page app. With `app` a plain
+  primary click is prevented and `(activated)` fires, while a middle click or a
+  modified one (Ctrl / Cmd / Shift / Alt) still opens the link the way the
+  browser would — the tile stays a real link, with its URL in the status bar.
+- **`strct-flow` `columns` as `{ heading, emptyText }`** and
+  **`nodes[].emphasis: 'surface'`** (FR-49-15). A column no node lands in is
+  still part of the answer — _"Lands on: no other member"_ — and is now drawn
+  with its note; `surface` fills a node with its tone, for a node that **is**
+  the finding rather than one that has a state.
+- **`strct-steps`: the `planned` state, `label` and `wrap`** (FR-49-16). A plan
+  shown before anything runs is not "pending": `planned` reads in `--t1` with a
+  plain numbered marker (measured against `pending`'s `--t3`). `label` names the
+  `<ol>`, and `wrap` lets a long pill keep its words — measured at 120px: two
+  lines and nothing clipped, against one clipped line without it.
+
+### Changed
+
+- **`strct-metric-tile [status]` now draws the leading rail `strct-card` has**
+  (FR-49-14). The tone was the value's alone, so a critical tile lost its edge
+  in a row of tiles. Measured: a 3px rail in the status colour, and no rail at
+  all on a neutral tile. Tiles without a `status` are unchanged.
+
 ## [5.3.0] - 2026-09-30
 
 ### Added

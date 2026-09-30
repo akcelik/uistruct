@@ -380,7 +380,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="legend"
       heading="Legend"
-      description="A chart's key is a component. The same swatch · label · value rows serve a line chart's series picker, a diagram's edge styles and a donut's categories — instead of 9px squares with inline backgrounds written per screen. The swatch takes a shape (square, dot, line, dash), a status tone or an explicit palette colour, and a category with nothing in it stays in the key, muted, because “0 failed” is information. With interactive each row is a toggle button carrying aria-pressed, for picking which series a chart draws."
+      description="A chart's key is a component. The same swatch · label · value rows serve a line chart's series picker, a diagram's edge styles and a donut's categories — instead of 9px squares with inline backgrounds written per screen. The swatch takes a shape (square, dot, line, dash), a status tone or an explicit palette colour, and a category with nothing in it stays in the key, muted, because “0 failed” is information. With interactive each row is a toggle button carrying aria-pressed, for picking which series a chart draws. A row the host cannot offer — a counter it does not collect — takes disabled with a reason, which becomes its title and its description. appearance=“picker” turns the key into a catalogue: an unpicked row is not a hidden series, so it is plain rather than struck through, and a check marks the picked ones."
       code='<strct-legend [items]="series" orientation="vertical" interactive (itemToggle)="toggle($event)" />'
     >
       <div class="stack" style="gap: 18px; width: 100%;">
@@ -389,6 +389,17 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <div>
           <strct-legend [items]="seriesKey()" interactive (itemToggle)="toggleSeries($event)" />
           <span class="echo">{{ seriesEcho() || 'click a row to switch a series off' }}</span>
+        </div>
+        <div>
+          <strct-legend
+            [items]="counterCatalogue()"
+            appearance="picker"
+            orientation="vertical"
+            interactive
+            style="max-width: 280px"
+            (itemToggle)="toggleCounter($event)"
+          />
+          <span class="echo">{{ counterEcho() || 'a picker: pick the counters to chart' }}</span>
         </div>
       </div>
     </app-demo>
@@ -456,7 +467,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="metric-tile"
       heading="Metric tile"
-      description="Compact KPI tiles — a value, a change indicator (sign drives the arrow + colour) and an inline sparkline."
+      description="Compact KPI tiles — a value, a change indicator (sign drives the arrow + colour) and an inline sparkline. status tones the value and draws the leading rail strct-card has, so a critical tile keeps its edge in a row of tiles."
       code='<strct-metric-tile label="CPU" [value]="62" unit="%" icon="cpu" status="warning" [delta]="8" [data]="cpuTrend" />'
     >
       <div class="mt-grid">
@@ -503,7 +514,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="metric-tile-link"
       owner="metric-tile"
       heading="A tile you can drill into, a caption that carries the warning, a number over its bar"
-      description="A KPI you can drill into is a link: href makes the whole tile the target, with the tile's own focus ring and no anchor wrapped around it by hand; interactive does the same as a button and emits (activated). captionStatus tints only the caption, because “2 down” is the warning and 14 nodes is not. And [strctMetricMeter] projects a meter under the value and above the caption, for a number shown over its bar."
+      description="A KPI you can drill into is a link: href makes the whole tile the target, with the tile's own focus ring and no anchor wrapped around it by hand; interactive does the same as a button and emits (activated). In a single-page app, navigate=“app” keeps the href — the URL still shows in the status bar and a middle click or Ctrl/Cmd-click still opens a tab — but a plain click is handed to (activated) instead of reloading the whole app. captionStatus tints only the caption, because “2 down” is the warning and 14 nodes is not. And [strctMetricMeter] projects a meter under the value and above the caption, for a number shown over its bar."
       code='<strct-metric-tile href="/alarms" label="Alarms" [value]="7" caption="2 critical" captionStatus="critical" />'
     >
       <div class="mt-grid">
@@ -514,6 +525,17 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           href="#/components/metric-tile"
           caption="2 critical"
           captionStatus="critical"
+        />
+        <strct-metric-tile
+          label="Capacity"
+          [value]="92"
+          unit="%"
+          icon="database"
+          status="critical"
+          href="/scenarios/dashboard"
+          navigate="app"
+          (activated)="tileEcho.set('routed to the dashboard — the page did not reload')"
+          [caption]="tileEcho() || 'a link the router follows'"
         />
         <strct-metric-tile
           label="Nodes"
@@ -573,7 +595,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="flow-fanout"
       owner="flow"
       heading="Fan-out and tree"
-      description='Infrastructure diagrams fan out: one host lands its VMs on several others, one switch has several hosts each with its own uplinks. layout="fan-out" places the nodes in columns and draws the edges between them as orthogonal connectors, measured from the boxes&apos; real positions rather than guessed; layout="tree" derives those columns from each node&apos;s depth in the edge list. A node carries whatever an <ng-template strctFlowNode> puts in it — chips, a bar, a count — and an edge takes a status, a dashed style and an animated dash that holds still under prefers-reduced-motion. The diagram is described structurally: each column is a group with its heading, each node lists where it leads (“→ hv-02, hv-03”), and the SVG edges are hidden. Below 480px the columns stack and the connectors become a leading rail, because orthogonal edges between stacked columns say nothing. Chain mode is unchanged.'
+      description="Infrastructure diagrams fan out: one host lands its VMs on several others, one switch has several hosts each with its own uplinks. layout=&quot;fan-out&quot; places the nodes in columns and draws the edges between them as orthogonal connectors, measured from the boxes' real positions rather than guessed; layout=&quot;tree&quot; derives those columns from each node's depth in the edge list. A node carries whatever an <ng-template strctFlowNode> puts in it — chips, a bar, a count — and an edge takes a status, a dashed style and an animated dash that holds still under prefers-reduced-motion. The diagram is described structurally: each column is a group with its heading, each node lists where it leads (“→ hv-02, hv-03”), and the SVG edges are hidden. Below 480px the columns stack and the connectors become a leading rail, because orthogonal edges between stacked columns say nothing. A column that no node lands in is still part of the answer, so passing it as { heading, emptyText } draws it with its note — “no other member” — instead of leaving it out; and a node that is the finding rather than a node with a state takes emphasis: 'surface', which fills it with its tone. Chain mode is unchanged."
       code='<strct-flow layout="fan-out" [nodes]="nodes" [edges]="edges" [columns]="[&apos;This host&apos;, &apos;Lands on&apos;, &apos;Stays down&apos;]" />'
     >
       <div class="stack" style="gap: 28px; width: 100%;">
@@ -581,7 +603,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           layout="fan-out"
           [nodes]="blastNodes"
           [edges]="blastEdges"
-          [columns]="['This host', 'Lands on', 'Stays down']"
+          [columns]="blastColumns"
           label="If hv-01 failed"
         >
           <ng-template strctFlowNode let-node>
@@ -599,6 +621,23 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="['Switch', 'Hosts', 'Uplinks', 'Network']"
           label="Switch topology"
         />
+
+        <!-- The same question with a different answer: nothing lands anywhere,
+             and the node that says so is the finding, not a node with a state. -->
+        <strct-flow
+          layout="fan-out"
+          [nodes]="lastMemberNodes"
+          [edges]="lastMemberEdges"
+          [columns]="lastMemberColumns"
+          label="If hv-09 failed — the cluster's last member"
+        >
+          <ng-template strctFlowNode let-node>
+            <strong>{{ node.label }}</strong>
+            @if (node.data) {
+              <span style="font-size: var(--text-sm)">{{ node.data }}</span>
+            }
+          </ng-template>
+        </strct-flow>
       </div>
     </app-demo>
   `,
@@ -716,6 +755,34 @@ export class ChartsPage implements OnDestroy {
       data: 'no host with enough memory',
     },
   ];
+  /** The third column is part of the answer even when nothing lands in it. */
+  protected readonly blastColumns = [
+    'This host',
+    'Lands on',
+    { heading: 'Stays down', emptyText: 'no other member' },
+  ];
+
+  /** Nothing lands: the second column is empty and the third is the finding. */
+  protected readonly lastMemberNodes: StrctFlowNode[] = [
+    { id: 'src9', label: 'hv-09.dc-east', column: 0, status: 'warning', data: '3 VMs running' },
+    {
+      id: 'nowhere',
+      label: 'Nowhere',
+      column: 2,
+      status: 'critical',
+      emphasis: 'surface',
+      data: 'all 3 VMs stay down',
+    },
+  ];
+  protected readonly lastMemberColumns = [
+    'This host',
+    { heading: 'Lands on', emptyText: 'no other member' },
+    'Stays down',
+  ];
+  protected readonly lastMemberEdges: StrctFlowEdge[] = [
+    { from: 'src9', to: 'nowhere', status: 'critical', style: 'dashed' },
+  ];
+
   protected readonly blastEdges: StrctFlowEdge[] = [
     { from: 'src', to: 't1', status: 'success' },
     { from: 'src', to: 't2', status: 'success' },
@@ -759,6 +826,30 @@ export class ChartsPage implements OnDestroy {
     })),
   );
   protected readonly seriesEcho = signal('');
+
+  /** A catalogue, not a key: some counters this host does not collect. */
+  protected readonly counterCatalogue = signal<StrctLegendItem[]>([
+    { label: 'CPU ready', value: '12 ms', status: 'accent', shape: 'line' },
+    { label: 'Memory ballooned', off: true, status: 'warning', shape: 'line' },
+    { label: 'Disk latency', value: '3 ms', status: 'success', shape: 'line' },
+    {
+      label: 'Swap in',
+      off: true,
+      disabled: true,
+      reason: 'Not collected on this host',
+      shape: 'line',
+    },
+  ]);
+  protected readonly counterEcho = signal('');
+  protected toggleCounter(label: string): void {
+    this.counterCatalogue.update((items) =>
+      items.map((i) => (i.label === label ? { ...i, off: !i.off } : i)),
+    );
+    const on = this.counterCatalogue()
+      .filter((i) => !i.off)
+      .map((i) => i.label);
+    this.counterEcho.set(on.length ? `charting: ${on.join(', ')}` : 'nothing picked');
+  }
   protected toggleSeries(label: string): void {
     this.seriesOff.update((off) =>
       off.includes(label) ? off.filter((l) => l !== label) : [...off, label],

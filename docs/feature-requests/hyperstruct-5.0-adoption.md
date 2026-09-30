@@ -19,7 +19,23 @@
 >   selection directly so an external write emits no `selectionChange`, while a user's own pick
 >   still does.
 >
-> Still open: **FR-49-05, 06, 13, 14, 15, 16, 18, 19, 20**.
+> Still open: **FR-49-05, 06, 18, 19, 20**.
+>
+> **FR-49-13, 14, 15 and 16 SHIPPED in 5.4.0 (2026-09-30)** — the dashboard set.
+>
+> - **13** `items[].disabled` + `items[].reason` (measured: the row is a disabled button whose
+>   `title` and `aria-description` say "Not collected on this host", cursor `not-allowed`) and
+>   `appearance="picker"`, where an off row is plain (`text-decoration: none`, opacity 1) and a
+>   check marks the picked ones.
+> - **14** `status` draws the rail (measured: 3px in the critical colour; a neutral tile has no
+>   `::before` at all), and `navigate="app"` keeps the href while handing a plain click to
+>   `(activated)` — measured: plain click prevented, Ctrl-click not, the URL unchanged, and the
+>   consumer's own caption updated.
+> - **15** a `{ heading, emptyText }` column is drawn with its dashed note when nothing lands in it,
+>   and `emphasis: 'surface'` fills the node (measured: `rgba(160, 99, 92, 0.12)` against white).
+> - **16** `planned` reads in `--t1` (measured 0.9 alpha against `pending`'s 0.55), `label` names
+>   the `<ol>`, and `wrap` at 120px gives two lines with nothing clipped, against one clipped line
+>   without it.
 >
 > **FR-49-10, 11 and 12 SHIPPED in 5.3.0 (2026-09-30)** — the form-and-note set.
 >

@@ -108,3 +108,61 @@ describe('StrctMetricTile', () => {
     });
   });
 });
+
+// FR-49-14 — the tone was the value's alone, and href reloaded the whole app.
+describe('StrctMetricTile — status rail and in-app navigation', () => {
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctMetricTile);
+    fixture.componentRef.setInput('label', 'Alarms');
+    fixture.componentRef.setInput('value', 3);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('marks the whole tile with its status, and says nothing when neutral', () => {
+    const neutral = make();
+    expect(neutral.el.classList).not.toContain('strct-mt--status');
+    expect(neutral.el.getAttribute('data-status')).toBeNull();
+
+    const critical = make({ status: 'critical' });
+    expect(critical.el.classList).toContain('strct-mt--status');
+    expect(critical.el.getAttribute('data-status')).toBe('critical');
+    // The value keeps its own tone as well.
+    expect(critical.el.querySelector('.strct-mt__value--critical')).toBeTruthy();
+  });
+
+  it('navigate="app" hands a plain click to the consumer and leaves the rest to the browser', () => {
+    const { fixture, el } = make({ href: '/alarms', navigate: 'app' });
+    let activated = 0;
+    fixture.componentInstance.activated.subscribe(() => activated++);
+    const link = el.querySelector('a.strct-mt__hit') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/alarms');
+
+    const plain = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+    link.dispatchEvent(plain);
+    expect(plain.defaultPrevented).toBe(true);
+    expect(activated).toBe(1);
+
+    // "Open in a new tab" is the browser's, not ours.
+    for (const mod of ['metaKey', 'ctrlKey', 'shiftKey', 'altKey'] as const) {
+      const e = new MouseEvent('click', { bubbles: true, cancelable: true, [mod]: true });
+      link.dispatchEvent(e);
+      expect(e.defaultPrevented).toBe(false);
+    }
+    const middle = new MouseEvent('click', { bubbles: true, cancelable: true, button: 1 });
+    link.dispatchEvent(middle);
+    expect(middle.defaultPrevented).toBe(false);
+    expect(activated).toBe(1);
+  });
+
+  it('follows the link as before by default', () => {
+    const { fixture, el } = make({ href: '/alarms' });
+    let activated = 0;
+    fixture.componentInstance.activated.subscribe(() => activated++);
+    const e = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+    (el.querySelector('a.strct-mt__hit') as HTMLAnchorElement).dispatchEvent(e);
+    expect(e.defaultPrevented).toBe(false);
+    expect(activated).toBe(0);
+  });
+});
