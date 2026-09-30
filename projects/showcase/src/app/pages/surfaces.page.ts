@@ -42,6 +42,9 @@ import {
   StrctBreadcrumb,
   StrctBreadcrumbItem,
   StrctResizeHandle,
+  StrctWindow,
+  StrctWindowBounds,
+  StrctWindowDock,
   StrctSplitter,
   StrctWatermark,
   StrctWizardAside,
@@ -96,6 +99,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctDropdownItemAction,
     StrctMediaFrame,
     StrctResizeHandle,
+    StrctWindow,
+    StrctWindowDock,
   ],
   template: `
     <app-page-header
@@ -491,6 +496,49 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           <button strct-button variant="primary" (click)="drawerOpen.set(false)">Save</button>
         </ng-container>
       </strct-drawer>
+    </app-demo>
+
+    <app-demo
+      anchor="window"
+      heading="Window"
+      description='Some work lives in a window beside the page: a VM console stays open while the operator browses. It can be moved (by the title bar, or Alt+arrows on it), resized from a focusable corner grip (arrows 16px, Shift+arrows 64px), minimised to a dock and brought back from it — and it does not block the page, because a modal does that and a drawer is pinned to an edge. It is a role="dialog" with aria-modal="false" on its own --z-window layer between the tour and the modal, so a modal opened from inside a window still comes up over it. Escape minimises rather than closes, since a window is not dismissed. palette="dark" forces the dark scheme inside while keeping your palette — what a console wants.'
+      code='<strct-window [(open)]="open" [(minimized)]="min" heading="APP01" palette="dark">…</strct-window>&#10;<strct-window-dock />'
+    >
+      <div class="stack" style="width: 100%;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <button strct-button variant="primary" (click)="consoleOpen.set(true)">
+            Open console
+          </button>
+          <strct-window-dock />
+        </div>
+        <strct-window
+          [(open)]="consoleOpen"
+          [(minimized)]="consoleMin"
+          [(bounds)]="consoleBounds"
+          heading="APP01 · console"
+          palette="dark"
+          [minWidth]="360"
+          [minHeight]="240"
+          (closed)="windowEcho.set('closed')"
+        >
+          <strct-badge strctWindowTitleMeta status="success">Running</strct-badge>
+          <div
+            style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 160px; background: #000; color: rgba(255,255,255,0.6); font-family: var(--mono); font-size: 12px;"
+          >
+            APP01 login:
+          </div>
+          <span strctWindowStatus>Connected · 1920×1080 · US keyboard</span>
+        </strct-window>
+        <span class="echo">
+          {{
+            consoleOpen()
+              ? consoleMin()
+                ? 'minimised — restore it from the dock'
+                : 'open at ' + consoleBounds()!.x + ', ' + consoleBounds()!.y
+              : windowEcho() || 'the window is closed'
+          }}
+        </span>
+      </div>
     </app-demo>
 
     <app-demo
@@ -943,6 +991,17 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class SurfacesPage {
+  // FR-48-33 — a console that stays open beside the page.
+  protected readonly consoleOpen = signal(false);
+  protected readonly consoleMin = signal(false);
+  protected readonly consoleBounds = signal<StrctWindowBounds | null>({
+    x: 120,
+    y: 140,
+    width: 560,
+    height: 360,
+  });
+  protected readonly windowEcho = signal('');
+
   // FR-48-35 — a sidebar in pixels, and a handle the splitter does not own.
   protected readonly sidebarPx = signal(240);
   protected readonly sidebarCollapsed = signal(false);
