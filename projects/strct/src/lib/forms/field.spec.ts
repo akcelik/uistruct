@@ -1,6 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { StrctField, StrctFieldHint, StrctFieldPrefix, StrctFieldSuffix } from './field';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import {
+  StrctField,
+  StrctFieldHint,
+  StrctFieldPrefix,
+  StrctFieldSuffix,
+  StrctFieldValue,
+} from './field';
 import { StrctInput } from './input';
 
 @Component({
@@ -176,5 +182,48 @@ describe('StrctField', () => {
       const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
       expect(input.getAttribute('aria-describedby')?.split(' ')).toContain(hint.id);
     });
+  });
+});
+
+// FR-49-12 — a settings form mixes editable rows with values that are read-only
+// here; in the control column they sat 9px above the label's line.
+describe('StrctField — [strctFieldValue]', () => {
+  @Component({
+    imports: [StrctField, StrctFieldValue, StrctInput],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-field layout="inline" label="Name">
+        <span strctFieldValue class="v">web-01</span>
+      </strct-field>
+      <strct-field layout="inline" label="Cores">
+        <input strctInput [mono]="mono()" class="c" />
+      </strct-field>
+    `,
+  })
+  class Host {
+    mono = signal(false);
+  }
+
+  it('marks the value so it aligns with the label, and leaves the control column alone', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const value = el.querySelector('.v')!;
+    expect(value.classList).toContain('strct-field__value');
+    // It lives in the control column, like any projected control.
+    expect(value.closest('.strct-field__control')).toBeTruthy();
+  });
+
+  // FR-49-10 — a PEM block or an id wants the mono face.
+  it('strctInput [mono] is opt-in and keeps the control class', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const input = el.querySelector('.c')!;
+    expect(input.classList).toContain('strct-control');
+    expect(input.classList).not.toContain('strct-control--mono');
+    fixture.componentInstance.mono.set(true);
+    fixture.detectChanges();
+    expect(input.classList).toContain('strct-control--mono');
   });
 });

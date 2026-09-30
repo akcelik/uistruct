@@ -39,6 +39,14 @@ export class StrctFieldSuffix {}
 export class StrctFieldHint {}
 
 /**
+ * A value that is read-only *here* — a name, a badge, a switch that only shows
+ * state — placed in an inline field's control column. Without it the text sits
+ * 9px above the label's line, because the column centres on a 34px control.
+ */
+@Directive({ selector: '[strctFieldValue]', host: { class: 'strct-field__value' } })
+export class StrctFieldValue {}
+
+/**
  * Wrapper that opts a run of `layout="inline"` fields out of the hairlines
  * between them — for settings that belong together and should read as one
  * block.
@@ -285,6 +293,19 @@ export class StrctFieldGroup {}
         grid-column: 1;
         padding-block-end: var(--space-2);
       }
+      /* A read-only value reads on the label's own line, not 9px above it. */
+      .strct-field__value {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        min-height: 20px;
+        font-size: var(--text-md);
+        color: var(--t1);
+      }
+      .strct-field--inline .strct-field__value {
+        padding-block-start: 9px;
+      }
       /* Consecutive settings get a hairline; [strctFieldGroup] opts out. */
       .strct-field--inline + .strct-field--inline {
         border-block-start: 1px solid var(--b1);
@@ -305,7 +326,8 @@ export class StrctFieldGroup {}
           grid-column: 1 / -1;
           grid-row: auto;
         }
-        .strct-field--inline > .strct-field__label {
+        .strct-field--inline > .strct-field__label,
+        .strct-field--inline .strct-field__value {
           padding-block-start: 0;
         }
         .strct-field--inline > .strct-field__msg--hint {

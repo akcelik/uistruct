@@ -223,3 +223,24 @@ describe('StrctNumber', () => {
     expect(buttons(fixture)[1].getAttribute('aria-label')).toBe('Increase');
   });
 });
+
+// FR-49-10 — in a grid cell, outside strct-field, the value input had no name.
+describe('StrctNumber — ariaLabel', () => {
+  it('names the spinbutton when one is given, and says nothing otherwise', () => {
+    const fixture = TestBed.createComponent(StrctNumber);
+    fixture.detectChanges();
+    const input = () =>
+      (fixture.nativeElement as HTMLElement).querySelector('input[role=spinbutton]')!;
+    expect(input().getAttribute('aria-label')).toBeNull();
+
+    fixture.componentRef.setInput('ariaLabel', 'Port');
+    fixture.detectChanges();
+    expect(input().getAttribute('aria-label')).toBe('Port');
+    // The stepper buttons keep their own names.
+    const buttons = (fixture.nativeElement as HTMLElement).querySelectorAll('button');
+    expect([...buttons].map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Decrement',
+      'Increment',
+    ]);
+  });
+});

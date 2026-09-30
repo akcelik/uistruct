@@ -21,6 +21,7 @@ import {
   StrctAnnouncer,
   StrctHotkeysHelp,
   StrctHotkeysService,
+  StrctAlertActions,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -46,6 +47,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctEmptyState,
     StrctTour,
     StrctHotkeysHelp,
+    StrctAlertActions,
   ],
   template: `
     <app-page-header title="Feedback" subtitle="Contextual messages and hints." />
@@ -89,13 +91,25 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="alert"
       heading="Alert"
-      description="Four contextual types, optionally dismissible."
-      code='<strct-alert type="warning">…</strct-alert>'
+      description="Four contextual types, optionally dismissible. A note that carries its own fix puts the control in [strctAlertActions], at the end of the alert's row — before the dismiss button, on the body's first line."
+      code='<strct-alert type="warning">3 VMs differ from the policy&#10;  <button strctAlertActions strct-button size="sm">Remediate</button>&#10;</strct-alert>'
     >
       <div class="stack">
         <strct-alert type="info">Informational message with a neutral accent.</strct-alert>
         <strct-alert type="success">The operation completed successfully.</strct-alert>
         <strct-alert type="warning">Heads up — this needs your attention.</strct-alert>
+        <strct-alert type="warning">
+          3 VMs differ from the policy
+          <button
+            strctAlertActions
+            strct-button
+            size="sm"
+            variant="neutral"
+            (click)="remediated.set(remediated() + 1)"
+          >
+            Remediate
+          </button>
+        </strct-alert>
         @if (showDanger()) {
           <strct-alert type="critical" closable (closed)="showDanger.set(false)">
             Something went wrong. This one is dismissible.
@@ -404,6 +418,8 @@ export class FeedbackPage {
   ];
 
   protected readonly showDanger = signal(true);
+  /** How many times the alert's own fix was pressed. */
+  protected readonly remediated = signal(0);
   protected readonly toast = inject(StrctToastService);
 
   private readonly confirm = inject(StrctConfirmService);

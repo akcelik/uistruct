@@ -49,6 +49,15 @@
 }
 
 // Native <select> gets a custom chevron.
+/* FR-49-10 — a PEM block, a key=value mapping or an id reads as code: the
+   mono face, with the tabular figures the rest of the library uses for data.
+   `mono` on the directive sets it; the class is there for a control the
+   directive does not own. */
+.strct-control--mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
 select.strct-control {
   appearance: none;
   padding-inline-end: 30px;

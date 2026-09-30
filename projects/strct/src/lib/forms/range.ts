@@ -35,7 +35,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
       (blur)="onTouched()"
     />
     @if (showValue()) {
-      <span class="strct-range__value">{{ value() }}</span>
+      <span class="strct-range__value">{{ valueText() }}</span>
     }
   `,
   styles: [
@@ -113,6 +113,17 @@ export class StrctRange implements ControlValueAccessor {
   readonly step = input(1);
   /** Display the current numeric value. */
   readonly showValue = input(false, { transform: booleanAttribute });
+  /**
+   * How the shown value reads: memory is "4 GB" and a weight is "20%", not 4
+   * and 20. It formats the label only — the model stays the number.
+   */
+  readonly valueFormat = input<((value: number) => string) | null>(null);
+  /** What `showValue` prints: the format, or the number itself. */
+  protected readonly valueText = computed(() => {
+    const v = this.value();
+    const format = this.valueFormat();
+    return format ? format(v) : String(v);
+  });
   /** Static disable; forms' setDisabledState also drives the disabled state. */
   readonly disabled = input(false, { transform: booleanAttribute });
 

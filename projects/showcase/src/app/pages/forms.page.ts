@@ -37,6 +37,8 @@ import {
   StrctTransferItem,
   StrctTreeNodeData,
   StrctTreeSelect,
+  StrctBadge,
+  StrctFieldValue,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -78,6 +80,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctDatetimePicker,
     StrctTreeSelect,
     StrctInlineEdit,
+    StrctBadge,
+    StrctFieldValue,
   ],
   template: `
     <app-page-header
@@ -162,7 +166,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="field-inline"
       owner="field"
       heading="Label column (inline layout)"
-      description='A long settings form reads as two columns: what the setting is, and its value. layout="inline" puts the label and its hint in a fixed-width column (--strct-field-label-w, 220px) and the control beside them, with a hairline between consecutive settings; the error still appears under the control, not under the label. Below 480px of field width it falls back to stacked, so the same form works in a drawer. Stacked stays the default — it suits short dialogs. Wrap a run in [strctFieldGroup] when the settings belong together and the hairlines get in the way.'
+      description='A long settings form reads as two columns: what the setting is, and its value. layout="inline" puts the label and its hint in a fixed-width column (--strct-field-label-w, 220px) and the control beside them, with a hairline between consecutive settings; the error still appears under the control, not under the label. Below 480px of field width it falls back to stacked, so the same form works in a drawer. Stacked stays the default — it suits short dialogs. Wrap a run in [strctFieldGroup] when the settings belong together and the hairlines get in the way. A row whose value is read-only here — a name, a badge, a switch that only shows state — projects it as [strctFieldValue], which puts it on the label&apos;s own line instead of 9px above it, where the control column centres on a 34px control.'
       code='<strct-field layout="inline" label="vCPUs" hint="Cores presented to the guest.">&#10;  <input strctInput type="number" [(ngModel)]="cpus" />&#10;</strct-field>'
     >
       <div style="width: 100%;">
@@ -188,6 +192,18 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         </strct-field>
         <strct-field layout="inline" label="Notes" hint="Free text, kept with the VM.">
           <textarea strctInput rows="2" [(ngModel)]="vmNotes"></textarea>
+        </strct-field>
+        <strct-field layout="inline" label="Instance id">
+          <span strctFieldValue class="strct-mono">vm-01m3e2e0000000000000000001</span>
+        </strct-field>
+        <strct-field layout="inline" label="Host key" hint="The appliance’s SSH host key.">
+          <textarea strctInput mono rows="2" [(ngModel)]="hostKey"></textarea>
+        </strct-field>
+        <strct-field layout="inline" label="Guest tools">
+          <span strctFieldValue>
+            <strct-badge status="success">Running</strct-badge>
+            version 12.4.1
+          </span>
         </strct-field>
       </div>
     </app-demo>
@@ -414,16 +430,27 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="range"
       heading="Slider"
-      description="Range input with a filled track and live value."
-      code='<strct-range [min]="0" [max]="100" [(ngModel)]="volume" showValue />'
+      description="Range input with a filled track and live value. showValue prints the number; valueFormat says how it reads — memory is “4 GB” and a weight is “20%”, while the model stays the number."
+      code='<strct-range [min]="1" [max]="64" [(ngModel)]="mem" showValue [valueFormat]="gb" />'
     >
-      <strct-range
-        [min]="0"
-        [max]="100"
-        [ngModel]="volume()"
-        (ngModelChange)="volume.set($event)"
-        showValue
-      />
+      <div style="display: flex; flex-direction: column; gap: 18px; width: 100%; max-width: 420px">
+        <strct-range
+          [min]="0"
+          [max]="100"
+          [ngModel]="volume()"
+          (ngModelChange)="volume.set($event)"
+          showValue
+        />
+        <strct-range
+          [min]="1"
+          [max]="64"
+          [step]="1"
+          [ngModel]="memGb()"
+          (ngModelChange)="memGb.set($event)"
+          showValue
+          [valueFormat]="formatGb"
+        />
+      </div>
     </app-demo>
 
     <app-demo
@@ -715,14 +742,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="number"
       heading="Number"
-      description="Numeric stepper — −/+ buttons flanking a free-form field; ArrowUp/Down step, PageUp/Down jump 10×, Home/End hit the bounds. Committed values clamp to min/max. CVA-compatible."
-      code='<strct-number [min]="1" [max]="16" [step]="2" [(ngModel)]="vcpus" />'
+      description="Numeric stepper — −/+ buttons flanking a free-form field; ArrowUp/Down step, PageUp/Down jump 10×, Home/End hit the bounds. Committed values clamp to min/max. CVA-compatible. ariaLabel names the field where it is not inside a strct-field — in a grid cell, or beside a label it does not own."
+      code='<strct-number [min]="1" [max]="16" [step]="2" [(ngModel)]="vcpus" ariaLabel="vCPUs" />'
     >
       <div class="field">
         <strct-number
           [min]="1"
           [max]="16"
           [step]="2"
+          ariaLabel="vCPUs"
           [ngModel]="vcpus()"
           (ngModelChange)="vcpus.set($event)"
         />
@@ -851,6 +879,7 @@ export class FormsPage {
   protected readonly vmMem = signal(8192);
   protected readonly vmFirmware = signal('uefi');
   protected readonly vmNotes = signal('');
+  protected readonly hostKey = signal('ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL8k2v9h6Q0fJp7T3xW1');
   protected readonly vmMemError = computed(() =>
     Number(this.vmMem()) < 512 ? 'At least 512 MB.' : '',
   );
@@ -886,6 +915,9 @@ export class FormsPage {
     { value: 'failed', label: 'Failed' },
   ];
   protected readonly volume = signal(60);
+  protected readonly memGb = signal(4);
+  /** A slider's label is a quantity, not a number — FR-49-10. */
+  protected readonly formatGb = (v: number) => (v >= 1024 ? `${v / 1024} TB` : `${v} GB`);
   protected readonly city = signal<unknown>(null);
   protected readonly date = signal('');
   protected readonly pw = signal('');
