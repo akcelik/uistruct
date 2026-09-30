@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.24.0] - 2026-09-30
+
+### Added
+
+- **`strct-login`: the showcase's aside, built in** (FR-48-40). What the library
+  shows as its login screen, a consumer can have by asking for it: `art="network"`
+  renders the glow, the dot grid and the pulsing node diagram — **palette tokens
+  only**, so it follows all six schemes, decorative for assistive tech, and still
+  under `prefers-reduced-motion`. `art="grid"` keeps the glow and grid alone.
+  `brandIcon` / `brandName` put the icon tile and product name at the top,
+  `tagline` is the kicker above your own copy, and `[strctLoginStatus]` is
+  projected at the aside's foot.
+- **`strct-qr`** (FR-48-41): a QR code **the library draws**, with the quiet zone
+  and contrast a scanner needs in every theme — not an image the consumer frames
+  on a hard-coded white box. The encoder ships with the library and has no
+  dependencies (byte mode, versions 1–10, all four correction levels), and it is
+  verified rather than assumed: the Reed–Solomon parity matches the published
+  vector, and a reader written from the spec reads every code back — format bits,
+  mask, zig-zag, de-interleaved blocks with zero syndromes, and the original
+  text. Dark modules on a light quiet zone in every scheme is a deliberate
+  exception to "tokens only", because a themed QR code is an unscannable one.
+
 ## [4.23.0] - 2026-09-30
 
 ### Added

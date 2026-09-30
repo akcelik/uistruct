@@ -5010,6 +5010,52 @@ export const DOCS: DocCategory[] = [
     loadExamples: () => import('../pages/patterns.page').then((m) => m.PatternsPage),
     components: [
       {
+        id: 'qr',
+        title: 'QR code',
+        selector: 'strct-qr',
+        importNames: ['StrctQr', 'StrctQrEcc'],
+        summary: 'A scannable QR code the library draws.',
+        lead: 'Enrolling an authenticator app shows a QR code **the library draws**, with the quiet zone and contrast a scanner needs — not an image the consumer frames on white. The encoder ships with the library (byte mode, versions 1\u201310, all four correction levels) and has no dependencies.',
+        inputs: [
+          {
+            name: 'value',
+            type: 'string',
+            description: 'What the code carries — an `otpauth://` URI, a URL, any text. Required.',
+          },
+          { name: 'size', type: 'number', default: '176', description: 'Rendered size in px.' },
+          {
+            name: 'label',
+            type: 'string',
+            default: `'QR code'`,
+            description: 'The code\u2019s accessible name.',
+          },
+          {
+            name: 'errorCorrection',
+            type: `'L' | 'M' | 'Q' | 'H'`,
+            default: `'M'`,
+            description:
+              'How much of the code a scanner may lose and still read it (≈7 / 15 / 25 / 30%).',
+          },
+          {
+            name: 'quietZone',
+            type: 'number',
+            default: '4',
+            description: 'The margin in modules. Four is what the spec asks for.',
+          },
+        ],
+        do: [
+          'Show the secret as text beside the code, so enrolment works without a camera.',
+          'Raise `errorCorrection` when the code will be printed or shown small.',
+        ],
+        dont: [
+          'Do not theme the modules — dark on light is what a scanner needs, and this component keeps it in every scheme.',
+          'Do not frame an image on a hard-coded white box; that is what this replaces.',
+        ],
+        a11y: [
+          'role="img" with `label`; the code itself carries no text, so the secret belongs beside it.',
+        ],
+      },
+      {
         id: 'login',
         title: 'Login',
         selector: 'strct-login',
@@ -5028,6 +5074,26 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description: 'Two-panel layout with a decorative aside.',
+          },
+          {
+            name: 'art',
+            type: `'none' | 'network' | 'grid'`,
+            default: `'none'`,
+            description:
+              'The aside\u2019s built-in art: `network` is the node diagram over the glow and dot grid, `grid` is the glow and grid alone. Palette tokens only, so it follows all six schemes; decorative and hidden from assistive tech, and still under `prefers-reduced-motion`.',
+          },
+          {
+            name: 'brandIcon / brandName / tagline',
+            type: 'string',
+            default: `''`,
+            description:
+              'The icon tile and product name at the aside\u2019s top, and the kicker line above your own copy.',
+          },
+          {
+            name: '[strctLoginStatus]',
+            type: 'slot',
+            description:
+              'Projected at the aside\u2019s foot — the "is the appliance reachable" strip.',
           },
         ],
         do: ['Use `strctLoginMain` for the form content in split mode.'],
