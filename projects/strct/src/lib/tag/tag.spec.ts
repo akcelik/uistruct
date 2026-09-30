@@ -96,3 +96,36 @@ describe('StrctTag', () => {
     expect(el.classList).toContain('strct-tag--mono');
   });
 });
+
+// FR-49-07 — the tag's name says what it is; activateLabel says what pressing it does.
+describe('StrctTag — activateLabel', () => {
+  const body = (f: { nativeElement: HTMLElement }) =>
+    f.nativeElement.querySelector('.strct-tag__text') as HTMLElement;
+
+  it('names the body only when the tag is interactive', () => {
+    const fixture = TestBed.createComponent(StrctTag);
+    fixture.componentRef.setInput('activateLabel', 'Show the console of APP02');
+    fixture.detectChanges();
+    // Not interactive: there is no button to name.
+    expect(body(fixture).getAttribute('aria-label')).toBeNull();
+
+    fixture.componentRef.setInput('interactive', true);
+    fixture.detectChanges();
+    expect(body(fixture).getAttribute('role')).toBe('button');
+    expect(body(fixture).getAttribute('aria-label')).toBe('Show the console of APP02');
+  });
+
+  it('leaves the text as the name when no label is given, and keeps removeLabel apart', () => {
+    const fixture = TestBed.createComponent(StrctTag);
+    fixture.componentRef.setInput('interactive', true);
+    fixture.componentRef.setInput('removable', true);
+    fixture.componentRef.setInput('removeLabel', 'Disconnect APP02');
+    fixture.detectChanges();
+    expect(body(fixture).getAttribute('aria-label')).toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement)
+        .querySelector('.strct-tag__remove')!
+        .getAttribute('aria-label'),
+    ).toBe('Disconnect APP02');
+  });
+});

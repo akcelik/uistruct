@@ -1,26 +1,122 @@
 [
   {
     "scheme": "arctic/dark",
+    "token": "--acc",
     "ratio": 5.88
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--success",
+    "ratio": 6.04
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--warning",
+    "ratio": 7.37
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--critical",
+    "ratio": 4.64
   },
   {
     "scheme": "arctic/light",
+    "token": "--acc",
     "ratio": 5.54
   },
   {
+    "scheme": "arctic/light",
+    "token": "--success",
+    "ratio": 5
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--warning",
+    "ratio": 5.01
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--critical",
+    "ratio": 4.74
+  },
+  {
     "scheme": "ember/dark",
+    "token": "--acc",
     "ratio": 6.47
   },
   {
+    "scheme": "ember/dark",
+    "token": "--success",
+    "ratio": 6.41
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--warning",
+    "ratio": 7.69
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--critical",
+    "ratio": 5.09
+  },
+  {
     "scheme": "ember/light",
+    "token": "--acc",
     "ratio": 5.88
   },
   {
+    "scheme": "ember/light",
+    "token": "--success",
+    "ratio": 4.98
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--warning",
+    "ratio": 5.03
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--critical",
+    "ratio": 4.83
+  },
+  {
     "scheme": "sage/dark",
+    "token": "--acc",
     "ratio": 6.29
   },
   {
+    "scheme": "sage/dark",
+    "token": "--success",
+    "ratio": 6.27
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--warning",
+    "ratio": 7.15
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--critical",
+    "ratio": 4.59
+  },
+  {
     "scheme": "sage/light",
+    "token": "--acc",
     "ratio": 5.51
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--success",
+    "ratio": 5.05
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--warning",
+    "ratio": 5.66
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--critical",
+    "ratio": 5.08
   }
 ]

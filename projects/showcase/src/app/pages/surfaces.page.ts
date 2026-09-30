@@ -49,6 +49,9 @@ import {
   StrctWatermark,
   StrctWizardAside,
   StrctProgress,
+  StrctStatusDot,
+  StrctCardHeaderLeading,
+  StrctCardHeaderMeta,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -101,6 +104,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctResizeHandle,
     StrctWindow,
     StrctWindowDock,
+    StrctStatusDot,
+    StrctCardHeaderLeading,
+    StrctCardHeaderMeta,
   ],
   template: `
     <app-page-header
@@ -165,6 +171,29 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           <button strct-button variant="primary" size="sm">Open</button>
         </strct-card-footer>
       </strct-card>
+    </app-demo>
+
+    <app-demo
+      anchor="card-fill"
+      owner="card"
+      heading="A row of cards, one line of actions"
+      description="fill makes the card a column inside the height its grid cell already gives it: the block takes the slack and the footer sits on the bottom edge, so a row of cards has its Open buttons on one line instead of four heights. The header can carry a real heading element (level), wrap a long title instead of ellipsising it, and take a leading slot — a drag grip, a status dot — before the title."
+      code='<strct-card fill>&#10;  <strct-card-header heading="Host Update Manager" [level]="3" wrap>&#10;    <span strctCardHeaderLeading>⠿</span>&#10;    <strct-badge strctCardHeaderMeta status="success">Healthy</strct-badge>&#10;  </strct-card-header>&#10;  <strct-card-block>…</strct-card-block>&#10;  <strct-card-footer><button strct-button size="sm">Open</button></strct-card-footer>&#10;</strct-card>'
+    >
+      <div class="fill-cards">
+        @for (c of fillCards; track c.heading) {
+          <strct-card fill>
+            <strct-card-header [heading]="c.heading" [level]="3" wrap>
+              <strct-status-dot strctCardHeaderLeading [status]="c.tone" />
+              <strct-badge strctCardHeaderMeta [status]="c.tone">{{ c.state }}</strct-badge>
+            </strct-card-header>
+            <strct-card-block>{{ c.body }}</strct-card-block>
+            <strct-card-footer>
+              <button strct-button size="sm" variant="flat">Open</button>
+            </strct-card-footer>
+          </strct-card>
+        }
+      </div>
     </app-demo>
 
     <app-demo
@@ -938,6 +967,14 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      .fill-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: var(--space-3);
+        align-items: stretch;
+        width: 100%;
+        max-width: 760px;
+      }
       .ph-pane {
         margin-top: 22px;
         max-width: 340px;
@@ -1024,6 +1061,28 @@ export class SurfacesPage {
   protected readonly consoleMin = signal(false);
   /** Whether the console minimises when the operator clicks the page beside it. */
   protected readonly dismissOutside = signal(true);
+
+  /** Deliberately uneven, so `fill` has something to prove. */
+  protected readonly fillCards = [
+    {
+      heading: 'Host Update Manager',
+      state: 'Healthy',
+      tone: 'success' as const,
+      body: 'All 12 hosts are on the current baseline.',
+    },
+    {
+      heading: 'Certificates',
+      state: 'Attention',
+      tone: 'warning' as const,
+      body: 'Two certificates expire within 30 days, and one of them is the one the console itself presents to browsers on the management network.',
+    },
+    {
+      heading: 'Backups',
+      state: 'Healthy',
+      tone: 'success' as const,
+      body: 'Last run 03:15.',
+    },
+  ];
   protected readonly consoleBounds = signal<StrctWindowBounds | null>({
     x: 120,
     y: 140,

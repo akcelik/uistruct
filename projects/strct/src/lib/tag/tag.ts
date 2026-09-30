@@ -34,6 +34,7 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
       class="strct-tag__text"
       [attr.role]="interactive() ? 'button' : null"
       [attr.tabindex]="interactive() && !disabled() ? 0 : null"
+      [attr.aria-label]="interactive() && activateLabel() ? activateLabel() : null"
       (click)="onActivate()"
       (keydown.enter)="onActivate()"
       (keydown.space)="$event.preventDefault(); onActivate()"
@@ -184,6 +185,13 @@ export class StrctTag {
   readonly disabled = input(false, { transform: booleanAttribute });
   /** Accessible label for the remove button. */
   readonly removeLabel = input('Remove');
+  /**
+   * What activating the tag's body does, for assistive tech. The body's own
+   * name is its text plus the leading slot — "Connected APP02" — which says
+   * what the tag *is*, not what pressing it does ("Show the console of APP02").
+   * The × keeps `removeLabel`.
+   */
+  readonly activateLabel = input('');
   /**
    * The body becomes a control: pointer, hover, focus ring, and `activated` on
    * click / Enter / Space. The × stays a separate tab stop, so "open it" and

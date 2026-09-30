@@ -116,7 +116,7 @@ interface ContrastRow {
     <app-demo
       anchor="text-tones"
       heading="Text tones and inline code"
-      description="The three tones every screen uses, so an app never writes them by hand: strct-text-muted for the explanation under a thing, strct-text-hint for a small aside, strct-text-overline for the label of a group, strct-text-lede for an intro paragraph. strctCode sets a command, a path or an identifier inside a sentence — horizontal padding only, so it never changes a paragraph's leading; add copyable for a copy button. The button follows the element's text as it changes, value gives it something else to copy (a shortened thumbprint copies the whole one), and wrap lets a long id break instead of overflowing a narrow card."
+      description="The three tones every screen uses, so an app never writes them by hand: strct-text-muted for the explanation under a thing, strct-text-hint for a small aside, strct-text-overline for the label of a group, strct-text-lede for an intro paragraph. strct-text-success / -warning / -critical / -accent tone a status word in place — in a grid cell, where a badge is too heavy. strctCode sets a command, a path or an identifier inside a sentence — horizontal padding only, so it never changes a paragraph's leading; add copyable for a copy button. The button follows the element's text as it changes, value gives it something else to copy (a shortened thumbprint copies the whole one), and wrap lets a long id break instead of overflowing a narrow card."
       code='<p class="strct-text-hint">Applies at the next boot.</p>&#10;Run <code strctCode copyable>hyperstructctl doctor</code> on the appliance.&#10;<code strctCode copyable wrap [value]="thumbprint">AB:1F:9C:04…5E:08</code>'
     >
       <div class="tones">
@@ -127,6 +127,14 @@ interface ContrastRow {
         <p>Default body text, for comparison.</p>
         <p class="strct-text-muted">Muted: the explanation under a thing.</p>
         <p class="strct-text-hint">Hint: a small aside, one step down in size.</p>
+        <p>
+          A status word inside a cell takes its tone without the box a badge draws:
+          <span class="strct-text-success">fits</span>,
+          <span class="strct-text-warning">tight</span>,
+          <span class="strct-text-critical">blocked</span>,
+          <span class="strct-text-accent">selected</span> — the badges' own tokens, so the
+          vocabulary stays one vocabulary.
+        </p>
         <p>
           Run <code strctCode>hyperstructctl doctor</code> on the appliance, then quote the id
           <code strctCode copyable>host-01m3e2e0000000000000000001</code> in the ticket.

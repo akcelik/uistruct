@@ -31,6 +31,10 @@ const ROUTES = [
   // BUG-49-05 shipped because this page was not covered: a custom element
   // between <dl> and its dt / dd is invalid, and axe says so.
   '/components/description-list',
+  // FR-49-08 puts real heading elements inside cards and FR-49-01 makes list
+  // rows wrap; both pages carry demos those changes touch.
+  '/components/card',
+  '/components/list',
   '/components/time-range',
   '/scenarios/dashboard',
 ];
@@ -210,8 +214,16 @@ const { result: contrastResult } = await send('Runtime.evaluate', {
         root.setAttribute('data-theme', mode);
         const cs = getComputedStyle(root);
         const bg = parse(cs.getPropertyValue('--bg-1'));
-        const acc = over(parse(cs.getPropertyValue('--acc')), bg);
-        out.push({ scheme: palette + '/' + mode, ratio: +ratio(acc, bg).toFixed(2) });
+        // FR-49-17 put --success / --warning / --critical on --bg-1 as text,
+        // the way --acc already was, so all four are gated the same way.
+        for (const token of ['--acc', '--success', '--warning', '--critical']) {
+          const fg = over(parse(cs.getPropertyValue(token)), bg);
+          out.push({
+            scheme: palette + '/' + mode,
+            token,
+            ratio: +ratio(fg, bg).toFixed(2),
+          });
+        }
       }
     }
     if (before[0]) root.setAttribute('data-palette', before[0]); else root.removeAttribute('data-palette');
@@ -222,10 +234,16 @@ const { result: contrastResult } = await send('Runtime.evaluate', {
 const contrasts = contrastResult?.value ?? [];
 const AA = 4.5;
 const belowAA = contrasts.filter((c) => c.ratio < AA);
+const worst = new Map();
+for (const c of contrasts) {
+  const seen = worst.get(c.token);
+  if (!seen || c.ratio < seen.ratio) worst.set(c.token, c);
+}
 console.log(
-  `\n${belowAA.length ? '✗' : '✓'} --acc on --bg-1: ` +
-    contrasts.map((c) => `${c.scheme} ${c.ratio}`).join(' · '),
+  `\n${belowAA.length ? '✗' : '✓'} status text on --bg-1 (worst of six schemes): ` +
+    [...worst.values()].map((c) => `${c.token} ${c.ratio} (${c.scheme})`).join(' · '),
 );
+for (const c of belowAA) console.log(`   ✗ ${c.token} on --bg-1 is ${c.ratio} in ${c.scheme}`);
 failures += belowAA.length;
 if (!contrasts.length) {
   console.log('✗ contrast check produced no readings');

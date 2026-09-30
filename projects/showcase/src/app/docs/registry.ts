@@ -279,6 +279,13 @@ export const DOCS: DocCategory[] = [
               'The body becomes the control for the thing the tag names: pointer, hover, focus ring, and `(activated)` on click / Enter / Space. The × stays its own tab stop, so “open it” and “remove it” are two targets. The body carries `role="button"` rather than being a `<button>`, because a template can project the same content into only one place — the shape `strct-list-item` and `strct-tree` rows use.',
           },
           {
+            name: 'activateLabel',
+            type: 'string',
+            default: `''`,
+            description:
+              'What activating the body does, for assistive tech: the body’s own name is its text — "Connected APP02", which says what the tag is, not what pressing it does. Applied only while `interactive`; the × keeps `removeLabel`.',
+          },
+          {
             name: 'shape',
             type: `'default' | 'pill'`,
             default: `'default'`,
@@ -1436,7 +1443,13 @@ export const DOCS: DocCategory[] = [
         id: 'card',
         title: 'Card',
         selector: 'strct-card',
-        importNames: ['StrctCard', 'StrctCardHeader', 'StrctCardBlock', 'StrctCardFooter'],
+        importNames: [
+          'StrctCard',
+          'StrctCardHeader',
+          'StrctCardBlock',
+          'StrctCardFooter',
+          'StrctCardHeaderLeading',
+        ],
         summary: 'Rich surface container: status rail, selection, loading, collapse.',
         lead: 'A surface container composed from `strct-card-header`, `strct-card-block` and an optional `strct-card-footer`. Beyond plain composition it now carries rich, opt-in states: a `status` tone rail (same language as alert/hero), `interactive` hover lift for clickable cards, a `selected` ring for pickers, `dense` paddings, a `loading` bar with `aria-busy`, and `collapsible` with a two-way `collapsed` model — the header grows a chevron toggle.',
         inputs: [
@@ -1455,10 +1468,31 @@ export const DOCS: DocCategory[] = [
               'On `strct-card-header`: `overline` is the uppercase, letter-spaced, quieter treatment — the same word `strct-section-header` uses.',
           },
           {
-            name: '[strctCardHeaderMeta] / [strctCardHeaderNote] / [strctCardHeaderActions]',
+            name: 'level',
+            type: '2 | 3 | 4 | 5 | 6 | null',
+            default: 'null',
+            description:
+              'On `strct-card-header`: render `heading` as that heading element, so the card’s title joins the page outline. `null` keeps a span — what a card inside an already-titled section wants.',
+          },
+          {
+            name: 'wrap',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'On `strct-card-header`: a long title wraps instead of ellipsising beside its badge.',
+          },
+          {
+            name: 'fill',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'On `strct-card`: fill the height the layout gives the card as a column — the block takes the slack and the footer sits on the bottom edge, so a row of cards has its actions on one line.',
+          },
+          {
+            name: '[strctCardHeaderLeading] / [strctCardHeaderMeta] / [strctCardHeaderNote] / [strctCardHeaderActions]',
             type: 'slots',
             description:
-              'Header row order: icon · heading · meta · flexible space · note (quiet, ellipsised) · actions. Every card in an app then lines up without consumer CSS.',
+              'Header row order: leading (a grip, a status dot) · icon · heading · meta · flexible space · note (quiet, ellipsised) · actions. Every card in an app then lines up without consumer CSS.',
           },
           {
             name: 'status',
@@ -2878,6 +2912,13 @@ export const DOCS: DocCategory[] = [
             default: 'null',
             description:
               'On `strct-list-item`: a leading rail, as `strct-card [status]` draws one.',
+          },
+          {
+            name: 'wrap',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'On `strct-list` (every row) or on `strct-list-item` (one row): the title and description wrap instead of ending in an ellipsis — for rows that carry a sentence. The leading marker stays on the title’s first line, and `dense` still means 32px for a one-line row.',
           },
           {
             name: '[strctListItemLeading] / [strctListItemDescription] / [strctListItemMeta] / [strctListItemTrailing]',

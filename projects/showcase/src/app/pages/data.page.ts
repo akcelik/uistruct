@@ -101,7 +101,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="list"
       heading="List"
-      description="Short lists of things with a status are lists, not tables: a leading marker, a title, a secondary line, a quiet meta and a control at the end. A table needs a header row, a timeline implies time order, and an alert per item is too heavy. interactive makes the row itself open — click, Enter or Space — while anything in [strctListItemTrailing] stays a separate tab stop, so “open this alarm” and “acknowledge it” are two different targets. dense gives 32px rows, status draws the rail strct-card uses, and below a 360px container the meta drops under the description."
+      description="Short lists of things with a status are lists, not tables: a leading marker, a title, a secondary line, a quiet meta and a control at the end. A table needs a header row, a timeline implies time order, and an alert per item is too heavy. interactive makes the row itself open — click, Enter or Space — while anything in [strctListItemTrailing] stays a separate tab stop, so “open this alarm” and “acknowledge it” are two different targets. dense gives 32px rows, status draws the rail strct-card uses, and below a 360px container the meta drops under the description. wrap lets the title and description carry a sentence — why a host is blocked, what a check found — instead of ending in an ellipsis; the leading marker stays on the title's first line. Put it on the list for every row, or on one row."
       code='<strct-list dense label="Active alarms">&#10;  <strct-list-item interactive status="critical" (activated)="open(a)">&#10;    <strct-badge strctListItemLeading status="critical">Critical</strct-badge>&#10;    Datastore latency&#10;    <span strctListItemDescription>ds-prod-01</span>&#10;    <span strctListItemMeta>2 min ago</span>&#10;    <button strctListItemTrailing strct-button size="sm" variant="flat">Acknowledge</button>&#10;  </strct-list-item>&#10;</strct-list>'
     >
       <div class="stack" style="width: 100%; max-width: 560px;">
@@ -120,6 +120,16 @@ import { DemoBlock, PageHeader } from '../ui/demo';
               <button strct-button strctListItemTrailing size="sm" variant="flat">
                 Acknowledge
               </button>
+            </strct-list-item>
+          }
+        </strct-list>
+        <strct-list wrap label="What the last check found">
+          @for (f of findingRows; track f.title) {
+            <strct-list-item [status]="f.tone">
+              <strct-status-dot strctListItemLeading [status]="f.tone" />
+              {{ f.title }}
+              <span strctListItemDescription>{{ f.detail }}</span>
+              <span strctListItemMeta>{{ f.when }}</span>
             </strct-list-item>
           }
         </strct-list>
@@ -1274,6 +1284,23 @@ mtu = 9000`;
       tone: 'accent',
     },
   ];
+  /** Rows that carry a sentence — FR-49-01's case. */
+  protected readonly findingRows = [
+    {
+      title: 'hv-02 cannot enter maintenance',
+      detail:
+        'Three VMs have a CD-ROM attached to a datastore that hv-03 cannot see, so they cannot be migrated there.',
+      when: '2 min ago',
+      tone: 'warning' as const,
+    },
+    {
+      title: 'Datastore ds-prod-01 is 92% full',
+      detail: 'At the current growth rate it reaches its limit in about 9 days.',
+      when: '18 min ago',
+      tone: 'critical' as const,
+    },
+  ];
+
   protected readonly memberRows = ['hv-01.dc-west', 'hv-02.dc-west', 'hv-03.dc-west'];
 
   // FR-48-01: a "choose one target" grid, with a row that cannot be chosen.

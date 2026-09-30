@@ -177,6 +177,22 @@ kbd,
 /* The affordance itself: a row that can be dragged says so, and a row that
    delegates to a handle points at the handle instead. A display-only list
    (reorderDisabled -> draggable="false") gets neither. */
+/* FR-49-17 — a status word inside a grid cell ("blocked", "fits") needs its
+   tone without the box a badge draws. Same tokens the badges use, so the
+   vocabulary stays one vocabulary; each is AA on --bg-1 in all six schemes. */
+.strct-text-success {
+  color: var(--success);
+}
+.strct-text-warning {
+  color: var(--warning);
+}
+.strct-text-critical {
+  color: var(--critical);
+}
+.strct-text-accent {
+  color: var(--acc);
+}
+
 .strct-reorder__handle {
   cursor: grab;
 }
