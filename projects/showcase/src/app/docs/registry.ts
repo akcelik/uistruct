@@ -5036,6 +5036,75 @@ export const DOCS: DocCategory[] = [
         ],
       },
       {
+        id: 'chat',
+        title: 'Chat',
+        selector: 'strct-chat-thread, strct-chat-message, strct-chat-composer',
+        importNames: [
+          'StrctChatThread',
+          'StrctChatMessage',
+          'StrctChatComposer',
+          'StrctChatAttachment',
+        ],
+        summary: 'Thread, messages, typing indicator and composer.',
+        lead: 'An assistant panel is built from the library, like every other panel: a thread of messages from two or more authors, a reply that streams in with a caret, a typing indicator while the assistant thinks, and a composer that grows, sends on Enter and breaks a line on Shift+Enter.',
+        inputs: [
+          {
+            name: 'busy / label / autoScroll',
+            type: 'boolean · string · boolean',
+            default: `false · 'Conversation' · true`,
+            description:
+              'On `strct-chat-thread`: `busy` shows the typing dots after the last message; `autoScroll` keeps the newest message in view unless the reader has scrolled up.',
+          },
+          {
+            name: 'author / name / avatarIcon',
+            type: `'user' | 'assistant' | 'system' · string`,
+            default: `'assistant'`,
+            description:
+              'On `strct-chat-message`: who wrote it (a `system` line is centred and quiet), the name above the bubble, and an icon avatar instead of initials.',
+          },
+          {
+            name: 'streaming / time',
+            type: 'boolean · Date | null',
+            default: 'false · null',
+            description:
+              'A caret follows a streaming reply and the message is `aria-busy`, so assistive tech announces it once it finishes rather than token by token.',
+          },
+          {
+            name: '[strctChatAttachment]',
+            type: 'slot',
+            description:
+              'A card under the bubble — the action the user must approve, the result to read.',
+          },
+          {
+            name: 'value / placeholder / disabled / maxRows',
+            type: 'string · string · boolean · number',
+            default: `'' · '' · false · 8`,
+            description:
+              'On `strct-chat-composer`: the draft is two-way; the box grows with the text to `maxRows` and then scrolls.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'send',
+            type: 'string',
+            description: 'The user sent the draft (Enter, or the send button).',
+          },
+        ],
+        do: [
+          'Stream a reply into one message and clear `streaming` when it ends.',
+          'Put an action to approve in `[strctChatAttachment]`, as a `strct-card [status]`.',
+        ],
+        dont: [
+          'Do not announce every token — the thread is polite and a streaming message is aria-busy until it finishes.',
+          'Do not send on Enter during IME composition; the composer already does not.',
+        ],
+        a11y: [
+          'The thread is a role="log" with aria-live="polite"; each message is an article named by its author.',
+          'The composer is a labelled textarea: Enter sends, Shift+Enter breaks a line, and composition is respected.',
+          'The caret and the typing dots hold still under prefers-reduced-motion.',
+        ],
+      },
+      {
         id: 'contextmenu',
         title: 'Context menu',
         selector: '[strctContextMenu], strct-context-menu',
