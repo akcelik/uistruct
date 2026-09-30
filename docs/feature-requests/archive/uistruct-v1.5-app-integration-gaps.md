@@ -5,10 +5,13 @@
 > and a `StrctIconName` type now exists. HyperStruct adopted `popover` (deleting the
 > hand-rolled strctOverlay workaround on two pages) and re-enabled `wrap` on the CSR blocks.
 >
-> **One follow-up remains** — see the icon note at the bottom: `StrctIconName` is
-> `keyof … | (string & {})`, so a wrong name (e.g. `shieldCheck`) still compiles. The
-> ask was for a wrong name to be a COMPILE error, which needs the union WITHOUT the
-> `string` escape hatch (or a separate strict type). Filed as FR-16-01 below.
+> **FR-16-01 RESOLVED in 1.12.0.** The follow-up asked for a wrong icon name to be a
+> compile error, by either dropping the `string` escape hatch or adding a strict input.
+> The second was taken: `strictName` is typed as the bare `StrctIconName` union, so
+> `strictName="sheildCheck"` fails to build under strict templates, while `name` keeps
+> its escape hatch for icons registered at runtime.
+>
+> **Nothing in this document is open.**
 
 Written after sweeping the whole 1.5.0 surface (104 components) against HyperStruct's
 hand-rolled UI and adopting everything that already fit. **1.5.0 closed two of our
