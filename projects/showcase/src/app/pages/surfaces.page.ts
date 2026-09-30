@@ -41,6 +41,7 @@ import {
   StrctPageHeaderCrumbs,
   StrctBreadcrumb,
   StrctBreadcrumbItem,
+  StrctResizeHandle,
   StrctSplitter,
   StrctWatermark,
   StrctWizardAside,
@@ -94,6 +95,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctSectionHeaderActions,
     StrctDropdownItemAction,
     StrctMediaFrame,
+    StrctResizeHandle,
   ],
   template: `
     <app-page-header
@@ -803,6 +805,55 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="splitter-px"
+      owner="splitter"
+      heading="Pixels, bounds and a collapsible pane"
+      description='A sidebar is 280px, not 22%. unit="px" sizes and drags the first pane in pixels, minSize / maxSize bound it in the same unit, and collapsible lets Enter on the gutter fold the pane away and bring it back — the gutter says so with aria-expanded. Percent mode is unchanged. For a layout the splitter does not own — a shell grid, a docked panel — [strctResizeHandle] is the same gutter on its own: it draws the grip, carries role="separator" with its value and bounds, steps with the arrows (four times with Shift), jumps with Home and End, and leaves the size to you.'
+      code='<strct-splitter unit="px" [(split)]="sidebar" [minSize]="200" [maxSize]="480" collapsible />'
+    >
+      <div class="stack" style="width: 100%; gap: 18px;">
+        <strct-splitter
+          unit="px"
+          [(split)]="sidebarPx"
+          [minSize]="180"
+          [maxSize]="420"
+          collapsible
+          [(collapsed)]="sidebarCollapsed"
+          style="height: 160px; border: 1px solid var(--b2); border-radius: var(--radius-md);"
+        >
+          <div strctPaneStart style="padding: 10px; font-size: 12px; color: var(--t3);">
+            {{ sidebarCollapsed() ? '' : 'Sidebar · ' + sidebarPx() + 'px' }}
+          </div>
+          <div strctPaneEnd style="padding: 10px; font-size: 12px; color: var(--t3);">
+            Content — drag or focus the gutter and press the arrows; Enter collapses.
+          </div>
+        </strct-splitter>
+
+        <div
+          style="display: flex; flex-direction: column; border: 1px solid var(--b2); border-radius: var(--radius-md); overflow: hidden;"
+        >
+          <div style="flex: 1; padding: 10px; font-size: 12px; color: var(--t3);">
+            A layout the splitter does not own
+          </div>
+          <div
+            [strctResizeHandle]="'y'"
+            [(size)]="panelHeight"
+            [min]="80"
+            [max]="260"
+            side="after"
+            aria-label="Resize the task panel"
+          ></div>
+          <div
+            [style.height.px]="panelHeight()"
+            style="padding: 10px; font-size: 12px; color: var(--t3); background: var(--bg-1);"
+          >
+            Task panel · {{ panelHeight() }}px
+          </div>
+        </div>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="watermark"
       heading="Watermark"
       description="A pointer-transparent repeating text overlay for compliance consoles — content stays fully interactive and selectable. Stamp who/when for screenshot traceability."
@@ -892,6 +943,11 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class SurfacesPage {
+  // FR-48-35 — a sidebar in pixels, and a handle the splitter does not own.
+  protected readonly sidebarPx = signal(240);
+  protected readonly sidebarCollapsed = signal(false);
+  protected readonly panelHeight = signal(120);
+
   // FR-48-34 — the states a console thumbnail goes through.
   protected readonly mediaFrames: {
     state: 'content' | 'loading' | 'empty' | 'off' | 'error';

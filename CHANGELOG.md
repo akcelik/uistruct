@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.21.0] - 2026-09-30
+
+### Added
+
+- **`strct-splitter`: pixel bounds and a collapsible pane** (FR-48-35). A sidebar
+  is 280px, not 22%: `unit="px"` sizes and drags the start pane in pixels, with
+  `minSize` / `maxSize` bounding it in the same unit, and `collapsible` lets
+  Enter on the gutter fold the pane away and bring it back (`collapsed` is
+  two-way, and the gutter says which with `aria-expanded`). Percent mode is
+  unchanged.
+- **`[strctResizeHandle]`** (FR-48-35): the same gutter, standalone, for a
+  layout the splitter does not own — a shell grid, a docked panel. It draws the
+  grip and brings the separator semantics with it: `role="separator"`, a tab
+  stop, arrows that step (Shift × 4), Home / End for the bounds, Enter to
+  collapse. The consumer owns the size, so it can be persisted or animated.
+- **`[strctReorderGroup]` and `[strctReorderHandle]`** (FR-48-36). A dashboard's
+  cards move within a column and between columns: the group connects the lists
+  and emits `(moved) { item, fromList, toList, fromIndex, toIndex }`, while a
+  handle — when an item has one — is the only place a drag may start, so text
+  selection or a chart brush inside a card cannot begin a move. From the
+  keyboard, Alt+ArrowLeft / Alt+ArrowRight move to the neighbouring list at the
+  same index, and the live region names the column it landed in. A single list
+  is unchanged.
+
 ## [4.20.0] - 2026-09-30
 
 ### Added

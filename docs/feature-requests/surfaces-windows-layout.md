@@ -13,8 +13,20 @@
 > their line, and the interactive hit area covers the frame exactly (border included) under one
 > accessible name.
 >
-> **Still open here: FR-48-33** (`strct-window` + dock), **35** (splitter px bounds, collapsible
-> pane, `[strctResizeHandle]`), **36** (connected reorder lists and a drag handle).
+> **FR-48-35 and FR-48-36 SHIPPED in 4.21.0 (2026-09-30)** — the splitter's `unit="px"`,
+> `minSize` / `maxSize`, `collapsible` / `collapsed` and the standalone `[strctResizeHandle]`; plus
+> `[strctReorderGroup]`, `listId`, `[strctReorderHandle]` and the sideways keyboard moves.
+>
+> Measured in Chrome: the px splitter starts at a 240px pane with bounds 180 / 420 on the gutter,
+> ArrowRight steps it to **264px** (3 × 8), and Enter collapses it to **0px** with
+> `aria-expanded="false"`. The standalone handle is a `role="separator"` with
+> `aria-orientation="horizontal"`, draws the 3px grip, and moves its panel 120 → **136** on an
+> arrow and → **200** with Shift, the panel's measured height following each step. On the board,
+> Alt+ArrowRight moves "Capacity" from column 1 to column 2 position 1, and the live region says
+> **"Moved Capacity to right, position 1 of 2"**.
+>
+> **Still open here: FR-48-33** (`strct-window` + dock) — the last item of this document, and the
+> largest of the audit.
 
 **From:** HyperStruct · **Version:** 4.4.0. Part of [hyperstruct-hand-built-audit.md](hyperstruct-hand-built-audit.md).
 

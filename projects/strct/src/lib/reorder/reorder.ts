@@ -20,6 +20,51 @@ export interface StrctReorderEvent {
   to: number;
 }
 
+/** A completed move between two connected lists. */
+export interface StrctReorderMoveEvent {
+  /** The moved element, so the consumer can identify its own item. */
+  item: HTMLElement;
+  fromList: string;
+  toList: string;
+  fromIndex: number;
+  toIndex: number;
+}
+
+/**
+ * Connects several `[strctReorder]` lists, so a card can move between the
+ * columns of a board — by its handle, or with Alt+ArrowLeft / Alt+ArrowRight.
+ * Moves within one list stay on that list's `reordered`; moves across lists
+ * come out here.
+ */
+@Directive({ selector: '[strctReorderGroup]' })
+export class StrctReorderGroup {
+  /** A card moved from one list to another. */
+  readonly moved = output<StrctReorderMoveEvent>();
+  /** Every list in this group, in DOM order. */
+  readonly lists = signal<StrctReorder[]>([]);
+  /** Where the current drag started, so a drop elsewhere knows its origin. */
+  readonly source = signal<{ list: StrctReorder; index: number } | null>(null);
+
+  register(list: StrctReorder): void {
+    this.lists.update((ls) => [...ls, list]);
+  }
+  unregister(list: StrctReorder): void {
+    this.lists.update((ls) => ls.filter((l) => l !== list));
+  }
+  /** The list next to `list` in the given direction, or null at the ends. */
+  neighbour(list: StrctReorder, dir: -1 | 1): StrctReorder | null {
+    const ordered = this.ordered();
+    const i = ordered.indexOf(list);
+    return ordered[i + dir] ?? null;
+  }
+  /** DOM order, not registration order — columns read left to right. */
+  ordered(): StrctReorder[] {
+    return [...this.lists()].sort((a, b) =>
+      a.element().compareDocumentPosition(b.element()) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1,
+    );
+  }
+}
+
 let reorderCounter = 0;
 
 /**
@@ -44,6 +89,8 @@ let reorderCounter = 0;
 @Directive({ selector: '[strctReorder]' })
 export class StrctReorder implements OnDestroy {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  /** The group this list belongs to, when it is one of several. */
+  readonly group = inject(StrctReorderGroup, { optional: true });
   private readonly renderer = inject(Renderer2);
   private readonly doc = inject(DOCUMENT);
   private readonly announcer = inject(StrctAnnouncer);
@@ -64,6 +111,13 @@ export class StrctReorder implements OnDestroy {
     (label: string, position: number, total: number) =>
       `Moved ${label} to position ${position} of ${total}`,
   );
+  /** This list's name inside a `[strctReorderGroup]`. */
+  readonly listId = input('');
+  /** What a move between lists says (localizable). */
+  readonly moveAnnouncement = input(
+    (label: string, list: string, position: number, total: number) =>
+      `Moved ${label} to ${list}, position ${position} of ${total}`,
+  );
 
   readonly dragIndex = signal<number | null>(null);
   readonly overIndex = signal<number | null>(null);
@@ -71,7 +125,34 @@ export class StrctReorder implements OnDestroy {
   readonly instructionsId = `strct-reorder-hint-${++reorderCounter}`;
   private hint: HTMLElement | null = null;
 
+  /** The container element — the group orders its lists by DOM position. */
+  element(): HTMLElement {
+    return this.host.nativeElement;
+  }
+
+  /** Move an item into this list at `index`, and say so. */
+  acceptFrom(from: StrctReorder, fromIndex: number, index: number): void {
+    const item = from.items()[fromIndex];
+    if (!item) return;
+    const label = item.textContent?.trim() ?? '';
+    const toIndex = Math.max(0, Math.min(index, this.items().length));
+    from.dragIndex.set(null);
+    this.overIndex.set(null);
+    this.group?.source.set(null);
+    this.group?.moved.emit({
+      item,
+      fromList: from.listId(),
+      toList: this.listId(),
+      fromIndex,
+      toIndex,
+    });
+    this.announcer.announce(
+      this.moveAnnouncement()(label, this.listId(), toIndex + 1, this.items().length + 1),
+    );
+  }
+
   constructor() {
+    this.group?.register(this);
     // Keep the sr-only instructions element in sync with the input.
     effect(() => {
       const text = this.instructions();
@@ -107,16 +188,22 @@ export class StrctReorder implements OnDestroy {
   protected onContainerDragOver(event: DragEvent): void {
     // Only the container's own empty space (below the last item); drags over
     // items are handled by the items themselves.
-    if (this.dragIndex() == null) return;
+    if (this.dragIndex() == null && !this.group?.source()) return;
     if ((event.target as HTMLElement).closest('[strctReorderItem]')) return;
     event.preventDefault();
   }
 
   @HostListener('drop', ['$event'])
   protected onContainerDrop(event: DragEvent): void {
+    if ((event.target as HTMLElement).closest('[strctReorderItem]')) return;
+    const source = this.group?.source();
+    if (source && source.list !== this) {
+      event.preventDefault();
+      this.acceptFrom(source.list, source.index, this.items().length);
+      return;
+    }
     const from = this.dragIndex();
     if (from == null) return; // an item already consumed this drop
-    if ((event.target as HTMLElement).closest('[strctReorderItem]')) return;
     event.preventDefault();
     // Drop into empty space moves the item to the end.
     this.commit(from, this.items().length - 1);
@@ -132,12 +219,20 @@ export class StrctReorder implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.group?.unregister(this);
     if (this.hint) {
       this.renderer.removeChild(this.doc.body, this.hint);
       this.hint = null;
     }
   }
 }
+
+/**
+ * The only place a drag may start from, when an item has one. Content that is
+ * itself draggable — text selection, a chart brush — must not start a move.
+ */
+@Directive({ selector: '[strctReorderHandle]', host: { class: 'strct-reorder__handle' } })
+export class StrctReorderHandle {}
 
 /** One draggable row inside a `[strctReorder]` container. */
 @Directive({
@@ -148,7 +243,7 @@ export class StrctReorder implements OnDestroy {
     '[class.strct-reorder--dragging]': 'isDragging()',
     '[class.strct-reorder--over]': 'isOver()',
     '[attr.aria-roledescription]': "'sortable'",
-    '[attr.aria-keyshortcuts]': "'Alt+ArrowUp Alt+ArrowDown'",
+    '[attr.aria-keyshortcuts]': 'shortcuts()',
     '[attr.aria-posinset]': 'index() + 1',
     '[attr.aria-setsize]': 'list.items().length',
     '[attr.aria-describedby]': 'list.instructions() ? list.instructionsId : null',
@@ -164,6 +259,13 @@ export class StrctReorderItem {
     return this.hadOwnTabindex ? null : 0;
   }
 
+  /** The keys that apply: the sideways pair only when there is somewhere to go. */
+  protected shortcuts(): string {
+    return this.list.group
+      ? 'Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight'
+      : 'Alt+ArrowUp Alt+ArrowDown';
+  }
+
   protected isDragging(): boolean {
     return this.list.dragIndex() === this.index();
   }
@@ -175,17 +277,31 @@ export class StrctReorderItem {
     return this.list.indexOf(this.el.nativeElement);
   }
 
+  /** Where the last pointerdown landed — a drag may only start on a handle. */
+  private fromHandle = false;
+
+  @HostListener('pointerdown', ['$event'])
+  protected onPointerDown(event: PointerEvent): void {
+    this.fromHandle = !!(event.target as HTMLElement).closest('[strctReorderHandle]');
+  }
+
   @HostListener('dragstart', ['$event'])
   protected onDragStart(event: DragEvent): void {
     if (this.list.reorderDisabled()) return;
+    // With a handle present, only the handle starts a move.
+    if (this.el.nativeElement.querySelector('[strctReorderHandle]') && !this.fromHandle) {
+      event.preventDefault();
+      return;
+    }
     this.list.dragIndex.set(this.index());
+    this.list.group?.source.set({ list: this.list, index: this.index() });
     event.dataTransfer?.setData('text/plain', String(this.index()));
     if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
   }
 
   @HostListener('dragover', ['$event'])
   protected onDragOver(event: DragEvent): void {
-    if (this.list.dragIndex() == null) return;
+    if (this.list.dragIndex() == null && !this.list.group?.source()) return;
     event.preventDefault();
     this.list.overIndex.set(this.index());
   }
@@ -193,6 +309,11 @@ export class StrctReorderItem {
   @HostListener('drop', ['$event'])
   protected onDrop(event: DragEvent): void {
     event.preventDefault();
+    const source = this.list.group?.source();
+    if (source && source.list !== this.list) {
+      this.list.acceptFrom(source.list, source.index, this.index());
+      return;
+    }
     const from = this.list.dragIndex();
     if (from == null) return;
     this.list.commit(from, this.index());
@@ -202,11 +323,23 @@ export class StrctReorderItem {
   protected onDragEnd(): void {
     this.list.dragIndex.set(null);
     this.list.overIndex.set(null);
+    this.list.group?.source.set(null);
   }
 
   @HostListener('keydown', ['$event'])
   protected onKeydown(event: KeyboardEvent): void {
     if (this.list.reorderDisabled() || !event.altKey) return;
+    const group = this.list.group;
+    // Alt+Left / Alt+Right move to the neighbouring list at the same index.
+    if (group && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+      const target = group.neighbour(this.list, event.key === 'ArrowLeft' ? -1 : 1);
+      if (!target) return;
+      event.preventDefault();
+      const index = this.index();
+      target.acceptFrom(this.list, index, index);
+      setTimeout(() => target.items()[Math.min(index, target.items().length - 1)]?.focus());
+      return;
+    }
     if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
     event.preventDefault();
     const from = this.index();

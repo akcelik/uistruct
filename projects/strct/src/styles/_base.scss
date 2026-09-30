@@ -129,3 +129,44 @@ kbd,
     transition-duration: 0.01ms !important;
   }
 }
+
+// The splitter's gutter, as a standalone handle for layouts the splitter does
+// not own (a shell grid, a docked panel). Shipped in the theme layer because
+// the directive attaches only the class.
+.strct-resize {
+  flex: none;
+  position: relative;
+  width: 5px;
+  cursor: col-resize;
+  background: transparent;
+  touch-action: none;
+}
+.strct-resize--y {
+  width: auto;
+  height: 5px;
+  cursor: row-resize;
+}
+.strct-resize::after {
+  content: '';
+  position: absolute;
+  inset-block: 50%;
+  inset-inline: 50%;
+  width: 3px;
+  height: 34px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: var(--b2);
+  transition: background 0.14s ease;
+}
+.strct-resize--y::after {
+  width: 34px;
+  height: 3px;
+}
+.strct-resize:hover::after,
+.strct-resize--dragging::after {
+  background: var(--acc);
+}
+.strct-resize:focus-visible {
+  outline: 2px solid var(--acc50);
+  outline-offset: -1px;
+}
