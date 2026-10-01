@@ -1,13 +1,17 @@
 import { DOCUMENT } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  Directive,
   ElementRef,
+  TemplateRef,
   Injectable,
   NgZone,
   ViewEncapsulation,
   booleanAttribute,
   computed,
+  contentChild,
   effect,
   inject,
   input,
@@ -34,7 +38,19 @@ export interface StrctWindowLabels {
   close: string;
   /** The dock's accessible name. */
   dock: string;
+  /**
+   * The tooltip each control shows on hover, when it says more than the name
+   * does — the console's minimise is "stays connected". Empty shows none.
+   */
+  minimizeHint: string;
+  maximizeHint: string;
+  restoreHint: string;
+  closeHint: string;
 }
+
+/** The title bar's height — what must stay on screen for the window to be
+ *  draggable back from an edge. */
+const TITLE_H = 36;
 
 const WINDOW_LABELS: StrctWindowLabels = {
   minimize: 'Minimize',
@@ -42,6 +58,10 @@ const WINDOW_LABELS: StrctWindowLabels = {
   restore: 'Restore',
   close: 'Close',
   dock: 'Minimized windows',
+  minimizeHint: '',
+  maximizeHint: '',
+  restoreHint: '',
+  closeHint: '',
 };
 
 let windowCounter = 0;
@@ -113,8 +133,11 @@ export class StrctWindowService {
           [attr.aria-label]="heading()"
           (pointerdown)="onDragStart($event)"
           (keydown)="onTitleKeydown($event)"
-          (dblclick)="maximized.set(!maximized())"
+          (dblclick)="onTitleDblclick()"
         >
+          @if (icon()) {
+            <strct-icon class="strct-window__icon" [name]="icon()" [size]="14" />
+          }
           <span class="strct-window__heading" [id]="titleId">{{ heading() }}</span>
           <span class="strct-window__meta"><ng-content select="[strctWindowTitleMeta]" /></span>
           <span class="strct-window__actions"><ng-content select="[strctWindowActions]" /></span>
@@ -123,6 +146,7 @@ export class StrctWindowService {
               type="button"
               class="strct-window__btn"
               [attr.aria-label]="L().minimize"
+              [attr.title]="L().minimizeHint || null"
               (click)="minimize()"
             >
               <strct-icon strictName="minus" [size]="14" />
@@ -131,7 +155,8 @@ export class StrctWindowService {
               type="button"
               class="strct-window__btn"
               [attr.aria-label]="maximized() ? L().restore : L().maximize"
-              (click)="maximized.set(!maximized())"
+              [attr.title]="(maximized() ? L().restoreHint : L().maximizeHint) || null"
+              (click)="toggleMaximized()"
             >
               <strct-icon
                 [strictName]="maximized() ? 'exitFullscreen' : 'fullscreen'"
@@ -142,6 +167,7 @@ export class StrctWindowService {
               type="button"
               class="strct-window__btn strct-window__btn--close"
               [attr.aria-label]="L().close"
+              [attr.title]="L().closeHint || null"
               (click)="close()"
             >
               <strct-icon strictName="close" [size]="14" />
@@ -189,6 +215,10 @@ export class StrctWindowService {
         inset: var(--space-3);
         width: auto;
         height: auto;
+      }
+      .strct-window__icon {
+        flex: none;
+        color: var(--t3);
       }
       .strct-window__title {
         display: flex;
@@ -319,8 +349,18 @@ export class StrctWindow {
   readonly labels = input<Partial<StrctWindowLabels>>({});
   /** The accessible name of each resize grip. */
   readonly resizeLabel = input<(corner: string) => string>((corner) => `Resize (${corner})`);
+  /** A leading icon in the title bar, as `strct-page-header [icon]` has. */
+  readonly icon = input('');
+  /**
+   * What a double-click on the title bar does. A console whose content has a
+   * real full screen of its own wants `none` and its own answer to
+   * `(titleDblclick)`.
+   */
+  readonly titleDblclick = input<'maximize' | 'none'>('maximize');
   /** The window was closed. */
   readonly closed = output<void>();
+  /** The title bar was double-clicked, whatever `titleDblclick` then did. */
+  readonly titleDblclicked = output<void>();
 
   protected readonly CORNERS = ['nw', 'ne', 'sw', 'se'] as const;
   protected readonly titleId = `strct-window-${++windowCounter}`;
@@ -444,6 +484,15 @@ export class StrctWindow {
   }
 
   /** Alt+arrows move the window; Escape minimises it. */
+  protected toggleMaximized(): void {
+    this.maximized.set(!this.maximized());
+  }
+
+  protected onTitleDblclick(): void {
+    this.titleDblclicked.emit();
+    if (this.titleDblclick() === 'maximize') this.toggleMaximized();
+  }
+
   protected onTitleKeydown(event: KeyboardEvent): void {
     if (!event.altKey) return;
     const step = event.shiftKey ? 64 : 16;
@@ -531,26 +580,66 @@ export class StrctWindow {
     };
   }
 
+  /**
+   * A window dragged off the screen cannot be dragged back: the title bar is
+   * the only handle it has. Keep enough of that bar on screen to grab — the
+   * window may hang off any edge, but never past its own title.
+   */
+  private clamp(next: StrctWindowBounds): StrctWindowBounds {
+    const view = this.doc.defaultView;
+    if (!view) return next;
+    const KEEP = 48; // enough of the bar to put a pointer on
+    const maxX = view.innerWidth - KEEP;
+    const maxY = view.innerHeight - TITLE_H;
+    return {
+      ...next,
+      x: Math.min(Math.max(next.x, KEEP - next.width), maxX),
+      y: Math.min(Math.max(next.y, 0), Math.max(0, maxY)),
+    };
+  }
+
   private setRect(next: StrctWindowBounds): void {
-    if (this.bounds()) this.bounds.set(next);
-    else this.fallback.set(next);
+    const clamped = this.clamp(next);
+    if (this.bounds()) this.bounds.set(clamped);
+    else this.fallback.set(clamped);
   }
 }
 
 /**
+ * What a dock chip shows, when the window's heading is not enough — a status
+ * dot, an icon, a count. The window is the context:
+ *
+ *   <ng-template strctWindowDockItem let-w>
+ *     <strct-status-dot [status]="tone(w)" size="sm" /> {{ w.heading() }}
+ *   </ng-template>
+ */
+@Directive({ selector: 'ng-template[strctWindowDockItem]' })
+export class StrctWindowDockItem {}
+
+/**
  * Where minimised windows wait. Put it in a toolbar or a status bar; each entry
- * restores its window, and its × closes it.
+ * restores its window — or asks the consumer to, through `(restoreRequest)` —
+ * and its × closes it.
  */
 @Component({
   selector: 'strct-window-dock',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon],
+  imports: [StrctIcon, NgTemplateOutlet],
   template: `
     @for (w of service.minimized(); track w) {
       <span class="strct-windock__chip">
-        <button type="button" class="strct-windock__open" (click)="w.restore()">
-          {{ w.heading() }}
+        <button type="button" class="strct-windock__open" (click)="onRestore(w)">
+          @if (itemTpl(); as tpl) {
+            <!-- A chip can say more than a heading: a status dot, an icon, a
+                 count. The window is the template's context. -->
+            <ng-container
+              [ngTemplateOutlet]="tpl"
+              [ngTemplateOutletContext]="{ $implicit: w, window: w }"
+            />
+          } @else {
+            {{ w.heading() }}
+          }
         </button>
         <button
           type="button"
@@ -619,4 +708,21 @@ export class StrctWindowDock {
   readonly label = input('Minimized windows');
   /** The name of each chip's close button. */
   readonly closeLabel = input<(heading: string) => string>((heading) => `Close ${heading}`);
+  /** What each chip shows, when a heading is not enough. */
+  protected readonly itemTpl = contentChild(StrctWindowDockItem, { read: TemplateRef });
+  /**
+   * Who restores a window when its chip is pressed. `dock` does it itself, as
+   * before; `request` only emits `(restoreRequest)`, so an app that allows one
+   * open window at a time can close the other first — the dock's own restore
+   * would walk past that rule.
+   */
+  readonly restoreMode = input<'dock' | 'request'>('dock');
+  /** A chip was pressed. Always emitted; with `restoreMode="request"` it is
+   *  the only thing that happens. */
+  readonly restoreRequest = output<StrctWindow>();
+
+  protected onRestore(w: StrctWindow): void {
+    this.restoreRequest.emit(w);
+    if (this.restoreMode() === 'dock') w.restore();
+  }
 }

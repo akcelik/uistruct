@@ -51,18 +51,21 @@ import { StrctIcon } from '../icon/icon';
             }
           }
           <div class="strct-login__aside-inner">
-            @if (brandIcon() || brandName()) {
-              <div class="strct-login__brand">
-                @if (brandIcon()) {
-                  <span class="strct-login__mark">
-                    <strct-icon [name]="brandIcon()" [size]="18" [strokeWidth]="1.5" />
-                  </span>
-                }
-                @if (brandName()) {
-                  <span class="strct-login__brandname">{{ brandName() }}</span>
-                }
-              </div>
-            }
+            <div class="strct-login__brand">
+              @if (brandIcon()) {
+                <span class="strct-login__mark">
+                  <strct-icon [name]="brandIcon()" [size]="18" [strokeWidth]="1.5" />
+                </span>
+              }
+              @if (brandName()) {
+                <span class="strct-login__brandname">{{ brandName() }}</span>
+              }
+              <!-- What this install is: "APPLIANCE", "EVALUATION". It belongs
+                   on the brand's line, not in the tagline under it. -->
+              <span class="strct-login__brandmeta">
+                <ng-content select="[strctLoginBrandMeta]" />
+              </span>
+            </div>
             <div class="strct-login__asidebody">
               @if (tagline()) {
                 <div class="strct-login__kicker">{{ tagline() }}</div>
@@ -188,6 +191,17 @@ import { StrctIcon } from '../icon/icon';
         50% {
           opacity: 0.85;
         }
+      }
+      .strct-login__brand:not(:has(*)) {
+        display: none;
+      }
+      .strct-login__brandmeta:empty {
+        display: none;
+      }
+      .strct-login__brandmeta {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
       }
       .strct-login__brand {
         position: relative;

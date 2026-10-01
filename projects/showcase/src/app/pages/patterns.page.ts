@@ -26,6 +26,7 @@ import {
   StrctPassword,
   StrctSparkline,
   StrctSubmenu,
+  StrctBadge,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -58,6 +59,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctLiveIndicator,
     StrctQr,
     StrctTag,
+    StrctBadge,
   ],
   template: `
     <app-page-header
@@ -169,7 +171,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="login-art"
       owner="login"
       heading="The aside, built in"
-      description='What the library shows as its login screen, a consumer can have by asking for it — art="network" renders the glow, the dot grid and the pulsing node diagram from palette tokens only, so it follows all six schemes, and it holds still under prefers-reduced-motion. brandIcon / brandName put the icon tile and product name at the top, tagline is the kicker above your own copy, and [strctLoginStatus] is projected at the aside&apos;s foot for the “is the appliance reachable” strip. art="grid" keeps the glow and grid without the diagram.'
+      description='What the library shows as its login screen, a consumer can have by asking for it — art="network" renders the glow, the dot grid and the pulsing node diagram from palette tokens only, so it follows all six schemes, and it holds still under prefers-reduced-motion. brandIcon / brandName put the icon tile and product name at the top, [strctLoginBrandMeta] adds what this install is beside them — an “APPLIANCE” or “EVALUATION” pill, on the brand&apos;s own line rather than in the tagline — tagline is the kicker above your own copy, and [strctLoginStatus] is projected at the aside&apos;s foot for the “is the appliance reachable” strip. art="grid" keeps the glow and grid without the diagram.'
       code='<strct-login split art="network" brandIcon="hexagon" brandName="HYPERSTRUCT" tagline="Datacenter operations">…</strct-login>'
     >
       <div class="login-stage">
@@ -181,6 +183,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           tagline="Datacenter operations"
           [maxWidth]="760"
         >
+          <strct-badge strctLoginBrandMeta status="accent">APPLIANCE</strct-badge>
           <ng-container strctLoginAside>
             <h2 style="margin: 0 0 12px; font-size: 22px; line-height: 1.15; font-weight: 700;">
               Command your infrastructure.

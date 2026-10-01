@@ -22,6 +22,7 @@ import {
   StrctSearchbox,
   StrctHotkeysService,
   StrctHotkeysHelp,
+  StrctButton,
 } from 'strct';
 import { COMPONENT_COUNT, DOCS, GUIDES, SCENARIOS } from './docs/registry';
 import { CommandPalette, CommandPaletteService } from './ui/command-palette';
@@ -47,6 +48,7 @@ interface NavGroup {
     RouterLink,
     StrctShell,
     StrctHeader,
+    StrctButton,
     StrctFooter,
     StrctVerticalNav,
     StrctNavItem,

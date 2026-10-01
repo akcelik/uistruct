@@ -19,7 +19,24 @@
 >   selection directly so an external write emits no `selectionChange`, while a user's own pick
 >   still does.
 >
-> Still open: **FR-49-06, 18, 19**.
+> **Every item in this document has shipped.** FR-49-06, 18 and 19 closed it in **5.6.0
+> (2026-10-01)**:
+>
+> - **06** `icon` before the heading; a tooltip per control through `labels` (measured: minimise
+>   carries "the session stays connected" while its name stays "Minimize", and a control without a
+>   hint shows none); the title bar is clamped (measured: after 60 hard moves into the corner, 48px
+>   of the bar is still on screen and the top edge is 0); `titleDblclick="none"` with
+>   `(titleDblclicked)`; and the dock takes an `[strctWindowDockItem]` template (measured: the chip
+>   reads "OK APP01 · console" with its status dot) plus `restoreMode="request"`.
+> - **18** all four: a `flat` button in `.strct-header` takes the header's foreground (measured
+>   `rgb(255 255 255 / 0.65)` inside against `rgba(0, 0, 0, 0.62)` outside, and the showcase's own
+>   header links now use it); `strct-theme-switcher [tone="surface"]` (measured: the same component
+>   draws `rgba(0, 0, 0, 0.9)` on a surface and `rgba(255, 255, 255, 0.9)` in the header);
+>   `strct-dropdown [focusable]` gives a popover's rows real tab stops (measured `tabindex="0"`
+>   against a menu's `-1`); and `strct-popover [maxWidth]` (measured 360px).
+> - **19** `[strctLoginBrandMeta]` (measured: "APPLIANCE" centred on the brand name's line, after
+>   it, and an empty slot is `display: none`) and `strct-input-otp [fill]` (measured: a 280px row
+>   of 40px boxes becomes a 320px row of 47px boxes).
 >
 > **FR-49-05 and 20 SHIPPED in 5.5.0 (2026-09-30)** — the progress bar and the small ones.
 >

@@ -5,6 +5,52 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.0] - 2026-10-01
+
+The last of the FR-49 backlog: **FR-49-06, 18, 19**. With it, every item
+HyperStruct's 5.0.0 adoption raised — eleven bugs and twenty feature requests —
+has shipped.
+
+### Added
+
+- **`strct-window`: the rest of what a console window needs** (FR-49-06).
+  **`icon`** puts a mark before the heading, as `strct-page-header` has.
+  **`labels.minimizeHint` / `maximizeHint` / `restoreHint` / `closeHint`** give
+  each control a tooltip for what its name cannot carry — the console's
+  minimise means _"the session stays connected"_. **`titleDblclick="none"`**
+  leaves the double-click to the consumer, with **`(titleDblclicked)`** firing
+  either way. **`strct-window-dock`** takes an **`[strctWindowDockItem]`**
+  template (a status dot, a count — the window is its context) and a
+  **`restoreMode="request"`** that hands the restore to the app through
+  **`(restoreRequest)`**, for "one open window at a time".
+- **`strct-dropdown [focusable]`** (FR-49-18). A popover's rows carried a
+  menu's `tabindex="-1"`, so a theme switcher or a filter inside one was out of
+  keyboard reach entirely. With `focusable` the rows keep a real tab stop; a
+  menu is still roved with the arrow keys.
+- **`strct-popover [maxWidth]`** (FR-49-18), with `--strct-popover-max-w` as
+  the same knob in CSS. The 320px default suits a sentence; an alarm list or a
+  drift table wants 340–360.
+- **`strct-theme-switcher [tone="surface"]`** (FR-49-18). The switcher read
+  only on `--hdr`; on a raised surface — a user menu, a settings popover — it
+  now takes the body text colour. Measured: the same component draws
+  `rgba(0, 0, 0, 0.9)` on a surface and `rgba(255, 255, 255, 0.9)` in the header.
+- **`[strctLoginBrandMeta]`** (FR-49-19). What this install is — an
+  _"APPLIANCE"_ pill — on the brand's own line, beside `brandName`.
+- **`strct-input-otp [fill]`** (FR-49-19). The boxes spread across the row, so
+  the code lines up with a full-width button under it. Measured: 280px with
+  40px boxes becomes 320px with 47px boxes.
+
+### Fixed
+
+- **A window could be dragged out of reach** (FR-49-06). The title bar is the
+  only handle a window has, so it is now clamped: after 60 hard moves into the
+  top-left corner, 48px of the bar remains on screen and the top edge stays at 0.
+- **`.strct-header` did not re-tone the buttons projected into it** (FR-49-18),
+  so an app's header triggers had to be native buttons with `color: inherit`. A
+  `flat` button in the header now takes the header's own foreground — measured
+  `rgb(255 255 255 / 0.65)` inside against `rgba(0, 0, 0, 0.62)` outside. The
+  showcase's own header links use it, and their hand-written CSS is deleted.
+
 ## [5.5.0] - 2026-09-30
 
 ### Added

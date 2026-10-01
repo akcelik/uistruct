@@ -55,9 +55,18 @@ import { StrctThemeService } from './theme.service';
       </button>
     </div>
   `,
-  host: { class: 'strct-ts' },
+  host: {
+    class: 'strct-ts',
+    '[class.strct-ts--surface]': "tone() === 'surface'",
+  },
   styles: [
     `
+      /* The switcher reads on the header by default; on a raised surface — a
+         user menu, a settings popover — tone="surface" points it at the
+         body text colour instead, and everything else follows. */
+      .strct-ts--surface {
+        --strct-ts-fg: var(--t1);
+      }
       .strct-ts {
         display: inline-flex;
         align-items: center;
@@ -77,7 +86,7 @@ import { StrctThemeService } from './theme.service';
         padding: 0;
         cursor: pointer;
         background: transparent;
-        border: 1.5px solid color-mix(in srgb, var(--hdr-fg) 40%, transparent);
+        border: 1.5px solid color-mix(in srgb, var(--strct-ts-fg, var(--hdr-fg)) 40%, transparent);
         transition:
           transform 0.15s ease,
           border-color 0.15s ease;
@@ -92,8 +101,8 @@ import { StrctThemeService } from './theme.service';
         display: block;
       }
       .strct-ts__dot--on {
-        border-color: var(--hdr-fg);
-        box-shadow: 0 0 0 2px color-mix(in srgb, var(--hdr-fg) 28%, transparent);
+        border-color: var(--strct-ts-fg, var(--hdr-fg));
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--strct-ts-fg, var(--hdr-fg)) 28%, transparent);
       }
 
       .strct-ts__pill {
@@ -101,7 +110,7 @@ import { StrctThemeService } from './theme.service';
         padding: 2px;
         gap: 2px;
         border-radius: 7px;
-        background: color-mix(in srgb, var(--hdr-fg) 12%, transparent);
+        background: color-mix(in srgb, var(--strct-ts-fg, var(--hdr-fg)) 12%, transparent);
       }
       .strct-ts__pbtn {
         display: inline-flex;
@@ -113,14 +122,14 @@ import { StrctThemeService } from './theme.service';
         border-radius: 5px;
         cursor: pointer;
         background: transparent;
-        color: color-mix(in srgb, var(--hdr-fg) 65%, transparent);
+        color: color-mix(in srgb, var(--strct-ts-fg, var(--hdr-fg)) 65%, transparent);
         transition:
           background 0.14s ease,
           color 0.14s ease;
       }
       .strct-ts__pbtn--on {
-        background: color-mix(in srgb, var(--hdr-fg) 20%, transparent);
-        color: var(--hdr-fg);
+        background: color-mix(in srgb, var(--strct-ts-fg, var(--hdr-fg)) 20%, transparent);
+        color: var(--strct-ts-fg, var(--hdr-fg));
       }
       .strct-ts__dot:focus-visible,
       .strct-ts__pbtn:focus-visible {
@@ -134,6 +143,12 @@ export class StrctThemeSwitcher {
   protected readonly theme = inject(StrctThemeService);
 
   /** Labels for the Light / Dark mode buttons (localizable). */
+  /**
+   * Where the switcher sits. `header` (the default) reads on `--hdr`;
+   * `surface` is a raised one — a user menu, a settings popover — where the
+   * header's foreground would be invisible.
+   */
+  readonly tone = input<'header' | 'surface'>('header');
   readonly lightLabel = input('Light');
   readonly darkLabel = input('Dark');
 }

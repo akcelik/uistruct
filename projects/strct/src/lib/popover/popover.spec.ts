@@ -189,3 +189,19 @@ describe('StrctPopover', () => {
     expect(document.activeElement).toBe(last);
   });
 });
+
+// FR-49-18 — the alarm bell and drift panels want 340–360px.
+describe('StrctPopover — maxWidth', () => {
+  it('is the default until one is given, and then sets the panel’s own knob', () => {
+    const fixture = TestBed.createComponent(StrctPopover);
+    fixture.componentInstance.open.set(true);
+    fixture.detectChanges();
+    const panel = () =>
+      (fixture.nativeElement as HTMLElement).querySelector('.strct-popover__panel') as HTMLElement;
+    expect(panel().style.getPropertyValue('--strct-popover-max-w')).toBe('');
+
+    fixture.componentRef.setInput('maxWidth', 360);
+    fixture.detectChanges();
+    expect(panel().style.getPropertyValue('--strct-popover-max-w')).toBe('360px');
+  });
+});

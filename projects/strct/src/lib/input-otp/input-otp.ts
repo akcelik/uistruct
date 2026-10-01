@@ -26,7 +26,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => StrctInputOtp), multi: true },
   ],
   template: `
-    <div class="strct-otp">
+    <div class="strct-otp" [class.strct-otp--fill]="fill()">
       @for (i of indices(); track i) {
         @if (groupSize() > 0 && i > 0 && i % groupSize() === 0) {
           <span class="strct-otp__sep" aria-hidden="true">–</span>
@@ -53,6 +53,16 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         display: inline-flex;
         align-items: center;
         gap: 8px;
+      }
+      /* fill — the boxes spread across the row, so they line up with a
+         full-width Verify button under them instead of huddling at the start. */
+      .strct-otp--fill {
+        display: flex;
+        width: 100%;
+      }
+      .strct-otp--fill .strct-otp__box {
+        flex: 1;
+        min-width: 0;
       }
       /* Group separator — mirrors how authenticator apps display the code. */
       .strct-otp__sep {
@@ -104,6 +114,11 @@ export class StrctInputOtp implements ControlValueAccessor {
    * `nnn – nnn`, mirroring how authenticator apps display the code.
    */
   readonly groupSize = input(0);
+  /**
+   * Spread the boxes across the full width, so the code lines up with a
+   * full-width button under it rather than huddling at the start of the row.
+   */
+  readonly fill = input(false, { transform: booleanAttribute });
 
   readonly slots = signal<string[]>([]);
   readonly isDisabled = signal(false);

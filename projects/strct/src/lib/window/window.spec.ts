@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { StrctWindow, StrctWindowBounds, StrctWindowDock } from './window';
+import { StrctWindow, StrctWindowBounds, StrctWindowDock, StrctWindowDockItem } from './window';
 
 @Component({
   imports: [StrctWindow, StrctWindowDock],
@@ -233,5 +233,143 @@ describe('StrctWindow — closeOnOutside', () => {
     fixture.detectChanges();
     expect(host.min()).toBe(false);
     el.remove();
+  });
+});
+
+// FR-49-06 — the rest of what a console window needs.
+@Component({
+  imports: [StrctWindow, StrctWindowDock, StrctWindowDockItem],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
+    <strct-window
+      [(open)]="open"
+      [(minimized)]="min"
+      [(bounds)]="bounds"
+      heading="APP01"
+      [icon]="icon()"
+      [titleDblclick]="dbl()"
+      [labels]="labels"
+      (titleDblclicked)="dblCount = dblCount + 1"
+    >
+      <p>screen</p>
+    </strct-window>
+    <strct-window-dock [restoreMode]="restoreMode()" (restoreRequest)="asked = asked + 1">
+      <ng-template strctWindowDockItem let-w>
+        <span class="chip-custom">{{ w.heading() }} · live</span>
+      </ng-template>
+    </strct-window-dock>
+  `,
+})
+class ConsoleHost {
+  open = signal(true);
+  min = signal(false);
+  bounds = signal({ x: 40, y: 40, width: 400, height: 300 });
+  icon = signal('');
+  dbl = signal<'maximize' | 'none'>('maximize');
+  restoreMode = signal<'dock' | 'request'>('dock');
+  labels = { minimizeHint: 'stays connected', closeHint: 'ends the session' };
+  dblCount = 0;
+  asked = 0;
+}
+
+describe('StrctWindow — labels, icon, clamping, double-click and the dock', () => {
+  function build() {
+    const fixture = TestBed.createComponent(ConsoleHost);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement, host: fixture.componentInstance };
+  }
+  const buttons = (el: HTMLElement) => [...el.querySelectorAll<HTMLElement>('.strct-window__btn')];
+
+  it('gives each control a tooltip of its own, without touching its name', () => {
+    const { el } = build();
+    const [minimize, maximize, close] = buttons(el);
+    expect(minimize.getAttribute('aria-label')).toBe('Minimize');
+    expect(minimize.getAttribute('title')).toBe('stays connected');
+    // A control with no hint shows none rather than repeating its name.
+    expect(maximize.getAttribute('title')).toBeNull();
+    expect(close.getAttribute('title')).toBe('ends the session');
+  });
+
+  it('takes a leading icon', () => {
+    const { fixture, el, host } = build();
+    expect(el.querySelector('.strct-window__icon')).toBeNull();
+    host.icon.set('monitor');
+    fixture.detectChanges();
+    const icon = el.querySelector('.strct-window__icon')!;
+    expect(icon).toBeTruthy();
+    // It leads the heading.
+    expect(icon.nextElementSibling!.className).toContain('strct-window__heading');
+  });
+
+  it('keeps the title bar reachable when the window is moved off the edge', () => {
+    const { fixture, host } = build();
+    const title = (fixture.nativeElement as HTMLElement).querySelector(
+      '.strct-window__title',
+    ) as HTMLElement;
+    // Alt+arrows move it; walk it hard into the top-left.
+    for (let i = 0; i < 40; i++) {
+      title.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowUp',
+          altKey: true,
+          shiftKey: true,
+          bubbles: true,
+        }),
+      );
+      title.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowLeft',
+          altKey: true,
+          shiftKey: true,
+          bubbles: true,
+        }),
+      );
+    }
+    fixture.detectChanges();
+    const r = host.bounds();
+    expect(r.y).toBeGreaterThanOrEqual(0);
+    // Part of the bar stays on screen: x may be negative, never past the window.
+    expect(r.x + r.width).toBeGreaterThanOrEqual(48);
+  });
+
+  it('lets the consumer own the double-click', () => {
+    const { fixture, el, host } = build();
+    const title = el.querySelector('.strct-window__title') as HTMLElement;
+    title.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    fixture.detectChanges();
+    expect(host.dblCount).toBe(1);
+    expect(el.querySelector('.strct-window__frame--max')).toBeTruthy();
+
+    // "none": the event still arrives, the window does not change.
+    host.dbl.set('none');
+    fixture.detectChanges();
+    title.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    fixture.detectChanges();
+    expect(host.dblCount).toBe(2);
+    expect(el.querySelector('.strct-window__frame--max')).toBeTruthy();
+  });
+
+  it('draws the dock chip from the template and can hand the restore back', () => {
+    const { fixture, el, host } = build();
+    host.min.set(true);
+    fixture.detectChanges();
+    const chip = el.querySelector('.strct-windock__open') as HTMLElement;
+    expect(chip.textContent!.trim()).toBe('APP01 · live');
+
+    // request: the dock asks and leaves the window where it is.
+    host.restoreMode.set('request');
+    fixture.detectChanges();
+    chip.click();
+    fixture.detectChanges();
+    expect(host.asked).toBe(1);
+    expect(host.min()).toBe(true);
+
+    // dock: it asks and restores.
+    host.restoreMode.set('dock');
+    fixture.detectChanges();
+    (el.querySelector('.strct-windock__open') as HTMLElement).click();
+    fixture.detectChanges();
+    expect(host.asked).toBe(2);
+    expect(host.min()).toBe(false);
   });
 });

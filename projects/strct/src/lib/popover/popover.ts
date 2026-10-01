@@ -51,6 +51,7 @@ import { focusFirstIn, keepTabInside, restoreFocus, saveFocusedElement } from '.
         role="dialog"
         tabindex="-1"
         [attr.aria-label]="ariaLabel()"
+        [style.--strct-popover-max-w.px]="maxWidth()"
         [strctOverlay]="trigger"
         [strctOverlayPlacement]="placement()"
         (keydown.tab)="onTab($event)"
@@ -74,7 +75,7 @@ import { focusFirstIn, keepTabInside, restoreFocus, saveFocusedElement } from '.
       .strct-popover__panel {
         z-index: var(--z-popover);
         width: max-content;
-        max-width: 320px;
+        max-width: var(--strct-popover-max-w, 320px);
         padding: var(--space-3);
         font-size: 13px;
         color: var(--t1);
@@ -109,6 +110,12 @@ export class StrctPopover {
   readonly placement = input<StrctOverlayPlacement>('bottom-start');
   /** Accessible name of the popover dialog (localizable). */
   readonly ariaLabel = input('Details');
+  /**
+   * How wide the panel may get (px). The default suits a sentence; an alarm
+   * list or a drift table wants 340–360. `--strct-popover-max-w` is the same
+   * knob in CSS, for a panel the consumer does not own.
+   */
+  readonly maxWidth = input<number | null>(null);
   /**
    * Modal-ish usage: move focus into the panel on open, trap Tab inside and
    * hand focus back to the trigger on close. Off by default — a plain popover

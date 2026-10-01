@@ -1345,6 +1345,13 @@ export const DOCS: DocCategory[] = [
         lead: 'Segmented one-time-password boxes with auto-advance, backspace and paste support. Value is the concatenated string. ControlValueAccessor-compatible.',
         inputs: [
           {
+            name: 'fill',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Spread the boxes across the full width, so the code lines up with a full-width button under it rather than huddling at the start of the row.',
+          },
+          {
             name: 'autofocus',
             type: 'boolean',
             default: 'false',
@@ -1864,6 +1871,39 @@ export const DOCS: DocCategory[] = [
         lead: 'Some work lives in a window beside the page: a VM console stays open while the operator browses. It can be moved, resized and minimised, and it comes back from the dock. A modal blocks the page and a drawer is pinned to an edge \u2014 neither is a window.',
         inputs: [
           {
+            name: 'icon',
+            type: 'string',
+            default: `''`,
+            description: 'A leading icon in the title bar, as `strct-page-header [icon]` has.',
+          },
+          {
+            name: 'titleDblclick',
+            type: `'maximize' | 'none'`,
+            default: `'maximize'`,
+            description:
+              'What a double-click on the title bar does. `none` leaves it to the consumer — a console whose content has a real full screen of its own — while `(titleDblclicked)` fires either way.',
+          },
+          {
+            name: 'labels.minimizeHint / maximizeHint / restoreHint / closeHint',
+            type: 'string',
+            default: `''`,
+            description:
+              'A tooltip per control, for what the name cannot carry: the console\u2019s minimise means "the session stays connected". Empty shows none.',
+          },
+          {
+            name: 'restoreMode',
+            type: `'dock' | 'request'`,
+            default: `'dock'`,
+            description:
+              'On `strct-window-dock`: who restores a window when its chip is pressed. `request` only emits `(restoreRequest)`, so an app that allows one open window at a time can close the other first.',
+          },
+          {
+            name: '[strctWindowDockItem]',
+            type: 'template',
+            description:
+              'What a dock chip shows, when the heading is not enough — a status dot, an icon, a count. The window is the template\u2019s context.',
+          },
+          {
             name: 'open / minimized / maximized',
             type: 'boolean',
             default: 'false',
@@ -2095,6 +2135,13 @@ export const DOCS: DocCategory[] = [
         summary: 'Click-to-open menu.',
         lead: 'A click-to-open menu that closes on outside click. Mark the trigger with `strctDropdownTrigger`; project `strct-dropdown-item` entries (which can be `critical` or `disabled`). With `popover` the panel holds form controls instead of menu items: inner clicks never close it (only outside click / Escape do) and it announces as a labeled `role="dialog"` — the filter/settings-panel pattern without hand-rolling `strctOverlay`.',
         inputs: [
+          {
+            name: 'focusable',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Only with `popover`: the panel\u2019s rows are controls in their own right — a theme switcher, a filter — so they keep a real tab stop instead of the `tabindex="-1"` a menu\u2019s items carry, which put them out of keyboard reach entirely.',
+          },
           {
             name: 'align',
             type: `'start' | 'end'`,
@@ -4863,6 +4910,13 @@ export const DOCS: DocCategory[] = [
         lead: 'The generic anchored overlay primitive behind menus, signposts and rich pickers: project any content and mark a native `<button>` with `strctPopoverTrigger`. `open` is two-way, so the panel can also be driven from the outside. Positioning, edge-flip and scroll/resize tracking come from `strctOverlay`; the panel is `position: fixed`, so it escapes ancestor overflow clipping.',
         inputs: [
           {
+            name: 'maxWidth',
+            type: 'number | null',
+            default: 'null',
+            description:
+              'How wide the panel may get (px). The 320px default suits a sentence; an alarm list or a drift table wants 340–360. `--strct-popover-max-w` is the same knob in CSS.',
+          },
+          {
             name: 'open',
             type: 'boolean',
             default: 'false',
@@ -5247,6 +5301,12 @@ export const DOCS: DocCategory[] = [
         summary: 'Centered or split login scaffold.',
         lead: 'A login page scaffold in centered or split layouts. In split mode, project a decorative aside via `strctLoginAside` and the form via `strctLoginMain`.',
         inputs: [
+          {
+            name: '[strctLoginBrandMeta]',
+            type: 'slot',
+            description:
+              'What this install is — an "APPLIANCE" or "EVALUATION" pill — on the brand\u2019s own line, beside `brandName`, rather than in the tagline under it.',
+          },
           {
             name: 'maxWidth',
             type: 'number',

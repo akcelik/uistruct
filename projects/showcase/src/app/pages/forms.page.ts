@@ -660,11 +660,20 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="otp"
       heading="Input OTP"
-      description="One-time-password boxes with auto-advance, backspace and paste."
-      code='<strct-input-otp [length]="6" [(ngModel)]="code" />'
+      description="One-time-password boxes with auto-advance, backspace and paste. fill spreads them across the row, so the code lines up with a full-width button under it instead of huddling at the start."
+      code='<strct-input-otp [length]="6" [(ngModel)]="code" fill />'
     >
       <strct-input-otp [length]="6" [ngModel]="code()" (ngModelChange)="code.set($event)" />
       <span class="echo">value: {{ code() || '—' }}</span>
+      <div style="width: 100%; max-width: 320px; margin-top: 16px">
+        <strct-input-otp
+          [length]="6"
+          fill
+          [ngModel]="code2()"
+          (ngModelChange)="code2.set($event)"
+        />
+        <button strct-button variant="primary" style="width: 100%; margin-top: 10px">Verify</button>
+      </div>
     </app-demo>
 
     <app-demo
@@ -927,6 +936,7 @@ export class FormsPage {
   protected readonly score = signal(3);
   protected readonly labels = signal<string[]>(['production', 'eu-west']);
   protected readonly code = signal('');
+  protected readonly code2 = signal('');
   protected readonly fan = signal(45);
   protected readonly temp = signal(60);
   protected readonly phone = signal('');
