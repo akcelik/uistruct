@@ -196,13 +196,22 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="popover"
       heading="Popover"
-      description="The generic anchored panel behind menus, signposts and rich pickers — a trigger button plus any projected content, edge-flipped and scroll-tracked by the overlay. Plain popovers never steal focus; the trap variant moves focus inside on open, cycles Tab and hands focus back on close."
+      description="The generic anchored panel behind menus, signposts and rich pickers — a trigger button plus any projected content, edge-flipped and scroll-tracked by the overlay. Plain popovers never steal focus; the trap variant moves focus inside on open, cycles Tab and hands focus back on close. maxWidth widens the panel past its 320px default — what an alarm list or a drift table needs — and --strct-popover-max-w is the same knob in CSS."
       code='<strct-popover placement="bottom-start"><button strctPopoverTrigger>…</button>…</strct-popover>'
     >
       <strct-popover placement="bottom-start" ariaLabel="Host details">
         <button strct-button size="sm" strctPopoverTrigger>Host details</button>
         <h4>hv-02.fra.corp</h4>
         <p>cluster-01 · 128 vCPUs · 768 GiB — any projected content fits here.</p>
+      </strct-popover>
+
+      <strct-popover placement="bottom-start" ariaLabel="Recent alarms" [maxWidth]="360">
+        <button strct-button size="sm" strctPopoverTrigger>Recent alarms (360px)</button>
+        <h4>Recent alarms</h4>
+        <p>
+          A list of alarms, each with a host and a time, needs more than a sentence's width — the
+          default 320px wraps every row.
+        </p>
       </strct-popover>
 
       <strct-popover placement="bottom-end" ariaLabel="Edit tags" trap>

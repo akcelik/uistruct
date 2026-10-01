@@ -47,7 +47,7 @@ interface ContrastRow {
     <app-demo
       anchor="palettes"
       heading="Palettes & themes"
-      description="Six surface schemes from three palettes × two modes. Try the switcher — it persists your choice."
+      description="Six surface schemes from three palettes × two modes. Try the switcher — it persists your choice. It reads on the header by default; on a raised surface — a user menu, a settings popover — tone=“surface” points it at the body text colour instead, which is what this card uses."
     >
       <strct-card>
         <strct-card-header>
@@ -56,7 +56,7 @@ interface ContrastRow {
         </strct-card-header>
         <strct-card-block>
           <div class="switch-row">
-            <strct-theme-switcher />
+            <strct-theme-switcher tone="surface" />
             <span class="hint"
               >Palette dots set the hue family; the pill toggles light / dark.</span
             >

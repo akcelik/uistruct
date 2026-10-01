@@ -454,3 +454,51 @@ describe('StrctDropdownItem — trailing action', () => {
     expect(host.deleted()).toBe('');
   });
 });
+
+// FR-49-18 — a popover's rows carried a menu's tabindex="-1", so a control
+// inside one was out of keyboard reach entirely.
+describe('StrctDropdown — popover [focusable]', () => {
+  @Component({
+    imports: [StrctDropdown, StrctDropdownTrigger, StrctDropdownItem],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-dropdown [popover]="asPanel()" popoverLabel="Appearance" [focusable]="walkable()">
+        <button strctDropdownTrigger type="button" class="t">Appearance</button>
+        <strct-dropdown-item class="row">Theme</strct-dropdown-item>
+        <strct-dropdown-item class="row2" disabled hint="Not on this plan"
+          >Density</strct-dropdown-item
+        >
+      </strct-dropdown>
+    `,
+  })
+  class Host {
+    asPanel = signal(true);
+    walkable = signal(false);
+  }
+
+  function open(fixture: ReturnType<typeof TestBed.createComponent<Host>>) {
+    const el = fixture.nativeElement as HTMLElement;
+    (el.querySelector('.t') as HTMLElement).click();
+    fixture.detectChanges();
+    return el;
+  }
+
+  it('keeps the menu roving by default and gives a focusable panel real tab stops', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    let el = open(fixture);
+    const rows = () =>
+      [...el.querySelectorAll('.strct-dd__item')].map((r) => r.getAttribute('tabindex'));
+    expect(rows()).toEqual(['-1', '-1']);
+
+    fixture.componentInstance.walkable.set(true);
+    fixture.detectChanges();
+    expect(rows()).toEqual(['0', '0']);
+
+    // A menu is still a menu: its rows are roved, not tabbed.
+    fixture.componentInstance.asPanel.set(false);
+    fixture.detectChanges();
+    el = fixture.nativeElement as HTMLElement;
+    expect(rows()).toEqual(['-1', '-1']);
+  });
+});

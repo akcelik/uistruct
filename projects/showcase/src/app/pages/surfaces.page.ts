@@ -52,6 +52,8 @@ import {
   StrctStatusDot,
   StrctCardHeaderLeading,
   StrctCardHeaderMeta,
+  StrctWindowDockItem,
+  StrctThemeSwitcher,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -107,6 +109,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctStatusDot,
     StrctCardHeaderLeading,
     StrctCardHeaderMeta,
+    StrctWindowDockItem,
+    StrctThemeSwitcher,
   ],
   template: `
     <app-page-header
@@ -554,7 +558,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="window"
       heading="Window"
-      description='Some work lives in a window beside the page: a VM console stays open while the operator browses. It can be moved (by the title bar, or Alt+arrows on it), resized from a focusable corner grip (arrows 16px, Shift+arrows 64px), minimised to a dock and brought back from it — and it does not block the page, because a modal does that and a drawer is pinned to an edge. closeOnOutside="minimize" sends it to the dock when the operator clicks the page beside it — a window is never dismissed by an outside click, only set aside. It is a role="dialog" with aria-modal="false" on its own --z-window layer between the tour and the modal, so a modal opened from inside a window still comes up over it. Escape minimises rather than closes, since a window is not dismissed. palette="dark" forces the dark scheme inside while keeping your palette — what a console wants.'
+      description='Some work lives in a window beside the page: a VM console stays open while the operator browses. It can be moved (by the title bar, or Alt+arrows on it), resized from a focusable corner grip (arrows 16px, Shift+arrows 64px), minimised to a dock and brought back from it — and it does not block the page, because a modal does that and a drawer is pinned to an edge. icon puts a mark before the heading; labels carries a tooltip per control, for a minimise that means "stays connected"; the title bar is clamped so a window dragged at an edge can always be dragged back; titleDblclick="none" leaves the double-click to the consumer, which a console with a real full screen of its own wants, and (titleDblclicked) still fires. A dock chip can be an <ng-template strctWindowDockItem> — a status dot, a count — and restoreMode="request" hands the restore to the app, for one open window at a time. closeOnOutside="minimize" sends it to the dock when the operator clicks the page beside it — a window is never dismissed by an outside click, only set aside. It is a role="dialog" with aria-modal="false" on its own --z-window layer between the tour and the modal, so a modal opened from inside a window still comes up over it. Escape minimises rather than closes, since a window is not dismissed. palette="dark" forces the dark scheme inside while keeping your palette — what a console wants.'
       code='<strct-window [(open)]="open" [(minimized)]="min" heading="APP01" palette="dark">…</strct-window>&#10;<strct-window-dock />'
     >
       <div class="stack" style="width: 100%;">
@@ -571,15 +575,24 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           >
             closeOnOutside: {{ dismissOutside() ? 'minimize' : 'none' }}
           </button>
-          <strct-window-dock />
+          <strct-window-dock>
+            <ng-template strctWindowDockItem let-w>
+              <strct-status-dot status="success" size="sm" />
+              {{ w.heading() }}
+            </ng-template>
+          </strct-window-dock>
         </div>
         <strct-window
           [(open)]="consoleOpen"
           [(minimized)]="consoleMin"
           [(bounds)]="consoleBounds"
           heading="APP01 · console"
+          icon="monitor"
           palette="dark"
+          titleDblclick="none"
+          [labels]="windowLabels"
           [closeOnOutside]="dismissOutside() ? 'minimize' : 'none'"
+          (titleDblclicked)="windowEcho.set('the console answers the double-click itself')"
           [minWidth]="360"
           [minHeight]="240"
           (closed)="windowEcho.set('closed')"
@@ -682,7 +695,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="dropdown-popover"
       owner="dropdown"
       heading="Popover mode — filter / settings panels"
-      description="With popover, the panel holds form controls: inner clicks never close it (only outside click / Escape), and it announces as a labeled dialog instead of a menu."
+      description="With popover, the panel holds form controls: inner clicks never close it (only outside click / Escape), and it announces as a labeled dialog instead of a menu. A menu's rows are roved with the arrow keys and stay out of the Tab order; a panel's rows are controls in their own right, so focusable gives them a real tab stop — without it a strct-theme-switcher in a user menu cannot be reached from the keyboard at all. The switcher itself takes tone=“surface” there, because the header's foreground is invisible on a raised one."
       code='<strct-dropdown popover popoverLabel="Filters">…form controls…</strct-dropdown>'
     >
       <strct-dropdown popover popoverLabel="Alarm filters">
@@ -705,6 +718,18 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       <span style="color: var(--t2); font-size: 12.5px;">
         severity: {{ popoverSeverity() }} · acknowledged: {{ popoverAcked() ? 'shown' : 'hidden' }}
       </span>
+
+      <strct-dropdown popover popoverLabel="Account" focusable align="end">
+        <button strct-button strctDropdownTrigger>
+          <strct-icon name="user" [size]="13" />
+          Ada Lovelace
+        </button>
+        <strct-dropdown-item>Profile</strct-dropdown-item>
+        <strct-dropdown-item>Audit log</strct-dropdown-item>
+        <div style="padding: 6px 4px">
+          <strct-theme-switcher tone="surface" />
+        </div>
+      </strct-dropdown>
     </app-demo>
 
     <app-demo
@@ -1075,6 +1100,11 @@ export class SurfacesPage {
   protected readonly consoleMin = signal(false);
   /** Whether the console minimises when the operator clicks the page beside it. */
   protected readonly dismissOutside = signal(true);
+  /** A tooltip per control: the console's minimise keeps the session. */
+  protected readonly windowLabels = {
+    minimizeHint: 'Minimise — the session stays connected',
+    closeHint: 'Close — the session ends',
+  };
 
   /** Deliberately uneven, so `fill` has something to prove. */
   protected readonly fillCards = [

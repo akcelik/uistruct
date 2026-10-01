@@ -145,6 +145,20 @@ export class StrctShell {
         border-bottom: 1px solid var(--b2);
         color: var(--hdr-fg);
       }
+      /* A button projected into the header sits on --hdr, not on a surface,
+         so the six triggers an app puts there had to be native buttons with
+         color: inherit. The flat variant now takes the header's own
+         foreground — nothing else changes about it. */
+      .strct-header .strct-btn--flat {
+        color: color-mix(in srgb, var(--hdr-fg) 72%, transparent);
+      }
+      .strct-header .strct-btn--flat:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--hdr-fg) 12%, transparent);
+        color: var(--hdr-fg);
+      }
+      .strct-header .strct-btn--flat:focus-visible {
+        outline-color: color-mix(in srgb, var(--hdr-fg) 60%, transparent);
+      }
       .strct-header__drawer-toggle {
         display: none;
         align-items: center;

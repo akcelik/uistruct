@@ -6,6 +6,7 @@ import {
   ElementRef,
   HostListener,
   booleanAttribute,
+  computed,
   inject,
   input,
   signal,
@@ -120,6 +121,13 @@ export class StrctDropdown {
   readonly popover = input(false, { transform: booleanAttribute });
   /** Accessible name of the popover dialog (localizable). */
   readonly popoverLabel = input('Filters');
+  /**
+   * Only with `popover`: the panel's rows are controls in their own right — a
+   * theme switcher, a filter — so they keep a real tab stop instead of the
+   * `tabindex="-1"` a menu's items carry. Without it nothing inside a popover
+   * can be reached from the keyboard at all.
+   */
+  readonly focusable = input(false, { transform: booleanAttribute });
   readonly open = signal(false);
 
   constructor() {
@@ -341,7 +349,7 @@ export class StrctDropdownItemAction {
     '[attr.role]': "selected() === null ? 'menuitem' : 'menuitemradio'",
     '[attr.aria-checked]': 'selected()',
     // A disabled item is skipped — unless it has a hint to be read.
-    '[attr.tabindex]': 'disabled() && !hint() ? null : -1',
+    '[attr.tabindex]': 'tabindex()',
     '[attr.title]': 'hint() || null',
     '[attr.aria-describedby]': 'hint() ? hintId : null',
     '[class.strct-dd__item--hinted]': '!!hint()',
@@ -427,6 +435,17 @@ export class StrctDropdownItem {
   readonly hint = input<string | null | undefined>(null);
 
   protected readonly hintId = `strct-dd-item-${++dropdownItemCounter}-hint`;
+  /** The panel this row belongs to, when it is inside one. */
+  private readonly panel = inject(StrctDropdown, { optional: true });
+  /**
+   * A menu's rows are roved with the arrow keys, so they stay out of the tab
+   * order. A `popover [focusable]` is a panel of real controls, and its rows
+   * keep a tab stop of their own.
+   */
+  protected readonly tabindex = computed<number | null>(() => {
+    if (this.disabled() && !this.hint()) return null;
+    return this.panel?.popover() && this.panel.focusable() ? 0 : -1;
+  });
 
   constructor() {
     // Without pointer-events:none (see the hinted style), a disabled item

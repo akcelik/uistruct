@@ -88,3 +88,16 @@ describe('StrctInputOtp FR-16-05/06', () => {
     expect(fixture.nativeElement.querySelectorAll('.strct-otp__sep').length).toBe(0);
   });
 });
+
+// FR-49-19 — the boxes had to line up with a full-width Verify button.
+describe('StrctInputOtp — fill', () => {
+  it('is opt-in and marks the row', () => {
+    const fixture = TestBed.createComponent(StrctInputOtp);
+    fixture.detectChanges();
+    const row = () => (fixture.nativeElement as HTMLElement).querySelector('.strct-otp')!;
+    expect(row().classList).not.toContain('strct-otp--fill');
+    fixture.componentRef.setInput('fill', true);
+    fixture.detectChanges();
+    expect(row().classList).toContain('strct-otp--fill');
+  });
+});
