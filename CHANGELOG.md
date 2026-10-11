@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.1] - 2026-10-11
+
+### Fixed
+
+- **A checkbox's indeterminate dash was squeezed and off centre.** The hidden
+  check icon stayed in the box's 17px flex row, so the dash — a second flex
+  item — was shrunk from its 9px to **3px painted** and the pair was centred
+  together, leaving the dash **5px right of centre**, hard against the edge.
+  It is now drawn out of flow and centred with `inset: 0; margin: auto`:
+  measured **9.0 × 2.0 with 4.00px clear on each side, 0.00px off centre**. The
+  icon stays in flow, hidden, because taking it out changed the box's baseline
+  and grew a datagrid's header row by 1.5px. It is the select-all checkbox of
+  every `strct-datagrid` — header and group — and any consumer's tri-state box.
+
+### Changed
+
+- `scripts/visual-regression.mjs` can screenshot **a state and a component**,
+  not only a whole page at rest: a route may carry a `prepare` expression (a
+  checked row, an open panel) and a `selector` to crop to, shot at 4×. The new
+  `datagrid-selectall` route covers the select-all checkbox while it is
+  indeterminate. With the old CSS put back it fails at **1.95%**; a full-page
+  shot of the same bug moved **0.002%** of the frame, which is why the gate
+  never saw it.
+
 ## [5.6.0] - 2026-10-01
 
 The last of the FR-49 backlog: **FR-49-06, 18, 19**. With it, every item

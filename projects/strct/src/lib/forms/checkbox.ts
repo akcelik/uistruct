@@ -107,8 +107,21 @@ let checkboxCounter = 0;
       .strct-cb__native:indeterminate + .strct-cb__box strct-icon {
         visibility: hidden;
       }
+      /* Drawn over the box, not laid out inside it. The check icon stays in
+         flow (hidden) so the box keeps the baseline every other state gives
+         it — taking it out of flow grew the header row by 1.5px — and the
+         dash, being out of flow, is neither squeezed by the icon's 11px nor
+         centred together with it: it was 3px wide and 5px right of centre. */
+      .strct-cb__box {
+        position: relative;
+      }
       .strct-cb__native:indeterminate + .strct-cb__box::after {
         content: '';
+        position: absolute;
+        /* inset:0 + margin:auto centres exactly, where a 50% offset plus a
+           translate lands half a pixel off on an odd-sized box. */
+        inset: 0;
+        margin: auto;
         width: 9px;
         height: 2px;
         border-radius: 1px;

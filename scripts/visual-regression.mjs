@@ -43,8 +43,16 @@ const MAX_MEAN_DRIFT = 0.6;
 const UPDATE = process.argv.includes('--update');
 
 /**
- * [name, route, anchor?] — the shot is the viewport at the top of the page, or
- * at `anchor` when one is given, for a case that lives below the fold.
+ * [name, route, anchor?, prepare?, selector?] — the shot is the viewport at
+ * the top of the page, or at `anchor` when one is given, for a case that
+ * lives below the fold.
+ *
+ * `prepare` is a JS expression run before the shot, for a state the page does
+ * not load in: a checked row, an open panel. `selector` crops the shot to one
+ * element (padded, at 4x), because a 17px control is 0.002% of a 1280x900
+ * page — far under any sane threshold, so a full-page shot can never see it
+ * move. Both exist because a broken indeterminate checkbox shipped past a
+ * gate that only ever saw whole pages at rest.
  */
 const ROUTES = [
   ['home', '/'],
@@ -55,6 +63,23 @@ const ROUTES = [
   ['datagrid-progress', '/components/datagrid', '#datagrid'],
   ['line', '/components/line'],
   ['tree', '/components/tree'],
+  // The select-all checkbox in its three states. The indeterminate one is the
+  // reason this gate learned to prepare a state: its dash was squeezed to 3px
+  // and pushed 5px off centre, and no screenshot of a page at rest showed it.
+  [
+    'datagrid-selectall',
+    '/components/datagrid',
+    '#datagrid',
+    `(() => {
+       const grid = [...document.querySelectorAll('strct-datagrid')]
+         .find((g) => g.querySelector('thead strct-checkbox'));
+       if (!grid) return;
+       const boxes = [...grid.querySelectorAll('tbody strct-checkbox input')];
+       boxes.filter((b) => b.checked).forEach((b) => b.click());
+       boxes[0]?.click();
+     })()`,
+    'thead strct-checkbox',
+  ],
 ];
 const SCHEMES = [
   ['arctic-dark', 'arctic', 'dark'],
@@ -189,7 +214,7 @@ try {
         document.addEventListener('DOMContentLoaded', () => document.head.appendChild(s));
       `,
     });
-    for (const [routeName, route, anchor] of ROUTES) {
+    for (const [routeName, route, anchor, prepare, selector] of ROUTES) {
       const name = `${routeName}--${schemeName}`;
       await send('Page.navigate', { url: `http://127.0.0.1:${PORT}${route}` });
       await sleep(2600);
@@ -198,11 +223,32 @@ try {
           ? `(() => { const el = document.querySelector('${anchor}'); if (el) el.scrollIntoView({ block: 'start' }); })()`
           : 'window.scrollTo(0,0)',
       });
+      if (prepare) {
+        await send('Runtime.evaluate', { expression: prepare });
+        await sleep(400);
+      }
       await sleep(300);
-      const shot = await send('Page.captureScreenshot', {
-        format: 'png',
-        clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT, scale: 1 },
-      });
+      let clip = { x: 0, y: 0, width: WIDTH, height: HEIGHT, scale: 1 };
+      if (selector) {
+        const { result } = await send('Runtime.evaluate', {
+          returnByValue: true,
+          expression: `(() => {
+            const el = document.querySelector('${selector}');
+            if (!el) return null;
+            const b = el.getBoundingClientRect();
+            const p = 6;
+            return { x: Math.round(b.x) - p, y: Math.round(b.y) - p,
+                     width: Math.round(b.width) + p * 2, height: Math.round(b.height) + p * 2 };
+          })()`,
+        });
+        if (!result?.value) {
+          rows.push([name, `FAIL ${selector} not found`]);
+          failures += 1;
+          continue;
+        }
+        clip = { ...result.value, scale: 4 };
+      }
+      const shot = await send('Page.captureScreenshot', { format: 'png', clip });
       const current = Buffer.from(shot.data, 'base64');
       const basePath = join(BASE_DIR, `${name}.png`);
       if (UPDATE || !existsSync(basePath)) {
