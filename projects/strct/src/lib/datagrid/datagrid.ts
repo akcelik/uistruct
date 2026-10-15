@@ -1215,8 +1215,14 @@ export class StrctDatagridActionBar {}
       /* BUG-54-01 — a collapsed table paints a clipped cell's background
          inside its padding box only, so --b1 composites over the table's
          --bg-2 under each row line: invisible in dark, 1.7x heavy in light.
-         singleLine clips every cell, so it joins the separate-mode hosts. */
-      .strct-dg-host--singleline .strct-dg,
+         singleLine clips every cell, so it needs separate borders too — but
+         it keeps the table's own overflow clip, which is what rounds the
+         frame's corners (BUG-57-02); only the scrolling hosts below give
+         that up. A host that is both takes the rule that follows. */
+      .strct-dg-host--singleline .strct-dg {
+        border-collapse: separate;
+        border-spacing: 0;
+      }
       .strct-dg-host--sticky .strct-dg,
       .strct-dg-host--virtual .strct-dg,
       .strct-dg-host--bounded .strct-dg {
@@ -1389,13 +1395,37 @@ export class StrctDatagridActionBar {}
       .strct-dg tbody tr:last-child td {
         border-bottom: 0;
       }
+      /* BUG-57-01 — these tints are translucent, so setting them as the
+         background *replaces* the cell's own opaque surface and what shows
+         through is the table's --bg-2: in dark a selected row differed from
+         its neighbours by +0.9 luminance, and hovering a dark row darkened
+         it. Composite over the surface instead, as the sticky rules do. */
       .strct-dg tbody tr:not(.strct-dg__detailrow):hover td {
-        background: var(--acc-s);
+        background: linear-gradient(var(--acc-s), var(--acc-s)) var(--bg-1);
+      }
+      [data-theme='dark'] .strct-dg tbody tr:not(.strct-dg__detailrow):hover td {
+        background: linear-gradient(var(--acc-s), var(--acc-s)) var(--bg-3);
       }
       /* BUG-54-02 — the themed body-cell rules (0,1,2 and 0,2,2) out-specified
          this fill (0,1,1), so a selected row looked unselected. */
       .strct-dg tbody .strct-dg__row--selected td {
-        background: var(--acc-m);
+        background: linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-1);
+      }
+      [data-theme='dark'] .strct-dg tbody .strct-dg__row--selected td {
+        background: linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-3);
+      }
+      /* Hovering a selected row must not read as less selected than resting.
+         The hover rules carry a tr element selector, so these have to as
+         well to reach the same specificity and win on source order. */
+      .strct-dg tbody tr.strct-dg__row--selected:hover td {
+        background:
+          linear-gradient(var(--acc-s), var(--acc-s)),
+          linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-1);
+      }
+      [data-theme='dark'] .strct-dg tbody tr.strct-dg__row--selected:hover td {
+        background:
+          linear-gradient(var(--acc-s), var(--acc-s)),
+          linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-3);
       }
       .strct-dg__sel {
         width: 1%;
@@ -1543,7 +1573,10 @@ export class StrctDatagridActionBar {}
         cursor: pointer;
       }
       .strct-dg tbody .strct-dg__row--active td {
-        background: var(--acc-m);
+        background: linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-1);
+      }
+      [data-theme='dark'] .strct-dg tbody .strct-dg__row--active td {
+        background: linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-3);
       }
       /* Caret on the active row that points toward the open detail pane. */
       .strct-dg__layout--paned .strct-dg__row--active td:last-child {

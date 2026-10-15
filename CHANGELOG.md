@@ -5,6 +5,48 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.12.0] - 2026-10-15
+
+What 5.7.0 drew and what the screen showed were two different things, in both
+of its datagrid fixes (`hyperstruct-5.7-adoption.md`).
+
+### Fixed
+
+- **A selected row was invisible in every dark theme** (BUG-57-01). BUG-54-02
+  set the fill as `background: var(--acc-m)`, and `--acc-m` is translucent: it
+  _replaced_ the cell's own opaque surface, so what showed through was the
+  table's `--bg-2` rather than the row. 5.7.0's release note — "a selected cell
+  reads `--acc-m` in both themes" — was read off the computed style, which is
+  exactly where this hides. Measured in arctic, against a resting cell of
+  (35, 40, 47): a selected cell read (34, 40, 52), **Δ +0.2 luminance**. The
+  checkbox carried the state alone, which is what BUG-54-02 set out to end.
+  The hover tint had the same shape, so hovering a dark row _darkened_ it
+  (Δ −7.7).
+
+  All three row tints — hover, selected and the detail pane's active row — are
+  now composited over the cell's own surface, as the sticky-column rules
+  already were: `linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-1)`, and
+  `var(--bg-3)` in dark. Measured after: a selected cell reads **(46, 55, 66),
+  Δ +14.5** in dark and **(237, 240, 244), Δ −15.3** in light — both within a
+  pixel of the designed tint — and hovering a dark row now lightens it
+  (Δ +6.8). Hovering a _selected_ row no longer reads as less selected than
+  leaving it alone: the two tints stack (Δ +20.4).
+
+- **`singleLine` squared the corners of a grid with no toolbar and no footer**
+  (BUG-57-02). BUG-54-01 moved `singleLine` into the separate-border rule the
+  sticky, virtual and bounded hosts share — and that rule also gives up the
+  table's `overflow: hidden`, which those hosts need for scrolling and sticky
+  cells but `singleLine` does not. Nothing clipped the cells to the frame's
+  9 px corners any more, so the header and last row painted square over the
+  rounded border. `singleLine` now has its own rule with the separate borders
+  alone; a host that is also sticky, virtual or bounded still takes theirs.
+  Measured: the corner is rounded again and the row line stays **+11.3 dark /
+  −13.0 light**, the figure BUG-54-01 was fixed to.
+
+Both are guarded by a spec that reads the component's own stylesheet, and the
+visual baselines for the datagrid pages were re-approved with the fills in
+them.
+
 ## [5.11.0] - 2026-10-15
 
 HyperStruct's assistant chat window, rebuilt on the library (FR-51-01 … 06 of
