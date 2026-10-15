@@ -144,6 +144,21 @@ export interface StrctDatagridColumn {
   editor?: 'text' | 'number' | 'select';
   /** Options for `editor: 'select'` (the library's own option shape). */
   /**
+   * What this column sorts by, when the cell does not show it: "1.5 TB" is
+   * sorted by its bytes, a formatted date by its timestamp. `null` and `''`
+   * are "unread" and sort last in both directions.
+   */
+  sortValue?: (row: StrctRow) => unknown;
+  /** Full control of the order, when a key is not enough. Wins over `sortValue`. */
+  comparator?: (a: StrctRow, b: StrctRow) => number;
+  /** What an export writes for this column; defaults to the stored value. */
+  exportValue?: (row: StrctRow) => unknown;
+  /**
+   * Hidden until the chooser is asked for it — the column exists, it is just
+   * not one of the defaults. A persisted or bound `columnState` wins.
+   */
+  hidden?: boolean;
+  /**
    * The choices an `editor: 'select'` offers. A function is asked per row: a
    * rule that holds a value the host no longer reports lists it for that row
    * only, rather than every row's picker carrying every other row's.
@@ -190,6 +205,9 @@ export interface StrctDatagridColumnState {
   widths?: Record<string, number>;
   hidden?: string[];
   order?: string[];
+  /** The column the operator sorted by, and which way. */
+  sortKey?: string | null;
+  sortDir?: 'asc' | 'desc';
 }
 
 /** One rendered tbody item: a data row, or a group header. */
@@ -2612,7 +2630,7 @@ export class StrctDatagrid {
     const sign = dir === 'asc' ? 1 : -1;
     const sortRows = (rs: StrctRow[]) => {
       const c = [...rs];
-      if (key) c.sort((a, b) => sign * this.compare(a[key], b[key]));
+      if (key) c.sort((a, b) => this.compareRows(a, b, key, sign));
       return c;
     };
     const filtering = this.activeFilters().length > 0 || this.quickTerm() !== '';
@@ -2642,7 +2660,7 @@ export class StrctDatagrid {
     const data = [...this.filteredRows()];
     if (!key) return data;
     const sign = dir === 'asc' ? 1 : -1;
-    return data.sort((a, b) => sign * this.compare(a[key], b[key]));
+    return data.sort((a, b) => this.compareRows(a, b, key, sign));
   });
 
   protected readonly paged = computed(() => {
@@ -3052,6 +3070,12 @@ export class StrctDatagrid {
         this.lazyLoad.emit(state);
       });
     });
+    // The columns' own `hidden` flags, read once they exist — a required input
+    // is not available in the constructor.
+    effect(() => {
+      const cols = this.columns();
+      untracked(() => this.applyDeclaredHidden(cols));
+    });
     // Restore persisted column preferences once, before the first render.
     const persisted = this.readPersistedState();
     if (persisted) this.applyColumnState(persisted);
@@ -3069,7 +3093,10 @@ export class StrctDatagrid {
       const widths = Object.fromEntries(this.columnWidths());
       const hidden = [...this.hiddenColumns()];
       const order = this.columnOrder() ?? undefined;
-      const st: StrctDatagridColumnState = { widths, hidden, order };
+      // A list an operator sorted by Host CPU opened sorted by name again, and
+      // a lazy one asked the server for the wrong order first.
+      const { key: sortKey, dir: sortDir } = this.sort();
+      const st: StrctDatagridColumnState = { widths, hidden, order, sortKey, sortDir };
       const key = JSON.stringify(st);
       untracked(() => {
         if (key === this.lastStateKey) return;
@@ -3100,8 +3127,29 @@ export class StrctDatagrid {
 
   private applyColumnState(st: StrctDatagridColumnState): void {
     this.columnWidths.set(new Map(Object.entries(st.widths ?? {}).map(([k, v]) => [k, Number(v)])));
+    if (st.hidden) this.hiddenDecidedByState = true;
     this.hiddenColumns.set(new Set(st.hidden ?? []));
     this.columnOrder.set(st.order?.length ? [...st.order] : null);
+    if (st.sortKey !== undefined) this.sort.set({ key: st.sortKey, dir: st.sortDir ?? 'asc' });
+  }
+
+  /** Whether a persisted or bound state has already decided what is hidden. */
+  private hiddenDecidedByState = false;
+  /** Whether the columns' own `hidden` flags have been read (once). */
+  private declaredHiddenApplied = false;
+
+  /**
+   * Columns the consumer declared hidden — the default for a column no state
+   * mentions. A list that shows five of twenty columns says so on the columns,
+   * rather than seeding `columnState` and reaching into the library's storage
+   * key to keep from overriding what the operator chose.
+   */
+  private applyDeclaredHidden(cols: readonly StrctDatagridColumn[]): void {
+    if (this.declaredHiddenApplied || this.hiddenDecidedByState) return;
+    this.declaredHiddenApplied = true;
+    const declared = cols.filter((c) => c.hidden).map((c) => c.key);
+    if (!declared.length) return;
+    this.hiddenColumns.update((set) => new Set([...set, ...declared]));
   }
 
   /**
@@ -3110,16 +3158,31 @@ export class StrctDatagrid {
    */
   toCSV(): string {
     const hidden = this.hiddenColumns();
-    const cols = this.columns().filter((c) => !hidden.has(c.key));
+    // The user's order, as the xlsx export already used: the same grid wrote
+    // its columns two different ways.
+    const cols = this.orderedColumns().filter((c) => !hidden.has(c.key));
     const esc = (v: unknown): string => {
-      const s = v == null ? '' : String(v);
+      let s = v == null ? '' : String(v);
+      // A cell that opens with one of these is a formula to a spreadsheet, so
+      // a VM named "=HYPERLINK(…)" ran when the export was opened. A leading
+      // apostrophe is the spreadsheet's own "this is text".
+      if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
       return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
     const data = this.lazy() ? this.rows() : this.sorted();
     return [
       cols.map((c) => esc(c.label)).join(','),
-      ...data.map((r) => cols.map((c) => esc(r[c.key])).join(',')),
+      ...data.map((r) => cols.map((c) => esc(this.exportValueOf(r, c))).join(',')),
     ].join('\n');
+  }
+
+  /**
+   * What an export writes for a cell: what the column says, else the stored
+   * value. A templated cell shows "2 h 15 m" and stored 8100; without this the
+   * export carries the seconds, an enum code or a bare `true`.
+   */
+  private exportValueOf(row: StrctRow, col: StrctDatagridColumn): unknown {
+    return col.exportValue ? col.exportValue(row) : row[col.key];
   }
 
   /**
@@ -3133,7 +3196,7 @@ export class StrctDatagrid {
     const data = this.lazy() ? this.rows() : this.sorted();
     return buildXlsx(
       cols.map((c) => c.label),
-      data.map((r) => cols.map((c) => r[c.key] as XlsxValue)),
+      data.map((r) => cols.map((c) => this.exportValueOf(r, c) as XlsxValue)),
     );
   }
 
@@ -3389,8 +3452,38 @@ export class StrctDatagrid {
     this.selectionChange.emit([...fresh, ...offData]);
   }
 
+  /**
+   * One row's sort key for a column: what the column says to sort by, else the
+   * stored value. A cell that shows "1.5 TB" sorts as text without this, which
+   * puts it before "900 GB"; a date written by toLocaleString sorts across
+   * days and AM/PM by its characters.
+   */
+  private sortKeyOf(row: StrctRow, col: StrctDatagridColumn | undefined, key: string): unknown {
+    return col?.sortValue ? col.sortValue(row) : row[key];
+  }
+
+  /** The column a key belongs to — the comparator and the sort key need it. */
+  private columnOf(key: string): StrctDatagridColumn | undefined {
+    return this.columns().find((c) => c.key === key);
+  }
+
+  /** Compare two rows by a column, honouring its comparator and nulls-last. */
+  private compareRows(a: StrctRow, b: StrctRow, key: string, sign: number): number {
+    const col = this.columnOf(key);
+    if (col?.comparator) return sign * col.comparator(a, b);
+    const av = this.sortKeyOf(a, col, key);
+    const bv = this.sortKeyOf(b, col, key);
+    // An unread value is neither the smallest nor the largest: it is not an
+    // answer at all, so it goes last whichever way the column is sorted.
+    const aEmpty = av == null || av === '';
+    const bEmpty = bv == null || bv === '';
+    if (aEmpty || bEmpty) return aEmpty && bEmpty ? 0 : aEmpty ? 1 : -1;
+    return sign * this.compare(av, bv);
+  }
+
   private compare(a: unknown, b: unknown): number {
     if (typeof a === 'number' && typeof b === 'number') return a - b;
+    if (a instanceof Date && b instanceof Date) return a.getTime() - b.getTime();
     return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true });
   }
 }

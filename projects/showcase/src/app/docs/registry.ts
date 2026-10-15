@@ -3363,6 +3363,25 @@ export const DOCS: DocCategory[] = [
         lead: 'A richer grid with sorting, selection, batch actions, pagination and expandable rows. Columns can be `sortable` and aligned. Use `*strctCell="key"` templates for custom cells (status pills, links, action buttons), and set `rowId` so selection / expansion survive live data refreshes.',
         inputs: [
           {
+            name: 'columns[].sortValue / columns[].comparator',
+            type: '(row) => unknown / (a, b) => number',
+            description:
+              'What a column sorts by when the cell does not show it: "1.5 TB" by its bytes, a formatted date by its timestamp. `comparator` takes full control and wins. `null` and `""` are unread — neither smallest nor largest — so they sort **last in both directions**.',
+          },
+          {
+            name: 'columns[].exportValue',
+            type: '(row) => unknown',
+            description:
+              'What `toCSV()` / `toXLSX()` write for this column; the stored value by default. A templated cell shows "2 h 15 m" and stores 8100 — the export carried the seconds.',
+          },
+          {
+            name: 'columns[].hidden',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'The column starts hidden and the chooser lists it unticked — the default for a column no persisted or bound `columnState` mentions, so a list can show five of twenty without seeding state or reaching into the library’s storage key.',
+          },
+          {
             name: 'columns[].editorOptions',
             type: 'StrctOption[] | ((row) => StrctOption[])',
             description:
