@@ -124,6 +124,19 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="badge-tone"
+      owner="badge"
+      heading="A tone of your own"
+      description="The five statuses mean something: green, amber and red are a state. Where a badge says which product or tenant a row belongs to, give it a colour instead — [tone] takes a token or any CSS colour, the text takes it and the border a 30% wash of it. A rule that already selects the badges can set --strct-badge-fg, --strct-badge-border and --strct-badge-on instead. The colour is yours, so its contrast is yours to check."
+      code='<strct-badge tone="var(--prod-acc)">Backup</strct-badge>'
+    >
+      <strct-badge tone="var(--acc)">Manager</strct-badge>
+      <strct-badge tone="var(--success)">Backup</strct-badge>
+      <strct-badge tone="var(--warning)">Site Recovery</strct-badge>
+      <strct-badge tone="var(--success)" solid>Backup</strct-badge>
+    </app-demo>
+
+    <app-demo
       anchor="buttongroup"
       heading="Button group"
       description="Segmented buttons joined into one control, plus square icon-only buttons."

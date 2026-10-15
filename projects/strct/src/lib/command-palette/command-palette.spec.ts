@@ -16,6 +16,7 @@ const ITEMS: StrctCommandItem[] = [
     [(open)]="open"
     [(query)]="q"
     [filter]="filter()"
+    [sectionOrder]="order()"
     [loading]="loading()"
     [maxResults]="maxResults()"
     (picked)="last = $event"
@@ -26,6 +27,7 @@ class HostComponent {
   open = signal(false);
   q = signal('');
   filter = signal(true);
+  order = signal<readonly string[]>([]);
   loading = signal(false);
   maxResults = signal(50);
   last: StrctCommandItem | null = null;
@@ -36,6 +38,7 @@ function setup(
   opts: {
     items?: StrctCommandItem[];
     filter?: boolean;
+    order?: readonly string[];
     loading?: boolean;
     maxResults?: number;
   } = {},
@@ -45,6 +48,7 @@ function setup(
   host.open.set(open);
   if (opts.items !== undefined) host.items.set(opts.items);
   if (opts.filter !== undefined) host.filter.set(opts.filter);
+  if (opts.order !== undefined) host.order.set(opts.order);
   if (opts.loading !== undefined) host.loading.set(opts.loading);
   if (opts.maxResults !== undefined) host.maxResults.set(opts.maxResults);
   fixture.detectChanges();
@@ -161,5 +165,106 @@ describe('StrctCommandPalette', () => {
     fixture.detectChanges();
     const active = el.querySelector('[role="option"][aria-selected="true"]')!;
     expect(active.textContent).toContain('Deploy cluster');
+  });
+});
+
+// FR-53-01 … 03 — a palette fed from several sources: sections, a badge per
+// result, and a tag that yields its room to the label.
+describe('StrctCommandPalette — sections, badges and a second line', () => {
+  const MIXED: StrctCommandItem[] = [
+    { id: 'a', label: 'Payments VM', section: 'Manager', group: 'Virtual machine' },
+    { id: 'b', label: 'Payments backup', section: 'Backup', group: 'Backup · daily' },
+    { id: 'c', label: 'Payments plan', section: 'Site Recovery', group: 'Recovery plan' },
+    { id: 'd', label: 'Payments host', section: 'Manager', group: 'Host' },
+  ];
+
+  it('draws each section as a named group, and the headings are not options', () => {
+    const { el } = setup(true, { items: MIXED });
+    const groups = [...el.querySelectorAll('[role="group"]')];
+    expect(groups.length).toBe(3);
+
+    const named = groups.map((g) => {
+      const id = g.getAttribute('aria-labelledby')!;
+      return el.querySelector(`#${id}`)!.textContent!.trim();
+    });
+    // The section a result is in keeps its results together.
+    expect(named).toEqual(['Manager', 'Backup', 'Site Recovery']);
+    expect(groups[0].querySelectorAll('[role="option"]').length).toBe(2);
+
+    // A heading is never an option, so the arrows never land on one.
+    expect(el.querySelectorAll('[role="option"]').length).toBe(4);
+    for (const heading of el.querySelectorAll('.strct-cmdp__section')) {
+      expect(heading.getAttribute('role')).toBeNull();
+      expect(heading.closest('[role="option"]')).toBeNull();
+    }
+  });
+
+  it('moves through every option across the sections, in the drawn order', () => {
+    const { fixture, el, host } = setup(true, { items: MIXED });
+    const dialog = el.querySelector('[role="dialog"]') as HTMLElement;
+    const press = (key: string) =>
+      dialog.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    const active = () =>
+      el.querySelector('[aria-selected="true"]')!.textContent!.replace(/\s+/g, ' ').trim();
+
+    expect(active()).toContain('Payments VM');
+    press('ArrowDown');
+    fixture.detectChanges();
+    expect(active()).toContain('Payments host'); // still in Manager
+    press('ArrowDown');
+    fixture.detectChanges();
+    expect(active()).toContain('Payments backup'); // into the next section
+    press('End');
+    fixture.detectChanges();
+    expect(active()).toContain('Payments plan');
+
+    press('Enter');
+    fixture.detectChanges();
+    expect(host.last?.id).toBe('c');
+  });
+
+  it('draws the sections in the order given, the rest as they arrive', () => {
+    const { el } = setup(true, { items: MIXED, order: ['Site Recovery', 'Backup'] });
+    const named = [...el.querySelectorAll('[role="group"]')].map((g) =>
+      el.querySelector(`#${g.getAttribute('aria-labelledby')}`)!.textContent!.trim(),
+    );
+    expect(named).toEqual(['Site Recovery', 'Backup', 'Manager']);
+    // The first option is the first result of the first section.
+    expect(el.querySelector('[role="option"]')!.textContent).toContain('Payments plan');
+  });
+
+  it('draws a badge and a second line, and keeps both in the option’s name', () => {
+    const { el } = setup(true, {
+      items: [
+        {
+          id: 'a',
+          label: 'Payments VM',
+          group: 'Virtual machine',
+          description: 'esx-04 · 8 vCPU',
+          badge: { label: 'Backup', tone: 'var(--prod-acc)' },
+        },
+      ],
+    });
+    const option = el.querySelector('[role="option"]') as HTMLElement;
+    const badge = option.querySelector('strct-badge') as HTMLElement;
+    expect(badge.textContent!.trim()).toBe('Backup');
+    expect(badge.classList).toContain('strct-badge--tone');
+    expect(option.querySelector('.strct-cmdp__desc')!.textContent!.trim()).toBe('esx-04 · 8 vCPU');
+    // Nothing is hidden from assistive technology: the row reads as it looks.
+    expect(option.querySelector('[aria-hidden="true"]')).toBeNull();
+    const name = option.textContent!.replace(/\s+/g, ' ').trim();
+    expect(name).toContain('Payments VM');
+    expect(name).toContain('Backup');
+  });
+
+  it('finds a result by the section it is in', () => {
+    const { fixture, el } = setup(true, { items: MIXED });
+    const input = el.querySelector('input')!;
+    input.value = 'site recovery';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    const options = [...el.querySelectorAll('[role="option"]')];
+    expect(options.length).toBe(1);
+    expect(options[0].textContent).toContain('Payments plan');
   });
 });

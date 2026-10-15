@@ -1,11 +1,16 @@
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { resetStrctDevWarnings } from '../util/dev-warn';
 import { StrctSubmenu } from '../context-menu/submenu';
 import {
   StrctDropdown,
   StrctDropdownDivider,
   StrctDropdownItem,
   StrctDropdownItemAction,
+  StrctDropdownGroup,
+  StrctDropdownItemDescription,
+  StrctDropdownItemIcon,
+  StrctDropdownItemLabel,
   StrctDropdownTrigger,
 } from './dropdown';
 
@@ -500,5 +505,134 @@ describe('StrctDropdown — popover [focusable]', () => {
     fixture.detectChanges();
     el = fixture.nativeElement as HTMLElement;
     expect(rows()).toEqual(['-1', '-1']);
+  });
+});
+
+// FR-52-05 / FR-53-08 — a menu that says what it holds: named groups, a
+// second line under a row's label, a leading icon in a colour of its own.
+describe('StrctDropdown — groups, descriptions and lead icons', () => {
+  @Component({
+    imports: [
+      StrctDropdown,
+      StrctDropdownTrigger,
+      StrctDropdownItem,
+      StrctDropdownGroup,
+      StrctDropdownItemDescription,
+      StrctDropdownItemIcon,
+      StrctDropdownItemLabel,
+    ],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-dropdown>
+        <button strctDropdownTrigger>Open</button>
+        <strct-dropdown-group label="Create">
+          <strct-dropdown-item>New backup policy…</strct-dropdown-item>
+          <strct-dropdown-item>New recovery plan…</strct-dropdown-item>
+        </strct-dropdown-group>
+        <strct-dropdown-group label="Products">
+          <strct-dropdown-item [selected]="true">
+            <span strctDropdownItemIcon tone="var(--prod-acc)" class="lead">▣</span>
+            <span strctDropdownItemLabel>HyperStruct Backup</span>
+            <span strctDropdownItemDescription>2 VMs past RPO</span>
+          </strct-dropdown-item>
+        </strct-dropdown-group>
+      </strct-dropdown>
+    `,
+  })
+  class GroupHost {}
+
+  async function open() {
+    const fixture = TestBed.createComponent(GroupHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    el.querySelector<HTMLElement>('[strctDropdownTrigger]')!.click();
+    fixture.detectChanges();
+    // Initial focus lands on the next turn, as the menu's own spec waits for.
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+    return { fixture, el };
+  }
+
+  it('names each group, and the label is not an item', async () => {
+    const { el } = await open();
+    const groups = [...el.querySelectorAll('[role="group"]')];
+    expect(groups.length).toBe(2);
+    const names = groups.map((g) =>
+      el.querySelector(`#${g.getAttribute('aria-labelledby')}`)!.textContent!.trim(),
+    );
+    expect(names).toEqual(['Create', 'Products']);
+    for (const label of el.querySelectorAll('.strct-dd__grouplabel')) {
+      expect(label.getAttribute('role')).toBe('presentation');
+      expect(label.closest('strct-dropdown-item')).toBeNull();
+    }
+  });
+
+  it('still roves every item across the groups', async () => {
+    const { fixture, el } = await open();
+    const items = [...el.querySelectorAll<HTMLElement>('strct-dropdown-item')];
+    // The selected row takes the opening focus, group labels or not.
+    expect(document.activeElement).toBe(items[2]);
+
+    const press = (key: string) =>
+      (document.activeElement as HTMLElement).dispatchEvent(
+        new KeyboardEvent('keydown', { key, bubbles: true }),
+      );
+    press('ArrowDown');
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(items[0]); // wraps across the groups
+
+    press('End');
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(items[2]);
+
+    press('Home');
+    fixture.detectChanges();
+    expect(document.activeElement).toBe(items[0]);
+  });
+
+  it('warns in dev when a description would be read before an unmarked label', async () => {
+    resetStrctDevWarnings();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    @Component({
+      imports: [
+        StrctDropdown,
+        StrctDropdownTrigger,
+        StrctDropdownItem,
+        StrctDropdownItemDescription,
+      ],
+      changeDetection: ChangeDetectionStrategy.Eager,
+      template: `<strct-dropdown>
+        <button strctDropdownTrigger>Open</button>
+        <strct-dropdown-item>
+          HyperStruct Backup
+          <span strctDropdownItemDescription>2 VMs past RPO</span>
+        </strct-dropdown-item>
+      </strct-dropdown>`,
+    })
+    class Unmarked {}
+
+    const fixture = TestBed.createComponent(Unmarked);
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('[strctDropdownTrigger]').click();
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('strctDropdownItemLabel'));
+    warn.mockRestore();
+  });
+
+  it('reads the description after the label, and tones the lead icon', async () => {
+    const { el } = await open();
+    const item = [...el.querySelectorAll('strct-dropdown-item')].at(-1) as HTMLElement;
+    const desc = item.querySelector('.strct-dd__itemdesc') as HTMLElement;
+    expect(desc.textContent!.trim()).toBe('2 VMs past RPO');
+    // Inside the row, so it is part of what the row is called — after the label.
+    const name = item.textContent!.replace(/\s+/g, ' ').trim();
+    expect(name.indexOf('HyperStruct Backup')).toBeLessThan(name.indexOf('2 VMs past RPO'));
+
+    const lead = item.querySelector('.lead') as HTMLElement;
+    expect(lead.classList).toContain('strct-dd__itemlead');
+    expect(lead.style.color).toBe('var(--prod-acc)');
   });
 });

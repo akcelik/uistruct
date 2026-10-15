@@ -19,6 +19,23 @@ probe or spec; "read" means source only.
 Suggested order: **FR-52-01** (the pattern itself), then **FR-52-03** (the token question every multi-product app hits)
 and **FR-52-04** (smallest, most reused).
 
+> **FR-52-02, FR-52-04 and FR-52-05 SHIPPED in 5.13.0 (2026-10-15).**
+>
+> - `strct-header [accent]` draws the line as an inset 3 px shadow — measured: the header is 56 px
+>   tall with it and without it, so nothing under it moves.
+> - `strct-badge [tone]` takes a colour token or value; the text takes it and the border a 30% wash
+>   of it (`color-mix`), `solid` fills with it. `--strct-badge-fg` / `--strct-badge-border` /
+>   `--strct-badge-on` do the same from a stylesheet, which is the better route when a rule already
+>   selects the badges.
+> - `[strctDropdownItemDescription]` is a second line under the label, with
+>   `[strctDropdownItemIcon] [tone]` as the leading-icon slot. Measured: the description starts
+>   0 px from the label's own start, 2 px below it, whatever leads the row. A row is read in DOM
+>   order and a slot can only be declared before the catch-all one, so the label goes in
+>   `[strctDropdownItemLabel]`; dev mode says so when it is missing.
+>
+> Still open: **FR-52-01** (the switcher), **FR-52-03** (secondary accents), **FR-52-06**
+> (section-menu links).
+
 ---
 
 ### FR-52-01 — `strct-header`: a product (app) switcher

@@ -18,6 +18,11 @@ import {
   StrctDrawerSide,
   StrctDropdown,
   StrctDropdownItem,
+  StrctIconName,
+  StrctDropdownGroup,
+  StrctDropdownItemDescription,
+  StrctDropdownItemIcon,
+  StrctDropdownItemLabel,
   StrctDropdownItemAction,
   StrctDropdownTrigger,
   StrctField,
@@ -80,6 +85,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctDrawerFooter,
     StrctDropdown,
     StrctDropdownItem,
+    StrctDropdownGroup,
+    StrctDropdownItemDescription,
+    StrctDropdownItemIcon,
+    StrctDropdownItemLabel,
     StrctDropdownTrigger,
     StrctField,
     StrctInput,
@@ -692,6 +701,39 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="dropdown-groups"
+      owner="dropdown"
+      heading="Named groups, and a line under the label"
+      description="A menu holding two kinds of entry can only separate them with a divider, which leaves what the group is unsaid. strct-dropdown-group names it — a heading the arrows pass over, read when a screen reader enters the group. A row can carry a second, quieter line ([strctDropdownItemDescription]) and a leading icon in a colour of its own ([strctDropdownItemIcon] with a tone). A screen reader reads a row in DOM order, so wrap the label in [strctDropdownItemLabel] when you use a description — the library says so in dev mode if you forget."
+      code='<strct-dropdown-group label="Products"><strct-dropdown-item><strct-icon strctDropdownItemIcon tone="var(--success)" … /><span strctDropdownItemLabel>HyperStruct Backup</span><span strctDropdownItemDescription>2 VMs past RPO</span></strct-dropdown-item></strct-dropdown-group>'
+    >
+      <strct-dropdown>
+        <button strct-button strctDropdownTrigger>
+          Products
+          <strct-icon strictName="chevronDown" [size]="13" />
+        </button>
+        <strct-dropdown-group label="Products">
+          @for (p of products; track p.id) {
+            <strct-dropdown-item [selected]="productId() === p.id" (click)="productId.set(p.id)">
+              <strct-icon strctDropdownItemIcon [tone]="p.tone" [strictName]="p.icon" [size]="15" />
+              <span strctDropdownItemLabel>{{ p.name }}</span>
+              <span strctDropdownItemDescription>
+                <strct-status-dot [status]="p.status" />
+                {{ p.health }}
+              </span>
+            </strct-dropdown-item>
+          }
+        </strct-dropdown-group>
+        <strct-dropdown-group label="Platform">
+          <strct-dropdown-item>
+            <strct-icon strctDropdownItemIcon strictName="settings" [size]="15" />
+            Administration
+          </strct-dropdown-item>
+        </strct-dropdown-group>
+      </strct-dropdown>
+    </app-demo>
+
+    <app-demo
       anchor="dropdown-popover"
       owner="dropdown"
       heading="Popover mode — filter / settings panels"
@@ -1159,6 +1201,41 @@ export class SurfacesPage {
     this.savedViews.update((v) => v.filter((x) => x !== name));
     this.viewEcho.set('deleted ' + name);
   }
+
+  protected readonly productId = signal('backup');
+  protected readonly products: {
+    id: string;
+    name: string;
+    icon: StrctIconName;
+    tone: string;
+    status: 'success' | 'warning';
+    health: string;
+  }[] = [
+    {
+      id: 'manager',
+      name: 'HyperStruct Manager',
+      icon: 'cluster',
+      tone: 'var(--acc)',
+      status: 'success' as const,
+      health: '128 hosts · 2 alarms',
+    },
+    {
+      id: 'backup',
+      name: 'HyperStruct Backup',
+      icon: 'archive',
+      tone: 'var(--success)',
+      status: 'warning' as const,
+      health: '2 VMs past RPO',
+    },
+    {
+      id: 'recovery',
+      name: 'HyperStruct Site Recovery',
+      icon: 'refresh',
+      tone: 'var(--warning)',
+      status: 'success' as const,
+      health: 'DR ready · tested 6 days ago',
+    },
+  ];
 
   protected readonly ddSort = signal('Name');
   protected readonly ddSortOptions = ['Name', 'CPU usage', 'Memory', 'Uptime'];
