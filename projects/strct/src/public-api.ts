@@ -139,3 +139,4 @@ export * from './lib/heatmap/heatmap';
 export * from './lib/util/host-check';
 export * from './lib/markdown/markdown';
 export * from './lib/markdown/markdown-parser';
+export * from './lib/product-switcher/product-switcher';

@@ -28,7 +28,9 @@ icons will need on a phone).
 > of the nav, and a tap at the centre of a menu entry hits **the entry**, not the backdrop.
 > HyperStruct's `.strct-vnav__backdrop` hide rule and its `app-nav-backdrop` can go.
 >
-> Still open: **FR-53-09** (the switcher's short label, which waits on FR-52-01).
+> **Every item in this document has shipped.** FR-53-09 came with the switcher in 5.15.0:
+> items take `shortLabel`, the chip shows it below `shortLabelWidth` (600px), and the full name
+> stays in the accessible name.
 >
 > **FR-53-04, FR-53-06 and FR-53-07 SHIPPED in 5.14.0 (2026-10-15).**
 >

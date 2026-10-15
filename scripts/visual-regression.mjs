@@ -93,6 +93,17 @@ const ROUTES = [
      })()`,
     '.strct-cmdp',
   ],
+  // Which product you are in, and the health lines of the ones you can switch
+  // to — with the platform after a divider.
+  [
+    'product-switcher',
+    '/components/product-switcher',
+    undefined,
+    `(() => { document.querySelector('.strct-ps__chip')?.click(); })()`,
+    '.strct-dd__menu',
+  ],
+  // Three products' own accents, each remapping --acc on its own subtree.
+  ['product-accent', '/components/product-switcher', '#product-accent', undefined, '.pa-demo'],
   // A menu with named groups and a second line under a row's label.
   [
     'dropdown-groups',

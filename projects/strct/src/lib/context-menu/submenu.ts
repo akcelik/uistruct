@@ -241,7 +241,9 @@ export class StrctSubmenu {
   private panelItems(): HTMLElement[] {
     const panel = this.panel()?.nativeElement;
     return panel
-      ? [...panel.querySelectorAll<HTMLElement>('strct-dropdown-item')].filter(
+      ? [
+          ...panel.querySelectorAll<HTMLElement>('strct-dropdown-item, a[strctDropdownItem]'),
+        ].filter(
           (i) =>
             i.getAttribute('aria-disabled') !== 'true' ||
             i.classList.contains('strct-dd__item--hinted'),

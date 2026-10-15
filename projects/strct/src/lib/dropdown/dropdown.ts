@@ -172,7 +172,7 @@ export class StrctDropdown {
     if (this.popover()) return;
     const target = event.target as HTMLElement | null;
     if (target?.closest('.strct-dd__itemaction')) return; // the second action is not the item
-    const item = target?.closest('strct-dropdown-item');
+    const item = target?.closest(DD_ITEM);
     if (item && item.getAttribute('aria-disabled') !== 'true') this.close(true);
   }
 
@@ -215,13 +215,13 @@ export class StrctDropdown {
   private onItemActionKey(event: KeyboardEvent, key: string): void {
     const target = event.target as HTMLElement;
     if (key === 'ArrowLeft') {
-      const item = target.closest<HTMLElement>('strct-dropdown-item');
+      const item = target.closest<HTMLElement>(DD_ITEM);
       if (!target.classList.contains('strct-dd__itemaction') || !item) return;
       event.preventDefault();
       item.focus();
       return;
     }
-    const item = target.closest<HTMLElement>('strct-dropdown-item');
+    const item = target.closest<HTMLElement>(DD_ITEM);
     const action = item?.querySelector<HTMLElement>('.strct-dd__itemaction');
     if (!item || item !== target || !action) return;
     event.preventDefault();
@@ -232,7 +232,9 @@ export class StrctDropdown {
   private enabledItems(): HTMLElement[] {
     return [
       ...this.host.nativeElement.querySelectorAll<HTMLElement>(
-        'strct-dropdown-item:not([aria-disabled="true"]), strct-submenu .strct-submenu__trigger',
+        `${DD_ITEM.split(', ')
+          .map((sel) => `${sel}:not([aria-disabled="true"])`)
+          .join(', ')}, strct-submenu .strct-submenu__trigger`,
       ),
     ];
   }
@@ -242,7 +244,7 @@ export class StrctDropdown {
   private navItems(): HTMLElement[] {
     const host = this.host.nativeElement;
     const rows = [
-      ...host.querySelectorAll<HTMLElement>('strct-dropdown-item'),
+      ...host.querySelectorAll<HTMLElement>(DD_ITEM),
       ...host.querySelectorAll<HTMLElement>('strct-submenu .strct-submenu__trigger'),
     ].filter(
       (el) =>
@@ -364,8 +366,15 @@ export class StrctDropdownItemLabel {}
 })
 export class StrctDropdownItemDescription {}
 
+/**
+ * The two forms a menu row can take. `a[strctDropdownItem]` is the one for a
+ * row that goes somewhere: a real link (middle-click, ⌘-click, open in a new
+ * tab, copy address) wearing the menu's semantics.
+ */
+const DD_ITEM = 'strct-dropdown-item, a[strctDropdownItem]';
+
 @Component({
-  selector: 'strct-dropdown-item',
+  selector: 'strct-dropdown-item, a[strctDropdownItem]',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   imports: [StrctIcon],

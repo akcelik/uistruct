@@ -5,6 +5,77 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.15.0] - 2026-10-15
+
+The product switcher and the accent a product brings with it (FR-52-01,
+FR-52-03 of `hyperstruct-product-switcher.md`; FR-53-09 of
+`hyperstruct-product-shell-search-phone.md`).
+
+### Added
+
+- **`strct-product-switcher`** (FR-52-01) — the chip every multi-product
+  console grows beside its logo:
+
+  ```html
+  <strct-product-switcher
+    [items]="products"
+    [(current)]="productId"
+    [footerItems]="[admin]"
+    (opened)="loadHealth()"
+    (select)="go($event)"
+  />
+  ```
+
+  It says which product you are in and opens the ones you may use, each with
+  an icon in its own tone, its full name and one line of health with a status
+  dot; the shared platform follows after a divider. Rows are `menuitemradio`
+  entries with the current one checked, and **real links** where the product
+  has a `routerLink` or `href`, so middle-click, ⌘-click and "open in a new
+  tab" work and a modified click is left to the browser. `(opened)` fires once
+  per opening, so an app reads the health lines then and the menu never waits
+  for them. A person offered one product sees a plain chip, not a menu of one.
+  - Keyboard, measured: Enter / Space / ArrowDown open on the product you are
+    in, the arrows rove, Home and End jump, Escape closes and returns focus to
+    the chip. axe reports no violations on the open menu.
+  - **`shortLabel`** (FR-53-09): below `shortLabelWidth` (600 px) the chip
+    shows it — an icon alone does not say whether you are in Backup or in Site
+    Recovery, while a short word fits (measured: a 108 px chip at 390 px) —
+    and the full name stays in the accessible name
+    ("HyperStruct Backup — switch product").
+
+- **A menu row may be a link.** `a[strctDropdownItem]` is the anchor form of
+  `strct-dropdown-item`: the menu's semantics and keyboard on a real link.
+- **Secondary accents** (FR-52-03). Every translucent accent tint is now
+  **derived from `--acc`** rather than written out per palette, so an element
+  carrying `[data-accent]` that sets `--acc` remaps badges, links, check
+  marks, focus rings, selection fills and meters in that subtree — no second
+  set of tokens, and no component has to know the product's name:
+
+  ```css
+  [data-accent='backup'] {
+    --acc: #2f8f7a;
+  }
+  [data-theme='dark'] [data-accent='backup'] {
+    --acc: #58b9a3;
+  }
+  ```
+
+  The mixes are the values these tokens have always had (12/6 % dark, 10/5 %
+  light, 50/30/18 % both), and every one of the six schemes computes the same
+  colours it did before — verified in Chrome and by the visual baselines.
+  The contrast check that guards `--acc` now runs on every `[data-accent]` the
+  showcase declares, in all six schemes (worst: 5.16:1).
+
+### Fixed
+
+- **The contrast gate could not read an `rgb()` colour.** Its parser's
+  `/[\d.]+/` lives inside a template literal, which eats the backslash, so the
+  class was `[d.]` and every non-hex colour threw "unreadable colour". It never
+  showed, because the four tokens it read are hex — the first reading that
+  passed it a computed `rgb()` found it. The class is `[0-9.]` now, and
+  `color(srgb …)` (what `color-mix()` serialises to) is read as the 0–1
+  components it has.
+
 ## [5.14.0] - 2026-10-15
 
 The shell on a phone, and menu entries that are real links (FR-53-04,

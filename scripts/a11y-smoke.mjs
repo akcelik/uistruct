@@ -168,11 +168,10 @@ const SCHEMES = ['arctic', 'ember', 'sage'].flatMap((palette) =>
 );
 await send('Page.navigate', { url: `http://localhost:${PORT}/components/button` });
 await sleep(2500);
-const { result: contrastResult } = await send('Runtime.evaluate', {
-  returnByValue: true,
-  expression: `(() => {
-    // Tokens come as #rgb, #rrggbb(aa) or rgb()/rgba() — all three, or the
-    // reading is silently wrong.
+// The colour maths, shared by the two readings below.
+const COLOUR_HELPERS = `
+    // Tokens come as #rgb, #rrggbb(aa), rgb()/rgba() or color(srgb …) — all of
+    // them, or the reading is silently wrong.
     const parse = (raw) => {
       const c = raw.trim();
       if (c.startsWith('#')) {
@@ -184,9 +183,17 @@ const { result: contrastResult } = await send('Runtime.evaluate', {
         const n = (i) => parseInt(full.slice(i, i + 2), 16);
         return { r: n(0), g: n(2), b: n(4), a: full.length === 8 ? n(6) / 255 : 1 };
       }
-      const m = c.match(/[\d.]+/g);
+      // [0-9.] and not \\d: this source is a template literal, which eats the
+      // backslash — the class became [d.] and every rgb() colour was
+      // "unreadable". It never showed, because the tokens read here are hex.
+      const m = c.match(/[0-9.]+/g);
       if (!m) throw new Error('unreadable colour: ' + raw);
       const v = m.map(Number);
+      // color(srgb …) carries 0–1 components — what color-mix() serialises to,
+      // and reading them as 0–255 would make every mix read almost black.
+      if (c.startsWith('color(')) {
+        return { r: v[0] * 255, g: v[1] * 255, b: v[2] * 255, a: v[3] ?? 1 };
+      }
       return { r: v[0], g: v[1], b: v[2], a: v[3] ?? 1 };
     };
     // A translucent token is what you see over its ground, not its own value.
@@ -205,6 +212,12 @@ const { result: contrastResult } = await send('Runtime.evaluate', {
       const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
       return (x + 0.05) / (y + 0.05);
     };
+`;
+
+const { result: contrastResult } = await send('Runtime.evaluate', {
+  returnByValue: true,
+  expression: `(() => {
+    ${COLOUR_HELPERS}
     const root = document.documentElement;
     const before = [root.getAttribute('data-palette'), root.getAttribute('data-theme')];
     const out = [];
@@ -231,7 +244,42 @@ const { result: contrastResult } = await send('Runtime.evaluate', {
     return out;
   })()`,
 });
-const contrasts = contrastResult?.value ?? [];
+// ── Secondary accents (FR-52-03) ──────────────────────────────────────────
+// A product's accent is the app's to pick, and the library documents the
+// subtree that carries it — so the same check that guards --acc runs on every
+// [data-accent] the showcase declares, in all six schemes.
+await send('Page.navigate', { url: `http://localhost:${PORT}/components/product-switcher` });
+await sleep(2500);
+const { result: accentResult } = await send('Runtime.evaluate', {
+  returnByValue: true,
+  expression: `(() => {
+    ${COLOUR_HELPERS}
+    const root = document.documentElement;
+    const before = [root.getAttribute('data-palette'), root.getAttribute('data-theme')];
+    const out = [];
+    for (const palette of ['arctic', 'ember', 'sage']) {
+      for (const mode of ['dark', 'light']) {
+        root.setAttribute('data-palette', palette);
+        root.setAttribute('data-theme', mode);
+        for (const card of document.querySelectorAll('[data-accent]')) {
+          const cs = getComputedStyle(card);
+          const bg = parse(cs.backgroundColor);
+          const fg = over(parse(cs.getPropertyValue('--acc')), bg);
+          out.push({
+            scheme: palette + '/' + mode,
+            token: '--acc [data-accent="' + card.getAttribute('data-accent') + '"]',
+            ratio: +ratio(fg, bg).toFixed(2),
+          });
+        }
+      }
+    }
+    if (before[0]) root.setAttribute('data-palette', before[0]); else root.removeAttribute('data-palette');
+    if (before[1]) root.setAttribute('data-theme', before[1]); else root.removeAttribute('data-theme');
+    return out;
+  })()`,
+});
+
+const contrasts = [...(contrastResult?.value ?? []), ...(accentResult?.value ?? [])];
 const AA = 4.5;
 const belowAA = contrasts.filter((c) => c.ratio < AA);
 const worst = new Map();
