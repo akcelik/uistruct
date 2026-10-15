@@ -49,6 +49,9 @@ export class StrctListItemTrailing {}
       [attr.role]="interactive() ? 'button' : null"
       [attr.tabindex]="interactive() ? 0 : null"
       [attr.aria-current]="selected() ? 'true' : null"
+      [attr.aria-disabled]="disabled() ? 'true' : null"
+      [attr.title]="disabledReason() || null"
+      [attr.aria-description]="disabled() ? disabledReason() || null : null"
       (click)="onActivate()"
       (keydown.enter)="onActivate()"
       (keydown.space)="$event.preventDefault(); onActivate()"
@@ -67,6 +70,7 @@ export class StrctListItemTrailing {}
     role: 'listitem',
     '[class.strct-li--interactive]': 'interactive()',
     '[class.strct-li--wrap]': 'wrap()',
+    '[class.strct-li--disabled]': 'disabled()',
     '[class.strct-li--selected]': 'selected()',
     '[class.strct-li--status]': 'status()',
     '[attr.data-status]': 'status()',
@@ -107,6 +111,15 @@ export class StrctListItemTrailing {}
       }
       .strct-li--interactive .strct-li__main {
         cursor: pointer;
+      }
+      /* It keeps its colours — it is still worth reading — and only says,
+         through the cursor and a little quiet, that it is not on offer. */
+      .strct-li--disabled .strct-li__main {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+      .strct-li--disabled.strct-li--interactive:hover {
+        background: none;
       }
       .strct-li--interactive:hover {
         background: var(--bg-2);
@@ -241,6 +254,15 @@ export class StrctListItem {
    * row at once; this is the per-row form.
    */
   readonly wrap = input(false, { transform: booleanAttribute });
+  /**
+   * The row cannot be activated — a conversation that cannot be switched away
+   * from while a reply arrives. It keeps its tab stop and says
+   * `aria-disabled`, so the reason can be read; a keyboard or touch user
+   * never sees a `title`.
+   */
+  readonly disabled = input(false, { transform: booleanAttribute });
+  /** Why it cannot be activated, read as the row's description. */
+  readonly disabledReason = input('');
   /** Marks the current row (`aria-current`). */
   readonly selected = input(false, { transform: booleanAttribute });
   /** Optional leading rail, as `strct-card [status]`. */
@@ -249,7 +271,7 @@ export class StrctListItem {
   readonly activated = output<void>();
 
   protected onActivate(): void {
-    if (this.interactive()) this.activated.emit();
+    if (this.interactive() && !this.disabled()) this.activated.emit();
   }
 }
 

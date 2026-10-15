@@ -126,7 +126,7 @@ export class StrctModalContent {
     }
   `,
   host: {
-    '(document:keydown.escape)': 'onEscape()',
+    '(document:keydown.escape)': 'onEscape($event)',
   },
   styles: [
     `
@@ -323,6 +323,19 @@ export class StrctModal {
    * `dismissible` for lightweight, transient dialogs where quick dismissal is fine.
    */
   readonly dismissible = input(false, { transform: booleanAttribute });
+  /**
+   * Escape closes the dialog. Defaults to `dismissible`; set it on its own for
+   * a window that should close on Escape — nothing is lost — but not on a
+   * stray click outside it. An Escape a focused control already handled
+   * (`defaultPrevented`) is left alone.
+   */
+  readonly closeOnEscape = input<boolean | null, boolean | string | null | undefined>(null, {
+    transform: (v) => (v === null || v === undefined ? null : booleanAttribute(v)),
+  });
+  /** A click on the backdrop closes it. Defaults to `dismissible`. */
+  readonly closeOnBackdrop = input<boolean | null, boolean | string | null | undefined>(null, {
+    transform: (v) => (v === null || v === undefined ? null : booleanAttribute(v)),
+  });
   /** Allow repositioning the dialog by dragging its header (mouse + touch). */
   readonly draggable = input(false, { transform: booleanAttribute });
   /** Extra class(es) added to the dialog panel — style it from app-global CSS. */
@@ -405,12 +418,16 @@ export class StrctModal {
     // backdrop click, or Enter/Space while the backdrop is focused. Ignore events
     // that bubbled up from a child (e.g. a space typed in an input/textarea).
     if (event && event.target !== event.currentTarget) return;
-    if (this.dismissible()) this.close();
+    if (this.closeOnBackdrop() ?? this.dismissible()) this.close();
   }
 
-  protected onEscape(): void {
+  protected onEscape(event?: Event): void {
+    // A control that used Escape first keeps it: an IME composition, a
+    // searchbox that clears. Both mark the event handled.
+    if (event?.defaultPrevented) return;
     // With several modals open, only the topmost one reacts to Escape.
-    if (this.open() && this.dismissible() && isTopmostModal(this)) this.close();
+    const allowed = this.closeOnEscape() ?? this.dismissible();
+    if (this.open() && allowed && isTopmostModal(this)) this.close();
   }
 
   /** Wrap Tab focus within the dialog. */

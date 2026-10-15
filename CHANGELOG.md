@@ -5,6 +5,60 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.11.0] - 2026-10-15
+
+HyperStruct's assistant chat window, rebuilt on the library (FR-51-01 … 06 of
+`hyperstruct-assistant-chat.md`).
+
+### Added
+
+- **`strct-markdown`** (FR-51-02) — a model's reply drawn as components,
+  never as HTML. Replies are Markdown: as plain text they leave tables as rows
+  of pipes and `**` everywhere, and an app that reaches for a Markdown library
+  ends up handing the browser HTML (`innerHTML` plus a sanitiser), which a
+  sealed, reviewed build cannot accept. The reader returns a tree of plain
+  objects and the templates draw it, so **every word reaches the page as a
+  text node** and raw HTML is shown as the characters it is.
+  - Paragraphs, ATX headings, fenced code (as `strct-code`), ordered and
+    unordered lists with nesting, block quotes, thematic breaks, GFM tables
+    with alignment, emphasis / strong / strikethrough with the flanking rule
+    (so "2 * 3 * 4" stays arithmetic), inline code, links and autolinks.
+  - **Link policy**: http(s) and `mailto:` open in a new tab with
+    `rel="noopener noreferrer"` and a visible external mark; a `/path` is
+    handed to `(navigate)`; `javascript:`, `data:`, `//host`, a relative path
+    and anything unrecognised **stay the text the model wrote**. Images are
+    never loaded — an image renders as its alt text.
+  - **Streaming**: an unterminated fence is already a code block, so streamed
+    code never flashes as a paragraph first, and the caret sits at the end of
+    the last inline run rather than after the last block.
+  - **`headingOffset`** pulls the model's headings under the surrounding
+    outline (`#` → `h3` by default), because a message is a region in a dialog.
+  - **`tokens` + `[strctMarkdownToken]`** let an app claim runs of text and
+    draw them itself — an inventory identifier becomes an object chip —
+    without forking the reader. Overlapping claims are dropped and a tokenizer
+    that throws leaves the text alone.
+  - Every loop is bounded (source, lines, nesting depth, delimiter runs),
+    because the input is a remote model's output.
+- **`strct-chat-composer [busy]` with `[stopLabel]` and `(stop)`**
+  (FR-51-01). While a reply streams the one button becomes Stop, where every
+  chat the operators know puts it — enabled whatever the draft holds, Enter
+  still never sending, the draft still editable. A separate Stop beside a
+  disabled Send was two buttons for one action.
+- **`[strctChatMessageActions]`** (FR-51-03) — the quiet row under the bubble
+  (Copy, a status, a "Used 3 tools" fold) that was going into the attachment
+  slot, which is documented as a card the message carries.
+- **`strct-tag [href]` and `[target]`** (FR-51-04). An object chip opens the
+  object's page, so it must be a real link: a middle click, a Ctrl/Cmd-click
+  and "copy link address" are things `role="button"` cannot give.
+- **`strct-modal [closeOnEscape]` and `[closeOnBackdrop]`** (FR-51-05), apart
+  at last: a chat window closes on Escape — nothing is lost — without closing
+  on a stray click outside it. An Escape a focused control already handled
+  (`defaultPrevented`) is left alone.
+- **`strct-list-item [disabled]` with `[disabledReason]`** (FR-51-06). A row
+  that cannot be activated keeps its tab stop and says `aria-disabled` with
+  its reason as the description, where a `title` is something a keyboard or
+  touch user never sees.
+
 ## [5.10.0] - 2026-10-15
 
 What a results page grouped by what to do needs (FR-56-01 … 05), from

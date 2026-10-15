@@ -182,3 +182,46 @@ describe('StrctList — wrap breaks tokens, flush drops the inset', () => {
     expect(el.classList).toContain('strct-list--wrap');
   });
 });
+
+// FR-51 (chat) — a conversation that cannot be switched away from.
+describe('StrctListItem — disabled, with a reason', () => {
+  @Component({
+    imports: [StrctList, StrctListItem],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-list>
+        <strct-list-item
+          interactive
+          [disabled]="locked()"
+          disabledReason="A reply is still arriving"
+          (activated)="opened = opened + 1"
+          >Yesterday's run</strct-list-item
+        >
+      </strct-list>
+    `,
+  })
+  class Host {
+    locked = signal(true);
+    opened = 0;
+  }
+
+  it('keeps its tab stop, says why, and does not activate', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const main = el.querySelector('.strct-li__main') as HTMLElement;
+    expect(main.getAttribute('tabindex')).toBe('0');
+    expect(main.getAttribute('aria-disabled')).toBe('true');
+    expect(main.getAttribute('aria-description')).toBe('A reply is still arriving');
+
+    main.click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.opened).toBe(0);
+
+    fixture.componentInstance.locked.set(false);
+    fixture.detectChanges();
+    expect(main.getAttribute('aria-disabled')).toBeNull();
+    main.click();
+    expect(fixture.componentInstance.opened).toBe(1);
+  });
+});

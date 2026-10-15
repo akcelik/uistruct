@@ -260,6 +260,13 @@ export const DOCS: DocCategory[] = [
         lead: 'A compact label chip for categories, filters or applied facets. Add `removable` to show a dismiss button that emits `removed`.',
         inputs: [
           {
+            name: 'href / target',
+            type: 'string | null · string',
+            default: 'null · ""',
+            description:
+              'The body becomes a real link — an object chip in a reply opens the object’s page. A middle click, a Ctrl/Cmd-click and "copy link address" all work, which a `role="button"` cannot give; `target="_blank"` adds the `rel` a new tab needs.',
+          },
+          {
             name: 'status',
             type: STATUS_VALUES,
             default: `'neutral'`,
@@ -2030,6 +2037,13 @@ export const DOCS: DocCategory[] = [
         lead: 'An overlay dialog with two-way `open` and a focus trap that restores focus on close. By default it closes only via its X or an action button — a click outside (or Escape) does not dismiss it; opt in with `dismissible`. Project the footer through `strctModalFooter`. Plain projected content is created with the parent, so it exists — and costs — even while the modal is closed; wrap an expensive body in `<ng-template strctModalContent>` to build it only while open (destroyed on close, so state does not survive).',
         inputs: [
           {
+            name: 'closeOnEscape / closeOnBackdrop',
+            type: 'boolean | null',
+            default: 'null (follows `dismissible`)',
+            description:
+              'Apart, so a window can close on Escape — nothing is lost — without closing on a stray click outside it. An Escape a focused control already handled (`defaultPrevented`: an IME composition, a searchbox that clears) is left alone.',
+          },
+          {
             name: 'chromeless',
             type: 'boolean',
             default: 'false',
@@ -3043,6 +3057,13 @@ export const DOCS: DocCategory[] = [
         lead: 'Short lists of things with a status are lists, not tables: a leading marker, a title, a secondary line, a quiet meta and a control at the end. A table needs a header row and columns, a timeline implies time order, and an alert per item is too heavy. `interactive` makes the row itself open — click, Enter or Space — while `[strctListItemTrailing]` stays a separate tab stop, so "open this alarm" and "acknowledge it" are two targets rather than one.',
         inputs: [
           {
+            name: 'disabled / disabledReason',
+            type: 'boolean · string',
+            default: 'false · ""',
+            description:
+              'On `strct-list-item`: the row cannot be activated — a conversation that cannot be switched away from while a reply arrives. It keeps its tab stop and says `aria-disabled` with its reason as the description, where a `title` is something a keyboard or touch user never sees.',
+          },
+          {
             name: 'flush',
             type: 'boolean',
             default: 'false',
@@ -3168,6 +3189,61 @@ export const DOCS: DocCategory[] = [
         ],
         dont: ['Do not use it for editable fields — that is what strct-field is for.'],
       },
+      {
+        id: 'markdown',
+        title: 'Markdown',
+        selector: 'strct-markdown',
+        importNames: ['StrctMarkdown', 'StrctMarkdownToken'],
+        summary: 'A model’s reply, drawn as components — never as HTML.',
+        lead: 'Model replies are Markdown: as plain text they leave tables as rows of pipes and `**` everywhere, and an app that reaches for a Markdown library ends up handing the browser HTML (`innerHTML` plus a sanitiser), which a sealed, reviewed build cannot accept. This reads the source into a tree of plain objects and draws it with ordinary bindings, so **every word reaches the page as a text node** and raw HTML is shown as the characters it is. Paragraphs, headings, fenced code (as `strct-code`), lists, quotes, rules, GFM tables with alignment, emphasis, strikethrough, inline code, links and autolinks.',
+        inputs: [
+          {
+            name: 'source',
+            type: 'string',
+            default: `''`,
+            description: 'The Markdown to read.',
+          },
+          {
+            name: 'streaming',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'The reply is still arriving: an unterminated fence is already a code block, so streamed code never flashes as a paragraph first, and the caret sits at the end of the last inline run rather than after the last block.',
+          },
+          {
+            name: 'headingOffset',
+            type: 'number',
+            default: '2',
+            description:
+              'How far the model’s headings are pulled down. A message is a region inside a dialog, so `#` should not be the page’s `h1`: the default makes it an `h3`.',
+          },
+          {
+            name: 'linkPolicy',
+            type: '((href) => "external" | "internal" | null) | null',
+            default: 'null',
+            description:
+              'What a link may do. By default http(s) and `mailto:` open in a new tab with `rel="noopener noreferrer"` and an external mark, a `/path` is handed to `(navigate)`, and anything else — `javascript:`, `data:`, `//host`, a relative path — **stays the text the model wrote**. Images are never loaded: an image renders as its alt text.',
+          },
+          {
+            name: 'tokens / [strctMarkdownToken]',
+            type: '(text) => Token[] · template',
+            description:
+              'Claim runs of plain text and draw them yourself — an inventory identifier becomes an object chip — without forking the reader. Overlapping claims are dropped, and a tokenizer that throws leaves the text alone.',
+          },
+        ],
+        outputs: [
+          { name: 'navigate', type: 'string', description: 'An in-app link was followed.' },
+        ],
+        do: [
+          'Pass the raw reply; let the component read it.',
+          'Use `tokens` for app-specific spans rather than pre-processing the text.',
+        ],
+        dont: ['Do not pass HTML — it is shown as characters, which is the point.'],
+        a11y: [
+          'Headings are pulled under the surrounding outline; external links carry a visible mark as well as the new-tab behaviour.',
+        ],
+      },
+
       {
         id: 'code',
         title: 'Code',
@@ -5490,6 +5566,19 @@ export const DOCS: DocCategory[] = [
         summary: 'Thread, messages, typing indicator and composer.',
         lead: 'An assistant panel is built from the library, like every other panel: a thread of messages from two or more authors, a reply that streams in with a caret, a typing indicator while the assistant thinks, and a composer that grows, sends on Enter and breaks a line on Shift+Enter.',
         inputs: [
+          {
+            name: 'busy / stopLabel / (stop)',
+            type: 'boolean · string · void',
+            default: 'false · "Stop"',
+            description:
+              'On `strct-chat-composer`: while a reply streams, the one button becomes Stop — where every chat the operators know puts it — enabled whatever the draft holds, with Enter still never sending and the draft still editable. A separate Stop button beside a disabled Send is two buttons for one action.',
+          },
+          {
+            name: '[strctChatMessageActions]',
+            type: 'slot',
+            description:
+              'A quiet row under the bubble: Copy, a status ("Stopped", "Model call failed"), a "Used 3 tools" fold. It was going into the attachment slot, which is documented as a card the message carries.',
+          },
           {
             name: 'sendDisabled',
             type: 'boolean',

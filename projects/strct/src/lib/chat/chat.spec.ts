@@ -1,6 +1,12 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { StrctChatAttachment, StrctChatComposer, StrctChatMessage, StrctChatThread } from './chat';
+import {
+  StrctChatAttachment,
+  StrctChatComposer,
+  StrctChatMessage,
+  StrctChatThread,
+  StrctChatMessageActions,
+} from './chat';
 
 @Component({
   imports: [StrctChatThread, StrctChatMessage, StrctChatAttachment, StrctChatComposer],
@@ -299,5 +305,82 @@ describe('StrctChatComposer — sendDisabled', () => {
     fixture.componentInstance.off.set(true);
     fixture.detectChanges();
     expect(area.disabled).toBe(true);
+  });
+});
+
+// FR-51 (chat) — one button for one action, and a row under the bubble.
+describe('StrctChatComposer — a Stop mode', () => {
+  @Component({
+    imports: [StrctChatComposer],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-chat-composer
+        [(value)]="draft"
+        [busy]="busy()"
+        (send)="sent.push($event)"
+        (stop)="stopped = stopped + 1"
+      />
+    `,
+  })
+  class Host {
+    draft = signal('why is hv-02 slow?');
+    busy = signal(false);
+    sent: string[] = [];
+    stopped = 0;
+  }
+
+  it('turns the send button into Stop, in the same place', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const send = () => el.querySelector('.strct-composer__send') as HTMLButtonElement;
+    expect(send().getAttribute('aria-label')).toBe('Send');
+
+    fixture.componentInstance.busy.set(true);
+    fixture.detectChanges();
+    expect(send().getAttribute('aria-label')).toBe('Stop');
+    // Enabled whatever the draft holds, and it stops rather than sends.
+    expect(send().disabled).toBe(false);
+    send().click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.stopped).toBe(1);
+    expect(fixture.componentInstance.sent).toEqual([]);
+
+    // Enter does not send while busy either, and the draft stays editable.
+    const area = el.querySelector('textarea') as HTMLTextAreaElement;
+    expect(area.disabled).toBe(false);
+    area.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.sent).toEqual([]);
+
+    fixture.componentInstance.busy.set(false);
+    fixture.detectChanges();
+    send().click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.sent).toEqual(['why is hv-02 slow?']);
+  });
+});
+
+describe('StrctChatMessage — an actions slot', () => {
+  @Component({
+    imports: [StrctChatMessage, StrctChatMessageActions],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-chat-message author="assistant" name="Assistant">
+        The host is busy.
+        <span strctChatMessageActions class="foot">Copy · Used 3 tools</span>
+      </strct-chat-message>
+    `,
+  })
+  class Host {}
+
+  it('renders under the bubble, not inside it', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const foot = el.querySelector('.strct-msg__actions .foot')!;
+    expect(foot).toBeTruthy();
+    expect(el.querySelector('.strct-msg__bubble')!.contains(foot)).toBe(false);
+    expect(el.querySelector('.strct-msg__bubble')!.textContent).toContain('The host is busy.');
   });
 });
