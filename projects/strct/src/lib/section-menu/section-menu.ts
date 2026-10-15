@@ -8,6 +8,8 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { StrctIcon } from '../icon/icon';
 import { StrctRailStatus } from '../layout/rail';
 
@@ -29,6 +31,15 @@ export interface StrctMenuLink {
   dotStatus?: StrctRailStatus;
   /** Muted trailing icon (e.g. "restart required"), before any badge / dot. */
   trailingIcon?: string;
+  /**
+   * Render as a real router link (`<a routerLink>`): middle-click, ⌘/Ctrl-click
+   * and "open in new tab" work, and the address can be copied — which a page
+   * with an address of its own needs. `(select)` still fires on plain
+   * activation. Without `routerLink` or `href` the entry stays a `<button>`.
+   */
+  routerLink?: string | unknown[];
+  /** Render as a plain `<a href>` (external or non-router destinations). */
+  href?: string;
 }
 
 /** A category (level 1) that groups {@link StrctMenuLink} items (level 2). */
@@ -54,8 +65,76 @@ export interface StrctMenuSection {
   selector: 'strct-section-menu',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon],
+  imports: [NgTemplateOutlet, RouterLink, RouterLinkActive, StrctIcon],
   template: `
+    <!-- What every entry holds, whatever element carries it. -->
+    <ng-template #rowContent let-item>
+      @if (showIcons() && item.icon) {
+        <strct-icon
+          class="strct-sm__item-icon"
+          [name]="item.icon"
+          [size]="16"
+          [strokeWidth]="1.4"
+        />
+      }
+      <span class="strct-sm__item-label">{{ item.label }}</span>
+      @if (item.trailingIcon) {
+        <strct-icon
+          class="strct-sm__trailing"
+          [name]="item.trailingIcon"
+          [size]="14"
+          [strokeWidth]="1.5"
+        />
+      }
+      @if (item.badge !== undefined && item.badge !== null && item.badge !== '') {
+        <span class="strct-sm__badge strct-sm__badge--{{ item.badgeStatus ?? 'accent' }}">
+          {{ item.badge }}
+        </span>
+      } @else if (item.dot) {
+        <span class="strct-sm__dot strct-sm__dot--{{ item.dotStatus ?? 'accent' }}"></span>
+      }
+    </ng-template>
+
+    <!-- A router link, a plain link, or a button (the default). A page with an
+         address of its own has to be openable in a new tab, as the rail
+         beside this menu already is. -->
+    <ng-template #row let-item>
+      @if (isRouted(item)) {
+        <a
+          class="strct-sm__item"
+          [routerLink]="item.routerLink"
+          routerLinkActive
+          #rla="routerLinkActive"
+          [class.strct-sm__item--active]="isActive(item, rla.isActive)"
+          [attr.aria-current]="isActive(item, rla.isActive) ? 'page' : null"
+          (click)="pick(item, $event)"
+        >
+          <ng-container *ngTemplateOutlet="rowContent; context: { $implicit: item }" />
+        </a>
+      } @else if (item.href && !item.disabled) {
+        <a
+          class="strct-sm__item"
+          [href]="item.href"
+          [class.strct-sm__item--active]="item.id === activeId()"
+          [attr.aria-current]="item.id === activeId() ? 'page' : null"
+          (click)="pick(item, $event)"
+        >
+          <ng-container *ngTemplateOutlet="rowContent; context: { $implicit: item }" />
+        </a>
+      } @else {
+        <button
+          type="button"
+          class="strct-sm__item"
+          [class.strct-sm__item--active]="item.id === activeId()"
+          [disabled]="item.disabled"
+          [attr.aria-current]="item.id === activeId() ? 'page' : null"
+          (click)="pick(item)"
+        >
+          <ng-container *ngTemplateOutlet="rowContent; context: { $implicit: item }" />
+        </button>
+      }
+    </ng-template>
+
     <nav class="strct-sm" [attr.aria-label]="ariaLabel()">
       @for (sec of sections(); track sec.label) {
         <div class="strct-sm__section" [class.strct-sm__section--collapsible]="collapsible()">
@@ -86,43 +165,7 @@ export interface StrctMenuSection {
           @if (isOpen(sec)) {
             <div class="strct-sm__items" role="group">
               @for (item of sec.items; track item.id) {
-                <button
-                  type="button"
-                  class="strct-sm__item"
-                  [class.strct-sm__item--active]="item.id === activeId()"
-                  [disabled]="item.disabled"
-                  [attr.aria-current]="item.id === activeId() ? 'page' : null"
-                  (click)="pick(item)"
-                >
-                  @if (showIcons() && item.icon) {
-                    <strct-icon
-                      class="strct-sm__item-icon"
-                      [name]="item.icon"
-                      [size]="16"
-                      [strokeWidth]="1.4"
-                    />
-                  }
-                  <span class="strct-sm__item-label">{{ item.label }}</span>
-                  @if (item.trailingIcon) {
-                    <strct-icon
-                      class="strct-sm__trailing"
-                      [name]="item.trailingIcon"
-                      [size]="14"
-                      [strokeWidth]="1.5"
-                    />
-                  }
-                  @if (item.badge !== undefined && item.badge !== null && item.badge !== '') {
-                    <span
-                      class="strct-sm__badge strct-sm__badge--{{ item.badgeStatus ?? 'accent' }}"
-                    >
-                      {{ item.badge }}
-                    </span>
-                  } @else if (item.dot) {
-                    <span
-                      class="strct-sm__dot strct-sm__dot--{{ item.dotStatus ?? 'accent' }}"
-                    ></span>
-                  }
-                </button>
+                <ng-container *ngTemplateOutlet="row; context: { $implicit: item }" />
               }
             </div>
           }
@@ -205,6 +248,11 @@ export interface StrctMenuSection {
         align-items: center;
         gap: 9px;
         width: 100%;
+        /* An entry can be an <a> now, which needs the box and the underline
+           settled the way the button already has them. */
+        box-sizing: border-box;
+        text-align: start;
+        text-decoration: none;
         padding: 7px 10px;
         border: 0;
         border-radius: 6px;
@@ -331,8 +379,32 @@ export class StrctSectionMenu {
     this.overrides.set(next);
   }
 
-  protected pick(item: StrctMenuLink): void {
+  /** Enabled entry with a router destination → renders as `<a routerLink>`. */
+  protected isRouted(item: StrctMenuLink): boolean {
+    return item.routerLink != null && !item.disabled;
+  }
+
+  /**
+   * Active state of a router-link entry: an explicit `activeId` is
+   * authoritative; without one the router's own active state drives it — the
+   * rail's contract.
+   */
+  protected isActive(item: StrctMenuLink, routerActive: boolean): boolean {
+    const id = this.activeId();
+    return id !== null ? item.id === id : routerActive;
+  }
+
+  protected pick(item: StrctMenuLink, event?: MouseEvent): void {
     if (item.disabled) return;
+    // A modified or non-primary click on a link belongs to the browser (a new
+    // tab, a copied address) — never to us: no activeId change, no (select).
+    if (
+      event &&
+      (item.routerLink != null || item.href) &&
+      (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+    ) {
+      return;
+    }
     this.activeId.set(item.id);
     this.select.emit(item);
   }

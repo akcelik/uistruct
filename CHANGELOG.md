@@ -5,6 +5,125 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.15.0] - 2026-10-15
+
+The product switcher and the accent a product brings with it (FR-52-01,
+FR-52-03 of `hyperstruct-product-switcher.md`; FR-53-09 of
+`hyperstruct-product-shell-search-phone.md`).
+
+### Added
+
+- **`strct-product-switcher`** (FR-52-01) — the chip every multi-product
+  console grows beside its logo:
+
+  ```html
+  <strct-product-switcher
+    [items]="products"
+    [(current)]="productId"
+    [footerItems]="[admin]"
+    (opened)="loadHealth()"
+    (select)="go($event)"
+  />
+  ```
+
+  It says which product you are in and opens the ones you may use, each with
+  an icon in its own tone, its full name and one line of health with a status
+  dot; the shared platform follows after a divider. Rows are `menuitemradio`
+  entries with the current one checked, and **real links** where the product
+  has a `routerLink` or `href`, so middle-click, ⌘-click and "open in a new
+  tab" work and a modified click is left to the browser. `(opened)` fires once
+  per opening, so an app reads the health lines then and the menu never waits
+  for them. A person offered one product sees a plain chip, not a menu of one.
+  - Keyboard, measured: Enter / Space / ArrowDown open on the product you are
+    in, the arrows rove, Home and End jump, Escape closes and returns focus to
+    the chip. axe reports no violations on the open menu.
+  - **`shortLabel`** (FR-53-09): below `shortLabelWidth` (600 px) the chip
+    shows it — an icon alone does not say whether you are in Backup or in Site
+    Recovery, while a short word fits (measured: a 108 px chip at 390 px) —
+    and the full name stays in the accessible name
+    ("HyperStruct Backup — switch product").
+
+- **A menu row may be a link.** `a[strctDropdownItem]` is the anchor form of
+  `strct-dropdown-item`: the menu's semantics and keyboard on a real link.
+- **Secondary accents** (FR-52-03). Every translucent accent tint is now
+  **derived from `--acc`** rather than written out per palette, so an element
+  carrying `[data-accent]` that sets `--acc` remaps badges, links, check
+  marks, focus rings, selection fills and meters in that subtree — no second
+  set of tokens, and no component has to know the product's name:
+
+  ```css
+  [data-accent='backup'] {
+    --acc: #2f8f7a;
+  }
+  [data-theme='dark'] [data-accent='backup'] {
+    --acc: #58b9a3;
+  }
+  ```
+
+  The mixes are the values these tokens have always had (12/6 % dark, 10/5 %
+  light, 50/30/18 % both), and every one of the six schemes computes the same
+  colours it did before — verified in Chrome and by the visual baselines.
+  The contrast check that guards `--acc` now runs on every `[data-accent]` the
+  showcase declares, in all six schemes (worst: 5.16:1).
+
+### Fixed
+
+- **The contrast gate could not read an `rgb()` colour.** Its parser's
+  `/[\d.]+/` lives inside a template literal, which eats the backslash, so the
+  class was `[d.]` and every non-hex colour threw "unreadable colour". It never
+  showed, because the four tokens it read are hex — the first reading that
+  passed it a computed `rgb()` found it. The class is `[0-9.]` now, and
+  `color(srgb …)` (what `color-mix()` serialises to) is read as the 0–1
+  components it has.
+
+## [5.14.0] - 2026-10-15
+
+The shell on a phone, and menu entries that are real links (FR-53-04,
+FR-53-06, FR-53-07 of `hyperstruct-product-shell-search-phone.md`; FR-52-06 of
+`hyperstruct-product-switcher.md`).
+
+### Added
+
+- **`*strctHeaderAction`** (FR-53-06) — a header action that knows whether it
+  may move into an overflow menu on a phone:
+  `*strctHeaderAction="{ label: 'Create', icon: 'plus', run: create }"`. Below
+  `overflowBreakpoint` (600 px by default) the actions marked `'phone'` (the
+  default) are drawn in the header's **"More"** menu instead of the header, and
+  the ones marked `'never'` stay — what an action that opens its own popover
+  needs. Content projected without the directive never moves. Measured on the
+  showcase's own header at 390 px: it was 443 px wide and silently clipped by
+  the shell, and is now exactly 390.
+  - An action with `run` becomes a menu item. An action without one has its own
+    template drawn in the panel, in a row that is **not** a menu item — a
+    control is not a command. A menu may only hold menu items, so a panel
+    carrying such a control is a labelled dialog rather than a menu (axe:
+    `aria-required-children` on every other arrangement; none on this one).
+- **`strct-shell [closeNavOnNavigate]`** (FR-53-04), on by default, and
+  **`StrctShellService.closeNav()`**. On a phone the drawer holds the
+  navigation, so a choice made in it opens a page _behind_ it; this is the
+  subscription every app with a router ends up writing. Without a `Router` in
+  the injector nothing happens.
+- **`strct-vertical-nav`: the drawer is a drawer** (FR-53-07).
+  - `drawerMaxWidth` (default `calc(100vw - 48px)`), applied only in drawer
+    mode, so the width an app picks for its desktop sidebar cannot cover a
+    phone whole.
+  - Opening it moves focus inside and sets `role="dialog"` + `aria-modal`;
+    `trapFocus` (on by default) keeps Tab inside; closing hands focus back to
+    the drawer toggle that opened it. All three only in drawer mode: a sidebar
+    that is part of the page must not trap anything.
+  - `closeButton` draws a close control at the drawer's top, because Escape and
+    the backdrop are both invisible and a touch screen has no Escape.
+- **`StrctMenuLink.routerLink` / `href`** (FR-52-06) — a section-menu entry
+  with a destination is drawn as a real `<a>`: middle-click, ⌘/Ctrl-click,
+  "open in new tab" and "copy link address" work, and the router marks it
+  `aria-current`. `(select)` still fires on a plain activation, and a modified
+  or non-primary click belongs to the browser — the rail's contract, now the
+  menu's.
+- **A dev-mode diagnostic for a header that does not fit.** The shell clips
+  what overflows the header, so triggers simply are not there and nothing says
+  so. In dev the header now reports its own width against the room it has, and
+  names `*strctHeaderAction` as the way out.
+
 ## [5.13.0] - 2026-10-15
 
 A palette fed from more than one source, and menus that say what they hold

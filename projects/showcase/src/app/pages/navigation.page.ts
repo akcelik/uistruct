@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+  StrctBadge,
   StrctBreadcrumb,
   StrctBreadcrumbItem,
   StrctButton,
@@ -9,6 +10,9 @@ import {
   StrctKbd,
   StrctMenuSection,
   StrctPagination,
+  StrctProductItem,
+  StrctProductSwitcher,
+  StrctProgress,
   StrctRail,
   StrctRailItem,
   StrctSearchbox,
@@ -26,12 +30,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     FormsModule,
     PageHeader,
     DemoBlock,
+    StrctBadge,
     StrctBreadcrumb,
     StrctBreadcrumbItem,
     StrctButton,
     StrctCommandPalette,
     StrctKbd,
     StrctPagination,
+    StrctProductSwitcher,
+    StrctProgress,
     StrctRail,
     StrctSearchbox,
     StrctSectionMenu,
@@ -229,9 +236,51 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="product-switcher"
+      heading="Product switcher"
+      description="Where am I, and where else can I go — the chip every multi-product console grows beside its logo. It opens the products this person may use, each with one line of health and a dot, and the shared platform after a divider. Rows are menuitemradio entries (the one you are in is checked) and real links where the product has an address, so middle-click and “open in a new tab” work. (opened) fires once per opening, so the health lines are read then and not before. Below 600px the chip shows each item's shortLabel — an icon alone does not say whether you are in Backup or in Site Recovery — while the full name stays in the accessible name. A person offered one product sees a plain chip, not a menu of one."
+      code='<strct-product-switcher [items]="products" [(current)]="productId" [footerItems]="[admin]" (opened)="loadHealth()" (select)="go($event)" />'
+    >
+      <div class="ps-demo">
+        <strct-product-switcher
+          [items]="products"
+          [footerItems]="platform"
+          [(current)]="productId"
+          (opened)="psOpens.set(psOpens() + 1)"
+          (select)="psEcho.set($event.name)"
+        />
+        <span class="echo"
+          >in: {{ productId() }} · menu opened {{ psOpens() }}×{{
+            psEcho() ? ' · chose ' + psEcho() : ''
+          }}</span
+        >
+      </div>
+    </app-demo>
+
+    <!-- FR-52-03: a product's tone is the operator's palette remapped on a
+         subtree, so every accent-toned component follows without a cycle. -->
+    <app-demo
+      anchor="product-accent"
+      owner="product-switcher"
+      heading="A product's own accent"
+      description="A product's colour is independent of the operator's palette (arctic / ember / sage × light / dark). Set --acc on an element carrying [data-accent] and every derived accent token — the translucent fills, the 30% border wash, the focus ring — is recomputed there, so badges, check marks, links and selection fills in that subtree follow. The colour is yours to pick, so its contrast is yours to check: text and marks want 4.5:1 on the surfaces they sit on, a line or a chip on the header wants 3:1."
+      code='[data-accent="backup"] { --acc: #2f8f7a; } [data-theme="dark"] [data-accent="backup"] { --acc: #58b9a3; }'
+    >
+      <div class="pa-demo">
+        @for (tone of accentDemo; track tone.id) {
+          <div class="pa-demo__card" [attr.data-accent]="tone.id">
+            <strct-badge status="accent">{{ tone.label }}</strct-badge>
+            <a href="#product-accent" class="pa-demo__link">a link in this accent</a>
+            <strct-progress [value]="tone.value" status="accent" [label]="tone.label + ' usage'" />
+          </div>
+        }
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="section-menu"
       heading="Section menu"
-      description="A two-level category / item menu (not a tree). Items carry the same trailing vocabulary as the rail: a status dot (Hosts — 'unsaved changes'), a muted trailing icon (VMs — 'restart required') and a count chip (Volumes — deviations). Toggle collapsible and icons to see the configurations."
+      description="A two-level category / item menu (not a tree). Items carry the same trailing vocabulary as the rail: a status dot (Hosts — 'unsaved changes'), a muted trailing icon (VMs — 'restart required') and a count chip (Volumes — deviations). An entry with routerLink or href is drawn as a real link — middle-click, ⌘-click and “copy link address” work, and the router marks it aria-current — while (select) still fires on a plain activation, as the rail does. Here Hosts and Volumes are links; the rest are buttons. Toggle collapsible and icons to see the configurations."
       code='<strct-section-menu [sections]="[{label:&#39;Compute&#39;,items:[{id:&#39;hosts&#39;,label:&#39;Hosts&#39;,dot:true,dotStatus:&#39;warning&#39;},{id:&#39;vms&#39;,label:&#39;VMs&#39;,trailingIcon:&#39;sync&#39;}]}]" [(activeId)]="active" />'
     >
       <div class="sm-demo">
@@ -289,6 +338,56 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         align-items: center;
         gap: 14px;
         flex-wrap: wrap;
+      }
+      .ps-demo {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .pa-demo {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .pa-demo__card {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 210px;
+        padding: 14px;
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-md);
+        background: var(--bg-1);
+      }
+      .pa-demo__link {
+        font-size: 13px;
+        color: var(--acc);
+      }
+      /* A product's accent, set on the subtree that carries it: every derived
+         accent token follows (FR-52-03). Measured on --bg-1: 5.9 / 6.9 / 5.6
+         in dark and 5.3 / 4.8 / 5.9 in light. */
+      .pa-demo__card[data-accent='manager'] {
+        --acc: #7b9ec8;
+      }
+      .pa-demo__card[data-accent='backup'] {
+        --acc: #58b9a3;
+      }
+      .pa-demo__card[data-accent='recovery'] {
+        --acc: #a98ad1;
+      }
+      /* :host-context and not a plain ancestor selector: emulated
+         encapsulation stamps its content attribute on every compound
+         selector, including the ancestor, and <html> does not carry it — so
+         the light values never applied and the contrast check said so. */
+      :host-context([data-theme='light']) .pa-demo__card[data-accent='manager'] {
+        --acc: #4a6b8f;
+      }
+      :host-context([data-theme='light']) .pa-demo__card[data-accent='backup'] {
+        --acc: #1f7a66;
+      }
+      :host-context([data-theme='light']) .pa-demo__card[data-accent='recovery'] {
+        --acc: #6b4fa0;
       }
       .cp-hint {
         font-size: 13px;
@@ -404,6 +503,51 @@ export class NavigationPage {
 
   // Server-backed palette demo: a simulated API with latency.
   protected readonly srvOpen = signal(false);
+  protected readonly productId = signal<string | null>('backup');
+  protected readonly psOpens = signal(0);
+  protected readonly psEcho = signal('');
+  protected readonly products: StrctProductItem[] = [
+    {
+      id: 'manager',
+      name: 'HyperStruct Manager',
+      shortLabel: 'Manager',
+      icon: 'cluster',
+      description: '128 hosts · 2 alarms',
+      status: 'success',
+      tone: 'var(--acc)',
+    },
+    {
+      id: 'backup',
+      name: 'HyperStruct Backup',
+      shortLabel: 'Backup',
+      icon: 'archive',
+      description: '2 VMs past RPO',
+      status: 'warning',
+      tone: 'var(--success)',
+    },
+    {
+      id: 'recovery',
+      name: 'HyperStruct Site Recovery',
+      shortLabel: 'Recovery',
+      icon: 'refresh',
+      description: 'DR ready · tested 6 days ago',
+      status: 'success',
+      tone: 'var(--warning)',
+    },
+  ];
+  protected readonly platform: StrctProductItem[] = [
+    { id: 'admin', name: 'Administration', shortLabel: 'Admin', icon: 'settings' },
+  ];
+
+  // The three demo products' own tones. Two shades each — a dark theme and a
+  // light one — because one colour cannot clear 4.5:1 on both grounds; the
+  // values live in this page's stylesheet, where a theme can scope them.
+  protected readonly accentDemo = [
+    { id: 'manager', label: 'Manager', value: 62 },
+    { id: 'backup', label: 'Backup', value: 48 },
+    { id: 'recovery', label: 'Site Recovery', value: 31 },
+  ];
+
   protected readonly secOpen = signal(false);
   protected readonly secLast = signal('');
   // One object, three products: the same VM is its page, its backups and its
@@ -524,7 +668,15 @@ export class NavigationPage {
       icon: 'cpu',
       items: [
         // "unsaved changes" dot + "restart required" trailing icon (FR-NAV-02)
-        { id: 'hosts', label: 'Hosts', icon: 'host', dot: true, dotStatus: 'warning' },
+        {
+          id: 'hosts',
+          label: 'Hosts',
+          icon: 'host',
+          dot: true,
+          dotStatus: 'warning',
+          // A page with an address of its own (FR-52-06).
+          routerLink: '/components/section-menu',
+        },
         { id: 'vms', label: 'Virtual machines', icon: 'vm', trailingIcon: 'sync' },
         { id: 'clusters', label: 'Clusters', icon: 'cluster' },
       ],
@@ -533,7 +685,14 @@ export class NavigationPage {
       label: 'Storage',
       icon: 'storage',
       items: [
-        { id: 'volumes', label: 'Volumes', icon: 'disk', badge: 3, badgeStatus: 'critical' },
+        {
+          id: 'volumes',
+          label: 'Volumes',
+          icon: 'disk',
+          badge: 3,
+          badgeStatus: 'critical',
+          routerLink: '/components/section-menu',
+        },
         { id: 'pools', label: 'Pools', icon: 'storage' },
       ],
     },

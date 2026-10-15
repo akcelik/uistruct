@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { StrctMenuLink, StrctMenuSection, StrctSectionMenu } from './section-menu';
 
 const sections: StrctMenuSection[] = [
@@ -87,5 +88,67 @@ describe('StrctSectionMenu', () => {
     const rows = host.querySelectorAll('.strct-sm__item');
     const plain = rows[rows.length - 1];
     expect(plain.querySelector('.strct-sm__badge, .strct-sm__dot, .strct-sm__trailing')).toBeNull();
+  });
+});
+
+// FR-52-06 — a page with an address of its own has to be openable in a new
+// tab, as the rail beside this menu already is.
+describe('StrctSectionMenu — entries that are real links', () => {
+  const routed: StrctMenuSection[] = [
+    {
+      label: 'Backup',
+      items: [
+        { id: 'policies', label: 'Policies', routerLink: '/backup/policies' },
+        { id: 'repos', label: 'Repository nodes', href: '/backup/repos' },
+        { id: 'jobs', label: 'Jobs' },
+        { id: 'off', label: 'Archive', routerLink: '/backup/archive', disabled: true },
+      ],
+    },
+  ];
+
+  function build() {
+    // A catch-all route: a routerLink row really does navigate when it is
+    // clicked, and a router with no routes rejects — which fails the run.
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: '**', children: [] }])] });
+    const fixture = TestBed.createComponent(StrctSectionMenu);
+    fixture.componentRef.setInput('sections', routed);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('renders a router destination as an anchor and the rest as buttons', () => {
+    const { el } = build();
+    const rows = [...el.querySelectorAll<HTMLElement>('.strct-sm__item')];
+    expect(rows.map((r) => r.tagName)).toEqual(['A', 'A', 'BUTTON', 'BUTTON']);
+    expect(rows[0].getAttribute('href')).toBe('/backup/policies');
+    expect(rows[1].getAttribute('href')).toBe('/backup/repos');
+    // A disabled entry has no destination to offer.
+    expect(rows[3].hasAttribute('href')).toBe(false);
+  });
+
+  it('still emits select on a plain click, and marks the active entry', () => {
+    const { fixture, el } = build();
+    const picked: string[] = [];
+    fixture.componentInstance.select.subscribe((item: StrctMenuLink) => picked.push(item.id));
+    const link = el.querySelector<HTMLElement>('.strct-sm__item')!;
+
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+    fixture.detectChanges();
+    expect(picked).toEqual(['policies']);
+    expect(fixture.componentInstance.activeId()).toBe('policies');
+    expect(link.getAttribute('aria-current')).toBe('page');
+  });
+
+  it('leaves a middle-click or ⌘-click to the browser', () => {
+    const { fixture, el } = build();
+    const picked: string[] = [];
+    fixture.componentInstance.select.subscribe((item: StrctMenuLink) => picked.push(item.id));
+    const link = el.querySelector<HTMLElement>('.strct-sm__item')!;
+
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 1 }));
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0, metaKey: true }));
+    fixture.detectChanges();
+    expect(picked).toEqual([]);
+    expect(fixture.componentInstance.activeId()).toBeNull();
   });
 });

@@ -81,11 +81,6 @@
   --t4: rgba(255, 255, 255, 0.15);
   --inv: #0e1015;
   --acc: #7b9ec8;
-  --acc-m: rgba(123, 158, 200, 0.12);
-  --acc-s: rgba(123, 158, 200, 0.06);
-  --acc50: rgba(123, 158, 200, 0.5);
-  --acc30: rgba(123, 158, 200, 0.3);
-  --acc18: rgba(123, 158, 200, 0.18);
   --success: #7da87e;
   --success-bg: rgba(125, 168, 126, 0.12);
   --warning: #bfae6a;
@@ -151,11 +146,6 @@
   --t4: rgba(0, 0, 0, 0.14);
   --inv: #ffffff;
   --acc: #4a6b8f;
-  --acc-m: rgba(74, 107, 143, 0.1);
-  --acc-s: rgba(74, 107, 143, 0.05);
-  --acc50: rgba(74, 107, 143, 0.5);
-  --acc30: rgba(74, 107, 143, 0.3);
-  --acc18: rgba(74, 107, 143, 0.18);
   --success: #4c7a4f;
   --success-bg: rgba(76, 122, 79, 0.12);
   --warning: #7d6f30;
@@ -221,11 +211,6 @@
   --t4: rgba(255, 225, 195, 0.14);
   --inv: #12100d;
   --acc: #c49a6c;
-  --acc-m: rgba(196, 154, 108, 0.12);
-  --acc-s: rgba(196, 154, 108, 0.06);
-  --acc50: rgba(196, 154, 108, 0.5);
-  --acc30: rgba(196, 154, 108, 0.3);
-  --acc18: rgba(196, 154, 108, 0.18);
   --success: #8aaa7a;
   --success-bg: rgba(138, 170, 122, 0.12);
   --warning: #c4b060;
@@ -291,11 +276,6 @@
   --t4: rgba(80, 55, 30, 0.14);
   --inv: #fdfcfa;
   --acc: #7d5e3f;
-  --acc-m: rgba(125, 94, 63, 0.1);
-  --acc-s: rgba(125, 94, 63, 0.05);
-  --acc50: rgba(125, 94, 63, 0.5);
-  --acc30: rgba(125, 94, 63, 0.3);
-  --acc18: rgba(125, 94, 63, 0.18);
   --success: #4c7a46;
   --success-bg: rgba(76, 122, 70, 0.12);
   --warning: #7d6e2c;
@@ -361,11 +341,6 @@
   --t4: rgba(195, 222, 210, 0.14);
   --inv: #0d1210;
   --acc: #7aab90;
-  --acc-m: rgba(122, 171, 144, 0.12);
-  --acc-s: rgba(122, 171, 144, 0.06);
-  --acc50: rgba(122, 171, 144, 0.5);
-  --acc30: rgba(122, 171, 144, 0.3);
-  --acc18: rgba(122, 171, 144, 0.18);
   --success: #82aa82;
   --success-bg: rgba(130, 170, 130, 0.12);
   --warning: #b8ac6a;
@@ -431,11 +406,6 @@
   --t4: rgba(35, 65, 45, 0.14);
   --inv: #fafcfb;
   --acc: #3f7355;
-  --acc-m: rgba(63, 115, 85, 0.1);
-  --acc-s: rgba(63, 115, 85, 0.05);
-  --acc50: rgba(63, 115, 85, 0.5);
-  --acc30: rgba(63, 115, 85, 0.3);
-  --acc18: rgba(63, 115, 85, 0.18);
   --success: #467a48;
   --success-bg: rgba(70, 122, 72, 0.12);
   --warning: #6f682d;
@@ -472,6 +442,37 @@
   --leading-normal: 1.5;
   --leading-loose: 1.6;
   --disabled-opacity: 0.5;
+}
+
+// A product's own accent, independent of the operator's palette (FR-52-03).
+// Every translucent accent tint is derived from --acc rather than written out
+// per palette, so a subtree that sets --acc on a [data-accent] element remaps
+// badges, check marks, links, focus rings and selection fills with it — no
+// second set of tokens, and no component has to know the product's name.
+//
+//   [data-accent='backup'] { --acc: #2f8f7a; }
+//   [data-theme='dark'] [data-accent='backup'] { --acc: #58b9a3; }
+//
+// The mixes are the values these tokens have always had: 12/6% in dark and
+// 10/5% in light, 50/30/18% in both. The colour is the app's to pick, so its
+// contrast is the app's to check: >= 4.5:1 on --bg-0/1/2 for text and marks,
+// >= 3:1 on --hdr for a line or a chip (the palette's own light accent is
+// 2.67-2.85:1 on its header, which is why a header shade is a second value).
+[data-palette][data-theme='dark'],
+[data-theme='dark'] [data-accent] {
+  --acc-m: color-mix(in srgb, var(--acc) 12%, transparent);
+  --acc-s: color-mix(in srgb, var(--acc) 6%, transparent);
+  --acc50: color-mix(in srgb, var(--acc) 50%, transparent);
+  --acc30: color-mix(in srgb, var(--acc) 30%, transparent);
+  --acc18: color-mix(in srgb, var(--acc) 18%, transparent);
+}
+[data-palette][data-theme='light'],
+[data-theme='light'] [data-accent] {
+  --acc-m: color-mix(in srgb, var(--acc) 10%, transparent);
+  --acc-s: color-mix(in srgb, var(--acc) 5%, transparent);
+  --acc50: color-mix(in srgb, var(--acc) 50%, transparent);
+  --acc30: color-mix(in srgb, var(--acc) 30%, transparent);
+  --acc18: color-mix(in srgb, var(--acc) 18%, transparent);
 }
 
 // Honour the OS "increase contrast" preference (low-vision users / bright ambient

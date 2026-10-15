@@ -33,8 +33,23 @@ and **FR-52-04** (smallest, most reused).
 >   order and a slot can only be declared before the catch-all one, so the label goes in
 >   `[strctDropdownItemLabel]`; dev mode says so when it is missing.
 >
-> Still open: **FR-52-01** (the switcher), **FR-52-03** (secondary accents), **FR-52-06**
-> (section-menu links).
+> **Every item in this document has shipped.**
+>
+> **FR-52-01 and FR-52-03 SHIPPED in 5.15.0 (2026-10-15)**, with FR-53-09's short label.
+>
+> - `strct-product-switcher` draws the chip and the menu: rows are `menuitemradio` entries (the
+>   current one checked) and real links where the product has an address, the platform follows a
+>   divider, `(opened)` fires once per opening, and one product means a plain chip. Measured:
+>   ArrowDown opens on the product you are in, the arrows rove, Home/End jump, Escape returns focus
+>   to the chip; axe clean. At 390px the chip is 108px and shows "Backup", with
+>   "HyperStruct Backup — switch product" as its name.
+> - Secondary accents are the palette's own tints derived from `--acc`, so `[data-accent]` on any
+>   element remaps everything under it. The six schemes compute exactly the colours they did
+>   before, and the library's contrast check now runs on every declared accent (worst 5.16:1).
+>
+> **FR-52-06 SHIPPED in 5.14.0 (2026-10-15).** `StrctMenuLink.routerLink` / `href` draws an entry
+> as a real `<a>` with `aria-current` from the router; `(select)` still fires on a plain
+> activation, and a modified or non-primary click is left to the browser — the rail's contract.
 
 ---
 

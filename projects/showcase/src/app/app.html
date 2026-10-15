@@ -10,32 +10,47 @@
 
     <span class="grow"></span>
 
-    <a strct-button variant="flat" size="sm" routerLink="/get-started">Get started</a>
-    <a strct-button variant="flat" size="sm" routerLink="/components/button">Components</a>
+    <!-- Below 600px these move into the header's own "More" menu; the
+         searchbox and the theme switcher stay, because each opens a surface
+         of its own. -->
+    <ng-container *strctHeaderAction="{ label: 'Get started', icon: 'rocket', run: goStarted }">
+      <a strct-button variant="flat" size="sm" routerLink="/get-started">Get started</a>
+    </ng-container>
+    <ng-container *strctHeaderAction="{ label: 'Components', icon: 'grid', run: goComponents }">
+      <a strct-button variant="flat" size="sm" routerLink="/components/button">Components</a>
+    </ng-container>
 
-    <strct-searchbox
-      class="hdr-search"
-      trigger
-      hint="⌘K"
-      ariaLabel="Search (Ctrl or Cmd K)"
-      (activated)="openPalette()"
-    />
+    <ng-container *strctHeaderAction="{ label: 'Search', overflow: 'never' }">
+      <strct-searchbox
+        class="hdr-search"
+        trigger
+        hint="⌘K"
+        ariaLabel="Search (Ctrl or Cmd K)"
+        (activated)="openPalette()"
+      />
+    </ng-container>
 
-    <strct-theme-switcher />
+    <!-- The widest trigger in this header (a segmented control): on a phone
+         it is drawn inside the More menu instead, template and all. -->
+    <ng-container *strctHeaderAction="{ label: 'Theme' }">
+      <strct-theme-switcher />
+    </ng-container>
 
-    <a
-      class="ghbtn"
-      href="https://github.com/akcelik/uistruct"
-      target="_blank"
-      rel="noreferrer"
-      aria-label="GitHub"
-    >
-      <strct-icon name="code" [size]="16" />
-    </a>
+    <ng-container *strctHeaderAction="{ label: 'GitHub', icon: 'code', run: goGithub }">
+      <a
+        class="ghbtn"
+        href="https://github.com/akcelik/uistruct"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="GitHub"
+      >
+        <strct-icon name="code" [size]="16" />
+      </a>
+    </ng-container>
   </strct-header>
 
   @if (showSidebar()) {
-    <strct-vertical-nav>
+    <strct-vertical-nav closeButton closeLabel="Close navigation">
       <div class="side">
         <div class="rail">
           @for (group of groups; track group.id) {

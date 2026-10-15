@@ -2878,6 +2878,73 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not use it for non-keyboard labels — that is a badge.'],
       },
       {
+        id: 'product-switcher',
+        title: 'Product switcher',
+        selector: 'strct-product-switcher',
+        importNames: ['StrctProductSwitcher', 'StrctProductItem'],
+        summary: 'Where am I, and where else can I go.',
+        lead: 'The chip every multi-product console grows beside its logo: it says which product you are in and opens the ones you may use, each with a line of health, with the shared platform after a divider. Rows are `menuitemradio` entries — the one you are in is checked — and real links where the product has an address, so middle-click and "open in a new tab" work. `(opened)` fires once per opening, so an app reads the health lines then and the menu never waits for them. A person offered one product sees a plain chip, not a menu of one.',
+        inputs: [
+          {
+            name: 'items',
+            type: 'StrctProductItem[]',
+            default: '[]',
+            description:
+              '`{ id, name, label?, shortLabel?, icon?, description?, status?, tone?, routerLink?, href?, disabled? }[]`. `name` is the row\u2019s label and what a reader hears; `label` is what the chip shows; `description` + `status` are the health line and its dot; `tone` colours the icons (see the product accent example).',
+          },
+          {
+            name: 'footerItems',
+            type: 'StrctProductItem[]',
+            default: '[]',
+            description: 'Entries after a divider — the shared platform, administration.',
+          },
+          {
+            name: 'current',
+            type: 'string | null',
+            default: 'null',
+            description: 'Which product you are in, two-way (`[(current)]`).',
+          },
+          {
+            name: 'shortLabelWidth',
+            type: 'number',
+            default: '600',
+            description:
+              'Below this width the chip shows each item\u2019s `shortLabel`. An icon alone does not say whether you are in Backup or in Site Recovery, while a short word fits; the full name stays in the accessible name.',
+          },
+          {
+            name: 'switchLabel',
+            type: 'string',
+            default: `'switch product'`,
+            description:
+              'What the chip is for, after the product\u2019s name: "HyperStruct Backup — switch product" (localisable).',
+          },
+        ],
+        outputs: [
+          {
+            name: 'opened',
+            type: 'void',
+            description: 'The menu has opened — read the health lines now, not before.',
+          },
+          {
+            name: 'select',
+            type: 'StrctProductItem',
+            description:
+              'A product was chosen. A modified or non-primary click on a link is left to the browser and emits nothing.',
+          },
+        ],
+        do: [
+          'Give each product a short label: an icon alone does not say where you are.',
+          'Load the health lines on (opened), not with the page.',
+        ],
+        dont: [
+          'Do not draw a menu of one — pass a single item and the component draws a plain chip.',
+        ],
+        a11y: [
+          'The chip keeps the product\u2019s name in its accessible name; rows are menuitemradio with the current one checked.',
+          'Enter / Space / ArrowDown open, the arrows rove, Home and End jump, Escape closes and returns focus to the chip.',
+        ],
+      },
+      {
         id: 'section-menu',
         title: 'Section menu',
         selector: 'strct-section-menu',
@@ -2889,7 +2956,7 @@ export const DOCS: DocCategory[] = [
             name: 'sections',
             type: 'StrctMenuSection[]',
             description:
-              'Categories with items: `{ label, icon?, expanded?, items: StrctMenuLink[] }`. Each item is `{ id, label, icon?, disabled?, badge?, badgeStatus?, dot?, dotStatus?, trailingIcon? }` — `badge` renders a trailing count chip, `dot` a small status dot (e.g. "unsaved changes"), `trailingIcon` a muted glyph (e.g. "restart required"). Same status vocabulary as the rail (`StrctRailStatus`). Required.',
+              'Categories with items: `{ label, icon?, expanded?, items: StrctMenuLink[] }`. Each item is `{ id, label, icon?, disabled?, badge?, badgeStatus?, dot?, dotStatus?, trailingIcon?, routerLink?, href? }` — `badge` renders a trailing count chip, `dot` a small status dot (e.g. "unsaved changes"), `trailingIcon` a muted glyph (e.g. "restart required"). An item with `routerLink` or `href` is drawn as a real link (middle-click, ⌘-click, "copy link address", `aria-current` from the router) and still emits `(select)` on a plain activation — the rail\u2019s contract; without one it stays a `<button>`. Same status vocabulary as the rail (`StrctRailStatus`). Required.',
           },
           {
             name: 'activeId',
@@ -2927,6 +2994,7 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not nest sections — items are a flat list under each category.'],
         a11y: [
           'Renders a nav landmark; the active item gets aria-current and collapsible categories expose aria-expanded.',
+          'An item with a destination is an anchor, so it is announced as a link and can be opened in a new tab.',
         ],
       },
     ],

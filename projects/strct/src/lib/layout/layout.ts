@@ -1,13 +1,31 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  Directive,
+  ElementRef,
+  TemplateRef,
   ViewEncapsulation,
+  afterNextRender,
+  booleanAttribute,
+  computed,
+  contentChildren,
+  effect,
   inject,
   input,
   signal,
+  viewChild,
 } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router } from '@angular/router';
 import { StrctIcon } from '../icon/icon';
+import { strctDevWarn } from '../util/dev-warn';
+import {
+  StrctDropdown,
+  StrctDropdownItem,
+  StrctDropdownItemIcon,
+  StrctDropdownTrigger,
+} from '../dropdown/dropdown';
 
 let shellCounter = 0;
 
@@ -16,6 +34,20 @@ export class StrctShellService {
   readonly mobileNavOpen = signal(false);
   /** Id of the vertical nav controlled by the header drawer toggle. */
   readonly navId = `strct-vnav-${++shellCounter}`;
+  /**
+   * The header's drawer toggle, so closing the drawer can hand focus back to
+   * what opened it. The header registers it; nothing else writes it.
+   */
+  drawerToggle: HTMLElement | null = null;
+
+  /**
+   * Closes the navigation drawer. On a phone the drawer holds the
+   * navigation, so a choice made in it opens a page *behind* it; the shell
+   * calls this on every completed navigation unless told not to.
+   */
+  closeNav(): void {
+    if (this.mobileNavOpen()) this.mobileNavOpen.set(false);
+  }
 }
 
 /**
@@ -109,11 +141,27 @@ export class StrctShell {
   readonly skipLinkLabel = input('Skip to main content');
   /** The name of the backdrop that closes the navigation drawer on a phone. */
   readonly closeNavLabel = input('Close navigation');
+  /**
+   * Close the drawer when a navigation completes — the subscription every app
+   * with a router ends up writing. It needs a `Router`; without one nothing
+   * happens. Set it to `false` to keep the drawer open across navigations,
+   * and close it yourself with `StrctShellService.closeNav()`.
+   */
+  readonly closeNavOnNavigate = input(true, { transform: booleanAttribute });
 
   /** The drawer's open state lives on the shell, and so does its backdrop. */
   protected readonly shell = inject(StrctShellService);
 
   private readonly doc = inject(DOCUMENT);
+  private readonly router = inject(Router, { optional: true });
+
+  constructor() {
+    // An app without the router package still works: the token is optional and
+    // the events stream is simply never there.
+    this.router?.events.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event instanceof NavigationEnd && this.closeNavOnNavigate()) this.shell.closeNav();
+    });
+  }
 
   /**
    * Moves focus rather than only the scroll position: an href alone scrolls
@@ -131,12 +179,60 @@ export class StrctShell {
   }
 }
 
+/** What a header action is, and whether it may move into the overflow menu. */
+export interface StrctHeaderActionConfig {
+  /** The name the overflow row shows, and the action's own name. */
+  label: string;
+  /** Optional icon for the overflow row (an icon-set name). */
+  icon?: string;
+  /**
+   * `'phone'` (the default) moves the action into the "More" menu below the
+   * breakpoint. `'never'` keeps it in the header at every width — what an
+   * action that opens its own popover (alarms, the account menu) needs, since
+   * a popover inside a menu is a menu inside a menu.
+   */
+  overflow?: 'phone' | 'never';
+  /**
+   * What the overflow row does when it is chosen. Given one, the row is a
+   * menu item with the icon and the label — a command.
+   *
+   * Without one the action's own template is drawn in the menu instead, in a
+   * row that is not a menu item: the way out for an action that is a control
+   * in its own right (a segmented choice, a switcher). It keeps its own tab
+   * stop and its own clicks, and using it does not close the menu.
+   */
+  run?: () => void;
+}
+
+/**
+ * An action in the header that knows whether it may move into the overflow
+ * menu on a phone:
+ *
+ *   <ng-container *strctHeaderAction="{ label: 'Create', icon: 'plus', run: create }">
+ *     <button strct-button variant="flat" iconOnly aria-label="Create">…</button>
+ *   </ng-container>
+ *
+ * Content projected into the header without this directive never moves.
+ */
+@Directive({ selector: '[strctHeaderAction]' })
+export class StrctHeaderAction {
+  readonly config = input.required<StrctHeaderActionConfig>({ alias: 'strctHeaderAction' });
+  readonly template = inject<TemplateRef<unknown>>(TemplateRef);
+}
+
 /** Top application bar. Holds brand on the left and actions on the right. */
 @Component({
   selector: 'strct-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon],
+  imports: [
+    NgTemplateOutlet,
+    StrctIcon,
+    StrctDropdown,
+    StrctDropdownTrigger,
+    StrctDropdownItem,
+    StrctDropdownItemIcon,
+  ],
   template: `
     <button
       type="button"
@@ -149,6 +245,62 @@ export class StrctShell {
       <strct-icon name="menu" [size]="18" />
     </button>
     <ng-content />
+    @if (actions().length) {
+      <span class="strct-header__actions">
+        @for (action of inlineActions(); track action) {
+          <ng-container *ngTemplateOutlet="action.template" />
+        }
+        @if (overflowActions().length) {
+          <!-- A menu may only hold menu items, so a panel that carries a
+               control of its own (a theme switcher, a segmented choice) is a
+               labelled dialog instead — the dropdown's popover mode. A panel
+               of plain commands stays a menu, with its arrow keys. -->
+          <strct-dropdown
+            #overflow
+            align="end"
+            [popover]="overflowIsPanel()"
+            [focusable]="overflowIsPanel()"
+            [popoverLabel]="overflowLabel()"
+          >
+            <button
+              type="button"
+              class="strct-header__more"
+              strctDropdownTrigger
+              [attr.aria-label]="overflowLabel()"
+            >
+              <strct-icon name="dots" [size]="18" />
+            </button>
+            @for (action of overflowActions(); track action) {
+              @if (action.config().run; as run) {
+                @if (overflowIsPanel()) {
+                  <button type="button" class="strct-header__morecmd" (click)="runAndClose(run)">
+                    @if (action.config().icon; as icon) {
+                      <strct-icon [name]="icon" [size]="15" />
+                    }
+                    {{ action.config().label }}
+                  </button>
+                } @else {
+                  <strct-dropdown-item (click)="run()">
+                    @if (action.config().icon; as icon) {
+                      <strct-icon strctDropdownItemIcon [name]="icon" [size]="15" />
+                    }
+                    {{ action.config().label }}
+                  </strct-dropdown-item>
+                }
+              } @else {
+                <div
+                  class="strct-header__moreslot"
+                  role="group"
+                  [attr.aria-label]="action.config().label"
+                >
+                  <ng-container *ngTemplateOutlet="action.template" />
+                </div>
+              }
+            }
+          </strct-dropdown>
+        }
+      </span>
+    }
   `,
   host: {
     class: 'strct-header',
@@ -194,6 +346,55 @@ export class StrctShell {
          border would change the height of everything under it. */
       .strct-header--accent {
         box-shadow: inset 0 -3px 0 var(--strct-header-accent, var(--acc));
+      }
+      .strct-header__actions {
+        display: flex;
+        align-items: center;
+        gap: inherit;
+        min-width: 0;
+      }
+      .strct-header__more {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+      }
+      .strct-header__more:hover {
+        background: rgb(255 255 255 / 0.12);
+      }
+      .strct-header__moreslot {
+        display: flex;
+        align-items: center;
+        padding: 6px 10px;
+      }
+      /* A command inside the panel: a menu item's look without its role,
+         because a dialog has no menu items. */
+      .strct-header__morecmd {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 9px 10px;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: var(--t1);
+        font-size: 13px;
+        font-family: var(--font);
+        text-align: start;
+        cursor: pointer;
+      }
+      .strct-header__morecmd:hover,
+      .strct-header__morecmd:focus-visible {
+        background: var(--bg-3);
+        outline: none;
       }
       /* Below a phone's width seven 32–36px triggers only fit with a tighter
          gap and padding; an app should not have to override our selector. */
@@ -275,7 +476,79 @@ export class StrctHeader {
    */
   readonly accent = input('');
 
+  /**
+   * Below this width (px) the actions marked `overflow: 'phone'` move into a
+   * "More" menu. A console header carries more icons than a phone has room
+   * for, and an app should not have to draw two copies of each.
+   */
+  readonly overflowBreakpoint = input(600);
+  /** The "More" trigger's accessible name (localisable). */
+  readonly overflowLabel = input('More');
+
+  protected readonly actions = contentChildren(StrctHeaderAction);
+  /** Whether the viewport is below `overflowBreakpoint`. */
+  private readonly narrow = signal(false);
+
+  protected readonly inlineActions = computed(() =>
+    this.actions().filter((a) => !this.narrow() || a.config().overflow === 'never'),
+  );
+  protected readonly overflowActions = computed(() =>
+    this.narrow() ? this.actions().filter((a) => a.config().overflow !== 'never') : [],
+  );
+  /** An action that brings its own control makes the panel a dialog, not a menu. */
+  protected readonly overflowIsPanel = computed(() =>
+    this.overflowActions().some((a) => !a.config().run),
+  );
+  private readonly overflowPanel = viewChild<StrctDropdown>('overflow');
+
+  /** In panel mode nothing closes on activation, so a command closes it. */
+  protected runAndClose(run: () => void): void {
+    run();
+    this.overflowPanel()?.close(true);
+  }
+
   protected readonly shell = inject(StrctShellService);
+  private readonly hostEl = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  constructor() {
+    // Dev-only: the shell clips what overflows the header, so a header that
+    // does not fit a phone fails silently — the triggers are simply not
+    // there. Say so, with the two numbers that make it obvious.
+    afterNextRender(() => {
+      if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+        const el = this.hostEl.nativeElement;
+        const over = el.scrollWidth - el.clientWidth;
+        if (over > 1) {
+          strctDevWarn(
+            'header-overflow',
+            `[strct] strct-header: its content is ${el.scrollWidth}px wide in a ` +
+              `${el.clientWidth}px header, so ${over}px of it is clipped and cannot be ` +
+              'reached. Mark the triggers that may move with *strctHeaderAction so they ' +
+              'collect into the header\u2019s "More" menu below overflowBreakpoint.',
+          );
+        }
+      }
+    });
+
+    // The breakpoint has to be read in script, not only in CSS: moving an
+    // action means rendering it somewhere else, which no media query can do.
+    effect((onCleanup) => {
+      const px = this.overflowBreakpoint();
+      if (typeof matchMedia !== 'function') return;
+      const query = matchMedia(`(max-width: ${px}px)`);
+      const update = () => this.narrow.set(query.matches);
+      update();
+      query.addEventListener('change', update);
+      onCleanup(() => query.removeEventListener('change', update));
+    });
+    // The drawer hands focus back here when it closes, so the shell has to
+    // know which element opened it.
+    afterNextRender(() => {
+      this.shell.drawerToggle = this.hostEl.nativeElement.querySelector(
+        '.strct-header__drawer-toggle',
+      );
+    });
+  }
 }
 
 /** Bottom status bar. */
