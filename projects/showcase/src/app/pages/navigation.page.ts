@@ -96,6 +96,32 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="command-palette-sections"
+      owner="command-palette"
+      heading="Results from more than one source"
+      description="A palette fed from several products reads as one undifferentiated list. Give each item a section and the results group under a heading the arrows pass over; sectionOrder puts the product you are in first. A badge (with a tone of its own) says which product a result belongs to, and a description takes the detail the tag has no room for — the tag now shrinks before the label does."
+      code='items = [{ id: "vm-1", label: "Payments VM", section: "Backup", badge: { label: "Backup", tone: "var(--acc)" }, description: "esx-04 · last backup 2h ago", group: "Virtual machine" }]'
+    >
+      <div class="cp-demo">
+        <button strct-button variant="primary" (click)="secOpen.set(true)">
+          Search across products
+        </button>
+        @if (secLast()) {
+          <span class="echo">picked: {{ secLast() }}</span>
+        }
+      </div>
+      <strct-command-palette
+        [items]="secItems"
+        [sectionOrder]="['Manager', 'Backup', 'Site Recovery', 'Administration']"
+        [open]="secOpen()"
+        (openChange)="secOpen.set($event)"
+        placeholder="Search every product…"
+        [hotkey]="false"
+        (picked)="secLast.set($event.label)"
+      />
+    </app-demo>
+
+    <app-demo
       anchor="searchbox"
       heading="Searchbox"
       description="The docs-header search pattern as a component. Default mode is a real search field — two-way value, Enter emits (search), Escape or the × clears. trigger mode is a button that only emits (activated): pair it with the command palette and show the hotkey in hint. The header of this site runs on it."
@@ -378,6 +404,66 @@ export class NavigationPage {
 
   // Server-backed palette demo: a simulated API with latency.
   protected readonly srvOpen = signal(false);
+  protected readonly secOpen = signal(false);
+  protected readonly secLast = signal('');
+  // One object, three products: the same VM is its page, its backups and its
+  // replication — which is why each result says where it belongs.
+  protected readonly secItems: StrctCommandItem[] = [
+    {
+      id: 'm-vm',
+      label: 'payments-db-01',
+      section: 'Manager',
+      icon: 'vm',
+      group: 'Virtual machine',
+      description: 'esx-04 · 8 vCPU · 32 GB',
+      badge: { label: 'Manager', tone: 'var(--acc)' },
+    },
+    {
+      id: 'm-host',
+      label: 'esx-04.dc1.local',
+      section: 'Manager',
+      icon: 'host',
+      group: 'Host',
+      description: 'Cluster PROD · 62% CPU',
+      badge: { label: 'Manager', tone: 'var(--acc)' },
+    },
+    {
+      id: 'b-vm',
+      label: 'payments-db-01',
+      section: 'Backup',
+      icon: 'archive',
+      group: 'Backups · daily at 02:00',
+      description: 'Last restore point 2h ago · 14 kept',
+      badge: { label: 'Backup', tone: 'var(--success)' },
+    },
+    {
+      id: 'b-policy',
+      label: 'Gold — 7 daily, 4 weekly',
+      section: 'Backup',
+      icon: 'shield',
+      group: 'Policy',
+      description: '38 VMs · 2 past RPO',
+      badge: { label: 'Backup', tone: 'var(--success)' },
+    },
+    {
+      id: 's-plan',
+      label: 'PROD → DR failover',
+      section: 'Site Recovery',
+      icon: 'refresh',
+      group: 'Recovery plan',
+      description: '12 VMs · tested 6 days ago',
+      badge: { label: 'Site Recovery', tone: 'var(--warning)' },
+    },
+    {
+      id: 'a-users',
+      label: 'Users and roles',
+      section: 'Administration',
+      icon: 'users',
+      group: 'Settings',
+      badge: { label: 'Admin' },
+    },
+  ];
+
   protected readonly srvQuery = signal('');
   protected readonly srvLoading = signal(false);
   protected readonly srvLast = signal('');

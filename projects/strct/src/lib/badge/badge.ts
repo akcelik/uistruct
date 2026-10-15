@@ -28,6 +28,8 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
     '[class.strct-badge--warninging]': "status() === 'warning'",
     '[class.strct-badge--critical]': "status() === 'critical'",
     '[class.strct-badge--solid]': 'solid()',
+    '[class.strct-badge--tone]': 'tone()',
+    '[style.--strct-badge-fg]': 'tone() || null',
   },
   styles: [
     `
@@ -67,6 +69,18 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
         border-color: var(--critical);
       }
 
+      /* A tone the five statuses do not carry: a product's own accent on a
+         row, where green / amber / red already mean something else. The text
+         takes the colour and the border a 30% wash of it, as --accent does
+         with --acc30. Either set [tone] or the two custom properties. */
+      .strct-badge--tone {
+        color: var(--strct-badge-fg, var(--t2));
+        border-color: var(
+          --strct-badge-border,
+          color-mix(in srgb, var(--strct-badge-fg, var(--b3)) 30%, transparent)
+        );
+      }
+
       /* Opt-in filled badge — uniform edges (no start rail). */
       .strct-badge--solid {
         color: var(--t1);
@@ -91,6 +105,11 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
         background: var(--critical);
         color: var(--inv);
       }
+      .strct-badge--solid.strct-badge--tone {
+        background: var(--strct-badge-fg, var(--bg-a));
+        color: var(--strct-badge-on, var(--inv));
+        border-color: transparent;
+      }
     `,
   ],
 })
@@ -106,12 +125,30 @@ export class StrctBadge {
         const el = this.hostEl.nativeElement;
         strctCheckHostInputs(el, 'strct-badge', {
           status: 'neutral, accent, success, warning, critical',
+          // A real input since 5.13.0 — a colour of its own, so it takes any
+          // colour token or value rather than one of a list.
+          tone: 'a colour token or value, e.g. var(--prod-acc)',
         });
       }
     });
   }
   /** Visual status color. */
   readonly status = input<StrctBadgeStatus>('neutral');
+  /**
+   * A colour of your own — `tone="var(--prod-acc)"` — for a distinction the
+   * five statuses do not carry, such as which product a row belongs to. The
+   * text takes it and the border a 30% wash of it; `solid` fills with it and
+   * writes in `--strct-badge-on` (`--inv` by default). It overrides `status`.
+   *
+   * The same can be set from a stylesheet with `--strct-badge-fg`,
+   * `--strct-badge-border` and `--strct-badge-on`, which is the better route
+   * when a rule already selects the badges (`.product-badge { … }`).
+   *
+   * The colour is yours to pick, so its contrast is yours to check: the
+   * library's own check covers `--acc` and the status tokens.
+   */
+  readonly tone = input('');
+
   /** Opt-in filled style instead of the default outlined style. */
   readonly solid = input(false, { transform: booleanAttribute });
 }

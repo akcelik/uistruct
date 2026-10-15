@@ -1,4 +1,5 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   Directive,
@@ -13,6 +14,7 @@ import {
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 import { StrctOverlay } from '../overlay/overlay';
+import { strctDevWarn } from '../util/dev-warn';
 
 /**
  * Click-to-open menu:
@@ -323,6 +325,45 @@ export class StrctDropdownItemAction {
   }
 }
 
+/**
+ * A leading icon for a menu row, in a colour of its own:
+ * `<strct-icon strctDropdownItemIcon tone="var(--prod-acc)" name="shield" />`.
+ * The row keeps its text aligned whether or not the icon is there.
+ */
+@Directive({
+  selector: '[strctDropdownItemIcon]',
+  host: { class: 'strct-dd__itemlead', '[style.color]': 'tone() || null' },
+})
+export class StrctDropdownItemIcon {
+  /** A colour token or value — a product's accent, say. */
+  readonly tone = input('');
+}
+
+/**
+ * The row's label, when the row also carries a description. A screen reader
+ * reads a row in DOM order, and a projected slot can only be declared before
+ * the catch-all one — so marking the label is what keeps "HyperStruct Backup"
+ * ahead of "2 VMs past RPO" in what the row is called. A row without a
+ * description does not need it.
+ */
+@Directive({
+  selector: '[strctDropdownItemLabel]',
+  host: { class: 'strct-dd__itemlabel' },
+})
+export class StrctDropdownItemLabel {}
+
+/**
+ * A second, quieter line under a row's label: "● 2 VMs past RPO" under
+ * "HyperStruct Backup". It is inside the row, so it is part of what the row
+ * is called — put the label in `[strctDropdownItemLabel]` so it is read
+ * first.
+ */
+@Directive({
+  selector: '[strctDropdownItemDescription]',
+  host: { class: 'strct-dd__itemdesc' },
+})
+export class StrctDropdownItemDescription {}
+
 @Component({
   selector: 'strct-dropdown-item',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -335,9 +376,15 @@ export class StrctDropdownItemAction {
         }
       </span>
     }
-    <!-- Declared before the catch-all so its selector wins; CSS order and an
-         auto margin put it at the item's end. -->
+    <!-- Every selective slot is declared before the catch-all, or the
+         catch-all would swallow its content; the visual order is CSS's
+         (the label is raw text, which only source order can place). -->
+    <ng-content select="[strctDropdownItemIcon]" />
     <ng-content select="[strctDropdownItemAction]" />
+    <span class="strct-dd__itemtext">
+      <ng-content select="[strctDropdownItemLabel]" />
+      <ng-content select="[strctDropdownItemDescription]" />
+    </span>
     <ng-content />
     @if (hint()) {
       <!-- hidden: kept out of the item's accessible NAME, still read as its
@@ -378,6 +425,36 @@ export class StrctDropdownItemAction {
         order: 1;
         margin-inline-start: auto;
         flex: none;
+      }
+      .strct-dd__itemlead {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+      }
+      .strct-dd__itemlabel {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      /* The label and its description are one column, so the second line
+         starts where the label does whatever leads the row. The wrapper
+         generates no box at all until there is a description, so every row
+         without one lays out exactly as it did. */
+      .strct-dd__itemtext {
+        display: contents;
+      }
+      .strct-dd__item:has(.strct-dd__itemdesc) .strct-dd__itemtext {
+        display: flex;
+        flex-direction: column;
+        row-gap: 2px;
+        min-width: 0;
+      }
+      .strct-dd__itemdesc {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: var(--text-sm);
+        color: var(--t2);
       }
       /* Selectable items (selected bound): a fixed lead slot keeps labels
          aligned; the check marks the current choice when reopening. */
@@ -453,6 +530,24 @@ export class StrctDropdownItem {
     // runs before those listeners, and stopping here also keeps the menu's own
     // activate-and-close handler from seeing it.
     const host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
+
+    // Dev-only: a description reads before an unmarked label, which is the
+    // one thing this slot must not do.
+    afterNextRender(() => {
+      if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+        if (
+          host.querySelector('.strct-dd__itemdesc') &&
+          !host.querySelector('.strct-dd__itemlabel')
+        ) {
+          strctDevWarn(
+            'dd-item-description-without-label',
+            '[strct] strct-dropdown-item: a [strctDropdownItemDescription] row reads its ' +
+              'description before its label, because a slot can only be declared before the ' +
+              'catch-all one. Wrap the label in [strctDropdownItemLabel].',
+          );
+        }
+      }
+    });
     host.addEventListener(
       'click',
       (event) => {
@@ -463,6 +558,52 @@ export class StrctDropdownItem {
       { capture: true },
     );
   }
+}
+
+/**
+ * A named group of rows — "Create" above the create actions, where a divider
+ * alone leaves what the group is unsaid. The label is not an item: the arrows
+ * pass over it and it is never activated.
+ */
+@Component({
+  selector: 'strct-dropdown-group',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
+  template: `<div class="strct-dd__grouplabel" [id]="labelId" role="presentation">
+      {{ label() }}
+    </div>
+    <ng-content />`,
+  host: {
+    class: 'strct-dd__group',
+    role: 'group',
+    '[attr.aria-labelledby]': 'labelId',
+  },
+  styles: [
+    `
+      .strct-dd__group {
+        display: block;
+      }
+      .strct-dd__group + .strct-dd__group {
+        margin-top: 4px;
+        border-top: 1px solid var(--b2);
+        padding-top: 4px;
+      }
+      .strct-dd__grouplabel {
+        padding: 6px 10px 2px;
+        font-size: var(--text-xs, 11px);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--t3);
+      }
+    `,
+  ],
+})
+export class StrctDropdownGroup {
+  /** What the group is — read when a screen reader enters it. */
+  readonly label = input('');
+
+  protected readonly labelId = `strct-dd-group-${++dropdownItemCounter}-label`;
 }
 
 /** Thin separator between groups of menu items. */

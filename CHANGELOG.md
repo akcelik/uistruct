@@ -5,6 +5,78 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.13.0] - 2026-10-15
+
+A palette fed from more than one source, and menus that say what they hold
+(FR-53-01 … 03, FR-53-05, FR-53-08 of
+`hyperstruct-product-shell-search-phone.md`; FR-52-02, FR-52-04, FR-52-05 of
+`hyperstruct-product-switcher.md`).
+
+### Added
+
+- **`strct-command-palette` sections** (FR-53-01). `StrctCommandItem.section`
+  groups results under a heading, and `sectionOrder` draws the sections in the
+  order you name — the product you are in first. Each section is a
+  `role="group"` with `aria-labelledby` its heading, so a screen reader says
+  the group's name when the active option enters it. A heading is never an
+  option: the arrows, Home and End move through every option across every
+  section exactly as before, and the flat index behind
+  `aria-activedescendant` is the drawn order, so what the eye sees and what
+  the keyboard does stay one list. A result is now also findable by the
+  section it is in.
+- **`StrctCommandItem.badge`** (FR-53-02) — `{ label, status?, tone? }`, drawn
+  before the group tag. It stays in the option's accessible name rather than
+  being hidden and repeated: the row reads as it looks.
+- **`StrctCommandItem.description`** (FR-53-03) — a muted second line, where
+  the detail no longer fits in the tag.
+- **`strct-badge [tone]`** (FR-52-04) — a colour of your own for a distinction
+  the five statuses do not carry (which product a row belongs to; green, amber
+  and red already mean something else). The text takes the colour and the
+  border a 30% wash of it, as `accent` does with `--acc30`; `solid` fills with
+  it. `--strct-badge-fg`, `--strct-badge-border` and `--strct-badge-on` do the
+  same from a stylesheet. The colour is yours, so its contrast is yours to
+  check.
+- **`strct-dropdown-group [label]`** (FR-53-08) — a named group of rows, where
+  a divider alone left what the group is unsaid. `role="group"` +
+  `aria-labelledby`; the heading is not an item and the arrows pass over it.
+- **`[strctDropdownItemDescription]`, `[strctDropdownItemLabel]`,
+  `[strctDropdownItemIcon]`** (FR-52-05) — a second, quieter line under a
+  row's label ("● 2 VMs past RPO" under "HyperStruct Backup") and a leading
+  icon in a colour of its own. The label and its description are one column,
+  so the second line starts exactly where the label does whatever leads the
+  row (measured: 0 px off, 2 px below). A row is read in DOM order and a slot
+  can only be declared before the catch-all one, so the label goes in
+  `[strctDropdownItemLabel]` when there is a description — **dev mode warns**
+  when it is missing. A row without a description lays out exactly as it did:
+  the wrapper generates no box at all until there is one.
+- **`strct-header [accent]`** (FR-52-02) — a thin line in a product's colour
+  under the header, drawn as an inset 3 px shadow so the header keeps its
+  height and nothing under it moves (measured: 56 px before and after). Empty
+  leaves today's border alone.
+- **`--strct-header-gap` / `--strct-header-pad`** (FR-53-05), with a tighter
+  default below 600 px (gap 4 px, padding 6 px), so an app fitting seven
+  triggers on a phone does not have to override the library's own selector.
+  Measured at 390 px: the header is still 56 px tall and the page does not
+  scroll sideways.
+
+### Fixed
+
+- **The palette's tag took the label's room** (FR-53-03). A long tag on a
+  narrow palette left the name — the thing searched for — as the part that was
+  cut. The tag now yields first: measured at 390 px, the label is drawn whole
+  (130 px, nothing clipped) and the tag ellipsises (61 px of 87). Shrinking is
+  shared out in proportion to each item's base size, so the label's basis is
+  its content and the tag carries a large shrink factor.
+- **The visual-regression gate only ever shot one theme.** Its per-scheme init
+  scripts share the page's global scope and all of them run on every new
+  document, so the second scheme's script redeclared `const s`, threw, and
+  never reached its own `localStorage` lines: every `--arctic-light` baseline
+  was the dark theme again, byte-identical to its dark twin. The gate now
+  removes the previous script and scopes the body, and the light baselines
+  have been regenerated — they are real light-theme shots for the first time.
+  Two new routes shoot the open palette with sections and the open menu with
+  groups.
+
 ## [5.12.0] - 2026-10-15
 
 What 5.7.0 drew and what the screen showed were two different things, in both

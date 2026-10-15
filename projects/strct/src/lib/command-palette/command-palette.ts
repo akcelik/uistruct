@@ -15,6 +15,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
+import { StrctBadge } from '../badge/badge';
+import { StrctStatus } from '../status';
 import { StrctKbd } from '../kbd/kbd';
 
 let paletteCounter = 0;
@@ -26,6 +28,19 @@ export interface StrctCommandItem {
   label: string;
   /** Right-aligned group tag (e.g. a category or section name). */
   group?: string;
+  /**
+   * Which section this result belongs to. A palette fed from several sources
+   * — a product's objects, another product's, the platform's pages — reads as
+   * one undifferentiated list without headings.
+   */
+  section?: string;
+  /**
+   * A tinted badge before the tag: which product a result belongs to, where
+   * the same VM is three results. The label is in the option's name too.
+   */
+  badge?: { label: string; status?: StrctStatus; tone?: string };
+  /** A muted second line — where the tag's detail can go on a narrow palette. */
+  description?: string;
   /** Leading icon name (StrctIcon set). */
   icon?: string;
   /** Right-aligned shortcut hint, rendered as a key chip. */
@@ -52,7 +67,7 @@ export interface StrctCommandItem {
   selector: 'strct-command-palette',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon, StrctKbd],
+  imports: [StrctIcon, StrctKbd, StrctBadge],
   host: { '(document:keydown)': 'onGlobalKey($event)' },
   template: `
     @if (open()) {
@@ -90,34 +105,61 @@ export interface StrctCommandItem {
                 <span class="strct-cmdp__spin" aria-hidden="true"></span>{{ loadingText() }}
               </div>
             }
-            @for (item of filtered(); track item.id; let i = $index) {
-              <button
-                type="button"
-                class="strct-cmdp__item"
-                role="option"
-                [id]="optionId(i)"
-                [attr.aria-selected]="i === activeIndex()"
-                [class.is-active]="i === activeIndex()"
-                tabindex="-1"
-                (click)="pick(item)"
-                (mousemove)="activeIndex.set(i)"
+            <!-- A section is a group with a heading, not an option: the
+                 heading is never active and never picked, and the arrows
+                 move through every option across every section. -->
+            @for (section of sections(); track section.id) {
+              <div
+                class="strct-cmdp__sec"
+                role="group"
+                [attr.aria-labelledby]="section.label ? section.id : null"
               >
-                @if (item.icon) {
-                  <strct-icon
-                    class="strct-cmdp__icon"
-                    [name]="item.icon"
-                    [size]="16"
-                    [strokeWidth]="1.4"
-                  />
+                @if (section.label) {
+                  <div class="strct-cmdp__section" [id]="section.id">{{ section.label }}</div>
                 }
-                <span class="strct-cmdp__label">{{ item.label }}</span>
-                @if (item.hint) {
-                  <strct-kbd>{{ item.hint }}</strct-kbd>
+                @for (row of section.rows; track row.item.id) {
+                  <button
+                    type="button"
+                    class="strct-cmdp__item"
+                    role="option"
+                    [id]="optionId(row.index)"
+                    [attr.aria-selected]="row.index === activeIndex()"
+                    [class.is-active]="row.index === activeIndex()"
+                    tabindex="-1"
+                    (click)="pick(row.item)"
+                    (mousemove)="activeIndex.set(row.index)"
+                  >
+                    @if (row.item.icon) {
+                      <strct-icon
+                        class="strct-cmdp__icon"
+                        [name]="row.item.icon"
+                        [size]="16"
+                        [strokeWidth]="1.4"
+                      />
+                    }
+                    <span class="strct-cmdp__text">
+                      <span class="strct-cmdp__label">{{ row.item.label }}</span>
+                      @if (row.item.description) {
+                        <span class="strct-cmdp__desc">{{ row.item.description }}</span>
+                      }
+                    </span>
+                    @if (row.item.hint) {
+                      <strct-kbd>{{ row.item.hint }}</strct-kbd>
+                    }
+                    @if (row.item.badge; as badge) {
+                      <strct-badge
+                        class="strct-cmdp__badge"
+                        [status]="badge.status ?? 'neutral'"
+                        [tone]="badge.tone ?? ''"
+                        >{{ badge.label }}</strct-badge
+                      >
+                    }
+                    @if (row.item.group) {
+                      <span class="strct-cmdp__group">{{ row.item.group }}</span>
+                    }
+                  </button>
                 }
-                @if (item.group) {
-                  <span class="strct-cmdp__group">{{ item.group }}</span>
-                }
-              </button>
+              </div>
             } @empty {
               @if (!loading()) {
                 <div class="strct-cmdp__empty">{{ emptyText() }} “{{ query() }}”</div>
@@ -209,10 +251,47 @@ export interface StrctCommandItem {
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      /* The label is the thing searched for, so a long tag shrinks before it
+         does: "Site Recovery · Recovery plan · PROD → DR" used to leave
+         "Paym…". Shrinking is shared out in proportion to each item's base
+         size times its factor, so a large factor on the tag makes it give up
+         nearly all of what has to go. */
       .strct-cmdp__group {
         font-size: var(--text-sm);
         color: var(--t3);
-        flex-shrink: 0;
+        flex: 0 20 auto;
+        min-width: 0;
+        max-width: 55%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      /* basis: auto, not 0 — with a zero basis the label asks for nothing
+         and simply takes what is left over, which is how it ended up the
+         part that was cut. */
+      .strct-cmdp__text {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+      .strct-cmdp__desc {
+        font-size: var(--text-sm);
+        color: var(--t3);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .strct-cmdp__badge {
+        flex: none;
+      }
+      .strct-cmdp__section {
+        padding: 8px 12px 4px;
+        font-size: var(--text-xs, 11px);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--t3);
       }
       .strct-cmdp__loading {
         display: flex;
@@ -289,6 +368,11 @@ export class StrctCommandPalette {
    * rendering.
    */
   readonly filter = input(true, { transform: booleanAttribute });
+  /**
+   * The order the sections are drawn in — the product you are in first, say.
+   * Sections not named here follow, in the order their first result arrives.
+   */
+  readonly sectionOrder = input<readonly string[]>([]);
   /** Show a "searching" row while server results are in flight. */
   readonly loading = input(false, { transform: booleanAttribute });
   /** Localizable text of the loading row. */
@@ -309,17 +393,39 @@ export class StrctCommandPalette {
     return `${this.listId}-opt-${i}`;
   }
 
+  /**
+   * The results in their drawn order, chunked into sections. The flat index
+   * each row carries is the one the keyboard and `aria-activedescendant`
+   * use, so what the arrows do and what the eye sees stay the same list.
+   */
+  protected readonly sections = computed(() => {
+    const out: {
+      label: string;
+      id: string;
+      rows: { item: StrctCommandItem; index: number }[];
+    }[] = [];
+    this.filtered().forEach((item, index) => {
+      const label = item.section ?? '';
+      const last = out[out.length - 1];
+      if (last && last.label === label) last.rows.push({ item, index });
+      else out.push({ label, id: `${this.listId}-sec-${out.length}`, rows: [{ item, index }] });
+    });
+    return out;
+  });
+
   /** Rank: label prefix > word-start > substring; group/keyword matches last. */
   protected readonly filtered = computed(() => {
     const items = this.items();
     // Server-backed mode: the caller already filtered — render as given.
-    if (!this.filter()) return items.slice(0, this.maxResults());
+    if (!this.filter()) return this.bySection(items.slice(0, this.maxResults()));
     const q = this.query().trim().toLowerCase();
-    if (!q) return items.slice(0, this.maxResults());
+    if (!q) return this.bySection(items.slice(0, this.maxResults()));
     const scored: { item: StrctCommandItem; score: number }[] = [];
     for (const item of items) {
       const label = item.label.toLowerCase();
-      const hay = [item.group ?? '', ...(item.keywords ?? [])].join(' ').toLowerCase();
+      const hay = [item.group ?? '', item.section ?? '', ...(item.keywords ?? [])]
+        .join(' ')
+        .toLowerCase();
       let score = -1;
       if (label.startsWith(q)) score = 0;
       else if (label.split(/\s+/).some((w) => w.startsWith(q))) score = 1;
@@ -327,11 +433,30 @@ export class StrctCommandPalette {
       else if (hay.includes(q)) score = 3;
       if (score >= 0) scored.push({ item, score });
     }
-    return scored
-      .sort((a, b) => a.score - b.score)
-      .slice(0, this.maxResults())
-      .map((s) => s.item);
+    return this.bySection(
+      scored
+        .sort((a, b) => a.score - b.score)
+        .slice(0, this.maxResults())
+        .map((s) => s.item),
+    );
   });
+
+  /**
+   * Keeps each section's results together, in `sectionOrder` where it is
+   * given and otherwise in the order the sections first appear. The sort is
+   * stable, so how well a result matched still orders it inside its section.
+   */
+  private bySection(list: StrctCommandItem[]): StrctCommandItem[] {
+    const rank = new Map<string, number>();
+    this.sectionOrder().forEach((name, i) => rank.set(name, i));
+    let next = rank.size;
+    for (const item of list) {
+      const key = item.section ?? '';
+      if (!rank.has(key)) rank.set(key, next++);
+    }
+    if (rank.size < 2) return list;
+    return [...list].sort((a, b) => rank.get(a.section ?? '')! - rank.get(b.section ?? '')!);
+  }
 
   constructor() {
     // Async results can shrink under the cursor — keep the active option in range.

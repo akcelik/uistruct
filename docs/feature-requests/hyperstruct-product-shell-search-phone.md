@@ -28,7 +28,19 @@ icons will need on a phone).
 > of the nav, and a tap at the centre of a menu entry hits **the entry**, not the backdrop.
 > HyperStruct's `.strct-vnav__backdrop` hide rule and its `app-nav-backdrop` can go.
 >
-> Still open: **FR-53-01 … 09**.
+> Still open: **FR-53-04, FR-53-06, FR-53-07, FR-53-09**.
+>
+> **FR-53-01, FR-53-02, FR-53-03, FR-53-05 and FR-53-08 SHIPPED in 5.13.0 (2026-10-15).**
+>
+> - Palette sections are `role="group"` + `aria-labelledby`, with `sectionOrder` for the product
+>   you are in first; headings are not options and the arrows still cross every section. An item
+>   takes a `badge` (`{ label, status?, tone? }`) before its tag and a `description` second line.
+> - The tag yields its room to the label: measured at 390 px, the label draws whole (130 px) and
+>   the tag ellipsises (61 px of 87) — it was the label that was cut.
+> - `--strct-header-gap` / `--strct-header-pad`, with a 4 px / 6 px default below 600 px. Measured
+>   at 390 px: the header stays 56 px and the page does not scroll sideways.
+> - `strct-dropdown-group [label]` names a group of rows (`role="group"`, the label skipped by the
+>   arrows).
 
 ---
 

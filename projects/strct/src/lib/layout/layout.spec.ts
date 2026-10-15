@@ -23,6 +23,36 @@ describe('StrctHeader', () => {
     expect(host.classList).toContain('strct-header');
   });
 
+  // FR-52-02 / FR-53-05 — which product you are in, and a header that fits a
+  // phone without an app overriding the library's own selector.
+  it('draws an accent line without taking any height, and only when asked', () => {
+    TestBed.configureTestingModule({ providers: [StrctShellService] });
+    const fixture = TestBed.createComponent(StrctHeader);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.classList).not.toContain('strct-header--accent');
+    expect(host.style.getPropertyValue('--strct-header-accent')).toBe('');
+
+    fixture.componentRef.setInput('accent', 'var(--prod-acc)');
+    fixture.detectChanges();
+    expect(host.classList).toContain('strct-header--accent');
+    expect(host.style.getPropertyValue('--strct-header-accent')).toBe('var(--prod-acc)');
+
+    // An inset shadow, so nothing under the header moves.
+    const css = [...document.querySelectorAll('style')]
+      .map((style) => style.textContent ?? '')
+      .join('')
+      .replace(/\s+/g, ' ');
+    expect(css).toContain(
+      '.strct-header--accent { box-shadow: inset 0 -3px 0 var(--strct-header-accent',
+    );
+    // The gap and padding are tokens, and a phone gets a tighter default.
+    expect(css).toMatch(/\.strct-header \{[^}]*gap: var\(--strct-header-gap, 14px\)/);
+    expect(css).toMatch(
+      /@media \(max-width: 600px\) \{ \.strct-header \{ gap: var\(--strct-header-gap, 4px\)/,
+    );
+  });
+
   it('reflects mobileNavOpen via aria-expanded and aria-controls on the drawer toggle', () => {
     TestBed.configureTestingModule({ providers: [StrctShellService] });
     const shell = TestBed.inject(StrctShellService);

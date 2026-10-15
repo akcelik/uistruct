@@ -244,6 +244,13 @@ export const DOCS: DocCategory[] = [
             default: 'false',
             description: 'Filled style with uniform edges (no left rail).',
           },
+          {
+            name: 'tone',
+            type: 'string',
+            default: `''`,
+            description:
+              'A colour of your own — `tone="var(--prod-acc)"` — for a distinction the five statuses do not carry, such as which product a row belongs to. The text takes it and the border a 30% wash of it; `solid` fills with it. Overrides `status`. The same can be set from a stylesheet with `--strct-badge-fg`, `--strct-badge-border` and `--strct-badge-on`. The colour is yours, so its contrast is yours to check.',
+          },
         ],
         do: [
           'Use semantic status to mirror real state (success = healthy, critical = failed).',
@@ -2198,7 +2205,14 @@ export const DOCS: DocCategory[] = [
         id: 'dropdown',
         title: 'Dropdown',
         selector: 'strct-dropdown',
-        importNames: ['StrctDropdown', 'StrctDropdownItem'],
+        importNames: [
+          'StrctDropdown',
+          'StrctDropdownItem',
+          'StrctDropdownGroup',
+          'StrctDropdownItemLabel',
+          'StrctDropdownItemDescription',
+          'StrctDropdownItemIcon',
+        ],
         summary: 'Click-to-open menu.',
         lead: 'A click-to-open menu that closes on outside click. Mark the trigger with `strctDropdownTrigger`; project `strct-dropdown-item` entries (which can be `critical` or `disabled`). With `popover` the panel holds form controls instead of menu items: inner clicks never close it (only outside click / Escape do) and it announces as a labeled `role="dialog"` — the filter/settings-panel pattern without hand-rolling `strctOverlay`.',
         inputs: [
@@ -2234,6 +2248,25 @@ export const DOCS: DocCategory[] = [
             default: 'null',
             description:
               'On `strct-dropdown-item`: bind for select-like menus — the item becomes a `menuitemradio` with `aria-checked`, a leading ✓ marks the current choice (aligned lead slot), and reopening focuses it. Leave unbound for action items.',
+          },
+          {
+            name: 'label',
+            type: 'string',
+            default: `''`,
+            description:
+              'On `strct-dropdown-group`: what the group of rows is — "Create" above the create actions. It is a heading, not an item: the arrows pass over it, and a screen reader reads it when it enters the group (`role="group"` + `aria-labelledby`).',
+          },
+          {
+            name: '[strctDropdownItemDescription] / [strctDropdownItemLabel]',
+            type: 'content slots',
+            description:
+              'A second, quieter line under a row\u2019s label — "● 2 VMs past RPO" under "HyperStruct Backup". A row is read in DOM order, so wrap the label in `[strctDropdownItemLabel]` when you use a description; dev mode warns when it is missing.',
+          },
+          {
+            name: '[strctDropdownItemIcon] (tone)',
+            type: 'content slot (string)',
+            description:
+              'A leading icon for a row, with a colour of its own: `<strct-icon strctDropdownItemIcon tone="var(--prod-acc)" …/>`.',
           },
           {
             name: 'critical',
@@ -2689,7 +2722,8 @@ export const DOCS: DocCategory[] = [
             name: 'items',
             type: 'StrctCommandItem[]',
             default: '[]',
-            description: '`{ id; label; group?; icon?; hint?; keywords?; data? }[]`.',
+            description:
+              '`{ id; label; group?; section?; badge?; description?; icon?; hint?; keywords?; data? }[]`. `section` groups results under a heading; `badge` is `{ label, status?, tone? }`, drawn before the tag; `description` is a muted second line.',
           },
           {
             name: 'open',
@@ -2716,6 +2750,13 @@ export const DOCS: DocCategory[] = [
             type: 'boolean / string',
             default: `false / 'Searching…'`,
             description: 'Politely-announced "searching" row while server results are in flight.',
+          },
+          {
+            name: 'sectionOrder',
+            type: 'readonly string[]',
+            default: '[]',
+            description:
+              'The order the sections are drawn in — the product you are in first. Sections not named here follow, in the order their first result arrives. Results stay grouped, and how well a result matched still orders it inside its section.',
           },
           {
             name: 'hotkey',

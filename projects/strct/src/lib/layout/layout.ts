@@ -150,7 +150,11 @@ export class StrctShell {
     </button>
     <ng-content />
   `,
-  host: { class: 'strct-header' },
+  host: {
+    class: 'strct-header',
+    '[class.strct-header--accent]': 'accent()',
+    '[style.--strct-header-accent]': 'accent() || null',
+  },
   styles: [
     `
       /* The drawer's backdrop: a sibling of the drawer, so inset: 0 is the
@@ -178,12 +182,26 @@ export class StrctShell {
       .strct-header {
         display: flex;
         align-items: center;
-        gap: 14px;
+        gap: var(--strct-header-gap, 14px);
         height: 56px;
-        padding: 0 18px;
+        padding: 0 var(--strct-header-pad, 18px);
         background: var(--hdr);
         border-bottom: 1px solid var(--b2);
         color: var(--hdr-fg);
+      }
+      /* The product you are in is said three ways: its name, its icon, and a
+         line in its colour under the header. An inset line, because an extra
+         border would change the height of everything under it. */
+      .strct-header--accent {
+        box-shadow: inset 0 -3px 0 var(--strct-header-accent, var(--acc));
+      }
+      /* Below a phone's width seven 32–36px triggers only fit with a tighter
+         gap and padding; an app should not have to override our selector. */
+      @media (max-width: 600px) {
+        .strct-header {
+          gap: var(--strct-header-gap, 4px);
+          padding: 0 var(--strct-header-pad, 6px);
+        }
       }
       /* A button projected into the header sits on --hdr, not on a surface,
          so the six triggers an app puts there had to be native buttons with
@@ -250,6 +268,12 @@ export class StrctShell {
 export class StrctHeader {
   /** Accessible label of the mobile drawer toggle. */
   readonly drawerToggleAriaLabel = input('Toggle navigation');
+  /**
+   * A thin line in a product's colour under the header — a colour token or
+   * any CSS colour. It is drawn inset, so the header keeps its height and
+   * nothing under it moves. Empty leaves today's border alone.
+   */
+  readonly accent = input('');
 
   protected readonly shell = inject(StrctShellService);
 }

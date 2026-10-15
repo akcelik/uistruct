@@ -80,6 +80,32 @@ const ROUTES = [
      })()`,
     'thead strct-checkbox',
   ],
+  // A palette fed from four products: the headings, the tinted badges and the
+  // tag that has to yield its room to the label before the label is cut.
+  [
+    'command-palette-sections',
+    '/components/command-palette',
+    undefined,
+    `(() => {
+       const btn = [...document.querySelectorAll('button')]
+         .find((b) => /Search across products/.test(b.textContent || ''));
+       btn?.click();
+     })()`,
+    '.strct-cmdp',
+  ],
+  // A menu with named groups and a second line under a row's label.
+  [
+    'dropdown-groups',
+    '/components/dropdown',
+    undefined,
+    `(() => {
+       const demo = document.getElementById('dropdown-groups');
+       const btn = [...(demo?.closest('section') ?? document).querySelectorAll('button')]
+         .find((b) => /Products/.test(b.textContent || ''));
+       btn?.click();
+     })()`,
+    '.strct-dd__menu',
+  ],
 ];
 const SCHEMES = [
   ['arctic-dark', 'arctic', 'dark'],
@@ -204,16 +230,27 @@ try {
   // theme service's own storage keys.
   let failures = 0;
   const rows = [];
+  let pinned = null;
   for (const [schemeName, palette, mode] of SCHEMES) {
-    await send('Page.addScriptToEvaluateOnNewDocument', {
+    // One scheme at a time: these scripts share the page's global scope and
+    // every one of them runs on every new document, so the second scheme's
+    // script used to redeclare `const s`, throw, and never reach its own
+    // localStorage lines — every "light" shot was the dark theme again, and
+    // the two baselines were byte-identical. Remove the last one, and keep
+    // the body inside an IIFE so nothing leaks into the page's scope.
+    if (pinned) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: pinned });
+    const added = await send('Page.addScriptToEvaluateOnNewDocument', {
       source: `
-        localStorage.setItem('strct-palette', '${palette}');
-        localStorage.setItem('strct-theme', '${mode}');
-        const s = document.createElement('style');
-        s.textContent = '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';
-        document.addEventListener('DOMContentLoaded', () => document.head.appendChild(s));
+        (() => {
+          localStorage.setItem('strct-palette', '${palette}');
+          localStorage.setItem('strct-theme', '${mode}');
+          const s = document.createElement('style');
+          s.textContent = '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';
+          document.addEventListener('DOMContentLoaded', () => document.head.appendChild(s));
+        })();
       `,
     });
+    pinned = added?.identifier ?? null;
     for (const [routeName, route, anchor, prepare, selector] of ROUTES) {
       const name = `${routeName}--${schemeName}`;
       await send('Page.navigate', { url: `http://127.0.0.1:${PORT}${route}` });
