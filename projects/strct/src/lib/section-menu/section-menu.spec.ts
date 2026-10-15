@@ -107,7 +107,9 @@ describe('StrctSectionMenu — entries that are real links', () => {
   ];
 
   function build() {
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    // A catch-all route: a routerLink row really does navigate when it is
+    // clicked, and a router with no routes rejects — which fails the run.
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: '**', children: [] }])] });
     const fixture = TestBed.createComponent(StrctSectionMenu);
     fixture.componentRef.setInput('sections', routed);
     fixture.detectChanges();
