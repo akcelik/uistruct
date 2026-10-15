@@ -359,6 +359,12 @@ export class StrctWindow {
   /** A leading icon in the title bar, as `strct-page-header [icon]` has. */
   readonly icon = input('');
   /**
+   * Whatever the consumer needs to recognise this window elsewhere — a session
+   * id, the object it shows. The dock passes it to `[strctWindowDockItem]`, so
+   * an app no longer keeps its own window-to-thing index.
+   */
+  readonly data = input<unknown>(null);
+  /**
    * What a double-click on the title bar does. A console whose content has a
    * real full screen of its own wants `none` and its own answer to
    * `(titleDblclick)`.
@@ -679,13 +685,18 @@ export class StrctWindowDockItem {}
   template: `
     @for (w of service.minimized(); track w) {
       <span class="strct-windock__chip">
-        <button type="button" class="strct-windock__open" (click)="onRestore(w)">
+        <button
+          type="button"
+          class="strct-windock__open"
+          [attr.aria-label]="restoreLabel()(w)"
+          (click)="onRestore(w)"
+        >
           @if (itemTpl(); as tpl) {
             <!-- A chip can say more than a heading: a status dot, an icon, a
                  count. The window is the template's context. -->
             <ng-container
               [ngTemplateOutlet]="tpl"
-              [ngTemplateOutletContext]="{ $implicit: w, window: w }"
+              [ngTemplateOutletContext]="{ $implicit: w, window: w, data: w.data() }"
             />
           } @else {
             {{ w.heading() }}
@@ -758,6 +769,11 @@ export class StrctWindowDock {
   readonly label = input('Minimized windows');
   /** The name of each chip's close button. */
   readonly closeLabel = input<(heading: string) => string>((heading) => `Close ${heading}`);
+  /**
+   * The name of each chip itself — what restoring it does: "Show the console
+   * of APP02". The window is passed, so its `data` can shape the sentence.
+   */
+  readonly restoreLabel = input<(w: StrctWindow) => string>((w) => `Restore ${w.heading()}`);
   /** What each chip shows, when a heading is not enough. */
   protected readonly itemTpl = contentChild(StrctWindowDockItem, { read: TemplateRef });
   /**

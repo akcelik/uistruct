@@ -206,3 +206,18 @@ describe('StrctSelect', () => {
     expect(el.querySelector('.strct-sel__opt--highlight')?.textContent).toContain('Two');
   });
 });
+
+// FR-50-01 — ARIA does not let a combobox take its name from its content.
+describe('StrctSelect — ariaLabel', () => {
+  it('names the trigger when it is not inside a field', () => {
+    const fixture = TestBed.createComponent(StrctSelect);
+    fixture.componentRef.setInput('options', [{ value: 'a', label: 'A' }]);
+    fixture.detectChanges();
+    const trigger = () => (fixture.nativeElement as HTMLElement).querySelector('[role=combobox]')!;
+    expect(trigger().getAttribute('aria-label')).toBeNull();
+
+    fixture.componentRef.setInput('ariaLabel', 'Severity');
+    fixture.detectChanges();
+    expect(trigger().getAttribute('aria-label')).toBe('Severity');
+  });
+});

@@ -227,3 +227,29 @@ describe('StrctField — [strctFieldValue]', () => {
     expect(input.classList).toContain('strct-control--mono');
   });
 });
+
+// FR-50-02 — the slot's 9px puts text on the label's line and a control 8px low.
+describe('StrctField — [strctFieldValue="control"]', () => {
+  @Component({
+    imports: [StrctField, StrctFieldValue],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-field layout="inline" label="Mode">
+        <span strctFieldValue class="text">Automatic</span>
+      </strct-field>
+      <strct-field layout="inline" label="Scope">
+        <span strctFieldValue="control" class="ctrl"><button type="button">All</button></span>
+      </strct-field>
+    `,
+  })
+  class Host {}
+
+  it('marks a control slot apart from a text one', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.text')!.classList).toContain('strct-field__value');
+    expect(el.querySelector('.text')!.classList).not.toContain('strct-field__value--control');
+    expect(el.querySelector('.ctrl')!.classList).toContain('strct-field__value--control');
+  });
+});

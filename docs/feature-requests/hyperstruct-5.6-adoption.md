@@ -34,7 +34,15 @@ Suggested order: **BUG-50-01, 02, 04, 05** first. Each one breaks something a co
 >   `rgb(255 255 255 / 0.65)` in the header and `rgba(0, 0, 0, 0.62)` inside a dialog rendered there.
 > - **06** the handle's `grab` is gated on the item's `draggable`; measured `auto` on a disabled list.
 >
-> Still open: **FR-50-01 … 13**.
+> **FR-50-01 … 13 SHIPPED in 5.8.0 (2026-10-15)** — every item in this document is now in.
+>
+> `strct-select [ariaLabel]` and `strct-toggle [ariaLabel]`; `[strctFieldValue="control"]`
+> (measured −1.00px from the label's line, against a real control's −0.55px and the text rule's
+> +6.5px low); a footer as soon as something is selected; `copyLabel`, and a `copyable` that is a
+> signal like any other; per-row `editorOptions`, which the display path asks too;
+> `strct-list [flush]` (12px → 0px) and `wrap` breaking long tokens; `strct-window [data]` with the
+> dock's `restoreLabel` and `let-data`; `--strct-progress-value-w` (every value box 32.8px);
+> `items[].description` on a legend row; and the number editor named from its column.
 
 ---
 

@@ -5,6 +5,63 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.0] - 2026-10-15
+
+The thirteen feature requests of HyperStruct's 5.6.0 adoption (FR-50-01 … 13):
+small gaps that surfaced while every new API met a real screen.
+
+### Added
+
+- **`strct-select [ariaLabel]`** (FR-50-01). ARIA does not let a `combobox`
+  take its name from its content, so a select outside a `strct-field` — a
+  filter above a list, a cell editor — had no name at all.
+- **`strct-toggle [ariaLabel]`** (FR-50-12), for a switch in a grid cell.
+- **`[strctFieldValue="control"]`** (FR-50-02). The slot's 9px puts _text_ on
+  the label's line; a 31px segmented control sat 8px low. A control is now
+  centred where a real control in that column is — measured **−1.00px** from
+  the label's line against a real control's **−0.55px**, where the text rule
+  left it **+6.5px** low. `--strct-field-control-h` is the knob.
+- **A footer wherever there is something to count** (FR-50-03): a grid with no
+  pager now draws one as soon as a row is selected, so "3 selected" has
+  somewhere to live. Two member pickers had gone `virtual` for it.
+- **`code[strctCode] [copyLabel]`** (FR-50-04). Two spans in the same drawer
+  were both "Copy"; they are "Copy thumbprint" and "Copy serial number".
+- **`copyable` is a signal like any other** (FR-50-05). It was read once at
+  first render, so a button that depends on state needed two template
+  branches. It is created when it turns on and destroyed when it turns off.
+- **Per-row editor options** (FR-50-06): `columns[].editorOptions` also takes
+  `(row) => StrctOption[]`. A rule that holds a value the host no longer
+  reports lists it for **that row only**, rather than every row's picker
+  carrying every other row's. The column's display path asks the same
+  function, so the cell reads as its own row's label.
+- **`strct-list [flush]`** (FR-50-13): the rows give up their inline padding,
+  so a statement list lines up with the paragraphs around it (measured 12px →
+  **0px**) instead of sitting inside them.
+- **`strct-window [data]` and `strct-window-dock [restoreLabel]`** (FR-50-08).
+  The dock's chips had no name for what restoring them does, and the
+  `[strctWindowDockItem]` context carried only the window — so an app kept its
+  own window-to-session index. The template now also receives `let-data`.
+- **`--strct-progress-value-w`** (FR-50-09, default `4ch`): a column of bars
+  with `valuePosition="end"` ends level rather than ragged between "5%" and
+  "100%". Measured: every value box 32.8px, with tabular figures.
+- **`strct-legend items[].description`** (FR-50-11) — what a row _is_, for any
+  row. `reason` stays the why-not of a row that cannot be picked; borrowing it
+  for a description blurred the two.
+
+### Fixed
+
+- **The datagrid's number editor had no name** (FR-50-10), while the text
+  editor had an `aria-label` and the select a `listLabel`. It takes the
+  column's, as they do.
+- **`strct-list [wrap]` still overflowed on a long token** (FR-50-07). A path
+  or a GUID has no spaces to break at; wrapped rows now break anywhere.
+
+### Note for consumers
+
+`columns[].editorOptions` is now `StrctOption[] | ((row) => StrctOption[])`.
+Passing an array is unchanged; code that _reads_ the property must narrow it
+first (the showcase's own cell-edit echo did).
+
 ## [5.7.0] - 2026-10-15
 
 Nine bugs from HyperStruct's 5.6.x adoption — every item that breaks something

@@ -52,6 +52,7 @@ let selectCounter = 0;
       class="strct-control strct-sel__btn"
       role="combobox"
       aria-haspopup="listbox"
+      [attr.aria-label]="ariaLabel() || null"
       [attr.aria-expanded]="open()"
       [attr.aria-controls]="open() ? listId : null"
       [attr.aria-activedescendant]="open() ? listId + '-' + activeIndex() : null"
@@ -193,6 +194,12 @@ export class StrctSelect implements ControlValueAccessor {
   readonly options = input<StrctOption[]>([]);
   /** Muted text shown while no value is selected (localizable). */
   readonly placeholder = input('Select…');
+  /**
+   * The control's accessible name, where it is not inside a `strct-field`.
+   * ARIA does not let a `combobox` take its name from its content, so a bare
+   * select — a filter above a list, a cell editor — has none without this.
+   */
+  readonly ariaLabel = input<string | null>(null);
   /** Accessible name of the listbox (localizable). */
   readonly listLabel = input('');
   /** Text shown when `options` is empty (localizable). */

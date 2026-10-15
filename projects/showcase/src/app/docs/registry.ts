@@ -427,6 +427,13 @@ export const DOCS: DocCategory[] = [
         lead: 'A horizontal value bar for completion or resource usage. The value is clamped to 0–100 and the fill takes a semantic color.',
         inputs: [
           {
+            name: '--strct-progress-value-w',
+            type: 'length',
+            default: '4ch',
+            description:
+              'The width of `valuePosition="end"`’s number, so a column of bars does not end ragged between "5%" and "100%". Tabular figures keep the digits in their columns.',
+          },
+          {
             name: 'ariaLabel',
             type: 'string',
             default: `''`,
@@ -538,6 +545,12 @@ export const DOCS: DocCategory[] = [
         summary: 'Label / required / hint / error wrapper.',
         lead: 'Wraps any form control with a label (and optional required marker), a hint and an error message. It auto-links the control via `aria-describedby` and toggles `aria-invalid`, so accessibility wiring is automatic.',
         inputs: [
+          {
+            name: '[strctFieldValue="control"]',
+            type: 'slot',
+            description:
+              'The slot holds a control rather than text: it is centred where a real control in this column would be (`--strct-field-control-h`, 34px), instead of being pushed down by the padding that puts text on the label’s line.',
+          },
           {
             name: '[strctFieldValue]',
             type: 'slot',
@@ -700,6 +713,13 @@ export const DOCS: DocCategory[] = [
         summary: 'Select-only combobox with a token-styled listbox.',
         lead: 'A single choice from a fixed list, rendered as a button trigger opening a token-styled listbox — so the options match the theme instead of the OS popup a native `<select>` shows. The current choice carries a leading ✓ and gets the highlight when reopening. ControlValueAccessor-compatible.',
         inputs: [
+          {
+            name: 'ariaLabel',
+            type: 'string | null',
+            default: 'null',
+            description:
+              'The control’s accessible name where it is not inside a `strct-field`. ARIA does not let a `combobox` take its name from its content, so a bare select — a filter above a list, a cell editor — has none without this.',
+          },
           model('unknown', 'Selected option value.'),
           {
             name: 'options',
@@ -784,6 +804,12 @@ export const DOCS: DocCategory[] = [
         summary: 'On / off switch.',
         lead: 'A binary on/off switch, ControlValueAccessor-compatible. Best for immediately-applied settings.',
         inputs: [
+          {
+            name: 'ariaLabel',
+            type: 'string | null',
+            default: 'null',
+            description: 'The switch’s accessible name, where no visible label gives it one.',
+          },
           model('boolean', 'On/off state.'),
           {
             name: 'description',
@@ -1870,6 +1896,19 @@ export const DOCS: DocCategory[] = [
         summary: 'Non-modal, draggable, resizable, minimisable.',
         lead: 'Some work lives in a window beside the page: a VM console stays open while the operator browses. It can be moved, resized and minimised, and it comes back from the dock. A modal blocks the page and a drawer is pinned to an edge \u2014 neither is a window.',
         inputs: [
+          {
+            name: 'data',
+            type: 'unknown',
+            default: 'null',
+            description:
+              'Whatever the consumer needs to recognise this window elsewhere — a session id, the object it shows. The dock passes it to `[strctWindowDockItem]` as `let-data`.',
+          },
+          {
+            name: 'restoreLabel',
+            type: '(w: StrctWindow) => string',
+            description:
+              'On `strct-window-dock`: what restoring a chip does — "Show the console of APP02". The window is passed, so its `data` can shape the sentence.',
+          },
           {
             name: 'icon',
             type: 'string',
@@ -2991,6 +3030,13 @@ export const DOCS: DocCategory[] = [
         lead: 'Short lists of things with a status are lists, not tables: a leading marker, a title, a secondary line, a quiet meta and a control at the end. A table needs a header row and columns, a timeline implies time order, and an alert per item is too heavy. `interactive` makes the row itself open — click, Enter or Space — while `[strctListItemTrailing]` stays a separate tab stop, so "open this alarm" and "acknowledge it" are two targets rather than one.',
         inputs: [
           {
+            name: 'flush',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'On `strct-list`: drop the rows’ inline padding, so a list of statements lines up with the paragraphs around it instead of sitting 12px inside them.',
+          },
+          {
             name: 'dense',
             type: 'boolean',
             default: 'false',
@@ -3316,6 +3362,12 @@ export const DOCS: DocCategory[] = [
         summary: 'Selectable, expandable data grid.',
         lead: 'A richer grid with sorting, selection, batch actions, pagination and expandable rows. Columns can be `sortable` and aligned. Use `*strctCell="key"` templates for custom cells (status pills, links, action buttons), and set `rowId` so selection / expansion survive live data refreshes.',
         inputs: [
+          {
+            name: 'columns[].editorOptions',
+            type: 'StrctOption[] | ((row) => StrctOption[])',
+            description:
+              'The choices an `editor: "select"` offers. A function is asked **per row**, so a rule that holds a value the host no longer reports lists it for that row only, rather than every row’s picker carrying every other row’s.',
+          },
           {
             name: 'selectionMode',
             type: "'none' | 'multiple' | 'single'",
@@ -4342,6 +4394,12 @@ export const DOCS: DocCategory[] = [
         summary: 'A chart key: swatch · label · value rows.',
         lead: 'A chart\u2019s key is a component. The same swatch · label · value rows serve a line chart\u2019s series picker, a diagram\u2019s edge styles and a donut\u2019s categories — instead of 9px squares with inline backgrounds written per screen. A category with nothing in it stays in the key, muted, because "0 failed" is information.',
         inputs: [
+          {
+            name: 'items[].description',
+            type: 'string',
+            description:
+              'What a row *is*, for any row — "vm.cpu.wait — CPU ready (written by the agent)". `reason` stays the why-not of a row that cannot be picked.',
+          },
           {
             name: 'appearance',
             type: `'legend' | 'picker'`,

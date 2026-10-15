@@ -143,7 +143,12 @@ export interface StrctDatagridColumn {
    */
   editor?: 'text' | 'number' | 'select';
   /** Options for `editor: 'select'` (the library's own option shape). */
-  editorOptions?: StrctOption[];
+  /**
+   * The choices an `editor: 'select'` offers. A function is asked per row: a
+   * rule that holds a value the host no longer reports lists it for that row
+   * only, rather than every row's picker carrying every other row's.
+   */
+  editorOptions?: StrctOption[] | ((row: StrctRow) => StrctOption[]);
   /** Bounds and step for `editor: 'number'`. */
   editorMin?: number;
   editorMax?: number;
@@ -661,7 +666,7 @@ export class StrctDatagridActionBar {}
                                    confirm with Enter once an option is picked. -->
                               <strct-select
                                 class="strct-dg__editselect"
-                                [options]="col.editorOptions ?? []"
+                                [options]="editorOptionsFor(row, col)"
                                 [listLabel]="L().editCell + ': ' + col.label"
                                 [ngModel]="row[col.key]"
                                 (ngModelChange)="commitValue(row, col, $event)"
@@ -672,6 +677,7 @@ export class StrctDatagridActionBar {}
                             @case ('number') {
                               <strct-number
                                 class="strct-dg__editnumber"
+                                [ariaLabel]="L().editCell + ': ' + col.label"
                                 [min]="col.editorMin ?? null"
                                 [max]="col.editorMax ?? null"
                                 [step]="col.editorStep ?? 1"
@@ -2424,6 +2430,12 @@ export class StrctDatagrid {
     if (cell) setTimeout(() => cell.focus());
   }
 
+  /** A column's choices, asked per row when the column gives a function. */
+  protected editorOptionsFor(row: StrctRow, col: StrctDatagridColumn): StrctOption[] {
+    const opts = col.editorOptions;
+    return typeof opts === 'function' ? opts(row) : (opts ?? []);
+  }
+
   protected startEdit(row: StrctRow, col: StrctDatagridColumn): void {
     this.editing.set({ rowKey: this.rowKey(row), colKey: col.key });
     this.editDraft.set(row[col.key]);
@@ -2458,7 +2470,8 @@ export class StrctDatagrid {
   protected displayValue(row: StrctRow, col: StrctDatagridColumn): unknown {
     const raw = row[col.key];
     if (col.editor !== 'select') return raw;
-    return col.editorOptions?.find((o) => o.value === raw)?.label ?? raw;
+    // Per-row options: this row's own choices decide what its value reads as.
+    return this.editorOptionsFor(row, col).find((o) => o.value === raw)?.label ?? raw;
   }
 
   /** Close the editor and emit `cellEdit` when the value actually changed. */
@@ -2653,7 +2666,10 @@ export class StrctDatagrid {
         this.pageSize() > 0 ||
         this.virtual() ||
         this.columnChooser() ||
-        this.sync()),
+        this.sync() ||
+        // "3 selected" is something to say, and a grid with no pager had
+        // nowhere to say it: two member pickers went `virtual` for the count.
+        (this.mode() !== 'single' && this.selectedCount() > 0)),
   );
 
   /** Full count for the pager / footer (server total in lazy mode). */

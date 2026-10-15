@@ -47,6 +47,11 @@ export class StrctCodeInline {
   readonly value = input('');
   /** Long ids wrap instead of overflowing a narrow card. */
   readonly wrap = input(false, { transform: booleanAttribute });
+  /**
+   * What the copy button is called. Two spans in the same drawer are both
+   * "Copy" without it; these are "Copy thumbprint" and "Copy serial number".
+   */
+  readonly copyLabel = input('');
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly vcr = inject(ViewContainerRef);
@@ -55,14 +60,12 @@ export class StrctCodeInline {
   /** The button, once it exists; and a counter the observer bumps. */
   private readonly copyRef = signal<ComponentRef<StrctCopy> | null>(null);
   private readonly revision = signal(0);
+  /** The host exists: nothing may be created into it before that. */
+  private readonly rendered = signal(false);
 
   constructor() {
     afterNextRender(() => {
-      if (!this.copyable()) return;
       const el = this.host.nativeElement;
-      const ref = this.vcr.createComponent(StrctCopy);
-      el.appendChild(ref.location.nativeElement);
-      this.copyRef.set(ref);
       // The element's text is not a signal, so watch it: a path or a thumbprint
       // that loads later must be the text that gets copied, not the first one.
       if (typeof MutationObserver !== 'undefined') {
@@ -70,18 +73,41 @@ export class StrctCodeInline {
         mo.observe(el, { childList: true, characterData: true, subtree: true });
         this.destroyRef.onDestroy(() => mo.disconnect());
       }
+      this.rendered.set(true);
     });
-    // Keeps the button's text in step with `value`, or with the element.
+    // `copyable` was read once, at first render, so a button that depends on
+    // state needed two template branches. It is a signal like any other now:
+    // the button is created when it turns on and destroyed when it turns off.
+    effect(() => {
+      if (!this.rendered()) return;
+      const want = this.copyable();
+      const ref = untracked(() => this.copyRef());
+      if (want === !!ref) return;
+      untracked(() => {
+        if (want) {
+          const created = this.vcr.createComponent(StrctCopy);
+          this.host.nativeElement.appendChild(created.location.nativeElement);
+          this.copyRef.set(created);
+        } else {
+          ref?.destroy();
+          this.copyRef.set(null);
+        }
+      });
+    });
+    // Keeps the button's text — and its name — in step with the element.
     effect(() => {
       const ref = this.copyRef();
       if (!ref) return;
       this.revision(); // re-read the element whenever its text changed
       const text = this.value() || this.ownText();
+      const label = this.copyLabel();
       untracked(() => {
         ref.setInput('text', text);
+        if (label) ref.setInput('ariaLabel', label);
         ref.changeDetectorRef.detectChanges();
       });
     });
+    this.destroyRef.onDestroy(() => untracked(() => this.copyRef())?.destroy());
   }
 
   /** What the element says, without the copy button's own content. */
