@@ -30,20 +30,37 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
   encapsulation: ViewEncapsulation.None,
   imports: [StrctIcon],
   template: `
-    <span
-      class="strct-tag__text"
-      [attr.role]="interactive() ? 'button' : null"
-      [attr.tabindex]="interactive() && !disabled() ? 0 : null"
-      [attr.aria-label]="interactive() && activateLabel() ? activateLabel() : null"
-      (click)="onActivate()"
-      (keydown.enter)="onActivate()"
-      (keydown.space)="$event.preventDefault(); onActivate()"
-    >
-      <!-- Declared before the catch-all so the selector wins; it renders first
+    <!-- With an href the body is a real link: Ctrl/Cmd-click opens a tab, the
+         address shows on hover and it can be copied as a link — none of which
+         a role="button" can do. The same text, the same focus ring. -->
+    @if (href() && !disabled()) {
+      <a
+        class="strct-tag__text strct-tag__text--link"
+        [attr.href]="href()"
+        [attr.target]="target() || null"
+        [attr.rel]="target() === '_blank' ? 'noopener noreferrer' : null"
+        [attr.aria-label]="activateLabel() || null"
+        (click)="onActivate()"
+      >
+        <ng-content select="[strctTagLeading]" />
+        <ng-content />
+      </a>
+    } @else {
+      <span
+        class="strct-tag__text"
+        [attr.role]="interactive() ? 'button' : null"
+        [attr.tabindex]="interactive() && !disabled() ? 0 : null"
+        [attr.aria-label]="interactive() && activateLabel() ? activateLabel() : null"
+        (click)="onActivate()"
+        (keydown.enter)="onActivate()"
+        (keydown.space)="$event.preventDefault(); onActivate()"
+      >
+        <!-- Declared before the catch-all so the selector wins; it renders first
            either way. -->
-      <ng-content select="[strctTagLeading]" />
-      <ng-content />
-    </span>
+        <ng-content select="[strctTagLeading]" />
+        <ng-content />
+      </span>
+    }
     @if (removable() && !disabled()) {
       <button
         type="button"
@@ -114,6 +131,14 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
          the same content into only one place, so branching the markup on
          interactive would drop it in the other branch — the shape
          strct-list-item and strct-tree rows use. */
+      .strct-tag__text--link {
+        color: inherit;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .strct-tag__text--link:hover {
+        text-decoration: underline;
+      }
       .strct-tag--interactive .strct-tag__text {
         cursor: pointer;
         border-radius: 3px;
@@ -192,6 +217,14 @@ export class StrctTag {
    * The × keeps `removeLabel`.
    */
   readonly activateLabel = input('');
+  /**
+   * The tag's body is a link to this address — an object chip in a reply opens
+   * the object's page. A link is what a middle click, a Ctrl/Cmd-click and
+   * "copy link address" need; `interactive` cannot give them.
+   */
+  readonly href = input<string | null>(null);
+  /** `_blank` adds the `rel` a new tab needs. */
+  readonly target = input<string>('');
   /**
    * The body becomes a control: pointer, hover, focus ring, and `activated` on
    * click / Enter / Space. The × stays a separate tab stop, so "open it" and

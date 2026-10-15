@@ -137,3 +137,5 @@ export * from './lib/inline-edit/inline-edit';
 export * from './lib/notification-center/notification-center';
 export * from './lib/heatmap/heatmap';
 export * from './lib/util/host-check';
+export * from './lib/markdown/markdown';
+export * from './lib/markdown/markdown-parser';

@@ -343,3 +343,46 @@ describe('StrctModal chromeless + size diagnostic', () => {
     expect(render('xl', false)).toEqual([]);
   });
 });
+
+// FR-51 (chat) — a window that closes on Escape but not on a stray click.
+describe('StrctModal — closeOnEscape and closeOnBackdrop apart', () => {
+  function make(inputs: Record<string, unknown>) {
+    const fixture = TestBed.createComponent(StrctModal);
+    fixture.componentRef.setInput('open', true);
+    fixture.componentRef.setInput('heading', 'Assistant');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+  const escape = (defaultPrevented = false) => {
+    const e = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    if (defaultPrevented) e.preventDefault();
+    document.dispatchEvent(e);
+  };
+
+  it('Escape alone closes it; the backdrop does not', () => {
+    const { fixture, el } = make({ closeOnEscape: true });
+    const overlay = el.querySelector('.strct-modal__overlay') as HTMLElement;
+    overlay.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.open()).toBe(true);
+
+    escape();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.open()).toBe(false);
+  });
+
+  it('leaves an Escape a control already handled', () => {
+    const { fixture } = make({ closeOnEscape: true });
+    escape(true);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.open()).toBe(true);
+  });
+
+  it('dismissible still means both', () => {
+    const { fixture } = make({ dismissible: true });
+    escape();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.open()).toBe(false);
+  });
+});

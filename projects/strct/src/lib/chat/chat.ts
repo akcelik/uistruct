@@ -22,6 +22,10 @@ import { StrctIcon } from '../icon/icon';
 export type StrctChatAuthor = 'user' | 'assistant' | 'system';
 
 /** A card the message carries — an action to approve, a result to read. */
+/** A quiet row under the bubble — copy, a status, a fold. */
+@Directive({ selector: '[strctChatMessageActions]' })
+export class StrctChatMessageActions {}
+
 @Directive({ selector: '[strctChatAttachment]', host: { class: 'strct-chat__attachment' } })
 export class StrctChatAttachment {}
 
@@ -201,6 +205,12 @@ export class StrctChatThread {
         }
       </div>
       <ng-content select="[strctChatAttachment]" />
+      <!-- Copy, a status ("Stopped", "Model call failed"), a quiet "Used 3
+           tools" fold. It was going into the attachment slot, which the
+           library documents as a card the message carries. -->
+      <div class="strct-msg__actions">
+        <ng-content select="[strctChatMessageActions]" />
+      </div>
     </div>
   `,
   host: {
@@ -249,6 +259,17 @@ export class StrctChatThread {
         font-weight: 600;
       }
       /* Surfaces from tokens: no blur, no gradient — a consumer may add them. */
+      .strct-msg__actions:empty {
+        display: none;
+      }
+      .strct-msg__actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin-block-start: 4px;
+        font-size: var(--text-sm);
+        color: var(--t3);
+      }
       .strct-msg__bubble {
         padding: var(--space-2) var(--space-3);
         border: 1px solid var(--b2);
@@ -358,11 +379,16 @@ export class StrctChatMessage {
       <button
         type="button"
         class="strct-composer__send"
-        [attr.aria-label]="sendLabel()"
-        [disabled]="disabled() || sendDisabled() || !value().trim()"
-        (click)="submit()"
+        [class.strct-composer__send--stop]="busy()"
+        [attr.aria-label]="busy() ? stopLabel() : sendLabel()"
+        [disabled]="busy() ? disabled() : disabled() || sendDisabled() || !value().trim()"
+        (click)="busy() ? stop.emit() : submit()"
       >
-        <strct-icon strictName="arrowUp" [size]="15" [strokeWidth]="1.8" />
+        @if (busy()) {
+          <span class="strct-composer__stopmark" aria-hidden="true"></span>
+        } @else {
+          <strct-icon strictName="arrowUp" [size]="15" [strokeWidth]="1.8" />
+        }
       </button>
     </div>
   `,
@@ -430,6 +456,13 @@ export class StrctChatMessage {
         color: var(--inv);
         cursor: pointer;
       }
+      /* A square, the way every chat draws Stop. */
+      .strct-composer__stopmark {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        background: currentColor;
+      }
       .strct-composer__send:disabled {
         opacity: var(--disabled-opacity);
         cursor: not-allowed;
@@ -455,6 +488,16 @@ export class StrctChatComposer {
    * while a reply is still streaming. `disabled` stops the typing as well.
    */
   readonly sendDisabled = input(false, { transform: booleanAttribute });
+  /**
+   * A reply is streaming: the one button becomes Stop, where every chat the
+   * operators know puts it. It is enabled whatever the draft holds, and Enter
+   * still never sends — the draft stays editable meanwhile.
+   */
+  readonly busy = input(false, { transform: booleanAttribute });
+  /** What the Stop button is called. */
+  readonly stopLabel = input('Stop');
+  /** The reader asked for the reply to stop. */
+  readonly stop = output<void>();
   /** How tall the box grows before it scrolls. */
   readonly maxRows = input(8);
   /** The send button's accessible name. */
@@ -488,7 +531,7 @@ export class StrctChatComposer {
 
   submit(): void {
     const text = this.value().trim();
-    if (!text || this.disabled() || this.sendDisabled()) return;
+    if (!text || this.disabled() || this.sendDisabled() || this.busy()) return;
     this.send.emit(text);
     this.value.set('');
     const el = this.host.nativeElement.querySelector<HTMLTextAreaElement>('textarea');

@@ -129,3 +129,30 @@ describe('StrctTag — activateLabel', () => {
     ).toBe('Disconnect APP02');
   });
 });
+
+// FR-51 (chat) — an object chip opens the object's page, like any link.
+describe('StrctTag — href', () => {
+  it('renders its body as a link, with the rel a new tab needs', () => {
+    const fixture = TestBed.createComponent(StrctTag);
+    fixture.detectChanges();
+    const el = () => fixture.nativeElement as HTMLElement;
+    expect(el().querySelector('a')).toBeNull();
+
+    fixture.componentRef.setInput('href', '/vms/web-01');
+    fixture.componentRef.setInput('activateLabel', 'Open web-01');
+    fixture.detectChanges();
+    const a = el().querySelector('a.strct-tag__text')!;
+    expect(a.getAttribute('href')).toBe('/vms/web-01');
+    expect(a.getAttribute('aria-label')).toBe('Open web-01');
+    expect(a.getAttribute('rel')).toBeNull();
+
+    fixture.componentRef.setInput('target', '_blank');
+    fixture.detectChanges();
+    expect(el().querySelector('a')!.getAttribute('rel')).toBe('noopener noreferrer');
+
+    // A disabled tag is not a link.
+    fixture.componentRef.setInput('disabled', true);
+    fixture.detectChanges();
+    expect(el().querySelector('a')).toBeNull();
+  });
+});
