@@ -5,6 +5,45 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.10.0] - 2026-10-15
+
+What a results page grouped by what to do needs (FR-56-01 … 05), from
+HyperStruct's redesigned cluster Validation tab.
+
+### Added
+
+- **Groups the consumer defines** (FR-56-01). `groupBy` made one header per
+  distinct value, alphabetically, with the raw value as its label and no way
+  to fold one. The new **`groups`** input gives each one its order, label,
+  tone, a one-line note, a count of its own and whether it starts folded;
+  values no group mentions follow as before. A declared group with no rows is
+  dropped unless **`showEmptyGroups`**. **`[(collapsedGroups)]`** is two-way,
+  so a summary counter can open the group it counts, and
+  **`<ng-template strctGroupHeader>`** draws the row — the button, its
+  `aria-expanded` and the keyboard stay the library's.
+- **A usable detail pane** (FR-56-02). It collapsed the list to one 260px
+  column, which cut a test name in half and hid the status the operator was
+  triaging by. Now: **`paneListWidth`**, **`columns[].keepInPane`** for the
+  columns that stay, two-way **`[(activeRowId)]`** so a page can open a row's
+  pane itself (a chip, a URL fragment; `null` closes it), the header slots
+  **`[strctDetailPaneTitle]` / `[strctDetailPaneMeta]` /
+  `[strctDetailPaneActions]`**, and a narrow takeover below
+  **`paneTakeoverWidth`** — the grid's own width, not the viewport's — where
+  the pane replaces the list with a way back. The keyboard is a mail client's:
+  Enter or Space opens a row, the arrows move the active row while the pane is
+  open, Escape closes it.
+- **`strct-status-dot [variant="ring"]`** (FR-56-03). "Inconclusive", "Not
+  applicable" and "Unknown" are not outcomes, and must not read as Warning or
+  Passed with only the colour to tell them apart. The tone moves from the fill
+  to the edge, so the difference survives being read without colour.
+- **A count on a segmented option** (FR-56-04): `count`, `countStatus` for a
+  count that is itself the news, and `countLabel` so the option reads
+  "History, 14 runs".
+- **`strct-metric-tile [pressed]` and `size="sm"`** (FR-56-05). A verdict
+  band's counters are filters: `pressed` is three-state, so a tile that is not
+  a toggle never claims `aria-pressed`, and `sm` fits six counters beside a
+  one-line verdict.
+
 ## [5.9.0] - 2026-10-15
 
 The four gaps HyperStruct's inventory lists hit (`hyperstruct-o260-lists.md`).

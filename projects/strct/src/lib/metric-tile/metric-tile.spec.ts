@@ -166,3 +166,35 @@ describe('StrctMetricTile — status rail and in-app navigation', () => {
     expect(activated).toBe(0);
   });
 });
+
+// FR-56-05 — a verdict band's counters are filters, and six of them must fit.
+describe('StrctMetricTile — pressed and the small size', () => {
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctMetricTile);
+    fixture.componentRef.setInput('label', 'Needs your decision');
+    fixture.componentRef.setInput('value', 1);
+    fixture.componentRef.setInput('interactive', true);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('claims no pressed state until it is used as a toggle', () => {
+    const plain = make();
+    expect(plain.el.querySelector('button')!.getAttribute('aria-pressed')).toBeNull();
+    expect(plain.el.classList).not.toContain('strct-mt--pressed');
+
+    const off = make({ pressed: false });
+    expect(off.el.querySelector('button')!.getAttribute('aria-pressed')).toBe('false');
+    expect(off.el.classList).not.toContain('strct-mt--pressed');
+
+    const on = make({ pressed: true });
+    expect(on.el.querySelector('button')!.getAttribute('aria-pressed')).toBe('true');
+    expect(on.el.classList).toContain('strct-mt--pressed');
+  });
+
+  it('takes the counter size', () => {
+    expect(make().el.classList).not.toContain('strct-mt--sm');
+    expect(make({ size: 'sm' }).el.classList).toContain('strct-mt--sm');
+  });
+});

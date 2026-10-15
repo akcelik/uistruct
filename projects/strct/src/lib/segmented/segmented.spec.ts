@@ -122,3 +122,28 @@ describe('StrctSegmented', () => {
     expect(host.classList).toContain('strct-seg--disabled');
   });
 });
+
+// FR-56-04 — a view switch says how much is behind each view.
+describe('StrctSegmented — a count on an option', () => {
+  const options = [
+    { value: 'result', label: 'Result' },
+    { value: 'history', label: 'History', count: 14, countLabel: (n: number) => `${n} runs` },
+    { value: 'exceptions', label: 'Exceptions', count: 1, countStatus: 'critical' as const },
+  ];
+
+  it('draws the count, tones it, and puts it in the option’s name', () => {
+    const fixture = TestBed.createComponent(StrctSegmented);
+    fixture.componentRef.setInput('options', options);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const opts = [...el.querySelectorAll('.strct-seg__opt')];
+
+    expect(opts[0].querySelector('.strct-seg__count')).toBeNull();
+    expect(opts[1].querySelector('.strct-seg__count')!.textContent!.trim()).toBe('14');
+    expect(opts[2].querySelector('.strct-seg__count')!.className).toContain(
+      'strct-seg__count--critical',
+    );
+    // The name carries it: "History, 14 runs".
+    expect(opts[1].textContent!.replace(/\s+/g, ' ')).toContain('14 runs');
+  });
+});

@@ -54,6 +54,7 @@ const DEFAULT_LABEL: Record<StrctStatus, string> = {
     '[class.strct-dot--critical]': "status() === 'critical'",
     '[class.strct-dot--sm]': "size() === 'sm'",
     '[class.strct-dot--pulse]': 'pulse()',
+    '[class.strct-dot--ring]': "variant() === 'ring'",
   },
   styles: [
     `
@@ -72,6 +73,28 @@ const DEFAULT_LABEL: Record<StrctStatus, string> = {
       .strct-dot--sm .strct-dot__dot {
         width: 8px;
         height: 8px;
+      }
+      /* The tone moves from the fill to the edge: same colour, different
+         shape, so the difference survives being read without colour. */
+      .strct-dot--ring .strct-dot__dot {
+        background: transparent;
+        box-shadow: inset 0 0 0 2px var(--t3);
+      }
+      .strct-dot--ring.strct-dot--accent .strct-dot__dot {
+        background: transparent;
+        box-shadow: inset 0 0 0 2px var(--acc);
+      }
+      .strct-dot--ring.strct-dot--success .strct-dot__dot {
+        background: transparent;
+        box-shadow: inset 0 0 0 2px var(--success);
+      }
+      .strct-dot--ring.strct-dot--warning .strct-dot__dot {
+        background: transparent;
+        box-shadow: inset 0 0 0 2px var(--warning);
+      }
+      .strct-dot--ring.strct-dot--critical .strct-dot__dot {
+        background: transparent;
+        box-shadow: inset 0 0 0 2px var(--critical);
       }
       .strct-dot--accent .strct-dot__dot {
         background: var(--acc);
@@ -177,6 +200,13 @@ export class StrctStatusDot {
    * not jitter. Under `prefers-reduced-motion` the halo is a static ring.
    */
   readonly pulse = input(false, { transform: booleanAttribute });
+  /**
+   * `solid` is an outcome. `ring` — a 2px outline with a transparent centre —
+   * is a state that is **not** one: "Inconclusive", "Not applicable",
+   * "Unknown". They must not read as Warning or Passed with only the colour
+   * to tell them apart, so the shape carries the difference (WCAG 1.4.1).
+   */
+  readonly variant = input<'solid' | 'ring'>('solid');
 
   protected readonly text = computed(() => this.label() || DEFAULT_LABEL[this.status()]);
 }

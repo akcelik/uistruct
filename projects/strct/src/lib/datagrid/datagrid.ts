@@ -1,6 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
+  afterNextRender,
   booleanAttribute,
   ChangeDetectionStrategy,
   Component,
@@ -12,6 +13,7 @@ import {
   effect,
   ElementRef,
   HostListener,
+  NgZone,
   inject,
   input,
   model,
@@ -41,6 +43,8 @@ export interface StrctDatagridLabels {
   openDetail: string;
   toggleDetail: string;
   closeDetail: string;
+  /** The pane's way back to the list, when it has taken the list's place. */
+  backToList: string;
   rowActions: string;
   chooseColumns: string;
   refresh: string;
@@ -77,6 +81,7 @@ const DG_LABELS: StrctDatagridLabels = {
   openDetail: 'Open detail',
   toggleDetail: 'Toggle detail',
   closeDetail: 'Close detail',
+  backToList: 'Back to the list',
   rowActions: 'Row actions',
   chooseColumns: 'Choose columns',
   refresh: 'Refresh data',
@@ -92,6 +97,7 @@ const DG_LABELS: StrctDatagridLabels = {
   toggleChildren: 'Toggle children',
   quickFilter: 'Quick filter',
 };
+import { StrctStatus } from '../status';
 import { StrctCheckbox } from '../forms/checkbox';
 import { StrctOption } from '../combobox/combobox';
 import { StrctSelect } from '../select/select';
@@ -154,6 +160,12 @@ export interface StrctDatagridColumn {
   /** What an export writes for this column; defaults to the stored value. */
   exportValue?: (row: StrctRow) => unknown;
   /**
+   * Keep this column visible while a `detailPane` is open. Without any, the
+   * list collapses to its first column — which cuts a long name in half and
+   * hides the status the operator is triaging by.
+   */
+  keepInPane?: boolean;
+  /**
    * Hidden until the chooser is asked for it — the column exists, it is just
    * not one of the defaults. A persisted or bound `columnState` wins.
    */
@@ -199,6 +211,49 @@ export interface StrctDatagridLazyState {
   quickFilter: string;
 }
 
+/**
+ * A group the consumer defines, beside `groupBy`. A triage page orders its
+ * groups by urgency, not alphabetically, and "Passed (59)" starts folded.
+ */
+export interface StrctDatagridGroup {
+  /** The `groupBy` column's value this group holds. */
+  value: unknown;
+  /** Shown instead of the raw value. */
+  label?: string;
+  /** Tints the label and the count chip. */
+  status?: StrctStatus;
+  /** One muted line after the count — "Blocks the join until …". */
+  note?: string;
+  /** Initial state; groups are expanded by default. */
+  collapsed?: boolean;
+  /** Shown instead of the row count — a server's total. */
+  count?: number;
+}
+
+/**
+ * A fully custom group header row:
+ *
+ *   <ng-template strctGroupHeader let-group let-count="count">
+ *     <strct-badge [status]="group.status">{{ group.label }}</strct-badge> {{ count }}
+ *   </ng-template>
+ */
+/** The pane header's own title, instead of the first column's value. */
+@Directive({ selector: '[strctDetailPaneTitle]' })
+export class StrctDetailPaneTitle {}
+
+/** Status, category, nodes — what the row is, beside its title. */
+@Directive({ selector: '[strctDetailPaneMeta]' })
+export class StrctDetailPaneMeta {}
+
+/** Controls at the pane header's end; the close button stays the library's. */
+@Directive({ selector: '[strctDetailPaneActions]' })
+export class StrctDetailPaneActions {}
+
+@Directive({ selector: 'ng-template[strctGroupHeader]' })
+export class StrctGroupHeaderDef {
+  readonly template = inject(TemplateRef);
+}
+
 /** Persistable user column preferences (widths from resize, hidden from the
  *  chooser, order from drag-reorder). */
 export interface StrctDatagridColumnState {
@@ -213,7 +268,14 @@ export interface StrctDatagridColumnState {
 /** One rendered tbody item: a data row, or a group header. */
 interface DgItem {
   row?: StrctRow;
-  group?: { key: unknown; label: string; count: number; collapsed: boolean };
+  group?: {
+    key: unknown;
+    label: string;
+    count: number;
+    collapsed: boolean;
+    status?: StrctStatus;
+    note?: string;
+  };
 }
 
 let datagridCounter = 0;
@@ -308,7 +370,12 @@ export class StrctDatagridActionBar {}
       >
     }
 
-    <div class="strct-dg__layout" [class.strct-dg__layout--paned]="paneOpen()">
+    <div
+      class="strct-dg__layout"
+      [class.strct-dg__layout--paned]="paneOpen()"
+      [class.strct-dg__layout--panetakeover]="paneOpen() && narrowPane()"
+      [style.--strct-dg-pane-list-w]="paneListWidth()"
+    >
       <div
         class="strct-dg__scroll"
         tabindex="0"
@@ -543,8 +610,34 @@ export class StrctDatagridActionBar {}
                         >
                           <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
                         </span>
-                        <span class="strct-dg__grouplabel">{{ grp.label }}</span>
-                        <span class="strct-dg__groupcount">{{ grp.count }}</span>
+                        @if (groupHeaderDef(); as tpl) {
+                          <!-- The consumer draws the row; the button, its
+                               aria-expanded and the keyboard stay ours. -->
+                          <ng-container
+                            [ngTemplateOutlet]="tpl.template"
+                            [ngTemplateOutletContext]="{
+                              $implicit: grp,
+                              group: grp,
+                              count: grp.count,
+                            }"
+                          />
+                        } @else {
+                          <span
+                            class="strct-dg__grouplabel strct-dg__grouplabel--{{
+                              grp.status ?? 'none'
+                            }}"
+                            >{{ grp.label }}</span
+                          >
+                          <span
+                            class="strct-dg__groupcount strct-dg__groupcount--{{
+                              grp.status ?? 'none'
+                            }}"
+                            >{{ grp.count }}</span
+                          >
+                          @if (grp.note) {
+                            <span class="strct-dg__groupnote">{{ grp.note }}</span>
+                          }
+                        }
                       </button>
                     </td>
                   </tr>
@@ -562,8 +655,16 @@ export class StrctDatagridActionBar {}
                     [attr.aria-expanded]="
                       childrenKey() && treeHasChildren(row) ? treeExpanded(row) : null
                     "
-                    [attr.tabindex]="childrenKey() ? treeRowTabindex(row) : null"
-                    (keydown)="childrenKey() && onTreeRowKeydown(row, $event)"
+                    [attr.tabindex]="
+                      childrenKey()
+                        ? treeRowTabindex(row)
+                        : canDetail()
+                          ? paneRowTabindex(row)
+                          : null
+                    "
+                    (keydown)="
+                      childrenKey() ? onTreeRowKeydown(row, $event) : onPaneRowKeydown(row, $event)
+                    "
                   >
                     @if (canDetail()) {
                       <td
@@ -799,7 +900,29 @@ export class StrctDatagridActionBar {}
       @if (paneOpen()) {
         <aside class="strct-dg__pane">
           <div class="strct-dg__pane-head">
-            <span class="strct-dg__pane-title">{{ activeRow()![columns()[0].key] }}</span>
+            @if (narrowPane()) {
+              <!-- The pane has taken the list's place, so there is a way back. -->
+              <button
+                type="button"
+                class="strct-dg__pane-back"
+                [attr.aria-label]="L().backToList"
+                (click)="closePane()"
+              >
+                <strct-icon name="chevronLeft" [size]="13" />
+              </button>
+            }
+            <span class="strct-dg__pane-title">
+              <ng-content select="[strctDetailPaneTitle]" />
+              @if (!paneTitleDef()) {
+                {{ activeRow()![columns()[0].key] }}
+              }
+            </span>
+            <span class="strct-dg__pane-meta">
+              <ng-content select="[strctDetailPaneMeta]" />
+            </span>
+            <span class="strct-dg__pane-actions">
+              <ng-content select="[strctDetailPaneActions]" />
+            </span>
             <button
               type="button"
               class="strct-dg__pane-close"
@@ -1373,17 +1496,48 @@ export class StrctDatagridActionBar {}
       }
       .strct-dg__layout--paned .strct-dg__scroll {
         flex: 0 0 auto;
-        width: 260px;
-        min-width: 260px;
-        max-width: 260px;
+        width: var(--strct-dg-pane-list-w, 260px);
+        min-width: var(--strct-dg-pane-list-w, 260px);
+        max-width: var(--strct-dg-pane-list-w, 260px);
       }
       .strct-dg__layout--paned .strct-dg {
-        width: 260px;
-        min-width: 260px;
-        max-width: 260px;
+        width: var(--strct-dg-pane-list-w, 260px);
+        min-width: var(--strct-dg-pane-list-w, 260px);
+        max-width: var(--strct-dg-pane-list-w, 260px);
         flex-shrink: 0;
         border-start-end-radius: 0;
         border-end-end-radius: 0;
+      }
+      /* Narrow: the pane takes the list's place rather than squeezing both. */
+      .strct-dg__layout--panetakeover .strct-dg__scroll {
+        display: none;
+      }
+      .strct-dg__layout--panetakeover .strct-dg__pane {
+        flex: 1;
+        min-width: 0;
+      }
+      .strct-dg__pane-meta,
+      .strct-dg__pane-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .strct-dg__pane-meta:empty,
+      .strct-dg__pane-actions:empty {
+        display: none;
+      }
+      .strct-dg__pane-actions {
+        margin-inline-start: auto;
+      }
+      .strct-dg__pane-back {
+        display: inline-flex;
+        align-items: center;
+        border: 0;
+        background: none;
+        color: var(--t2);
+        cursor: pointer;
+        padding: 2px;
+        border-radius: var(--radius-sm);
       }
       .strct-dg__row--clickable {
         cursor: pointer;
@@ -1798,6 +1952,22 @@ export class StrctDatagrid {
   /** Collapse the grid to a single column and open a side detail pane for the
    *  clicked row (distinct from {@link expandable}). */
   readonly detailPane = input(false, { transform: booleanAttribute });
+  /**
+   * How wide the list column is while the pane is open — px or any CSS width.
+   * 260px cuts a test name like "Validate Switch Enabled Teaming
+   * Configurations" in half and hides its status.
+   */
+  readonly paneListWidth = input<string>('260px');
+  /**
+   * Below this container width (px) the pane takes the list's place, with a
+   * way back in its header, rather than squeezing both into a phone.
+   */
+  readonly paneTakeoverWidth = input(900);
+  /**
+   * The row whose pane is open, two-way: a "what to do next" chip opens the
+   * finding it settles, a URL fragment deep-links to a test, `null` closes it.
+   */
+  readonly activeRowId = model<unknown>(null);
   /** Compact density mode. */
   readonly compact = input(false, { transform: booleanAttribute });
   /**
@@ -1930,6 +2100,19 @@ export class StrctDatagrid {
    */
   readonly groupBy = input<string | null>(null);
   /**
+   * The groups themselves, beside `groupBy`: their order, their labels, a
+   * tone, a note, whether they start folded and a count of the consumer's
+   * own. Values no group mentions follow, in the order the rows arrived.
+   */
+  readonly groups = input<readonly StrctDatagridGroup[] | null>(null);
+  /** Keep a declared group that holds no rows, rather than dropping it. */
+  readonly showEmptyGroups = input(false, { transform: booleanAttribute });
+  /**
+   * Which groups are folded, two-way — so a summary counter elsewhere on the
+   * page can open the group it counts.
+   */
+  readonly collapsedGroups = model<readonly unknown[]>([]);
+  /**
    * Two-way per-column filter state: `key → contains-text` (text filter) or
    * `key → unknown[]` (checked value set). Applied client-side; in `lazy`
    * mode it is passed through on `lazyLoad` instead.
@@ -1994,6 +2177,9 @@ export class StrctDatagrid {
   private readonly menu = inject(StrctMenuService);
 
   protected readonly detailDef = contentChild(StrctRowDetailDef);
+  /** An `<ng-template strctGroupHeader let-group let-count="count">`. */
+  protected readonly groupHeaderDef = contentChild(StrctGroupHeaderDef);
+  protected readonly paneTitleDef = contentChild(StrctDetailPaneTitle);
   protected readonly actionBarDef = contentChild(StrctDatagridActionBar);
   /** A read-only grid with a note needed an empty action bar to show it. */
   protected readonly actionBarCaptionDef = contentChild(StrctDatagridActionBarCaption);
@@ -2048,12 +2234,18 @@ export class StrctDatagrid {
     document.removeEventListener('mouseup', this.onUp);
   }
 
-  private readonly activeId = signal<unknown>(null);
   protected readonly activeRow = computed(() => {
-    const id = this.activeId();
+    const id = this.activeRowId();
     if (id == null) return null;
     return this.rows().find((r) => this.idOf(r) === id) ?? null;
   });
+
+  /**
+   * Whether the container is too narrow to show the list and the pane at once.
+   * It is the grid's own width that decides, not the viewport: the same grid
+   * is wide in a page and narrow in a drawer.
+   */
+  protected readonly narrowPane = signal(false);
 
   protected readonly canExpand = computed(
     () => this.expandable() && !this.detailPane() && !!this.detailDef(),
@@ -2085,9 +2277,14 @@ export class StrctDatagrid {
   });
   /** Only the first column is shown while the detail pane is open. */
   protected readonly visibleColumns = computed(() => {
-    if (this.paneOpen()) return this.orderedColumns().slice(0, 1);
     const hidden = this.hiddenColumns();
-    return this.orderedColumns().filter((c) => !hidden.has(c.key));
+    const shown = this.orderedColumns().filter((c) => !hidden.has(c.key));
+    if (!this.paneOpen()) return shown;
+    // A results list keeps its status and its name while the pane is open;
+    // one 260px column cut the name in half and hid the status. Columns that
+    // ask to stay, stay; otherwise the first one, as before.
+    const kept = shown.filter((c) => c.keepInPane);
+    return kept.length ? kept : shown.slice(0, 1);
   });
 
   // ── Column drag-reorder ────────────────────────────────────────
@@ -2127,13 +2324,14 @@ export class StrctDatagrid {
   }
 
   // ── Row grouping ───────────────────────────────────────────────
-  private readonly collapsedGroups = signal<Set<unknown>>(new Set());
+  /** The folded groups as a set, from the two-way `collapsedGroups`. */
+  private readonly collapsedSet = computed(() => new Set(this.collapsedGroups()));
   /** Collapse / expand one group header. */
   toggleGroup(key: unknown): void {
     const next = new Set(this.collapsedGroups());
     if (next.has(key)) next.delete(key);
     else next.add(key);
-    this.collapsedGroups.set(next);
+    this.collapsedGroups.set([...next]);
   }
   /** What tbody renders: plain (virtual/paged) rows, or groups + their rows. */
   protected readonly displayItems = computed<DgItem[]>(() => {
@@ -2146,10 +2344,33 @@ export class StrctDatagrid {
       if (bucket) bucket.push(row);
       else map.set(key, [row]);
     }
+    // Declared groups come first, in the order they were given: a triage page
+    // orders by urgency, not alphabetically. Values nobody declared follow, in
+    // the order the rows arrived — today's behaviour.
+    const declared = this.groups() ?? [];
+    const byValue = new Map(declared.map((d) => [d.value, d]));
+    const order: unknown[] = [
+      ...declared.map((d) => d.value),
+      ...[...map.keys()].filter((k) => !byValue.has(k)),
+    ];
+    const collapsedSet = this.collapsedSet();
     const out: DgItem[] = [];
-    for (const [key, rows] of map) {
-      const collapsed = this.collapsedGroups().has(key);
-      out.push({ group: { key, label: String(key ?? '—'), count: rows.length, collapsed } });
+    for (const key of order) {
+      const rows = map.get(key) ?? [];
+      const def = byValue.get(key);
+      // A declared group with nothing in it is dropped unless it is asked for.
+      if (!rows.length && (!def || !this.showEmptyGroups())) continue;
+      const collapsed = collapsedSet.has(key);
+      out.push({
+        group: {
+          key,
+          label: def?.label ?? String(key ?? '—'),
+          count: def?.count ?? rows.length,
+          collapsed,
+          status: def?.status,
+          note: def?.note,
+        },
+      });
       if (!collapsed) for (const row of rows) out.push({ row });
     }
     return out;
@@ -2325,6 +2546,8 @@ export class StrctDatagrid {
 
   // ── Inline cell editing ────────────────────────────────────────
   private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly zone = inject(NgZone);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly editing = signal<{ rowKey: unknown; colKey: string } | null>(null);
   protected isEditingCell(row: StrctRow, col: StrctDatagridColumn): boolean {
     const e = this.editing();
@@ -3070,6 +3293,18 @@ export class StrctDatagrid {
         this.lazyLoad.emit(state);
       });
     });
+    // Below `paneTakeoverWidth` the pane replaces the list. The grid's own
+    // width decides, not the viewport: the same grid is wide in a page and
+    // narrow in a drawer.
+    afterNextRender(() => {
+      if (typeof ResizeObserver === 'undefined') return;
+      const host = this.hostRef.nativeElement;
+      const ro = new ResizeObserver(() =>
+        this.zone.run(() => this.narrowPane.set(host.clientWidth < this.paneTakeoverWidth())),
+      );
+      ro.observe(host);
+      this.destroyRef.onDestroy(() => ro.disconnect());
+    });
     // The columns' own `hidden` flags, read once they exist — a required input
     // is not available in the constructor.
     effect(() => {
@@ -3240,9 +3475,57 @@ export class StrctDatagrid {
 
   /** Toggle the detail pane for a row (triggered by its »  button, not the row,
    *  so row cells remain selectable for copy). */
+  /** One tab stop for the list while a pane can be opened from it. */
+  protected paneRowTabindex(row: StrctRow): number {
+    const rows = this.renderRows();
+    if (!rows.length) return -1;
+    const active = this.activeRow();
+    const current = active && rows.includes(active) ? active : rows[0];
+    return current === row ? 0 : -1;
+  }
+
+  /**
+   * The mail-client contract a triage list is read with: Enter or Space opens
+   * the row's pane, the arrows move the active row while it is open, and
+   * Escape closes the pane and leaves focus on the row it came from.
+   */
+  protected onPaneRowKeydown(row: StrctRow, event: KeyboardEvent): void {
+    if (!this.canDetail()) return;
+    if ((event.target as HTMLElement | null)?.closest('input, button, select, textarea')) return;
+    const rows = this.renderRows();
+    const idx = rows.indexOf(row);
+    switch (event.key) {
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        this.openDetail(row);
+        break;
+      case 'Escape':
+        if (!this.paneOpen()) return;
+        event.preventDefault();
+        this.closePane();
+        break;
+      case 'ArrowDown':
+      case 'ArrowUp': {
+        const next = rows[idx + (event.key === 'ArrowDown' ? 1 : -1)];
+        if (!next) return;
+        event.preventDefault();
+        // While the pane is open the arrows move the pane with the row, as a
+        // mail client does; closed, they only move focus.
+        if (this.paneOpen()) this.activeRowId.set(this.idOf(next));
+        setTimeout(() => {
+          const trs =
+            this.hostRef.nativeElement.querySelectorAll<HTMLElement>('tbody tr[tabindex]');
+          trs[idx + (event.key === 'ArrowDown' ? 1 : -1)]?.focus();
+        });
+        break;
+      }
+    }
+  }
+
   openDetail(row: StrctRow): void {
     const id = this.idOf(row);
-    this.activeId.set(this.activeId() === id ? null : id);
+    this.activeRowId.set(this.activeRowId() === id ? null : id);
   }
 
   closePane(): void {
@@ -3251,7 +3534,7 @@ export class StrctDatagrid {
     const host = this.hostRef.nativeElement;
     const focusInside = !!host.querySelector('.strct-dg__pane')?.contains(document.activeElement);
     const trigger = host.querySelector<HTMLElement>('.strct-dg__detailbtn--active');
-    this.activeId.set(null);
+    this.activeRowId.set(null);
     if (focusInside) restoreFocus(trigger);
   }
 

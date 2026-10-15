@@ -1,11 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import {
   StrctDatagrid,
   StrctDatagridColumn,
   StrctDatagridColumnState,
   StrctDatagridLazyState,
   StrctRowDetailDef,
+  StrctDetailPaneTitle,
+  StrctDetailPaneActions,
 } from './datagrid';
 import { StrctCellDef, StrctRow } from '../table/table';
 import { resetStrctDevWarnings } from '../util/dev-warn';
@@ -2269,5 +2271,176 @@ describe('StrctDatagrid — sort values, hidden columns, exports', () => {
     next.detectChanges();
     const first = (next.nativeElement as HTMLElement).querySelector('tbody tr')!;
     expect(first.children[1].textContent!.trim()).toBe('1.5 TB');
+  });
+});
+
+// FR-56-01 — a triage page orders its groups by urgency, not alphabetically.
+describe('StrctDatagrid — groups the consumer defines', () => {
+  const rows: StrctRow[] = [
+    { id: '1', state: 'passed', test: 'A' },
+    { id: '2', state: 'needs', test: 'B' },
+    { id: '3', state: 'passed', test: 'C' },
+    { id: '4', state: 'other', test: 'D' },
+  ];
+  const cols: StrctDatagridColumn[] = [{ key: 'test', label: 'Test' }];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('rowId', 'id');
+    fixture.componentRef.setInput('groupBy', 'state');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      groups: () =>
+        [...el.querySelectorAll('.strct-dg__grouprow')].map((g) =>
+          g.querySelector('.strct-dg__grouplabel')!.textContent!.trim(),
+        ),
+      bodyRows: () => el.querySelectorAll('tbody tr:not(.strct-dg__grouprow)').length,
+    };
+  }
+
+  it('renders the declared order, labels, counts, tone and note; the rest follow', () => {
+    const { el, groups } = make({
+      groups: [
+        {
+          value: 'needs',
+          label: 'Needs your decision',
+          status: 'critical',
+          note: 'Blocks the join',
+        },
+        { value: 'passed', label: 'Passed', collapsed: true },
+      ],
+      collapsedGroups: ['passed'],
+    });
+    expect(groups()).toEqual(['Needs your decision', 'Passed', 'other']);
+    const first = el.querySelector('.strct-dg__grouprow')!;
+    expect(first.querySelector('.strct-dg__grouplabel')!.className).toContain(
+      'strct-dg__grouplabel--critical',
+    );
+    expect(first.querySelector('.strct-dg__groupnote')!.textContent!.trim()).toBe(
+      'Blocks the join',
+    );
+    // "Passed" is folded, so only the two open groups' rows are rendered.
+    expect(el.querySelectorAll('tbody tr:not(.strct-dg__grouprow)').length).toBe(2);
+  });
+
+  it('counts what the consumer says, and can keep an empty group', () => {
+    const empty = [{ value: 'nobody', label: 'Not applicable', count: 11 }];
+    expect(make({ groups: empty }).groups()).not.toContain('Not applicable');
+
+    const { el, groups } = make({ groups: empty, showEmptyGroups: true });
+    expect(groups()).toContain('Not applicable');
+    expect(
+      [...el.querySelectorAll('.strct-dg__groupcount')].map((c) => c.textContent!.trim()),
+    ).toContain('11');
+  });
+
+  it('collapsedGroups is two-way', () => {
+    const { fixture, el } = make({ collapsedGroups: [] });
+    const btn = el.querySelector('.strct-dg__groupbtn') as HTMLButtonElement;
+    btn.click();
+    fixture.detectChanges();
+    expect([...fixture.componentInstance.collapsedGroups()].length).toBe(1);
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+  });
+});
+
+// FR-56-02 — the 260px single column cut a test name in half and hid its status.
+describe('StrctDatagrid — a usable detail pane', () => {
+  const rows: StrctRow[] = [
+    { id: 'a', status: 'Failed', test: 'Validate Switch Enabled Teaming Configurations' },
+    { id: 'b', status: 'Passed', test: 'Validate Cluster Network Configuration' },
+  ];
+  const cols: StrctDatagridColumn[] = [
+    { key: 'status', label: 'Status', keepInPane: true },
+    { key: 'test', label: 'Test', keepInPane: true },
+    { key: 'where', label: 'Where' },
+  ];
+
+  @Component({
+    imports: [StrctDatagrid, StrctRowDetailDef, StrctDetailPaneTitle, StrctDetailPaneActions],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-datagrid
+        [columns]="cols"
+        [rows]="rows"
+        rowId="id"
+        detailPane
+        paneListWidth="420px"
+        [(activeRowId)]="active"
+      >
+        <span strctDetailPaneTitle class="ptitle">The finding</span>
+        <button strctDetailPaneActions type="button" class="pact">Accept</button>
+        <ng-template strctRowDetail let-row>
+          <p class="pbody">{{ row.test }}</p>
+        </ng-template>
+      </strct-datagrid>
+    `,
+  })
+  class Host {
+    cols = cols;
+    rows = rows;
+    active = signal<unknown>(null);
+  }
+
+  function build() {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement, host: fixture.componentInstance };
+  }
+
+  it('opens from outside, keeps the columns that ask to stay, and closes on null', () => {
+    const { fixture, el, host } = build();
+    expect(el.querySelector('.strct-dg__pane')).toBeNull();
+    // Three columns while the pane is shut.
+    expect(el.querySelectorAll('thead th').length).toBe(4); // + the detail column
+
+    host.active.set('a');
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-dg__pane')).toBeTruthy();
+    expect(el.querySelector('.pbody')!.textContent).toContain('Teaming');
+    // Status and Test stay; Where goes.
+    const heads = [...el.querySelectorAll('thead th')].map((h) => h.textContent!.trim());
+    expect(heads).toContain('Status');
+    expect(heads).toContain('Test');
+    expect(heads).not.toContain('Where');
+    // The list's width is the consumer's.
+    expect(
+      (el.querySelector('.strct-dg__layout') as HTMLElement).style.getPropertyValue(
+        '--strct-dg-pane-list-w',
+      ),
+    ).toBe('420px');
+    // The header's own slots.
+    expect(el.querySelector('.strct-dg__pane-title .ptitle')).toBeTruthy();
+    expect(el.querySelector('.strct-dg__pane-actions .pact')).toBeTruthy();
+
+    host.active.set(null);
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-dg__pane')).toBeNull();
+  });
+
+  it('opens on Enter, moves with the arrows, and closes on Escape', () => {
+    const { fixture, el, host } = build();
+    const tr = () => [...el.querySelectorAll<HTMLElement>('tbody tr')];
+    const press = (el: HTMLElement, key: string) =>
+      el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+
+    expect(tr()[0].getAttribute('tabindex')).toBe('0');
+    press(tr()[0], 'Enter');
+    fixture.detectChanges();
+    expect(host.active()).toBe('a');
+
+    press(tr()[0], 'ArrowDown');
+    fixture.detectChanges();
+    expect(host.active()).toBe('b');
+
+    press(tr()[1], 'Escape');
+    fixture.detectChanges();
+    expect(host.active()).toBeNull();
   });
 });

@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
+import { StrctStatus } from '../status';
 
 /** One segment of a `StrctSegmented`. */
 export interface StrctSegmentedOption {
@@ -21,6 +22,18 @@ export interface StrctSegmentedOption {
   icon?: string;
   /** Disable just this segment. */
   disabled?: boolean;
+  /**
+   * How much is behind this view — "History 14". Drawn after the label as a
+   * muted tabular number; the selected option keeps it muted.
+   */
+  count?: number;
+  /** A count that is itself the news: "Failed 3" in critical. */
+  countStatus?: StrctStatus;
+  /**
+   * What the count is called, for the option's accessible name: given
+   * `(n) => n + ' runs'`, the option reads "History, 14 runs".
+   */
+  countLabel?: (count: number) => string;
 }
 
 /** Segment size. */
@@ -62,6 +75,16 @@ export type StrctSegmentedSize = 'sm' | 'md';
           <strct-icon [name]="opt.icon" [size]="16" />
         }
         <span>{{ opt.label }}</span>
+        @if (opt.count !== undefined) {
+          <span
+            class="strct-seg__count strct-seg__count--{{ opt.countStatus ?? 'none' }}"
+            aria-hidden="true"
+            >{{ opt.count }}</span
+          >
+          <span class="strct-sr-only">{{
+            opt.countLabel ? ', ' + opt.countLabel(opt.count) : ', ' + opt.count
+          }}</span>
+        }
       </button>
     }
   `,
@@ -75,6 +98,23 @@ export type StrctSegmentedSize = 'sm' | 'md';
   },
   styles: [
     `
+      .strct-seg__count {
+        margin-inline-start: 5px;
+        font-variant-numeric: tabular-nums;
+        color: var(--t3);
+      }
+      .strct-seg__count--accent {
+        color: var(--acc);
+      }
+      .strct-seg__count--success {
+        color: var(--success);
+      }
+      .strct-seg__count--warning {
+        color: var(--warning);
+      }
+      .strct-seg__count--critical {
+        color: var(--critical);
+      }
       .strct-seg {
         display: inline-flex;
         gap: 2px;

@@ -82,6 +82,7 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
         type="button"
         class="strct-mt__hit"
         [attr.aria-label]="hitLabel()"
+        [attr.aria-pressed]="pressed() === null ? null : pressed() ? 'true' : 'false'"
         (click)="activated.emit()"
       ></button>
     }
@@ -91,6 +92,8 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
     '[class.strct-mt--status]': "status() !== 'neutral'",
     '[attr.data-status]': "status() !== 'neutral' ? status() : null",
     '[class.strct-mt--actionable]': 'href() || interactive()',
+    '[class.strct-mt--pressed]': 'pressed() === true',
+    '[class.strct-mt--sm]': "size() === 'sm'",
     '[class.strct-mt--loading]': 'loading()',
     '[attr.aria-busy]': 'loading() ? "true" : null',
   },
@@ -131,6 +134,27 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
       }
       .strct-mt[data-status='critical']::before {
         background: var(--critical);
+      }
+      /* A tile used as a filter says which one is on — with a border and a
+         fill, not colour alone. */
+      .strct-mt--pressed {
+        border-color: var(--acc);
+        background: var(--acc-m);
+      }
+      /* sm: a counter, not a dashboard tile. */
+      .strct-mt--sm {
+        gap: 2px;
+        padding: 6px 10px;
+      }
+      .strct-mt--sm .strct-mt__label {
+        font-size: 12px;
+      }
+      .strct-mt--sm .strct-mt__value {
+        font-size: 16px;
+      }
+      .strct-mt--sm .strct-mt__icon strct-icon {
+        width: 13px;
+        height: 13px;
       }
       .strct-mt__top {
         display: flex;
@@ -277,6 +301,19 @@ export class StrctMetricTile {
   readonly href = input<string | null>(null);
   /** Makes the whole tile a control that emits `activated`. */
   readonly interactive = input(false, { transform: booleanAttribute });
+  /**
+   * The tile is a filter: `true` draws it on and says `aria-pressed`, `false`
+   * draws it off and still says so. `null` (the default) is a tile that is
+   * not a toggle at all, which must not claim a pressed state.
+   */
+  readonly pressed = input<boolean | null, boolean | string | null | undefined>(null, {
+    transform: (v) => (v === null || v === undefined ? null : booleanAttribute(v)),
+  });
+  /**
+   * `sm` is the verdict-band size: six counters beside a one-line verdict at
+   * 1440px, where the dashboard size fits three.
+   */
+  readonly size = input<'md' | 'sm'>('md');
   /**
    * What a plain click on an `href` tile does. `browser` follows the link, as
    * today. `app` belongs to a single-page app: the click is prevented and

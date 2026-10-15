@@ -63,3 +63,20 @@ describe('StrctStatusDot', () => {
     expect(el.classList).toContain('strct-dot--pulse');
   });
 });
+
+// FR-56-03 — "Inconclusive" and "Not applicable" are not outcomes, and must
+// not read as Warning or Passed with only the colour to tell them apart.
+describe('StrctStatusDot — ring', () => {
+  it('is solid by default and a ring on request', () => {
+    const fixture = TestBed.createComponent(StrctStatusDot);
+    fixture.componentRef.setInput('status', 'warning');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.classList).not.toContain('strct-dot--ring');
+
+    fixture.componentRef.setInput('variant', 'ring');
+    fixture.detectChanges();
+    expect(el.classList).toContain('strct-dot--ring');
+    expect(el.classList).toContain('strct-dot--warning');
+  });
+});
