@@ -2889,7 +2889,7 @@ export const DOCS: DocCategory[] = [
             name: 'sections',
             type: 'StrctMenuSection[]',
             description:
-              'Categories with items: `{ label, icon?, expanded?, items: StrctMenuLink[] }`. Each item is `{ id, label, icon?, disabled?, badge?, badgeStatus?, dot?, dotStatus?, trailingIcon? }` — `badge` renders a trailing count chip, `dot` a small status dot (e.g. "unsaved changes"), `trailingIcon` a muted glyph (e.g. "restart required"). Same status vocabulary as the rail (`StrctRailStatus`). Required.',
+              'Categories with items: `{ label, icon?, expanded?, items: StrctMenuLink[] }`. Each item is `{ id, label, icon?, disabled?, badge?, badgeStatus?, dot?, dotStatus?, trailingIcon?, routerLink?, href? }` — `badge` renders a trailing count chip, `dot` a small status dot (e.g. "unsaved changes"), `trailingIcon` a muted glyph (e.g. "restart required"). An item with `routerLink` or `href` is drawn as a real link (middle-click, ⌘-click, "copy link address", `aria-current` from the router) and still emits `(select)` on a plain activation — the rail\u2019s contract; without one it stays a `<button>`. Same status vocabulary as the rail (`StrctRailStatus`). Required.',
           },
           {
             name: 'activeId',
@@ -2927,6 +2927,7 @@ export const DOCS: DocCategory[] = [
         dont: ['Do not nest sections — items are a flat list under each category.'],
         a11y: [
           'Renders a nav landmark; the active item gets aria-current and collapsible categories expose aria-expanded.',
+          'An item with a destination is an anchor, so it is announced as a link and can be opened in a new tab.',
         ],
       },
     ],

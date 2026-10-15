@@ -231,7 +231,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="section-menu"
       heading="Section menu"
-      description="A two-level category / item menu (not a tree). Items carry the same trailing vocabulary as the rail: a status dot (Hosts — 'unsaved changes'), a muted trailing icon (VMs — 'restart required') and a count chip (Volumes — deviations). Toggle collapsible and icons to see the configurations."
+      description="A two-level category / item menu (not a tree). Items carry the same trailing vocabulary as the rail: a status dot (Hosts — 'unsaved changes'), a muted trailing icon (VMs — 'restart required') and a count chip (Volumes — deviations). An entry with routerLink or href is drawn as a real link — middle-click, ⌘-click and “copy link address” work, and the router marks it aria-current — while (select) still fires on a plain activation, as the rail does. Here Hosts and Volumes are links; the rest are buttons. Toggle collapsible and icons to see the configurations."
       code='<strct-section-menu [sections]="[{label:&#39;Compute&#39;,items:[{id:&#39;hosts&#39;,label:&#39;Hosts&#39;,dot:true,dotStatus:&#39;warning&#39;},{id:&#39;vms&#39;,label:&#39;VMs&#39;,trailingIcon:&#39;sync&#39;}]}]" [(activeId)]="active" />'
     >
       <div class="sm-demo">
@@ -524,7 +524,15 @@ export class NavigationPage {
       icon: 'cpu',
       items: [
         // "unsaved changes" dot + "restart required" trailing icon (FR-NAV-02)
-        { id: 'hosts', label: 'Hosts', icon: 'host', dot: true, dotStatus: 'warning' },
+        {
+          id: 'hosts',
+          label: 'Hosts',
+          icon: 'host',
+          dot: true,
+          dotStatus: 'warning',
+          // A page with an address of its own (FR-52-06).
+          routerLink: '/components/section-menu',
+        },
         { id: 'vms', label: 'Virtual machines', icon: 'vm', trailingIcon: 'sync' },
         { id: 'clusters', label: 'Clusters', icon: 'cluster' },
       ],
@@ -533,7 +541,14 @@ export class NavigationPage {
       label: 'Storage',
       icon: 'storage',
       items: [
-        { id: 'volumes', label: 'Volumes', icon: 'disk', badge: 3, badgeStatus: 'critical' },
+        {
+          id: 'volumes',
+          label: 'Volumes',
+          icon: 'disk',
+          badge: 3,
+          badgeStatus: 'critical',
+          routerLink: '/components/section-menu',
+        },
         { id: 'pools', label: 'Pools', icon: 'storage' },
       ],
     },

@@ -33,8 +33,11 @@ and **FR-52-04** (smallest, most reused).
 >   order and a slot can only be declared before the catch-all one, so the label goes in
 >   `[strctDropdownItemLabel]`; dev mode says so when it is missing.
 >
-> Still open: **FR-52-01** (the switcher), **FR-52-03** (secondary accents), **FR-52-06**
-> (section-menu links).
+> Still open: **FR-52-01** (the switcher) and **FR-52-03** (secondary accents).
+>
+> **FR-52-06 SHIPPED in 5.14.0 (2026-10-15).** `StrctMenuLink.routerLink` / `href` draws an entry
+> as a real `<a>` with `aria-current` from the router; `(select)` still fires on a plain
+> activation, and a modified or non-primary click is left to the browser — the rail's contract.
 
 ---
 

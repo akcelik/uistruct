@@ -5,6 +5,54 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.0] - 2026-10-15
+
+The shell on a phone, and menu entries that are real links (FR-53-04,
+FR-53-06, FR-53-07 of `hyperstruct-product-shell-search-phone.md`; FR-52-06 of
+`hyperstruct-product-switcher.md`).
+
+### Added
+
+- **`*strctHeaderAction`** (FR-53-06) — a header action that knows whether it
+  may move into an overflow menu on a phone:
+  `*strctHeaderAction="{ label: 'Create', icon: 'plus', run: create }"`. Below
+  `overflowBreakpoint` (600 px by default) the actions marked `'phone'` (the
+  default) are drawn in the header's **"More"** menu instead of the header, and
+  the ones marked `'never'` stay — what an action that opens its own popover
+  needs. Content projected without the directive never moves. Measured on the
+  showcase's own header at 390 px: it was 443 px wide and silently clipped by
+  the shell, and is now exactly 390.
+  - An action with `run` becomes a menu item. An action without one has its own
+    template drawn in the panel, in a row that is **not** a menu item — a
+    control is not a command. A menu may only hold menu items, so a panel
+    carrying such a control is a labelled dialog rather than a menu (axe:
+    `aria-required-children` on every other arrangement; none on this one).
+- **`strct-shell [closeNavOnNavigate]`** (FR-53-04), on by default, and
+  **`StrctShellService.closeNav()`**. On a phone the drawer holds the
+  navigation, so a choice made in it opens a page _behind_ it; this is the
+  subscription every app with a router ends up writing. Without a `Router` in
+  the injector nothing happens.
+- **`strct-vertical-nav`: the drawer is a drawer** (FR-53-07).
+  - `drawerMaxWidth` (default `calc(100vw - 48px)`), applied only in drawer
+    mode, so the width an app picks for its desktop sidebar cannot cover a
+    phone whole.
+  - Opening it moves focus inside and sets `role="dialog"` + `aria-modal`;
+    `trapFocus` (on by default) keeps Tab inside; closing hands focus back to
+    the drawer toggle that opened it. All three only in drawer mode: a sidebar
+    that is part of the page must not trap anything.
+  - `closeButton` draws a close control at the drawer's top, because Escape and
+    the backdrop are both invisible and a touch screen has no Escape.
+- **`StrctMenuLink.routerLink` / `href`** (FR-52-06) — a section-menu entry
+  with a destination is drawn as a real `<a>`: middle-click, ⌘/Ctrl-click,
+  "open in new tab" and "copy link address" work, and the router marks it
+  `aria-current`. `(select)` still fires on a plain activation, and a modified
+  or non-primary click belongs to the browser — the rail's contract, now the
+  menu's.
+- **A dev-mode diagnostic for a header that does not fit.** The shell clips
+  what overflows the header, so triggers simply are not there and nothing says
+  so. In dev the header now reports its own width against the room it has, and
+  names `*strctHeaderAction` as the way out.
+
 ## [5.13.0] - 2026-10-15
 
 A palette fed from more than one source, and menus that say what they hold

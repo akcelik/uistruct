@@ -12,6 +12,7 @@ import { filter } from 'rxjs';
 import {
   StrctFooter,
   StrctHeader,
+  StrctHeaderAction,
   StrctIcon,
   StrctNavItem,
   StrctShell,
@@ -48,6 +49,7 @@ interface NavGroup {
     RouterLink,
     StrctShell,
     StrctHeader,
+    StrctHeaderAction,
     StrctButton,
     StrctFooter,
     StrctVerticalNav,
@@ -67,6 +69,13 @@ export class App {
   private readonly hotkeys = inject(StrctHotkeysService);
   private readonly theme = inject(StrctThemeService);
   private readonly palette = inject(CommandPaletteService);
+
+  // What the header's "More" rows do on a phone, where the triggers
+  // themselves are not drawn (FR-53-06).
+  protected readonly goStarted = () => void this.router.navigateByUrl('/get-started');
+  protected readonly goComponents = () => void this.router.navigateByUrl('/components/button');
+  protected readonly goGithub = () =>
+    void window.open('https://github.com/akcelik/uistruct', '_blank', 'noreferrer');
 
   protected openPalette(): void {
     this.palette.open.set(true);

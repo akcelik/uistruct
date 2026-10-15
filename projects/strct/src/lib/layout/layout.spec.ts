@@ -1,6 +1,14 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { StrctShell, StrctHeader, StrctFooter, StrctShellService } from './layout';
+import { Event, NavigationEnd, Router, provideRouter } from '@angular/router';
+import { Subject } from 'rxjs';
+import {
+  StrctShell,
+  StrctHeader,
+  StrctHeaderAction,
+  StrctFooter,
+  StrctShellService,
+} from './layout';
 import { StrctVerticalNav } from './nav';
 
 describe('StrctShell', () => {
@@ -215,5 +223,155 @@ describe('StrctShell — the mobile nav backdrop', () => {
     fixture.detectChanges();
     expect(service.mobileNavOpen()).toBe(false);
     expect(el.querySelector('.strct-vnav__backdrop')).toBeNull();
+  });
+});
+
+// FR-53-04 / 06 / 07 — the shell on a phone: the drawer that closes when a
+// choice in it navigates, the header's overflow menu, and a drawer you can
+// reach, leave and close.
+describe('StrctShell — the drawer and the header on a phone', () => {
+  function media(narrow: boolean) {
+    const listeners = new Set<() => void>();
+    const mql = {
+      matches: narrow,
+      addEventListener: (_: string, fn: () => void) => listeners.add(fn),
+      removeEventListener: (_: string, fn: () => void) => listeners.delete(fn),
+    };
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => mql),
+    );
+    return {
+      set(value: boolean) {
+        mql.matches = value;
+        listeners.forEach((fn) => fn());
+      },
+    };
+  }
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('closes the drawer when a navigation completes, unless told not to', async () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    const fixture = TestBed.createComponent(StrctShell);
+    fixture.detectChanges();
+    const shell = fixture.debugElement.injector.get(StrctShellService);
+    const router = TestBed.inject(Router);
+
+    shell.mobileNavOpen.set(true);
+    (router.events as Subject<Event>).next(new NavigationEnd(1, '/a', '/a'));
+    expect(shell.mobileNavOpen()).toBe(false);
+
+    fixture.componentRef.setInput('closeNavOnNavigate', false);
+    fixture.detectChanges();
+    shell.mobileNavOpen.set(true);
+    (router.events as Subject<Event>).next(new NavigationEnd(2, '/b', '/b'));
+    expect(shell.mobileNavOpen()).toBe(true);
+
+    // The manual route, for an app that drives it itself.
+    shell.closeNav();
+    expect(shell.mobileNavOpen()).toBe(false);
+  });
+
+  it('moves the phone actions into a More menu, and keeps the ones that must stay', () => {
+    const screen = media(false);
+
+    @Component({
+      imports: [StrctHeader, StrctHeaderAction],
+      changeDetection: ChangeDetectionStrategy.Eager,
+      template: `
+        <strct-header>
+          <ng-container *strctHeaderAction="{ label: 'Create', icon: 'plus', run: create }">
+            <button class="act-create">Create</button>
+          </ng-container>
+          <ng-container *strctHeaderAction="{ label: 'Search', icon: 'search', run: search }">
+            <button class="act-search">Search</button>
+          </ng-container>
+          <ng-container *strctHeaderAction="{ label: 'Alarms', overflow: 'never' }">
+            <button class="act-alarms">Alarms</button>
+          </ng-container>
+        </strct-header>
+      `,
+    })
+    class Host {
+      ran: string[] = [];
+      create = () => this.ran.push('create');
+      search = () => this.ran.push('search');
+    }
+
+    TestBed.configureTestingModule({ providers: [StrctShellService] });
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    // Wide: every action is in the header, and there is no More trigger.
+    expect(el.querySelectorAll('.act-create, .act-search, .act-alarms').length).toBe(3);
+    expect(el.querySelector('.strct-header__more')).toBeNull();
+
+    screen.set(true);
+    fixture.detectChanges();
+    expect(el.querySelector('.act-create')).toBeNull();
+    expect(el.querySelector('.act-search')).toBeNull();
+    expect(el.querySelector('.act-alarms')).toBeTruthy(); // overflow: never
+    el.querySelector<HTMLElement>('.strct-header__more')!.click();
+    fixture.detectChanges();
+
+    const rows = [...el.querySelectorAll<HTMLElement>('strct-dropdown-item')];
+    expect(rows.map((r) => r.textContent!.trim())).toEqual(['Create', 'Search']);
+    rows[1].click();
+    expect(fixture.componentInstance.ran).toEqual(['search']);
+  });
+
+  it('caps the drawer’s width, moves focus into it and hands it back', async () => {
+    media(true); // the drawer breakpoint
+
+    @Component({
+      imports: [StrctShell, StrctHeader, StrctVerticalNav],
+      changeDetection: ChangeDetectionStrategy.Eager,
+      template: `
+        <strct-shell>
+          <strct-header />
+          <strct-vertical-nav closeButton drawerMaxWidth="300px">
+            <button class="first-entry">Hosts</button>
+            <button class="last-entry">VMs</button>
+          </strct-vertical-nav>
+        </strct-shell>
+      `,
+    })
+    class Host {}
+
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const shell = fixture.debugElement.children[0].injector.get(StrctShellService);
+    const nav = el.querySelector<HTMLElement>('strct-vertical-nav')!;
+    const toggle = el.querySelector<HTMLElement>('.strct-header__drawer-toggle')!;
+
+    expect(nav.style.getPropertyValue('--strct-vnav-drawer-max')).toBe('300px');
+    expect(nav.querySelector('.strct-vnav__close')).toBeTruthy();
+    expect(nav.getAttribute('aria-modal')).toBeNull(); // closed: not a dialog
+
+    toggle.focus();
+    shell.mobileNavOpen.set(true);
+    fixture.detectChanges();
+    expect(nav.getAttribute('aria-modal')).toBe('true');
+    expect(nav.getAttribute('role')).toBe('dialog');
+
+    // Focus lands on the first thing inside, after the drawer has painted.
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    expect(document.activeElement).toBe(nav.querySelector('.strct-vnav__close'));
+
+    // Tab from the last entry cycles back inside rather than leaving.
+    const last = nav.querySelector<HTMLElement>('.last-entry')!;
+    last.focus();
+    const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    last.dispatchEvent(tab);
+    expect(tab.defaultPrevented).toBe(true);
+
+    // The close control closes it, and focus goes back to what opened it.
+    nav.querySelector<HTMLElement>('.strct-vnav__close')!.click();
+    fixture.detectChanges();
+    expect(shell.mobileNavOpen()).toBe(false);
+    expect(document.activeElement).toBe(toggle);
   });
 });

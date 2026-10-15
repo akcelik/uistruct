@@ -28,7 +28,22 @@ icons will need on a phone).
 > of the nav, and a tap at the centre of a menu entry hits **the entry**, not the backdrop.
 > HyperStruct's `.strct-vnav__backdrop` hide rule and its `app-nav-backdrop` can go.
 >
-> Still open: **FR-53-04, FR-53-06, FR-53-07, FR-53-09**.
+> Still open: **FR-53-09** (the switcher's short label, which waits on FR-52-01).
+>
+> **FR-53-04, FR-53-06 and FR-53-07 SHIPPED in 5.14.0 (2026-10-15).**
+>
+> - `strct-shell [closeNavOnNavigate]` (on by default) closes the drawer on every completed
+>   navigation, with `StrctShellService.closeNav()` for an app that drives it itself. Measured at
+>   390px: choosing an entry in the drawer navigates, the drawer closes, and focus returns to the
+>   toggle.
+> - `*strctHeaderAction` moves the actions marked `phone` into a "More" panel below
+>   `overflowBreakpoint` (600px); `overflow: 'never'` keeps an action in the header. Measured on
+>   the showcase's own header at 390px: 443px wide and silently clipped before, exactly 390 now.
+>   A panel that carries a control of its own is a labelled dialog rather than a menu — a menu may
+>   only hold menu items, and axe flags every other arrangement.
+> - `strct-vertical-nav` caps its drawer width (`drawerMaxWidth`, default `calc(100vw - 48px)`),
+>   moves focus inside on open with `role="dialog"` + `aria-modal`, keeps Tab inside, hands focus
+>   back to the toggle on close, and can draw its own `closeButton`.
 >
 > **FR-53-01, FR-53-02, FR-53-03, FR-53-05 and FR-53-08 SHIPPED in 5.13.0 (2026-10-15).**
 >
