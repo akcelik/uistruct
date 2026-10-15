@@ -5,6 +5,32 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.16.0] - 2026-10-15
+
+A run of results reads at a glance (FR-55-01, FR-55-02 of
+`hyperstruct-collapsible-header.md`).
+
+### Added
+
+- **`[strctAccordionPanelMeta]`** (FR-55-01) — badges and tags after a panel's
+  title, projected into the header but kept **outside** its button. The button
+  stays called by its heading alone, and the meta is read after it through
+  `aria-describedby`: a badge inside the name would make the button "Cluster
+  time Failed", and a tag you can click cannot live inside another button at
+  all.
+- **`strct-accordion-panel [status]`** — a tone rail on the leading edge, the
+  same language `strct-card [status]` uses, so a stack of results reads the
+  same whichever surface carries it. An accordion is the shape of a check run:
+  one panel per test, closed until opened, its result in the header.
+- **`strct-card [headerToggles]`** (FR-55-02) — with `collapsible`, a click
+  anywhere on `strct-card-header` folds the card, which is where an operator
+  clicks: the title, not the chevron. A button, a link or a form control in the
+  header keeps its own click, and **so does the chevron** — whose click would
+  otherwise bubble to the header and toggle a second time, leaving the card
+  closed while the consumer's state said open. Selecting the heading's text is
+  not a click either. The chevron stays the keyboard control with its
+  `aria-expanded`: a header is not a button.
+
 ## [5.15.0] - 2026-10-15
 
 The product switcher and the accent a product brings with it (FR-52-01,

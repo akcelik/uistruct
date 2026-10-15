@@ -104,6 +104,16 @@ const ROUTES = [
   ],
   // Three products' own accents, each remapping --acc on its own subtree.
   ['product-accent', '/components/product-switcher', '#product-accent', undefined, '.pa-demo'],
+  // A check run as an accordion: the result in the header, beside the title
+  // but outside its button, and the tone rail on the leading edge.
+  [
+    'accordion-results',
+    '/components/accordion',
+    '#accordion-results',
+    undefined,
+    // The page holds several accordions; this is the one with results in it.
+    '.strct-accordion:has(strct-badge)',
+  ],
   // A menu with named groups and a second line under a row's label.
   [
     'dropdown-groups',

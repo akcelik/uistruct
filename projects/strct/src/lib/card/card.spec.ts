@@ -242,3 +242,81 @@ describe('StrctCard — heading level, wrap, leading slot, fill', () => {
     expect(el.querySelector('.strct-card')!.classList).toContain('strct-card--fill');
   });
 });
+
+// FR-55-02 — the operator clicks the title, not the chevron.
+describe('StrctCard — the whole header toggles (opt-in)', () => {
+  @Component({
+    imports: [StrctCard, StrctCardHeader, StrctCardBlock],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-card collapsible [headerToggles]="opt()" [(collapsed)]="closed">
+        <strct-card-header heading="Cluster time">
+          <button type="button" class="act" (click)="runs = runs + 1">Re-run</button>
+        </strct-card-header>
+        <strct-card-block>Two hosts are 4 minutes apart.</strct-card-block>
+      </strct-card>
+    `,
+  })
+  class Host {
+    opt = signal(true);
+    closed = signal(false);
+    runs = 0;
+  }
+
+  function build() {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      host: fixture.componentInstance,
+      header: el.querySelector('strct-card-header') as HTMLElement,
+      title: el.querySelector('.strct-card__htitle') as HTMLElement,
+      chevron: el.querySelector('.strct-card__collapse') as HTMLButtonElement,
+    };
+  }
+
+  it('toggles from a click on the title, and offers the pointer that says so', () => {
+    const { fixture, host, header, title } = build();
+    expect(header.classList).toContain('strct-card__header--toggles');
+
+    title.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+    expect(host.closed()).toBe(true);
+
+    title.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+    expect(host.closed()).toBe(false);
+  });
+
+  it('toggles once when the chevron is used, not twice', () => {
+    const { fixture, host, chevron } = build();
+    chevron.click();
+    fixture.detectChanges();
+    expect(host.closed()).toBe(true);
+    // The card and the consumer's state agree: the chevron's click did not
+    // also reach the header.
+    expect(chevron.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('leaves an interactive descendant its own click', () => {
+    const { fixture, el, host } = build();
+    const action = el.querySelector('button.act') as HTMLButtonElement;
+    action.click();
+    fixture.detectChanges();
+    expect(host.runs).toBe(1);
+    expect(host.closed()).toBe(false);
+  });
+
+  it('does nothing without the opt-in', () => {
+    const { fixture, host, header, title } = build();
+    host.opt.set(false);
+    fixture.detectChanges();
+    expect(header.classList).not.toContain('strct-card__header--toggles');
+
+    title.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+    expect(host.closed()).toBe(false);
+  });
+});

@@ -1,5 +1,14 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, input, model } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Directive,
+  ViewEncapsulation,
+  contentChild,
+  input,
+  model,
+} from '@angular/core';
 import { StrctIcon } from '../icon/icon';
+import { StrctStatus } from '../status';
 
 /** Vertical container for `<strct-accordion-panel>` items. */
 @Component({
@@ -25,6 +34,19 @@ export class StrctAccordion {}
 
 let accordionCounter = 0;
 
+/**
+ * Badges, tags or a result in a panel's header, after the title:
+ * `<strct-badge strctAccordionPanelMeta status="critical">Failed</strct-badge>`.
+ * It is projected into the header but kept **outside** the button, so the
+ * button is still called by its heading alone — the result is read after it,
+ * as the button's description.
+ */
+@Directive({
+  selector: '[strctAccordionPanelMeta]',
+  host: { class: 'strct-acc__metaitem' },
+})
+export class StrctAccordionPanelMeta {}
+
 /** Collapsible panel with a header. `expanded` is two-way bindable. */
 @Component({
   selector: 'strct-accordion-panel',
@@ -32,19 +54,28 @@ let accordionCounter = 0;
   encapsulation: ViewEncapsulation.None,
   imports: [StrctIcon],
   template: `
-    <button
-      type="button"
-      class="strct-acc__head"
-      [id]="headId"
-      [attr.aria-expanded]="expanded()"
-      [attr.aria-controls]="bodyId"
-      (click)="toggle()"
-    >
-      <span class="strct-acc__chevron" [class.strct-acc__chevron--open]="expanded()">
-        <strct-icon name="chevronRight" [size]="13" [strokeWidth]="1.7" />
+    <div class="strct-acc__header">
+      <button
+        type="button"
+        class="strct-acc__head"
+        [id]="headId"
+        [attr.aria-expanded]="expanded()"
+        [attr.aria-controls]="bodyId"
+        [attr.aria-describedby]="meta() ? metaId : null"
+        (click)="toggle()"
+      >
+        <span class="strct-acc__chevron" [class.strct-acc__chevron--open]="expanded()">
+          <strct-icon name="chevronRight" [size]="13" [strokeWidth]="1.7" />
+        </span>
+        <span class="strct-acc__title">{{ heading() }}</span>
+      </button>
+      <!-- Outside the button on purpose: a badge in the name would make the
+           button "Cluster time — Failed", and a tag you can click cannot
+           live inside another button at all. -->
+      <span class="strct-acc__meta" [id]="metaId">
+        <ng-content select="[strctAccordionPanelMeta]" />
       </span>
-      <span class="strct-acc__title">{{ heading() }}</span>
-    </button>
+    </div>
     @if (expanded()) {
       <div class="strct-acc__body" [id]="bodyId" role="region" [attr.aria-labelledby]="headId">
         <ng-content />
@@ -54,6 +85,10 @@ let accordionCounter = 0;
   host: {
     class: 'strct-acc',
     '[class.strct-acc--quiet]': "appearance() === 'quiet'",
+    '[class.strct-acc--accent]': "status() === 'accent'",
+    '[class.strct-acc--success]': "status() === 'success'",
+    '[class.strct-acc--warning]': "status() === 'warning'",
+    '[class.strct-acc--critical]': "status() === 'critical'",
   },
   styles: [
     `
@@ -63,6 +98,36 @@ let accordionCounter = 0;
       /* Hairline divider joins consecutive panels into one stacked surface. */
       .strct-acc + .strct-acc {
         border-top: 1px solid var(--b2);
+      }
+      /* The header row holds the button and whatever sits beside it. */
+      .strct-acc__header {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      .strct-acc__meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: none;
+        padding-inline-end: 14px;
+      }
+      .strct-acc__meta:empty {
+        display: none;
+      }
+      /* Tone rail on the leading edge — the card's language, so a stack of
+         results reads the same whichever surface carries it. */
+      .strct-acc--accent {
+        border-inline-start: 3px solid var(--acc);
+      }
+      .strct-acc--success {
+        border-inline-start: 3px solid var(--success);
+      }
+      .strct-acc--warning {
+        border-inline-start: 3px solid var(--warning);
+      }
+      .strct-acc--critical {
+        border-inline-start: 3px solid var(--critical);
       }
       .strct-acc__head {
         display: flex;
@@ -113,6 +178,9 @@ let accordionCounter = 0;
       .strct-acc--quiet + .strct-acc--quiet {
         border-top: 0;
       }
+      .strct-acc--quiet .strct-acc__meta {
+        padding-inline-end: 0;
+      }
       .strct-acc--quiet .strct-acc__head {
         width: auto;
         padding: 2px 0;
@@ -146,6 +214,11 @@ let accordionCounter = 0;
 export class StrctAccordionPanel {
   /** Panel heading. */
   readonly heading = input.required<string>();
+  /**
+   * A tone rail on the leading edge, as `strct-card [status]` has — the
+   * result of the thing the panel reports, said in colour as well as words.
+   */
+  readonly status = input<StrctStatus>('neutral');
   /** Whether the panel is open (two-way). */
   readonly expanded = model(false);
   /**
@@ -155,8 +228,12 @@ export class StrctAccordionPanel {
    */
   readonly appearance = input<'boxed' | 'quiet'>('boxed');
 
+  /** Whatever a consumer put beside the title, so the button can describe it. */
+  protected readonly meta = contentChild(StrctAccordionPanelMeta);
+
   protected readonly bodyId = `strct-acc-${++accordionCounter}`;
   protected readonly headId = `${this.bodyId}-head`;
+  protected readonly metaId = `${this.bodyId}-meta`;
 
   toggle(): void {
     this.expanded.update((v) => !v);
