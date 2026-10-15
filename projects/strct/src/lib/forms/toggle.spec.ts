@@ -64,3 +64,17 @@ describe('StrctToggle', () => {
     expect(el.querySelector('input')?.getAttribute('aria-describedby')).toBe(desc.id);
   });
 });
+
+// FR-50-12 — a toggle in a grid cell has no visible label to borrow.
+describe('StrctToggle — ariaLabel', () => {
+  it('names the switch, and says nothing when it has none', () => {
+    const fixture = TestBed.createComponent(StrctToggle);
+    fixture.detectChanges();
+    const input = () => (fixture.nativeElement as HTMLElement).querySelector('input')!;
+    expect(input().getAttribute('aria-label')).toBeNull();
+
+    fixture.componentRef.setInput('ariaLabel', 'Stateful');
+    fixture.detectChanges();
+    expect(input().getAttribute('aria-label')).toBe('Stateful');
+  });
+});

@@ -455,3 +455,37 @@ describe('StrctWindow — its own overlays are not "outside"', () => {
     el.remove();
   });
 });
+
+// FR-50-08 — the dock could not name its restore, and knew nothing about the
+// window beyond its heading.
+describe('StrctWindowDock — a restore label and the window’s data', () => {
+  @Component({
+    imports: [StrctWindow, StrctWindowDock, StrctWindowDockItem],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-window [(open)]="open" [(minimized)]="min" heading="APP01" [data]="session">
+        <p>screen</p>
+      </strct-window>
+      <strct-window-dock [restoreLabel]="label">
+        <ng-template strctWindowDockItem let-w let-data="data">
+          <span class="chip">{{ w.heading() }} · {{ data.vm }}</span>
+        </ng-template>
+      </strct-window-dock>
+    `,
+  })
+  class Host {
+    open = signal(true);
+    min = signal(true);
+    session = { vm: 'web-01', id: 'sess-7' };
+    label = (w: StrctWindow) => `Show the console of ${w.heading()}`;
+  }
+
+  it('passes the window’s data to the chip and names the restore', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const chip = el.querySelector('.strct-windock__open')!;
+    expect(chip.textContent!.replace(/\s+/g, ' ').trim()).toBe('APP01 · web-01');
+    expect(chip.getAttribute('aria-label')).toBe('Show the console of APP01');
+  });
+});

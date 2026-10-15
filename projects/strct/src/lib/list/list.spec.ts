@@ -165,3 +165,20 @@ describe('StrctList / StrctListItem — wrap', () => {
     expect(list.classList).toContain('strct-list--wrap');
   });
 });
+
+// FR-50-07 / 13 — a path has no spaces to break at, and a statement list
+// should line up with the paragraphs around it.
+describe('StrctList — wrap breaks tokens, flush drops the inset', () => {
+  it('marks the list for each, and neither is on by default', () => {
+    const fixture = TestBed.createComponent(StrctList);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.classList).not.toContain('strct-list--flush');
+
+    fixture.componentRef.setInput('flush', true);
+    fixture.componentRef.setInput('wrap', true);
+    fixture.detectChanges();
+    expect(el.classList).toContain('strct-list--flush');
+    expect(el.classList).toContain('strct-list--wrap');
+  });
+});

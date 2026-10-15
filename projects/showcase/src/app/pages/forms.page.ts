@@ -166,7 +166,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="field-inline"
       owner="field"
       heading="Label column (inline layout)"
-      description='A long settings form reads as two columns: what the setting is, and its value. layout="inline" puts the label and its hint in a fixed-width column (--strct-field-label-w, 220px) and the control beside them, with a hairline between consecutive settings; the error still appears under the control, not under the label. Below 480px of field width it falls back to stacked, so the same form works in a drawer. Stacked stays the default — it suits short dialogs. Wrap a run in [strctFieldGroup] when the settings belong together and the hairlines get in the way. A row whose value is read-only here — a name, a badge, a switch that only shows state — projects it as [strctFieldValue], which puts it on the label&apos;s own line instead of 9px above it, where the control column centres on a 34px control.'
+      description='A long settings form reads as two columns: what the setting is, and its value. layout="inline" puts the label and its hint in a fixed-width column (--strct-field-label-w, 220px) and the control beside them, with a hairline between consecutive settings; the error still appears under the control, not under the label. Below 480px of field width it falls back to stacked, so the same form works in a drawer. Stacked stays the default — it suits short dialogs. Wrap a run in [strctFieldGroup] when the settings belong together and the hairlines get in the way. A row whose value is read-only here — a name, a badge, a switch that only shows state — projects it as [strctFieldValue], which puts it on the label&apos;s own line instead of 9px above it, where the control column centres on a 34px control. [strctFieldValue="control"] is the same slot holding a control rather than text: it is centred where a real control in this column would be, instead of sitting 8px low.'
       code='<strct-field layout="inline" label="vCPUs" hint="Cores presented to the guest.">&#10;  <input strctInput type="number" [(ngModel)]="cpus" />&#10;</strct-field>'
     >
       <div style="width: 100%;">
@@ -198,6 +198,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         </strct-field>
         <strct-field layout="inline" label="Host key" hint="The appliance’s SSH host key.">
           <textarea strctInput mono rows="2" [(ngModel)]="hostKey"></textarea>
+        </strct-field>
+        <strct-field layout="inline" label="Scope">
+          <span strctFieldValue="control">
+            <strct-segmented
+              [options]="scopeOptions"
+              [ngModel]="scope()"
+              (ngModelChange)="scope.set($event)"
+            />
+          </span>
         </strct-field>
         <strct-field layout="inline" label="Guest tools">
           <span strctFieldValue>
@@ -889,6 +898,11 @@ export class FormsPage {
   protected readonly vmFirmware = signal('uefi');
   protected readonly vmNotes = signal('');
   protected readonly hostKey = signal('ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL8k2v9h6Q0fJp7T3xW1');
+  protected readonly scope = signal('all');
+  protected readonly scopeOptions = [
+    { value: 'all', label: 'All' },
+    { value: 'cluster', label: 'This cluster' },
+  ];
   protected readonly vmMemError = computed(() =>
     Number(this.vmMem()) < 512 ? 'At least 512 MB.' : '',
   );

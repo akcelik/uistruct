@@ -80,6 +80,12 @@ export class StrctListItemTrailing {}
         padding-inline: var(--space-3);
         position: relative;
       }
+      /* flush — a statement list reads with the paragraphs around it, so the
+         row gives up the inline padding that sets a card's list in from its
+         edge, and the leading marker starts on the text's own edge. */
+      .strct-list--flush .strct-li {
+        padding-inline: 0;
+      }
       .strct-list--dividers .strct-li + .strct-li {
         border-block-start: 1px solid var(--b1);
       }
@@ -153,6 +159,9 @@ export class StrctListItemTrailing {}
         overflow: visible;
         text-overflow: clip;
         white-space: normal;
+        /* A path or a GUID has no spaces to break at, so wrapping alone still
+           overflowed the row. */
+        overflow-wrap: anywhere;
       }
       .strct-li--wrap .strct-li__meta,
       .strct-list--wrap .strct-li__meta {
@@ -277,6 +286,7 @@ export class StrctListItem {
     '[class.strct-list--dense]': 'dense()',
     '[class.strct-list--dividers]': 'dividers()',
     '[class.strct-list--wrap]': 'wrap()',
+    '[class.strct-list--flush]': 'flush()',
   },
   styles: [
     `
@@ -301,6 +311,11 @@ export class StrctList {
    * `strct-list-item [wrap]` turns it on for one row.
    */
   readonly wrap = input(false, { transform: booleanAttribute });
+  /**
+   * Drop the rows' inline padding, so a list of statements lines up with the
+   * paragraphs around it instead of sitting 12px inside them.
+   */
+  readonly flush = input(false, { transform: booleanAttribute });
   /** Hairline between rows. */
   readonly dividers = input(true, { transform: booleanAttribute });
   /** Shown when the list has no items. */

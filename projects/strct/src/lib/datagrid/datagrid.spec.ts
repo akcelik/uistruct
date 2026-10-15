@@ -1894,7 +1894,8 @@ describe('StrctDatagrid — two-way selectedIds', () => {
   it('writing it checks those rows and counts them, and emits nothing', () => {
     const { fixture, el, emitted, boxes } = make({ selectedIds: ['h1', 'h3'] });
     expect(boxes().map((b) => b.checked)).toEqual([true, false, true]);
-    expect(el.querySelector('.strct-dg__count-sel')).toBeNull(); // no pager, no footer
+    // FR-50-03: a selection is something to count, so the footer appears for it.
+    expect(el.querySelector('.strct-dg__count-sel')!.textContent!.trim()).toBe('2 selected');
     expect(emitted).toEqual([]);
 
     fixture.componentRef.setInput('selectedIds', ['h2']);
@@ -2112,5 +2113,70 @@ describe('StrctDatagrid — singleLine draws in separate mode', () => {
     expect(css).toMatch(
       /\.strct-dg-host--singleline\s+\.strct-dg[^{]*\{[^}]*border-collapse:\s*separate/,
     );
+  });
+});
+
+// FR-50-03 / 06 / 10 — the footer, the per-row picker and the number editor.
+describe('StrctDatagrid — a count worth showing, and a picker per row', () => {
+  const rows: StrctRow[] = [
+    { id: 'r1', proto: 'tcp', port: 22 },
+    { id: 'r2', proto: 'held', port: 80 },
+  ];
+  const cols: StrctDatagridColumn[] = [
+    {
+      key: 'proto',
+      label: 'Protocol',
+      editable: true,
+      editor: 'select',
+      // Per row: the held value is offered only to the row that holds it.
+      editorOptions: (row: StrctRow) =>
+        row['id'] === 'r2'
+          ? [
+              { value: 'tcp', label: 'TCP' },
+              { value: 'held', label: 'held (not discovered)' },
+            ]
+          : [{ value: 'tcp', label: 'TCP' }],
+    },
+    { key: 'port', label: 'Port', editable: true, editor: 'number' },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('rowId', 'id');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('shows the footer once something is selected, with no pager at all', () => {
+    const { fixture, el } = make({ selectable: true });
+    expect(el.querySelector('.strct-dg__foot')).toBeNull();
+
+    fixture.componentInstance.toggleRow(rows[0]);
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-dg__count-sel')!.textContent!.trim()).toBe('1 selected');
+
+    fixture.componentInstance.toggleRow(rows[0]);
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-dg__foot')).toBeNull();
+  });
+
+  it('asks the column for this row’s options, and reads the value through them', () => {
+    const { el } = make();
+    const cells = [...el.querySelectorAll('tbody td')];
+    // r1 does not know "held"; r2 does, and shows its label.
+    expect(cells[0].textContent!.trim()).toBe('TCP');
+    expect(cells[2].textContent!.trim()).toBe('held (not discovered)');
+  });
+
+  it('names the number editor from its column', () => {
+    const { fixture, el } = make();
+    const portCell = [...el.querySelectorAll('tbody td')][1] as HTMLElement;
+    portCell.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    fixture.detectChanges();
+    const editor = el.querySelector('.strct-dg__editnumber input[role=spinbutton]')!;
+    expect(editor.getAttribute('aria-label')).toBe('Edit: Port');
   });
 });

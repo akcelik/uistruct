@@ -32,6 +32,7 @@ let toggleCounter = 0;
         role="switch"
         [checked]="checked()"
         [disabled]="isDisabled()"
+        [attr.aria-label]="ariaLabel()"
         [attr.aria-labelledby]="labelledBy()"
         [attr.aria-describedby]="describedBy()"
         (change)="onToggle($event)"
@@ -148,6 +149,8 @@ export class StrctToggle implements ControlValueAccessor {
    * `[strctControlDescription]` projects one with markup in it.
    */
   readonly description = input('');
+  /** The switch's accessible name, where no visible label gives it one. */
+  readonly ariaLabel = input<string | null>(null);
 
   private readonly n = ++toggleCounter;
   protected readonly descId = `strct-tg-desc-${this.n}`;

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { StrctCopy } from '../copy/copy';
 import { TestBed } from '@angular/core/testing';
@@ -92,5 +92,57 @@ describe('StrctCodeInline — what gets copied', () => {
     fixture.detectChanges();
     await new Promise((r) => setTimeout(r));
     expect(whole.text()).toBe('ab:cd:ef:01:23:45:67:89');
+  });
+});
+
+// FR-50-04 / 05 — two buttons in one drawer were both "Copy", and `copyable`
+// was read once so a state-dependent button needed two template branches.
+describe('StrctCodeInline — copyLabel, and a copyable that changes', () => {
+  @Component({
+    imports: [StrctCodeInline],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: ` <code strctCode [copyable]="on()" [copyLabel]="label()" class="c">ab:cd:ef</code> `,
+  })
+  class Host {
+    on = signal(false);
+    label = signal('');
+  }
+
+  async function setup() {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+  const button = (el: HTMLElement) => el.querySelector('strct-copy button');
+
+  it('creates the button when copyable turns on, and destroys it when it turns off', async () => {
+    const { fixture, el } = await setup();
+    expect(button(el)).toBeNull();
+
+    fixture.componentInstance.on.set(true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(button(el)).toBeTruthy();
+    // The text is still the element's.
+    expect(fixture.debugElement.queryAll(By.directive(StrctCopy))[0].componentInstance.text()).toBe(
+      'ab:cd:ef',
+    );
+
+    fixture.componentInstance.on.set(false);
+    fixture.detectChanges();
+    expect(button(el)).toBeNull();
+  });
+
+  it('names the button when a label is given', async () => {
+    const { fixture, el } = await setup();
+    fixture.componentInstance.on.set(true);
+    fixture.componentInstance.label.set('Copy thumbprint');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(button(el)!.getAttribute('aria-label')).toBe('Copy thumbprint');
   });
 });

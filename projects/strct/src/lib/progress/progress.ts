@@ -143,6 +143,10 @@ export interface StrctProgressSegment {
       }
       .strct-progress__value--end {
         flex: none;
+        /* A fixed width, so a column of bars does not end ragged between "5%"
+           and "100%". Tabular figures keep the digits in their columns. */
+        width: var(--strct-progress-value-w, 4ch);
+        text-align: end;
         font-size: var(--text-sm);
         color: var(--t2);
         font-variant-numeric: tabular-nums;

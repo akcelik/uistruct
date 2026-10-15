@@ -1486,8 +1486,10 @@ mtu = 9000`;
     this.fwRows.update((rows) =>
       rows.map((r) => (r === e.row ? { ...r, [e.column.key]: e.typedValue } : r)),
     );
-    const label = (v: unknown) =>
-      String(e.column.editorOptions?.find((o) => o.value === v)?.label ?? v);
+    // editorOptions can be a function of the row (FR-50-06).
+    const opts = e.column.editorOptions;
+    const choices = typeof opts === 'function' ? opts(e.row) : (opts ?? []);
+    const label = (v: unknown) => String(choices.find((o) => o.value === v)?.label ?? v);
     this.fwLast.set(
       `${String(e.row['name'])}: ${e.column.label} ${label(e.previous)} \u2192 ${label(e.typedValue)}`,
     );

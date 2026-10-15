@@ -43,8 +43,22 @@ export class StrctFieldHint {}
  * state — placed in an inline field's control column. Without it the text sits
  * 9px above the label's line, because the column centres on a 34px control.
  */
-@Directive({ selector: '[strctFieldValue]', host: { class: 'strct-field__value' } })
-export class StrctFieldValue {}
+@Directive({
+  selector: '[strctFieldValue]',
+  host: {
+    class: 'strct-field__value',
+    '[class.strct-field__value--control]': "strctFieldValue() === 'control'",
+  },
+})
+export class StrctFieldValue {
+  /**
+   * What the slot holds. Text (the default) reads on the label's own line; a
+   * `control` — a segmented picker, a small button, a switch with its own box
+   * — is centred where a real control in this column would be, rather than
+   * pushed down by the padding that puts text on the line.
+   */
+  readonly strctFieldValue = input<'' | 'text' | 'control'>('');
+}
 
 /**
  * Wrapper that opts a run of `layout="inline"` fields out of the hairlines
@@ -306,6 +320,15 @@ export class StrctFieldGroup {}
       .strct-field--inline .strct-field__value {
         padding-block-start: 9px;
       }
+      /* strctFieldValue="control" — the slot's 9px puts *text* on the label's
+         line, which leaves a 31px segmented control 8px low and a 28px button
+         6px. A control is centred the way a real one in this column is:
+         inside the control row's own height. */
+      .strct-field--inline .strct-field__value--control {
+        padding-block-start: 0;
+        min-height: var(--strct-field-control-h, 34px);
+        align-items: center;
+      }
       /* Consecutive settings get a hairline; [strctFieldGroup] opts out. */
       .strct-field--inline + .strct-field--inline {
         border-block-start: 1px solid var(--b1);
@@ -329,6 +352,9 @@ export class StrctFieldGroup {}
         .strct-field--inline > .strct-field__label,
         .strct-field--inline .strct-field__value {
           padding-block-start: 0;
+        }
+        .strct-field--inline .strct-field__value--control {
+          min-height: 0;
         }
         .strct-field--inline > .strct-field__msg--hint {
           padding-block-end: 0;

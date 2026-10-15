@@ -32,6 +32,12 @@ export interface StrctLegendItem {
   disabled?: boolean;
   /** Why a `disabled` row cannot be picked; its title and its description. */
   reason?: string;
+  /**
+   * What the row is, for any row — "vm.cpu.wait — CPU ready (written by the
+   * agent)". `reason` is the why-not of a row that cannot be picked; this is
+   * the what of one that can.
+   */
+  description?: string;
 }
 
 /**
@@ -53,15 +59,19 @@ export interface StrctLegendItem {
   template: `
     <ul class="strct-legend__list" role="list">
       @for (item of items(); track item.label) {
-        <li class="strct-legend__row" [class.strct-legend__row--muted]="item.muted">
+        <li
+          class="strct-legend__row"
+          [class.strct-legend__row--muted]="item.muted"
+          [attr.title]="!interactive() && item.description ? item.description : null"
+        >
           @if (interactive()) {
             <button
               type="button"
               class="strct-legend__hit"
               [attr.aria-pressed]="!item.off"
               [disabled]="item.disabled || null"
-              [attr.title]="item.reason || null"
-              [attr.aria-description]="item.reason || null"
+              [attr.title]="item.reason || item.description || null"
+              [attr.aria-description]="item.reason || item.description || null"
               (click)="itemToggle.emit(item.label)"
             >
               <span

@@ -132,3 +132,31 @@ describe('StrctLegend — disabled items and the picker appearance', () => {
     expect(picker.hits()[1].getAttribute('aria-pressed')).toBe('false');
   });
 });
+
+// FR-50-11 — `reason` is the why-not of a disabled row; a description is what
+// any row is.
+describe('StrctLegend — items[].description', () => {
+  const items: StrctLegendItem[] = [
+    { label: 'CPU ready', description: 'vm.cpu.wait — written by the agent' },
+    { label: 'Swap in', disabled: true, reason: 'Not collected on this host' },
+  ];
+
+  it('describes an enabled row, and a reason still wins on a disabled one', () => {
+    const fixture = TestBed.createComponent(StrctLegend);
+    fixture.componentRef.setInput('items', items);
+    fixture.componentRef.setInput('interactive', true);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const hits = [...el.querySelectorAll('.strct-legend__hit')];
+    expect(hits[0].getAttribute('aria-description')).toBe('vm.cpu.wait — written by the agent');
+    expect(hits[1].getAttribute('aria-description')).toBe('Not collected on this host');
+  });
+
+  it('carries it on a plain legend row too', () => {
+    const fixture = TestBed.createComponent(StrctLegend);
+    fixture.componentRef.setInput('items', items);
+    fixture.detectChanges();
+    const row = (fixture.nativeElement as HTMLElement).querySelector('.strct-legend__row')!;
+    expect(row.getAttribute('title')).toBe('vm.cpu.wait — written by the agent');
+  });
+});
