@@ -22,6 +22,13 @@ import {
 import { StrctIcon } from '../icon/icon';
 import { restoreFocus, saveFocusedElement } from '../overlay/focus';
 
+/** What `(outsidePointer)` carries: where the pointer landed, and a veto. */
+export interface StrctWindowOutsidePointer {
+  target: Node;
+  /** Keep the window open; the library does nothing further with this event. */
+  cancel: () => void;
+}
+
 /** Where a window sits and how big it is, in viewport px. */
 export interface StrctWindowBounds {
   x: number;
@@ -361,6 +368,12 @@ export class StrctWindow {
   readonly closed = output<void>();
   /** The title bar was double-clicked, whatever `titleDblclick` then did. */
   readonly titleDblclicked = output<void>();
+  /**
+   * A pointer landed outside the window while `closeOnOutside="minimize"`,
+   * before it is acted on. Call `cancel()` to keep the window as it is — a
+   * console that owns its own shade, a drag that started on the page.
+   */
+  readonly outsidePointer = output<StrctWindowOutsidePointer>();
 
   protected readonly CORNERS = ['nw', 'ne', 'sw', 'se'] as const;
   protected readonly titleId = `strct-window-${++windowCounter}`;
@@ -391,9 +404,46 @@ export class StrctWindow {
     if (this.closeOnOutside() !== 'minimize' || !this.open() || this.minimized()) return;
     const frame = this.host.nativeElement.querySelector('.strct-window__frame');
     const target = event.target;
-    if (frame && target instanceof Node && frame.contains(target)) return;
-    this.zone.run(() => this.minimize());
+    if (!(target instanceof Node)) return;
+    if (frame && frame.contains(target)) return;
+    // A menu, a modal or a toast opened from inside the window is appended to
+    // <body>, so "not in the frame" called it outside and minimised the window
+    // the operator was working in — on the very click that chose the menu
+    // entry. Anything stacked at or above the window belongs to it.
+    if (this.inOverlayAbove(target, frame)) return;
+    let vetoed = false;
+    this.zone.run(() => {
+      this.outsidePointer.emit({ target, cancel: () => (vetoed = true) });
+      if (!vetoed) this.minimize();
+    });
   };
+
+  /**
+   * Whether the pointer landed in something stacked at or above this window:
+   * a menu, a modal, a toast, a popover. They are rendered at the document's
+   * root, so containment cannot answer this — the stacking order can.
+   */
+  private inOverlayAbove(target: Node, frame: Element | null): boolean {
+    const view = this.doc.defaultView;
+    if (!view || !frame) return false;
+    // `auto` — and the empty string a non-rendering environment returns — mean
+    // "not stacked", not zero. Reading them as 0 would call the whole page an
+    // overlay the moment the window's own z-index could not be read.
+    const zOf = (el: Element): number => {
+      const raw = view.getComputedStyle(el).zIndex;
+      const n = raw === '' || raw === 'auto' ? NaN : Number(raw);
+      return Number.isFinite(n) ? n : NaN;
+    };
+    const mine = zOf(frame);
+    if (!Number.isFinite(mine)) return false;
+    let el: Element | null =
+      target instanceof Element ? target : (target.parentElement as Element | null);
+    for (; el && el !== this.doc.body; el = el.parentElement) {
+      const z = zOf(el);
+      if (Number.isFinite(z) && z >= mine) return true;
+    }
+    return false;
+  }
 
   constructor() {
     this.service.register(this);

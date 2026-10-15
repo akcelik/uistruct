@@ -5,6 +5,81 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0] - 2026-10-15
+
+Nine bugs from HyperStruct's 5.6.x adoption — every item that breaks something
+a consumer does by following the documentation.
+
+### Fixed
+
+- **An unbound `selectedId` wiped what `initialSelection` seeded** (BUG-50-01).
+  `selectedId` is a model, so its `null` means both "the consumer does not
+  drive it" and "the consumer cleared the pick"; the effect added in 5.0.1 read
+  the first as the second and cleared a single-mode grid's seed on its first
+  run — the documented 4.8 pattern, broken silently. `null` is now "not
+  driven" until `selectedId` has once been non-null.
+- **Pruning a selection lost picks the rows would hold again** (BUG-50-02).
+  - A poll that replaces `rows`, or a reload that blanks them, wiped the whole
+    selection and emitted `selectionChange([])`. An empty array proves nothing
+    was deleted, so the prune now skips it — and skips while `loading()`. A
+    real delete still prunes and still emits once.
+  - In single mode a row that left and came back stayed unchecked: `selected`
+    had been pruned, `selectedId` still held the id, and nothing re-ran. The
+    single-mode effect now follows `rows()` as well.
+- **Utility columns had empty header cells** (BUG-50-03) — axe's
+  `empty-table-header` on every grid with a row detail, and nothing announced
+  where the detail, expand and single-select controls are. They carry hidden
+  names from the new `detailColumn` / `expandColumn` / `selectColumn` labels,
+  and every header cell now declares `scope="col"`.
+- **`strct-window closeOnOutside` treated the window's own overlays as
+  "outside"** (BUG-50-04). A menu, a modal or a toast opened from inside the
+  window is appended to `<body>`, so choosing a menu entry minimised the window
+  on the very click that chose it. Anything stacked at or above the window is
+  now its own; a new **`(outsidePointer)`** fires first and `cancel()` vetoes
+  the minimise.
+- **The header's flat-button re-tone reached into overlays rendered inside the
+  header** (BUG-50-05). A modal renders where it is written, so a wizard opened
+  from a header control had its Back / Cancel painted in the header's
+  near-white on the dialog's own light surface. The re-tone now stops at every
+  overlay surface. Measured: the same button reads `rgb(255 255 255 / 0.65)` in
+  the header and `rgba(0, 0, 0, 0.62)` inside a dialog there.
+- **A reorder handle still offered `grab` in a display-only list** (BUG-50-06).
+  It is gated on the item's `draggable`, as the item's own cursor already was.
+- **On a phone the navigation drawer's backdrop covered the drawer and took
+  its taps** (BUG-53-01). The backdrop was a `position: fixed` child of the
+  transformed drawer, so the drawer was its containing block: `inset: 0` was
+  the drawer's own box, the page beside it was never dimmed, and every tap on
+  the rail or the menu landed on the backdrop and closed the drawer. It is now
+  drawn by `strct-shell`, which owns the open state. Measured at 390px: the
+  backdrop covers 390×780, and a tap at a menu entry's centre hits the entry.
+- **A `singleLine` grid lost its row lines in dark and drew them 1.7× heavy in
+  light** (BUG-54-01). A collapsed table paints a clipped cell's background
+  inside its padding box only, so the device pixel under each row line was
+  covered by neither cell and the translucent `--b1` composited over the
+  table's `--bg-2` instead of over the cell. `singleLine` clips every cell, so
+  it now draws in separate mode, as the sticky, virtual and bounded hosts
+  already do. Measured in Chrome against the plain grid's designed line:
+  **+11.2 dark and −13.0 light**, where it had been −2.6 (invisible) and −22.3.
+- **Selected rows had no fill** (BUG-54-02). `.strct-dg tbody td` and its
+  dark-theme twin out-specified `.strct-dg__row--selected td`, so a selected
+  row looked exactly like an unselected one and the checkbox carried the state
+  alone. The selected and active fills now win. Measured: a selected cell reads
+  `--acc-m` in both themes, against the resting colour before.
+
+### Added
+
+- **`.strct-sr-only`** in the theme's base stylesheet — text that is read but
+  not shown, in flow so it never extends a page's scrollable area. The library
+  had this inlined in five components.
+- **`strct-shell [closeNavLabel]`** names the drawer's backdrop.
+
+### Changed
+
+- The `anyComponentStyle` **error** budget is 16 kB (the warning stays at
+  10 kB). The datagrid's stylesheet was 64 bytes over 14 kB with these fixes in
+  it, and trimming explanatory comments buys nothing — the minifier already
+  strips them.
+
 ## [5.6.1] - 2026-10-11
 
 ### Fixed

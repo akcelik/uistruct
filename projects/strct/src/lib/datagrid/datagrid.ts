@@ -51,6 +51,10 @@ export interface StrctDatagridLabels {
   editCell: string;
   /** How an editable cell says, to assistive tech, that it can be edited. */
   editCellInstructions: string;
+  /** The names of the utility columns, read but not shown. */
+  detailColumn: string;
+  expandColumn: string;
+  selectColumn: string;
   toggleChildren: string;
   quickFilter: string;
   /** `paging="more"`: the button that asks for the next slice. */
@@ -82,6 +86,9 @@ const DG_LABELS: StrctDatagridLabels = {
   clearFilter: 'Clear filter',
   editCell: 'Edit',
   editCellInstructions: 'Editable cell. Press Enter or F2 to edit, arrow keys to move.',
+  detailColumn: 'Open detail',
+  expandColumn: 'Expand row',
+  selectColumn: 'Select row',
   toggleChildren: 'Toggle children',
   quickFilter: 'Quick filter',
 };
@@ -271,7 +278,7 @@ export class StrctDatagridActionBar {}
            containing block is the page extends the document's scrollable area
            from wherever the grid happens to sit. 1x1 and clipped is enough. -->
       <span
-        class="strct-dg__hint"
+        class="strct-sr-only"
         style="display: inline-block; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap"
         [id]="editHintId"
         >{{ L().editCellInstructions }}</span
@@ -301,23 +308,34 @@ export class StrctDatagridActionBar {}
           }
           <thead>
             <tr>
+              <!-- A utility column is still a column: axe reports every empty
+                   header, and a screen-reader user hears nothing where the
+                   detail, expand and select controls are. The name is hidden,
+                   not absent. -->
               @if (canDetail()) {
                 <th
                   class="strct-dg__expandcol"
+                  scope="col"
                   [class.strct-dg__cell--sticky]="stickyActive()"
                   [style.insetInlineStart.px]="utilLeft('detail')"
-                ></th>
+                >
+                  <span class="strct-sr-only">{{ L().detailColumn }}</span>
+                </th>
               }
               @if (canExpand()) {
                 <th
                   class="strct-dg__expandcol"
+                  scope="col"
                   [class.strct-dg__cell--sticky]="stickyActive()"
                   [style.insetInlineStart.px]="utilLeft('expand')"
-                ></th>
+                >
+                  <span class="strct-sr-only">{{ L().expandColumn }}</span>
+                </th>
               }
               @if (hasSelectionColumn()) {
                 <th
                   class="strct-dg__sel"
+                  scope="col"
                   [class.strct-dg__cell--sticky]="stickyActive()"
                   [style.insetInlineStart.px]="utilLeft('sel')"
                 >
@@ -328,11 +346,14 @@ export class StrctDatagridActionBar {}
                       [indeterminate]="somePageSelected()"
                       (checkedChange)="toggleAll()"
                     />
+                  } @else {
+                    <span class="strct-sr-only">{{ L().selectColumn }}</span>
                   }
                 </th>
               }
               @for (col of visibleColumns(); track col.key) {
                 <th
+                  scope="col"
                   [style.text-align]="col.align ?? (col.numeric ? 'end' : 'start')"
                   [style.width]="colWidth(col.key) ?? col.width ?? null"
                   [class.strct-dg__th--sortable]="col.sortable"
@@ -427,7 +448,7 @@ export class StrctDatagridActionBar {}
                 </th>
               }
               @if (canActions()) {
-                <th class="strct-dg__actioncol" [attr.aria-label]="L().actions"></th>
+                <th class="strct-dg__actioncol" scope="col" [attr.aria-label]="L().actions"></th>
               }
             </tr>
           </thead>
@@ -1044,6 +1065,11 @@ export class StrctDatagridActionBar {}
          position: sticky on table cells in Chromium); per-cell bottom borders
          keep the visuals identical. width: max-content lets declared column
          widths win so frozen offsets stay exact. */
+      /* BUG-54-01 — a collapsed table paints a clipped cell's background
+         inside its padding box only, so --b1 composites over the table's
+         --bg-2 under each row line: invisible in dark, 1.7x heavy in light.
+         singleLine clips every cell, so it joins the separate-mode hosts. */
+      .strct-dg-host--singleline .strct-dg,
       .strct-dg-host--sticky .strct-dg,
       .strct-dg-host--virtual .strct-dg,
       .strct-dg-host--bounded .strct-dg {
@@ -1219,7 +1245,9 @@ export class StrctDatagridActionBar {}
       .strct-dg tbody tr:not(.strct-dg__detailrow):hover td {
         background: var(--acc-s);
       }
-      .strct-dg__row--selected td {
+      /* BUG-54-02 — the themed body-cell rules (0,1,2 and 0,2,2) out-specified
+         this fill (0,1,1), so a selected row looked unselected. */
+      .strct-dg tbody .strct-dg__row--selected td {
         background: var(--acc-m);
       }
       .strct-dg__sel {
@@ -1336,7 +1364,7 @@ export class StrctDatagridActionBar {}
       .strct-dg__row--clickable {
         cursor: pointer;
       }
-      .strct-dg__row--active td {
+      .strct-dg tbody .strct-dg__row--active td {
         background: var(--acc-m);
       }
       /* Caret on the active row that points toward the open detail pane. */
@@ -2913,6 +2941,11 @@ export class StrctDatagrid {
     effect(() => {
       const rows = this.rows();
       if (this.lazy()) return;
+      // An empty array proves nothing was deleted: a poll that replaces the
+      // rows, a reload that blanks them and a grid still loading all look the
+      // same from here, and wiping the pick on one of those is the bug this
+      // guard exists for. A genuinely emptied grid is the consumer's to clear.
+      if (!rows.length || this.loading()) return;
       untracked(() => {
         const selected = this.selected();
         if (!selected.size) return;
@@ -2950,6 +2983,15 @@ export class StrctDatagrid {
     effect(() => {
       if (this.mode() !== 'single') return;
       const id = this.selectedId();
+      // `selectedId` is a model, so its null is two things: "the consumer does
+      // not drive it" and "the consumer cleared the pick". Until it has once
+      // been non-null it is the former — otherwise the first run wipes what
+      // `initialSelection` seeded, which is how a 4.x grid picks its row.
+      if (id == null && !this.selectedIdDriven) return;
+      if (id != null) this.selectedIdDriven = true;
+      // Read the rows as well: a pick whose row leaves and comes back must be
+      // checked again, and `selectedId` itself never changed to say so.
+      this.rows();
       untracked(() => {
         const next = id == null ? new Set<unknown>() : new Set([id]);
         const current = this.selected();
@@ -3298,6 +3340,9 @@ export class StrctDatagrid {
     this.rangeAnchor = null;
     this.commitSelection(new Set());
   }
+
+  /** Whether `selectedId` has ever been given a value — see the effect. */
+  private selectedIdDriven = false;
 
   /** Last known row object per selected id — selections made on one page stay
    *  in the payload when the data set no longer contains them (lazy paging),

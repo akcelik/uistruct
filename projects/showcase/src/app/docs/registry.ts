@@ -1952,7 +1952,15 @@ export const DOCS: DocCategory[] = [
               'A badge beside the heading, controls at the title bar\u2019s end, and a status bar under the content.',
           },
         ],
-        outputs: [{ name: 'closed', type: 'void', description: 'The window was closed.' }],
+        outputs: [
+          {
+            name: 'outsidePointer',
+            type: 'StrctWindowOutsidePointer',
+            description:
+              'A pointer landed outside the window while `closeOnOutside="minimize"`, before it is acted on. `cancel()` keeps the window as it is. Anything stacked at or above the window — a menu, a modal, a toast it opened — is already treated as its own and never reaches this.',
+          },
+          { name: 'closed', type: 'void', description: 'The window was closed.' },
+        ],
         do: [
           'Use a window for work that continues while the user browses elsewhere.',
           'Persist `bounds` if the window should come back where it was.',

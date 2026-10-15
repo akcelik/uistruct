@@ -15,17 +15,11 @@ import { StrctShellService } from './layout';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
-    @if (shell.mobileNavOpen()) {
-      <div
-        class="strct-vnav__backdrop"
-        tabindex="-1"
-        role="button"
-        aria-label="Close navigation"
-        (click)="shell.mobileNavOpen.set(false)"
-        (keydown.enter)="shell.mobileNavOpen.set(false)"
-        (keydown.space)="shell.mobileNavOpen.set(false)"
-      ></div>
-    }
+    <!-- The backdrop is drawn by strct-shell. Here it was a fixed child of a
+         transformed element, so its inset: 0 was the drawer's own box and its
+         z-index put it above the drawer's content: the page beside the drawer
+         was never dimmed, and every tap on the rail or the menu landed on the
+         backdrop and closed the drawer. -->
     <ng-content />
   `,
   host: {
@@ -61,23 +55,6 @@ import { StrctShellService } from './layout';
         .strct-vnav--open,
         [dir='rtl'] .strct-vnav--open {
           transform: translateX(0);
-        }
-        .strct-vnav__backdrop {
-          position: fixed;
-          inset: 0;
-          z-index: calc(var(--z-nav) - 1);
-          background: var(--backdrop);
-          animation: strct-vnav-backdrop-in 0.2s ease;
-        }
-      }
-      @media (min-width: 769px) {
-        .strct-vnav__backdrop {
-          display: none;
-        }
-      }
-      @keyframes strct-vnav-backdrop-in {
-        from {
-          opacity: 0;
         }
       }
     `,

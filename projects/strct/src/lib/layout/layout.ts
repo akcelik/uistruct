@@ -42,6 +42,19 @@ export class StrctShellService {
       >
     }
     <ng-content select="strct-header" />
+    @if (shell.mobileNavOpen()) {
+      <!-- Outside the drawer, which is transformed and would otherwise be this
+           fixed element's containing block (BUG-53-01). -->
+      <div
+        class="strct-vnav__backdrop"
+        tabindex="-1"
+        role="button"
+        [attr.aria-label]="closeNavLabel()"
+        (click)="shell.mobileNavOpen.set(false)"
+        (keydown.enter)="shell.mobileNavOpen.set(false)"
+        (keydown.space)="shell.mobileNavOpen.set(false)"
+      ></div>
+    }
     <div class="strct-shell__main"><ng-content /></div>
     <ng-content select="strct-footer" />
   `,
@@ -94,6 +107,11 @@ export class StrctShell {
   readonly skipLinkTarget = input<string | null>(null);
   /** The link's text (localisable). */
   readonly skipLinkLabel = input('Skip to main content');
+  /** The name of the backdrop that closes the navigation drawer on a phone. */
+  readonly closeNavLabel = input('Close navigation');
+
+  /** The drawer's open state lives on the shell, and so does its backdrop. */
+  protected readonly shell = inject(StrctShellService);
 
   private readonly doc = inject(DOCUMENT);
 
@@ -135,6 +153,28 @@ export class StrctShell {
   host: { class: 'strct-header' },
   styles: [
     `
+      /* The drawer's backdrop: a sibling of the drawer, so inset: 0 is the
+         viewport and the page beside the drawer is what gets dimmed. */
+      .strct-vnav__backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: calc(var(--z-nav) - 1);
+        background: var(--backdrop);
+        animation: strct-vnav-backdrop-in 0.2s ease;
+      }
+      @media (min-width: 769px) {
+        .strct-vnav__backdrop {
+          display: none;
+        }
+      }
+      @keyframes strct-vnav-backdrop-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
       .strct-header {
         display: flex;
         align-items: center;
@@ -149,14 +189,39 @@ export class StrctShell {
          so the six triggers an app puts there had to be native buttons with
          color: inherit. The flat variant now takes the header's own
          foreground — nothing else changes about it. */
-      .strct-header .strct-btn--flat {
+      /* …but only in the header itself. A modal renders where it is written,
+         so a wizard opened from a header control had its flat Back / Cancel
+         painted in the header's near-white on the dialog's own surface. The
+         exclusion stops the re-tone at every overlay a header can open. */
+      .strct-header
+        .strct-btn--flat:not(
+          .strct-modal__dialog *,
+          .strct-drawer *,
+          .strct-popover__panel *,
+          .strct-dd__menu *,
+          .strct-tour__card *
+        ) {
         color: color-mix(in srgb, var(--hdr-fg) 72%, transparent);
       }
-      .strct-header .strct-btn--flat:hover:not(:disabled) {
+      .strct-header
+        .strct-btn--flat:not(
+          .strct-modal__dialog *,
+          .strct-drawer *,
+          .strct-popover__panel *,
+          .strct-dd__menu *,
+          .strct-tour__card *
+        ):hover:not(:disabled) {
         background: color-mix(in srgb, var(--hdr-fg) 12%, transparent);
         color: var(--hdr-fg);
       }
-      .strct-header .strct-btn--flat:focus-visible {
+      .strct-header
+        .strct-btn--flat:not(
+          .strct-modal__dialog *,
+          .strct-drawer *,
+          .strct-popover__panel *,
+          .strct-dd__menu *,
+          .strct-tour__card *
+        ):focus-visible {
         outline-color: color-mix(in srgb, var(--hdr-fg) 60%, transparent);
       }
       .strct-header__drawer-toggle {

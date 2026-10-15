@@ -1841,7 +1841,7 @@ describe('StrctDatagrid — keyboard access to editable cells', () => {
 
   it('describes the cell for assistive tech, and the pencil is opt-in', () => {
     const { fixture, cells, el } = make();
-    const hint = el.querySelector('.strct-dg__hint')!;
+    const hint = el.querySelector('.strct-sr-only')!;
     expect(hint.textContent).toContain('Press Enter or F2 to edit');
     expect(cells()[0].getAttribute('aria-describedby')).toBe(hint.id);
     expect(el.querySelector('.strct-dg__editpencil')).toBeNull();
@@ -1977,5 +1977,140 @@ describe('StrctDatagrid — footer and chrome combinations', () => {
     expect(
       make({}).el.querySelector('.strct-dg__scroll')!.getAttribute('style') ?? '',
     ).not.toContain('max-height');
+  });
+});
+
+// BUG-50-01 / 02 — the selection model's two regressions from 5.0.1 / 5.0.2.
+describe('StrctDatagrid — a seeded pick survives, and a row that returns is still picked', () => {
+  const cols: StrctDatagridColumn[] = [{ key: 'name', label: 'Host' }];
+  const rows: StrctRow[] = [
+    { id: 'h1', name: 'hv-01' },
+    { id: 'h2', name: 'hv-02' },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('rowId', 'id');
+    fixture.componentRef.setInput('selectable', true);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    const emitted: StrctRow[][] = [];
+    fixture.componentInstance.selectionChange.subscribe((s) => emitted.push(s));
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      emitted,
+      radios: () => [...el.querySelectorAll<HTMLInputElement>('.strct-dg__radio')],
+      boxes: () => [...el.querySelectorAll<HTMLInputElement>('tbody strct-checkbox input')],
+      selected: () => el.querySelectorAll('.strct-dg__row--selected').length,
+    };
+  }
+
+  // BUG-50-01 — an unbound selectedId is "not driven", not "cleared".
+  it('keeps what initialSelection seeded in single mode, and a binding still wins', () => {
+    const { fixture, radios } = make({ selectionMode: 'single', initialSelection: ['h2'] });
+    expect(radios().map((r) => r.checked)).toEqual([false, true]);
+
+    // Binding it still decides.
+    fixture.componentInstance.selectedId.set('h1');
+    fixture.detectChanges();
+    expect(radios().map((r) => r.checked)).toEqual([true, false]);
+
+    // And once driven, null clears, as documented.
+    fixture.componentInstance.selectedId.set(null);
+    fixture.detectChanges();
+    expect(radios().some((r) => r.checked)).toBe(false);
+  });
+
+  // BUG-50-02.1 — the row leaves and comes back: switch host, switch back.
+  it('re-applies the single pick when its row returns', () => {
+    const { fixture, radios } = make({ selectionMode: 'single' });
+    fixture.componentInstance.selectedId.set('h2');
+    fixture.detectChanges();
+    expect(radios()[1].checked).toBe(true);
+
+    fixture.componentRef.setInput('rows', [rows[0]]);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('rows', rows);
+    fixture.detectChanges();
+    expect(radios().map((r) => r.checked)).toEqual([false, true]);
+    expect(fixture.componentInstance.selectedId()).toBe('h2');
+  });
+
+  // BUG-50-02.2 — a poll that blanks the array is not a delete.
+  it('does not prune on an empty re-emit, nor while loading', () => {
+    const { fixture, emitted, selected } = make({ initialSelection: ['h1', 'h2'] });
+    expect(selected()).toBe(2);
+
+    fixture.componentRef.setInput('rows', []);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('rows', rows);
+    fixture.detectChanges();
+    expect(selected()).toBe(2);
+    expect(emitted).toEqual([]);
+
+    // A grid still loading says nothing about what is gone either.
+    fixture.componentRef.setInput('loading', true);
+    fixture.componentRef.setInput('rows', [rows[0]]);
+    fixture.detectChanges();
+    fixture.componentRef.setInput('loading', false);
+    fixture.detectChanges();
+
+    // A real delete still prunes, and says so once.
+    expect(selected()).toBe(1);
+    expect(emitted.length).toBe(1);
+    expect(emitted[0].map((r) => r['id'])).toEqual(['h1']);
+  });
+});
+
+// BUG-50-03 — a utility column is still a column.
+describe('StrctDatagrid — utility columns have names', () => {
+  it('names the detail, expand and single-select columns without showing them', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [{ key: 'name', label: 'Host' }]);
+    fixture.componentRef.setInput('rows', [{ id: 'h1', name: 'hv-01' }]);
+    fixture.componentRef.setInput('rowId', 'id');
+    fixture.componentRef.setInput('expandable', true);
+    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('selectionMode', 'single');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const heads = [...el.querySelectorAll('thead th')];
+    expect(heads.every((h) => h.textContent!.trim().length > 0)).toBe(true);
+    expect(heads.every((h) => h.getAttribute('scope') === 'col')).toBe(true);
+    expect(
+      [...el.querySelectorAll('thead .strct-sr-only')].map((n) => n.textContent!.trim()),
+    ).toContain('Select row');
+
+    // Multiple mode keeps the checkbox rather than the hidden word.
+    fixture.componentRef.setInput('selectionMode', 'multiple');
+    fixture.detectChanges();
+    expect(el.querySelector('thead .strct-dg__sel strct-checkbox')).toBeTruthy();
+    expect(el.querySelector('thead .strct-dg__sel .strct-sr-only')).toBeNull();
+  });
+});
+
+// BUG-54-01 — jsdom cannot see paint; the mode the paint depends on is visible.
+describe('StrctDatagrid — singleLine draws in separate mode', () => {
+  it('marks the host so the row lines composite over the cell, not the table', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [{ key: 'name', label: 'Host' }]);
+    fixture.componentRef.setInput('rows', [{ name: 'hv-01' }]);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.classList).not.toContain('strct-dg-host--singleline');
+
+    fixture.componentRef.setInput('singleLine', true);
+    fixture.detectChanges();
+    expect(el.classList).toContain('strct-dg-host--singleline');
+
+    // The rule that follows from it, asserted on the component's own styles.
+    const css = [...document.querySelectorAll('style')].map((s) => s.textContent ?? '').join('');
+    expect(css).toMatch(
+      /\.strct-dg-host--singleline\s+\.strct-dg[^{]*\{[^}]*border-collapse:\s*separate/,
+    );
   });
 });

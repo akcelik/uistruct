@@ -1,11 +1,5 @@
 [
   {
-    "id": "empty-table-header",
-    "impact": "minor",
-    "nodes": 2,
-    "help": "Table header text should not be empty"
-  },
-  {
     "id": "landmark-unique",
     "impact": "moderate",
     "nodes": 3,
