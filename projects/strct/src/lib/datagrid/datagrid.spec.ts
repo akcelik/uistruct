@@ -2444,3 +2444,58 @@ describe('StrctDatagrid — a usable detail pane', () => {
     expect(host.active()).toBeNull();
   });
 });
+
+// BUG-57-01 / BUG-57-02 — the row tints and the table's own clip. Both are
+// pure CSS, so they are asserted on the stylesheet the component ships.
+describe('StrctDatagrid — the row tints and the frame', () => {
+  function sheet(): string {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [{ key: 'name', label: 'Host' }]);
+    fixture.componentRef.setInput('rows', [{ name: 'hv-01' }]);
+    fixture.detectChanges();
+    return [...document.querySelectorAll('style')]
+      .map((s) => s.textContent ?? '')
+      .join('')
+      .replace(/\s+/g, ' ');
+  }
+
+  it('composites every row tint over the cell’s own surface', () => {
+    const css = sheet();
+    // --acc-s and --acc-m are translucent: set as the background they replace
+    // the cell's opaque surface and the table's --bg-2 shows through, which
+    // left a selected row +0.9 luminance from its neighbours in dark.
+    for (const selector of [
+      '\\.strct-dg tbody tr:not\\(\\.strct-dg__detailrow\\):hover td',
+      '\\.strct-dg tbody \\.strct-dg__row--selected td',
+      '\\.strct-dg tbody \\.strct-dg__row--active td',
+    ]) {
+      for (const [prefix, surface] of [
+        ['', 'bg-1'],
+        ['\\[data-theme=.?dark.?\\] ', 'bg-3'],
+      ]) {
+        const rule = new RegExp(
+          `${prefix}${selector} \\{ background: linear-gradient\\(var\\(--acc-[sm]\\), ?var\\(--acc-[sm]\\)\\) var\\(--${surface}\\)`,
+        );
+        expect(css, `${prefix}${selector} over --${surface}`).toMatch(rule);
+      }
+    }
+    // No row tint may be a bare translucent fill again.
+    expect(css).not.toMatch(
+      /\.strct-dg tbody [^{]*(row--selected|row--active|:hover)[^{]*\{ background: var\(--acc-[sm]\); \}/,
+    );
+  });
+
+  it('keeps the table’s clip for singleLine, and drops it only for the scrolling hosts', () => {
+    const css = sheet();
+    // singleLine needs separate borders (BUG-54-01) but not the visible
+    // overflow: that is what rounds the frame's corners (BUG-57-02).
+    const single = /\.strct-dg-host--singleline \.strct-dg \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(single).toContain('border-collapse: separate');
+    expect(single).not.toContain('overflow');
+    expect(single).not.toContain('border-radius');
+
+    const scrolling = /\.strct-dg-host--sticky \.strct-dg,([^{]*)\{([^}]*)\}/.exec(css);
+    expect(scrolling?.[1]).not.toContain('singleline');
+    expect(scrolling?.[2]).toContain('overflow: visible');
+  });
+});
