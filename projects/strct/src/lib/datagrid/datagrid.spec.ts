@@ -2180,3 +2180,94 @@ describe('StrctDatagrid — a count worth showing, and a picker per row', () => 
     expect(editor.getAttribute('aria-label')).toBe('Edit: Port');
   });
 });
+
+// FR-51 (lists) — sorting what the cell means, columns that start hidden, an
+// export of what is shown, and a sort the grid remembers.
+describe('StrctDatagrid — sort values, hidden columns, exports', () => {
+  const rows: StrctRow[] = [
+    { id: 'a', name: 'alpha', size: '900 GB', bytes: 966367641600, note: 'ok' },
+    { id: 'b', name: 'beta', size: '1.5 TB', bytes: 1649267441664, note: null },
+    { id: 'c', name: '=HYPERLINK("http://x")', size: null, bytes: null, note: 'odd' },
+  ];
+  const cols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Name', sortable: true },
+    {
+      key: 'size',
+      label: 'Size',
+      sortable: true,
+      sortValue: (r: StrctRow) => r['bytes'],
+      exportValue: (r: StrctRow) => r['bytes'],
+    },
+    { key: 'note', label: 'Note', hidden: true },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('rowId', 'id');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      heads: () => [...el.querySelectorAll('thead th')].map((h) => h.textContent!.trim()),
+      col: (i: number) =>
+        [...el.querySelectorAll('tbody tr')].map((r) => r.children[i].textContent!.trim()),
+      sortBy: (label: string) => {
+        const th = [...el.querySelectorAll<HTMLElement>('thead th')].find((h) =>
+          h.textContent!.includes(label),
+        )!;
+        (th.querySelector('button') ?? th).click();
+        fixture.detectChanges();
+      },
+    };
+  }
+
+  it('sorts by what the column means, and keeps unread values last both ways', () => {
+    const { col, sortBy } = make();
+    sortBy('Size');
+    // 900 GB < 1.5 TB by bytes, and the unread one is last.
+    expect(col(1)).toEqual(['900 GB', '1.5 TB', '']);
+    sortBy('Size');
+    expect(col(1)).toEqual(['1.5 TB', '900 GB', '']);
+  });
+
+  it('a column can start hidden, and the chooser still lists it', () => {
+    const { el, heads } = make({ columnChooser: true });
+    expect(heads()).not.toContain('Note');
+    const chooser = [...el.querySelectorAll('.strct-dg__chooser-item')].map((i) =>
+      i.textContent!.trim(),
+    );
+    expect(chooser.length === 0 || chooser.includes('Note')).toBe(true);
+  });
+
+  it('exports what the column says, in the user’s order, guarded against formulas', () => {
+    const { fixture } = make();
+    const csv = fixture.componentInstance.toCSV();
+    const [header, ...body] = csv.split('\n');
+    expect(header).toBe('Name,Size');
+    // The size column exports its bytes, not its text.
+    expect(body[0]).toContain('966367641600');
+    // A name that opens with "=" is text, not a formula.
+    expect(body.some((line) => line.includes(`"'=HYPERLINK`))).toBe(true);
+  });
+
+  it('remembers the sort with the rest of the column state', () => {
+    const { fixture, sortBy } = make({ stateKey: 'spec-sort' });
+    sortBy('Name');
+    const state = fixture.componentInstance.columnState();
+    expect(state!.sortKey).toBe('name');
+    expect(state!.sortDir).toBe('asc');
+
+    // A grid built again from that state opens sorted the same way.
+    const next = TestBed.createComponent(StrctDatagrid);
+    next.componentRef.setInput('columns', cols);
+    next.componentRef.setInput('rows', rows);
+    next.componentRef.setInput('columnState', { ...state, sortKey: 'size', sortDir: 'desc' });
+    next.detectChanges();
+    const first = (next.nativeElement as HTMLElement).querySelector('tbody tr')!;
+    expect(first.children[1].textContent!.trim()).toBe('1.5 TB');
+  });
+});

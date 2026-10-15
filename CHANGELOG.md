@@ -5,6 +5,47 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.0] - 2026-10-15
+
+The four gaps HyperStruct's inventory lists hit (`hyperstruct-o260-lists.md`).
+
+### Added
+
+- **`columns[].sortValue` and `columns[].comparator`.** A formatted cell sorted
+  as text, so "1.5 TB" came before "900 GB" and a date written by
+  `toLocaleString()` sorted across days and AM/PM by its characters. A column
+  now says what it sorts by — its bytes, its timestamp — or takes the
+  comparison outright. The two choices a consumer had were a `strctCell`
+  template that exists only to format (and an export that then writes
+  "1610612736"), or the wrong order.
+- **`columns[].exportValue`.** `toCSV()` and `toXLSX()` wrote the raw row
+  value, so a templated cell exported seconds, bytes, `true` or an enum code
+  rather than what it showed.
+- **`columns[].hidden`.** The default for a column no persisted or bound state
+  mentions: a list that shows five of twenty columns says so on the columns,
+  instead of seeding `columnState` only when
+  `localStorage['strct-dg:<key>']` is empty — which made the consumer reach
+  into the library's storage key.
+- **The sort travels with the column state** (`sortKey` / `sortDir`). A list an
+  operator sorted by Host CPU opened sorted by name again, and a `lazy` list
+  asked the server for the wrong order first.
+
+### Fixed
+
+- **`toCSV()` wrote the declared column order while `toXLSX()` wrote the
+  user's** — the same grid exported its columns two different ways. Both use
+  the user's order now.
+- **CSV formula injection.** A cell opening with `=`, `+`, `-` or `@` is a
+  formula when the export is opened in a spreadsheet, so a VM named
+  `=HYPERLINK(…)` ran. Those cells are prefixed with an apostrophe — the
+  spreadsheet's own "this is text" (OWASP CSV Injection).
+- **Unread values sorted first.** `null` became `''`, the smallest string, so
+  an unread fact sat above every real value in an ascending sort. An unread
+  value is neither the smallest nor the largest: it sorts **last in both
+  directions**, which is what the reporting app and vCenter do.
+- `compare()` also understands `Date` objects, which previously went through
+  `String()`.
+
 ## [5.8.0] - 2026-10-15
 
 The thirteen feature requests of HyperStruct's 5.6.0 adoption (FR-50-01 … 13):
