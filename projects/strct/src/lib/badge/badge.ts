@@ -125,6 +125,9 @@ export class StrctBadge {
         const el = this.hostEl.nativeElement;
         strctCheckHostInputs(el, 'strct-badge', {
           status: 'neutral, accent, success, warning, critical',
+          // A real input since 5.13.0 — a colour of its own, so it takes any
+          // colour token or value rather than one of a list.
+          tone: 'a colour token or value, e.g. var(--prod-acc)',
         });
       }
     });
