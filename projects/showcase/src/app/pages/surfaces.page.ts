@@ -6,6 +6,7 @@ import {
   StrctSectionHeaderMeta,
   StrctAccordion,
   StrctAccordionPanel,
+  StrctAccordionPanelMeta,
   StrctBadge,
   StrctButton,
   StrctCard,
@@ -76,6 +77,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctBadge,
     StrctAccordion,
     StrctAccordionPanel,
+    StrctAccordionPanelMeta,
     StrctTabs,
     StrctTab,
     StrctTree,
@@ -213,7 +215,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="card-rich"
       owner="card"
       heading="Rich cards"
-      description="Opt-in states: a status tone rail, hover-lift for clickable cards, a selection ring, dense padding, a loading bar with aria-busy, and collapsible cards whose header grows a chevron."
+      description="Opt-in states: a status tone rail, hover-lift for clickable cards, a selection ring, dense padding, a loading bar with aria-busy, and collapsible cards whose header grows a chevron. With headerToggles a click anywhere on the header folds the card — where an operator actually clicks — while a button, a link or a form control in the header keeps its own click, and so does the chevron, which would otherwise toggle a second time. The chevron stays the keyboard control: a header is not a button."
       code='<strct-card status="warning" collapsible [(collapsed)]="hidden">…</strct-card>'
     >
       <div class="rich-cards">
@@ -242,8 +244,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           </strct-card-footer>
         </strct-card>
 
-        <strct-card status="critical" collapsible [(collapsed)]="richCollapsed">
-          <strct-card-header icon="siren">3 active alarms</strct-card-header>
+        <!-- FR-55-02: the operator clicks the title, not the chevron. -->
+        <strct-card status="critical" collapsible headerToggles [(collapsed)]="richCollapsed">
+          <strct-card-header icon="siren">3 active alarms (the header toggles)</strct-card-header>
           <strct-card-block
             >Fan redundancy lost on hv-02 · SSD-01 above 85% · NTP drift.</strct-card-block
           >
@@ -269,6 +272,25 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <strct-accordion-panel heading="Danger zone">
           Keep destructive settings tucked away here.
         </strct-accordion-panel>
+      </strct-accordion>
+    </app-demo>
+
+    <app-demo
+      anchor="accordion-results"
+      owner="accordion"
+      heading="A run of results"
+      description="An accordion is the shape of a check run: one entry per test, closed until opened, its result in the header. [strctAccordionPanelMeta] projects badges and tags after the title but outside the header's button, so the button is still called by its heading alone and the result is read after it as the button's description — a badge inside the name would make it “Cluster time Failed”, and a tag you can click cannot live inside another button at all. status draws the tone rail on the leading edge, the same language a card uses."
+      code='<strct-accordion-panel heading="Cluster time" status="critical"><strct-badge strctAccordionPanelMeta status="critical">Failed</strct-badge>…</strct-accordion-panel>'
+    >
+      <strct-accordion style="width: 100%; max-width: 560px;">
+        @for (test of validation; track test.name) {
+          <strct-accordion-panel [heading]="test.name" [status]="test.status">
+            <strct-badge strctAccordionPanelMeta [status]="test.status">{{
+              test.result
+            }}</strct-badge>
+            {{ test.detail }}
+          </strct-accordion-panel>
+        }
       </strct-accordion>
     </app-demo>
 
@@ -1201,6 +1223,33 @@ export class SurfacesPage {
     this.savedViews.update((v) => v.filter((x) => x !== name));
     this.viewEcho.set('deleted ' + name);
   }
+
+  // A cluster check run, as FR-55-01 describes it.
+  protected readonly validation: {
+    name: string;
+    result: string;
+    status: 'critical' | 'warning' | 'success';
+    detail: string;
+  }[] = [
+    {
+      name: 'Cluster time',
+      result: 'Failed',
+      status: 'critical',
+      detail: 'hv-02 and hv-04 are 4 minutes apart; NTP unreachable from both.',
+    },
+    {
+      name: 'Datastore headroom',
+      result: 'Warning',
+      status: 'warning',
+      detail: 'SSD-01 is at 86% — below the 90% threshold, above the 80% target.',
+    },
+    {
+      name: 'Network redundancy',
+      result: 'Passed',
+      status: 'success',
+      detail: 'Every host has two uplinks on separate switches.',
+    },
+  ];
 
   protected readonly productId = signal('backup');
   protected readonly products: {

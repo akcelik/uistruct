@@ -191,6 +191,15 @@ export class StrctCard {
   readonly loading = input(false, { transform: booleanAttribute });
   /** Allow collapsing to just the header (a chevron appears in the header). */
   readonly collapsible = input(false, { transform: booleanAttribute });
+  /**
+   * Opt-in: a click anywhere on `strct-card-header` toggles the card, which
+   * is where an operator clicks — the title, not the chevron. A click on an
+   * interactive descendant (a button, a link, a form control) keeps its own,
+   * and so does the chevron, which would otherwise toggle twice and leave the
+   * card closed while the consumer's state said open. The chevron stays the
+   * keyboard control: a header is not a button.
+   */
+  readonly headerToggles = input(false, { transform: booleanAttribute });
   /** Collapsed state (two-way; only meaningful with `collapsible`). */
   readonly collapsed = model(false);
 
@@ -267,9 +276,14 @@ export class StrctCard {
     class: 'strct-card__header',
     '[class.strct-card__header--overline]': "appearance() === 'overline'",
     '[class.strct-card__header--wrap]': 'wrap()',
+    '[class.strct-card__header--toggles]': 'togglesOnClick()',
+    '(click)': 'onHeaderClick($event)',
   },
   styles: [
     `
+      .strct-card__header--toggles {
+        cursor: pointer;
+      }
       .strct-card__header {
         display: flex;
         align-items: center;
@@ -396,6 +410,31 @@ export class StrctCardHeader {
   readonly expandLabel = input('Expand');
 
   protected readonly card = inject(StrctCard, { optional: true });
+
+  /** Only a collapsible card that asked for it toggles from its header. */
+  protected togglesOnClick(): boolean {
+    return !!this.card?.collapsible() && !!this.card?.headerToggles();
+  }
+
+  /**
+   * Anything with a click of its own keeps it — including our own chevron,
+   * whose click would otherwise bubble here and toggle a second time, leaving
+   * the card closed while the consumer's state said open.
+   */
+  protected onHeaderClick(event: MouseEvent): void {
+    if (!this.togglesOnClick()) return;
+    const target = event.target as HTMLElement | null;
+    if (
+      target?.closest(
+        'button, a[href], input, select, textarea, label, summary, [role="button"], [role="link"], [role="checkbox"], [role="switch"], [contenteditable]',
+      )
+    ) {
+      return;
+    }
+    // Selecting the heading's text is not a click on the header.
+    if (typeof getSelection === 'function' && getSelection()?.toString()) return;
+    this.card?.toggle();
+  }
 }
 
 /** Leads the card's heading — a drag grip, a status dot, an avatar. */

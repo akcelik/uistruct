@@ -1632,6 +1632,13 @@ export const DOCS: DocCategory[] = [
             description: 'Header gains a chevron toggle; `[(collapsed)]` hides block + footer.',
           },
           {
+            name: 'headerToggles',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'With `collapsible`: a click anywhere on `strct-card-header` folds the card — where an operator actually clicks. A button, a link or a form control in the header keeps its own click, and so does the chevron, which would otherwise toggle a second time and leave the card closed while your state said open. The chevron stays the keyboard control: a header is not a button.',
+          },
+          {
             name: 'icon',
             type: 'string',
             description: 'On `strct-card-header`: optional leading icon.',
@@ -1705,7 +1712,7 @@ export const DOCS: DocCategory[] = [
         id: 'accordion',
         title: 'Accordion',
         selector: 'strct-accordion',
-        importNames: ['StrctAccordion', 'StrctAccordionPanel'],
+        importNames: ['StrctAccordion', 'StrctAccordionPanel', 'StrctAccordionPanelMeta'],
         summary: 'Independently collapsible panels.',
         lead: 'A stack of independently collapsible panels. Each `strct-accordion-panel` manages its own expanded state.',
         inputs: [
@@ -1727,10 +1734,29 @@ export const DOCS: DocCategory[] = [
             description:
               'On `strct-accordion-panel`: `quiet` is a fold in running text — no border or background, a `--text-sm` summary in `--t2` with a chevron, the body indented. It reads like a raw `<details>` while keeping the button + region semantics.',
           },
+          {
+            name: 'status',
+            type: STATUS_VALUES,
+            default: `'neutral'`,
+            description:
+              'On `strct-accordion-panel`: a tone rail on the leading edge, the same language `strct-card [status]` uses — the result of what the panel reports, said in colour as well as in words.',
+          },
+          {
+            name: '[strctAccordionPanelMeta]',
+            type: 'content slot',
+            description:
+              'Badges or tags after the title, projected into the header but kept outside its button: the button stays called by its heading alone, and the meta is read after it through `aria-describedby`. A badge inside the name would make the button "Cluster time Failed", and a tag you can click cannot live inside another button at all.',
+          },
         ],
-        do: ['Use for optional or secondary detail that benefits from progressive disclosure.'],
+        do: [
+          'Use for optional or secondary detail that benefits from progressive disclosure.',
+          'Put a run of results in one — a panel per test, its result in the header.',
+        ],
         dont: ['Do not hide critical, always-needed information inside a collapsed panel.'],
-        a11y: ['The chevron rotates with state; the header is a focusable toggle.'],
+        a11y: [
+          'The chevron rotates with state; the header is a focusable toggle.',
+          'Meta content is outside the button and reaches a screen reader as its description.',
+        ],
       },
       {
         id: 'tabs',

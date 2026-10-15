@@ -12,6 +12,16 @@ glance.
 
 Suggested order: FR-55-02 (a small, opt-in behaviour), then FR-55-01.
 
+> **FR-55-01 and FR-55-02 SHIPPED in 5.16.0 (2026-10-15)** — every item in this document.
+>
+> - `[strctAccordionPanelMeta]` projects badges and tags into the panel's header, outside its
+>   button, and the button points at them with `aria-describedby`: its own name stays the heading.
+>   `strct-accordion-panel [status]` draws the card's tone rail on the leading edge.
+> - `strct-card [headerToggles]` folds the card from a click anywhere on its header. Interactive
+>   descendants keep their own click, and so does the chevron — the double-toggle HyperStruct's
+>   own handler had to guard against is guarded here, with a test that fails if it returns.
+>   `.vr-acc-head { cursor: pointer }` and the local handler can go.
+
 ---
 
 ### FR-55-01 — `strct-accordion-panel`: a meta slot in the header
