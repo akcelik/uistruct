@@ -894,6 +894,12 @@ export const DOCS: DocCategory[] = [
         lead: 'A single-select segmented control with managed selected state — distinct from `StrctTabs` (panel switching) and a button group (visual cluster only). Reach for it for mode pickers and list filters. CVA-compatible.',
         inputs: [
           {
+            name: 'options[].count / countStatus / countLabel',
+            type: 'number · StrctStatus · (count) => string',
+            description:
+              'How much is behind each view — "History 14". Muted and tabular by default; `countStatus` is for a count that is itself the news ("Failed 3" in critical); `countLabel` puts it in the option’s accessible name ("History, 14 runs").',
+          },
+          {
             name: 'options',
             type: 'StrctSegmentedOption[]',
             default: '[]',
@@ -2885,6 +2891,13 @@ export const DOCS: DocCategory[] = [
         lead: 'A small status dot whose tone is painted in CSS while the state is also rendered as visually-hidden text — screen readers (and anyone copying text) get "Warning", not just a yellow circle. Uses the canonical `StrctStatus` vocabulary: OK maps to `success`, info to `accent` (there is no `ok` / `info`).',
         inputs: [
           {
+            name: 'variant',
+            type: `'solid' | 'ring'`,
+            default: `'solid'`,
+            description:
+              'A ring — a 2px outline with a transparent centre — for a state that is **not** an outcome: "Inconclusive", "Not applicable", "Unknown". They must not read as Warning or Passed with only the colour to tell them apart, so the shape carries the difference (WCAG 1.4.1).',
+          },
+          {
             name: 'status',
             type: STATUS_VALUES,
             default: `'neutral'`,
@@ -3362,6 +3375,26 @@ export const DOCS: DocCategory[] = [
         summary: 'Selectable, expandable data grid.',
         lead: 'A richer grid with sorting, selection, batch actions, pagination and expandable rows. Columns can be `sortable` and aligned. Use `*strctCell="key"` templates for custom cells (status pills, links, action buttons), and set `rowId` so selection / expansion survive live data refreshes.',
         inputs: [
+          {
+            name: 'groups / showEmptyGroups / [(collapsedGroups)]',
+            type: 'StrctDatagridGroup[] | null · boolean · unknown[]',
+            default: 'null · false · []',
+            description:
+              'The groups themselves, beside `groupBy`: `{ value, label?, status?, note?, collapsed?, count? }` in the order they are given — a triage page orders by urgency, not alphabetically. Values no group mentions follow, as before. A declared group with no rows is dropped unless `showEmptyGroups`. `[(collapsedGroups)]` lets a summary counter elsewhere open the group it counts, and `<ng-template strctGroupHeader let-group let-count="count">` draws the row (the button, its `aria-expanded` and the keyboard stay the library’s).',
+          },
+          {
+            name: 'paneListWidth / paneTakeoverWidth / [(activeRowId)] / columns[].keepInPane',
+            type: 'string · number · unknown · boolean',
+            default: '"260px" · 900 · null · false',
+            description:
+              'A usable master–detail: the list keeps the width you give it and the columns that ask to stay (260px and one column cut a long name in half and hid its status); `[(activeRowId)]` opens a row’s pane from elsewhere — a chip, a URL fragment — and `null` closes it; below `paneTakeoverWidth` **of the grid’s own width** the pane replaces the list with a way back. Enter or Space opens a row, the arrows move the active row while the pane is open, Escape closes it.',
+          },
+          {
+            name: '[strctDetailPaneTitle] / [strctDetailPaneMeta] / [strctDetailPaneActions]',
+            type: 'slots',
+            description:
+              'The pane header’s title, what the row is (status, category, nodes) and its controls. The close button stays the library’s.',
+          },
           {
             name: 'columns[].sortValue / columns[].comparator',
             type: '(row) => unknown / (a, b) => number',
@@ -4570,6 +4603,20 @@ export const DOCS: DocCategory[] = [
         summary: 'Dense KPI tile with sparkline.',
         lead: 'A compact dashboard tile — a label, a large value (+ unit), an optional change indicator and an inline sparkline. Built for at-a-glance metrics.',
         inputs: [
+          {
+            name: 'pressed',
+            type: 'boolean | null',
+            default: 'null',
+            description:
+              'The tile is a filter: `true` draws it on and says `aria-pressed`, `false` draws it off and still says so. `null` is a tile that is not a toggle, which must not claim a pressed state.',
+          },
+          {
+            name: 'size',
+            type: `'md' | 'sm'`,
+            default: `'md'`,
+            description:
+              '`sm` is the verdict-band counter: six beside a one-line verdict at 1440px, where the dashboard size fits three.',
+          },
           {
             name: 'navigate',
             type: `'browser' | 'app'`,
