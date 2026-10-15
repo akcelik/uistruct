@@ -373,3 +373,85 @@ describe('StrctWindow — labels, icon, clamping, double-click and the dock', ()
     expect(host.min()).toBe(false);
   });
 });
+
+// BUG-50-04 — a menu, a modal or a toast opened from the window is rendered at
+// the document's root, and "not in the frame" minimised the window on the very
+// click that chose the entry.
+describe('StrctWindow — its own overlays are not "outside"', () => {
+  @Component({
+    imports: [StrctWindow],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-window
+        [(open)]="open"
+        [(minimized)]="min"
+        heading="APP01"
+        closeOnOutside="minimize"
+        (outsidePointer)="seen = seen + 1; veto() && $event.cancel()"
+      >
+        <p class="content">screen</p>
+      </strct-window>
+    `,
+  })
+  class Host {
+    open = signal(true);
+    min = signal(false);
+    veto = signal(false);
+    seen = 0;
+  }
+
+  async function build() {
+    const fixture = TestBed.createComponent(Host);
+    const el = fixture.nativeElement as HTMLElement;
+    document.body.appendChild(el);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r));
+    return { fixture, el, host: fixture.componentInstance };
+  }
+  const down = (el: Element) => el.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+
+  it('ignores a pointer inside something stacked above it, and minimises elsewhere', async () => {
+    const { fixture, el, host } = await build();
+    const frame = el.querySelector('.strct-window__frame') as HTMLElement;
+    frame.style.zIndex = '500';
+
+    // A menu at the document's root, above the window — as strct renders one.
+    const menu = document.createElement('div');
+    menu.style.cssText = 'position: fixed; z-index: 1000';
+    menu.innerHTML = '<button class="entry">Open</button>';
+    document.body.appendChild(menu);
+
+    down(menu.querySelector('.entry')!);
+    fixture.detectChanges();
+    expect(host.min()).toBe(false);
+    expect(host.seen).toBe(0); // it never even asked
+
+    // A plain page element below the window still minimises it.
+    const page = document.createElement('div');
+    document.body.appendChild(page);
+    down(page);
+    fixture.detectChanges();
+    expect(host.seen).toBe(1);
+    expect(host.min()).toBe(true);
+
+    menu.remove();
+    page.remove();
+    el.remove();
+  });
+
+  it('lets a consumer veto the minimise', async () => {
+    const { fixture, el, host } = await build();
+    (el.querySelector('.strct-window__frame') as HTMLElement).style.zIndex = '500';
+    host.veto.set(true);
+    const page = document.createElement('div');
+    document.body.appendChild(page);
+
+    down(page);
+    fixture.detectChanges();
+    expect(host.seen).toBe(1);
+    expect(host.min()).toBe(false);
+    page.remove();
+    el.remove();
+  });
+});

@@ -193,7 +193,20 @@ kbd,
   color: var(--acc);
 }
 
-.strct-reorder__handle {
+/* Text that is read but not shown — a column's name where an icon stands for
+   it, an instruction a pointer user never needs. In flow and 1x1, so it never
+   extends a page's scrollable area the way an out-of-flow box can. The
+   library had this inlined in five components. */
+.strct-sr-only {
+  display: inline-block;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+[strctReorderItem][draggable='true'] .strct-reorder__handle {
   cursor: grab;
 }
 [strctReorderItem][draggable='true']:not(:has(.strct-reorder__handle)) {

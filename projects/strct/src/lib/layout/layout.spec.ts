@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctShell, StrctHeader, StrctFooter, StrctShellService } from './layout';
 import { StrctVerticalNav } from './nav';
@@ -77,15 +78,17 @@ describe('StrctVerticalNav', () => {
     expect(host.classList).toContain('strct-vnav');
   });
 
+  // The backdrop is the shell's (BUG-53-01), not the drawer's.
   it('keeps the backdrop out of the tab order', () => {
-    TestBed.configureTestingModule({ providers: [StrctShellService] });
-    const shell = TestBed.inject(StrctShellService);
+    const fixture = TestBed.createComponent(StrctShell);
+    fixture.detectChanges();
+    const shell = fixture.debugElement.injector.get(StrctShellService);
     shell.mobileNavOpen.set(true);
-    const fixture = TestBed.createComponent(StrctVerticalNav);
     fixture.detectChanges();
 
     const backdrop = fixture.nativeElement.querySelector('.strct-vnav__backdrop') as HTMLElement;
     expect(backdrop.getAttribute('tabindex')).toBe('-1');
+    expect(backdrop.getAttribute('role')).toBe('button');
   });
 
   it('closes the mobile nav on Escape', () => {
@@ -141,5 +144,46 @@ describe('StrctVerticalNav', () => {
         main.remove();
       }
     });
+  });
+});
+
+// BUG-53-01 — the drawer's backdrop was a fixed child of the transformed
+// drawer, so it covered the drawer and took every tap meant for the rail.
+describe('StrctShell — the mobile nav backdrop', () => {
+  @Component({
+    imports: [StrctShell, StrctVerticalNav],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-shell>
+        <strct-vertical-nav><button class="entry" type="button">Hosts</button></strct-vertical-nav>
+      </strct-shell>
+    `,
+  })
+  class Host {}
+
+  it('is drawn by the shell, outside the drawer, and closes it', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const shellEl = el.querySelector('strct-shell')!;
+    const nav = el.querySelector('strct-vertical-nav')!;
+    const service = fixture.debugElement
+      .query((d) => d.name === 'strct-shell')
+      .injector.get(StrctShellService);
+
+    expect(el.querySelector('.strct-vnav__backdrop')).toBeNull();
+
+    service.mobileNavOpen.set(true);
+    fixture.detectChanges();
+    const backdrop = el.querySelector('.strct-vnav__backdrop')!;
+    expect(backdrop).toBeTruthy();
+    // The shell draws it; the drawer does not contain it.
+    expect(backdrop.parentElement).toBe(shellEl);
+    expect(nav.contains(backdrop)).toBe(false);
+
+    (backdrop as HTMLElement).click();
+    fixture.detectChanges();
+    expect(service.mobileNavOpen()).toBe(false);
+    expect(el.querySelector('.strct-vnav__backdrop')).toBeNull();
   });
 });
