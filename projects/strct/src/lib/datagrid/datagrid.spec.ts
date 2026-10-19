@@ -2623,3 +2623,165 @@ describe('StrctDatagrid — the grid says what it does', () => {
     }
   });
 });
+
+// A1 / A2 / B1 (and FR-58-01, FR-58-04) — the grid interaction model.
+describe('StrctDatagrid — interactionMode="grid"', () => {
+  const COLS: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Cluster', sortable: true },
+    { key: 'type', label: 'Type' },
+  ];
+  const ROWS: StrctRow[] = [
+    { id: 'a', name: 'alpha', type: 'Failover' },
+    { id: 'b', name: 'beta', type: 'Standard' },
+    { id: 'c', name: 'gamma', type: 'Failover' },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', COLS);
+    fixture.componentRef.setInput('rows', ROWS);
+    fixture.componentRef.setInput('rowId', 'id');
+    fixture.componentRef.setInput('interactionMode', 'grid');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const rows = () => [...el.querySelectorAll<HTMLElement>('tbody tr')];
+    const press = (target: HTMLElement, key: string) => {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      target.dispatchEvent(event);
+      fixture.detectChanges();
+      return event;
+    };
+    return { fixture, el, rows, press };
+  }
+
+  it('is one tab stop: the cursor row carries it, every other row is -1', () => {
+    const { el, rows } = make();
+    expect(el.querySelector('table')!.getAttribute('role')).toBe('grid');
+    expect(rows().map((r) => r.getAttribute('tabindex'))).toEqual(['0', '-1', '-1']);
+  });
+
+  it('moves the cursor with the arrows, Home and End', async () => {
+    const { rows, press } = make();
+    const at = () => rows().findIndex((r) => r.getAttribute('tabindex') === '0');
+
+    press(rows()[0], 'ArrowDown');
+    expect(at()).toBe(1);
+    press(rows()[1], 'ArrowDown');
+    expect(at()).toBe(2);
+    // Past the last row it stays put rather than wrapping into nothing.
+    press(rows()[2], 'ArrowDown');
+    expect(at()).toBe(2);
+    press(rows()[2], 'Home');
+    expect(at()).toBe(0);
+    press(rows()[0], 'End');
+    expect(at()).toBe(2);
+  });
+
+  it('picks with Space and activates with Enter', () => {
+    const { fixture, rows, press } = make({ selectionMode: 'single' });
+    const picked: unknown[] = [];
+    const activated: unknown[] = [];
+    fixture.componentInstance.selectionChange.subscribe((r: StrctRow[]) =>
+      picked.push(r[0]?.['id']),
+    );
+    fixture.componentInstance.rowActivate.subscribe((r: StrctRow) => activated.push(r['id']));
+
+    const space = press(rows()[1], ' ');
+    expect(space.defaultPrevented).toBe(true); // the page must not scroll
+    expect(picked).toEqual(['b']);
+    expect(rows()[1].getAttribute('aria-selected')).toBe('true');
+    expect(activated).toEqual([]);
+
+    press(rows()[1], 'Enter');
+    expect(activated).toEqual(['b']);
+  });
+
+  it('activates on a double-click, and a single click only moves the cursor', () => {
+    const { fixture, rows } = make();
+    const activated: unknown[] = [];
+    fixture.componentInstance.rowActivate.subscribe((r: StrctRow) => activated.push(r['id']));
+
+    rows()[2].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+    expect(activated).toEqual([]);
+    expect(rows()[2].getAttribute('tabindex')).toBe('0');
+
+    rows()[2].dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    fixture.detectChanges();
+    expect(activated).toEqual(['c']);
+  });
+
+  it('steps through the row’s own controls with the arrows, and Escape comes back', () => {
+    const { el, rows, press } = make({
+      selectionMode: 'multiple',
+      rowActions: () => [{ id: 'open', label: 'Open' }],
+    });
+    const row = rows()[0];
+    const controls = [...row.querySelectorAll<HTMLElement>('button, input')];
+    expect(controls.length).toBeGreaterThan(1);
+    // In grid mode they are out of the tab order — the row is the tab stop.
+    expect(controls.every((c) => c.getAttribute('tabindex') === '-1')).toBe(true);
+
+    row.focus();
+    press(row, 'ArrowRight');
+    expect(document.activeElement).toBe(controls[0]);
+
+    press(controls[0], 'ArrowRight');
+    expect(document.activeElement).toBe(controls[1]);
+
+    press(controls[1], 'Escape');
+    expect(document.activeElement).toBe(row);
+    expect(el.querySelector('table')!.getAttribute('role')).toBe('grid');
+  });
+
+  it('can select without a tick column, and opens the pane from the row', () => {
+    @Component({
+      imports: [StrctDatagrid, StrctRowDetailDef],
+      template: `
+        <strct-datagrid
+          [columns]="cols"
+          [rows]="rows"
+          rowId="id"
+          interactionMode="grid"
+          selectionMode="single"
+          selectionColumn="none"
+          detailPane
+        >
+          <ng-template strctRowDetail let-row>{{ row['name'] }} detail</ng-template>
+        </strct-datagrid>
+      `,
+    })
+    class GridPaneHost {
+      cols = COLS;
+      rows = ROWS;
+    }
+
+    const fixture = TestBed.createComponent(GridPaneHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    // A file list picks by clicking the row; no radio column is drawn.
+    expect(el.querySelector('tbody input[type="radio"]')).toBeNull();
+
+    const row = [...el.querySelectorAll<HTMLElement>('tbody tr')][1];
+    row.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    fixture.detectChanges();
+    expect(row.getAttribute('aria-selected')).toBe('true');
+    // FR-58-01: the row itself opens its pane, no » button needed.
+    expect(el.querySelector('.strct-dg__pane')).toBeTruthy();
+  });
+
+  it('leaves the table alone in the default mode', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', COLS);
+    fixture.componentRef.setInput('rows', ROWS);
+    fixture.componentRef.setInput('selectionMode', 'multiple');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('table')!.getAttribute('role')).toBeNull();
+    expect([...el.querySelectorAll('tbody tr')].every((r) => !r.hasAttribute('tabindex'))).toBe(
+      true,
+    );
+    expect(el.querySelector('tbody .strct-cb__native')!.getAttribute('tabindex')).toBeNull();
+  });
+});

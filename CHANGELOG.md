@@ -5,6 +5,42 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.19.0] - 2026-10-19
+
+The second batch of the datagrid audit: the interaction model. Opt-in, because
+it changes what Tab does inside the table.
+
+### Added
+
+- **`strct-datagrid [interactionMode="grid"]`** — the APG grid pattern at row
+  level:
+  - **One tab stop.** The cursor row carries it and every other row is `-1`;
+    the row's own controls leave the tab order and are reached with →/←, with
+    Escape coming back to the row. Measured on the showcase's own grid: the
+    body went from **10 tab stops to 1** (25 to 4 for the whole grid).
+  - **`role="grid"`**, which is what makes a selected row announce itself.
+    Chrome's accessibility tree read a selected row as `role: "row", props: []`
+    before — `aria-selected` on a row reaches no screen reader outside a grid.
+    It now reads `props: ["focusable=true", "selected=true"]`.
+  - ↑/↓ move the cursor, Home/End jump, **Space picks**, **Enter activates**.
+    With the detail pane open the arrows carry the pane with the cursor, as
+    they already did.
+- **`[selectionColumn="none"]`** — selection without a tick or radio column,
+  for a list where the row itself is the control (a file browser). Pair it
+  with grid mode so the row stays reachable from the keyboard.
+- **`(rowActivate)`** — the row was opened: a double-click, or Enter on the
+  focused row in grid mode. Selection is "which rows do I mean"; activation is
+  "go". With `detailPane` it opens the row's pane as well, so **a click on a
+  row opens its pane** instead of hunting for the » button.
+- **`strct-checkbox [tabIndex]`** — takes the box out of the tab order where
+  something around it owns the keyboard.
+
+`interactionMode` defaults to `'table'`, which is exactly what the grid has
+always been: nothing changes for an app that does not ask for the new model.
+
+This closes HyperStruct's FR-58-01 (a row click opens its pane) and FR-58-04
+(a row that activates, and single selection without a radio column).
+
 ## [5.18.0] - 2026-10-19
 
 The first batch of the datagrid audit: what the grid says to someone who

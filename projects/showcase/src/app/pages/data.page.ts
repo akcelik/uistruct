@@ -425,6 +425,32 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="datagrid-grid-mode"
+      owner="datagrid"
+      heading="The grid interaction model (opt-in)"
+      description='interactionMode="grid" turns the table into the APG grid: the whole grid is one tab stop instead of two per row, the cursor row carries it, ↑/↓ move it, Home/End jump, →/← step through that row&apos;s own controls and Escape comes back out, Space picks and Enter activates. It also makes a selected row say so — aria-selected on a row reaches no screen reader outside a grid. selectionColumn="none" drops the tick column where the row itself is the control (a file list), and (rowActivate) fires on a double-click or Enter, which is how a console opens a row. It is opt-in because it changes what Tab does inside the table.'
+      code='<strct-datagrid interactionMode="grid" selectionMode="single" selectionColumn="none" (rowActivate)="open($event)" />'
+    >
+      <div class="dg-wrap">
+        <strct-datagrid
+          style="width: 100%;"
+          [columns]="pickCols"
+          [rows]="pickRows"
+          rowId="id"
+          interactionMode="grid"
+          selectionMode="single"
+          selectionColumn="none"
+          [(selectedId)]="gridPicked"
+          (rowActivate)="gridOpened.set($any($event)['name'])"
+        />
+        <span class="echo">
+          selected: {{ gridPicked() ?? 'none' }} ·
+          {{ gridOpened() ? 'opened: ' + gridOpened() : 'double-click a row, or press Enter' }}
+        </span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="datagrid-groupselect"
       owner="datagrid"
       heading="Select all in a group"
@@ -1349,6 +1375,8 @@ mtu = 9000`;
     { id: 'h4', name: 'hv-07.edge', pool: 'Edge', agent: '4.4.0' },
   ];
   protected readonly pickedHost = signal<unknown>('h1');
+  protected readonly gridPicked = signal<unknown>('h1');
+  protected readonly gridOpened = signal('');
   protected readonly pickedGroup = signal(0);
   /** A host with an old agent cannot receive a deployment — and says so. */
   protected readonly canDeploy = (row: StrctRow): boolean | string =>

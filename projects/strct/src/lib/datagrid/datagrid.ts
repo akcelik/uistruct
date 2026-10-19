@@ -404,7 +404,7 @@ export class StrctDatagridActionBar {}
       >
         <table
           class="strct-dg"
-          [attr.role]="childrenKey() ? 'treegrid' : null"
+          [attr.role]="childrenKey() ? 'treegrid' : gridMode() ? 'grid' : null"
           [attr.aria-labelledby]="caption() ? captionId : null"
         >
           @if (caption()) {
@@ -689,13 +689,20 @@ export class StrctDatagridActionBar {}
                     [attr.tabindex]="
                       childrenKey()
                         ? treeRowTabindex(row)
-                        : canDetail()
-                          ? paneRowTabindex(row)
-                          : null
+                        : gridMode()
+                          ? gridRowTabindex(row)
+                          : canDetail()
+                            ? paneRowTabindex(row)
+                            : null
                     "
                     (keydown)="
-                      childrenKey() ? onTreeRowKeydown(row, $event) : onPaneRowKeydown(row, $event)
+                      childrenKey()
+                        ? onTreeRowKeydown(row, $event)
+                        : gridMode()
+                          ? onGridRowKeydown(row, $event)
+                          : onPaneRowKeydown(row, $event)
                     "
+                    (dblclick)="onRowActivate(row)"
                   >
                     @if (canDetail()) {
                       <td
@@ -705,6 +712,7 @@ export class StrctDatagridActionBar {}
                       >
                         <button
                           type="button"
+                          [attr.tabindex]="ctlTabindex()"
                           class="strct-dg__detailbtn"
                           [class.strct-dg__detailbtn--active]="row === activeRow()"
                           [attr.aria-expanded]="row === activeRow()"
@@ -723,6 +731,7 @@ export class StrctDatagridActionBar {}
                       >
                         <button
                           type="button"
+                          [attr.tabindex]="ctlTabindex()"
                           class="strct-dg__expandbtn"
                           [class.strct-dg__expandbtn--open]="isExpanded(row)"
                           [attr.aria-expanded]="isExpanded(row)"
@@ -751,6 +760,7 @@ export class StrctDatagridActionBar {}
                             [attr.aria-description]="lockedReason(row) || null"
                             [checked]="isSelected(row)"
                             [disabled]="lockedReason(row) !== null"
+                            [attr.tabindex]="ctlTabindex()"
                             (change)="selectSingle(row)"
                             (click)="$event.stopPropagation()"
                           />
@@ -762,6 +772,7 @@ export class StrctDatagridActionBar {}
                             [attr.aria-description]="lockedReason(row) || null"
                             [checked]="isSelected(row)"
                             [disabled]="lockedReason(row) !== null"
+                            [tabIndex]="ctlTabindex()"
                             (click)="noteRangeIntent($event); $event.stopPropagation()"
                             (checkedChange)="toggleRow(row)"
                           />
@@ -891,6 +902,7 @@ export class StrctDatagridActionBar {}
                       <td class="strct-dg__actioncell">
                         <button
                           type="button"
+                          [attr.tabindex]="ctlTabindex()"
                           class="strct-dg__kebab"
                           [attr.aria-label]="L().rowActions"
                           (click)="openRowMenu(row, $event)"
@@ -2253,6 +2265,29 @@ export class StrctDatagrid {
    * Tab walks the interactive elements inside each row as usual.
    */
   readonly childrenKey = input<string | null>(null);
+  /**
+   * `'table'` (the default) is what the grid has always been: a table whose
+   * controls each take a tab stop. `'grid'` is the APG grid: the table claims
+   * `role="grid"`, the rows carry a roving tabindex so the whole grid is **one**
+   * tab stop, ↑/↓ move the cursor, Home/End jump, →/← step through the focused
+   * row's own controls and Escape comes back out, Space picks and Enter
+   * activates. It also makes a selected row say so — `aria-selected` on a row
+   * reaches no screen reader outside a grid.
+   *
+   * Opt-in, because it changes what Tab does inside the table.
+   */
+  readonly interactionMode = input<'table' | 'grid'>('table');
+  /**
+   * `'none'` hides the tick / radio column while selection keeps working — a
+   * file list selects by clicking the row, not a control in it. The row is
+   * then the control, so pair it with `interactionMode="grid"`.
+   */
+  readonly selectionColumn = input<'auto' | 'none'>('auto');
+  /**
+   * The row was opened: a double-click, or Enter on the focused row in grid
+   * mode. Selection is "which rows do I mean"; activation is "go".
+   */
+  readonly rowActivate = output<StrctRow>();
   /** Emitted when the selection changes. */
   readonly selectionChange = output<StrctRow[]>();
   /** Emitted when the refresh button is clicked. */
@@ -2637,6 +2672,129 @@ export class StrctDatagrid {
         }
         break;
     }
+  }
+
+  // ── The grid interaction model (opt-in) ────────────────────────
+  // APG's grid, at row level: the grid is one tab stop, the cursor row carries
+  // it, the arrows move inside. Cell-level navigation is deliberately not here
+  // — a console grid's cells are text, and its controls live at the row's
+  // edges, so →/← step through those instead.
+
+  /** The row the grid's single tab stop is on. */
+  private readonly cursorRow = signal<unknown>(null);
+
+  protected gridRowTabindex(row: StrctRow): number {
+    const rows = this.renderRows();
+    if (!rows.length) return -1;
+    const cursor = this.cursorRow();
+    const current =
+      cursor != null && rows.some((r) => this.rowKey(r) === cursor) ? cursor : this.rowKey(rows[0]);
+    return current === this.rowKey(row) ? 0 : -1;
+  }
+
+  /** The focused row's own controls, in the order the arrows visit them. */
+  private rowControls(rowEl: HTMLElement): HTMLElement[] {
+    return [
+      ...rowEl.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not(tr)',
+      ),
+    ].filter((el) => el.tagName !== 'TR');
+  }
+
+  protected onGridRowKeydown(row: StrctRow, event: KeyboardEvent): void {
+    const target = event.target as HTMLElement | null;
+    const rowEl = (target?.closest('tr') ?? null) as HTMLElement | null;
+    const onRow = target?.tagName === 'TR';
+    // A text field inside a cell keeps every key it understands.
+    if (target instanceof HTMLInputElement && target.type === 'text') return;
+    const rows = this.renderRows();
+    const idx = rows.indexOf(row);
+
+    switch (event.key) {
+      case 'ArrowDown':
+      case 'ArrowUp': {
+        if (!onRow) return;
+        const next = idx + (event.key === 'ArrowDown' ? 1 : -1);
+        if (next < 0 || next >= rows.length) return;
+        event.preventDefault();
+        if (this.paneOpen()) this.activeRowId.set(this.idOf(rows[next]));
+        this.focusGridRow(next);
+        break;
+      }
+      case 'Home':
+      case 'End': {
+        if (!onRow) return;
+        event.preventDefault();
+        this.focusGridRow(event.key === 'Home' ? 0 : rows.length - 1);
+        break;
+      }
+      case 'ArrowRight':
+      case 'ArrowLeft': {
+        if (!rowEl) return;
+        const controls = this.rowControls(rowEl);
+        if (!controls.length) return;
+        event.preventDefault();
+        const at = controls.indexOf(target as HTMLElement);
+        const step = event.key === 'ArrowRight' ? 1 : -1;
+        // From the row itself the first arrow lands on the first (or last)
+        // control; from a control it steps, and stepping off the start comes
+        // back to the row.
+        if (onRow) {
+          controls[step === 1 ? 0 : controls.length - 1]?.focus();
+        } else if (at + step < 0) {
+          rowEl.focus();
+        } else {
+          controls[at + step]?.focus();
+        }
+        break;
+      }
+      case 'Escape': {
+        if (!onRow && rowEl) {
+          event.preventDefault();
+          rowEl.focus();
+          return;
+        }
+        if (!this.paneOpen()) return;
+        event.preventDefault();
+        this.closePane();
+        break;
+      }
+      case ' ': {
+        if (!onRow || this.mode() === 'none') return;
+        event.preventDefault(); // Space on a row picks it, not scrolls the page
+        if (this.mode() === 'single') this.selectSingle(row);
+        else this.toggleRow(row);
+        break;
+      }
+      case 'Enter': {
+        if (!onRow) return;
+        event.preventDefault();
+        this.onRowActivate(row);
+        break;
+      }
+    }
+  }
+
+  /** Move the cursor to the row at `idx` and focus it once it has rendered. */
+  private focusGridRow(idx: number): void {
+    const rows = this.renderRows();
+    if (idx < 0 || idx >= rows.length) return;
+    this.cursorRow.set(this.rowKey(rows[idx]));
+    setTimeout(() => {
+      const trs = this.hostRef.nativeElement.querySelectorAll<HTMLElement>('tbody tr[tabindex]');
+      trs[idx]?.focus();
+    });
+  }
+
+  /**
+   * "Go": a double-click, or Enter on the focused row. It opens the detail
+   * pane where there is one — a row click that shows the row is what every
+   * console does — and always tells the consumer.
+   */
+  protected onRowActivate(row: StrctRow): void {
+    if (this.lockedReason(row) !== null) return;
+    if (this.canDetail()) this.openDetail(row);
+    this.rowActivate.emit(row);
   }
 
   /** Move the roving tabindex to the row at `idx` and focus its element once
@@ -3191,7 +3349,18 @@ export class StrctDatagrid {
     if (explicit !== 'none') return explicit;
     return this.selectable() ? 'multiple' : 'none';
   });
-  protected readonly hasSelectionColumn = computed(() => this.mode() !== 'none');
+  protected readonly hasSelectionColumn = computed(
+    () => this.mode() !== 'none' && this.selectionColumn() !== 'none',
+  );
+  /** The grid interaction model, opt-in. */
+  protected readonly gridMode = computed(() => this.interactionMode() === 'grid');
+  /**
+   * In grid mode the row is the tab stop and its controls are reached with the
+   * arrows, so they leave the tab order; in table mode nothing changes.
+   */
+  protected ctlTabindex(): number | null {
+    return this.gridMode() ? -1 : null;
+  }
   /** One radio group per grid instance. */
   protected readonly radioName = `strct-dg-pick-${++datagridCounter}`;
 
@@ -3211,6 +3380,13 @@ export class StrctDatagrid {
 
   /** Click anywhere on the row picks it, in single mode only. */
   protected onRowPick(row: StrctRow): void {
+    if (this.gridMode()) {
+      // The cursor follows the pointer, or Tab would return to a row the user
+      // has not looked at since.
+      this.cursorRow.set(this.rowKey(row));
+      // A console opens the row's pane by clicking the row, not a » button.
+      if (this.canDetail()) this.activeRowId.set(this.idOf(row));
+    }
     if (this.mode() !== 'single') return;
     this.selectSingle(row);
   }
