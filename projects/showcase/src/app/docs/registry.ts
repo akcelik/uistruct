@@ -1801,7 +1801,7 @@ export const DOCS: DocCategory[] = [
             type: 'StrctTreeNodeData[]',
             default: 'null',
             description:
-              'On `strct-tree`: data-driven node list (`{ id?; label; icon?; badge?; active?; expanded?; children?; data? }`). When set, projected content is ignored and the tree recurses itself. An `id` gives each node a stable key (trackBy + expansion state + a `data-node-id` attribute); it falls back to `label`.',
+              'On `strct-tree`: data-driven node list (`{ id?; label; icon?; badge?; active?; expanded?; children?; meta?; tag?; hasChildren?; loading?; data? }`). When set, projected content is ignored and the tree recurses itself. An `id` gives each node a stable key (trackBy + expansion state + a `data-node-id` attribute); it falls back to `label`. `meta` is a quiet trailing word and `tag: { label; status? }` a trailing badge — what `[strctTreeTrailing]` is for a projected node. `hasChildren: true` gives the row its chevron and `aria-expanded` before `children` arrives, so a listing can be read on expand (`(nodeToggled)`); `loading: true` puts one captioned row under it and `aria-busy` on it, and a node that turns out to be empty (`hasChildren: false`, `children: []`) loses its chevron again.',
           },
           {
             name: 'canDrag',
@@ -1876,6 +1876,13 @@ export const DOCS: DocCategory[] = [
             default: 'false',
             description: 'On `strct-tree-node`: two-way open state (`[(expanded)]`).',
           },
+          {
+            name: 'loadingLabel',
+            type: 'string',
+            default: "'Loading…'",
+            description:
+              'On `strct-tree`: wording of the row drawn under a node with `loading: true` — localizable, and the row’s accessible name.',
+          },
         ],
         outputs: [
           {
@@ -1931,6 +1938,7 @@ export const DOCS: DocCategory[] = [
           'Give nodes a stable `id` and use `[(expandedIds)]` to persist / restore expansion.',
           'Use node `badge` to show object state on the node.',
           'Use `[nodeMenu]` for per-object right-click actions.',
+          'Read a subtree on expand: `hasChildren: true` up front, `loading: true` while it is read, then the `children`.',
         ],
         dont: ['Do not use a tree for flat lists.'],
       },

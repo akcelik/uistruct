@@ -152,3 +152,26 @@ describe('StrctSectionMenu — entries that are real links', () => {
     expect(fixture.componentInstance.activeId()).toBeNull();
   });
 });
+
+// BUG-58-06: the same as the rail beside it — the attribute the template
+// writes is the directive's to clear, so it has to come from the directive.
+describe('StrctSectionMenu — the current page survives the router', () => {
+  it('keeps aria-current="page" after the navigation settles', async () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: '**', children: [] }])] });
+    const fixture = TestBed.createComponent(StrctSectionMenu);
+    fixture.componentRef.setInput('sections', [
+      {
+        label: 'Backup',
+        items: [{ id: 'policies', label: 'Policies', routerLink: '/backup/policies' }],
+      },
+    ] satisfies StrctMenuSection[]);
+    fixture.detectChanges();
+    const link = (fixture.nativeElement as HTMLElement).querySelector('a.strct-sm__item')!;
+
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0, cancelable: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(link.getAttribute('aria-current')).toBe('page');
+  });
+});

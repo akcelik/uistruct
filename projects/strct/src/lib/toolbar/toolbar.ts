@@ -34,6 +34,24 @@ import { FOCUSABLE_SELECTOR } from '../overlay/focus';
 @Directive({ selector: '[strctToolbarCaption]' })
 export class StrctToolbarCaption {}
 
+/** A control whose own keyboard is the caret's. */
+function isTextEntry(el: HTMLElement | null): boolean {
+  if (!el) return false;
+  // `isContentEditable` is a rendering-time property: jsdom does not implement
+  // it, so the attribute is read too — a consumer's own test sees the same
+  // behaviour as a browser.
+  if (el.isContentEditable) return true;
+  const editable = el.closest('[contenteditable]')?.getAttribute('contenteditable');
+  if (editable !== null && editable !== undefined && editable !== 'false') return true;
+  const tag = el.tagName;
+  if (tag === 'TEXTAREA') return true;
+  if (tag !== 'INPUT') return false;
+  const type = (el as HTMLInputElement).type;
+  return !['button', 'submit', 'reset', 'checkbox', 'radio', 'range', 'color', 'file'].includes(
+    type,
+  );
+}
+
 @Component({
   selector: 'strct-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -191,6 +209,10 @@ export class StrctToolbar {
     const target = event.target as HTMLElement | null;
     if (target?.closest('[role=listbox], [role=menu], [role=dialog], [role=tree], [role=grid]'))
       return;
+    // A text field keeps its arrows for the caret — APG's toolbar says so, and
+    // ArrowLeft inside a searchbox in the bar used to jump to the button
+    // before it instead of moving one character.
+    if (isTextEntry(target)) return;
     const vertical = this.orientation() === 'vertical';
     const prevKey = vertical ? 'ArrowUp' : 'ArrowLeft';
     const nextKey = vertical ? 'ArrowDown' : 'ArrowRight';

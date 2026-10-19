@@ -422,9 +422,25 @@ export class StrctModal {
   }
 
   protected onEscape(event?: Event): void {
-    // A control that used Escape first keeps it: an IME composition, a
-    // searchbox that clears. Both mark the event handled.
+    // A control that used Escape first keeps it: a searchbox that clears
+    // marks the event handled (it did not, until 5.23.0).
     if (event?.defaultPrevented) return;
+    // An IME composition ends on Escape, and the keystroke is the composer's.
+    if ((event as KeyboardEvent | undefined)?.isComposing) return;
+    // An Escape raised inside another surface on top — a command palette
+    // opened over this modal, a menu, a listbox — belongs to that surface.
+    // isTopmostModal only knows about modals, so the palette's Escape used to
+    // close the palette AND the modal. An Escape with the focus on nothing in
+    // particular is still ours.
+    const target = event?.target;
+    const surface =
+      target instanceof Element
+        ? target.closest('[role="dialog"], [role="menu"], [role="listbox"], [role="tree"]')
+        : null;
+    const dialog = (this.elementRef.nativeElement as HTMLElement).querySelector(
+      '.strct-modal__dialog',
+    );
+    if (surface && dialog && surface !== dialog && !dialog.contains(surface)) return;
     // With several modals open, only the topmost one reacts to Escape.
     const allowed = this.closeOnEscape() ?? this.dismissible();
     if (this.open() && allowed && isTopmostModal(this)) this.close();

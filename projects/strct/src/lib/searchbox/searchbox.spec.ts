@@ -62,3 +62,31 @@ describe('StrctSearchbox', () => {
     expect(el.querySelector<HTMLInputElement>('.strct-sb__input')!.disabled).toBe(true);
   });
 });
+
+// BUG-58-05: what is above the searchbox has to be able to tell that the
+// Escape was used — a modal closed on the same keystroke that cleared this.
+describe('StrctSearchbox — Escape', () => {
+  const escape = (input: HTMLInputElement) => {
+    const e = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    input.dispatchEvent(e);
+    return e;
+  };
+
+  it('marks the Escape that clears a value, and leaves an empty one alone', () => {
+    const fixture = TestBed.createComponent(StrctSearchbox);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const input = el.querySelector<HTMLInputElement>('.strct-sb__input')!;
+
+    // Nothing to clear: the keystroke is not ours.
+    expect(escape(input).defaultPrevented).toBe(false);
+
+    input.value = 'hv-01';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    const used = escape(input);
+    fixture.detectChanges();
+    expect(used.defaultPrevented).toBe(true);
+    expect(fixture.componentInstance.value()).toBe('');
+  });
+});

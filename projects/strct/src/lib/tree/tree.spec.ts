@@ -617,3 +617,104 @@ describe('StrctTree — drag and drop (FR-43-04)', () => {
     expect(el.style.maxHeight).toBe('260px');
   });
 });
+
+// FR-58-05 / FR-58-06: trailing marks on a data node, and a node whose
+// children have not been read yet.
+describe('StrctTree data nodes', () => {
+  const build = (nodes: StrctTreeNodeData[], loadingLabel?: string) => {
+    const fixture = TestBed.createComponent(StrctTree);
+    fixture.componentRef.setInput('nodes', nodes);
+    if (loadingLabel !== undefined) fixture.componentRef.setInput('loadingLabel', loadingLabel);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      row: (id: string) =>
+        el.querySelector<HTMLElement>(`[data-node-id="${id}"] > .strct-tnode__row`)!,
+    };
+  };
+
+  it('draws a trailing tag and a quiet meta on the row', () => {
+    const { row } = build([
+      { id: 'vm', label: 'VM 1', meta: '4 vCPU', tag: { label: 'Running', status: 'success' } },
+    ]);
+    const r = row('vm');
+    const tag = r.querySelector('.strct-tnode__tag')!;
+    expect(tag.textContent?.trim()).toBe('Running');
+    expect(tag.classList).toContain('strct-badge--success');
+    expect(r.querySelector('.strct-tnode__meta')?.textContent?.trim()).toBe('4 vCPU');
+    // They follow the label, and the label is still the row's first text.
+    expect(r.textContent?.trim().startsWith('VM 1')).toBe(true);
+  });
+
+  it('a tag without a status falls back to neutral, and no marks means no markup', () => {
+    const { row } = build([
+      { id: 'a', label: 'A', tag: { label: 'Draft' } },
+      { id: 'b', label: 'B' },
+    ]);
+    const tag = row('a').querySelector('.strct-tnode__tag')!;
+    expect([...tag.classList].some((c) => c.startsWith('strct-badge--'))).toBe(false);
+    expect(row('b').querySelector('.strct-tnode__tag')).toBeNull();
+    expect(row('b').querySelector('.strct-tnode__meta')).toBeNull();
+  });
+
+  it('hasChildren gives a chevron and aria-expanded before the children arrive', () => {
+    const { fixture, el, row } = build([{ id: 'host', label: 'Host', hasChildren: true }]);
+    const r = row('host');
+    expect(r.querySelector('.strct-tnode__chevron')).toBeTruthy();
+    expect(r.getAttribute('aria-expanded')).toBe('false');
+
+    const toggled: { node: StrctTreeNodeData; expanded: boolean }[] = [];
+    fixture.componentInstance.nodeToggled.subscribe((e) => toggled.push(e));
+    r.querySelector<HTMLElement>('.strct-tnode__chevron')!.click();
+    fixture.detectChanges();
+    // It opens and asks for its listing, with no children to show yet.
+    expect(r.getAttribute('aria-expanded')).toBe('true');
+    expect(toggled).toEqual([
+      { node: { id: 'host', label: 'Host', hasChildren: true }, expanded: true },
+    ]);
+    expect(el.querySelectorAll('.strct-tnode').length).toBe(1);
+  });
+
+  it('shows one quiet row while the children are being read, then the children', () => {
+    const { fixture, el, row } = build(
+      [{ id: 'host', label: 'Host', hasChildren: true, loading: true, expanded: true }],
+      'Reading…',
+    );
+    expect(row('host').getAttribute('aria-busy')).toBe('true');
+    const loading = el.querySelector('.strct-tnode__loading')!;
+    expect(loading.textContent).toContain('Reading…');
+    expect(loading.querySelector('.strct-spinner')?.getAttribute('aria-label')).toBe('Reading…');
+
+    fixture.componentRef.setInput('nodes', [
+      {
+        id: 'host',
+        label: 'Host',
+        hasChildren: true,
+        expanded: true,
+        children: [{ id: 'vm', label: 'VM 1' }],
+      },
+    ]);
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-tnode__loading')).toBeNull();
+    expect(row('host').getAttribute('aria-busy')).toBeNull();
+    expect(row('vm').textContent).toContain('VM 1');
+  });
+
+  it('a node that turns out to be empty loses its chevron', () => {
+    const { fixture, row } = build([
+      { id: 'host', label: 'Host', hasChildren: true, expanded: true },
+    ]);
+    expect(row('host').querySelector('.strct-tnode__chevron')).toBeTruthy();
+
+    fixture.componentRef.setInput('nodes', [
+      { id: 'host', label: 'Host', hasChildren: false, expanded: true, children: [] },
+    ]);
+    fixture.detectChanges();
+    const r = row('host');
+    expect(r.querySelector('.strct-tnode__chevron')).toBeNull();
+    expect(r.querySelector('.strct-tnode__spacer')).toBeTruthy();
+    expect(r.getAttribute('aria-expanded')).toBeNull();
+  });
+});

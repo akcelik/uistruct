@@ -104,6 +104,7 @@ export interface StrctMenuSection {
           class="strct-sm__item"
           [routerLink]="item.routerLink"
           routerLinkActive
+          ariaCurrentWhenActive="page"
           #rla="routerLinkActive"
           [class.strct-sm__item--active]="isActive(item, rla.isActive)"
           [attr.aria-current]="isActive(item, rla.isActive) ? 'page' : null"

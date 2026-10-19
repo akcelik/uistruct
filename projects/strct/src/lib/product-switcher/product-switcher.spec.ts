@@ -216,3 +216,43 @@ describe('StrctProductSwitcher', () => {
     expect(chip.textContent!.trim()).toBe('HyperStruct Backup');
   });
 });
+
+// BUG-58-10: the rows used to project one shared template, and a node matches
+// the first slot it fits — so the icon, the label and the health line landed
+// in the wrong places and the description sat beside the label, not under it.
+describe('StrctProductSwitcher — every row keeps its own parts', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('each branch puts the icon, the label and the health line where they belong', async () => {
+    media(false);
+    const { fixture, el } = build();
+    await openMenu(fixture, el);
+    const rows = [...document.querySelectorAll<HTMLElement>('.strct-dd__item')];
+    // Three products (two routed, one plain) and the admin footer entry: all
+    // three branches of the row template are on screen at once.
+    expect(rows.length).toBe(4);
+    expect(rows.map((r) => r.tagName)).toEqual(['A', 'A', 'STRCT-DROPDOWN-ITEM', 'A']);
+
+    for (const row of rows) {
+      expect(row.querySelector('.strct-dd__itemlead')).toBeTruthy();
+      const label = row.querySelector('.strct-dd__itemlabel')!;
+      expect(label).toBeTruthy();
+      // The label is the product's name, not the name plus its health line.
+      expect(label.textContent?.trim()).toMatch(/^(HyperStruct|Administration)/);
+      const desc = row.querySelector('.strct-dd__itemdesc');
+      // A description, when there is one, is its own node under the label —
+      // inside the text column, never inside the label.
+      expect(label.querySelector('.strct-dd__itemdesc')).toBeNull();
+      if (desc) expect(desc.closest('.strct-dd__itemtext')).toBeTruthy();
+    }
+
+    const manager = rows[0];
+    expect(manager.querySelector('.strct-dd__itemlabel')!.textContent?.trim()).toBe(
+      'HyperStruct Manager',
+    );
+    expect(manager.querySelector('.strct-dd__itemdesc')!.textContent).toContain('128 hosts');
+    expect(manager.querySelector('.strct-dd__itemdesc strct-status-dot')).toBeTruthy();
+    // Recovery has no description, so it has no description node either.
+    expect(rows[2].querySelector('.strct-dd__itemdesc')).toBeNull();
+  });
+});

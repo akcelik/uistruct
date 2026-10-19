@@ -45,8 +45,15 @@ export interface StrctProductItem {
   description?: string;
   /** The dot beside that line. */
   status?: StrctStatus;
-  /** The product's own colour (a token or value): the icons take it. */
+  /** The product's own colour (a token or value): the row's icon takes it. */
   tone?: string;
+  /**
+   * The chip's own shade. The chip sits on `--hdr`, which is dark in every
+   * scheme, and the menu rows on `--bg-1`: one colour measured 2.45–2.93 : 1
+   * on one of the two, under the 3 : 1 a graphical object owes. Falls back to
+   * `tone`.
+   */
+  headerTone?: string;
   /** Render the row as a real router link (middle-click, a new tab). */
   routerLink?: string | unknown[];
   /** Render the row as a plain link. */
@@ -83,22 +90,6 @@ export interface StrctProductItem {
     StrctDropdownDivider,
   ],
   template: `
-    <!-- What a row holds, whichever element carries it. -->
-    <ng-template #rowBody let-item>
-      @if (item.icon) {
-        <strct-icon strctDropdownItemIcon [tone]="item.tone ?? ''" [name]="item.icon" [size]="16" />
-      }
-      <span strctDropdownItemLabel>{{ item.name }}</span>
-      @if (item.description) {
-        <span strctDropdownItemDescription>
-          @if (item.status) {
-            <strct-status-dot [status]="item.status" />
-          }
-          {{ item.description }}
-        </span>
-      }
-    </ng-template>
-
     <!-- A row is a link where the product has an address, so it can be opened
          in a new tab — and a menuitemradio either way, checked on the one you
          are in. -->
@@ -110,7 +101,23 @@ export interface StrctProductItem {
           [selected]="item.id === current()"
           (click)="pick(item, $event)"
         >
-          <ng-container *ngTemplateOutlet="rowBody; context: { $implicit: item }" />
+          @if (item.icon) {
+            <strct-icon
+              strctDropdownItemIcon
+              [tone]="item.tone ?? ''"
+              [name]="item.icon"
+              [size]="16"
+            />
+          }
+          <span strctDropdownItemLabel>{{ item.name }}</span>
+          @if (item.description) {
+            <span strctDropdownItemDescription>
+              @if (item.status) {
+                <strct-status-dot [status]="item.status" />
+              }
+              {{ item.description }}
+            </span>
+          }
         </a>
       } @else if (item.href && !item.disabled) {
         <a
@@ -119,7 +126,23 @@ export interface StrctProductItem {
           [selected]="item.id === current()"
           (click)="pick(item, $event)"
         >
-          <ng-container *ngTemplateOutlet="rowBody; context: { $implicit: item }" />
+          @if (item.icon) {
+            <strct-icon
+              strctDropdownItemIcon
+              [tone]="item.tone ?? ''"
+              [name]="item.icon"
+              [size]="16"
+            />
+          }
+          <span strctDropdownItemLabel>{{ item.name }}</span>
+          @if (item.description) {
+            <span strctDropdownItemDescription>
+              @if (item.status) {
+                <strct-status-dot [status]="item.status" />
+              }
+              {{ item.description }}
+            </span>
+          }
         </a>
       } @else {
         <strct-dropdown-item
@@ -127,7 +150,23 @@ export interface StrctProductItem {
           [disabled]="!!item.disabled"
           (click)="pick(item)"
         >
-          <ng-container *ngTemplateOutlet="rowBody; context: { $implicit: item }" />
+          @if (item.icon) {
+            <strct-icon
+              strctDropdownItemIcon
+              [tone]="item.tone ?? ''"
+              [name]="item.icon"
+              [size]="16"
+            />
+          }
+          <span strctDropdownItemLabel>{{ item.name }}</span>
+          @if (item.description) {
+            <span strctDropdownItemDescription>
+              @if (item.status) {
+                <strct-status-dot [status]="item.status" />
+              }
+              {{ item.description }}
+            </span>
+          }
         </strct-dropdown-item>
       }
     </ng-template>
@@ -167,7 +206,7 @@ export interface StrctProductItem {
             class="strct-ps__icon"
             [name]="item.icon"
             [size]="16"
-            [style.color]="item.tone || null"
+            [style.color]="item.headerTone || item.tone || null"
           />
         }
         <span class="strct-ps__label">{{ chipText() }}</span>

@@ -386,3 +386,59 @@ describe('StrctModal — closeOnEscape and closeOnBackdrop apart', () => {
     expect(fixture.componentInstance.open()).toBe(false);
   });
 });
+
+// BUG-58-05: the three Escapes that are not the modal's.
+describe('StrctModal — an Escape something else used', () => {
+  function make() {
+    const fixture = TestBed.createComponent(StrctModal);
+    fixture.componentRef.setInput('open', true);
+    fixture.componentRef.setInput('closeOnEscape', true);
+    fixture.componentRef.setInput('heading', 'Assistant');
+    fixture.detectChanges();
+    // The modal renders where the fixture is, which is in the document.
+    document.body.appendChild(fixture.nativeElement as HTMLElement);
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+  const escapeFrom = (target: EventTarget, init: KeyboardEventInit = {}) => {
+    const e = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+      ...init,
+    });
+    target.dispatchEvent(e);
+    return e;
+  };
+
+  it("an Escape that ends an IME composition is the composer's", () => {
+    const { fixture, el } = make();
+    const dialog = el.querySelector('.strct-modal__dialog')!;
+    escapeFrom(dialog, { isComposing: true });
+    fixture.detectChanges();
+    expect(fixture.componentInstance.open()).toBe(true);
+  });
+
+  it("an Escape raised inside another surface on top is that surface's", () => {
+    const { fixture } = make();
+    // A command palette opened over the modal (Ctrl-K), focus in its input.
+    const palette = document.createElement('div');
+    palette.setAttribute('role', 'dialog');
+    const input = document.createElement('input');
+    palette.appendChild(input);
+    document.body.appendChild(palette);
+    try {
+      escapeFrom(input);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.open()).toBe(true);
+    } finally {
+      palette.remove();
+    }
+  });
+
+  it("an Escape with the focus on nothing in particular is still the modal's", () => {
+    const { fixture, el } = make();
+    escapeFrom(el.querySelector('.strct-modal__dialog')!);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.open()).toBe(false);
+  });
+});
