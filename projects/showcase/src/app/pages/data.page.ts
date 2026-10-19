@@ -24,6 +24,7 @@ import {
   StrctList,
   StrctDatagridActionBar,
   StrctDatagridColumn,
+  StrctDatagridGroup,
   StrctDatagridFilters,
   StrctDatagridLazyState,
   StrctDesc,
@@ -589,6 +590,25 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             <strct-badge [status]="badgeFor(value)">{{ value }}</strct-badge>
           </ng-template>
         </strct-datagrid>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="datagrid-groups-toned"
+      owner="datagrid"
+      heading="Groups the consumer defines, in their own tone"
+      description="groups[] names the order, the label, the count, a status and a note — a results page grouped by what the operator must do. The status tints the label and its count chip the way strct-badge does, and the note is a second, quieter voice after it rather than a continuation of the heading. A screen reader hears the three as one sentence: “Needs your decision, 2. Blocks the join until fixed or accepted by name.”"
+      code='<strct-datagrid [groups]="[{ value: &#39;block&#39;, label: &#39;Needs your decision&#39;, status: &#39;critical&#39;, note: &#39;Blocks the join…&#39; }]" groupBy="severity" />'
+    >
+      <div class="dg-wrap">
+        <strct-datagrid
+          style="width: 100%;"
+          [columns]="checkCols"
+          [rows]="checkRows"
+          rowId="id"
+          groupBy="severity"
+          [groups]="checkGroups"
+        />
       </div>
     </app-demo>
 
@@ -1375,6 +1395,36 @@ mtu = 9000`;
     { id: 'h4', name: 'hv-07.edge', pool: 'Edge', agent: '4.4.0' },
   ];
   protected readonly pickedHost = signal<unknown>('h1');
+  // A check run grouped by what the operator must do (FR-56-01 + BUG-58-01).
+  protected readonly checkCols: StrctDatagridColumn[] = [
+    { key: 'test', label: 'Test' },
+    { key: 'host', label: 'Host' },
+    { key: 'detail', label: 'Detail', muted: true },
+  ];
+  protected readonly checkRows: StrctRow[] = [
+    { id: 1, severity: 'block', test: 'Cluster time', host: 'hv-02', detail: '4 minutes apart' },
+    { id: 2, severity: 'block', test: 'NTP reachable', host: 'hv-04', detail: 'No response' },
+    { id: 3, severity: 'warn', test: 'Datastore headroom', host: 'SSD-01', detail: '86% used' },
+    {
+      id: 4,
+      severity: 'pass',
+      test: 'Network redundancy',
+      host: 'all',
+      detail: 'Two uplinks each',
+    },
+    { id: 5, severity: 'pass', test: 'Agent version', host: 'all', detail: '4.4.1' },
+  ];
+  protected readonly checkGroups: StrctDatagridGroup[] = [
+    {
+      value: 'block',
+      label: 'Needs your decision',
+      status: 'critical',
+      note: 'Blocks the join until fixed or accepted by name.',
+    },
+    { value: 'warn', label: 'Worth a look', status: 'warning', note: 'The join proceeds.' },
+    { value: 'pass', label: 'Passed', status: 'success' },
+  ];
+
   protected readonly gridPicked = signal<unknown>('h1');
   protected readonly gridOpened = signal('');
   protected readonly pickedGroup = signal(0);

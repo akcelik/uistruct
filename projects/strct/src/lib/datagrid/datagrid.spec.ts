@@ -2856,3 +2856,143 @@ describe('StrctDatagrid — empty states and the bulk escape', () => {
     expect(lazy.el.querySelector('.strct-dg__bulk')).toBeNull();
   });
 });
+
+// BUG-58-13 / BUG-58-14 — the saved state is read before anything acts on it.
+describe('StrctDatagrid — column state is read first', () => {
+  const COLS: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'size', label: 'Size', sortable: true },
+    { key: 'note', label: 'Note', hidden: true },
+  ];
+  const ROWS: StrctRow[] = [
+    { id: 1, name: 'b', size: 2, note: 'x' },
+    { id: 2, name: 'a', size: 1, note: 'y' },
+  ];
+
+  @Component({
+    imports: [StrctDatagrid],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `<strct-datagrid
+      [columns]="cols"
+      [rows]="rows"
+      rowId="id"
+      [stateKey]="key()"
+      [columnState]="bound()"
+      [lazy]="lazy()"
+      [total]="99"
+      (lazyLoad)="asks.push($event)"
+    />`,
+  })
+  class Host {
+    cols = COLS;
+    rows = ROWS;
+    key = signal<string | null>(null);
+    bound = signal<StrctDatagridColumnState | null>(null);
+    lazy = signal(false);
+    asks: StrctDatagridLazyState[] = [];
+  }
+
+  afterEach(() => localStorage.clear());
+
+  it('restores what the operator saved — a template-bound stateKey is not null by then', () => {
+    localStorage.setItem(
+      'strct-dg:k',
+      JSON.stringify({ widths: {}, hidden: [], sortKey: 'size', sortDir: 'desc' }),
+    );
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.key.set('k');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    // The column the operator un-hid stays shown, though it declares hidden.
+    const headers = [...el.querySelectorAll('thead th')].map((h) => h.textContent!.trim());
+    expect(headers).toContain('Note');
+    // And the sort it was left in is the sort it opens with.
+    const size = [...el.querySelectorAll('thead th')].find((h) => h.textContent!.includes('Size'))!;
+    expect(size.getAttribute('aria-sort')).toBe('descending');
+    // What was stored is still what is stored: the defaults did not land on it.
+    expect(JSON.parse(localStorage.getItem('strct-dg:k')!)).toMatchObject({
+      sortKey: 'size',
+      sortDir: 'desc',
+      hidden: [],
+    });
+  });
+
+  it('asks the server once, with the sort already applied', () => {
+    const fixture = TestBed.createComponent(Host);
+    const host = fixture.componentInstance;
+    host.lazy.set(true);
+    host.bound.set({ widths: {}, hidden: [], sortKey: 'size', sortDir: 'desc' });
+    fixture.detectChanges();
+
+    // It used to ask twice: unsorted, then sorted — the first request was
+    // sent to the server and cancelled.
+    expect(host.asks.length).toBe(1);
+    expect(host.asks[0]).toMatchObject({ sortKey: 'size', sortDir: 'desc' });
+  });
+
+  it('still saves what the operator changes afterwards', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.key.set('k2');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    (el.querySelector('thead .strct-dg__sortbtn') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(JSON.parse(localStorage.getItem('strct-dg:k2')!)).toMatchObject({
+      sortKey: 'name',
+      sortDir: 'asc',
+    });
+  });
+});
+
+// BUG-58-01 / BUG-58-03 — what the group header draws, and whose width is whose.
+describe('StrctDatagrid — group tones and the paned list width', () => {
+  function sheet(): string {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', [{ key: 'n', label: 'N' }]);
+    fixture.componentRef.setInput('rows', [{ n: 'a' }]);
+    fixture.detectChanges();
+    return [...document.querySelectorAll('style')]
+      .map((s) => s.textContent ?? '')
+      .join('')
+      .replace(/\s+/g, ' ');
+  }
+
+  it('draws the status classes the template has always written', () => {
+    const css = sheet();
+    // The template wrote --critical / --warning / --success and the stylesheet
+    // had a rule for none of them: four groups of different severity looked
+    // identical.
+    for (const [cls, token] of [
+      ['grouplabel--critical', 'critical'],
+      ['grouplabel--warning', 'warning'],
+      ['grouplabel--success', 'success'],
+    ]) {
+      expect(css, cls).toMatch(new RegExp(`\\.strct-dg__${cls} \\{ color: var\\(--${token}\\)`));
+    }
+    // The count chip's status rules must come after its base rule, or the
+    // accent wash wins on equal specificity.
+    const base = css.indexOf('.strct-dg__groupcount {');
+    const toned = css.indexOf('.strct-dg__groupcount--critical');
+    expect(base).toBeGreaterThan(-1);
+    expect(toned).toBeGreaterThan(base);
+    // The note is a second voice, not more heading.
+    expect(css).toMatch(/\.strct-dg__groupnote \{[^}]*font-weight: 400/);
+  });
+
+  it('gives the paned width to the scroller alone, and only to this list', () => {
+    const css = sheet();
+    // A percentage used to compound: the list was 40% of the layout and the
+    // table 40% of the list.
+    expect(css).toMatch(
+      /\.strct-dg__layout--paned > \.strct-dg__scroll \{[^}]*width: var\(--strct-dg-pane-list-w/,
+    );
+    expect(css).toMatch(
+      /\.strct-dg__layout--paned > \.strct-dg__scroll > \.strct-dg \{[^}]*width: 100%/,
+    );
+    // Descendant selectors reached a datagrid drawn inside the pane.
+    expect(css).not.toMatch(/\.strct-dg__layout--paned \.strct-dg \{/);
+    expect(css).not.toMatch(/\.strct-dg__layout--panetakeover \.strct-dg__scroll \{/);
+  });
+});
