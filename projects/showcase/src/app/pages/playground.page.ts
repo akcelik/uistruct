@@ -566,12 +566,12 @@ const PLAYGROUND: PlaygroundCmp[] = [
         min-height: 220px;
         padding: 28px;
         border: 1px solid var(--b2);
-        border-radius: 11px;
+        border-radius: 5px;
         background: var(--bg-2);
       }
       .pg__controls {
         border: 1px solid var(--b2);
-        border-radius: 11px;
+        border-radius: 5px;
         background: var(--bg-1);
         padding: 14px;
       }
@@ -598,7 +598,7 @@ const PLAYGROUND: PlaygroundCmp[] = [
       .pg__code {
         margin-top: 16px;
         border: 1px solid var(--b2);
-        border-radius: 11px;
+        border-radius: 5px;
         overflow: hidden;
       }
       .pg__code-bar {

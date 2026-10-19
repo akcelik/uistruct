@@ -98,7 +98,7 @@ const HEX = /^#([0-9a-f]{6})$/i;
         align-items: center;
         gap: 9px;
         padding: 6px 11px 6px 7px;
-        border-radius: 6px;
+        border-radius: 3px;
         cursor: pointer;
         font-family: var(--font);
         font-size: 13px;
@@ -112,7 +112,7 @@ const HEX = /^#([0-9a-f]{6})$/i;
       .strct-cp__swatch {
         width: 20px;
         height: 20px;
-        border-radius: 5px;
+        border-radius: 2px;
         flex-shrink: 0;
         border: 1px solid var(--b3);
         background-clip: padding-box;
@@ -130,7 +130,7 @@ const HEX = /^#([0-9a-f]{6})$/i;
         padding: 10px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 9px;
+        border-radius: 4px;
         box-shadow: var(--shh);
       }
       .strct-cp__grid {
@@ -141,7 +141,7 @@ const HEX = /^#([0-9a-f]{6})$/i;
       }
       .strct-cp__chip {
         aspect-ratio: 1;
-        border-radius: 5px;
+        border-radius: 2px;
         cursor: pointer;
         padding: 0;
         border: 1px solid var(--b2);

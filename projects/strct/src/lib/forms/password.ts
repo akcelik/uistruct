@@ -88,7 +88,7 @@ const LEVEL_COLORS = [
         display: inline-flex;
         padding: 5px;
         border: 0;
-        border-radius: 5px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t2);
         cursor: pointer;
@@ -111,7 +111,7 @@ const LEVEL_COLORS = [
       .strct-pw__bar {
         flex: 1;
         height: 3px;
-        border-radius: 2px;
+        border-radius: 1px;
         transition: background 0.2s ease;
       }
       .strct-pw__label {

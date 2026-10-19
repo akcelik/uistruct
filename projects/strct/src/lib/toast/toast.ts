@@ -251,7 +251,7 @@ const MAX_VISIBLE_TOASTS = 5;
         background: transparent;
         color: var(--t3);
         cursor: pointer;
-        border-radius: 4px;
+        border-radius: 2px;
       }
       .strct-toast__close:hover {
         color: var(--t1);

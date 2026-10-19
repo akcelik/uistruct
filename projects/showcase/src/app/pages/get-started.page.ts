@@ -120,7 +120,7 @@ import { PACKAGE_NAME } from '../docs/registry';
       .gs__code {
         margin: 0 0 12px;
         padding: 13px 16px;
-        border-radius: 9px;
+        border-radius: 4px;
         overflow-x: auto;
         font-family: var(--mono);
         font-size: 13px;

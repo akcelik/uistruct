@@ -77,7 +77,7 @@ let toggleCounter = 0;
         position: relative;
         width: 34px;
         height: 19px;
-        border-radius: 11px;
+        border-radius: 5px;
         flex-shrink: 0;
         background: var(--bg-3);
         border: 1px solid var(--b3);

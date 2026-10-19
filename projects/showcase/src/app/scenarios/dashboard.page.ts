@@ -385,13 +385,13 @@ const HEAT: number[][] = [
         gap: 12px;
         padding: 14px 16px;
         border: 1px solid var(--b2);
-        border-radius: 11px;
+        border-radius: 5px;
         background: var(--bg-1);
       }
       .kpi__icon {
         display: inline-flex;
         padding: 9px;
-        border-radius: 9px;
+        border-radius: 4px;
         color: var(--acc);
         background: var(--acc-s);
       }
@@ -469,7 +469,7 @@ const HEAT: number[][] = [
       .dot {
         width: 9px;
         height: 9px;
-        border-radius: 3px;
+        border-radius: 1px;
         flex-shrink: 0;
       }
       .dot--ok {

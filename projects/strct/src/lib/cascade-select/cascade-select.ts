@@ -94,7 +94,7 @@ export abstract class StrctCascadeHost {
         padding: 4px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 7px;
+        border-radius: 3px;
         box-shadow: var(--shh);
       }
       .strct-csc:focus {
@@ -110,7 +110,7 @@ export abstract class StrctCascadeHost {
         width: 100%;
         padding: 7px 8px 7px 10px;
         border: 0;
-        border-radius: 5px;
+        border-radius: 2px;
         cursor: pointer;
         background: transparent;
         color: var(--t1);

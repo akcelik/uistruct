@@ -107,7 +107,7 @@ let tourCounter = 0;
         position: fixed;
         z-index: calc(var(--z-tour) + 1);
         border: 2px solid var(--acc);
-        border-radius: 9px;
+        border-radius: 4px;
         box-shadow:
           0 0 0 4px var(--acc30),
           0 0 0 9999px var(--backdrop);
@@ -120,7 +120,7 @@ let tourCounter = 0;
         padding: 14px 16px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 9px;
+        border-radius: 4px;
         box-shadow: var(--shh);
       }
       .strct-tour__step {

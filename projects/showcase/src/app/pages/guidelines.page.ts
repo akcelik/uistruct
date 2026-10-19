@@ -178,7 +178,7 @@ interface Row {
         flex-wrap: wrap;
         padding: 20px;
         border: 1px solid var(--b2);
-        border-radius: 11px;
+        border-radius: 5px;
         background: var(--bg-2);
       }
       .gl__demo--block {
@@ -193,7 +193,7 @@ interface Row {
         padding: 8px 12px;
         background: var(--acc-m);
         border: 1px solid var(--acc30);
-        border-radius: 8px;
+        border-radius: 4px;
       }
       .gl__bulkcount {
         color: var(--acc);
@@ -203,7 +203,7 @@ interface Row {
       }
       .gl__list {
         border: 1px solid var(--b2);
-        border-radius: 9px;
+        border-radius: 4px;
         overflow: hidden;
         background: var(--bg-1);
       }

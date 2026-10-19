@@ -1203,7 +1203,7 @@ export class StrctDatagridActionBar {}
         align-items: center;
         justify-content: center;
         font-size: 12px;
-        border-radius: 9px;
+        border-radius: 4px;
         background: var(--acc-m);
         color: var(--acc);
         font-variant-numeric: tabular-nums;
@@ -1311,12 +1311,12 @@ export class StrctDatagridActionBar {}
       /* The table rounds only the frame corners it actually touches (no
        * toolbar above / no footer below); interior edges stay square. */
       .strct-dg-host:not(:has(.strct-dg__toolbar)) .strct-dg {
-        border-start-start-radius: 9px;
-        border-start-end-radius: 9px;
+        border-start-start-radius: 4px;
+        border-start-end-radius: 4px;
       }
       .strct-dg-host:not(:has(.strct-dg__foot)) .strct-dg {
-        border-end-start-radius: 9px;
-        border-end-end-radius: 9px;
+        border-end-start-radius: 4px;
+        border-end-end-radius: 4px;
       }
       .strct-dg th,
       .strct-dg td {
@@ -1453,7 +1453,7 @@ export class StrctDatagridActionBar {}
         display: inline-flex;
         padding: 4px;
         border: 0;
-        border-radius: 5px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t3);
         cursor: pointer;
@@ -1469,7 +1469,7 @@ export class StrctDatagridActionBar {}
         display: inline-flex;
         padding: 3px;
         border: 0;
-        border-radius: 4px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t3);
         cursor: pointer;
@@ -1489,7 +1489,7 @@ export class StrctDatagridActionBar {}
         display: inline-flex;
         padding: 3px;
         border: 0;
-        border-radius: 4px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t3);
         cursor: pointer;
@@ -1601,7 +1601,7 @@ export class StrctDatagridActionBar {}
         background: var(--bg-1);
         border: 1px solid var(--b2);
         border-inline-start: 2px solid var(--acc);
-        border-radius: 8px;
+        border-radius: 4px;
         border-start-start-radius: 0;
         border-end-start-radius: 0;
         overflow: hidden;
@@ -1622,7 +1622,7 @@ export class StrctDatagridActionBar {}
         display: inline-flex;
         padding: 3px;
         border: 0;
-        border-radius: 4px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t3);
         cursor: pointer;
@@ -1747,7 +1747,7 @@ export class StrctDatagridActionBar {}
         min-width: 180px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: 4px;
         box-shadow: var(--shadow-pop);
         padding: 6px;
         display: flex;
@@ -1763,7 +1763,7 @@ export class StrctDatagridActionBar {}
         align-items: center;
         gap: 8px;
         padding: 5px 8px;
-        border-radius: 6px;
+        border-radius: 3px;
         cursor: pointer;
         font-size: 12px;
         color: var(--t1);
@@ -1794,7 +1794,7 @@ export class StrctDatagridActionBar {}
         margin-inline-start: 2px;
         padding: 0;
         border: 0;
-        border-radius: 4px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t3);
         cursor: pointer;
@@ -1821,7 +1821,7 @@ export class StrctDatagridActionBar {}
         padding: 10px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 7px;
+        border-radius: 3px;
         box-shadow: var(--shh);
         font-weight: 400;
         text-transform: none;
@@ -1890,7 +1890,7 @@ export class StrctDatagridActionBar {}
         margin-inline-end: 4px;
         padding: 0;
         border: 0;
-        border-radius: 4px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t3);
         cursor: pointer;

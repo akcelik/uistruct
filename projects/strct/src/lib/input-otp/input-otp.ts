@@ -80,7 +80,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         color: var(--t1);
         background: var(--bg-2);
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: 4px;
         transition:
           border-color 0.14s ease,
           box-shadow 0.14s ease,

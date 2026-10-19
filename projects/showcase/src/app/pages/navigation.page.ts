@@ -413,7 +413,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         width: 100%;
         max-width: 560px;
         border: 1px solid var(--b2);
-        border-radius: 10px;
+        border-radius: 5px;
         overflow: hidden;
       }
       .rail-demo__canvas {
@@ -438,7 +438,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         width: 244px;
         padding: 8px;
         border: 1px solid var(--b2);
-        border-radius: 10px;
+        border-radius: 5px;
         background: var(--bg-1);
       }
     `,

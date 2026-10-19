@@ -203,7 +203,7 @@ const round = (n: number): number => Math.round(n * 100) / 100;
       .strct-donut__swatch {
         width: 9px;
         height: 9px;
-        border-radius: 2px;
+        border-radius: 1px;
         flex-shrink: 0;
       }
       .strct-donut__leg-label {

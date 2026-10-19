@@ -261,7 +261,7 @@ let comboboxCounter = 0;
         color: var(--t3);
         background: none;
         border: none;
-        border-radius: 3px;
+        border-radius: 1px;
         cursor: pointer;
       }
       .strct-cbx__chip-x:hover {
@@ -279,7 +279,7 @@ let comboboxCounter = 0;
         color: var(--t3);
         background: none;
         border: none;
-        border-radius: 3px;
+        border-radius: 1px;
         cursor: pointer;
       }
       .strct-cbx__clear:hover {
@@ -302,7 +302,7 @@ let comboboxCounter = 0;
         padding: 4px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 7px;
+        border-radius: 3px;
         box-shadow: var(--shh);
       }
       .strct-cbx__group {
@@ -318,7 +318,7 @@ let comboboxCounter = 0;
         align-items: center;
         gap: 8px;
         padding: 9px 10px;
-        border-radius: 5px;
+        border-radius: 2px;
         cursor: pointer;
         font-size: 13px;
         color: var(--t1);
@@ -368,7 +368,7 @@ let comboboxCounter = 0;
       /* Free-form value row (allowCustomValue) — pinned to the list end. */
       .strct-cbx__opt--custom {
         border-top: 1px solid var(--b2);
-        border-radius: 0 0 5px 5px;
+        border-radius: 0 0 2px 2px;
         color: var(--t2);
       }
       .strct-cbx__chip-icon {

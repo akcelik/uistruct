@@ -54,7 +54,7 @@ import { ApiRow } from './registry';
       .api {
         margin-top: 14px;
         border: 1px solid var(--b2);
-        border-radius: 9px;
+        border-radius: 4px;
         overflow: hidden;
         background: var(--bg-1);
       }
@@ -163,7 +163,7 @@ export class ApiTable {
       }
       .ug__col {
         border: 1px solid var(--b2);
-        border-radius: 9px;
+        border-radius: 4px;
         padding: 14px 16px;
         background: var(--bg-1);
         border-top-width: 3px;
@@ -315,7 +315,7 @@ export interface PageRef {
         gap: 3px;
         padding: 12px 16px;
         border: 1px solid var(--b2);
-        border-radius: 9px;
+        border-radius: 4px;
         text-decoration: none;
         background: var(--bg-1);
         min-width: 160px;

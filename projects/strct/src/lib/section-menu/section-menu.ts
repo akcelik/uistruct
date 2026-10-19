@@ -191,7 +191,7 @@ export interface StrctMenuSection {
         width: 100%;
         padding: 7px 9px;
         border: 0;
-        border-radius: 6px;
+        border-radius: 3px;
         background: transparent;
         color: var(--t2);
         font-size: 13px;
@@ -255,7 +255,7 @@ export interface StrctMenuSection {
         text-decoration: none;
         padding: 7px 10px;
         border: 0;
-        border-radius: 6px;
+        border-radius: 3px;
         background: transparent;
         color: var(--t1);
         font-size: 13px;
@@ -310,7 +310,7 @@ export interface StrctMenuSection {
         font-size: 12px;
         font-weight: 600;
         line-height: 1;
-        border-radius: 9px;
+        border-radius: 4px;
         font-variant-numeric: tabular-nums;
       }
       .strct-sm__badge--accent {

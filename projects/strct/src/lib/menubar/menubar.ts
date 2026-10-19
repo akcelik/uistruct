@@ -147,7 +147,7 @@ export interface StrctMenubarItem {
       .strct-mb__top {
         padding: 4px 11px;
         border: 0;
-        border-radius: 5px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t1);
         font-family: var(--font);
@@ -187,7 +187,7 @@ export interface StrctMenubarItem {
         width: 100%;
         padding: 6px 10px;
         border: 0;
-        border-radius: 5px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t1);
         font-family: var(--font);

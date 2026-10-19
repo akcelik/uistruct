@@ -460,7 +460,7 @@ export class StrctChatMessage {
       .strct-composer__stopmark {
         width: 10px;
         height: 10px;
-        border-radius: 2px;
+        border-radius: 1px;
         background: currentColor;
       }
       .strct-composer__send:disabled {

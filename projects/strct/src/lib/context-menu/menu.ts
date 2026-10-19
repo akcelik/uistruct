@@ -168,7 +168,7 @@ export interface StrctMenuItem {
         width: 100%;
         padding: 7px 8px 7px 10px;
         border: 0;
-        border-radius: 5px;
+        border-radius: 2px;
         cursor: pointer;
         background: transparent;
         color: var(--t1);

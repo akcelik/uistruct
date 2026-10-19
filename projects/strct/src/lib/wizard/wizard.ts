@@ -268,7 +268,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         min-height: 80px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: 4px;
         color: var(--t2);
         font-size: 13px;
       }
@@ -315,7 +315,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
            aside — the aside adds to the total, it never carves the form. */
         grid-template-columns: 232px minmax(var(--strct-wiz-content-min, 864px), 1fr);
         border: 1px solid var(--b2);
-        border-radius: 12px;
+        border-radius: 6px;
         background: var(--bg-1);
         overflow: hidden;
       }

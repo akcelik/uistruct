@@ -151,7 +151,7 @@ const NON_SGR_CSI_RE = /\u001b\[[0-9;]*[A-LN-Za-ln-z]/g;
       .strct-lv {
         display: block;
         border: 1px solid var(--b2);
-        border-radius: 9px;
+        border-radius: 4px;
         background: var(--bg-2);
         overflow: hidden;
       }

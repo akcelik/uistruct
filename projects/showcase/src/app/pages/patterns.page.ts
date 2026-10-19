@@ -493,7 +493,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         justify-content: center;
         width: 34px;
         height: 34px;
-        border-radius: 9px;
+        border-radius: 4px;
         background: var(--acc-m);
         border: 1px solid var(--acc30);
         color: var(--acc);
@@ -538,7 +538,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         display: block;
         width: 44px;
         height: 3px;
-        border-radius: 2px;
+        border-radius: 1px;
         background: var(--acc);
         margin: 16px 0;
       }
@@ -560,7 +560,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         min-width: 0;
         padding: 9px 12px;
         border: 1px solid var(--b2);
-        border-radius: 10px;
+        border-radius: 5px;
         background: var(--acc-s);
       }
       .auth-status__dot {
@@ -651,7 +651,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         font-size: 13px;
         background: var(--bg-1);
         border: 1px dashed var(--b3);
-        border-radius: 10px;
+        border-radius: 5px;
       }
       .ctx-target strct-icon {
         color: var(--t3);

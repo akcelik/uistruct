@@ -992,7 +992,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [(split)]="splitPct"
           [min]="20"
           [max]="80"
-          style="height: 180px; border: 1px solid var(--b2); border-radius: 9px;"
+          style="height: 180px; border: 1px solid var(--b2); border-radius: 4px;"
         >
           <div strctPaneStart style="padding: 12px; font-size: 12.5px; color: var(--t2);">
             VM list ({{ splitPct() }}%)
@@ -1061,7 +1061,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     >
       <strct-watermark text="CONFIDENTIAL · serkan@corp" style="width: 100%;">
         <div
-          style="height: 140px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--b2); border-radius: 9px; color: var(--t2); font-size: 12.5px;"
+          style="height: 140px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--b2); border-radius: 4px; color: var(--t2); font-size: 12.5px;"
         >
           A classified inventory table would render here — try selecting this text.
         </div>

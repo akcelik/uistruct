@@ -253,7 +253,7 @@ interface ContrastRow {
       }
       .switch-row strct-theme-switcher {
         padding: 8px 12px;
-        border-radius: 8px;
+        border-radius: 4px;
         background: var(--hdr);
       }
       .hint {
@@ -286,13 +286,13 @@ interface ContrastRow {
         gap: 9px;
         padding: 8px 10px;
         border: 1px solid var(--b2);
-        border-radius: 7px;
+        border-radius: 3px;
         background: var(--bg-1);
       }
       .tok__swatch {
         width: 26px;
         height: 26px;
-        border-radius: 5px;
+        border-radius: 2px;
         flex-shrink: 0;
         border: 1px solid var(--b2);
       }
@@ -311,7 +311,7 @@ interface ContrastRow {
       .type-table {
         width: 100%;
         border: 1px solid var(--b2);
-        border-radius: 10px;
+        border-radius: 5px;
         background: var(--bg-1);
         overflow: hidden;
       }
@@ -371,7 +371,7 @@ interface ContrastRow {
       }
       .space-bar {
         height: 12px;
-        border-radius: 3px;
+        border-radius: 1px;
         background: var(--acc);
         opacity: 0.75;
       }
@@ -397,7 +397,7 @@ interface ContrastRow {
       .aa-table {
         width: 100%;
         border: 1px solid var(--b2);
-        border-radius: 10px;
+        border-radius: 5px;
         background: var(--bg-1);
         overflow: hidden;
         font-size: 12.5px;

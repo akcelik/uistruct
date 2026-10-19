@@ -368,7 +368,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       }
       .es-grid strct-empty-state {
         border: 1px solid var(--b2);
-        border-radius: 11px;
+        border-radius: 5px;
         background: var(--bg-2);
       }
       .stack {

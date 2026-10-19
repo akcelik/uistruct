@@ -462,7 +462,7 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
       .strct-flow__line {
         position: absolute;
         inset: 0;
-        border-radius: 2px;
+        border-radius: 1px;
         background: linear-gradient(
           to right,
           var(--b3),

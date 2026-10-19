@@ -213,7 +213,7 @@ interface HostOption {
         gap: 10px;
         padding: 10px 12px;
         border: 1px solid var(--b2);
-        border-radius: 9px;
+        border-radius: 4px;
         background: var(--bg-1);
         cursor: pointer;
       }

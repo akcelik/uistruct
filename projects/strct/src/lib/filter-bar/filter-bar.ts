@@ -117,7 +117,7 @@ export interface StrctFilterChip {
       .strct-fb__clear {
         border: 0;
         padding: 3px 6px;
-        border-radius: 5px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t3);
         font-family: var(--font);

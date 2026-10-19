@@ -86,7 +86,7 @@ let checkboxCounter = 0;
         justify-content: center;
         width: 17px;
         height: 17px;
-        border-radius: 4px;
+        border-radius: 2px;
         flex-shrink: 0;
         background: var(--bg-2);
         border: 1px solid var(--b3);

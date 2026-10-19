@@ -23,7 +23,7 @@ import { StrctStatus } from '../status';
         display: flex;
         flex-direction: column;
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: 4px;
         overflow: hidden;
         background: var(--bg-1);
       }

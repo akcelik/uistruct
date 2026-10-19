@@ -5,6 +5,34 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.17.0] - 2026-10-19
+
+### Changed
+
+- **Every corner is half as round.** The four radius tokens — and every
+  hard-coded radius in the components — are scaled by 50%:
+
+  | Token         | Was  | Now     | Where it shows                             |
+  | ------------- | ---- | ------- | ------------------------------------------ |
+  | `--radius-sm` | 4px  | **2px** | badge, checkbox, small button, menu row    |
+  | `--radius-md` | 6px  | **3px** | button, pagination, input, toolbar control |
+  | `--radius-lg` | 8px  | **4px** | datagrid frame, card, dropdown, panel      |
+  | `--radius-xl` | 12px | **6px** | window, modal, large surface               |
+
+  The rule for the values written into components (a 9px grid frame, a 5px
+  menu row, and the rest): halve, round ties **down** (9 → 4), never below
+  1px, because a hairline corner halved is sub-pixel. **Pills and circles are
+  untouched** — `99px`, `999px` and `50%` mean "fully round", and scaling them
+  would deform the shape rather than tighten it. 166 declarations across the
+  library and the showcase; the visual baselines were re-approved with the
+  tighter corners.
+
+  An app that wants the old softness back sets the four tokens in its own
+  stylesheet (`:root { --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px;
+--radius-xl: 12px }`). That restores everything the tokens drive; the values
+  written into components do not follow a token yet, so a handful of surfaces
+  (the datagrid's own frame among them) stay at the new figure.
+
 ## [5.16.0] - 2026-10-15
 
 A run of results reads at a glance (FR-55-01, FR-55-02 of

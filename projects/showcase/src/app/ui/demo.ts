@@ -111,16 +111,16 @@ export class PageHeader {
         margin-bottom: 26px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 10px;
+        border-radius: 5px;
         scroll-margin-top: 16px;
       }
       .demo > :first-child {
-        border-top-left-radius: 9px;
-        border-top-right-radius: 9px;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
       }
       .demo > :last-child {
-        border-bottom-left-radius: 9px;
-        border-bottom-right-radius: 9px;
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 4px;
       }
       .demo__head {
         display: flex;
@@ -153,7 +153,7 @@ export class PageHeader {
         display: inline-flex;
         padding: 5px;
         border: 1px solid var(--b2);
-        border-radius: 6px;
+        border-radius: 3px;
         background: var(--bg-1);
         color: var(--t3);
         cursor: pointer;

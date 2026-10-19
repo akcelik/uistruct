@@ -182,7 +182,7 @@ function badgeFor(status: DcObject['status']) {
         align-items: center;
         gap: 10px;
         padding: 8px 10px;
-        border-radius: 6px;
+        border-radius: 3px;
         color: var(--t2);
         text-decoration: none;
         font-size: 13px;
@@ -251,7 +251,7 @@ function badgeFor(status: DcObject['status']) {
       .detail-card {
         background: var(--surface, var(--b1));
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: 4px;
         padding: 16px;
         max-width: 520px;
       }
