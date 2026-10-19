@@ -15,6 +15,8 @@ import {
   signal,
 } from '@angular/core';
 import { StrctIcon, StrctIconBadge } from '../icon/icon';
+import { StrctBadge, StrctBadgeStatus } from '../badge/badge';
+import { StrctSpinner } from '../spinner/spinner';
 import { StrctContextMenuTrigger, StrctMenuItem } from '../context-menu/menu';
 import { StrctAnnouncer } from '../a11y/announcer';
 
@@ -36,6 +38,22 @@ export interface StrctTreeNodeData {
   /** Initial expanded state. */
   expanded?: boolean;
   children?: StrctTreeNodeData[];
+  /**
+   * A quiet trailing word on the row — what `[strctTreeTrailing]` is for a
+   * projected node: "VM" on a virtual machine's own folder.
+   */
+  meta?: string;
+  /** A trailing tag instead of (or beside) `meta`. */
+  tag?: { label: string; status?: StrctBadgeStatus };
+  /**
+   * "It has children, they have not been read yet": the chevron and
+   * `aria-expanded` appear before `children` arrives, and expanding emits
+   * `(nodeToggled)` as usual. A node that turns out to be empty loses its
+   * chevron when `children` arrives as `[]`.
+   */
+  hasChildren?: boolean;
+  /** Its children are being read: a quiet row under it, and `aria-busy`. */
+  loading?: boolean;
   /** Arbitrary payload returned with (nodeActivated). */
   data?: unknown;
 }
@@ -80,7 +98,7 @@ let treeNodeCounter = 0;
   selector: 'strct-tree-node',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon, StrctContextMenuTrigger],
+  imports: [StrctIcon, StrctContextMenuTrigger, StrctBadge, StrctSpinner],
   template: `
     <div
       class="strct-tnode__row"
@@ -92,6 +110,7 @@ let treeNodeCounter = 0;
       [attr.aria-posinset]="posInSet()"
       [attr.aria-selected]="displayActive()"
       [attr.aria-expanded]="hasChildren() ? isOpen() : null"
+      [attr.aria-busy]="node()?.loading ? true : null"
       [attr.aria-owns]="hasChildren() && isOpen() ? groupId : null"
       [attr.draggable]="isDraggable() ? 'true' : null"
       [class.strct-tnode__row--dragging]="isDragSource()"
@@ -136,10 +155,24 @@ let treeNodeCounter = 0;
         />
       }
       <span class="strct-tnode__label">{{ displayLabel() }}</span>
+      @if (node()?.tag; as tag) {
+        <strct-badge class="strct-tnode__tag" [status]="tag.status ?? 'neutral'">{{
+          tag.label
+        }}</strct-badge>
+      }
+      @if (node()?.meta; as meta) {
+        <span class="strct-tnode__meta">{{ meta }}</span>
+      }
       <ng-content select="[strctTreeTrailing]" />
     </div>
     @if (hasChildren() && isOpen()) {
       <div class="strct-tnode__children" role="group" [id]="groupId">
+        @if (node()?.loading) {
+          <div class="strct-tnode__loading">
+            <span class="strct-tnode__spacer"></span>
+            <strct-spinner size="sm" [caption]="loadingLabel()" />
+          </div>
+        }
         @if (node()) {
           @for (child of node()!.children ?? []; track child.id ?? child.label) {
             <strct-tree-node
@@ -250,8 +283,32 @@ let treeNodeCounter = 0;
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      /* Trailing marks: they follow the label, never push it out of the row. */
+      .strct-tnode__tag,
+      .strct-tnode__meta {
+        flex-shrink: 0;
+      }
+      .strct-tnode__meta {
+        font-size: 11px;
+        color: var(--t3);
+        font-variant-numeric: tabular-nums;
+      }
+      /* An active row writes in 600; the trailing marks stay quiet. */
+      .strct-tnode__row--active .strct-tnode__meta {
+        font-weight: 400;
+      }
       .strct-tnode__children {
         margin-inline-start: 16px;
+      }
+      /* "Its children are being read": one row in the children group, lined up
+         with where the child labels will appear. */
+      .strct-tnode__loading {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 9px;
+        font-size: 13px;
+        color: var(--t3);
       }
     `,
   ],
@@ -420,6 +477,9 @@ export class StrctTreeNode {
     this.tree ? (this.tree.isRovingActive(this) ? 0 : -1) : 0,
   );
 
+  /** Wording of the "children are being read" row (from the owning tree). */
+  protected readonly loadingLabel = computed(() => this.tree?.loadingLabel() ?? 'Loading…');
+
   /** Accessible label of the chevron toggle (factory from the owning tree). */
   protected readonly chevronAriaLabel = computed(() =>
     (this.tree?.chevronAriaLabel() ?? defaultChevronAriaLabel)(this.isOpen(), this.displayLabel()),
@@ -454,7 +514,11 @@ export class StrctTreeNode {
 
   readonly hasChildren = computed(() => {
     const n = this.node();
-    return n ? (n.children?.length ?? 0) > 0 : this.childNodes().length > 0;
+    if (!n) return this.childNodes().length > 0;
+    // A folder whose listing has not been asked for still opens: without
+    // this it had no chevron and no aria-expanded, so it could not be.
+    if (n.hasChildren !== undefined) return n.hasChildren || (n.children?.length ?? 0) > 0;
+    return (n.children?.length ?? 0) > 0;
   });
 
   readonly isOpen = computed(() => {
@@ -598,6 +662,8 @@ export class StrctTree {
   readonly dragExpandDelay = input(700);
   /** Emitted for an accepted drop only. */
   readonly nodeDrop = output<StrctTreeDropEvent>();
+  /** Wording of the row shown under a node whose children are being read (`node.loading`). */
+  readonly loadingLabel = input('Loading…');
   /** Accessible label of each node's chevron toggle; receives the expanded state and the node label. */
   readonly chevronAriaLabel =
     input<(expanded: boolean, label: string) => string>(defaultChevronAriaLabel);

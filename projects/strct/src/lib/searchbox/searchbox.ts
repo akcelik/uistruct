@@ -65,7 +65,7 @@ import { StrctIcon } from '../icon/icon';
           [value]="value()"
           (input)="onInput($event)"
           (keydown.enter)="search.emit(value())"
-          (keydown.escape)="clear()"
+          (keydown.escape)="onEscape($event)"
           (focus)="focused.set(true)"
           (blur)="focused.set(false); onTouched()"
         />
@@ -236,6 +236,16 @@ export class StrctSearchbox implements ControlValueAccessor {
   }
 
   /** Clear the text (Escape / the × button). */
+  /**
+   * An Escape that clears a value is used: a modal around this box takes an
+   * unhandled Escape as "close me", and the same keystroke did both.
+   */
+  protected onEscape(event: Event): void {
+    if (!this.value()) return;
+    event.preventDefault();
+    this.clear();
+  }
+
   clear(): void {
     if (!this.value()) return;
     this.value.set('');

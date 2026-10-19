@@ -94,6 +94,7 @@ export interface StrctRailItem {
           class="strct-rail__item"
           [routerLink]="item.routerLink"
           routerLinkActive
+          ariaCurrentWhenActive="page"
           #rla="routerLinkActive"
           [class.strct-rail__item--active]="isActive(item, rla.isActive)"
           [attr.aria-current]="isActive(item, rla.isActive) ? 'page' : null"

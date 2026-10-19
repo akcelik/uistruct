@@ -505,6 +505,34 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="tree-trailing"
+      owner="tree"
+      heading="Trailing marks"
+      description="A data node can carry what the row says after its label: meta is a quiet word (size, count, shape), tag is a badge with a status. On a projected node the same place is [strctTreeTrailing]."
+      code='{ label: "hv-01", meta: "4 vCPU", tag: { label: "Running", status: "success" } }'
+    >
+      <strct-tree style="width: 100%; max-width: 360px;" [nodes]="trailingTree" />
+    </app-demo>
+
+    <app-demo
+      anchor="tree-lazy"
+      owner="tree"
+      heading="Read the children on expand"
+      description="hasChildren: true gives the row its chevron and aria-expanded before any children exist, so the listing can be read when it opens — (nodeToggled) asks, loading: true says it is being read, and a node that turns out to be empty loses its chevron."
+      code='<strct-tree [nodes]="lazyNodes()" loadingLabel="Reading…" (nodeToggled)="readChildren($event)" />'
+    >
+      <div class="stack">
+        <strct-tree
+          style="width: 100%; max-width: 360px;"
+          [nodes]="lazyNodes()"
+          loadingLabel="Reading…"
+          (nodeToggled)="readChildren($event)"
+        />
+        <span class="echo">{{ lazyLog() || 'Expand a host — its VMs are read on demand.' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="modal"
       heading="Modal"
       description="Overlay dialog in four fixed widths (sm 480 · md 640 · lg 860 · xl 1080 px). Closes only via the X or an action button — clicking outside won't dismiss it; add dismissible to allow backdrop / Escape."
@@ -1390,6 +1418,77 @@ export class SurfacesPage {
       });
     walk(this.regionTree);
     this.expandedIds.set(ids);
+  }
+
+  // Trailing marks: what the row says after the label.
+  protected readonly trailingTree: StrctTreeNodeData[] = [
+    {
+      id: 't-cluster',
+      label: 'cluster-01',
+      icon: 'cluster',
+      expanded: true,
+      meta: '3 hosts',
+      children: [
+        {
+          id: 't-hv1',
+          label: 'hv-01',
+          icon: 'host',
+          meta: '4 vCPU',
+          tag: { label: 'Running', status: 'success' },
+        },
+        {
+          id: 't-hv2',
+          label: 'hv-02',
+          icon: 'host',
+          meta: '8 vCPU',
+          tag: { label: 'Maintenance', status: 'warning' },
+        },
+        { id: 't-store', label: 'datastore-a', icon: 'storage', meta: '1.4 TB' },
+      ],
+    },
+  ];
+
+  // Read-on-expand: the hosts know they have VMs, not which ones. The timer
+  // stands in for the request a console would make.
+  protected readonly lazyNodes = signal<StrctTreeNodeData[]>([
+    { id: 'l-hv1', label: 'hv-01', icon: 'host', badge: 'success', hasChildren: true },
+    { id: 'l-hv2', label: 'hv-02', icon: 'host', badge: 'warning', hasChildren: true },
+    { id: 'l-hv3', label: 'hv-03', icon: 'host', hasChildren: true },
+  ]);
+  protected readonly lazyLog = signal('');
+  private readonly lazyChildren: Record<string, StrctTreeNodeData[]> = {
+    'l-hv1': [
+      {
+        id: 'l-vm1',
+        label: 'web-01',
+        icon: 'vm',
+        badge: 'success',
+        tag: { label: 'Running', status: 'success' },
+      },
+      { id: 'l-vm2', label: 'web-02', icon: 'vm', badge: 'off' },
+    ],
+    'l-hv2': [{ id: 'l-vm3', label: 'db-01', icon: 'vm', badge: 'success', meta: '32 GB' }],
+    'l-hv3': [],
+  };
+
+  protected readChildren(event: { node: StrctTreeNodeData; expanded: boolean }): void {
+    const id = event.node.id!;
+    if (!event.expanded || event.node.children) return;
+    this.patchLazy(id, { loading: true });
+    this.lazyLog.set(`Reading ${event.node.label}…`);
+    setTimeout(() => {
+      const children = this.lazyChildren[id] ?? [];
+      this.patchLazy(id, { loading: false, children, hasChildren: children.length > 0 });
+      this.lazyLog.set(
+        children.length
+          ? `${event.node.label}: ${children.length} VM(s)`
+          : `${event.node.label} is empty`,
+      );
+    }, 900);
+  }
+
+  private patchLazy(id: string, patch: Partial<StrctTreeNodeData>): void {
+    this.lazyNodes.update((ns) => ns.map((n) => (n.id === id ? { ...n, ...patch } : n)));
   }
 
   protected readonly step1Valid = signal(false);

@@ -163,3 +163,26 @@ describe('StrctRail', () => {
     expect((f.nativeElement as HTMLElement).querySelector('.strct-rail__toggle')).toBeNull();
   });
 });
+
+// BUG-58-06: RouterLinkActive.update() writes the link's own aria-current and
+// clears it when the directive has no ariaCurrentWhenActive — so the entry the
+// router had just made active was styled, and nameless to a screen reader.
+describe('StrctRail — the current page survives the router', () => {
+  it('keeps aria-current="page" after the navigation settles', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideRouter([{ path: 'compute', children: [] }])],
+    });
+    const f = TestBed.createComponent(StrctRail);
+    f.componentRef.setInput('items', [
+      { id: 'compute', label: 'Compute', icon: 'host', routerLink: '/compute' },
+    ] satisfies StrctRailItem[]);
+    f.detectChanges();
+    const a = (f.nativeElement as HTMLElement).querySelector('a.strct-rail__item')!;
+
+    a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    f.detectChanges();
+    await f.whenStable(); // RouterLinkActive updates here
+    f.detectChanges();
+    expect(a.getAttribute('aria-current')).toBe('page');
+  });
+});

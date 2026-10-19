@@ -193,3 +193,62 @@ describe('StrctToolbar — an open overlay keeps its own arrow keys', () => {
     el.remove();
   });
 });
+
+// BUG-58-15: the APG toolbar pattern leaves a text field its arrow keys — the
+// roving focus took them, so the caret could not be moved inside a searchbox
+// sitting in the bar.
+@Component({
+  imports: [StrctToolbar],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
+    <strct-toolbar>
+      <button type="button" class="a">Restart</button>
+      <input type="text" class="q" />
+      <textarea class="note"></textarea>
+      <div class="note2" contenteditable="true" tabindex="0"></div>
+      <button type="button" class="b">Stop</button>
+      <input type="checkbox" class="box" />
+    </strct-toolbar>
+  `,
+})
+class TextEntryHost {}
+
+describe('StrctToolbar — a text field inside the bar', () => {
+  function setupText() {
+    const fixture = TestBed.createComponent(TextEntryHost);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+  const arrow = (from: HTMLElement, k: 'ArrowLeft' | 'ArrowRight') => {
+    const e = new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true });
+    from.dispatchEvent(e);
+    return e;
+  };
+
+  it('leaves the arrow keys to an input, a textarea and a contenteditable', () => {
+    const { el } = setupText();
+    for (const sel of ['.q', '.note', '.note2'] as const) {
+      const field = el.querySelector<HTMLElement>(sel)!;
+      field.focus();
+      const left = arrow(field, 'ArrowLeft');
+      const right = arrow(field, 'ArrowRight');
+      // Untouched: the caret moves, and focus stays in the field.
+      expect(left.defaultPrevented).toBe(false);
+      expect(right.defaultPrevented).toBe(false);
+      expect(document.activeElement).toBe(field);
+    }
+  });
+
+  it('still roves from the buttons, and from a checkbox (its keys are not the caret)', () => {
+    const { el } = setupText();
+    const a = el.querySelector<HTMLElement>('.a')!;
+    a.focus();
+    arrow(a, 'ArrowRight');
+    expect(document.activeElement).toBe(el.querySelector('.q'));
+
+    const box = el.querySelector<HTMLElement>('.box')!;
+    box.focus();
+    arrow(box, 'ArrowLeft');
+    expect(document.activeElement).toBe(el.querySelector('.b'));
+  });
+});

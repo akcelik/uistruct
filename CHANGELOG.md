@@ -5,6 +5,58 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.23.0] - 2026-10-19
+
+The last of HyperStruct's 5.16 report: an Escape that was already used, the
+page a screen reader could not name, a switcher row's own parts, a toolbar
+that took the arrow keys out of a text field, and a tree that can be read one
+level at a time (BUG-58-05, BUG-58-06, BUG-58-10, BUG-58-15, FR-58-02,
+FR-58-05, FR-58-06).
+
+### Added
+
+- **`strct-tree`: trailing marks on a data node** (FR-58-05). A data-mode node
+  recursed internally and had nowhere to say what the row says after its
+  label, which `[strctTreeTrailing]` gives a projected one. `meta?: string` is
+  a quiet word (`4 vCPU`), `tag?: { label; status? }` a badge — both drawn in
+  that same place.
+- **`strct-tree`: a node whose children have not been read yet** (FR-58-06).
+  `hasChildren: true` gives the row its chevron and `aria-expanded` before any
+  `children` exist, so expanding it can ask for the listing — `(nodeToggled)`
+  fires as it always has. `loading: true` puts one captioned row under it
+  (`loadingLabel`, default "Loading…") and `aria-busy` on the row, and a node
+  that turns out to be empty loses its chevron again.
+- **`strct-product-switcher`: `headerTone` on an item** (FR-58-02). The chip
+  sits on the product's own header, where the row's `tone` is the colour of
+  the product, not of that surface: `headerTone` is what the chip takes, and
+  the menu row keeps `tone`.
+
+### Fixed
+
+- **`strct-modal` no longer closes on an Escape that was already used**
+  (BUG-58-05). A dropdown, a menu, a listbox or a tree inside the dialog
+  closes on Escape and the dialog closed with it — a search field in a modal
+  lost the whole dialog on the first Escape. The modal now ignores an Escape
+  that was handled (`defaultPrevented`), one typed into an IME composition,
+  and one whose target sits inside another surface within the dialog.
+- **`strct-searchbox` marks the Escape it uses** (BUG-58-05). It cleared the
+  field and let the event through; it now calls `preventDefault()` when there
+  was something to clear, so what is above it can tell.
+- **`routerLink` entries keep `aria-current`** (BUG-58-06). `strct-rail` and
+  `strct-section-menu` wrote `aria-current="page"` and Angular's
+  `RouterLinkActive` stripped it on every navigation: the current page was
+  styled but unnamed to a screen reader. Both now set
+  `ariaCurrentWhenActive="page"`, so the router writes it.
+- **`strct-product-switcher`'s rows draw their own parts** (BUG-58-10). The
+  three row branches projected one shared template, and a node matches the
+  first slot it fits: the icon, the label and the health line were split
+  across the wrong slots, so the description sat inline beside the label
+  instead of under it. Each branch now draws them directly.
+- **`strct-toolbar` leaves the arrow keys to a text field inside it**
+  (BUG-58-15). Its roving focus took ← and → from an input, a textarea, a
+  `contenteditable` or a combobox in the toolbar, so the caret could not be
+  moved. Text entry keeps its own keys now.
+
 ## [5.22.0] - 2026-10-19
 
 `strct-markdown`: what it links, what it reads, and what it costs

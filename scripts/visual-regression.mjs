@@ -63,6 +63,9 @@ const ROUTES = [
   ['datagrid-progress', '/components/datagrid', '#datagrid'],
   ['line', '/components/line'],
   ['tree', '/components/tree'],
+  // What a node says after its label: the quiet meta and the status tag, which
+  // have to sit on the row without pushing the label out of it.
+  ['tree-trailing', '/components/tree', '#tree-trailing', undefined, '.strct-tree'],
   // The select-all checkbox in its three states. The indeterminate one is the
   // reason this gate learned to prepare a state: its dash was squeezed to 3px
   // and pushed 5px off centre, and no screenshot of a page at rest showed it.
