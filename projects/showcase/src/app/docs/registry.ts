@@ -3360,6 +3360,20 @@ export const DOCS: DocCategory[] = [
               'What a link may do. By default http(s) and `mailto:` open in a new tab with `rel="noopener noreferrer"` and an external mark, a `/path` is handed to `(navigate)`, and anything else — `javascript:`, `data:`, `//host`, a relative path — **stays the text the model wrote**. Images are never loaded: an image renders as its alt text.',
           },
           {
+            name: 'breaks',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'A single newline is a line break, the way a comment box reads — a model writing "Host: X\\nCPU: 40 %" means two lines. Off by default, which is CommonMark.',
+          },
+          {
+            name: 'newTabLabel',
+            type: 'string',
+            default: `' (opens in a new tab)'`,
+            description:
+              'What a screen reader hears after an external link; the icon beside it is decorative (localisable).',
+          },
+          {
             name: 'tokens / [strctMarkdownToken]',
             type: '(text) => Token[] · template',
             description:

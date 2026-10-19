@@ -1,7 +1,12 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctMarkdown, StrctMarkdownToken } from './markdown';
-import { strctClassifyHref, strctParseMarkdown, parseInlines } from './markdown-parser';
+import {
+  STRCT_MD_LIMITS,
+  strctClassifyHref,
+  strctParseMarkdown,
+  parseInlines,
+} from './markdown-parser';
 
 describe('strctParseMarkdown — the reader', () => {
   it('reads paragraphs, headings, rules and quotes', () => {
@@ -108,8 +113,11 @@ describe('strctClassifyHref — what a link may do', () => {
   it('follows http(s) and in-app paths, and nothing else', () => {
     expect(strctClassifyHref('https://example.com/x')).toBe('external');
     expect(strctClassifyHref('http://example.com')).toBe('external');
-    expect(strctClassifyHref('mailto:ops@example.com')).toBe('external');
     expect(strctClassifyHref('/hosts/hv-01')).toBe('internal');
+    // mailto: opens a mail client with a subject and body the model wrote —
+    // an app says yes to that, it is not the default.
+    expect(strctClassifyHref('mailto:ops@example.com')).toBeNull();
+    expect(strctClassifyHref('mailto:ops@example.com', { mailto: true })).toBe('external');
 
     for (const bad of [
       'javascript:alert(1)',
@@ -119,6 +127,11 @@ describe('strctClassifyHref — what a link may do', () => {
       'vbscript:x',
       'relative/path',
       'java\nscript:alert(1)',
+      // A browser reads a backslash as a slash: a middle-click on this one
+      // left the app for https://evil.example/.
+      '/\\evil.example',
+      '/%5cevil.example',
+      '/%5Cevil.example',
       '',
     ]) {
       expect(strctClassifyHref(bad)).toBeNull();
@@ -229,5 +242,98 @@ describe('StrctMarkdown — the view', () => {
     fixture.detectChanges();
     expect(el.querySelectorAll('.strct-md__p').length).toBe(2);
     expect(el.querySelector('h3')!.textContent!.trim()).toBe('Title');
+  });
+});
+
+// BUG-58-08 / BUG-58-09 / FR-58-03 — what the reader links, reads and costs.
+describe('strctParseMarkdown — the reader after the parity report', () => {
+  it('leaves an underscore inside a word alone', () => {
+    // `list_inventory for vm_cpu_usage` became `list<em>inventory for vm</em>cpu_usage`.
+    expect(parseInlines('list_inventory for vm_cpu_usage')).toEqual([
+      { kind: 'text', text: 'list_inventory for vm_cpu_usage' },
+    ]);
+    expect(parseInlines('window.__x stays')).toEqual([{ kind: 'text', text: 'window.__x stays' }]);
+    // Emphasis around a word still works.
+    expect(parseInlines('_really_ down').map((n) => n.kind)).toEqual(['em', 'text']);
+  });
+
+  it('links a bare URL and leaves the sentence its punctuation', () => {
+    const nodes = parseInlines('see https://example.com/x, then stop');
+    expect(nodes[1]).toMatchObject({ kind: 'link', href: 'https://example.com/x' });
+    expect(nodes[2]).toMatchObject({ kind: 'text', text: ', then stop' });
+    // A closing bracket the address opened is part of it.
+    expect(parseInlines('(https://example.com/a(b))')[1]).toMatchObject({
+      href: 'https://example.com/a(b)',
+    });
+  });
+
+  it('reads a single newline as a break only when asked', () => {
+    expect(parseInlines('Host: X\nCPU: 40 %').map((n) => n.kind)).toEqual(['text', 'text', 'text']);
+    expect(parseInlines('Host: X\nCPU: 40 %', { breaks: true }).map((n) => n.kind)).toEqual([
+      'text',
+      'break',
+      'text',
+    ]);
+  });
+
+  it('looks for a closer within a window, not to the end of the reply', () => {
+    // The mechanism, asserted without a clock: a closer beyond the window is
+    // not a closer, so the opener stays the character it is.
+    const far = '*' + 'a'.repeat(STRCT_MD_LIMITS.scan + 50) + '*';
+    expect(parseInlines(far)[0].kind).toBe('text');
+    const near = '*' + 'a'.repeat(50) + '*';
+    expect(parseInlines(near)[0].kind).toBe('em');
+  });
+
+  it('stays well inside a second on the shapes that used to cost several', () => {
+    // Measured before: "*a " x 64 KiB 1.6 s, "**a " 755 ms, "[" x 200 KiB
+    // 2.1 s; after: 156 / 78 / 48 ms. The budget is loose on purpose — this
+    // runs beside 115 other files — but it still catches the old behaviour.
+    const cases = ['*a '.repeat(22000), '**a '.repeat(16000), '['.repeat(200000)];
+    for (const source of cases) {
+      const started = Date.now();
+      strctParseMarkdown(source);
+      expect(Date.now() - started, source.slice(0, 3)).toBeLessThan(1500);
+    }
+  });
+});
+
+describe('StrctMarkdown — tokens, breaks and the external link', () => {
+  @Component({
+    imports: [StrctMarkdown, StrctMarkdownToken],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-markdown [source]="src" [tokens]="tokens">
+        <ng-template strctMarkdownToken="object" let-text>
+          <span class="chip">{{ text }}</span>
+        </ng-template>
+      </strct-markdown>
+    `,
+  })
+  class Host {
+    src = '- HV-NODE-01 is down\n\n> HV-NODE-01 again\n\nHV-NODE-01 in a paragraph';
+    tokens = (text: string) => {
+      const at = text.indexOf('HV-NODE-01');
+      return at === -1 ? [] : [{ start: at, length: 10, token: 'object' }];
+    };
+  }
+
+  it('draws a claimed run in a list item and a quote, not only in a paragraph', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    // One chip per block: the nested view had no templates and drew text.
+    expect(el.querySelectorAll('.chip').length).toBe(3);
+    expect(el.querySelector('li .chip')).toBeTruthy();
+    expect(el.querySelector('blockquote .chip')).toBeTruthy();
+  });
+
+  it('tells a screen reader that an external link opens a new tab', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.src = '[docs](https://example.com)';
+    fixture.detectChanges();
+    const link = (fixture.nativeElement as HTMLElement).querySelector('a')!;
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.textContent).toContain('opens in a new tab');
   });
 });

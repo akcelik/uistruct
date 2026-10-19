@@ -25,6 +25,13 @@ export const STRCT_MD_LIMITS = {
   depth: 8,
   /** Inline delimiter runs considered per text span. */
   delimiters: 2000,
+  /**
+   * How far a closing delimiter or bracket is looked for. Without it every
+   * unmatched opener scanned to the end of the document, once each: a 64 KiB
+   * line of "*a " took 1.6 s to read, and a streamed reply is read again on
+   * every token.
+   */
+  scan: 4096,
 } as const;
 
 export type StrctMdAlign = 'start' | 'center' | 'end' | null;
@@ -85,7 +92,7 @@ const TABLE_DELIM = /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?\s*$/;
  */
 export function strctParseMarkdown(
   source: string,
-  options: { streaming?: boolean; tokenize?: StrctMdTokenizer } = {},
+  options: { streaming?: boolean; tokenize?: StrctMdTokenizer; breaks?: boolean } = {},
 ): StrctMdBlock[] {
   const text =
     source.length > STRCT_MD_LIMITS.source ? source.slice(0, STRCT_MD_LIMITS.source) : source;
@@ -294,7 +301,7 @@ function toAlign(cell: string): StrctMdAlign {
  */
 export function parseInlines(
   source: string,
-  options: { tokenize?: StrctMdTokenizer } = {},
+  options: { tokenize?: StrctMdTokenizer; breaks?: boolean } = {},
 ): StrctMdInline[] {
   const out: StrctMdInline[] = [];
   let buf = '';
@@ -329,9 +336,10 @@ export function parseInlines(
       }
     }
 
-    // Hard break: two spaces at the end of a line, or a backslash.
+    // Hard break: two spaces at the end of a line, or a backslash — or every
+    // newline, where the consumer asked for GitHub's comment style.
     if (ch === '\n') {
-      const hard = buf.endsWith('  ') || buf.endsWith('\\');
+      const hard = options.breaks === true || buf.endsWith('  ') || buf.endsWith('\\');
       buf = buf.replace(/( {2,}|\\)$/, '');
       flush();
       out.push(hard ? { kind: 'break' } : { kind: 'text', text: ' ' });
@@ -375,13 +383,40 @@ export function parseInlines(
       }
     }
 
+    // A bare URL is a link: a model writes "see https://example.com/x" far
+    // more often than it writes an autolink. Trailing punctuation belongs to
+    // the sentence, not the address.
+    if ((ch === 'h' || ch === 'H') && /^https?:\/\//i.test(source.slice(i, i + 8))) {
+      const match = /^https?:\/\/[^\s<]+/i.exec(source.slice(i));
+      if (match) {
+        let url = match[0];
+        const trail = /[.,;:!?)\]'"]+$/.exec(url);
+        if (trail) {
+          // A closing bracket is part of the address when the URL opened one.
+          const kept = url.slice(0, url.length - trail[0].length);
+          url = kept.includes('(') && trail[0].startsWith(')') ? kept + ')' : kept;
+        }
+        if (url.length > 'https://'.length) {
+          flush();
+          out.push({ kind: 'link', href: url, children: [{ kind: 'text', text: url }] });
+          i += url.length;
+          continue;
+        }
+      }
+    }
+
     // Emphasis, strong, strikethrough. A delimiter only opens when something
     // follows it immediately and only closes when something precedes it —
     // the flanking rule, which is what keeps "2 * 3 * 4" arithmetic.
     if ((ch === '*' || ch === '_' || ch === '~') && budget-- > 0) {
       const run = new RegExp(`^\\${ch}+`).exec(source.slice(i))![0];
       const len = ch === '~' ? (run.length >= 2 ? 2 : 0) : Math.min(run.length, 2);
-      const opens = !/^\s|^$/.test(source.slice(i + run.length, i + run.length + 1) || '');
+      const after = source.slice(i + run.length, i + run.length + 1) || '';
+      const before = i > 0 ? source[i - 1] : '';
+      // An underscore inside a word is a character, not a delimiter — or
+      // `list_inventory for vm_cpu_usage` loses its underscores to emphasis.
+      const intraword = ch === '_' && /[\p{L}\p{N}]/u.test(before) && /[\p{L}\p{N}]/u.test(after);
+      const opens = !/^\s|^$/.test(after) && !intraword;
       if (len && opens) {
         const marker = ch.repeat(len);
         const close = findCloser(source, marker, i + len);
@@ -414,10 +449,16 @@ export function parseInlines(
  * no such closer is not a delimiter at all, it is the character written.
  */
 function findCloser(source: string, marker: string, from: number): number {
+  // Bounded: an unmatched delimiter in a long reply used to scan to the end of
+  // the document, once per delimiter — 1.6s for a 64 KiB line of "*a ".
+  const limit = Math.min(source.length, from + STRCT_MD_LIMITS.scan);
   let at = source.indexOf(marker, from);
-  while (at !== -1) {
+  while (at !== -1 && at < limit) {
     const before = source[at - 1];
-    if (before && !/\s/.test(before)) return at;
+    const after = source[at + marker.length] ?? '';
+    const intraword =
+      marker[0] === '_' && /[\p{L}\p{N}]/u.test(before ?? '') && /[\p{L}\p{N}]/u.test(after);
+    if (before && !/\s/.test(before) && !intraword) return at;
     at = source.indexOf(marker, at + marker.length);
   }
   return -1;
@@ -426,7 +467,8 @@ function findCloser(source: string, marker: string, from: number): number {
 /** The index of the `]` matching the `[` at `from`, or -1. */
 function matchBracket(source: string, from: number): number {
   let depth = 0;
-  for (let i = from; i < source.length; i++) {
+  const limit = Math.min(source.length, from + STRCT_MD_LIMITS.scan);
+  for (let i = from; i < limit; i++) {
     if (source[i] === '\\') {
       i++;
       continue;
@@ -474,14 +516,22 @@ function applyTokens(text: string, tokenize?: StrctMdTokenizer): StrctMdInline[]
  * model wrote: `javascript:`, `data:`, a protocol-relative `//host`, or
  * anything this does not recognise.
  */
-export function strctClassifyHref(href: string): 'external' | 'internal' | null {
+export function strctClassifyHref(
+  href: string,
+  options: { mailto?: boolean } = {},
+): 'external' | 'internal' | null {
   const raw = (href ?? '').trim();
   if (!raw) return null;
   // Control characters and whitespace inside a URL are a smuggling trick.
   if (/[\u0000-\u001f\u007f\s]/.test(raw)) return null;
   if (/^https?:\/\/[^/]/i.test(raw)) return 'external';
-  if (/^mailto:[^@\s]+@[^@\s]+$/i.test(raw)) return 'external';
+  // mailto: opens a mail client with a subject and a body the model wrote, so
+  // it is something an app says yes to rather than the default.
+  if (options.mailto && /^mailto:[^@\s]+@[^@\s]+$/i.test(raw)) return 'external';
   if (raw.startsWith('//')) return null;
+  // A browser reads a backslash as a slash: "/\evil.example" is an in-app
+  // path to this function and https://evil.example/ to a middle-click.
+  if (/[\\]/.test(raw) || /%5c/i.test(raw)) return null;
   if (raw.startsWith('/')) return 'internal';
   return null;
 }

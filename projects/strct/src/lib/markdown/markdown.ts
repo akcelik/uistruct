@@ -202,10 +202,16 @@ export class StrctMarkdownToken {
     <!-- Blocks inside a list item or a quote. -->
     <ng-template #blockRun let-blocks>
       @for (b of blocks; track $index) {
+        <!-- The nested view had no token templates of its own, so a claimed
+             run inside a list item or a quote was drawn as plain text while
+             the same run in a paragraph became a chip. -->
         <strct-markdown
           [tree]="[b]"
           [headingOffset]="headingOffset()"
           [linkPolicy]="linkPolicy()"
+          [tokens]="tokens()"
+          [breaks]="breaks()"
+          [inheritedTokens]="allTokenDefs()"
           (navigate)="navigate.emit($event)"
         />
       }
@@ -277,6 +283,7 @@ export class StrctMarkdownToken {
                     [size]="11"
                     aria-hidden="true"
                   />
+                  <span class="strct-sr-only">{{ newTabLabel() }}</span>
                 </a>
               }
               @case ('internal') {
@@ -433,10 +440,29 @@ export class StrctMarkdown {
   readonly linkPolicy = input<((href: string) => 'external' | 'internal' | null) | null>(null);
   /** Claim runs of plain text — an inventory id becomes an object chip. */
   readonly tokens = input<StrctMdTokenizer | null>(null);
+  /**
+   * A single newline is a line break, the way a comment box reads: a model
+   * writing "Host: X\nCPU: 40 %" means two lines. Off by default, which is
+   * CommonMark.
+   */
+  readonly breaks = input(false, { transform: booleanAttribute });
+  /** What a screen reader hears after an external link (localisable). */
+  readonly newTabLabel = input(' (opens in a new tab)');
+  /**
+   * The token templates of the view that nested this one. A list item or a
+   * quote is drawn by a nested view, which has no projected content of its
+   * own — without this its claimed runs fall back to plain text.
+   */
+  readonly inheritedTokens = input<readonly StrctMarkdownToken[]>([]);
   /** An in-app link was followed; the consumer routes it. */
   readonly navigate = output<string>();
 
-  private readonly tokenDefs = contentChildren(StrctMarkdownToken);
+  private readonly ownTokenDefs = contentChildren(StrctMarkdownToken);
+  /** This view's own templates, plus the ones handed down to it. */
+  protected readonly allTokenDefs = computed<readonly StrctMarkdownToken[]>(() => {
+    const own = this.ownTokenDefs();
+    return own.length ? own : this.inheritedTokens();
+  });
 
   protected readonly blocks = computed<StrctMdBlock[]>(() => {
     const given = this.tree();
@@ -444,6 +470,7 @@ export class StrctMarkdown {
     return strctParseMarkdown(this.source(), {
       streaming: this.streaming(),
       tokenize: this.tokens() ?? undefined,
+      breaks: this.breaks(),
     });
   });
 
@@ -457,7 +484,7 @@ export class StrctMarkdown {
   }
 
   protected tokenTemplate(kind: string): TemplateRef<unknown> | null {
-    return this.tokenDefs().find((d) => d.strctMarkdownToken() === kind)?.template ?? null;
+    return this.allTokenDefs().find((d) => d.strctMarkdownToken() === kind)?.template ?? null;
   }
 
   /** The caret belongs to the last block, and only while streaming. */

@@ -5,6 +5,52 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.22.0] - 2026-10-19
+
+`strct-markdown`: what it links, what it reads, and what it costs
+(BUG-58-08, BUG-58-09, FR-58-03).
+
+### Added
+
+- **`breaks`** — a single newline is a line break, the way a comment box
+  reads: a model writing "Host: X\nCPU: 40 %" means two lines. Off by default,
+  which is CommonMark.
+- **Bare `https://` URLs are links.** A model writes "see https://example.com/x"
+  far more often than it writes an autolink. Trailing punctuation stays with
+  the sentence, and a closing bracket the address opened stays with the
+  address.
+- **An external link says so.** The `externalLink` icon is decorative, so a
+  screen reader heard nothing: links now carry a visually hidden
+  "(opens in a new tab)", localisable through `newTabLabel`.
+
+### Fixed
+
+- **A backslash in an in-app path is refused** (BUG-58-08). `strctClassifyHref`
+  called anything starting with `/` internal, and a browser reads a backslash
+  as a slash: `[x](/\evil.example)` was handed to `(navigate)` on a plain
+  click and opened `https://evil.example/` on a middle-click. Backslashes and
+  `%5c` are refused now.
+- **`mailto:` is opt-in** (BUG-58-08). It opens a mail client with a subject
+  and body the model wrote, so an app says yes to it:
+  `strctClassifyHref(href, { mailto: true })` through `linkPolicy`.
+- **Token templates reach nested blocks** (BUG-58-09). A list item or a quote
+  is drawn by a nested view, which had no projected templates: the same
+  claimed run became a chip in a paragraph and plain text in a list. The
+  templates are handed down now.
+- **An underscore inside a word is a character** (BUG-58-09). The flanking
+  test only looked ahead, so `list_inventory for vm_cpu_usage` became
+  `list<em>inventory for vm</em>cpu_usage` — tool names and counter codes lost
+  their underscores. CommonMark's intraword rule for `_` applies.
+- **The reader is bounded** (BUG-58-09). Every unmatched opener scanned to the
+  end of the document, once each, and a streamed reply is read again on every
+  token. Closer and bracket searches now work inside a 4 KiB window:
+
+  | shape             | before  | after      |
+  | ----------------- | ------- | ---------- |
+  | `"*a "` × 64 KiB  | 1622 ms | **156 ms** |
+  | `"**a "` × 64 KiB | 755 ms  | **78 ms**  |
+  | `"["` × 200 KiB   | 2059 ms | **48 ms**  |
+
 ## [5.21.0] - 2026-10-19
 
 The rest of the datagrid: the audit's A6, A7 and C2, and the four datagrid
