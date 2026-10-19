@@ -3639,6 +3639,20 @@ export const DOCS: DocCategory[] = [
               'How many rows a user may pick. `selectable` remains the boolean spelling of `multiple`, so nothing changes for a grid that already uses it. `single` draws a native radio group (one name per grid), so the arrow keys move between rows and Space picks — instead of a radio column wired by hand outside the grid. Clicking anywhere on the row picks it, and (selectionChange) still fires with a one-element array.',
           },
           {
+            name: 'interactionMode',
+            type: `'table' | 'grid'`,
+            default: `'table'`,
+            description:
+              '`grid` is the APG grid pattern: the whole grid is **one tab stop** instead of two per row, the cursor row carries it, ↑/↓ move it, Home/End jump, →/← step through that row\u2019s own controls and Escape comes back out, Space picks and Enter activates. It also sets `role="grid"`, which is what makes a selected row announce itself — `aria-selected` on a row reaches no screen reader outside one. Opt-in, because it changes what Tab does inside the table.',
+          },
+          {
+            name: 'selectionColumn',
+            type: `'auto' | 'none'`,
+            default: `'auto'`,
+            description:
+              '`none` drops the tick / radio column while selection keeps working — a file list selects by clicking the row, not a control in it. Pair it with `interactionMode="grid"`, so the row is reachable from the keyboard.',
+          },
+          {
             name: 'selectedId',
             type: 'unknown (two-way)',
             default: 'null',
@@ -3887,6 +3901,12 @@ export const DOCS: DocCategory[] = [
             name: 'selectionChange',
             type: 'StrctRow[]',
             description: 'Emits the selected rows when selection changes.',
+          },
+          {
+            name: 'rowActivate',
+            type: 'StrctRow',
+            description:
+              'The row was opened: a double-click, or Enter on the focused row in grid mode. Selection is "which rows do I mean"; activation is "go". With `detailPane` it opens the row\u2019s pane as well.',
           },
           {
             name: 'loadMore',

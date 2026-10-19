@@ -38,6 +38,7 @@ let checkboxCounter = 0;
         [attr.aria-label]="ariaLabel()"
         [attr.aria-labelledby]="labelledBy()"
         [attr.aria-describedby]="describedBy()"
+        [attr.tabindex]="tabIndex()"
         (change)="onToggle($event)"
         (blur)="onTouched()"
       />
@@ -174,6 +175,12 @@ export class StrctCheckbox implements ControlValueAccessor {
    * the name. `[strctControlDescription]` projects one with markup in it.
    */
   readonly description = input('');
+  /**
+   * Takes the box out of the tab order (`-1`) where something around it owns
+   * the keyboard — a datagrid in grid mode roves its rows and reaches the box
+   * with the arrows. `null` leaves the native order alone.
+   */
+  readonly tabIndex = input<number | null>(null);
 
   private readonly n = ++checkboxCounter;
   protected readonly descId = `strct-cb-desc-${this.n}`;
