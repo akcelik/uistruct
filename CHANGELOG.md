@@ -5,6 +5,51 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.18.0] - 2026-10-19
+
+The first batch of the datagrid audit: what the grid says to someone who
+cannot see it.
+
+### Added
+
+- **The grid announces what it does to itself.** Sorting reorders every row,
+  a page replaces them, a filter hides most of them — and until now the grid
+  carried no live region at all, so none of it reached a screen reader. One
+  polite `role="status"` region now says "Sorted by Cluster, ascending",
+  "Page 2 of 3" and "3 of 12 rows match". It is silent on first render, and a
+  repeated sentence is nudged so a reader does not drop it.
+  - Five labels join `labels` for it: `sortedAscending`, `sortedDescending`,
+    `sortCleared`, `pageOf`, `rowsMatch`.
+
+### Fixed
+
+- **A sortable header is a button now.** It was a `<th tabindex="0">`:
+  Chrome's accessibility tree read it as `role: "columnheader", props:
+["focusable=true"]` — nothing said it could be activated. It now reads
+  `role: "button", name: "CLUSTER"`, with `aria-sort` staying on the `th`
+  where the column's sorted state belongs. Measured: focus stays on the
+  control through a sort, which it did not before.
+- **`aria-busy` while the grid loads.** The skeleton rows said "updating" to
+  the eye and nothing to anyone else; the host now carries `aria-busy="true"`
+  for `loading` and `loadingMore` (measured through a lazy page change).
+- **Cell text left the faint token.** `--t3` measures **4.27–4.45 : 1** over a
+  grid cell in the three dark schemes — under AA. Text that has to be read
+  (a muted column, a cell's description line, the action-bar caption, the
+  filter note, the empty marker) now takes `--t2`, which is **5.11–6.20 : 1**
+  on the same cell. Glyphs and rails keep `--t3`, where the bar is 3 : 1.
+  axe's `color-contrast` is clean on the datagrid pages in both themes; it
+  reported three serious violations before.
+
+The grid's own layout is unchanged — header row 37.5 px, body row 39.5 px,
+as before. (The live region's first draft was an in-flow `.strct-sr-only`,
+whose 1 px inline-block still opens a line box and pushed the whole grid down
+21 px; the visual gate caught it, and the region is out of flow now.)
+
+### Changed
+
+- The `anyComponentStyle` **error** budget is 17 kB (the warning stays at
+  10 kB). The datagrid's stylesheet is 16.04 kB.
+
 ## [5.17.0] - 2026-10-19
 
 ### Changed

@@ -286,6 +286,16 @@ try {
         await sleep(400);
       }
       await sleep(300);
+      // Settle the scroll again right before the shot: the app's own
+      // scroll handling can land after the anchor step, and a route
+      // captured 56px higher one run and lower the next is not a baseline.
+      await send('Runtime.evaluate', {
+        expression: anchor
+          ? `(() => { const el = document.querySelector('${anchor}');
+               if (el) window.scrollTo(0, Math.round(el.getBoundingClientRect().top + scrollY)); })()`
+          : 'window.scrollTo(0,0)',
+      });
+      await sleep(250);
       let clip = { x: 0, y: 0, width: WIDTH, height: HEIGHT, scale: 1 };
       if (selector) {
         const { result } = await send('Runtime.evaluate', {
@@ -295,7 +305,11 @@ try {
             if (!el) return null;
             const b = el.getBoundingClientRect();
             const p = 6;
-            return { x: Math.round(b.x) - p, y: Math.round(b.y) - p,
+            // captureScreenshot's clip is in DOCUMENT coordinates; a rect is
+            // viewport-relative. On a route with an anchor the page is
+            // scrolled, and without the offset the crop lands that many
+            // pixels above the element — a different picture entirely.
+            return { x: Math.round(b.x + scrollX) - p, y: Math.round(b.y + scrollY) - p,
                      width: Math.round(b.width) + p * 2, height: Math.round(b.height) + p * 2 };
           })()`,
         });
