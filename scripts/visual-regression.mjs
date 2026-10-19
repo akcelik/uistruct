@@ -114,6 +114,34 @@ const ROUTES = [
     // The page holds several accordions; this is the one with results in it.
     '.strct-accordion:has(strct-badge)',
   ],
+  // The two states a screenshot of a page at rest never shows: a grid whose
+  // filter hides everything, and the banner that offers the rest of a set.
+  [
+    'datagrid-empty-filtered',
+    '/components/datagrid',
+    '#datagrid-filters',
+    `(() => {
+       const g = [...document.querySelectorAll('strct-datagrid')]
+         .find((x) => x.querySelector('.strct-dg__toolbar input'));
+       const input = g?.querySelector('.strct-dg__toolbar input');
+       if (!input) return;
+       const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+       set.call(input, 'zzzz');
+       input.dispatchEvent(new Event('input', { bubbles: true }));
+     })()`,
+    'strct-datagrid:has(strct-empty-state)',
+  ],
+  [
+    'datagrid-bulk',
+    '/components/datagrid',
+    '#datagrid',
+    `(() => {
+       const g = [...document.querySelectorAll('strct-datagrid')]
+         .find((x) => x.querySelector('thead strct-checkbox input'));
+       g?.querySelector('thead strct-checkbox input')?.click();
+     })()`,
+    '.strct-dg__bulk',
+  ],
   // A menu with named groups and a second line under a row's label.
   [
     'dropdown-groups',

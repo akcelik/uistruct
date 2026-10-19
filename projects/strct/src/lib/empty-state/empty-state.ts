@@ -115,16 +115,20 @@ const VARIANTS: Record<StrctEmptyVariant, { icon: string; tone: string }> = {
       .strct-empty__title {
         margin: 0;
         font: inherit;
-        font-size: 15px;
+        /* 15px was on no rung of the scale (12/12/13/14/16/22) — the only one
+           in the library. */
+        font-size: var(--text-xl);
         font-weight: 600;
         color: var(--t1);
       }
       .strct-empty__desc {
         margin: 0;
         max-width: 360px;
-        font-size: 13px;
+        font-size: var(--text-md);
         line-height: 1.5;
-        color: var(--t3);
+        /* A sentence the reader is meant to act on: --t3 is the faint token
+           and sits under AA on the darker surfaces. */
+        color: var(--t2);
       }
       /* size="sm": the row FR-48-20 described — a 16px icon inline with the
          title, the description under it. It fits a 240px card, which a 40px
@@ -146,7 +150,7 @@ const VARIANTS: Record<StrctEmptyVariant, { icon: string; tone: string }> = {
         grid-row: 1;
       }
       .strct-empty--sm .strct-empty__title {
-        font-size: 13px;
+        font-size: var(--text-md);
         grid-row: 1;
       }
       .strct-empty--sm .strct-empty__desc,

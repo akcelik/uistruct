@@ -2785,3 +2785,74 @@ describe('StrctDatagrid — interactionMode="grid"', () => {
     expect(el.querySelector('tbody .strct-cb__native')!.getAttribute('tabindex')).toBeNull();
   });
 });
+
+// B2 / B3 — the two empty states, and the way past a page-wide selection.
+describe('StrctDatagrid — empty states and the bulk escape', () => {
+  const COLS: StrctDatagridColumn[] = [{ key: 'n', label: 'N' }];
+  const ROWS: StrctRow[] = Array.from({ length: 7 }, (_, i) => ({ id: i, n: `row-${i}` }));
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', COLS);
+    fixture.componentRef.setInput('rows', ROWS);
+    fixture.componentRef.setInput('rowId', 'id');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('says "nothing here" and "nothing matches" differently', () => {
+    const bare = make({ rows: [] });
+    const empty = bare.el.querySelector('strct-empty-state')!;
+    expect(empty.textContent).toContain('No data');
+    expect(empty.querySelector('button')).toBeNull();
+
+    const filtered = make({ quickFilterable: true, quickFilter: 'zzzz' });
+    const state = filtered.el.querySelector('strct-empty-state')!;
+    expect(state.textContent).toContain('No rows match the filter');
+    // The query is named, and there is a way back.
+    expect(state.textContent).toContain('zzzz');
+    expect(state.querySelector('button')!.textContent!.trim()).toBe('Clear filters');
+  });
+
+  it('clears the filter from the empty state and the rows come back', () => {
+    const { fixture, el } = make({ quickFilterable: true, quickFilter: 'zzzz' });
+    expect(el.querySelectorAll('tbody tr').length).toBe(1);
+
+    el.querySelector<HTMLButtonElement>('strct-empty-state button')!.click();
+    fixture.detectChanges();
+    expect(el.querySelectorAll('tbody tr').length).toBe(7);
+    expect(el.querySelector('strct-empty-state')).toBeNull();
+  });
+
+  it('offers the rest of the set once the page is selected, then offers to clear', () => {
+    const { fixture, el } = make({ selectable: true, pageSize: 3 });
+    expect(el.querySelector('.strct-dg__bulk')).toBeNull();
+
+    el.querySelector<HTMLInputElement>('thead .strct-cb__native')!.click();
+    fixture.detectChanges();
+    const bulk = el.querySelector('.strct-dg__bulk')!;
+    expect(bulk.textContent).toContain('All 3 rows on this page are selected.');
+    const action = bulk.querySelector('button')!;
+    expect(action.textContent!.trim()).toBe('Select all 7');
+
+    action.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.strct-dg__bulk')!.textContent).toContain('All 7 rows are selected.');
+    expect(el.querySelector('.strct-dg__bulk button')!.textContent!.trim()).toBe('Clear selection');
+  });
+
+  it('does not offer what it cannot do: one page, or a lazy grid', () => {
+    const onePage = make({ selectable: true });
+    onePage.el.querySelector<HTMLInputElement>('thead .strct-cb__native')!.click();
+    onePage.fixture.detectChanges();
+    // Every row is already on the page — there is no "rest" to offer.
+    expect(onePage.el.querySelector('.strct-dg__bulk')).toBeNull();
+
+    const lazy = make({ selectable: true, pageSize: 3, lazy: true, total: 99 });
+    lazy.el.querySelector<HTMLInputElement>('thead .strct-cb__native')!.click();
+    lazy.fixture.detectChanges();
+    // The grid cannot name rows the server has not sent.
+    expect(lazy.el.querySelector('.strct-dg__bulk')).toBeNull();
+  });
+});

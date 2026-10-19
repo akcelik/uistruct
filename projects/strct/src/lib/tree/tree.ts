@@ -197,10 +197,15 @@ let treeNodeCounter = 0;
         outline: none;
         box-shadow: inset 0 0 0 2px var(--acc50);
       }
+      /* The accent on its own fill measured 4.49:1 over --bg-2 (arctic light)
+         — under AA, and a tree in a sidebar sits on --bg-2 all the time. The
+         label takes the primary text colour; the fill, the weight and the
+         accent icon still say which row is active, and an icon only owes
+         3:1. */
       .strct-tnode__row--active {
         background: var(--acc-m);
-        color: var(--acc);
-        font-weight: 500;
+        color: var(--t1);
+        font-weight: 600;
       }
       .strct-tnode__row--active .strct-tnode__icon,
       .strct-tnode__row--active .strct-tnode__chevron {

@@ -70,6 +70,15 @@ export interface StrctDatagridLabels {
    * reorders every row, a page replaces them, a filter hides most of them —
    * none of it is visible to someone who cannot see the table.
    */
+  /** The two empty states, and the way out of the filtered one. */
+  noMatches: string;
+  noMatchesFor: (query: string) => string;
+  clearFilters: string;
+  /** The bulk-selection escape: the page is selected, everything is not. */
+  pageSelected: (shown: number) => string;
+  selectAllCount: (total: number) => string;
+  allSelected: (total: number) => string;
+  clearSelection: string;
   sortedAscending: (column: string) => string;
   sortedDescending: (column: string) => string;
   sortCleared: string;
@@ -106,6 +115,13 @@ const DG_LABELS: StrctDatagridLabels = {
   selectColumn: 'Select row',
   toggleChildren: 'Toggle children',
   quickFilter: 'Quick filter',
+  noMatches: 'No rows match the filter',
+  noMatchesFor: (query) => `Nothing matches “${query}”.`,
+  clearFilters: 'Clear filters',
+  pageSelected: (shown) => `All ${shown} rows on this page are selected.`,
+  selectAllCount: (total) => `Select all ${total}`,
+  allSelected: (total) => `All ${total} rows are selected.`,
+  clearSelection: 'Clear selection',
   sortedAscending: (column) => `Sorted by ${column}, ascending`,
   sortedDescending: (column) => `Sorted by ${column}, descending`,
   sortCleared: 'Sorting cleared',
@@ -117,6 +133,7 @@ import { StrctCheckbox } from '../forms/checkbox';
 import { StrctOption } from '../combobox/combobox';
 import { StrctSelect } from '../select/select';
 import { StrctSpinner } from '../spinner/spinner';
+import { StrctEmptyState } from '../empty-state/empty-state';
 import { StrctNumber } from '../number/number';
 import { StrctButton, StrctButtonGroup } from '../button/button';
 import { StrctCellContext, StrctCellDef, StrctRow } from '../table/table';
@@ -342,6 +359,7 @@ export class StrctDatagridActionBar {}
     StrctSelect,
     StrctNumber,
     StrctSpinner,
+    StrctEmptyState,
     FormsModule,
   ],
   template: `
@@ -388,6 +406,16 @@ export class StrctDatagridActionBar {}
       >
     }
 
+    @if (bulkHint(); as hint) {
+      <!-- Selecting the page is not selecting the set. Say which one happened,
+           and offer the other. -->
+      <div class="strct-dg__bulk" role="status">
+        <span>{{ hint.text }}</span>
+        <button strct-button variant="flat" size="sm" (click)="hint.run()">
+          {{ hint.action }}
+        </button>
+      </div>
+    }
     <div
       class="strct-dg__layout"
       [class.strct-dg__layout--paned]="paneOpen()"
@@ -926,8 +954,25 @@ export class StrctDatagridActionBar {}
                   }
                 }
               } @empty {
+                <!-- "Nothing here" and "nothing matches what you typed" are
+                     different states: the second one can be undone, and
+                     saying so is the whole point. -->
                 <tr>
-                  <td class="strct-dg__empty" [attr.colspan]="colspan()">{{ emptyText() }}</td>
+                  <td class="strct-dg__emptyrow" [attr.colspan]="colspan()">
+                    @if (filteredAway()) {
+                      <strct-empty-state
+                        size="sm"
+                        [title]="L().noMatches"
+                        [description]="noMatchesDescription()"
+                      >
+                        <button strct-button variant="flat" size="sm" (click)="clearAllFilters()">
+                          {{ L().clearFilters }}
+                        </button>
+                      </strct-empty-state>
+                    } @else {
+                      <strct-empty-state size="sm" [title]="emptyText()" />
+                    }
+                  </td>
                 </tr>
               }
               @if (virtual() && bottomPad() > 0) {
@@ -1129,6 +1174,18 @@ export class StrctDatagridActionBar {}
          a 1px inline-block still opens a line box — it pushed the whole grid
          down 21px, which the visual gate caught. Auto offsets keep it at its
          static position, so it cannot extend anything either. */
+      .strct-dg__bulk {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 4px 10px;
+        padding: 7px 12px;
+        border-bottom: 1px solid var(--b2);
+        background: var(--acc-s);
+        color: var(--t2);
+        font-size: var(--text-md);
+      }
       .strct-dg__announcer {
         position: absolute;
         width: 1px;
@@ -2572,6 +2629,66 @@ export class StrctDatagrid {
       return { ...f, [key]: cur };
     });
   }
+  /**
+   * The escape every bulk workflow needs: the header tick selects the page,
+   * and nothing says the other pages exist. Offered only when the grid holds
+   * the rows — in `lazy` mode it cannot name rows the server has not sent,
+   * and selecting them would be a lie.
+   */
+  protected readonly bulkHint = computed<{ text: string; action: string; run: () => void } | null>(
+    () => {
+      if (this.mode() !== 'multiple' || this.lazy()) return null;
+      const all = this.filteredRows();
+      const page = this.selectionRows();
+      if (!page.length || all.length <= page.length) return null;
+      const l = this.L();
+      const selected = this.selected();
+      const everything = all.every((r) => selected.has(this.idOf(r)));
+      if (everything) {
+        return {
+          text: l.allSelected(all.length),
+          action: l.clearSelection,
+          run: () => this.clearSelection(),
+        };
+      }
+      if (!this.allPageSelected()) return null;
+      return {
+        text: l.pageSelected(page.length),
+        action: l.selectAllCount(all.length),
+        run: () => this.selectAllFiltered(),
+      };
+    },
+  );
+
+  /** Select every row the filter allows, not only the page. */
+  selectAllFiltered(): void {
+    const next = new Set(this.selected());
+    for (const row of this.filteredRows()) {
+      if (this.lockedReason(row) === null) next.add(this.idOf(row));
+    }
+    this.commitSelection(next);
+  }
+
+  /** Rows exist, but nothing the filter allows — the undoable empty. */
+  protected readonly filteredAway = computed(
+    () => this.rows().length > 0 && this.anyFilter() && this.filteredRows().length === 0,
+  );
+
+  protected readonly anyFilter = computed(
+    () => this.quickFilter().trim().length > 0 || Object.keys(this.filters()).length > 0,
+  );
+
+  protected noMatchesDescription(): string {
+    const q = this.quickFilter().trim();
+    return q ? this.L().noMatchesFor(q) : '';
+  }
+
+  /** The way back out of the filtered empty state. */
+  protected clearAllFilters(): void {
+    this.quickFilter.set('');
+    this.filters.set({});
+  }
+
   protected clearFilter(key: string): void {
     this.filters.update((f) => {
       const next = { ...f };

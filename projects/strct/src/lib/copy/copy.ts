@@ -61,7 +61,8 @@ import { StrctIcon } from '../icon/icon';
         border: 0;
         border-radius: var(--radius-md);
         background: transparent;
-        color: var(--t3);
+        /* A control's own label: --t3 measured 4.43:1 on a glass modal. */
+        color: var(--t2);
         font-family: var(--font);
         font-size: 12px;
         cursor: pointer;

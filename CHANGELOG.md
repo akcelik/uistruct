@@ -5,6 +5,61 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.20.0] - 2026-10-19
+
+The audit's third batch, together with the cheap, measured items of
+HyperStruct's 5.16 adoption report.
+
+### Added
+
+- **The datagrid tells its two empties apart** (audit B3). "Nothing here" and
+  "nothing matches what you typed" are different states, and the second one
+  can be undone: a filtered-empty grid now draws `strct-empty-state` with the
+  query it could not match and a **Clear filters** button, instead of the bare
+  "No data" cell both states shared.
+- **A way past a page-wide selection** (audit B2). The header tick selects the
+  page and nothing said the other pages existed. With every row on the page
+  selected the grid shows a banner — "All 5 rows on this page are selected.
+  **Select all 12**" — and once everything is selected it offers **Clear
+  selection**. It is not offered in `lazy` mode, where the grid cannot name
+  rows the server has not sent.
+  - Labels for both: `noMatches`, `noMatchesFor`, `clearFilters`,
+    `pageSelected`, `selectAllCount`, `allSelected`, `clearSelection`.
+
+### Fixed
+
+- **`strct-tag` lost its leading slot, or its text** (BUG-58-02, BUG-58-07).
+  Each branch of the `href` / `span` split declared its own `ng-content`, so
+  Angular's four slots sent a leading node to the link's slot and the text to
+  the span's: a plain tag never showed its icon, and `<strct-tag href="…">`
+  drew an **empty link**. The content is projected once now and rendered into
+  whichever branch is alive, with a spec per branch.
+- **The tree's active row was under AA** (BUG-58-17). `--acc` on its own
+  `--acc-m` fill measured **4.49 : 1** over `--bg-2` in arctic light — and a
+  tree in a sidebar sits on `--bg-2` all the time. The label takes `--t1`; the
+  fill, the weight and the accent icon still say which row is active, and an
+  icon owes 3 : 1. Measured across six schemes × three surfaces: worst case
+  **4.22 → 8.31**. The a11y gate now measures this pair as the page draws it.
+- **Three more places on the faint token** (BUG-58-12 and the rule from
+  5.18.0): the palette's group tag and description line (4.26 : 1 on the
+  active row in dark) and `strct-copy`'s label (4.43 : 1 on a glass modal)
+  take `--t2`.
+- **A long tag still clipped a short name in the palette** (BUG-58-11). The
+  tag's shrink factor of 20 still left the label giving up its share; against
+  "Virtual machines · DC-IST / CL-PROD-03 / HV-NODE-0012" the name "web-01"
+  showed as "web-…". The tag now absorbs essentially all of the shrink.
+  Measured at 390 px: the label draws whole (132 px of 132) while the tag
+  ellipsises (59 of 326).
+- **`strct-empty-state`'s title was off the type scale** (BUG-58-16). 15 px
+  was on no rung of 12/12/13/14/16/22 — the only one in the library. The
+  title takes `--text-xl`, the small variant `--text-md`, and the description
+  `--text-md` with `--t2`.
+
+### Also
+
+Two visual-gate routes for states a screenshot of a page at rest never shows:
+a grid whose filter hides everything, and the bulk-selection banner.
+
 ## [5.19.0] - 2026-10-19
 
 The second batch of the datagrid audit: the interaction model. Opt-in, because
