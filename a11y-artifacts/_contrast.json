@@ -208,5 +208,35 @@
     "scheme": "sage/light",
     "token": "--acc [data-accent=\"recovery\"]",
     "ratio": 6.43
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "tree active row",
+    "ratio": 12.11
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "tree active row",
+    "ratio": 14.54
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "tree active row",
+    "ratio": 10.52
+  },
+  {
+    "scheme": "ember/light",
+    "token": "tree active row",
+    "ratio": 9.12
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "tree active row",
+    "ratio": 9.95
+  },
+  {
+    "scheme": "sage/light",
+    "token": "tree active row",
+    "ratio": 9.04
   }
 ]

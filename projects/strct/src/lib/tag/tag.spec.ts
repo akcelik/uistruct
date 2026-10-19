@@ -1,5 +1,6 @@
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { StrctTag } from './tag';
+import { StrctTag, StrctTagLeading } from './tag';
 
 describe('StrctTag', () => {
   it('renders a remove button when removable and emits on click', () => {
@@ -154,5 +155,46 @@ describe('StrctTag — href', () => {
     fixture.componentRef.setInput('disabled', true);
     fixture.detectChanges();
     expect(el().querySelector('a')).toBeNull();
+  });
+});
+
+// BUG-58-02 / BUG-58-07 — one content projection, whichever branch renders.
+describe('StrctTag — the leading slot and the text reach the same branch', () => {
+  @Component({
+    imports: [StrctTag, StrctTagLeading],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
+      <strct-tag class="plain"><span strctTagLeading class="lead">●</span>HV-NODE-01</strct-tag>
+      <strct-tag class="act" interactive
+        ><span strctTagLeading class="lead">●</span>HV-NODE-02</strct-tag
+      >
+      <strct-tag class="link" href="/objects/x"
+        ><span strctTagLeading class="lead">●</span>HV-NODE-03</strct-tag
+      >
+    `,
+  })
+  class Host {}
+
+  function build() {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('draws the leading content in every branch', () => {
+    const el = build();
+    for (const cls of ['plain', 'act', 'link']) {
+      const tag = el.querySelector(`.${cls}`)!;
+      expect(tag.querySelector('.lead'), cls).toBeTruthy();
+    }
+  });
+
+  it('keeps the text inside the link, not in the branch that is not rendered', () => {
+    const el = build();
+    const link = el.querySelector('.link a') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/objects/x');
+    // FR-51-04 shipped a chip whose link was empty: the text went to the span.
+    expect(link.textContent!.replace(/\s+/g, ' ').trim()).toContain('HV-NODE-03');
+    expect(el.querySelector('.plain')!.textContent!.trim()).toContain('HV-NODE-01');
   });
 });

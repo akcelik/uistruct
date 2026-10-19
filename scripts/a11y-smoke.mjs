@@ -279,7 +279,59 @@ const { result: accentResult } = await send('Runtime.evaluate', {
   })()`,
 });
 
-const contrasts = [...(contrastResult?.value ?? []), ...(accentResult?.value ?? [])];
+// ── Rendered pairs (BUG-58-17) ────────────────────────────────────────────
+// A token can clear AA on its own and still fail where it is actually drawn:
+// the tree's active row paints --acc-m over whatever surface the tree sits on,
+// and the label was 4.49:1 over --bg-2. These read the element as the page
+// draws it, over the ground it really has.
+const PAIRS = [
+  ['/components/tree', '.strct-tnode__row--active .strct-tnode__label', 'tree active row'],
+];
+const pairResults = [];
+for (const [route, selector, name] of PAIRS) {
+  await send('Page.navigate', { url: `http://localhost:${PORT}${route}` });
+  await sleep(2500);
+  const { result } = await send('Runtime.evaluate', {
+    returnByValue: true,
+    expression: `(() => {
+      ${COLOUR_HELPERS}
+      const root = document.documentElement;
+      const before = [root.getAttribute('data-palette'), root.getAttribute('data-theme')];
+      const el = document.querySelector(${JSON.stringify(selector)});
+      if (!el) return [];
+      const out = [];
+      // The ground a translucent fill is painted on.
+      const opaque = (node) => {
+        for (let n = node; n; n = n.parentElement) {
+          const c = parse(getComputedStyle(n).backgroundColor);
+          if (c.a === 1) return c;
+        }
+        return parse(getComputedStyle(document.body).backgroundColor);
+      };
+      for (const palette of ['arctic', 'ember', 'sage']) {
+        for (const mode of ['dark', 'light']) {
+          root.setAttribute('data-palette', palette);
+          root.setAttribute('data-theme', mode);
+          const cs = getComputedStyle(el);
+          const row = el.closest('.strct-tnode__row') || el.parentElement || el;
+          const ground = over(parse(getComputedStyle(row).backgroundColor), opaque(row.parentElement || row));
+          const fg = over(parse(cs.color), ground);
+          out.push({ scheme: palette + '/' + mode, token: ${JSON.stringify(name)}, ratio: +ratio(fg, ground).toFixed(2) });
+        }
+      }
+      if (before[0]) root.setAttribute('data-palette', before[0]); else root.removeAttribute('data-palette');
+      if (before[1]) root.setAttribute('data-theme', before[1]); else root.removeAttribute('data-theme');
+      return out;
+    })()`,
+  });
+  pairResults.push(...(result?.value ?? []));
+}
+
+const contrasts = [
+  ...(contrastResult?.value ?? []),
+  ...(accentResult?.value ?? []),
+  ...pairResults,
+];
 const AA = 4.5;
 const belowAA = contrasts.filter((c) => c.ratio < AA);
 const worst = new Map();

@@ -11,6 +11,7 @@ import {
   output,
 } from '@angular/core';
 import { strctCheckHostInputs } from '../util/host-check';
+import { NgTemplateOutlet } from '@angular/common';
 import { StrctIcon } from '../icon/icon';
 
 /** Content rendered before the tag's text — a status dot, an icon. */
@@ -28,8 +29,17 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
   selector: 'strct-tag',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon],
+  imports: [NgTemplateOutlet, StrctIcon],
   template: `
+    <!-- Projected ONCE. Two branches each declaring their own ng-content gave
+         Angular four slots: a leading node went to the first (the link's) and
+         the text to the last (the span's), so a plain tag lost its leading
+         icon and a linked tag was drawn empty. One template, rendered into
+         whichever branch is alive. -->
+    <ng-template #body>
+      <ng-content select="[strctTagLeading]" />
+      <ng-content />
+    </ng-template>
     <!-- With an href the body is a real link: Ctrl/Cmd-click opens a tab, the
          address shows on hover and it can be copied as a link — none of which
          a role="button" can do. The same text, the same focus ring. -->
@@ -42,8 +52,7 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
         [attr.aria-label]="activateLabel() || null"
         (click)="onActivate()"
       >
-        <ng-content select="[strctTagLeading]" />
-        <ng-content />
+        <ng-container *ngTemplateOutlet="body" />
       </a>
     } @else {
       <span
@@ -55,10 +64,7 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
         (keydown.enter)="onActivate()"
         (keydown.space)="$event.preventDefault(); onActivate()"
       >
-        <!-- Declared before the catch-all so the selector wins; it renders first
-           either way. -->
-        <ng-content select="[strctTagLeading]" />
-        <ng-content />
+        <ng-container *ngTemplateOutlet="body" />
       </span>
     }
     @if (removable() && !disabled()) {

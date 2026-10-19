@@ -258,8 +258,14 @@ export interface StrctCommandItem {
          nearly all of what has to go. */
       .strct-cmdp__group {
         font-size: var(--text-sm);
-        color: var(--t3);
-        flex: 0 20 auto;
+        /* Read on the active row too, where --t3 measured 4.26:1 in dark. */
+        color: var(--t2);
+        /* A factor of 20 still let the label give up its share: against a
+           long tag ("Virtual machines · DC-IST / CL-PROD-03 / HV-NODE-0012")
+           a short name lost its last letters. The tag now absorbs
+           essentially all of the shrink, and the label ellipsises only once
+           the tag has nothing left. */
+        flex: 0 1000 auto;
         min-width: 0;
         max-width: 55%;
         overflow: hidden;
@@ -277,7 +283,7 @@ export interface StrctCommandItem {
       }
       .strct-cmdp__desc {
         font-size: var(--text-sm);
-        color: var(--t3);
+        color: var(--t2);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
