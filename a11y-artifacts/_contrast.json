@@ -20,6 +20,66 @@
     "ratio": 4.64
   },
   {
+    "scheme": "arctic/dark",
+    "token": "--t1 on --bg-1",
+    "ratio": 13.4
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--t2 on --bg-1",
+    "ratio": 5.37
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--t3 on --bg-1",
+    "ratio": 4.93
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--t1 on --bg-2",
+    "ratio": 14.35
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--t2 on --bg-2",
+    "ratio": 5.55
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--t3 on --bg-2",
+    "ratio": 5.07
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--t1 on --bg-3",
+    "ratio": 12.26
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--t2 on --bg-3",
+    "ratio": 5.11
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--t3 on --bg-3",
+    "ratio": 4.71
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--t1 on --bg-h",
+    "ratio": 11.64
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--t2 on --bg-h",
+    "ratio": 4.95
+  },
+  {
+    "scheme": "arctic/dark",
+    "token": "--t3 on --bg-h",
+    "ratio": 4.57
+  },
+  {
     "scheme": "arctic/light",
     "token": "--acc",
     "ratio": 5.54
@@ -38,6 +98,66 @@
     "scheme": "arctic/light",
     "token": "--critical",
     "ratio": 4.74
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--t1 on --bg-1",
+    "ratio": 17.49
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--t2 on --bg-1",
+    "ratio": 6.2
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--t3 on --bg-1",
+    "ratio": 4.76
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--t1 on --bg-2",
+    "ratio": 16.3
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--t2 on --bg-2",
+    "ratio": 6.04
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--t3 on --bg-2",
+    "ratio": 4.67
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--t1 on --bg-3",
+    "ratio": 15.56
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--t2 on --bg-3",
+    "ratio": 5.94
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--t3 on --bg-3",
+    "ratio": 4.61
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--t1 on --bg-h",
+    "ratio": 15.71
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--t2 on --bg-h",
+    "ratio": 5.96
+  },
+  {
+    "scheme": "arctic/light",
+    "token": "--t3 on --bg-h",
+    "ratio": 4.62
   },
   {
     "scheme": "ember/dark",
@@ -60,6 +180,66 @@
     "ratio": 5.09
   },
   {
+    "scheme": "ember/dark",
+    "token": "--t1 on --bg-1",
+    "ratio": 11.71
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--t2 on --bg-1",
+    "ratio": 5.81
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--t3 on --bg-1",
+    "ratio": 5.01
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--t1 on --bg-2",
+    "ratio": 12.49
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--t2 on --bg-2",
+    "ratio": 6.03
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--t3 on --bg-2",
+    "ratio": 5.17
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--t1 on --bg-3",
+    "ratio": 10.7
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--t2 on --bg-3",
+    "ratio": 5.48
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--t3 on --bg-3",
+    "ratio": 4.76
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--t1 on --bg-h",
+    "ratio": 10.04
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--t2 on --bg-h",
+    "ratio": 5.25
+  },
+  {
+    "scheme": "ember/dark",
+    "token": "--t3 on --bg-h",
+    "ratio": 4.58
+  },
+  {
     "scheme": "ember/light",
     "token": "--acc",
     "ratio": 5.88
@@ -78,6 +258,66 @@
     "scheme": "ember/light",
     "token": "--critical",
     "ratio": 4.83
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--t1 on --bg-1",
+    "ratio": 11.07
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--t2 on --bg-1",
+    "ratio": 6.04
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--t3 on --bg-1",
+    "ratio": 5.02
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--t1 on --bg-2",
+    "ratio": 10.17
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--t2 on --bg-2",
+    "ratio": 5.71
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--t3 on --bg-2",
+    "ratio": 4.76
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--t1 on --bg-3",
+    "ratio": 9.74
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--t2 on --bg-3",
+    "ratio": 5.55
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--t3 on --bg-3",
+    "ratio": 4.63
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--t1 on --bg-h",
+    "ratio": 9.53
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--t2 on --bg-h",
+    "ratio": 5.47
+  },
+  {
+    "scheme": "ember/light",
+    "token": "--t3 on --bg-h",
+    "ratio": 4.57
   },
   {
     "scheme": "sage/dark",
@@ -100,6 +340,66 @@
     "ratio": 4.59
   },
   {
+    "scheme": "sage/dark",
+    "token": "--t1 on --bg-1",
+    "ratio": 11.07
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--t2 on --bg-1",
+    "ratio": 5.82
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--t3 on --bg-1",
+    "ratio": 5.36
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--t1 on --bg-2",
+    "ratio": 11.82
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--t2 on --bg-2",
+    "ratio": 6.06
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--t3 on --bg-2",
+    "ratio": 5.58
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--t1 on --bg-3",
+    "ratio": 10.03
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--t2 on --bg-3",
+    "ratio": 5.44
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--t3 on --bg-3",
+    "ratio": 5.02
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--t1 on --bg-h",
+    "ratio": 8.82
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--t2 on --bg-h",
+    "ratio": 4.95
+  },
+  {
+    "scheme": "sage/dark",
+    "token": "--t3 on --bg-h",
+    "ratio": 4.58
+  },
+  {
     "scheme": "sage/light",
     "token": "--acc",
     "ratio": 5.51
@@ -118,6 +418,66 @@
     "scheme": "sage/light",
     "token": "--critical",
     "ratio": 5.08
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--t1 on --bg-1",
+    "ratio": 10.86
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--t2 on --bg-1",
+    "ratio": 6.1
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--t3 on --bg-1",
+    "ratio": 4.97
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--t1 on --bg-2",
+    "ratio": 10.07
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--t2 on --bg-2",
+    "ratio": 5.79
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--t3 on --bg-2",
+    "ratio": 4.74
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--t1 on --bg-3",
+    "ratio": 9.66
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--t2 on --bg-3",
+    "ratio": 5.62
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--t3 on --bg-3",
+    "ratio": 4.62
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--t1 on --bg-h",
+    "ratio": 9.52
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--t2 on --bg-h",
+    "ratio": 5.56
+  },
+  {
+    "scheme": "sage/light",
+    "token": "--t3 on --bg-h",
+    "ratio": 4.58
   },
   {
     "scheme": "arctic/dark",

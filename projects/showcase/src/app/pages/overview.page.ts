@@ -543,7 +543,12 @@ export class OverviewPage {
   protected readonly contrast: ContrastRow[] = [
     { token: '--t1', usage: 'Primary text on panels', dark: '14.4:1', light: '13.5:1' },
     { token: '--t2', usage: 'Secondary text', dark: '5.5:1', light: '6.1:1' },
-    { token: '--t3', usage: 'Tertiary / captions', dark: '4.8:1', light: '4.8:1' },
+    {
+      token: '--t3',
+      usage: 'Tertiary / captions (4.6:1 on a hovered row, its worst surface)',
+      dark: '4.9:1',
+      light: '4.8:1',
+    },
     { token: '--acc', usage: 'Links, active nav, accent text', dark: '6.3:1', light: '5.4:1' },
     { token: '--success', usage: 'Success text & badges', dark: '6.5:1', light: '4.9:1' },
     { token: '--warning', usage: 'Warning text & badges', dark: '7.9:1', light: '4.9:1' },
