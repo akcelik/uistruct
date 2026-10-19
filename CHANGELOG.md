@@ -5,6 +5,35 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.24.0] - 2026-10-19
+
+The faint text token clears AA on every surface text is set on (BUG-58-04).
+
+### Fixed
+
+- **`--t3` was under AA on the surfaces text actually sits on** (BUG-58-04).
+  The gate only ever measured text on `--bg-1`, so nothing saw the rest:
+  measured over the four grounds the library paints text on — the pane
+  (`--bg-1`), the page (`--bg-2`), a table cell (`--bg-3`) and a hovered row
+  (`--bg-h`) — `--t3` was **3.94** on a hovered row in sage dark, **4.20** in
+  ember dark, and under 4.5 on a cell in four of the six schemes. 5.18.0 moved
+  the datagrid's read text to `--t2`, which fixed that grid; the token itself
+  stayed short everywhere else (a section header's description on the page, a
+  caption on a hovered row). The alpha is raised in five schemes — arctic dark
+  0.47 → 0.49, ember dark 0.51 → 0.545, ember light 0.70 → 0.715, sage dark
+  0.54 → 0.61, sage light 0.70 → 0.71 (arctic light already cleared) — so the
+  worst reading in all six schemes on all four surfaces is now **4.57**. It
+  stays below `--t2` everywhere, so the three-step text scale is intact, and
+  the visual baselines are unchanged (drift 0.13 at most).
+
+### Changed
+
+- **The contrast gate reads every text token on every surface.** It measured
+  `--acc`, `--success`, `--warning` and `--critical` on `--bg-1` only; it now
+  also measures `--t1`, `--t2` and `--t3` over `--bg-1`, `--bg-2`, `--bg-3`
+  and `--bg-h` in all six schemes — 72 readings instead of 24 — and fails
+  under 4.5. This is what would have caught BUG-58-04 before HyperStruct did.
+
 ## [5.23.0] - 2026-10-19
 
 The last of HyperStruct's 5.16 report: an Escape that was already used, the

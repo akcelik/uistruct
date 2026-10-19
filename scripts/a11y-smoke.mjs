@@ -237,6 +237,22 @@ const { result: contrastResult } = await send('Runtime.evaluate', {
             ratio: +ratio(fg, bg).toFixed(2),
           });
         }
+        // BUG-58-04: the text tokens on every surface text is set on — the
+        // pane (--bg-1), the page (--bg-2), a table cell (--bg-3) and a
+        // hovered row (--bg-h). --t3 was 3.94 on a hovered row in sage dark
+        // and under AA on a cell in four schemes; nothing measured it,
+        // because the gate only ever read --bg-1.
+        for (const surface of ['--bg-1', '--bg-2', '--bg-3', '--bg-h']) {
+          const ground = parse(cs.getPropertyValue(surface));
+          for (const token of ['--t1', '--t2', '--t3']) {
+            const fg = over(parse(cs.getPropertyValue(token)), ground);
+            out.push({
+              scheme: palette + '/' + mode,
+              token: token + ' on ' + surface,
+              ratio: +ratio(fg, ground).toFixed(2),
+            });
+          }
+        }
       }
     }
     if (before[0]) root.setAttribute('data-palette', before[0]); else root.removeAttribute('data-palette');
@@ -340,10 +356,10 @@ for (const c of contrasts) {
   if (!seen || c.ratio < seen.ratio) worst.set(c.token, c);
 }
 console.log(
-  `\n${belowAA.length ? '✗' : '✓'} status text on --bg-1 (worst of six schemes): ` +
+  `\n${belowAA.length ? '✗' : '✓'} text contrast (worst of six schemes): ` +
     [...worst.values()].map((c) => `${c.token} ${c.ratio} (${c.scheme})`).join(' · '),
 );
-for (const c of belowAA) console.log(`   ✗ ${c.token} on --bg-1 is ${c.ratio} in ${c.scheme}`);
+for (const c of belowAA) console.log(`   ✗ ${c.token} is ${c.ratio} in ${c.scheme}`);
 failures += belowAA.length;
 if (!contrasts.length) {
   console.log('✗ contrast check produced no readings');
