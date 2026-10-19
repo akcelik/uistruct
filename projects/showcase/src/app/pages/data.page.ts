@@ -916,7 +916,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       .dg-cpu__pct {
         font-family: var(--mono);
         font-size: 11px;
-        color: var(--t3);
+        /* axe measured --t3 at 4.44:1 on a dark row — a number worth reading
+           takes --t2. */
+        color: var(--t2);
         min-width: 30px;
         text-align: end;
       }

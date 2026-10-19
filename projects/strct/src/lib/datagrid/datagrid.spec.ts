@@ -2499,3 +2499,127 @@ describe('StrctDatagrid — the row tints and the frame', () => {
     expect(scrolling?.[2]).toContain('overflow: visible');
   });
 });
+
+// A3 / A4 / A5 / C1 — what the grid says to someone who cannot see it, and
+// what it says out loud when it changes under them.
+describe('StrctDatagrid — the grid says what it does', () => {
+  const COLS: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Cluster', sortable: true },
+    { key: 'type', label: 'Type' },
+    { key: 'note', label: 'Note', muted: true },
+  ];
+  const ROWS: StrctRow[] = [
+    { name: 'gamma', type: 'Failover', note: 'n1' },
+    { name: 'alpha', type: 'Standard', note: 'n2' },
+    { name: 'beta', type: 'Failover', note: 'n3' },
+  ];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', COLS);
+    fixture.componentRef.setInput('rows', ROWS);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      said: () => el.querySelector('.strct-dg__announcer')!.textContent!.trim(),
+      sortBtn: () => el.querySelector('thead .strct-dg__sortbtn') as HTMLButtonElement,
+    };
+  }
+
+  it('sorts from a real button, and keeps aria-sort on the column header', () => {
+    const { fixture, el, sortBtn } = make();
+    const headers = [...el.querySelectorAll('thead th')];
+    const sortable = headers[0];
+
+    // A th with tabindex reads as "column header, focusable" and never says it
+    // can be activated; a button does.
+    expect(sortBtn()).toBeTruthy();
+    expect(sortBtn().textContent!.trim()).toContain('Cluster');
+    expect(sortable.hasAttribute('tabindex')).toBe(false);
+    expect(sortable.getAttribute('aria-sort')).toBe('none');
+    // A column that does not sort has no button to press.
+    expect(headers[1].querySelector('.strct-dg__sortbtn')).toBeNull();
+
+    sortBtn().click();
+    fixture.detectChanges();
+    expect(sortable.getAttribute('aria-sort')).toBe('ascending');
+    expect(
+      [...el.querySelectorAll('tbody tr td:first-child')].map((c) => c.textContent!.trim()),
+    ).toEqual(['alpha', 'beta', 'gamma']);
+
+    sortBtn().click();
+    fixture.detectChanges();
+    expect(sortable.getAttribute('aria-sort')).toBe('descending');
+  });
+
+  it('says nothing until something happens, then says what it did', () => {
+    const { fixture, said, sortBtn } = make();
+    expect(said()).toBe('');
+
+    sortBtn().click();
+    fixture.detectChanges();
+    expect(said()).toBe('Sorted by Cluster, ascending');
+
+    sortBtn().click();
+    fixture.detectChanges();
+    expect(said()).toBe('Sorted by Cluster, descending');
+
+    // A third press clears the sort, and says so.
+    sortBtn().click();
+    fixture.detectChanges();
+    expect(said()).toBe('Sorting cleared');
+  });
+
+  it('says where the pager went, and how much a filter left', () => {
+    const { fixture, el, said } = make({ pageSize: 2, quickFilterable: true });
+    const pager = el.querySelector('.strct-pg') as HTMLElement;
+    const second = [...pager.querySelectorAll('button')].find(
+      (b) => b.textContent!.trim() === '2',
+    )!;
+    second.click();
+    fixture.detectChanges();
+    expect(said()).toBe('Page 2 of 2');
+
+    fixture.componentRef.setInput('quickFilter', 'failover');
+    fixture.detectChanges();
+    expect(said()).toBe('2 of 3 rows match');
+
+    // The same sentence twice in a row is nudged, or a reader drops it.
+    fixture.componentRef.setInput('quickFilter', 'failover ');
+    fixture.detectChanges();
+    expect(said().startsWith('2 of 3 rows match')).toBe(true);
+  });
+
+  it('marks itself busy while it is loading', () => {
+    const { fixture, el } = make();
+    expect(el.getAttribute('aria-busy')).toBeNull();
+
+    fixture.componentRef.setInput('loading', true);
+    fixture.detectChanges();
+    expect(el.getAttribute('aria-busy')).toBe('true');
+
+    fixture.componentRef.setInput('loading', false);
+    fixture.detectChanges();
+    expect(el.getAttribute('aria-busy')).toBeNull();
+  });
+
+  it('keeps cell text off the faint token, which is under AA on a dark cell', () => {
+    make();
+    const css = [...document.querySelectorAll('style')]
+      .map((s) => s.textContent ?? '')
+      .join('')
+      .replace(/\s+/g, ' ');
+    // Measured over a grid cell: --t3 is 4.27–4.45:1 in the three dark
+    // schemes, --t2 is 5.11–6.20:1. Glyphs may keep --t3; text may not.
+    for (const selector of [
+      '\\.strct-dg td\\.strct-dg__cell--muted',
+      '\\.strct-dg__celldesc',
+      '\\.strct-dg__filternote',
+    ]) {
+      expect(css, selector).toMatch(new RegExp(`${selector} \\{[^}]*color: var\\(--t2\\)`));
+    }
+  });
+});

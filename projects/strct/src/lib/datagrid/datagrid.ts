@@ -65,6 +65,16 @@ export interface StrctDatagridLabels {
   loadMore: string;
   /** `paging="more"`: what the footer says it is showing. */
   showing: (shown: number, total?: number) => string;
+  /**
+   * What the grid announces after it changes under the reader: sorting
+   * reorders every row, a page replaces them, a filter hides most of them —
+   * none of it is visible to someone who cannot see the table.
+   */
+  sortedAscending: (column: string) => string;
+  sortedDescending: (column: string) => string;
+  sortCleared: string;
+  pageOf: (page: number, pages: number) => string;
+  rowsMatch: (shown: number, total: number) => string;
 }
 
 const DG_LABELS: StrctDatagridLabels = {
@@ -96,6 +106,11 @@ const DG_LABELS: StrctDatagridLabels = {
   selectColumn: 'Select row',
   toggleChildren: 'Toggle children',
   quickFilter: 'Quick filter',
+  sortedAscending: (column) => `Sorted by ${column}, ascending`,
+  sortedDescending: (column) => `Sorted by ${column}, descending`,
+  sortCleared: 'Sorting cleared',
+  pageOf: (page, pages) => `Page ${page} of ${pages}`,
+  rowsMatch: (shown, total) => `${shown} of ${total} rows match`,
 };
 import { StrctStatus } from '../status';
 import { StrctCheckbox } from '../forms/checkbox';
@@ -330,6 +345,9 @@ export class StrctDatagridActionBar {}
     FormsModule,
   ],
   template: `
+    <!-- One polite region for everything the grid does to itself: sorting,
+         paging and filtering all change the rows without saying so. -->
+    <span class="strct-dg__announcer" role="status" aria-live="polite">{{ announcement() }}</span>
     @if (actionBarDef() || quickFilterable() || actionBarCaptionDef()) {
       <div class="strct-dg__toolbar">
         @if (quickFilterable()) {
@@ -451,25 +469,38 @@ export class StrctDatagridActionBar {}
                   [class.strct-dg__cell--sticky]="isSticky(col)"
                   [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
                   [style.insetInlineStart.px]="stickyLeft(col.key)"
-                  [attr.tabindex]="col.sortable ? 0 : null"
                   [attr.aria-sort]="col.sortable ? ariaSort(col.key) : null"
                   [attr.draggable]="reorderable() ? true : null"
                   (dragstart)="onColDragStart(col.key, $event)"
                   (dragover)="onColDragOver(col.key, $event)"
                   (drop)="onColDrop(col.key)"
                   (dragend)="onColDragEnd()"
-                  (click)="col.sortable && sortBy(col.key)"
-                  (keydown.enter)="col.sortable && sortBy(col.key)"
-                  (keydown.space)="col.sortable && onHeaderSpace($event, col.key)"
                 >
                   <span class="strct-dg__hd">
-                    {{ col.label }}
+                    <!-- A header that sorts is a button: a th with tabindex is
+                         read as "column header, focusable" and never says it
+                         can be activated. aria-sort stays on the th, which is
+                         what carries the column's sorted state. -->
                     @if (col.sortable) {
-                      <strct-icon
-                        class="strct-dg__sorticon"
-                        [name]="sortIcon(col.key)"
-                        [size]="13"
-                      />
+                      <!-- The button covers most of the header, so it carries
+                           the drag source too: a reorderable column has to be
+                           grabbable where the pointer actually lands. The
+                           event bubbles to the th's own handlers. -->
+                      <button
+                        type="button"
+                        class="strct-dg__sortbtn"
+                        [attr.draggable]="reorderable() ? true : null"
+                        (click)="sortBy(col.key)"
+                      >
+                        {{ col.label }}
+                        <strct-icon
+                          class="strct-dg__sorticon"
+                          [name]="sortIcon(col.key)"
+                          [size]="13"
+                        />
+                      </button>
+                    } @else {
+                      {{ col.label }}
                     }
                     @if (col.filterable || col.filterOptions) {
                       <button
@@ -1027,7 +1058,12 @@ export class StrctDatagridActionBar {}
               </button>
             }
           } @else if (pageSize() > 0 && !groupBy()) {
-            <strct-pagination [total]="totalCount()" [pageSize]="pageSize()" [(page)]="page" />
+            <strct-pagination
+              [total]="totalCount()"
+              [pageSize]="pageSize()"
+              [page]="page()"
+              (pageChange)="goToPage($event)"
+            />
           }
         </div>
       </div>
@@ -1035,6 +1071,8 @@ export class StrctDatagridActionBar {}
   `,
   host: {
     class: 'strct-dg-host',
+    // The skeleton rows say "updating" to the eye; this says it to everyone else.
+    '[attr.aria-busy]': 'loading() || loadingMore() ? "true" : null',
     '[class.strct-dg-host--compact]': 'compact()',
     '[class.strct-dg-host--singleline]': 'singleLine()',
     '[class.strct-dg-host--virtual]': 'virtual()',
@@ -1070,11 +1108,23 @@ export class StrctDatagridActionBar {}
         text-overflow: ellipsis;
         white-space: nowrap;
         font-size: var(--text-sm);
-        color: var(--t3);
+        color: var(--t2);
       }
 
       /* Enclosed chrome: the action bar, grid and footer share one frame so the
        * whole component reads as a single object on the page. */
+      /* Out of flow on purpose: .strct-sr-only is an in-flow inline-block, and
+         a 1px inline-block still opens a line box — it pushed the whole grid
+         down 21px, which the visual gate caught. Auto offsets keep it at its
+         static position, so it cannot extend anything either. */
+      .strct-dg__announcer {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
       .strct-dg-host {
         display: block;
         border: 1px solid var(--b2);
@@ -1108,21 +1158,25 @@ export class StrctDatagridActionBar {}
         font-family: var(--mono);
         font-size: var(--text-sm);
       }
+      /* --t3 is the faint token: measured over a grid cell it is 4.27-4.45:1
+         in the three dark schemes, under AA. Text that has to be read takes
+         --t2 (5.11-6.20:1 on the same cell); --t3 stays for glyphs and rails,
+         where 3:1 is the bar. */
       .strct-dg td.strct-dg__cell--muted {
-        color: var(--t3);
+        color: var(--t2);
       }
       .strct-dg td.strct-dg__cell--numeric {
         font-variant-numeric: tabular-nums;
       }
       .strct-dg__empty {
-        color: var(--t3);
+        color: var(--t2);
       }
       /* A name with a muted hint under it, in the row height singleLine + 1
          line gives. */
       .strct-dg__celldesc {
         display: block;
         font-size: var(--text-sm);
-        color: var(--t3);
+        color: var(--t2);
         line-height: 1.3;
       }
       .strct-dg__scroll {
@@ -1360,6 +1414,23 @@ export class StrctDatagridActionBar {}
       }
       .strct-dg__th--sortable:hover {
         color: var(--t1);
+      }
+      .strct-dg__sortbtn {
+        display: inline-flex;
+        align-items: center;
+        gap: inherit;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: inherit;
+        font: inherit;
+        text-align: start;
+        cursor: pointer;
+      }
+      .strct-dg__sortbtn:focus-visible {
+        outline: 2px solid var(--acc50);
+        outline-offset: 2px;
+        border-radius: var(--radius-sm);
       }
       .strct-dg__th--sortable:focus-visible {
         outline: 2px solid var(--acc50);
@@ -1686,7 +1757,7 @@ export class StrctDatagridActionBar {}
       }
       .strct-dg__empty {
         text-align: center;
-        color: var(--t3);
+        color: var(--t2);
         padding: 22px;
       }
       .strct-dg__quickfilter {
@@ -1703,7 +1774,7 @@ export class StrctDatagridActionBar {}
       }
       .strct-dg__filternote {
         font-size: 11.5px;
-        color: var(--t3);
+        color: var(--t2);
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
       }
@@ -2224,6 +2295,10 @@ export class StrctDatagrid {
   });
 
   readonly page = signal(1);
+  /** What the polite region is saying right now; '' until something happens. */
+  protected readonly announcement = signal('');
+  /** The first filtered() run is the initial render, which announces nothing. */
+  private filterSettled = false;
   private readonly sort = signal<{ key: string | null; dir: SortDir }>({ key: null, dir: 'asc' });
   /** Selection / expansion are tracked by row id (see {@link rowId}). */
   private readonly selected = signal<Set<unknown>>(new Set());
@@ -3199,6 +3274,22 @@ export class StrctDatagrid {
   private lastStateKey = '';
 
   constructor() {
+    // A filter can leave one row out of twelve with nothing said. Announce the
+    // count it left, but only while a filter is actually on, and never for the
+    // first render.
+    effect(() => {
+      const shown = this.filteredRows().length;
+      const total = this.rows().length;
+      const active = this.quickFilter().trim().length > 0 || Object.keys(this.filters()).length > 0;
+      untracked(() => {
+        if (!this.filterSettled) {
+          this.filterSettled = true;
+          return;
+        }
+        if (active) this.announce(this.L().rowsMatch(shown, total));
+      });
+    });
+
     // The resize listeners live on document — if the grid is destroyed
     // mid-drag they must not leak (onResizeEnd is a safe no-op when idle).
     inject(DestroyRef).onDestroy(() => this.onResizeEnd());
@@ -3597,6 +3688,31 @@ export class StrctDatagrid {
     } else {
       this.sort.set({ key: null, dir: 'asc' });
     }
+    const { key: sorted, dir } = this.sort();
+    const label = this.columns().find((c) => c.key === key)?.label ?? key;
+    const l = this.L();
+    this.announce(
+      sorted === null
+        ? l.sortCleared
+        : dir === 'asc'
+          ? l.sortedAscending(label)
+          : l.sortedDescending(label),
+    );
+  }
+
+  /** The pager's own change, plus what it means for a reader. */
+  protected goToPage(page: number): void {
+    this.page.set(page);
+    const pages = Math.max(1, Math.ceil(this.totalCount() / Math.max(1, this.pageSize())));
+    this.announce(this.L().pageOf(page, pages));
+  }
+
+  /**
+   * Says something once. The same text twice in a row would be dropped by a
+   * screen reader, so a repeat is nudged with a trailing space.
+   */
+  private announce(text: string): void {
+    this.announcement.set(this.announcement() === text ? text + ' ' : text);
   }
 
   protected sortIcon(key: string): string {
