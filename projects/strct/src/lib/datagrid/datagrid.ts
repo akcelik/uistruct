@@ -70,6 +70,8 @@ export interface StrctDatagridLabels {
    * reorders every row, a page replaces them, a filter hides most of them —
    * none of it is visible to someone who cannot see the table.
    */
+  /** The resize separator's name, per column. */
+  resizeColumn: (column: string) => string;
   /** The two empty states, and the way out of the filtered one. */
   noMatches: string;
   noMatchesFor: (query: string) => string;
@@ -115,6 +117,7 @@ const DG_LABELS: StrctDatagridLabels = {
   selectColumn: 'Select row',
   toggleChildren: 'Toggle children',
   quickFilter: 'Quick filter',
+  resizeColumn: (column) => `Resize ${column}`,
   noMatches: 'No rows match the filter',
   noMatchesFor: (query) => `Nothing matches “${query}”.`,
   clearFilters: 'Clear filters',
@@ -433,6 +436,7 @@ export class StrctDatagridActionBar {}
         <table
           class="strct-dg"
           [attr.role]="childrenKey() ? 'treegrid' : gridMode() ? 'grid' : null"
+          [attr.aria-rowcount]="ariaRowCount()"
           [attr.aria-labelledby]="caption() ? captionId : null"
         >
           @if (caption()) {
@@ -497,6 +501,7 @@ export class StrctDatagridActionBar {}
                   [class.strct-dg__cell--sticky]="isSticky(col)"
                   [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
                   [style.insetInlineStart.px]="stickyLeft(col.key)"
+                  [attr.data-col]="col.key"
                   [attr.aria-sort]="col.sortable ? ariaSort(col.key) : null"
                   [attr.draggable]="reorderable() ? true : null"
                   (dragstart)="onColDragStart(col.key, $event)"
@@ -589,9 +594,20 @@ export class StrctDatagridActionBar {}
                     }
                   </span>
                   @if (resizable() && col.resizable !== false) {
+                    <!-- A separator, not a bare div: a column could only be
+                         resized with a mouse, which is the one input a
+                         console cannot assume. -->
                     <div
                       class="strct-dg__resize"
+                      role="separator"
+                      aria-orientation="vertical"
+                      tabindex="0"
+                      [attr.aria-label]="L().resizeColumn(col.label)"
+                      [attr.aria-valuenow]="separatorValue(col.key)"
+                      [attr.aria-valuemin]="40"
                       (mousedown)="onResizeStart($event, col.key)"
+                      (keydown)="onResizeKey($event, col.key)"
+                      (dblclick)="resetWidth(col.key)"
                     ></div>
                   }
                 </th>
@@ -687,6 +703,10 @@ export class StrctDatagridActionBar {}
                             }}"
                             >{{ grp.label }}</span
                           >
+                          <!-- The three spans run together in the button's
+                               name ("Needs your decision1Blocks the join…");
+                               the separators are read, not seen. -->
+                          <span class="strct-dg__announcer">, </span>
                           <span
                             class="strct-dg__groupcount strct-dg__groupcount--{{
                               grp.status ?? 'none'
@@ -694,6 +714,7 @@ export class StrctDatagridActionBar {}
                             >{{ grp.count }}</span
                           >
                           @if (grp.note) {
+                            <span class="strct-dg__announcer">. </span>
                             <span class="strct-dg__groupnote">{{ grp.note }}</span>
                           }
                         }
@@ -703,6 +724,7 @@ export class StrctDatagridActionBar {}
                 } @else {
                   @let row = it.row!;
                   <tr
+                    [attr.aria-rowindex]="ariaRowIndex(row)"
                     [class.strct-dg__row--selected]="isSelected(row)"
                     [class.strct-dg__row--locked]="lockedReason(row) !== null"
                     [attr.aria-selected]="mode() === 'none' ? null : isSelected(row)"
@@ -1293,7 +1315,8 @@ export class StrctDatagridActionBar {}
         background: transparent;
         color: var(--t1);
         font-family: var(--font);
-        font-size: 12.5px;
+        /* 12.5px was on no rung of the scale (12/13/14/16/22). */
+        font-size: var(--text-sm);
         font-weight: 600;
         cursor: pointer;
         text-align: start;
@@ -1318,6 +1341,38 @@ export class StrctDatagridActionBar {}
           transition: none;
         }
       }
+      /* A group's tone, drawn: the template has always written these class
+         names and the stylesheet had a rule for none of them, so four groups
+         of different severity looked identical. The label takes the status
+         colour, the count its wash — the badge's language. */
+      .strct-dg__grouplabel--critical {
+        color: var(--critical);
+      }
+      .strct-dg__grouplabel--warning {
+        color: var(--warning);
+      }
+      .strct-dg__grouplabel--success {
+        color: var(--success);
+      }
+      .strct-dg__grouplabel--accent {
+        color: var(--acc);
+      }
+      .strct-dg__grouplabel--neutral,
+      .strct-dg__grouplabel--none {
+        color: var(--t1);
+      }
+      /* The note is a second voice, not a continuation of the heading: it was
+         drawn in the button's own 600 weight and primary colour, so the two
+         read as one bold line. */
+      .strct-dg__groupnote {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: var(--text-sm);
+        font-weight: 400;
+        color: var(--t2);
+      }
       .strct-dg__groupcount {
         min-width: 18px;
         height: 18px;
@@ -1330,6 +1385,23 @@ export class StrctDatagridActionBar {}
         background: var(--acc-m);
         color: var(--acc);
         font-variant-numeric: tabular-nums;
+      }
+      .strct-dg__groupcount--critical {
+        background: var(--critical-bg);
+        color: var(--critical);
+      }
+      .strct-dg__groupcount--warning {
+        background: var(--warning-bg);
+        color: var(--warning);
+      }
+      .strct-dg__groupcount--success {
+        background: var(--success-bg);
+        color: var(--success);
+      }
+      .strct-dg__groupcount--neutral,
+      .strct-dg__groupcount--none {
+        background: var(--bg-3);
+        color: var(--t2);
       }
       /* Sticky cells require border-collapse: separate (collapse breaks
          position: sticky on table cells in Chromium); per-cell bottom borders
@@ -1571,6 +1643,28 @@ export class StrctDatagridActionBar {}
         width: 1%;
         white-space: nowrap;
       }
+      .strct-dg__sel .strct-cb,
+      .strct-dg__sel .strct-dg__radio,
+      .strct-dg__expandbtn {
+        position: relative;
+      }
+      /* The pad fills the cell it sits in (the negative inset is the cell's
+         own padding), so the target is the whole cell — well past 24x24 —
+         and the row's height is untouched. */
+      .strct-dg__sel .strct-cb::after,
+      .strct-dg__sel .strct-dg__radio::after,
+      .strct-dg__expandbtn::after {
+        content: '';
+        position: absolute;
+        inset: -11px -13px;
+        min-width: 24px;
+        min-height: 24px;
+      }
+      .strct-dg-host--compact .strct-dg__sel .strct-cb::after,
+      .strct-dg-host--compact .strct-dg__sel .strct-dg__radio::after,
+      .strct-dg-host--compact .strct-dg__expandbtn::after {
+        inset: -7px -11px;
+      }
       .strct-dg__sel input {
         accent-color: var(--acc);
         width: 15px;
@@ -1605,8 +1699,16 @@ export class StrctDatagridActionBar {}
         color: var(--t1);
         background: var(--bg-3);
       }
+      /* WCAG 2.2 (2.5.8) asks 24x24 of a target; the chevron was 18x18 and
+         the row tick 25x17. The target grows, the layout does not: a
+         min-height on these made every row 3.5px taller, which is a density
+         change nobody asked for. An absolutely placed pad inside the control
+         takes the pointer without taking any space. */
       .strct-dg__expandbtn {
+        position: relative;
         display: inline-flex;
+        align-items: center;
+        justify-content: center;
         padding: 3px;
         border: 0;
         border-radius: 2px;
@@ -1664,25 +1766,30 @@ export class StrctDatagridActionBar {}
       .strct-dg__layout--paned {
         gap: 0;
       }
-      .strct-dg__layout--paned .strct-dg__scroll {
+      /* The width belongs to the scroller alone. Giving it to the table too
+         made a percentage compound — paneListWidth="40%" drew a list at 40%
+         of the layout and a table at 40% of THAT. And both were descendant
+         selectors, so a datagrid drawn inside the pane was squeezed by the
+         outer grid's rules; the child combinators keep them to this list. */
+      .strct-dg__layout--paned > .strct-dg__scroll {
         flex: 0 0 auto;
         width: var(--strct-dg-pane-list-w, 260px);
         min-width: var(--strct-dg-pane-list-w, 260px);
         max-width: var(--strct-dg-pane-list-w, 260px);
       }
-      .strct-dg__layout--paned .strct-dg {
-        width: var(--strct-dg-pane-list-w, 260px);
-        min-width: var(--strct-dg-pane-list-w, 260px);
-        max-width: var(--strct-dg-pane-list-w, 260px);
+      .strct-dg__layout--paned > .strct-dg__scroll > .strct-dg {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
         flex-shrink: 0;
         border-start-end-radius: 0;
         border-end-end-radius: 0;
       }
       /* Narrow: the pane takes the list's place rather than squeezing both. */
-      .strct-dg__layout--panetakeover .strct-dg__scroll {
+      .strct-dg__layout--panetakeover > .strct-dg__scroll {
         display: none;
       }
-      .strct-dg__layout--panetakeover .strct-dg__pane {
+      .strct-dg__layout--panetakeover > .strct-dg__pane {
         flex: 1;
         min-width: 0;
       }
@@ -1842,7 +1949,7 @@ export class StrctDatagridActionBar {}
         order: 3;
       }
       .strct-dg__filternote {
-        font-size: 11.5px;
+        font-size: var(--text-sm);
         color: var(--t2);
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
@@ -1997,7 +2104,7 @@ export class StrctDatagridActionBar {}
         background: transparent;
         color: var(--t2);
         font-family: var(--font);
-        font-size: 11.5px;
+        font-size: var(--text-sm);
         cursor: pointer;
       }
       .strct-dg__filterclear:hover:not(:disabled) {
@@ -2396,7 +2503,7 @@ export class StrctDatagrid {
   private readonly selected = signal<Set<unknown>>(new Set());
   protected readonly selectedCount = computed(() => this.selected().size);
   private readonly expandedRows = signal<Set<unknown>>(new Set());
-  private readonly columnWidths = signal<Map<string, number>>(new Map());
+  protected readonly columnWidths = signal<Map<string, number>>(new Map());
   protected readonly hiddenColumns = signal<Set<string>>(new Set());
   protected readonly chooserOpen = signal(false);
   private resizeState: { key: string; startX: number; startWidth: number } | null = null;
@@ -2406,6 +2513,64 @@ export class StrctDatagrid {
   colWidth(key: string): string | null {
     const px = this.columnWidths().get(key);
     return px != null ? `${px}px` : null;
+  }
+
+  /**
+   * A focusable separator owes ARIA a value, and a column that has never been
+   * resized has no stored width — so the header's real width is swept after
+   * render and whenever the grid resizes. Without it every handle was an
+   * `aria-required-attr` violation (12 of them on the showcase's own page).
+   */
+  private readonly measuredWidths = signal<Map<string, number>>(new Map());
+
+  protected separatorValue(key: string): number | null {
+    return this.columnWidths().get(key) ?? this.measuredWidths().get(key) ?? null;
+  }
+
+  private sweepHeaderWidths(): void {
+    if (!this.resizable()) return;
+    const next = new Map<string, number>();
+    for (const th of this.hostRef.nativeElement.querySelectorAll<HTMLElement>(
+      'thead th[data-col]',
+    )) {
+      const key = th.dataset['col'];
+      if (key) next.set(key, Math.round(th.offsetWidth));
+    }
+    const current = this.measuredWidths();
+    if (next.size === current.size && [...next].every(([k, v]) => current.get(k) === v)) return;
+    this.measuredWidths.set(next);
+  }
+
+  /**
+   * The keyboard half of a resize: the arrows step 16px (4px with Shift for a
+   * fine adjustment), Home gives the column back its natural width. Steps are
+   * the only way a separator can be moved without a pointer.
+   */
+  protected onResizeKey(event: KeyboardEvent, key: string): void {
+    const step = event.shiftKey ? 4 : 16;
+    const th = (event.target as HTMLElement).closest('th');
+    const current = this.columnWidths().get(key) ?? th?.offsetWidth ?? 160;
+    let next: number | null = null;
+    if (event.key === 'ArrowRight') next = current + step;
+    else if (event.key === 'ArrowLeft') next = current - step;
+    else if (event.key === 'Home') next = null;
+    else return;
+    event.preventDefault();
+    if (next === null) this.resetWidth(key);
+    else this.setColumnWidth(key, Math.max(40, next));
+  }
+
+  /** Give the column back the width the content asks for. */
+  protected resetWidth(key: string): void {
+    this.columnWidths.update((m) => {
+      const next = new Map(m);
+      next.delete(key);
+      return next;
+    });
+  }
+
+  private setColumnWidth(key: string, px: number): void {
+    this.columnWidths.update((m) => new Map(m).set(key, px));
   }
 
   onResizeStart(e: MouseEvent, key: string) {
@@ -3318,6 +3483,24 @@ export class StrctDatagrid {
   protected readonly renderRows = computed(() =>
     this.virtual() ? this.sorted().slice(this.vRange().start, this.vRange().end) : this.paged(),
   );
+  /**
+   * A virtual grid draws 23 rows of 20.000 and, without these, says it has
+   * 23. The count includes the header row, as the ARIA spec asks.
+   */
+  protected readonly ariaRowCount = computed(() => {
+    if (!this.virtual() && !this.lazy()) return null;
+    const total = this.lazy() ? (this.total() ?? this.rows().length) : this.sorted().length;
+    return total + 1;
+  });
+
+  /** 1 is the header row, so data rows start at 2. */
+  protected ariaRowIndex(row: StrctRow): number | null {
+    if (this.ariaRowCount() === null) return null;
+    const offset = this.virtual() ? this.vRange().start : 0;
+    const at = this.renderRows().indexOf(row);
+    return at < 0 ? null : offset + at + 2;
+  }
+
   protected readonly topPad = computed(() =>
     this.virtual() ? this.vRange().start * this.rowHeight() : 0,
   );
@@ -3567,6 +3750,38 @@ export class StrctDatagrid {
   private lastStateKey = '';
 
   constructor() {
+    // FIRST, before the effects that read column state or announce a lazy
+    // page. Two faults lived here:
+    //  - the persisted state was read in this constructor's body, where a
+    //    template-bound stateKey is still null, so nothing was ever restored
+    //    — and the persistence effect then wrote the defaults over what the
+    //    operator had saved;
+    //  - a bound columnState was applied after the lazy effect had already
+    //    announced an unsorted first page.
+    // Reading it in the first run of an effect puts it after input binding
+    // and before both.
+    effect(() => {
+      const sk = this.stateKey();
+      const bound = this.columnState();
+      untracked(() => {
+        if (this.stateRestored) return;
+        this.stateRestored = true;
+        // A bound columnState is the consumer's own word and wins over
+        // storage; without one, storage speaks.
+        if (bound) {
+          this.lastStateKey = JSON.stringify(bound);
+          this.applyColumnState(bound);
+          return;
+        }
+        if (!sk) return;
+        const persisted = this.readPersistedState();
+        if (persisted) {
+          this.lastStateKey = JSON.stringify(persisted);
+          this.applyColumnState(persisted);
+        }
+      });
+    });
+
     // A filter can leave one row out of twelve with nothing said. Announce the
     // count it left, but only while a filter is actually on, and never for the
     // first render.
@@ -3695,6 +3910,9 @@ export class StrctDatagrid {
     // change (and once on init, so the consumer fetches the first page).
     effect(() => {
       if (!this.lazy()) return;
+      // Nothing is announced before the saved or bound state has been read,
+      // or the server is asked for an unsorted page and then asked again.
+      if (!this.stateRestored) return;
       const state: StrctDatagridLazyState = {
         page: this.page(),
         pageSize: this.pageSize(),
@@ -3717,9 +3935,13 @@ export class StrctDatagrid {
       if (typeof ResizeObserver === 'undefined') return;
       const host = this.hostRef.nativeElement;
       const ro = new ResizeObserver(() =>
-        this.zone.run(() => this.narrowPane.set(host.clientWidth < this.paneTakeoverWidth())),
+        this.zone.run(() => {
+          this.narrowPane.set(host.clientWidth < this.paneTakeoverWidth());
+          this.sweepHeaderWidths();
+        }),
       );
       ro.observe(host);
+      this.sweepHeaderWidths();
       this.destroyRef.onDestroy(() => ro.disconnect());
     });
     // The columns' own `hidden` flags, read once they exist — a required input
@@ -3728,10 +3950,8 @@ export class StrctDatagrid {
       const cols = this.columns();
       untracked(() => this.applyDeclaredHidden(cols));
     });
-    // Restore persisted column preferences once, before the first render.
-    const persisted = this.readPersistedState();
-    if (persisted) this.applyColumnState(persisted);
-    // Apply externally-driven columnState.
+    // Apply externally-driven columnState (later changes; the first one is
+    // taken by the restore effect above).
     effect(() => {
       const st = this.columnState();
       untracked(() => {
@@ -3751,6 +3971,9 @@ export class StrctDatagrid {
       const st: StrctDatagridColumnState = { widths, hidden, order, sortKey, sortDir };
       const key = JSON.stringify(st);
       untracked(() => {
+        // Never write before reading: this is what overwrote the operator's
+        // saved state with the component's defaults.
+        if (!this.stateRestored) return;
         if (key === this.lastStateKey) return;
         this.lastStateKey = key;
         this.columnState.set(st);
@@ -3765,6 +3988,9 @@ export class StrctDatagrid {
       });
     });
   }
+
+  /** Whether the saved (or bound) column state has been read yet. */
+  private stateRestored = false;
 
   private readPersistedState(): StrctDatagridColumnState | null {
     const sk = this.stateKey();

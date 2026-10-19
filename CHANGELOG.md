@@ -5,6 +5,66 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.21.0] - 2026-10-19
+
+The rest of the datagrid: the audit's A6, A7 and C2, and the four datagrid
+items of HyperStruct's report.
+
+### Added
+
+- **A column can be resized from the keyboard** (audit A6). The handle was a
+  bare `div` — twelve of them, with no role, no tab stop and no name, so
+  resizing needed a mouse. It is a `separator` now: Tab reaches it, ←/→ step
+  16 px (4 px with Shift), Home gives the column back its natural width, and
+  it carries `aria-valuenow` — the header's real width, swept after render and
+  on every resize, not only for columns someone had already dragged.
+- **A virtual or lazy grid says how many rows it has** (audit A7). 20.000 rows
+  drawn as 23 looked like 23: the table now carries `aria-rowcount` (20001,
+  header included) and each row its `aria-rowindex`.
+
+### Fixed
+
+- **A group's tone was written and never drawn** (BUG-58-01). The header has
+  always written `strct-dg__grouplabel--critical` and friends, and the
+  stylesheet had a rule for none of them — four groups of different severity
+  looked identical. The label takes the status colour and the count chip its
+  wash (the badge's language, with the status rules after the base rule, or
+  the accent wash wins). The note is 12 px / 400 / `--t2` — a second voice
+  rather than more heading — and ellipsises on a narrow list. The button's
+  12.5 px and the filter note's 11.5 px join the type scale. A visually
+  hidden ", " and ". " make the header's name read as a sentence instead of
+  "Needs your decision1Blocks the join…".
+- **A percentage `paneListWidth` compounded** (BUG-58-03). The width was given
+  to the scroller _and_ the table, so `40%` drew a list at 40 % of the layout
+  and a table at 40 % of the list. The scroller keeps the width, the table
+  takes 100 % of it, and the paned rules use child combinators — a
+  `strct-datagrid` drawn **inside** the pane was being squeezed by the outer
+  grid's rules (measured: an 809 px pane held a grid to 509 px; it is 837 px
+  now, `max-width: none`).
+- **`stateKey` restored nothing, then overwrote what was saved** (BUG-58-13).
+  The persisted state was read in the constructor, where a template-bound
+  `stateKey` is still `null`, so nothing was ever restored — and the
+  persistence effect then wrote the component's defaults over the operator's
+  saved state. It is read in the first run of an effect now, before the
+  declared-hidden, lazy and persistence effects act, and nothing is written
+  until it has been read.
+- **A bound `columnState` reached `(lazyLoad)` second** (BUG-58-14). The grid
+  announced an unsorted first page, then announced it again with the sort. The
+  state is applied first and the lazy effect waits for it: one ask, already
+  sorted.
+- **Touch targets** (audit C2). The row tick was 25 × 17 and the expand
+  chevron 18 × 18, under WCAG 2.2's 24 × 24. The target now fills its cell —
+  measured: five of five probe points land on it, at every corner — while the
+  row's height is untouched (37.5 px header, 39.5 px body, as before). A first
+  attempt with `min-height` grew every row by 3.5 px; the visual gate and a
+  layout measurement caught it.
+
+### Changed
+
+- The `anyComponentStyle` **error** budget is 18 kB. The datagrid's stylesheet
+  is the library's largest by far and keeps growing; splitting it belongs with
+  the API work the audit calls D1.
+
 ## [5.20.0] - 2026-10-19
 
 The audit's third batch, together with the cheap, measured items of
