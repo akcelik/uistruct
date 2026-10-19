@@ -264,7 +264,7 @@ import {
       .det__avatar {
         display: inline-flex;
         padding: 8px;
-        border-radius: 9px;
+        border-radius: 4px;
         color: var(--acc);
         background: var(--acc-s);
       }

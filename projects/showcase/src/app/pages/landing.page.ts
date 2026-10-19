@@ -110,7 +110,7 @@ interface Feature {
       .hero__mark {
         display: inline-flex;
         padding: 16px;
-        border-radius: 18px;
+        border-radius: 9px;
         color: var(--acc);
         background: var(--acc-s);
         border: 1px solid var(--acc30);
@@ -137,7 +137,7 @@ interface Feature {
         margin-top: 26px;
         padding: 6px 6px 6px 14px;
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: 4px;
         background: var(--bg-1);
       }
       .hero__install code {
@@ -179,7 +179,7 @@ interface Feature {
       }
       .hero__switch strct-theme-switcher {
         padding: 8px 12px;
-        border-radius: 8px;
+        border-radius: 4px;
         background: var(--hdr);
       }
       .hero__hint {
@@ -197,13 +197,13 @@ interface Feature {
       .feat {
         padding: 18px;
         border: 1px solid var(--b2);
-        border-radius: 11px;
+        border-radius: 5px;
         background: var(--bg-1);
       }
       .feat__icon {
         display: inline-flex;
         padding: 9px;
-        border-radius: 9px;
+        border-radius: 4px;
         color: var(--acc);
         background: var(--acc-s);
         margin-bottom: 10px;
@@ -251,7 +251,7 @@ interface Feature {
         gap: 12px;
         padding: 14px 16px;
         border: 1px solid var(--b2);
-        border-radius: 10px;
+        border-radius: 5px;
         background: var(--bg-1);
         text-decoration: none;
         transition:
@@ -265,7 +265,7 @@ interface Feature {
       .cat__icon {
         display: inline-flex;
         padding: 8px;
-        border-radius: 8px;
+        border-radius: 4px;
         color: var(--acc);
         background: var(--acc-s);
       }

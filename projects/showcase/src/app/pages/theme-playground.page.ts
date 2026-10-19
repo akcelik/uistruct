@@ -414,7 +414,7 @@ const accentTokens = (hex: string, mode: 'dark' | 'light'): Record<string, strin
         margin-bottom: 18px;
         padding: 12px 14px;
         border: 1px solid var(--b2);
-        border-radius: 10px;
+        border-radius: 5px;
         background: var(--hdr);
       }
       .tp__hint {

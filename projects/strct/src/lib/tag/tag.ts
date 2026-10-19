@@ -90,7 +90,7 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
         gap: 5px;
         padding-block: 3px;
         padding-inline: 9px 4px;
-        border-radius: 4px;
+        border-radius: 2px;
         font-size: 12px;
         font-weight: 500;
         color: var(--t1);
@@ -141,7 +141,7 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
       }
       .strct-tag--interactive .strct-tag__text {
         cursor: pointer;
-        border-radius: 3px;
+        border-radius: 1px;
       }
       .strct-tag--interactive:hover {
         border-color: var(--b3);
@@ -171,7 +171,7 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
         display: inline-flex;
         padding: 2px;
         border: 0;
-        border-radius: 3px;
+        border-radius: 1px;
         background: transparent;
         color: currentColor;
         opacity: 0.65;

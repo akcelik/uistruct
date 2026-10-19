@@ -119,7 +119,7 @@ import {
         padding: 14px 18px;
         margin-bottom: 14px;
         border: 1px solid var(--b2);
-        border-radius: 12px;
+        border-radius: 6px;
         background: var(--bg-1);
       }
       .st__dotitem {
@@ -142,7 +142,7 @@ import {
         gap: 8px;
         padding: 36px 24px;
         border: 1px solid var(--b2);
-        border-radius: 12px;
+        border-radius: 6px;
         background: var(--bg-1);
       }
       .st__card--left {
@@ -154,7 +154,7 @@ import {
       .st__art {
         display: inline-flex;
         padding: 16px;
-        border-radius: 16px;
+        border-radius: 8px;
         margin-bottom: 4px;
         color: var(--t2);
         background: var(--bg-3);

@@ -383,7 +383,7 @@ export class StrctHeaderAction {
         box-sizing: border-box;
         padding: 9px 10px;
         border: 0;
-        border-radius: 5px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t1);
         font-size: 13px;
@@ -449,7 +449,7 @@ export class StrctHeaderAction {
         justify-content: center;
         padding: 4px;
         border: 0;
-        border-radius: 5px;
+        border-radius: 2px;
         background: transparent;
         color: color-mix(in srgb, var(--hdr-fg) 85%, transparent);
         cursor: pointer;

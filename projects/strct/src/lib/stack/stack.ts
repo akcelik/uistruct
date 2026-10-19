@@ -12,7 +12,7 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation, input } from '@a
       .strct-stack {
         display: block;
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: 4px;
         overflow: hidden;
       }
       .strct-stack__list {

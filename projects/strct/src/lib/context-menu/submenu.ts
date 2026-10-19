@@ -83,7 +83,7 @@ import { focusFirstIn } from '../overlay/focus';
         align-items: center;
         gap: 8px;
         padding: 7px 8px 7px 10px;
-        border-radius: 5px;
+        border-radius: 2px;
         cursor: default;
         font-size: 13px;
         color: var(--t1);

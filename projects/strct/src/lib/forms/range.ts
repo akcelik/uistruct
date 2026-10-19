@@ -50,7 +50,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         flex: 1;
         appearance: none;
         height: 5px;
-        border-radius: 3px;
+        border-radius: 1px;
         cursor: pointer;
         background: linear-gradient(
           to right,

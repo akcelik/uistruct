@@ -198,7 +198,7 @@ export type StrctDrawerSize = 'sm' | 'md' | 'lg';
         display: inline-flex;
         padding: 4px;
         border: 0;
-        border-radius: 5px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t3);
         cursor: pointer;

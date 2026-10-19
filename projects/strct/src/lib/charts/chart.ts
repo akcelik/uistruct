@@ -753,7 +753,7 @@ interface SeriesRender {
         font-weight: 600;
         background: var(--bg-1);
         padding: 0 3px;
-        border-radius: 3px;
+        border-radius: 1px;
         white-space: nowrap;
       }
 
@@ -838,7 +838,7 @@ interface SeriesRender {
         font-variant-numeric: tabular-nums;
         background: var(--bg-1);
         padding: 0 3px;
-        border-radius: 3px;
+        border-radius: 1px;
       }
       .strct-chart__axis-y {
         position: absolute;
@@ -878,7 +878,7 @@ interface SeriesRender {
       .strct-chart__leg-sw {
         width: 9px;
         height: 3px;
-        border-radius: 2px;
+        border-radius: 1px;
         flex-shrink: 0;
       }
 
@@ -939,7 +939,7 @@ interface SeriesRender {
       .strct-chart__tip-sw {
         width: 8px;
         height: 3px;
-        border-radius: 2px;
+        border-radius: 1px;
         flex-shrink: 0;
       }
       .strct-chart__tip-rl {

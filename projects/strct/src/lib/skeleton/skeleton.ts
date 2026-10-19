@@ -28,7 +28,7 @@ import {
     `
       .strct-skel {
         display: block;
-        border-radius: 5px;
+        border-radius: 2px;
         background: linear-gradient(
           90deg,
           var(--bg-3) 25%,

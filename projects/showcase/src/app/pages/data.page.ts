@@ -936,7 +936,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         gap: 8px;
         padding: 7px 10px;
         border: 1px solid var(--b2);
-        border-radius: 7px;
+        border-radius: 3px;
         background: var(--bg-2);
         color: var(--t1);
         font-size: 12.5px;

@@ -216,7 +216,7 @@ import { StrctIcon } from '../icon/icon';
         justify-content: center;
         width: 34px;
         height: 34px;
-        border-radius: 9px;
+        border-radius: 4px;
         background: var(--acc-m);
         border: 1px solid var(--acc30);
         color: var(--acc);

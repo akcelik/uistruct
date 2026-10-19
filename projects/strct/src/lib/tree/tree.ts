@@ -172,7 +172,7 @@ let treeNodeCounter = 0;
         align-items: center;
         gap: 6px;
         padding: 4px 9px;
-        border-radius: 5px;
+        border-radius: 2px;
         cursor: pointer;
         font-size: 13px;
         color: var(--t1);
@@ -540,7 +540,7 @@ export class StrctTreeNode {
       .strct-tree--comfortable .strct-tnode__row {
         gap: 7px;
         padding: 6px 10px;
-        border-radius: 6px;
+        border-radius: 3px;
         font-size: 14px;
       }
       .strct-tree--comfortable .strct-tnode__chevron {

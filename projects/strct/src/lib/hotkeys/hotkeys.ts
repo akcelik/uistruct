@@ -185,7 +185,7 @@ function isTyping(event: KeyboardEvent): boolean {
         padding: 16px 18px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 10px;
+        border-radius: 5px;
         box-shadow: var(--shh);
       }
       .strct-hkh__head {
@@ -208,7 +208,7 @@ function isTyping(event: KeyboardEvent): boolean {
         display: inline-flex;
         padding: 4px;
         border: 0;
-        border-radius: 5px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t3);
         cursor: pointer;

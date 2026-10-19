@@ -203,7 +203,7 @@ export interface StrctLegendItem {
       .strct-legend__swatch--square {
         width: 9px;
         height: 9px;
-        border-radius: 2px;
+        border-radius: 1px;
       }
       .strct-legend__swatch--dot {
         width: 9px;

@@ -107,7 +107,7 @@ import { StrctIcon } from '../icon/icon';
         margin: -3px 0 -3px -4px;
         padding: 0;
         border: 0;
-        border-radius: 5px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t3);
         cursor: pointer;
@@ -143,7 +143,7 @@ import { StrctIcon } from '../icon/icon';
         text-transform: uppercase;
         color: var(--t3);
         border: 1px solid var(--b2);
-        border-radius: 4px;
+        border-radius: 2px;
         padding: 2px 6px;
       }
       .strct-code__grow {

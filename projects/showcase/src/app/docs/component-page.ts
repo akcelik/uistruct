@@ -147,7 +147,7 @@ interface CategoryHost {
       .doc__import {
         margin: 20px 0 28px;
         border: 1px solid var(--b2);
-        border-radius: 9px;
+        border-radius: 4px;
         overflow: hidden;
         background: var(--bg-1);
       }
@@ -199,7 +199,7 @@ interface CategoryHost {
       .doc__a11y {
         margin-top: 16px;
         border: 1px solid var(--b2);
-        border-radius: 9px;
+        border-radius: 4px;
         padding: 14px 16px;
         background: var(--bg-1);
       }

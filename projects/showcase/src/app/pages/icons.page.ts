@@ -275,7 +275,7 @@ interface StateExample {
         align-items: center;
         gap: 10px;
         padding: 16px 6px 12px;
-        border-radius: 10px;
+        border-radius: 5px;
         background: transparent;
         transition: background 0.14s ease;
       }
@@ -310,7 +310,7 @@ interface StateExample {
         width: 96px;
         padding: 16px 8px;
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: 4px;
         background: var(--bg-1);
       }
       .ig-state strct-icon {
@@ -329,7 +329,7 @@ interface StateExample {
         gap: 20px;
         padding: 22px;
         border: 1px solid var(--b2);
-        border-radius: 12px;
+        border-radius: 6px;
         background: var(--bg-1);
       }
       .ig-interactive__tabs {
@@ -344,7 +344,7 @@ interface StateExample {
         gap: 8px;
         padding: 8px 14px;
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: 4px;
         background: transparent;
         color: var(--t2);
         font-size: 13px;
@@ -370,7 +370,7 @@ interface StateExample {
         gap: 12px;
         padding: 28px 36px;
         border: 1px dashed var(--b2);
-        border-radius: 12px;
+        border-radius: 6px;
       }
       .ig-interactive__stage strct-icon {
         color: var(--t1);
@@ -400,7 +400,7 @@ interface StateExample {
         width: 96px;
         padding: 18px 8px;
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: 4px;
         background: var(--bg-1);
       }
       .ig-vendor__text {

@@ -75,7 +75,7 @@ type PageToken = number | 'dots';
         min-width: 30px;
         height: 30px;
         padding: 0 7px;
-        border-radius: 6px;
+        border-radius: 3px;
         font-family: var(--font);
         font-size: 12px;
         cursor: pointer;

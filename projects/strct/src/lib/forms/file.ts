@@ -90,7 +90,7 @@ import { StrctIcon } from '../icon/icon';
         color: var(--t2);
         background: var(--bg-2);
         border: 1px dashed var(--b3);
-        border-radius: 8px;
+        border-radius: 4px;
         transition:
           border-color 0.14s ease,
           background 0.14s ease,
@@ -140,7 +140,7 @@ import { StrctIcon } from '../icon/icon';
         font-size: 13px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 6px;
+        border-radius: 3px;
       }
       .strct-file__name {
         flex: 1;
@@ -158,7 +158,7 @@ import { StrctIcon } from '../icon/icon';
         display: inline-flex;
         padding: 3px;
         border: 0;
-        border-radius: 4px;
+        border-radius: 2px;
         background: transparent;
         color: var(--t3);
         cursor: pointer;

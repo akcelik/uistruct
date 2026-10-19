@@ -143,7 +143,7 @@ export interface StrctTransferItem {
         padding: 10px;
         background: var(--bg-2);
         border: 1px solid var(--b2);
-        border-radius: 9px;
+        border-radius: 4px;
       }
       .strct-tf__head {
         display: flex;
@@ -178,7 +178,7 @@ export interface StrctTransferItem {
         display: flex;
         align-items: center;
         padding: 2px 4px;
-        border-radius: 5px;
+        border-radius: 2px;
         color: var(--t1);
         font-size: 12.5px;
       }

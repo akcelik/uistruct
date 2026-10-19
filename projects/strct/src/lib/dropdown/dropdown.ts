@@ -420,7 +420,7 @@ const DD_ITEM = 'strct-dropdown-item, a[strctDropdownItem]';
         align-items: center;
         gap: 8px;
         padding: 9px 10px;
-        border-radius: 5px;
+        border-radius: 2px;
         cursor: pointer;
         font-size: 13px;
         color: var(--t1);

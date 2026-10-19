@@ -904,7 +904,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         justify-content: center;
         width: 38px;
         height: 38px;
-        border-radius: 10px;
+        border-radius: 5px;
         background: var(--acc-m);
         color: var(--acc);
       }
@@ -926,7 +926,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         grid-template-columns: 248px minmax(0, 1fr);
         gap: 0;
         border: 1px solid var(--b2);
-        border-radius: 12px;
+        border-radius: 6px;
         overflow: hidden;
         background: var(--bg-1);
         min-height: 520px;
@@ -957,7 +957,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         width: 100%;
         padding: 8px 10px;
         border: 0;
-        border-radius: 8px;
+        border-radius: 4px;
         background: transparent;
         color: var(--t2);
         cursor: pointer;
@@ -1097,7 +1097,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         gap: 22px;
         padding: 16px 20px;
         border: 1px solid var(--b2);
-        border-radius: 11px;
+        border-radius: 5px;
         background: var(--bg-2);
       }
       .hero__big {
@@ -1131,7 +1131,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
       .seg {
         display: inline-flex;
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: 4px;
         overflow: hidden;
       }
       .seg__b {
@@ -1172,7 +1172,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         gap: 14px;
         padding: 14px 16px;
         border: 1px solid var(--b2);
-        border-radius: 11px;
+        border-radius: 5px;
         background: var(--bg-2);
       }
       .card__lead {
@@ -1181,7 +1181,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         justify-content: center;
         width: 34px;
         height: 34px;
-        border-radius: 8px;
+        border-radius: 4px;
         background: var(--bg-3);
         color: var(--t2);
         flex-shrink: 0;
@@ -1251,7 +1251,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
         gap: 13px;
         padding: 12px 14px;
         border: 1px solid var(--b2);
-        border-radius: 10px;
+        border-radius: 5px;
         background: var(--bg-1);
         color: var(--t1);
         cursor: pointer;

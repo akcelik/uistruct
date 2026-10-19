@@ -72,7 +72,7 @@ export type StrctSignpostPosition = 'top' | 'bottom' | 'left' | 'right';
         color: var(--t1);
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 8px;
+        border-radius: 4px;
         box-shadow: var(--shh);
         animation: strct-sp-in 0.11s ease;
       }
