@@ -5009,8 +5009,8 @@ export const DOCS: DocCategory[] = [
         id: 'flow',
         title: 'Flow',
         selector: 'strct-flow',
-        importNames: ['StrctFlow', 'StrctFlowNode'],
-        summary: 'Animated relationship between endpoints.',
+        importNames: ['StrctFlow', 'StrctFlowNode', 'StrctFlowEdge', 'StrctFlowColumn'],
+        summary: 'Animated relationship between endpoints — and a topology.',
         lead: 'Shows a connection between two (or N) endpoints with an optional animated "flow" — moving packets travelling along the connector — for live data movement such as replication, sync or a pipeline. When `live` is off (or the user prefers reduced motion) the connector is a static gradient with a direction arrow. Dependency-free.',
         inputs: [
           {
@@ -5071,6 +5071,13 @@ export const DOCS: DocCategory[] = [
               'Infrastructure diagrams fan out. `fan-out` places the nodes in columns (their own `column`, or their order) and draws the `edges` between them as orthogonal connectors, measured from the boxes\u2019 real positions; `tree` derives those columns from each node\u2019s depth in the edge list. `chain` is the straight A → B connector, unchanged.',
           },
           {
+            name: 'navigable',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Makes the diagram one tab stop with the arrow keys inside it: ← / → follow the edges (and fall back to the next column where a node has none), ↑ / ↓ move within a column, Home / End jump to its ends, and Enter / Space — or a click — emits `(nodeActivate)`. Off by default, so a decorative pipeline keeps no tab stop at all. Each node keeps its structural description, so a screen reader is given the graph rather than the picture.',
+          },
+          {
             name: 'edges',
             type: 'StrctFlowEdge[] | null',
             default: 'null',
@@ -5094,6 +5101,14 @@ export const DOCS: DocCategory[] = [
             type: 'ng-template',
             description:
               'A node\u2019s own content (`let-node`), for the lines a one-line terminal cannot carry.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'nodeActivate',
+            type: 'StrctFlowNode',
+            description:
+              'With `navigable`, the node a click or Enter / Space acted on — the topology equivalent of a row activation.',
           },
         ],
         do: [

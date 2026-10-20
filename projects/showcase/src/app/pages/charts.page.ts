@@ -592,6 +592,27 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       </div>
     </app-demo>
     <app-demo
+      anchor="flow-topology"
+      owner="flow"
+      heading="A topology you can walk"
+      description="navigable makes the diagram one tab stop with the arrow keys inside it: ← and → follow the edges (and fall back to the next column where a node has none), ↑ and ↓ move within a column, Home and End jump to its ends, and Enter or Space — or a click — emits (nodeActivate) with the node. Each node keeps its structural description (“→ uplink-1, uplink-2”), so a screen reader is given the graph rather than the picture. A node may carry an icon when its kind is part of the answer. Without navigable the diagram keeps no tab stop at all, which is right for a decorative pipeline."
+      code='<strct-flow layout="fan-out" navigable [nodes]="nodes" [edges]="edges" (nodeActivate)="open($event)" />'
+    >
+      <div class="stack" style="width: 100%;">
+        <strct-flow
+          layout="fan-out"
+          navigable
+          [nodes]="mvsNodes"
+          [edges]="mvsEdges"
+          [columns]="['Port profiles', 'Switch', 'Members', 'Uplinks']"
+          label="mvs-01 — Tab into it, then use the arrow keys"
+          (nodeActivate)="mvsPicked.set($event.label)"
+        />
+        <span class="echo">{{ mvsPicked() || 'Enter or Space on a node reports it here.' }}</span>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="flow-fanout"
       owner="flow"
       heading="Fan-out and tree"
@@ -788,6 +809,43 @@ export class ChartsPage implements OnDestroy {
     { from: 'src', to: 't2', status: 'success' },
     { from: 'src', to: 'down', status: 'critical', style: 'dashed' },
   ];
+  // A virtual switch's topology: port profiles feed the switch, the switch
+  // has members, each member has its uplinks (FR-59-08).
+  protected readonly mvsNodes: StrctFlowNode[] = [
+    { id: 'pp-mgmt', label: 'mgmt', column: 0, icon: 'tag', sublabel: 'VLAN 10' },
+    { id: 'pp-vm', label: 'vm-traffic', column: 0, icon: 'tag', sublabel: 'VLAN 200–209' },
+    {
+      id: 'mvs',
+      label: 'mvs-01',
+      column: 1,
+      icon: 'network',
+      status: 'success',
+      sublabel: '2 members',
+    },
+    { id: 'hv-01', label: 'hv-01', column: 2, icon: 'host', status: 'success' },
+    {
+      id: 'hv-02',
+      label: 'hv-02',
+      column: 2,
+      icon: 'host',
+      status: 'warning',
+      sublabel: '1 uplink down',
+    },
+    { id: 'u1', label: 'ToR-A · 1/0/7', column: 3, icon: 'link' },
+    { id: 'u2', label: 'ToR-B · 1/0/7', column: 3, icon: 'link' },
+    { id: 'u3', label: 'ToR-A · 1/0/8', column: 3, icon: 'link', status: 'critical' },
+  ];
+  protected readonly mvsEdges: StrctFlowEdge[] = [
+    { from: 'pp-mgmt', to: 'mvs' },
+    { from: 'pp-vm', to: 'mvs' },
+    { from: 'mvs', to: 'hv-01' },
+    { from: 'mvs', to: 'hv-02' },
+    { from: 'hv-01', to: 'u1' },
+    { from: 'hv-01', to: 'u2' },
+    { from: 'hv-02', to: 'u3', status: 'critical', style: 'dashed' },
+  ];
+  protected readonly mvsPicked = signal('');
+
   protected readonly topoNodes: StrctFlowNode[] = [
     { id: 'sw', label: 'vSwitch0', status: 'accent' },
     { id: 'h1', label: 'hv-01', status: 'success' },
