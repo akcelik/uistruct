@@ -62,6 +62,17 @@ const ROUTES = [
   // used to be the exact colour of the row behind it in the dark theme.
   ['datagrid-progress', '/components/datagrid', '#datagrid'],
   ['line', '/components/line'],
+  // BUG-59-04: a header row with a sortable and a plain column side by side.
+  // The sortable ones draw their text inside a button, which resets the
+  // header's uppercase and letter-spacing unless the rule inherits them.
+  [
+    'datagrid-header-mixed',
+    '/components/datagrid',
+    '#datagrid-virtual',
+    undefined,
+    // Scoped to the demo, or the first match is a grid far above the anchor.
+    '#datagrid-virtual thead',
+  ],
   ['tree', '/components/tree'],
   // What a node says after its label: the quiet meta and the status tag, which
   // have to sit on the row without pushing the label out of it.

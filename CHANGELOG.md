@@ -5,6 +5,44 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.25.0] - 2026-10-20
+
+The first batch of HyperStruct's 5.24 report: what an empty grid adds to a
+page's outline, which entry a sidebar calls current, and a header row with two
+kinds of column (BUG-59-01, BUG-59-02, BUG-59-04, FR-59-01).
+
+### Fixed
+
+- **An empty `strct-datagrid` no longer adds an `<h3>` to the page outline**
+  (BUG-59-01). 5.20.0 drew the empty row with `strct-empty-state`, whose
+  `titleLevel` defaults to `3`: every empty grid put a heading inside a table
+  cell, so a page's heading list named its empty grids and `heading-order`
+  failed under an `h1`. Both branches now pass `[titleLevel]="null"` (a `<p>`),
+  and `strct-empty-state` with an empty `title` draws no title element at all
+  instead of an empty `<h3>`.
+- **A sidebar entry under an explicit `activeId` is the only current one**
+  (BUG-59-02). `RouterLinkActive` matches by prefix and owns `aria-current`
+  wherever it is attached, so on `/backup/vms/vm-1` both "Protection overview"
+  (`/backup`) and "Protected VMs" carried it, whatever `activeId` said.
+  `strct-rail` and `strct-section-menu` now ask the router themselves
+  (`Router.isActive`, re-read on `NavigationEnd`) and keep one element with
+  one binding: with an `activeId` it decides, without one the router does, and
+  nothing clears the attribute afterwards (BUG-58-06 stays fixed). Each
+  component's spec fails on the previous code with two current entries.
+- **A sortable header keeps the header's case and tracking** (BUG-59-04).
+  `.strct-dg__sortbtn` set `font: inherit`, which carries neither
+  `text-transform` nor `letter-spacing`, and a browser resets both inside a
+  button: a header row with one plain column read "HOST CLUSTER Zone
+  Kernel". Both are inherited now, with `text-align` beside them, and the
+  visual gate watches a header row that has both kinds of column.
+
+### Changed
+
+- **A group header's count is heard with the grid's noun** (FR-59-01).
+  "Inconclusive, 3" does not say three of what: the button's accessible name
+  now ends ", 3 rows" — `labels.row` / `labels.rows`, so a grid of tests says
+  "3 tests" and one row says "1 test". The chip still shows the number alone.
+
 ## [5.24.0] - 2026-10-19
 
 The faint text token clears AA on every surface text is set on (BUG-58-04).

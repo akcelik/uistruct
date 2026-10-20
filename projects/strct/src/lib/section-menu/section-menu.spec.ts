@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { StrctMenuLink, StrctMenuSection, StrctSectionMenu } from './section-menu';
 
 const sections: StrctMenuSection[] = [
@@ -173,5 +173,54 @@ describe('StrctSectionMenu — the current page survives the router', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(link.getAttribute('aria-current')).toBe('page');
+  });
+});
+
+// BUG-59-02: RouterLinkActive matches by prefix, so with an explicit activeId
+// the parent path of the current page was marked current as well.
+describe('StrctSectionMenu — activeId is the only source when it is set', () => {
+  const nested: StrctMenuSection[] = [
+    {
+      label: 'Backup',
+      items: [
+        { id: 'backup', label: 'Protection overview', routerLink: '/backup' },
+        { id: 'backup-vms', label: 'Protected VMs', routerLink: '/backup/vms' },
+        { id: 'backup-pol', label: 'Policies', routerLink: '/backup/policies' },
+      ],
+    },
+  ];
+
+  const build = async (activeId: string | null, url: string) => {
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: '**', children: [] }])] });
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl(url);
+    const fixture = TestBed.createComponent(StrctSectionMenu);
+    fixture.componentRef.setInput('sections', nested);
+    fixture.componentRef.setInput('activeId', activeId);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      current: [...el.querySelectorAll('.strct-sm__item')].filter(
+        (a) => a.getAttribute('aria-current') === 'page',
+      ),
+      active: [...el.querySelectorAll('.strct-sm__item--active')],
+    };
+  };
+
+  it('marks exactly the entry activeId names, under a deeper URL', async () => {
+    const { current, active } = await build('backup-vms', '/backup/vms/vm-1');
+    expect(current.map((a) => a.textContent?.trim())).toEqual(['Protected VMs']);
+    expect(active.map((a) => a.textContent?.trim())).toEqual(['Protected VMs']);
+  });
+
+  it('leaves it to the router when there is no activeId', async () => {
+    const { current } = await build(null, '/backup/policies');
+    // The router matches by prefix, which is its documented behaviour: the
+    // overview and the page itself. What matters is that it still writes one.
+    expect(current.length).toBeGreaterThanOrEqual(1);
+    expect(current.map((a) => a.textContent?.trim())).toContain('Policies');
   });
 });
