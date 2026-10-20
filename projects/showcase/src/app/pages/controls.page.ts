@@ -112,7 +112,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="badge"
       heading="Badge"
-      description="Outlined by default; add the solid attribute for a filled badge."
+      description="A state said in words, with a 6px dot in the status tone — no box, on purpose: the outlined pill it replaced shared the button's border token, radius, transparent fill and text size, so a badge read as something to press. The buttons beside the badges here are the comparison. Add solid for the filled chip, where a block of weight is what the layout needs; a badge that carries its own strct-icon drops the dot."
       code='<strct-badge status="success">Active</strct-badge>'
     >
       <strct-badge>Neutral</strct-badge>
@@ -121,13 +121,17 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       <strct-badge status="warning">Pending</strct-badge>
       <strct-badge status="critical">Failed</strct-badge>
       <strct-badge status="accent" solid>Solid</strct-badge>
+      <span style="display: inline-flex; gap: 8px; margin-inline-start: 12px">
+        <button strct-button size="mini" variant="neutral">Restart</button>
+        <button strct-button size="sm" variant="neutral">View alarms</button>
+      </span>
     </app-demo>
 
     <app-demo
       anchor="badge-tone"
       owner="badge"
       heading="A tone of your own"
-      description="The five statuses mean something: green, amber and red are a state. Where a badge says which product or tenant a row belongs to, give it a colour instead — [tone] takes a token or any CSS colour, the text takes it and the border a 30% wash of it. A rule that already selects the badges can set --strct-badge-fg, --strct-badge-border and --strct-badge-on instead. The colour is yours, so its contrast is yours to check."
+      description="The five statuses mean something: green, amber and red are a state. Where a badge says which product or tenant a row belongs to, give it a colour instead — [tone] takes a token or any CSS colour, and the dot takes it while the word stays in the reading tone. A rule that already selects the badges can set --strct-badge-fg (or --strct-badge-dot for the dot alone, --strct-badge-on for solid) instead. The colour is yours, so its contrast is yours to check — a dot is a graphic, so its bar is 3:1."
       code='<strct-badge tone="var(--prod-acc)">Backup</strct-badge>'
     >
       <strct-badge tone="var(--acc)">Manager</strct-badge>

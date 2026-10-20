@@ -33,61 +33,76 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
   },
   styles: [
     `
-      /* Restrained: outlined on a neutral surface, color carried by text + a thin border. */
+      /* A status label, not a control. Measured on 5.24.0: a neutral badge
+         and a neutral mini button shared the border token (--b3), the radius
+         (2px), the transparent fill and the text size (12px) — 2px of height,
+         100 of weight and a 2px-thicker start rail were the whole difference,
+         so the badge read as something to press. The box is gone: a 6px dot
+         carries the tone, the word carries the meaning. */
       .strct-badge {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
         font-size: 12px;
-        font-weight: 600;
+        font-weight: 500;
         line-height: 1;
         letter-spacing: 0.2px;
-        padding-block: 3px;
-        padding-inline: 9px 7px;
-        border-radius: var(--radius-sm);
+        /* A trailing pad only, so two badges beside each other never run
+           together whatever the container's gap is. */
+        padding: 0 8px 0 0;
+        border: 0;
+        border-radius: 0;
         white-space: nowrap;
         color: var(--t2);
         background: transparent;
-        border: 1px solid var(--b3);
-        /* Thicker start rail gives badges a distinct "tag" identity vs. buttons. */
-        border-inline-start-width: 3px;
+      }
+      .strct-badge::before {
+        content: '';
+        flex: none;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--strct-badge-dot, var(--t3));
+      }
+      /* A badge that carries its own icon already says its kind; a dot beside
+         it would be a second mark for the same thing. */
+      .strct-badge:has(> strct-icon, > .strct-icon, > svg, > strct-status-dot)::before {
+        display: none;
       }
       .strct-badge--accent {
-        color: var(--acc);
-        border-color: var(--acc30);
+        --strct-badge-dot: var(--acc);
       }
       .strct-badge--success {
-        color: var(--success);
-        border-color: var(--success);
+        --strct-badge-dot: var(--success);
       }
       .strct-badge--warning {
-        color: var(--warning);
-        border-color: var(--warning);
+        --strct-badge-dot: var(--warning);
       }
       .strct-badge--critical {
-        color: var(--critical);
-        border-color: var(--critical);
+        --strct-badge-dot: var(--critical);
       }
 
       /* A tone the five statuses do not carry: a product's own accent on a
-         row, where green / amber / red already mean something else. The text
-         takes the colour and the border a 30% wash of it, as --accent does
-         with --acc30. Either set [tone] or the two custom properties. */
+         row, where green / amber / red already mean something else. The dot
+         takes the colour; the word stays in the reading tone. Either set
+         [tone] or the custom property. */
       .strct-badge--tone {
-        color: var(--strct-badge-fg, var(--t2));
-        border-color: var(
-          --strct-badge-border,
-          color-mix(in srgb, var(--strct-badge-fg, var(--b3)) 30%, transparent)
-        );
+        --strct-badge-dot: var(--strct-badge-fg, var(--t3));
       }
 
-      /* Opt-in filled badge — uniform edges (no start rail). */
+      /* Opt-in filled chip, for the few places that want the weight of a
+         block (a version on a header, a count on a tab). It keeps a box
+         deliberately, so it keeps the dot off. */
       .strct-badge--solid {
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: var(--radius-sm);
+        font-weight: 600;
         color: var(--t1);
         background: var(--bg-a);
-        border-color: transparent;
-        border-inline-start-width: 1px;
-        padding-inline-start: 7px;
+      }
+      .strct-badge--solid::before {
+        display: none;
       }
       .strct-badge--solid.strct-badge--accent {
         background: var(--acc);
@@ -108,7 +123,6 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
       .strct-badge--solid.strct-badge--tone {
         background: var(--strct-badge-fg, var(--bg-a));
         color: var(--strct-badge-on, var(--inv));
-        border-color: transparent;
       }
     `,
   ],

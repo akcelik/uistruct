@@ -229,8 +229,8 @@ export const DOCS: DocCategory[] = [
         title: 'Badge',
         selector: 'strct-badge',
         importNames: ['StrctBadge'],
-        summary: 'Small inline status pill with a distinctive left rail.',
-        lead: 'A compact status pill. Outlined by default, with the color carried by the text and a thicker left rail that distinguishes badges from buttons at a glance. Add `solid` for a filled badge.',
+        summary: 'A status word with a tone dot — no box.',
+        lead: "A state said in words, with a 6 px dot in the status tone. It has no box on purpose: until 5.26.0 the outlined pill shared the button's border token, radius, transparent fill and text size, so a badge read as something to press. A badge that carries its own `strct-icon` drops the dot. Add `solid` for the filled chip, where a block of weight is what the layout needs.",
         inputs: [
           {
             name: 'status',
@@ -242,21 +242,25 @@ export const DOCS: DocCategory[] = [
             name: 'solid',
             type: 'boolean',
             default: 'false',
-            description: 'Filled style with uniform edges (no left rail).',
+            description:
+              'The filled chip: a box with the status colour behind it and no dot — for the few places that want the weight of a block (a version on a header, a count on a tab).',
           },
           {
             name: 'tone',
             type: 'string',
             default: `''`,
             description:
-              'A colour of your own — `tone="var(--prod-acc)"` — for a distinction the five statuses do not carry, such as which product a row belongs to. The text takes it and the border a 30% wash of it; `solid` fills with it. Overrides `status`. The same can be set from a stylesheet with `--strct-badge-fg`, `--strct-badge-border` and `--strct-badge-on`. The colour is yours, so its contrast is yours to check.',
+              'A colour of your own — `tone="var(--prod-acc)"` — for a distinction the five statuses do not carry, such as which product a row belongs to. The dot takes it (and `solid` fills with it); the word stays in the reading tone. Overrides `status`. The same can be set from a stylesheet with `--strct-badge-fg` and `--strct-badge-on`, or the dot alone with `--strct-badge-dot`. The colour is yours, so its contrast is yours to check — a dot is a graphic, so its bar is 3:1.',
           },
         ],
         do: [
           'Use semantic status to mirror real state (success = healthy, critical = failed).',
           'Keep the label to a single short word.',
         ],
-        dont: ['Do not use a badge as a button — it is not interactive.'],
+        dont: [
+          'Do not use a badge as a button — it is not interactive, and since 5.26.0 it does not look like one either.',
+          'Do not reach for `solid` to make a badge stand out in a table; the dot is the signal there.',
+        ],
       },
       {
         id: 'tag',

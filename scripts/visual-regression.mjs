@@ -73,6 +73,9 @@ const ROUTES = [
     // Scoped to the demo, or the first match is a grid far above the anchor.
     '#datagrid-virtual thead',
   ],
+  // The badge itself: a dot and a word, beside the buttons it used to look
+  // like (5.26.0). The crop is the demo row, so a change to its metrics shows.
+  ['badge', '/components/badge', '#badge', undefined, '.doc__examples'],
   ['tree', '/components/tree'],
   // What a node says after its label: the quiet meta and the status tag, which
   // have to sit on the row without pushing the label out of it.

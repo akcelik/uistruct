@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.26.0] - 2026-10-20
+
+`strct-badge` is a dot and a word. It had no box to lose.
+
+### Changed
+
+- **The badge is no longer a box** — measured on 5.24.0 in Chrome, a neutral
+  badge and a neutral `mini` button shared the border token (`--b3`), the
+  radius (2 px), the transparent fill and the text size (12 px); 2 px of
+  height, 100 of font weight and a 2 px-thicker start rail were the whole
+  difference. A badge read as something to press, and in a header beside real
+  buttons it was indistinguishable. It is now a **6 px dot in the status tone
+  followed by the word**, with no border, no radius and no fill: the word
+  carries the meaning, the dot carries the state, and nothing about it says
+  "press me".
+  - The text takes `--t2` (4.95 – 6.06 : 1 in the six schemes) and the dot the
+    status colour — a dot is a graphic, so its bar is 3 : 1 and the status
+    tokens clear it twice over.
+  - `tone` colours the dot (`--strct-badge-dot` sets it from a stylesheet);
+    the word stays in the reading tone.
+  - A badge that carries its own `strct-icon` **drops the dot**, so a kind
+    icon and a state dot are never two marks for the same thing.
+  - **`solid` keeps its chip** on purpose — a filled block for the few places
+    that need that weight (a version on a header, a count on a tab) — and
+    draws no dot.
+  - `strct-tag` is unchanged: it is genuinely interactive (a dismiss button, an
+    optional `href`), so its box tells the truth.
+  - Five visual baselines re-shot (`badge` added, plus the command palette,
+    the product accents, the accordion results and the datagrid's status
+    column).
+
 ## [5.25.0] - 2026-10-20
 
 The first batch of HyperStruct's 5.24 report: what an empty grid adds to a

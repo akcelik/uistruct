@@ -7,9 +7,26 @@ stays here until it goes quiet.
 
 ## Open
 
-> **Nothing is open.** Every FR this folder has ever carried has shipped; the ledger below is the
-> record. New requests arrive as a new file here, and move to [`archive/`](archive/) once every
-> item in them ships.
+- [`hyperstruct-5.16-adoption.md`](hyperstruct-5.16-adoption.md) — HyperStruct's redesigned Validation tab on
+  5.16.0 (O326): **BUG-58-01** (`groups[].status` and `note` ship without a rule), **BUG-58-02** (`strct-tag` drops
+  `[strctTagLeading]` without an `href`), **BUG-58-03** (a percentage `paneListWidth` applies twice; the paned rules
+  reach a grid in the pane), **BUG-58-04** (`--t3` under AA on a dark grid cell and a light page), **FR-58-01** (a row
+  click opens its pane). Then HyperStruct's adoption of 5.8–5.16 (O327): **BUG-58-05** (`closeOnEscape` closes on an
+  Escape a searchbox, an IME or a palette on top used), **BUG-58-06** (`routerLink` entries of the section menu and
+  the rail lose `aria-current`), **BUG-58-07** (`strct-tag [href]` draws an empty link), **BUG-58-08**
+  (`strct-markdown` links `/\host` and `mailto:` by default), **BUG-58-09** (its tokens are lost in lists and
+  quotes, `snake_case` reads as emphasis, its reader is not bounded), **BUG-58-10** (`strct-product-switcher`'s rows
+  lose their slots), **BUG-58-11** (a long palette tag still clips a short name), **BUG-58-12** (two more `--t3`
+  surfaces under AA), **FR-58-02** (a header shade for the switcher's chip), **FR-58-03** (`strct-markdown` line
+  breaks, bare URLs, "opens in a new tab"). Then HyperStruct's adoption of 5.9.0's list features (O328):
+  **BUG-58-13** (`stateKey` restores nothing — read in the constructor, before the input is bound — and overwrites
+  what was saved), **BUG-58-14** (a bound `columnState`'s sort reaches `(lazyLoad)` second). It also notes the id
+  collision: `archive/hyperstruct-o260-lists.md` and `archive/hyperstruct-assistant-chat.md` both use FR-51-01. Then
+  HyperStruct's CSV Files browser (O329): **FR-58-04** (a datagrid row that activates on double-click / Enter, single
+  selection without a radio column), **FR-58-05** (a trailing tag on a data-mode tree node), **FR-58-06** (a lazy tree
+  node and its loading row), **BUG-58-15** (`strct-toolbar` takes ← and → from a text field), **BUG-58-16**
+  (`strct-empty-state`'s 15 px title), **BUG-58-17** (`strct-tree`'s active row 4.49 : 1 on `--bg-2`, light). Each
+  measured.
 
 ## Status ledger
 
