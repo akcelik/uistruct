@@ -5,6 +5,32 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.28.0] - 2026-10-20
+
+The last item of HyperStruct's 5.24 report: a topology you can walk
+(FR-59-08).
+
+### Added
+
+- **`strct-flow [navigable]`, `(nodeActivate)` and a node `icon`** (FR-59-08).
+  The report asks for a `strct-topology` — left-to-right columns of nodes,
+  edges between them, status tones, one tab stop with arrow-key movement,
+  `(nodeActivate)` and a structural fallback for a screen reader. Four of
+  those `strct-flow` has had since **4.19.0**: `layout="fan-out"` /
+  `"tree"` places the nodes in columns, draws the measured edges between
+  them, tones each node by status and describes the graph (a group per
+  column with its heading, and "→ hv-02, hv-03" per node) while hiding the
+  SVG. What was missing is now here rather than in a second diagram
+  component:
+  - **`navigable`** makes the diagram **one tab stop** with the arrow keys
+    inside it: ← / → follow the **edges** (falling back to the next column
+    where a node has none), ↑ / ↓ move within a column, Home / End jump to
+    its ends.
+  - **`(nodeActivate)`** emits the node on a click or Enter / Space.
+  - **`StrctFlowNode.icon`** draws a leading icon where a node's kind is part
+    of the answer.
+  - Off by default, so a decorative pipeline keeps no tab stop at all.
+
 ## [5.27.0] - 2026-10-20
 
 The second batch of HyperStruct's 5.24 report: the reader's cost, a disabled

@@ -14,8 +14,10 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
 } from '@angular/core';
+import { StrctIcon } from '../icon/icon';
 import { StrctStatus } from '../status';
 
 /**
@@ -57,6 +59,8 @@ export interface StrctFlowNode {
   role?: string;
   /** Optional status dot tone for this terminal. */
   status?: StrctStatus;
+  /** A leading icon, for a node whose kind is part of the answer. */
+  icon?: string;
   /** Which column this node sits in (`fan-out`). Derived from depth in `tree`. */
   column?: number;
   /**
@@ -93,7 +97,7 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
   selector: 'strct-flow',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, StrctIcon],
   template: `
     @if (layout() !== 'chain') {
       <div class="strct-flow__fan" #fan>
@@ -124,7 +128,13 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
                 <li
                   class="strct-flow__box strct-flow__box--{{ node.status ?? 'neutral' }}"
                   [class.strct-flow__box--surface]="node.emphasis === 'surface'"
+                  [class.strct-flow__box--navigable]="navigable()"
                   [attr.data-flow-node]="node.id"
+                  [attr.role]="navigable() ? 'button' : null"
+                  [attr.tabindex]="navigable() ? (isCursor(node) ? 0 : -1) : null"
+                  (click)="activate(node)"
+                  (focus)="cursor.set(node.id)"
+                  (keydown)="onNodeKeydown($event, node)"
                 >
                   @if (nodeTpl(); as tpl) {
                     <ng-container
@@ -132,6 +142,14 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
                       [ngTemplateOutletContext]="{ $implicit: node, node }"
                     />
                   } @else {
+                    @if (node.icon) {
+                      <strct-icon
+                        class="strct-flow__icon"
+                        [name]="node.icon"
+                        [size]="15"
+                        [strokeWidth]="1.4"
+                      />
+                    }
                     <span class="strct-flow__label">{{ node.label }}</span>
                     @if (node.role) {
                       <span class="strct-flow__role">{{ node.role }}</span>
@@ -366,6 +384,20 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
         border-radius: var(--radius-md);
         font-size: var(--text-sm);
         color: var(--t3);
+      }
+      /* A node you can walk to and act on: one tab stop for the diagram, the
+         arrow keys inside it. Off unless navigable is set, so a decorative
+         pipeline keeps no tab stop at all. */
+      .strct-flow__box--navigable {
+        cursor: pointer;
+      }
+      .strct-flow__box--navigable:focus-visible {
+        outline: 2px solid var(--acc);
+        outline-offset: 2px;
+      }
+      .strct-flow__icon {
+        color: var(--t2);
+        flex: none;
       }
       .strct-flow__sr {
         position: absolute;
@@ -706,6 +738,88 @@ export class StrctFlow {
         nodes: byColumn.get(index) ?? [],
       }));
   });
+
+  /**
+   * One tab stop for the whole diagram, with the arrow keys walking it:
+   * ← / → follow the edges (or the columns, where a node has none), ↑ / ↓ move
+   * within a column, Home / End jump to its ends. Off by default, so a
+   * decorative pipeline keeps no tab stop at all.
+   */
+  readonly navigable = input(false, { transform: booleanAttribute });
+  /** Emitted when a node is clicked, or Enter / Space is pressed on it. */
+  readonly nodeActivate = output<StrctFlowNode>();
+  /** The node the tab stop is on (its id). */
+  protected readonly cursor = signal<string | null>(null);
+
+  protected isCursor(node: StrctFlowNode): boolean {
+    const at = this.cursor();
+    if (at) return at === node.id;
+    // Nothing focused yet: the first node of the first column holds the stop.
+    return this.columnsView()[0]?.nodes[0]?.id === node.id;
+  }
+
+  protected activate(node: StrctFlowNode): void {
+    if (!this.navigable()) return;
+    this.cursor.set(node.id);
+    this.nodeActivate.emit(node);
+  }
+
+  protected onNodeKeydown(event: KeyboardEvent, node: StrctFlowNode): void {
+    if (!this.navigable()) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.activate(node);
+      return;
+    }
+    const keys = ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+    if (!keys.includes(event.key)) return;
+    event.preventDefault();
+    const next = this.neighbour(node, event.key);
+    if (next) this.focusNode(next);
+  }
+
+  /** Where a key leads from `node`: along an edge, or within the column. */
+  private neighbour(node: StrctFlowNode, key: string): string | null {
+    const cols = this.columnsView();
+    const col = cols.find((c) => c.nodes.some((n) => n.id === node.id));
+    if (!col) return null;
+    const within = col.nodes.findIndex((n) => n.id === node.id);
+    const edges = this.edges() ?? [];
+    switch (key) {
+      case 'ArrowDown':
+        return col.nodes[within + 1]?.id ?? col.nodes[0]?.id ?? null;
+      case 'ArrowUp':
+        return col.nodes[within - 1]?.id ?? col.nodes[col.nodes.length - 1]?.id ?? null;
+      case 'Home':
+        return col.nodes[0]?.id ?? null;
+      case 'End':
+        return col.nodes[col.nodes.length - 1]?.id ?? null;
+      case 'ArrowRight': {
+        // The edge is the structure: the first node this one leads to.
+        const out = edges.find((e) => e.from === node.id)?.to;
+        if (out) return out;
+        const at = cols.indexOf(col);
+        return cols[at + 1]?.nodes[0]?.id ?? null;
+      }
+      default: {
+        const into = edges.find((e) => e.to === node.id)?.from;
+        if (into) return into;
+        const at = cols.indexOf(col);
+        return cols[at - 1]?.nodes[0]?.id ?? null;
+      }
+    }
+  }
+
+  private focusNode(id: string): void {
+    this.cursor.set(id);
+    // Matched by reading the attribute rather than by building a selector:
+    // an id is the consumer's string, and CSS.escape is not everywhere (jsdom
+    // has none, and a throw here would silently leave the focus behind).
+    const el = [...this.host.nativeElement.querySelectorAll<HTMLElement>('[data-flow-node]')].find(
+      (n) => n.getAttribute('data-flow-node') === id,
+    );
+    el?.focus();
+  }
 
   /** What a node says to assistive tech: itself, then where it leads. */
   protected nodeSummary(node: StrctFlowNode): string {

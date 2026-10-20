@@ -76,6 +76,15 @@ const ROUTES = [
   // The badge itself: a dot and a word, beside the buttons it used to look
   // like (5.26.0). The crop is the demo row, so a change to its metrics shows.
   ['badge', '/components/badge', '#badge', undefined, '.doc__examples'],
+  // FR-59-08: a topology — columns, edges, icons and a node that can be
+  // walked to. The crop is the diagram, so a change to its geometry shows.
+  [
+    'flow-topology',
+    '/components/flow',
+    '#flow-topology',
+    undefined,
+    '#flow-topology strct-flow',
+  ],
   ['tree', '/components/tree'],
   // What a node says after its label: the quiet meta and the status tag, which
   // have to sit on the row without pushing the label out of it.

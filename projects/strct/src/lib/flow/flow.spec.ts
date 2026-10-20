@@ -246,3 +246,95 @@ describe('StrctFlow — an empty column and a toned node', () => {
     expect(boxes[1].classList).toContain('strct-flow__box--critical');
   });
 });
+
+// FR-59-08: a topology is a fan-out you can walk and act on — one tab stop,
+// the arrow keys inside it, and the edges as the structure they are.
+describe('StrctFlow — a navigable topology', () => {
+  const nodes: StrctFlowNode[] = [
+    { id: 'p1', label: 'Port profile A', column: 0, icon: 'tag' },
+    { id: 'p2', label: 'Port profile B', column: 0 },
+    { id: 'sw', label: 'mvs-01', column: 1, status: 'success', sublabel: '2 uplinks' },
+    { id: 'u1', label: 'uplink-1', column: 2 },
+    { id: 'u2', label: 'uplink-2', column: 2 },
+  ];
+  const edges: StrctFlowEdge[] = [
+    { from: 'p1', to: 'sw' },
+    { from: 'p2', to: 'sw' },
+    { from: 'sw', to: 'u1' },
+    { from: 'sw', to: 'u2' },
+  ];
+
+  function build(navigable = true) {
+    const fixture = TestBed.createComponent(StrctFlow);
+    fixture.componentRef.setInput('nodes', nodes);
+    fixture.componentRef.setInput('edges', edges);
+    fixture.componentRef.setInput('layout', 'fan-out');
+    fixture.componentRef.setInput('columns', ['Port profiles', 'Switch', 'Uplinks']);
+    fixture.componentRef.setInput('navigable', navigable);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    document.body.appendChild(el);
+    const box = (id: string) => el.querySelector<HTMLElement>(`[data-flow-node="${id}"]`)!;
+    const key = (id: string, k: string) => {
+      box(id).dispatchEvent(
+        new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }),
+      );
+      fixture.detectChanges();
+    };
+    return { fixture, el, box, key };
+  }
+
+  it('is one tab stop, and the rest of the nodes are reachable only from it', () => {
+    const { el, box } = build();
+    const stops = [...el.querySelectorAll('[data-flow-node]')].filter(
+      (n) => n.getAttribute('tabindex') === '0',
+    );
+    expect(stops.length).toBe(1);
+    expect(stops[0]).toBe(box('p1'));
+    expect(box('sw').getAttribute('tabindex')).toBe('-1');
+    expect(box('p1').getAttribute('role')).toBe('button');
+  });
+
+  it('the arrow keys follow the edges, and move within a column', () => {
+    const { box, key } = build();
+    box('p1').focus();
+    key('p1', 'ArrowDown');
+    expect(document.activeElement).toBe(box('p2'));
+    key('p2', 'ArrowRight'); // along its edge, into the switch
+    expect(document.activeElement).toBe(box('sw'));
+    key('sw', 'ArrowRight'); // and on to the first uplink
+    expect(document.activeElement).toBe(box('u1'));
+    key('u1', 'ArrowLeft'); // back the way the edge came
+    expect(document.activeElement).toBe(box('sw'));
+    key('sw', 'Home');
+    expect(document.activeElement).toBe(box('sw')); // one node in that column
+    key('sw', 'ArrowLeft'); // the first node that leads into it
+    expect(document.activeElement).toBe(box('p1'));
+  });
+
+  it('Enter, Space and a click all activate the node', () => {
+    const { fixture, box, key } = build();
+    const picked: string[] = [];
+    fixture.componentInstance.nodeActivate.subscribe((n: StrctFlowNode) => picked.push(n.id));
+    key('sw', 'Enter');
+    key('sw', ' ');
+    box('u2').click();
+    expect(picked).toEqual(['sw', 'sw', 'u2']);
+  });
+
+  it('without navigable there is no tab stop and no activation', () => {
+    const { fixture, box } = build(false);
+    const picked: string[] = [];
+    fixture.componentInstance.nodeActivate.subscribe((n: StrctFlowNode) => picked.push(n.id));
+    expect(box('p1').hasAttribute('tabindex')).toBe(false);
+    expect(box('p1').hasAttribute('role')).toBe(false);
+    box('p1').click();
+    expect(picked).toEqual([]);
+  });
+
+  it('a node can carry an icon, and still says where it leads', () => {
+    const { box } = build();
+    expect(box('p1').querySelector('strct-icon')).toBeTruthy();
+    expect(box('sw').querySelector('.strct-flow__sr')!.textContent).toContain('uplink-1');
+  });
+});
