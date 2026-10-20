@@ -307,6 +307,8 @@ export function parseInlines(
   let buf = '';
   let i = 0;
   let budget = STRCT_MD_LIMITS.delimiters;
+  /** Closer positions per marker, read once for this span. */
+  const closers = new Map<string, number[]>();
 
   const flush = () => {
     if (!buf) return;
@@ -419,7 +421,7 @@ export function parseInlines(
       const opens = !/^\s|^$/.test(after) && !intraword;
       if (len && opens) {
         const marker = ch.repeat(len);
-        const close = findCloser(source, marker, i + len);
+        const close = findCloser(source, marker, i + len, closers);
         if (close !== -1 && close > i + len) {
           const inner = source.slice(i + len, close);
           flush();
@@ -445,23 +447,55 @@ export function parseInlines(
 }
 
 /**
- * The next closing delimiter: one with a non-space before it. An opener with
- * no such closer is not a delimiter at all, it is the character written.
+ * Where a given marker can close: a run with a non-space before it (and, for
+ * `_`, not inside a word). It depends on the text alone, so it is read once
+ * per span and per marker instead of once per opener — CommonMark's
+ * `openers_bottom` by another route. Without it, 16k unmatched openers in a
+ * 64 KiB line each scanned their own 4 KiB window: 142 ms for "*a " repeated,
+ * and a streamed reply is read again on every token (BUG-59-03).
  */
-function findCloser(source: string, marker: string, from: number): number {
-  // Bounded: an unmatched delimiter in a long reply used to scan to the end of
-  // the document, once per delimiter — 1.6s for a 64 KiB line of "*a ".
-  const limit = Math.min(source.length, from + STRCT_MD_LIMITS.scan);
-  let at = source.indexOf(marker, from);
-  while (at !== -1 && at < limit) {
+function closerPositions(source: string, marker: string): number[] {
+  const out: number[] = [];
+  let at = source.indexOf(marker);
+  while (at !== -1) {
     const before = source[at - 1];
     const after = source[at + marker.length] ?? '';
     const intraword =
       marker[0] === '_' && /[\p{L}\p{N}]/u.test(before ?? '') && /[\p{L}\p{N}]/u.test(after);
-    if (before && !/\s/.test(before) && !intraword) return at;
+    if (before && !/\s/.test(before) && !intraword) out.push(at);
     at = source.indexOf(marker, at + marker.length);
   }
-  return -1;
+  return out;
+}
+
+/**
+ * The next closing delimiter at or after `from`, within the scan window. An
+ * opener with no such closer is not a delimiter at all, it is the character
+ * written.
+ */
+function findCloser(
+  source: string,
+  marker: string,
+  from: number,
+  index: Map<string, number[]>,
+): number {
+  let positions = index.get(marker);
+  if (!positions) {
+    positions = closerPositions(source, marker);
+    index.set(marker, positions);
+  }
+  // Still bounded: a closer further than the window is not looked at, so the
+  // opener stays the character it is.
+  const limit = Math.min(source.length, from + STRCT_MD_LIMITS.scan);
+  let lo = 0;
+  let hi = positions.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (positions[mid] < from) lo = mid + 1;
+    else hi = mid;
+  }
+  const at = positions[lo];
+  return at !== undefined && at < limit ? at : -1;
 }
 
 /** The index of the `]` matching the `[` at `from`, or -1. */

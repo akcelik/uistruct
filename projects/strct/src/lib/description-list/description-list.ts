@@ -5,6 +5,8 @@ import {
   booleanAttribute,
   input,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { StrctIcon } from '../icon/icon';
 import { StrctStatus } from '../status';
 import { StrctStatusDot } from '../status-dot/status-dot';
@@ -172,6 +174,21 @@ export type StrctDescAlign = 'between' | 'start' | 'grid';
         align-items: center;
         gap: 6px;
       }
+      /* The value is the link: the library's link tone and focus ring, and
+         the value's own type stays (mono, muted) because the rules above
+         select the cell, not its content. */
+      .strct-desc__link {
+        color: var(--acc);
+        text-decoration: none;
+        border-radius: var(--radius-sm);
+      }
+      .strct-desc__link:hover {
+        text-decoration: underline;
+      }
+      .strct-desc__link:focus-visible {
+        outline: 2px solid var(--acc);
+        outline-offset: 2px;
+      }
       .strct-desc__note {
         display: block;
         margin-top: 1px;
@@ -212,7 +229,7 @@ export class StrctDescriptionList {
   selector: 'strct-desc, div[strctDesc]',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [StrctIcon, StrctStatusDot],
+  imports: [StrctIcon, StrctStatusDot, NgTemplateOutlet, RouterLink],
   template: `
     <dt class="strct-desc__label">
       @if (status()) {
@@ -224,7 +241,30 @@ export class StrctDescriptionList {
       {{ label() }}
     </dt>
     <dd class="strct-desc__value">
-      <ng-content />
+      <!-- One projection, drawn into whichever branch is alive: a node matches
+           the first slot it fits, so two <ng-content>s would split the value. -->
+      <ng-template #value><ng-content /></ng-template>
+      @if (routerLink() !== null && routerLink() !== undefined) {
+        <a
+          class="strct-desc__link"
+          [routerLink]="routerLink()"
+          [attr.target]="target() || null"
+          [attr.rel]="relFor(target())"
+        >
+          <ng-container *ngTemplateOutlet="value" />
+        </a>
+      } @else if (href()) {
+        <a
+          class="strct-desc__link"
+          [href]="href()"
+          [attr.target]="target() || null"
+          [attr.rel]="relFor(target())"
+        >
+          <ng-container *ngTemplateOutlet="value" />
+        </a>
+      } @else {
+        <ng-container *ngTemplateOutlet="value" />
+      }
       @if (note()) {
         <span class="strct-desc__note">{{ note() }}</span>
       }
@@ -251,4 +291,18 @@ export class StrctDesc {
   readonly icon = input('');
   /** A quiet second line under the value — "last seen 12 s ago". */
   readonly note = input('');
+  /**
+   * The value is a destination: the whole value becomes the link, with the
+   * library's link and focus style. `href` for an address outside the app.
+   */
+  readonly href = input('');
+  /** The same, routed — takes what `[routerLink]` takes. */
+  readonly routerLink = input<string | unknown[] | null>(null);
+  /** `target="_blank"` opens a new tab; the safe `rel` comes with it. */
+  readonly target = input('');
+
+  /** A new tab never gets a handle on the opener. */
+  protected relFor(target: string): string | null {
+    return target === '_blank' ? 'noopener noreferrer' : null;
+  }
 }

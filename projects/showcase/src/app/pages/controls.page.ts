@@ -110,6 +110,19 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="button-disabled-reason"
+      owner="button"
+      heading="A disabled action owes its reason"
+      description="disabledReason says why the action cannot be taken. The button keeps its tab stop and refuses through aria-disabled rather than the native attribute — a disabled button takes no focus, so the reason it carries could never be read — and the sentence appears on hover and on focus, as aria-describedby. Without a reason, [disabled] is the native attribute exactly as before."
+      code='<button strct-button [disabled]="true" disabledReason="The cluster is already joined">Join</button>'
+    >
+      <button strct-button [disabled]="true" disabledReason="The cluster is already joined">
+        Join
+      </button>
+      <button strct-button variant="primary" [disabled]="true">Join (no reason)</button>
+    </app-demo>
+
+    <app-demo
       anchor="badge"
       heading="Badge"
       description="A state said in words, with a 6px dot in the status tone — no box, on purpose: the outlined pill it replaced shared the button's border token, radius, transparent fill and text size, so a badge read as something to press. The buttons beside the badges here are the comparison. Add solid for the filled chip, where a block of weight is what the layout needs; a badge that carries its own strct-icon drops the dot."

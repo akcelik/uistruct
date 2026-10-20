@@ -156,6 +156,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           <div strctDesc label="IPv4" mono>172.16.75.100/24</div>
           <div strctDesc label="Gateway" mono>172.16.75.2</div>
           <div strctDesc label="IPv6"><strct-badge status="success">Enabled</strct-badge></div>
+          <!-- FR-59-06: a value that is a destination is the link itself. -->
+          <div strctDesc label="Now" mono href="/components/description-list#description-list">
+            1.4.2
+          </div>
         </strct-description-list>
 
         <strct-description-list
@@ -833,6 +837,20 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <strct-change from="v10.27" to="v10.28" mono />
         <strct-change from="26100.4351" to="26100.4652" mono />
         <strct-change from="Maintenance" to="In service" />
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="change-one-side"
+      owner="change"
+      heading="One side only"
+      description="An install has a “to” and no “from”; a removal the other way round. Leave the other side empty: the row still reads as one phrase, and the sentence assistive tech hears becomes “set to …” or “… removed” (addedLabel / removedLabel, and removedMark for what stands in place of the value)."
+      code='<strct-change to="1.4.2" mono /> · <strct-change from="1.4.1" mono />'
+    >
+      <div class="stack">
+        <strct-change to="1.4.2" mono />
+        <strct-change from="1.4.1" mono />
+        <strct-change from="LACP" to="" />
       </div>
     </app-demo>
 

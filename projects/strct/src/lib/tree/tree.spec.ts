@@ -407,7 +407,7 @@ describe('StrctTree — drag and drop (FR-43-04)', () => {
   ];
 
   type DragFn = ((n: StrctTreeNodeData) => boolean) | null;
-  type DropFn = ((s: StrctTreeNodeData, t: StrctTreeNodeData) => boolean) | null;
+  type DropFn = ((s: StrctTreeNodeData, t: StrctTreeNodeData) => boolean | string) | null;
 
   @Component({
     imports: [StrctTree],
@@ -418,6 +418,7 @@ describe('StrctTree — drag and drop (FR-43-04)', () => {
         [canDrop]="canDrop()"
         [dragExpandDelay]="delay()"
         (nodeDrop)="drops.push($event)"
+        (dropRefused)="refusals.push($event)"
       />
     `,
   })
@@ -427,6 +428,7 @@ describe('StrctTree — drag and drop (FR-43-04)', () => {
     readonly canDrop = signal<DropFn>(() => true);
     readonly delay = signal(700);
     drops: { source: StrctTreeNodeData; target: StrctTreeNodeData; position: string }[] = [];
+    refusals: { source: StrctTreeNodeData; target: StrctTreeNodeData; reason: string }[] = [];
   }
 
   function setupDnd(patch: { canDrag?: DragFn; canDrop?: DropFn; delay?: number } = {}) {
@@ -590,6 +592,63 @@ describe('StrctTree — drag and drop (FR-43-04)', () => {
     drag('drop', row('host'));
     await settle();
     expect(live()).toContain('Dropped VM 1 on Host');
+  });
+
+  // FR-59-07: a refusal the operator should read — instead of a target that
+  // simply will not take the drop, or a toast after the fact.
+  describe('a refused drop with its reason', () => {
+    const reason = 'A resource pool cannot be moved into another cluster';
+
+    it('shows the reason beside the pointer, announces it once, and refuses the drop', async () => {
+      const { host, el, row, drag } = setupDnd({
+        canDrop: (_s: StrctTreeNodeData, t: StrctTreeNodeData) => (t.id === 'host' ? reason : true),
+      });
+      const live = () => document.querySelector('[aria-live="polite"]')?.textContent ?? '';
+      const settle = () => new Promise((r) => setTimeout(r));
+
+      drag('dragstart', row('vm-1'));
+      drag('dragover', row('host'), 120);
+      await settle();
+
+      const bubble = el.querySelector('.strct-tree__refusal')!;
+      expect(bubble.textContent!.trim()).toBe(reason);
+      expect(bubble.getAttribute('aria-hidden')).toBe('true');
+      expect(live()).toContain(reason);
+      expect(row('host').classList).not.toContain('strct-tnode__row--droptarget');
+      expect(host.refusals.map((r) => r.reason)).toEqual([reason]);
+
+      drag('dragover', row('host'), 121);
+      drag('dragover', row('host'), 122);
+      expect(host.refusals.length).toBe(1);
+
+      drag('drop', row('host'));
+      expect(host.drops).toEqual([]);
+      expect(el.querySelector('.strct-tree__refusal')).toBeNull();
+    });
+
+    it('a target that accepts clears the reason, and still takes the drop', () => {
+      const { host, el, row, drag } = setupDnd({
+        canDrop: (_s: StrctTreeNodeData, t: StrctTreeNodeData) => (t.id === 'host' ? reason : true),
+      });
+      drag('dragstart', row('vm-1'));
+      drag('dragover', row('host'));
+      expect(el.querySelector('.strct-tree__refusal')).toBeTruthy();
+
+      drag('dragover', row('sub'));
+      expect(el.querySelector('.strct-tree__refusal')).toBeNull();
+      drag('drop', row('sub'));
+      expect(host.drops.map((d) => d.target.id)).toEqual(['sub']);
+    });
+
+    it('a plain false still refuses with nothing said', () => {
+      const { host, el, row, drag } = setupDnd({ canDrop: () => false });
+      drag('dragstart', row('vm-1'));
+      drag('dragover', row('host'));
+      expect(el.querySelector('.strct-tree__refusal')).toBeNull();
+      expect(host.refusals).toEqual([]);
+      drag('drop', row('host'));
+      expect(host.drops).toEqual([]);
+    });
   });
 
   it('rows stay treeitems, focusable and operable while drag-and-drop is wired', () => {
