@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { StrctRail, StrctRailItem } from './rail';
 
@@ -184,5 +184,30 @@ describe('StrctRail — the current page survives the router', () => {
     await f.whenStable(); // RouterLinkActive updates here
     f.detectChanges();
     expect(a.getAttribute('aria-current')).toBe('page');
+  });
+});
+
+// BUG-59-02: the same prefix problem as the menu beside it.
+describe('StrctRail — activeId is the only source when it is set', () => {
+  const items: StrctRailItem[] = [
+    { id: 'backup', label: 'Backup', icon: 'archive', routerLink: '/backup' },
+    { id: 'backup-vms', label: 'Protected VMs', icon: 'vm', routerLink: '/backup/vms' },
+  ];
+
+  it('marks exactly the item activeId names, under a deeper URL', async () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: '**', children: [] }])] });
+    await TestBed.inject(Router).navigateByUrl('/backup/vms/vm-1');
+    const f = TestBed.createComponent(StrctRail);
+    f.componentRef.setInput('items', items);
+    f.componentRef.setInput('activeId', 'backup-vms');
+    f.detectChanges();
+    await f.whenStable();
+    f.detectChanges();
+    const el = f.nativeElement as HTMLElement;
+    const current = [...el.querySelectorAll('a.strct-rail__item')].filter(
+      (a) => a.getAttribute('aria-current') === 'page',
+    );
+    expect(current.length).toBe(1);
+    expect(current[0].textContent).toContain('Protected VMs');
   });
 });

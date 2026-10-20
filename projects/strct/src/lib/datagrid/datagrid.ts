@@ -713,6 +713,10 @@ export class StrctDatagridActionBar {}
                             }}"
                             >{{ grp.count }}</span
                           >
+                          <!-- Seen: the chip's number. Heard: the number with
+                               the grid's noun, because "Inconclusive, 3" does
+                               not say three of what. -->
+                          <span class="strct-dg__announcer"> {{ countNoun(grp.count) }}</span>
                           @if (grp.note) {
                             <span class="strct-dg__announcer">. </span>
                             <span class="strct-dg__groupnote">{{ grp.note }}</span>
@@ -984,6 +988,7 @@ export class StrctDatagridActionBar {}
                     @if (filteredAway()) {
                       <strct-empty-state
                         size="sm"
+                        [titleLevel]="null"
                         [title]="L().noMatches"
                         [description]="noMatchesDescription()"
                       >
@@ -992,7 +997,9 @@ export class StrctDatagridActionBar {}
                         </button>
                       </strct-empty-state>
                     } @else {
-                      <strct-empty-state size="sm" [title]="emptyText()" />
+                      <!-- Not a heading: a grid is a region of a page, and an
+                           empty one used to put an <h3> in its outline. -->
+                      <strct-empty-state size="sm" [titleLevel]="null" [title]="emptyText()" />
                     }
                   </td>
                 </tr>
@@ -1565,7 +1572,12 @@ export class StrctDatagridActionBar {}
         background: none;
         color: inherit;
         font: inherit;
-        text-align: start;
+        /* The font shorthand carries neither of these, and a browser resets
+           both inside a button: a header row with one plain column drew
+           "Name  Kind  Size  USED BY". */
+        text-transform: inherit;
+        letter-spacing: inherit;
+        text-align: inherit;
         cursor: pointer;
       }
       .strct-dg__sortbtn:focus-visible {
@@ -3492,6 +3504,15 @@ export class StrctDatagrid {
     const total = this.lazy() ? (this.total() ?? this.rows().length) : this.sorted().length;
     return total + 1;
   });
+
+  /**
+   * The grid's own noun for a count, singular for one — what the footer
+   * already says, used where a bare number would be read alone (FR-59-01).
+   */
+  protected countNoun(count: number): string {
+    const l = this.L();
+    return count === 1 ? l.row : l.rows;
+  }
 
   /** 1 is the header row, so data rows start at 2. */
   protected ariaRowIndex(row: StrctRow): number | null {

@@ -4,12 +4,15 @@ import {
   ViewEncapsulation,
   booleanAttribute,
   computed,
+  inject,
   input,
   model,
   output,
+  signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { StrctIcon } from '../icon/icon';
 
 /** Semantic colour for a rail item's count badge. */
@@ -57,7 +60,7 @@ export interface StrctRailItem {
   selector: 'strct-rail',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [NgTemplateOutlet, RouterLink, RouterLinkActive, StrctIcon],
+  imports: [NgTemplateOutlet, RouterLink, StrctIcon],
   template: `
     <!-- Shared row content: icon, label, trailing indicator, badge / dot. -->
     <ng-template #rowContent let-item>
@@ -90,14 +93,17 @@ export interface StrctRailItem {
     <!-- One rail row: a router link, a plain link, or a button (today's default). -->
     <ng-template #row let-item>
       @if (isRouted(item)) {
+        <!-- No routerLinkActive here on purpose. That directive owns
+             aria-current wherever it is attached: it writes the attribute on
+             every navigation and removes it when it does not match, so a
+             template binding cannot survive beside it (BUG-58-06) and an
+             explicit activeId cannot win over its prefix match (BUG-59-02).
+             The rail asks the router itself instead, and keeps one element. -->
         <a
           class="strct-rail__item"
           [routerLink]="item.routerLink"
-          routerLinkActive
-          ariaCurrentWhenActive="page"
-          #rla="routerLinkActive"
-          [class.strct-rail__item--active]="isActive(item, rla.isActive)"
-          [attr.aria-current]="isActive(item, rla.isActive) ? 'page' : null"
+          [class.strct-rail__item--active]="isActive(item, isRouterActive(item))"
+          [attr.aria-current]="isActive(item, isRouterActive(item)) ? 'page' : null"
           [attr.title]="collapsed() ? item.label : null"
           (click)="pick(item, $event)"
         >
@@ -366,6 +372,17 @@ export interface StrctRailItem {
   ],
 })
 export class StrctRail {
+  /** Optional: these entries work with no router at all (href / button rows). */
+  private readonly router = inject(Router, { optional: true });
+  /** Bumped on every finished navigation, so the active state re-reads. */
+  private readonly navTick = signal(0);
+
+  constructor() {
+    this.router?.events.pipe(takeUntilDestroyed()).subscribe((e: unknown) => {
+      if (e instanceof NavigationEnd) this.navTick.update((n) => n + 1);
+    });
+  }
+
   /** Navigation entries. */
   readonly items = input.required<StrctRailItem[]>();
   /** Currently-active item id (two-way). */
@@ -401,6 +418,24 @@ export class StrctRail {
    * Active state of a router-link item: an explicit `activeId` is authoritative;
    * without one, the router's own active state drives it.
    */
+  /**
+   * Whether the router is on this entry's destination — the prefix match
+   * `RouterLinkActive` does, asked directly so no directive owns the
+   * element's `aria-current` (BUG-58-06, BUG-59-02). Absolute destinations
+   * are what these inputs take; a relative one is resolved from the root.
+   */
+  protected isRouterActive(item: StrctRailItem): boolean {
+    this.navTick();
+    const link = item.routerLink;
+    if (link == null || !this.router) return false;
+    return this.router.isActive(this.router.createUrlTree(Array.isArray(link) ? link : [link]), {
+      paths: 'subset',
+      queryParams: 'subset',
+      fragment: 'ignored',
+      matrixParams: 'ignored',
+    });
+  }
+
   protected isActive(item: StrctRailItem, routerActive: boolean): boolean {
     const id = this.activeId();
     return id !== null ? item.id === id : routerActive;

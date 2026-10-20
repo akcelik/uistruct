@@ -3,13 +3,15 @@ import {
   Component,
   ViewEncapsulation,
   booleanAttribute,
+  inject,
   input,
   model,
   output,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { StrctIcon } from '../icon/icon';
 import { StrctRailStatus } from '../layout/rail';
 
@@ -65,7 +67,7 @@ export interface StrctMenuSection {
   selector: 'strct-section-menu',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [NgTemplateOutlet, RouterLink, RouterLinkActive, StrctIcon],
+  imports: [NgTemplateOutlet, RouterLink, StrctIcon],
   template: `
     <!-- What every entry holds, whatever element carries it. -->
     <ng-template #rowContent let-item>
@@ -100,14 +102,17 @@ export interface StrctMenuSection {
          beside this menu already is. -->
     <ng-template #row let-item>
       @if (isRouted(item)) {
+        <!-- No routerLinkActive here on purpose. That directive owns
+             aria-current wherever it is attached: it writes the attribute on
+             every navigation and removes it when it does not match, so a
+             template binding cannot survive beside it (BUG-58-06) and an
+             explicit activeId cannot win over its prefix match (BUG-59-02).
+             The rail asks the router itself instead, and keeps one element. -->
         <a
           class="strct-sm__item"
           [routerLink]="item.routerLink"
-          routerLinkActive
-          ariaCurrentWhenActive="page"
-          #rla="routerLinkActive"
-          [class.strct-sm__item--active]="isActive(item, rla.isActive)"
-          [attr.aria-current]="isActive(item, rla.isActive) ? 'page' : null"
+          [class.strct-sm__item--active]="isActive(item, isRouterActive(item))"
+          [attr.aria-current]="isActive(item, isRouterActive(item)) ? 'page' : null"
           (click)="pick(item, $event)"
         >
           <ng-container *ngTemplateOutlet="rowContent; context: { $implicit: item }" />
@@ -352,6 +357,17 @@ export interface StrctMenuSection {
   ],
 })
 export class StrctSectionMenu {
+  /** Optional: these entries work with no router at all (href / button rows). */
+  private readonly router = inject(Router, { optional: true });
+  /** Bumped on every finished navigation, so the active state re-reads. */
+  private readonly navTick = signal(0);
+
+  constructor() {
+    this.router?.events.pipe(takeUntilDestroyed()).subscribe((e: unknown) => {
+      if (e instanceof NavigationEnd) this.navTick.update((n) => n + 1);
+    });
+  }
+
   /** Categories with their items (max two levels). */
   readonly sections = input.required<StrctMenuSection[]>();
   /** Active item id (two-way). */
@@ -390,6 +406,24 @@ export class StrctSectionMenu {
    * authoritative; without one the router's own active state drives it — the
    * rail's contract.
    */
+  /**
+   * Whether the router is on this entry's destination — the prefix match
+   * `RouterLinkActive` does, asked directly so no directive owns the
+   * element's `aria-current` (BUG-58-06, BUG-59-02). Absolute destinations
+   * are what these inputs take; a relative one is resolved from the root.
+   */
+  protected isRouterActive(item: StrctMenuLink): boolean {
+    this.navTick();
+    const link = item.routerLink;
+    if (link == null || !this.router) return false;
+    return this.router.isActive(this.router.createUrlTree(Array.isArray(link) ? link : [link]), {
+      paths: 'subset',
+      queryParams: 'subset',
+      fragment: 'ignored',
+      matrixParams: 'ignored',
+    });
+  }
+
   protected isActive(item: StrctMenuLink, routerActive: boolean): boolean {
     const id = this.activeId();
     return id !== null ? item.id === id : routerActive;

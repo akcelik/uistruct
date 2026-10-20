@@ -2996,3 +2996,98 @@ describe('StrctDatagrid — group tones and the paned list width', () => {
     expect(css).not.toMatch(/\.strct-dg__layout--panetakeover \.strct-dg__scroll \{/);
   });
 });
+
+// BUG-59-01 / FR-59-01 — what an empty grid adds to a page's outline, and
+// what a group header's count is read as.
+describe('StrctDatagrid — the empty row is not a heading', () => {
+  const cols: StrctDatagridColumn[] = [{ key: 'name', label: 'Name' }];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', []);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+
+  it('an empty grid puts no h1–h6 in the page outline', () => {
+    const { el } = make({ emptyText: 'No hosts yet' });
+    expect(
+      el.querySelectorAll('tbody h1, tbody h2, tbody h3, tbody h4, tbody h5, tbody h6').length,
+    ).toBe(0);
+    // The text is still there, as a paragraph.
+    const title = el.querySelector('tbody .strct-empty__title')!;
+    expect(title.tagName).toBe('P');
+    expect(title.textContent?.trim()).toBe('No hosts yet');
+  });
+
+  it('a grid emptied by a filter says so, and still adds no heading', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', [{ name: 'hv-01' }]);
+    fixture.componentRef.setInput('quickFilterable', true);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const input = el.querySelector<HTMLInputElement>('.strct-dg__quickfilter input')!;
+    input.value = 'zzzz';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    expect(el.querySelector('tbody .strct-empty__title')?.tagName).toBe('P');
+    expect(
+      el.querySelectorAll('tbody h1, tbody h2, tbody h3, tbody h4, tbody h5, tbody h6').length,
+    ).toBe(0);
+  });
+
+  it('an empty title draws no title element at all', () => {
+    const { el } = make({ emptyText: '' });
+    expect(el.querySelector('tbody .strct-empty__title')).toBeNull();
+  });
+});
+
+describe('StrctDatagrid — a group count is heard with the grid noun', () => {
+  const rows: StrctRow[] = [
+    { id: '1', state: 'failed', test: 'A' },
+    { id: '2', state: 'failed', test: 'B' },
+    { id: '3', state: 'passed', test: 'C' },
+  ];
+  const cols: StrctDatagridColumn[] = [{ key: 'test', label: 'Test' }];
+
+  function make(labels?: Record<string, unknown>) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('rowId', 'id');
+    fixture.componentRef.setInput('groupBy', 'state');
+    if (labels) fixture.componentRef.setInput('labels', labels);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return [...el.querySelectorAll('.strct-dg__groupbtn')].map((b) =>
+      (b.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    );
+  }
+
+  it('reads "2 rows" after the count, and the singular for one', () => {
+    const [first, second] = make();
+    expect(first).toBe('failed, 2 rows');
+    expect(second).toBe('passed, 1 row');
+  });
+
+  it('takes the noun from labels, so a grid of tests says tests', () => {
+    const [first, second] = make({ row: 'test', rows: 'tests' });
+    expect(first).toBe('failed, 2 tests');
+    expect(second).toBe('passed, 1 test');
+  });
+
+  it('the chip itself still shows only the number', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('groupBy', 'state');
+    fixture.detectChanges();
+    const chips = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('.strct-dg__groupcount'),
+    ];
+    expect(chips.map((c) => c.textContent!.trim())).toEqual(['2', '1']);
+  });
+});

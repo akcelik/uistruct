@@ -46,25 +46,29 @@ const VARIANTS: Record<StrctEmptyVariant, { icon: string; tone: string }> = {
       }
     </span>
     <!-- A zero state on a page is a heading; a loading state inside a card is
-         not, and an outline that gains an h3 while data loads is noise. -->
-    @switch (titleLevel()) {
-      @case (2) {
-        <h2 class="strct-empty__title">{{ title() }}</h2>
-      }
-      @case (3) {
-        <h3 class="strct-empty__title">{{ title() }}</h3>
-      }
-      @case (4) {
-        <h4 class="strct-empty__title">{{ title() }}</h4>
-      }
-      @case (5) {
-        <h5 class="strct-empty__title">{{ title() }}</h5>
-      }
-      @case (6) {
-        <h6 class="strct-empty__title">{{ title() }}</h6>
-      }
-      @default {
-        <p class="strct-empty__title">{{ title() }}</p>
+         not, and an outline that gains an h3 while data loads is noise. A
+         state with no title draws no title element: an empty <h3> is a
+         heading with no name, which is worse than no heading. -->
+    @if (title()) {
+      @switch (titleLevel()) {
+        @case (2) {
+          <h2 class="strct-empty__title">{{ title() }}</h2>
+        }
+        @case (3) {
+          <h3 class="strct-empty__title">{{ title() }}</h3>
+        }
+        @case (4) {
+          <h4 class="strct-empty__title">{{ title() }}</h4>
+        }
+        @case (5) {
+          <h5 class="strct-empty__title">{{ title() }}</h5>
+        }
+        @case (6) {
+          <h6 class="strct-empty__title">{{ title() }}</h6>
+        }
+        @default {
+          <p class="strct-empty__title">{{ title() }}</p>
+        }
       }
     }
     @if (description()) {
