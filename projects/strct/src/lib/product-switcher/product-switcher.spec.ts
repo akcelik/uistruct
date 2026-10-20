@@ -256,3 +256,40 @@ describe('StrctProductSwitcher — every row keeps its own parts', () => {
     expect(rows[2].querySelector('.strct-dd__itemdesc')).toBeNull();
   });
 });
+
+// FR-59-04: a menu that marks the checked row in that product's own accent,
+// and specs that find a row by its product.
+describe('StrctProductSwitcher — a hook and an accent per row', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('writes data-item on every row and data-accent where the item has one', async () => {
+    media(false);
+    const { fixture, el, host } = build();
+    host.items.set([
+      { ...PRODUCTS[0], accent: 'var(--prod-manager)' },
+      { ...PRODUCTS[1], accent: 'var(--prod-backup)' },
+      PRODUCTS[2],
+    ]);
+    fixture.detectChanges();
+    await openMenu(fixture, el);
+
+    const rows = [...document.querySelectorAll<HTMLElement>('.strct-dd__item')];
+    expect(rows.map((r) => r.getAttribute('data-item'))).toEqual([
+      'manager',
+      'backup',
+      'recovery',
+      'admin',
+    ]);
+    expect(rows.map((r) => r.getAttribute('data-accent'))).toEqual([
+      'var(--prod-manager)',
+      'var(--prod-backup)',
+      null,
+      null,
+    ]);
+    // The row a spec would look for, found by its product.
+    expect(
+      document.querySelector('[data-item="backup"]')!.querySelector('.strct-dd__itemlabel')!
+        .textContent,
+    ).toContain('HyperStruct Backup');
+  });
+});

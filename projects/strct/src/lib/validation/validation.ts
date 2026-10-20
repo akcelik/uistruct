@@ -2,14 +2,20 @@ import {
   ChangeDetectionStrategy,
   Component,
   ViewEncapsulation,
+  booleanAttribute,
   computed,
   input,
 } from '@angular/core';
 import { StrctIcon } from '../icon/icon';
 import { StrctSpinner } from '../spinner/spinner';
 
-/** Lifecycle of an async (or deferred) validation check. */
-export type StrctValidationStatus = 'idle' | 'checking' | 'ok' | 'warning' | 'error';
+/**
+ * Lifecycle of an async (or deferred) validation check — plus the two tones a
+ * line uses when it states a fact rather than a verdict: `accent` for
+ * something offered ("an update is available") and `info` for a plain note.
+ */
+export type StrctValidationStatus =
+  'idle' | 'checking' | 'ok' | 'warning' | 'error' | 'accent' | 'info';
 
 /**
  * A first-class "validating… → ok / warning / error (reason)" model, so apps stop
@@ -37,6 +43,10 @@ export function strctValidationIcon(status: StrctValidationStatus): string {
       return 'warning';
     case 'error':
       return 'critical';
+    case 'accent':
+      return 'arrowUp';
+    case 'info':
+      return 'info';
     default:
       return '';
   }
@@ -61,11 +71,16 @@ export function strctValidationIcon(status: StrctValidationStatus): string {
       <span class="strct-vstate strct-vstate--{{ state().status }}">
         @if (state().status === 'checking') {
           <strct-spinner size="sm" [label]="loadingLabel()" />
-        } @else if (icon()) {
-          <strct-icon [name]="icon()" [size]="16" />
+        } @else if (shownIcon()) {
+          <strct-icon [name]="shownIcon()" [size]="16" />
         }
         @if (state().message) {
-          <span class="strct-vstate__msg" aria-live="polite">{{ state().message }}</span>
+          <!-- A verdict that has just arrived is announced; a line that simply
+               says what is true is not, or every row of a grid speaks when it
+               is drawn (FR-59-02). -->
+          <span class="strct-vstate__msg" [attr.aria-live]="announce() ? 'polite' : null">{{
+            state().message
+          }}</span>
         }
       </span>
     }
@@ -92,6 +107,12 @@ export function strctValidationIcon(status: StrctValidationStatus): string {
       .strct-vstate--error {
         color: var(--critical);
       }
+      .strct-vstate--accent {
+        color: var(--acc);
+      }
+      .strct-vstate--info {
+        color: var(--t2);
+      }
       .strct-vstate__msg {
         color: var(--t2);
       }
@@ -103,5 +124,18 @@ export class StrctCellStatus {
   readonly state = input.required<StrctValidationState>();
   /** Accessible label for the 'checking' spinner (localizable). */
   readonly loadingLabel = input('Loading');
-  protected readonly icon = computed(() => strctValidationIcon(this.state().status));
+  /**
+   * An icon of your own, in place of the one the status carries — "an update
+   * is available" is an `arrowUp`, not a tick.
+   */
+  readonly icon = input('');
+  /**
+   * Whether the message is announced when it changes. True for a verdict that
+   * has just arrived (the default, as before); false for a line that states a
+   * fact, which is not a change to announce.
+   */
+  readonly announce = input(true, { transform: booleanAttribute });
+  protected readonly shownIcon = computed(
+    () => this.icon() || strctValidationIcon(this.state().status),
+  );
 }

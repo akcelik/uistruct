@@ -5,6 +5,57 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.27.0] - 2026-10-20
+
+The second batch of HyperStruct's 5.24 report: the reader's cost, a disabled
+action's reason, a refusal's reason, and four smaller asks (BUG-59-03,
+FR-59-02 … FR-59-07).
+
+### Fixed
+
+- **The markdown reader no longer costs 14–17× a linear reader on
+  emphasis-heavy input** (BUG-59-03). 5.22.0 bounded each scan to a 4 KiB
+  window, but every opener still scanned its own: a 64 KiB line of `"*a "` is
+  16k openers with no closer anywhere. Where a marker can close depends on the
+  text alone, so those positions are now read **once per span** and looked up
+  by binary search — CommonMark's `openers_bottom` by another route. Measured
+  against a delimiter-free read of the same length: `"*a "` **145× → 4.7×**,
+  `"**a "` **68× → 9.5×** (in wall clock on the same machine, 122 → 3.0 ms and
+  57 → 7.1 ms). Reading is unchanged: 60 000 random delimiter soups and twelve
+  hand-written shapes parse identically to the scanning reader.
+
+### Added
+
+- **`strct-button [disabledReason]`** (FR-59-03). A disabled action owes its
+  reason, and a disabled button takes no focus — so the reason it carries
+  could never be read. With a reason the button keeps its tab stop and refuses
+  through `aria-disabled`: the sentence appears on hover and on focus, as
+  `aria-describedby`, and the component refuses the click itself. Without one,
+  `[disabled]` is the native attribute exactly as before.
+- **`strct-tree`: a refusal with a reason** (FR-59-07). `canDrop` may return a
+  string: the target shows the no-drop state, the sentence stands beside the
+  pointer, it is announced politely **once per target**, `(dropRefused)`
+  carries `{ source, target, reason }` and `(nodeDrop)` stays silent. A plain
+  `false` refuses with nothing said, as before.
+- **`strct-cell-status`: a phrase, not only a verdict** (FR-59-02). Two tones
+  that state a fact — `accent` ("an update is available") and `info` — an
+  `icon` of your own in place of the status's, and `announce="false"` for a
+  line that is not a change to announce (`aria-live` is dropped, so a grid of
+  such lines does not speak when it is drawn).
+- **`strct-change` with one side** (FR-59-05). An install has a "to" and no
+  "from"; a removal the other way round. The missing side is simply absent,
+  the removed value's place takes `removedMark` (`—`), and the sentence
+  becomes "set to 1.4.2" / "1.4.1 removed" (`addedLabel`, `removedLabel`).
+- **`strct-desc`: the value as a link** (FR-59-06). `href`, `routerLink` and
+  `target` make the whole value the link, with the library's link and focus
+  style — instead of an `<a>` hand-made inside the value slot. `target="_blank"`
+  brings `rel="noopener noreferrer"` with it.
+- **`strct-product-switcher`: an accent and a hook per row** (FR-59-04).
+  `StrctProductItem.accent` is written on the row as `data-accent`, so the
+  checked row is tinted in **that product's** accent (the library's tints have
+  followed `[data-accent]` since 5.15.0), and every row carries
+  `data-item="<id>"` for a spec that looks for a product by name.
+
 ## [5.26.0] - 2026-10-20
 
 `strct-badge` is a dot and a word. It had no box to lose.

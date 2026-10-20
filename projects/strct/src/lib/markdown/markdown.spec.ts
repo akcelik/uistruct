@@ -285,6 +285,33 @@ describe('strctParseMarkdown — the reader after the parity report', () => {
     expect(parseInlines(near)[0].kind).toBe('em');
   });
 
+  // BUG-59-03: a reply of unmatched emphasis cost 14–17x a linear reader,
+  // because every opener scanned its own window. The closer positions are
+  // read once per span now.
+  it('reads emphasis-heavy input within reach of a delimiter-free read', () => {
+    const mean = (fn: () => void) => {
+      fn(); // warm
+      const t: number[] = [];
+      for (let i = 0; i < 3; i++) {
+        const started = performance.now();
+        fn();
+        t.push(performance.now() - started);
+      }
+      return t.reduce((x, y) => x + y) / t.length;
+    };
+    const repeat = (unit: string) => unit.repeat(Math.ceil((64 * 1024) / unit.length));
+    // The same length of text with no delimiters in it: the machine's own
+    // speed, so the bound does not depend on which machine runs it.
+    const base = mean(() => strctParseMarkdown(repeat('xa ')));
+    for (const unit of ['*a ', '**a ']) {
+      const cost = mean(() => strctParseMarkdown(repeat(unit)));
+      // Measured on the fix: 4.7x and 9.5x. Measured on the scanning reader
+      // it replaced: 145x and 68x. The bound sits between, with room for a
+      // loaded machine.
+      expect(cost / base, unit).toBeLessThan(30);
+    }
+  });
+
   it('stays well inside a second on the shapes that used to cost several', () => {
     // Measured before: "*a " x 64 KiB 1.6 s, "**a " 755 ms, "[" x 200 KiB
     // 2.1 s; after: 156 / 78 / 48 ms. The budget is loose on purpose — this

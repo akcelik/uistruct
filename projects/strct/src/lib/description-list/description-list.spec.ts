@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { StrctDesc, StrctDescItem, StrctDescriptionList } from './description-list';
 
 @Component({
@@ -139,5 +140,56 @@ describe('StrctDescriptionList', () => {
     expect(dl.querySelectorAll('dd').length).toBe(2);
     expect(dl.querySelector('dt')?.textContent).toContain('IPv4');
     expect(dl.querySelector('dd')?.textContent).toContain('172.16.75.100');
+  });
+});
+
+// FR-59-06: a value that is a destination is the link itself, instead of an
+// <a> hand-made inside the slot.
+describe('StrctDesc — a value that is a link', () => {
+  @Component({
+    imports: [StrctDesc],
+    template: `
+      <strct-desc label="Now" [href]="href()" [target]="target()">1.4.2</strct-desc>
+      <strct-desc label="Plain">1.4.1</strct-desc>
+    `,
+  })
+  class Host {
+    href = signal('/updates/1.4.2');
+    target = signal('');
+  }
+
+  const build = () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  };
+
+  it('wraps the whole value, and leaves a plain value alone', () => {
+    const { el } = build();
+    const link = el.querySelector<HTMLAnchorElement>('.strct-desc__value a.strct-desc__link')!;
+    expect(link.getAttribute('href')).toBe('/updates/1.4.2');
+    expect(link.textContent!.trim()).toBe('1.4.2');
+    const plain = el.querySelectorAll('.strct-desc')[1];
+    expect(plain.querySelector('a')).toBeNull();
+    expect(plain.querySelector('.strct-desc__value')!.textContent!.trim()).toBe('1.4.1');
+  });
+
+  it('a new tab gets no handle on the opener', () => {
+    const { fixture, el } = build();
+    fixture.componentInstance.target.set('_blank');
+    fixture.detectChanges();
+    const link = el.querySelector('a.strct-desc__link')!;
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('routes when the destination is a routerLink', async () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: '**', children: [] }])] });
+    const fixture = TestBed.createComponent(StrctDesc);
+    fixture.componentRef.setInput('label', 'Now');
+    fixture.componentRef.setInput('routerLink', '/updates/1.4.2');
+    fixture.detectChanges();
+    const link = (fixture.nativeElement as HTMLElement).querySelector('a.strct-desc__link')!;
+    expect(link.getAttribute('href')).toBe('/updates/1.4.2');
   });
 });

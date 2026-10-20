@@ -48,6 +48,12 @@ export interface StrctProductItem {
   /** The product's own colour (a token or value): the row's icon takes it. */
   tone?: string;
   /**
+   * The product's accent, written on the row as `data-accent`: the library's
+   * tints follow it (5.15.0), so the checked row is filled in **that
+   * product's** accent rather than the shell's.
+   */
+  accent?: string;
+  /**
    * The chip's own shade. The chip sits on `--hdr`, which is dark in every
    * scheme, and the menu rows on `--bg-1`: one colour measured 2.45–2.93 : 1
    * on one of the two, under the 3 : 1 a graphical object owes. Falls back to
@@ -99,6 +105,8 @@ export interface StrctProductItem {
           strctDropdownItem
           [routerLink]="item.routerLink"
           [selected]="item.id === current()"
+          [attr.data-item]="item.id"
+          [attr.data-accent]="item.accent || null"
           (click)="pick(item, $event)"
         >
           @if (item.icon) {
@@ -124,6 +132,8 @@ export interface StrctProductItem {
           strctDropdownItem
           [href]="item.href"
           [selected]="item.id === current()"
+          [attr.data-item]="item.id"
+          [attr.data-accent]="item.accent || null"
           (click)="pick(item, $event)"
         >
           @if (item.icon) {
@@ -148,6 +158,8 @@ export interface StrctProductItem {
         <strct-dropdown-item
           [selected]="item.id === current()"
           [disabled]="!!item.disabled"
+          [attr.data-item]="item.id"
+          [attr.data-accent]="item.accent || null"
           (click)="pick(item)"
         >
           @if (item.icon) {

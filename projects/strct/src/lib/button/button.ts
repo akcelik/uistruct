@@ -1,9 +1,16 @@
+import { DOCUMENT } from '@angular/common';
+import { StrctTooltipPosition, strctShowTooltip } from '../tooltip/tooltip';
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  OnDestroy,
   ViewEncapsulation,
   booleanAttribute,
+  computed,
+  inject,
   input,
+  signal,
 } from '@angular/core';
 
 /** Button visual variants. */
@@ -38,6 +45,17 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
     '[class.strct-btn--mini]': "size() === 'mini'",
     '[class.strct-btn--block]': 'block()',
     '[class.strct-btn--icon]': 'iconOnly()',
+    // With a reason to give, the control stays reachable: aria-disabled
+    // instead of the native attribute, because a disabled button takes no
+    // focus and so can never show why it is disabled.
+    '[attr.disabled]': 'nativeDisabled() ? "" : null',
+    '[attr.aria-disabled]': 'softDisabled() ? "true" : null',
+    '[attr.aria-describedby]': 'reasonId()',
+    '(click)': 'onClick($event)',
+    '(mouseenter)': 'showReason()',
+    '(focus)': 'showReason()',
+    '(mouseleave)': 'hideReason()',
+    '(blur)': 'hideReason()',
   },
   styles: [
     `
@@ -205,7 +223,13 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
     `,
   ],
 })
-export class StrctButton {
+export class StrctButton implements OnDestroy {
+  private readonly hostEl = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly doc = inject(DOCUMENT);
+  private reason: { id: string; dispose: () => void } | null = null;
+  /** The raised reason's id, so the host can describe itself with it. */
+  protected readonly reasonId = signal<string | null>(null);
+
   /** Visual variant. */
   readonly variant = input<StrctButtonVariant>('neutral');
   /** Size variant. */
@@ -216,6 +240,54 @@ export class StrctButton {
   readonly block = input(false, { transform: booleanAttribute });
   /** Square padding for a single-icon button. */
   readonly iconOnly = input(false, { transform: booleanAttribute });
+  /**
+   * Disabled. Declared here so `disabledReason` can decide *how* it is
+   * disabled; without a reason it is the native attribute, exactly as before.
+   */
+  readonly disabled = input(false, { transform: booleanAttribute });
+  /**
+   * Why the action cannot be taken. With one, the button keeps its tab stop
+   * and says no through `aria-disabled`, and the reason appears on hover and
+   * on focus (and in `aria-describedby`) — a disabled button cannot be
+   * focused, so the reason it carries can never be read.
+   */
+  readonly disabledReason = input('');
+  /** Where the reason appears. */
+  readonly disabledReasonPosition = input<StrctTooltipPosition>('top');
+
+  /** Disabled with no reason to give: the native attribute, as before. */
+  protected readonly nativeDisabled = computed(() => this.disabled() && !this.disabledReason());
+  /** Disabled with a reason: focusable, and refusing clicks itself. */
+  protected readonly softDisabled = computed(() => this.disabled() && !!this.disabledReason());
+
+  protected onClick(event: Event): void {
+    if (!this.softDisabled()) return;
+    // A link is the other half of this: an <a strct-button> has no disabled
+    // attribute at all, so the click is stopped here either way.
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+
+  protected showReason(): void {
+    if (!this.softDisabled() || this.reason) return;
+    this.reason = strctShowTooltip(
+      this.hostEl.nativeElement,
+      this.disabledReason(),
+      this.disabledReasonPosition(),
+      this.doc,
+    );
+    this.reasonId.set(this.reason?.id ?? null);
+  }
+
+  protected hideReason(): void {
+    this.reason?.dispose();
+    this.reason = null;
+    this.reasonId.set(null);
+  }
+
+  ngOnDestroy(): void {
+    this.hideReason();
+  }
 }
 
 /** Segments adjacent buttons into a single joined control. */

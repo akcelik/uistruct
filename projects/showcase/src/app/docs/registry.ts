@@ -107,6 +107,26 @@ export const DOCS: DocCategory[] = [
             description: 'Stretch to the full width of the container.',
           },
           {
+            name: 'disabled',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Disabled. Without a `disabledReason` it is the native attribute, exactly as before.',
+          },
+          {
+            name: 'disabledReason',
+            type: 'string',
+            default: `''`,
+            description:
+              'Why the action cannot be taken. With one, the button keeps its tab stop and refuses through `aria-disabled` instead of the native attribute — a disabled button takes no focus, so a reason it carries can never be read — and the sentence appears on hover and on focus, as `aria-describedby`. The click is refused by the component.',
+          },
+          {
+            name: 'disabledReasonPosition',
+            type: `'top' | 'bottom' | 'left' | 'right'`,
+            default: `'top'`,
+            description: 'Where the reason appears.',
+          },
+          {
             name: 'iconOnly',
             type: 'boolean',
             default: 'false',
@@ -1796,6 +1816,7 @@ export const DOCS: DocCategory[] = [
           'StrctTreeNodeData',
           'StrctTreeNodeMenuFn',
           'StrctTreeDropEvent',
+          'StrctTreeDropRefusal',
         ],
         summary: 'Nested, expandable nodes with icons.',
         lead: 'Nested, expandable nodes with optional icons, status badges and active state. Compose `strct-tree-node` manually, or pass `[nodes]` for a fully data-driven, self-recursing tree of any depth. Add `[nodeMenu]` for a per-node right-click menu.',
@@ -1816,10 +1837,10 @@ export const DOCS: DocCategory[] = [
           },
           {
             name: 'canDrop',
-            type: '((source, target) => boolean) | null',
+            type: '((source, target) => boolean | string) | null',
             default: 'null',
             description:
-              "Where the dragged node may land, asked during `dragover` with BOTH nodes — a browser will not let `dragover` read the drag's data, so the tree keeps the source for you. Without it nothing accepts a drop: the tree owns the gesture, you own the rule. Two rules are built in whatever you return — a node is never dropped on itself, and never into its own subtree (a folder into its own subfolder is a cycle).",
+              "Where the dragged node may land, asked during `dragover` with BOTH nodes — a browser will not let `dragover` read the drag's data, so the tree keeps the source for you. Without it nothing accepts a drop: the tree owns the gesture, you own the rule. Return a **string** instead of `false` to refuse with a reason: the sentence appears beside the pointer, is announced politely once per target, and arrives on `(dropRefused)` while `(nodeDrop)` stays silent. Two rules are built in whatever you return — a node is never dropped on itself, and never into its own subtree (a folder into its own subfolder is a cycle).",
           },
           {
             name: 'dragExpandDelay',
@@ -1889,6 +1910,12 @@ export const DOCS: DocCategory[] = [
           },
         ],
         outputs: [
+          {
+            name: 'dropRefused',
+            type: 'StrctTreeDropRefusal',
+            description:
+              '`{ source; target; reason }`, emitted once per target when `canDrop` refuses with a sentence — the same sentence the operator is shown and a screen reader hears.',
+          },
           {
             name: 'nodeDrop',
             type: 'StrctTreeDropEvent',
@@ -4152,7 +4179,9 @@ export const DOCS: DocCategory[] = [
           {
             name: 'from / to',
             type: 'string',
-            description: 'The values before and after. Required.',
+            default: `''`,
+            description:
+              'The values before and after. One side may be empty: an install has a "to" and no "from" (" → 1.4.2"), a removal the other way round ("1.4.1 → —").',
           },
           {
             name: 'mono',
@@ -4165,6 +4194,18 @@ export const DOCS: DocCategory[] = [
             type: '(from: string, to: string) => string',
             default: '`from <from> to <to>`',
             description: 'What assistive tech hears in place of the arrow (localisable).',
+          },
+          {
+            name: 'addedLabel / removedLabel',
+            type: '(value: string) => string',
+            default: '`set to <to>` / `<from> removed`',
+            description: 'The sentence for a change with only one side (localisable).',
+          },
+          {
+            name: 'removedMark',
+            type: 'string',
+            default: `'—'`,
+            description: 'What stands where the new value would be when there is none.',
           },
         ],
         do: ['Use it wherever an upgrade or an edit is stated.'],

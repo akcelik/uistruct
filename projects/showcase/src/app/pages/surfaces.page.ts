@@ -447,7 +447,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="tree-dnd"
       owner="tree"
       heading="Drag and drop"
-      description="The tree owns the gesture; you own the rule. canDrag says which nodes can be picked up (none by default), canDrop is asked during dragover with BOTH nodes — the browser will not let dragover read the drag's data, which is the part a consumer cannot do from outside — and (nodeDrop) fires only for a target canDrop accepted. Dropping a node on itself or into its own subtree is refused whatever canDrop says, so a folder cannot be moved into its own subfolder. Drag a VM onto a folder or a host: the source dims, an accepting row is outlined, a refusing one keeps the browser's not-allowed cursor, and hovering a collapsed folder for 700ms opens it so an unseen target can be reached."
+      description="The tree owns the gesture; you own the rule. canDrag says which nodes can be picked up (none by default), canDrop is asked during dragover with BOTH nodes — the browser will not let dragover read the drag's data, which is the part a consumer cannot do from outside — and (nodeDrop) fires only for a target canDrop accepted. Dropping a node on itself or into its own subtree is refused whatever canDrop says, so a folder cannot be moved into its own subfolder. Drag a VM onto a folder or a host: the source dims, an accepting row is outlined, a refusing one keeps the browser's not-allowed cursor, and hovering a collapsed folder for 700ms opens it so an unseen target can be reached. canDrop may also return a sentence instead of false — drag a VM onto another VM: the reason appears beside the pointer, is announced once for that target, and (dropRefused) carries it."
       code='<strct-tree [nodes]="nodes()" [canDrag]="canDrag" [canDrop]="canDrop" (nodeDrop)="move($event)" />'
     >
       <div class="stack">
@@ -1520,10 +1520,16 @@ export class SurfacesPage {
   ]);
   protected readonly dndLog = signal('');
   protected readonly dndCanDrag = (node: StrctTreeNodeData): boolean => node.icon === 'vm';
+  // A refusal the operator should read is a sentence, not a false: the tree
+  // shows it beside the pointer and announces it once per target (FR-59-07).
   protected readonly dndCanDrop = (
     _source: StrctTreeNodeData,
     target: StrctTreeNodeData,
-  ): boolean => target.icon === 'folder' || target.icon === 'host';
+  ): boolean | string => {
+    if (target.icon === 'folder' || target.icon === 'host') return true;
+    if (target.icon === 'vm') return 'A VM cannot hold another VM — drop it on a host or a folder.';
+    return false;
+  };
 
   /** Moving things around is the consumer's business — the tree only reports it. */
   protected onNodeDrop(event: StrctTreeDropEvent): void {

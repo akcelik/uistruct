@@ -72,6 +72,13 @@ export interface StrctTreeDropEvent {
   position: 'into';
 }
 
+/** Payload of (dropRefused): a refusal the consumer gave a reason for. */
+export interface StrctTreeDropRefusal {
+  source: StrctTreeNodeData;
+  target: StrctTreeNodeData;
+  reason: string;
+}
+
 /** Payload of (nodeMenuSelect). */
 export interface StrctTreeMenuEvent {
   node: StrctTreeNodeData;
@@ -369,7 +376,7 @@ export class StrctTreeNode {
     const n = this.node();
     if (!n || !this.tree) return;
     event.stopPropagation();
-    this.tree.dragOver(n, event.clientY);
+    this.tree.dragOver(n, event.clientY, event.clientX);
     if (!this.tree.acceptsDrop(n)) {
       // No preventDefault: the pointer keeps the browser's "not allowed" cursor.
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'none';
@@ -578,6 +585,18 @@ export class StrctTreeNode {
     } @else {
       <ng-content />
     }
+    @if (dropRefusal()) {
+      <!-- The sentence the operator reads while the pointer refuses to land.
+           A screen reader hears it through the announcer instead, so this one
+           is hidden from the a11y tree. -->
+      <span
+        class="strct-tree__refusal"
+        aria-hidden="true"
+        [style.left.px]="pointer().x + 14"
+        [style.top.px]="pointer().y + 16"
+        >{{ dropRefusal() }}</span
+      >
+    }
   `,
   host: {
     class: 'strct-tree',
@@ -590,6 +609,23 @@ export class StrctTreeNode {
     `
       .strct-tree {
         display: block;
+      }
+      /* The refusal beside the pointer: fixed, so no ancestor's overflow can
+         clip it, and never under the pointer itself. */
+      .strct-tree__refusal {
+        position: fixed;
+        z-index: 1300;
+        pointer-events: none;
+        max-inline-size: 260px;
+        padding: 5px 8px;
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1.4;
+        color: var(--t1);
+        background: var(--bg-0);
+        border: 1px solid var(--critical);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shh);
       }
       /* A tree used as a picker inside a dialog sits in a frame and scrolls
          inside it — instead of an inline-styled wrapper per dialog, with its
@@ -656,12 +692,17 @@ export class StrctTree {
    * itself, and never into its own subtree (that would be a cycle).
    */
   readonly canDrop = input<
-    ((source: StrctTreeNodeData, target: StrctTreeNodeData) => boolean) | null
+    ((source: StrctTreeNodeData, target: StrctTreeNodeData) => boolean | string) | null
   >(null);
   /** How long a collapsed node must be hovered mid-drag before it expands (ms). */
   readonly dragExpandDelay = input(700);
   /** Emitted for an accepted drop only. */
   readonly nodeDrop = output<StrctTreeDropEvent>();
+  /**
+   * Emitted once per target when `canDrop` refuses with a sentence: the same
+   * sentence the operator is shown and the screen reader hears.
+   */
+  readonly dropRefused = output<StrctTreeDropRefusal>();
   /** Wording of the row shown under a node whose children are being read (`node.loading`). */
   readonly loadingLabel = input('Loading…');
   /** Accessible label of each node's chevron toggle; receives the expanded state and the node label. */
@@ -869,12 +910,27 @@ export class StrctTree {
   /** Whether the current drag may land on `target`: the built-in guards first,
    *  then the consumer's rule. */
   acceptsDrop(target: StrctTreeNodeData): boolean {
+    return this.verdictFor(target) === true;
+  }
+
+  /**
+   * The consumer's answer for this target: `true`, `false`, or the sentence
+   * the operator should read. The two built-in guards answer first and have
+   * no sentence — a node onto itself, or into its own subtree.
+   */
+  private verdictFor(target: StrctTreeNodeData): boolean | string {
     const source = this.dragSourceNode();
     if (!source) return false;
     if (this.keyOf(source) === this.keyOf(target)) return false;
     if (this.containsNode(source, target)) return false;
-    return this.canDrop()?.(source, target) ?? false;
+    const verdict = this.canDrop()?.(source, target) ?? false;
+    return verdict === true ? true : verdict || false;
   }
+
+  /** The refusal sentence for the target being hovered, or '' . */
+  readonly dropRefusal = signal('');
+  /** Where the pointer is, so the sentence can stand beside it. */
+  protected readonly pointer = signal<{ x: number; y: number }>({ x: 0, y: 0 });
 
   /** Whether `node` is somewhere inside `root`'s subtree. */
   private containsNode(root: StrctTreeNodeData, node: StrctTreeNodeData): boolean {
@@ -890,16 +946,29 @@ export class StrctTree {
   }
 
   /** Called from every `dragover` on a row: highlight, hover-expand, scroll. */
-  dragOver(target: StrctTreeNodeData, clientY: number): void {
+  dragOver(target: StrctTreeNodeData, clientY: number, clientX = 0): void {
+    this.pointer.set({ x: clientX, y: clientY });
     if (!this.dragSourceNode()) return;
-    const accepts = this.acceptsDrop(target);
-    this.dropTargetNode.set(accepts ? target : null);
+    const verdict = this.verdictFor(target);
+    this.dropTargetNode.set(verdict === true ? target : null);
+    // A refusal with a reason says it beside the pointer and, once per
+    // target, politely — a drag that simply refuses tells the operator
+    // nothing, and a toast after the drop is too late (FR-59-07).
+    const reason = typeof verdict === 'string' ? verdict : '';
+    if (reason !== this.dropRefusal()) {
+      this.dropRefusal.set(reason);
+      if (reason) {
+        this.announcer.announce(reason);
+        this.dropRefused.emit({ source: this.dragSourceNode()!, target, reason });
+      }
+    }
     this.scheduleHoverExpand(target);
     this.edgeScroll(clientY);
   }
 
   dragLeave(target: StrctTreeNodeData): void {
     if (this.isDropTarget(target)) this.dropTargetNode.set(null);
+    this.dropRefusal.set('');
     if (this.expandTimerKey === this.keyOf(target)) this.clearExpandTimer();
     this.stopEdgeScroll();
   }
@@ -918,6 +987,7 @@ export class StrctTree {
   endDrag(): void {
     this.dragSourceNode.set(null);
     this.dropTargetNode.set(null);
+    this.dropRefusal.set('');
     this.clearExpandTimer();
     this.stopEdgeScroll();
   }
