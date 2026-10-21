@@ -48,6 +48,17 @@ module.exports = tseslint.config(
     },
   },
   {
+    // The datagrid's 5.30.0 compatibility layer: each flat input that has
+    // moved into a feature object is declared as `xxxFlat` with
+    // `alias: 'xxx'`, so the template-facing name is unchanged while the
+    // component — and the template — read a resolved signal of the original
+    // name (the object first, the flat input second). The alias is the
+    // mechanism that keeps the public API stable, which is the opposite of
+    // what the rule guards against. Removed with the flat inputs in 6.0.
+    files: ['projects/strct/src/lib/datagrid/datagrid.ts'],
+    rules: { '@angular-eslint/no-input-rename': 'off' },
+  },
+  {
     files: ['**/*.spec.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',

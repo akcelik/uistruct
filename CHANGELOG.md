@@ -5,6 +5,47 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.30.0] - 2026-10-21
+
+The first step toward 6.0: the datagrid's features become objects, and
+nothing breaks.
+
+### Added
+
+- **`strct-datagrid`: seven feature objects.** The component had grown to 54
+  inputs, which is more than a template can read — the audit's **D1**. Each
+  cluster of related inputs is now a single object, and the flat inputs keep
+  working for the whole 5.x line:
+
+  | object        | replaces                                                                                             |
+  | ------------- | ---------------------------------------------------------------------------------------------------- |
+  | `[selection]` | `selectable`, `selectionMode`, `selectionColumn`, `rowSelectable`, `groupSelect`, `initialSelection` |
+  | `[paging]`    | `pageSize`, `hasMore`, `loadingMore`, `moreTotal`, `lazy`, `total`                                   |
+  | `[pane]`      | `detailPane`, `paneListWidth`, `paneTakeoverWidth`                                                   |
+  | `[virtual]`   | `viewportHeight`, `rowHeight`, `maxHeight`                                                           |
+  | `[grouping]`  | `groupBy`, `groups`, `showEmptyGroups`, `childrenKey`                                                |
+  | `[filtering]` | `quickFilterable`, `quickFilterFields`, `quickFilterAlign`                                           |
+  | `[state]`     | `stateKey`, `sync`                                                                                   |
+  - `[paging]` still takes the mode on its own (`paging="more"`), and `pane` /
+    `virtual` still take the bare attribute. Where both an object and a flat
+    input are given, the object wins.
+  - **The two-way state stays flat on purpose** — `selectedIds`, `selectedId`,
+    `activeRowId`, `filters`, `quickFilter`, `columnState`, `collapsedGroups`
+    — because `[(…)]` cannot bind through a property of an object. So do the
+    grid's core (`columns`, `rows`, `rowId`, `labels`) and the look flags.
+  - **A development build names what has moved**: one console line per app
+    run listing each flat input in use and the object it belongs to —
+    measured on the showcase's datagrid page, 12 grids produce one notice
+    with 17 names, not one per grid.
+  - `docs/migration-6.md` is the before/after table for every one of them.
+
+### Changed
+
+- **`scripts/dev-warnings.mjs` reports 6.0 readiness.** Beyond failing on
+  `[strct]` misuse diagnostics as before, it now lists the flat inputs the
+  showcase still passes. The list must be empty before 6.0 is cut; today it
+  is 17.
+
 ## [5.29.0] - 2026-10-21
 
 HyperStruct's two new reports: a "disabled" button that acted, a routed value

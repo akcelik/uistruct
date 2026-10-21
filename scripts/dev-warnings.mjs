@@ -109,6 +109,8 @@ await new Promise((res, rej) => {
 let id = 0;
 const pending = new Map();
 const found = [];
+/** Flat inputs the showcase still passes — the 6.0 readiness list. */
+const deprecated = new Set();
 ws.onmessage = (e) => {
   const m = JSON.parse(e.data);
   if (m.id && pending.has(m.id)) {
@@ -122,6 +124,15 @@ ws.onmessage = (e) => {
       .join(' ')
       .trim();
     if (text.includes('[strct]')) found.push(text);
+    // A deprecation notice is not misuse: it is the 6.0 readiness signal.
+    // Every flat input the showcase still uses is named once per app run, so
+    // the lines collected here are the work left before the major.
+    if (text.includes('removed in 6.0')) {
+      for (const line of text.split('\n')) {
+        const moved = line.match(/^\s{2}(\S+) → (\S+)/);
+        if (moved) deprecated.add(`${moved[1]} → ${moved[2]}`);
+      }
+    }
   }
 };
 const send = (method, params = {}) =>
@@ -147,4 +158,13 @@ if (found.length) {
   process.exit(1);
 }
 console.log('\nNo [strct] diagnostics. The showcase uses the library as documented.');
+if (deprecated.size) {
+  console.log(
+    `\n⚠ ${deprecated.size} input(s) the showcase still passes flat; 6.0 removes them:`,
+  );
+  for (const line of [...deprecated].sort()) console.log(`   ${line}`);
+  console.log('   (see docs/migration-6.md — this list must be empty before 6.0)');
+} else {
+  console.log('\n✓ Nothing deprecated left in the showcase: ready for 6.0.');
+}
 process.exit(0);
