@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.33.0] - 2026-10-21
+
+A height cap is not virtual scrolling. Fixes a regression 5.30.0 introduced.
+
+### Fixed
+
+- **`maxHeight` is an input of its own again.** 5.30.0 folded it into
+  `[virtual]`, and every `[virtual]` object turns virtual scrolling on —
+  because `viewportHeight` and `rowHeight` mean nothing otherwise. So a grid
+  given only a height cap was virtualised, and a virtualised grid **drops its
+  grouping** (the window is computed over rows; a group header is not one).
+  Measured on the showcase's row-grouping demo: 0 group rows and a 360 px
+  viewport where 220 px was asked for; now 2 group rows and a 220 px box, and
+  the checkbox that sets it works again.
+  - `maxHeight` is not deprecated and does not move in 6.0. The codemod and
+    `docs/migration-6.md` no longer mention it.
+  - `[virtual]` keeps the rest: an object there still turns virtual scrolling
+    on, which is right for settings that only exist in that mode.
+- **The grid says when grouping is dropped.** Asking for `[grouping]` and
+  virtual scrolling together has always rendered the rows ungrouped, silently.
+  A development build now says so once per app run — the diagnostic that would
+  have caught this the moment it shipped.
+
 ## [5.32.0] - 2026-10-21
 
 The codemod that does the 6.0 rewrite, and the showcase moved with it.

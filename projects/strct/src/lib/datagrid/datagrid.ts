@@ -317,12 +317,6 @@ export class StrctDatagrid {
   /** Scroll viewport height in px (virtual mode). */
   readonly viewportHeightFlat = input(360, { alias: 'viewportHeight' });
   /**
-   * Bound the grid's own scroll box (px), with a sticky header — what
-   * `viewportHeight` does for `virtual`, for every other grid: a grouped
-   * picker inside a dialog scrolls instead of growing the page.
-   */
-  readonly maxHeightFlat = input<number | null>(null, { alias: 'maxHeight' });
-  /**
    * Show a pencil on an editable cell when it is hovered or focused. A mouse
    * user finds an editable cell by double-clicking one; nothing said so.
    */
@@ -464,6 +458,15 @@ export class StrctDatagrid {
   // was. The object wins when it carries the property; otherwise the flat
   // input answers, as it did before 5.30.0.
 
+  /**
+   * Caps the grid's height in px; it scrolls inside that. Not a virtual
+   * setting — a virtual grid is sized by `[virtual].viewportHeight` — which
+   * is why it is not in that object (it was, in 5.30.0 – 5.32.0, and an
+   * object there turns virtual scrolling on: a grouped grid given a height
+   * cap silently lost its groups).
+   */
+  readonly maxHeight = input<number | null>(null);
+
   /** How rows are picked — replaces six flat inputs. */
   readonly selectionCfg = input<StrctDatagridSelection>({}, { alias: 'selection' });
   /** The detail pane — replaces three. `[pane]` on its own turns it on. */
@@ -523,7 +526,6 @@ export class StrctDatagrid {
     ['groupSelect', () => this.groupSelectFlat(), '[selection].groupSelect'],
     ['initialSelection', () => this.initialSelectionFlat() !== null, '[selection].initial'],
     ['viewportHeight', () => this.viewportHeightFlat() !== 360, '[virtual].viewportHeight'],
-    ['maxHeight', () => this.maxHeightFlat() !== null, '[virtual].maxHeight'],
     ['rowHeight', () => this.rowHeightFlat() !== 38, '[virtual].rowHeight'],
     ['lazy', () => this.lazyFlat(), '[paging].lazy'],
     ['total', () => this.totalFlat() !== null, '[paging].total'],
@@ -605,8 +607,7 @@ export class StrctDatagrid {
   readonly viewportHeight = computed(
     () => this.virtualCfg().viewportHeight ?? this.viewportHeightFlat(),
   );
-  /** `[virtual].maxHeight` when it is set, else the flat `maxHeight` (deprecated). */
-  readonly maxHeight = computed(() => this.virtualCfg().maxHeight ?? this.maxHeightFlat());
+
   /** `[virtual].rowHeight` when it is set, else the flat `rowHeight` (deprecated). */
   readonly rowHeight = computed(() => this.virtualCfg().rowHeight ?? this.rowHeightFlat());
   /** `[paging].lazy` when it is set, else the flat `lazy` (deprecated). */
@@ -866,6 +867,18 @@ export class StrctDatagrid {
   /** What tbody renders: plain (virtual/paged) rows, or groups + their rows. */
   protected readonly displayItems = computed<DgItem[]>(() => {
     const g = this.groupBy();
+    if (g && this.virtual() && typeof ngDevMode !== 'undefined' && ngDevMode) {
+      // Grouping and virtual scrolling cannot both be honoured: the window is
+      // computed over rows, and a group header is not one. The grid drops the
+      // grouping, which it used to do without a word — and a grid that lost
+      // its groups to a height cap is how that was found.
+      strctDevWarn(
+        'dg-group-virtual',
+        '[strct] strct-datagrid: [grouping] is ignored while virtual scrolling is on, ' +
+          'so the rows render ungrouped. Turn one of them off — and note that any ' +
+          '[virtual] object turns virtual scrolling on.',
+      );
+    }
     if (!g || this.virtual()) return this.renderRows().map((row) => ({ row }));
     const map = new Map<unknown, StrctRow[]>();
     for (const row of this.sorted()) {

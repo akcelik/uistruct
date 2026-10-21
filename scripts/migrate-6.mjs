@@ -41,9 +41,10 @@ const MOVES = {
   detailPane: ['pane', 'enabled'],
   paneListWidth: ['pane', 'listWidth'],
   paneTakeoverWidth: ['pane', 'takeoverWidth'],
+  // `maxHeight` is deliberately absent: it caps a grid that is NOT virtual,
+  // and an object in `[virtual]` turns virtual scrolling on.
   viewportHeight: ['virtual', 'viewportHeight'],
   rowHeight: ['virtual', 'rowHeight'],
-  maxHeight: ['virtual', 'maxHeight'],
   groupBy: ['grouping', 'by'],
   groups: ['grouping', 'groups'],
   showEmptyGroups: ['grouping', 'showEmpty'],

@@ -3216,3 +3216,68 @@ describe('StrctDatagrid — the feature objects', () => {
     }
   });
 });
+
+// A height cap is not a virtual setting. It was folded into [virtual] in
+// 5.30.0, and every [virtual] object turns virtual scrolling on — so a
+// grouped grid given a cap silently lost its groups and kept the virtual
+// viewport's height instead.
+describe('StrctDatagrid — a height cap is not virtual scrolling', () => {
+  const rows: StrctRow[] = [
+    { id: '1', name: 'a', type: 'Failover' },
+    { id: '2', name: 'b', type: 'Failover' },
+    { id: '3', name: 'c', type: 'Standard' },
+  ];
+  const cols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Name' },
+    { key: 'type', label: 'Type' },
+  ];
+
+  function make(inputs: Record<string, unknown>) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('rowId', 'id');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      scroll: el.querySelector<HTMLElement>('.strct-dg__scroll')!,
+      groupRows: () => el.querySelectorAll('.strct-dg__grouprow').length,
+    };
+  }
+
+  it('caps the height and keeps the grouping', () => {
+    const { fixture, scroll, groupRows } = make({
+      grouping: { by: 'type' },
+      maxHeight: 220,
+    });
+    expect(groupRows()).toBe(2);
+    expect(scroll.style.maxHeight).toBe('220px');
+    expect(fixture.componentInstance.virtual()).toBe(false);
+  });
+
+  it('does not turn virtual scrolling on, and is not in the virtual object', () => {
+    const { fixture } = make({ maxHeight: 220 });
+    expect(fixture.componentInstance.virtual()).toBe(false);
+    // What [virtual] does carry still turns it on, because those settings
+    // mean nothing otherwise.
+    const virt = make({ virtual: { viewportHeight: 120 } });
+    expect(virt.fixture.componentInstance.virtual()).toBe(true);
+    expect(virt.scroll.style.maxHeight).toBe('120px');
+  });
+
+  it('says so when grouping and virtual scrolling are asked for together', () => {
+    resetStrctDevWarnings();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const { groupRows } = make({ grouping: { by: 'type' }, virtual: true });
+      expect(groupRows()).toBe(0); // the rows render ungrouped, as before
+      const said = warn.mock.calls.map((c) => String(c[0])).join('\n');
+      expect(said).toContain('[grouping] is ignored while virtual scrolling is on');
+    } finally {
+      warn.mockRestore();
+    }
+  });
+});
