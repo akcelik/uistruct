@@ -1,0 +1,789 @@
+<!-- One polite region for everything the grid does to itself: sorting,
+     paging and filtering all change the rows without saying so. -->
+<span class="strct-dg__announcer" role="status" aria-live="polite">{{ announcement() }}</span>
+@if (actionBarDef() || quickFilterable() || actionBarCaptionDef()) {
+  <div class="strct-dg__toolbar">
+    @if (quickFilterable()) {
+      <strct-searchbox
+        class="strct-dg__quickfilter"
+        [class.strct-dg__quickfilter--end]="quickFilterAlign() === 'end'"
+        [placeholder]="L().quickFilter"
+        [ariaLabel]="L().quickFilter"
+        [value]="quickFilter()"
+        (valueChange)="quickFilter.set($event)"
+      />
+      @if (filterNote(); as note) {
+        <span
+          class="strct-dg__filternote"
+          [class.strct-dg__filternote--end]="quickFilterAlign() === 'end'"
+          >{{ note }}</span
+        >
+      }
+    }
+    <span class="strct-dg__actioncaption">
+      <ng-content select="[strctDatagridActionBarCaption]" />
+    </span>
+    <ng-content select="[strctDatagridActionBar]" />
+  </div>
+}
+
+@if (hasEditableColumn()) {
+  <!-- What the editable cells point at with aria-describedby: a keyboard
+       user is told the cell can be edited, and how. -->
+  <!-- In flow, not absolutely positioned: an out-of-flow box whose
+       containing block is the page extends the document's scrollable area
+       from wherever the grid happens to sit. 1x1 and clipped is enough. -->
+  <span
+    class="strct-sr-only"
+    style="
+      display: inline-block;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    "
+    [id]="editHintId"
+    >{{ L().editCellInstructions }}</span
+  >
+}
+
+@if (bulkHint(); as hint) {
+  <!-- Selecting the page is not selecting the set. Say which one happened,
+       and offer the other. -->
+  <div class="strct-dg__bulk" role="status">
+    <span>{{ hint.text }}</span>
+    <button strct-button variant="flat" size="sm" (click)="hint.run()">
+      {{ hint.action }}
+    </button>
+  </div>
+}
+<div
+  class="strct-dg__layout"
+  [class.strct-dg__layout--paned]="paneOpen()"
+  [class.strct-dg__layout--panetakeover]="paneOpen() && narrowPane()"
+  [style.--strct-dg-pane-list-w]="paneListWidth()"
+>
+  <div
+    class="strct-dg__scroll"
+    tabindex="0"
+    role="region"
+    [attr.aria-label]="L().rows"
+    [style.max-height.px]="virtual() ? viewportHeight() : maxHeight()"
+    (scroll)="virtual() && onScroll($event)"
+  >
+    <table
+      class="strct-dg"
+      [attr.role]="childrenKey() ? 'treegrid' : gridMode() ? 'grid' : null"
+      [attr.aria-rowcount]="ariaRowCount()"
+      [attr.aria-labelledby]="caption() ? captionId : null"
+    >
+      @if (caption()) {
+        <caption class="strct-dg__caption" [id]="captionId">
+          {{
+            caption()
+          }}
+        </caption>
+      }
+      <thead>
+        <tr>
+          <!-- A utility column is still a column: axe reports every empty
+               header, and a screen-reader user hears nothing where the
+               detail, expand and select controls are. The name is hidden,
+               not absent. -->
+          @if (canDetail()) {
+            <th
+              class="strct-dg__expandcol"
+              scope="col"
+              [class.strct-dg__cell--sticky]="stickyActive()"
+              [style.insetInlineStart.px]="utilLeft('detail')"
+            >
+              <span class="strct-sr-only">{{ L().detailColumn }}</span>
+            </th>
+          }
+          @if (canExpand()) {
+            <th
+              class="strct-dg__expandcol"
+              scope="col"
+              [class.strct-dg__cell--sticky]="stickyActive()"
+              [style.insetInlineStart.px]="utilLeft('expand')"
+            >
+              <span class="strct-sr-only">{{ L().expandColumn }}</span>
+            </th>
+          }
+          @if (hasSelectionColumn()) {
+            <th
+              class="strct-dg__sel"
+              scope="col"
+              [class.strct-dg__cell--sticky]="stickyActive()"
+              [style.insetInlineStart.px]="utilLeft('sel')"
+            >
+              @if (mode() === 'multiple') {
+                <strct-checkbox
+                  [ariaLabel]="L().selectAll"
+                  [checked]="allPageSelected()"
+                  [indeterminate]="somePageSelected()"
+                  (checkedChange)="toggleAll()"
+                />
+              } @else {
+                <span class="strct-sr-only">{{ L().selectColumn }}</span>
+              }
+            </th>
+          }
+          @for (col of visibleColumns(); track col.key) {
+            <th
+              scope="col"
+              [style.text-align]="col.align ?? (col.numeric ? 'end' : 'start')"
+              [style.width]="colWidth(col.key) ?? col.width ?? null"
+              [class.strct-dg__th--sortable]="col.sortable"
+              [class.strct-dg__th--drop]="col.key === dropKey()"
+              [class.strct-dg__cell--sticky]="isSticky(col)"
+              [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
+              [style.insetInlineStart.px]="stickyLeft(col.key)"
+              [attr.data-col]="col.key"
+              [attr.aria-sort]="col.sortable ? ariaSort(col.key) : null"
+              [attr.draggable]="reorderable() ? true : null"
+              (dragstart)="onColDragStart(col.key, $event)"
+              (dragover)="onColDragOver(col.key, $event)"
+              (drop)="onColDrop(col.key)"
+              (dragend)="onColDragEnd()"
+            >
+              <span class="strct-dg__hd">
+                <!-- A header that sorts is a button: a th with tabindex is
+                     read as "column header, focusable" and never says it
+                     can be activated. aria-sort stays on the th, which is
+                     what carries the column's sorted state. -->
+                @if (col.sortable) {
+                  <!-- The button covers most of the header, so it carries
+                       the drag source too: a reorderable column has to be
+                       grabbable where the pointer actually lands. The
+                       event bubbles to the th's own handlers. -->
+                  <button
+                    type="button"
+                    class="strct-dg__sortbtn"
+                    [attr.draggable]="reorderable() ? true : null"
+                    (click)="sortBy(col.key)"
+                  >
+                    {{ col.label }}
+                    <strct-icon class="strct-dg__sorticon" [name]="sortIcon(col.key)" [size]="13" />
+                  </button>
+                } @else {
+                  {{ col.label }}
+                }
+                @if (col.filterable || col.filterOptions) {
+                  <button
+                    #fbtn
+                    type="button"
+                    class="strct-dg__filterbtn"
+                    [class.strct-dg__filterbtn--active]="hasFilter(col.key)"
+                    [attr.aria-expanded]="filterOpenKey() === col.key"
+                    [attr.aria-label]="L().filterColumn + ': ' + col.label"
+                    (click)="toggleFilterPanel(col.key, $event)"
+                    (keydown.enter)="$event.stopPropagation()"
+                    (keydown.space)="$event.stopPropagation()"
+                  >
+                    <strct-icon name="filter" [size]="12" />
+                  </button>
+                  @if (filterOpenKey() === col.key) {
+                    <div
+                      class="strct-dg__filterpanel"
+                      role="dialog"
+                      [attr.aria-label]="L().filterColumn + ': ' + col.label"
+                      [strctOverlay]="fbtn"
+                      strctOverlayPlacement="bottom-start"
+                      (click)="$event.stopPropagation()"
+                      (keydown.enter)="$event.stopPropagation()"
+                      (keydown.space)="$event.stopPropagation()"
+                    >
+                      @if (col.filterOptions; as opts) {
+                        @for (opt of opts; track $index) {
+                          <label class="strct-dg__filteropt">
+                            <input
+                              type="checkbox"
+                              [checked]="optionChecked(col.key, opt)"
+                              (change)="toggleFilterOption(col.key, opt)"
+                            />
+                            <span>{{ opt }}</span>
+                          </label>
+                        }
+                      } @else {
+                        <input
+                          class="strct-dg__filterinput"
+                          type="text"
+                          [attr.placeholder]="L().filterPlaceholder"
+                          [attr.aria-label]="L().filterColumn + ': ' + col.label"
+                          [value]="textFilter(col.key)"
+                          (input)="setTextFilter(col.key, $any($event.target).value)"
+                        />
+                      }
+                      <button
+                        type="button"
+                        class="strct-dg__filterclear"
+                        [disabled]="!hasFilter(col.key)"
+                        (click)="clearFilter(col.key)"
+                      >
+                        {{ L().clearFilter }}
+                      </button>
+                    </div>
+                  }
+                }
+              </span>
+              @if (resizable() && col.resizable !== false) {
+                <!-- A separator, not a bare div: a column could only be
+                     resized with a mouse, which is the one input a
+                     console cannot assume. -->
+                <div
+                  class="strct-dg__resize"
+                  role="separator"
+                  aria-orientation="vertical"
+                  tabindex="0"
+                  [attr.aria-label]="L().resizeColumn(col.label)"
+                  [attr.aria-valuenow]="separatorValue(col.key)"
+                  [attr.aria-valuemin]="40"
+                  (mousedown)="onResizeStart($event, col.key)"
+                  (keydown)="onResizeKey($event, col.key)"
+                  (dblclick)="resetWidth(col.key)"
+                ></div>
+              }
+            </th>
+          }
+          @if (canActions()) {
+            <th class="strct-dg__actioncol" scope="col" [attr.aria-label]="L().actions"></th>
+          }
+        </tr>
+      </thead>
+      <!--
+        focusin is the real keyboard path (focus does not bubble from cells);
+        the plain focus binding exists to satisfy mouse-events-have-key-events.
+      -->
+      <tbody
+        (mouseover)="revealIfClipped($event)"
+        (focusin)="revealIfClipped($event)"
+        (focus)="revealIfClipped($event)"
+      >
+        @if (loading()) {
+          @for (_ of [1, 2, 3, 4, 5]; track $index) {
+            <tr class="strct-dg__skeleton-row">
+              @if (canDetail()) {
+                <td class="strct-dg__expandcell"></td>
+              }
+              @if (canExpand()) {
+                <td class="strct-dg__expandcell"></td>
+              }
+              @if (hasSelectionColumn()) {
+                <td class="strct-dg__sel"></td>
+              }
+              @for (col of visibleColumns(); track col.key) {
+                <td [style.text-align]="col.align ?? 'start'">
+                  <div class="strct-dg__skeleton-block"></div>
+                </td>
+              }
+              @if (canActions()) {
+                <td class="strct-dg__actioncell"></td>
+              }
+            </tr>
+          }
+        } @else {
+          @if (virtual() && topPad() > 0) {
+            <tr class="strct-dg__vspacer" aria-hidden="true">
+              <td [attr.colspan]="colspan()" [style.height.px]="topPad()"></td>
+            </tr>
+          }
+          @for (it of displayItems(); track itemKey(it)) {
+            @if (it.group; as grp) {
+              <!-- Group header: distinct value + count, collapsible. -->
+              <tr class="strct-dg__grouprow">
+                @if (groupSelect() && mode() === 'multiple') {
+                  <td class="strct-dg__sel">
+                    <strct-checkbox
+                      [ariaLabel]="L().selectAllInGroup(grp.label)"
+                      [checked]="groupAllSelected(grp.key)"
+                      [indeterminate]="groupSomeSelected(grp.key)"
+                      (checkedChange)="toggleGroupSelection(grp.key)"
+                    />
+                  </td>
+                }
+                <td
+                  [attr.colspan]="
+                    groupSelect() && mode() === 'multiple' ? colspan() - 1 : colspan()
+                  "
+                >
+                  <button
+                    type="button"
+                    class="strct-dg__groupbtn"
+                    [attr.aria-expanded]="!grp.collapsed"
+                    (click)="toggleGroup(grp.key)"
+                  >
+                    <span
+                      class="strct-dg__groupchev"
+                      [class.strct-dg__groupchev--open]="!grp.collapsed"
+                    >
+                      <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
+                    </span>
+                    @if (groupHeaderDef(); as tpl) {
+                      <!-- The consumer draws the row; the button, its
+                           aria-expanded and the keyboard stay ours. -->
+                      <ng-container
+                        [ngTemplateOutlet]="tpl.template"
+                        [ngTemplateOutletContext]="{
+                          $implicit: grp,
+                          group: grp,
+                          count: grp.count,
+                        }"
+                      />
+                    } @else {
+                      <span
+                        class="strct-dg__grouplabel strct-dg__grouplabel--{{
+                          grp.status ?? 'none'
+                        }}"
+                        >{{ grp.label }}</span
+                      >
+                      <!-- The three spans run together in the button's
+                           name ("Needs your decision1Blocks the join…");
+                           the separators are read, not seen. -->
+                      <span class="strct-dg__announcer">, </span>
+                      <span
+                        class="strct-dg__groupcount strct-dg__groupcount--{{
+                          grp.status ?? 'none'
+                        }}"
+                        >{{ grp.count }}</span
+                      >
+                      <!-- Seen: the chip's number. Heard: the number with
+                           the grid's noun, because "Inconclusive, 3" does
+                           not say three of what. -->
+                      <span class="strct-dg__announcer"> {{ countNoun(grp.count) }}</span>
+                      @if (grp.note) {
+                        <span class="strct-dg__announcer">. </span>
+                        <span class="strct-dg__groupnote">{{ grp.note }}</span>
+                      }
+                    }
+                  </button>
+                </td>
+              </tr>
+            } @else {
+              @let row = it.row!;
+              <tr
+                [attr.aria-rowindex]="ariaRowIndex(row)"
+                [class.strct-dg__row--selected]="isSelected(row)"
+                [class.strct-dg__row--locked]="lockedReason(row) !== null"
+                [attr.aria-selected]="mode() === 'none' ? null : isSelected(row)"
+                [attr.aria-disabled]="lockedReason(row) !== null ? 'true' : null"
+                [attr.title]="lockedReason(row) || null"
+                (click)="onRowPick(row)"
+                [class.strct-dg__row--active]="paneOpen() && row === activeRow()"
+                [attr.aria-level]="childrenKey() ? treeDepth(row) + 1 : null"
+                [attr.aria-expanded]="
+                  childrenKey() && treeHasChildren(row) ? treeExpanded(row) : null
+                "
+                [attr.tabindex]="
+                  childrenKey()
+                    ? treeRowTabindex(row)
+                    : gridMode()
+                      ? gridRowTabindex(row)
+                      : canDetail()
+                        ? paneRowTabindex(row)
+                        : null
+                "
+                (keydown)="
+                  childrenKey()
+                    ? onTreeRowKeydown(row, $event)
+                    : gridMode()
+                      ? onGridRowKeydown(row, $event)
+                      : onPaneRowKeydown(row, $event)
+                "
+                (dblclick)="onRowActivate(row)"
+              >
+                @if (canDetail()) {
+                  <td
+                    class="strct-dg__expandcell"
+                    [class.strct-dg__cell--sticky]="stickyActive()"
+                    [style.insetInlineStart.px]="utilLeft('detail')"
+                  >
+                    <button
+                      type="button"
+                      [attr.tabindex]="ctlTabindex()"
+                      class="strct-dg__detailbtn"
+                      [class.strct-dg__detailbtn--active]="row === activeRow()"
+                      [attr.aria-expanded]="row === activeRow()"
+                      [attr.aria-label]="L().openDetail"
+                      (click)="openDetail(row)"
+                    >
+                      <strct-icon name="chevronDoubleRight" [size]="13" [strokeWidth]="1.6" />
+                    </button>
+                  </td>
+                }
+                @if (canExpand()) {
+                  <td
+                    class="strct-dg__expandcell"
+                    [class.strct-dg__cell--sticky]="stickyActive()"
+                    [style.insetInlineStart.px]="utilLeft('expand')"
+                  >
+                    <button
+                      type="button"
+                      [attr.tabindex]="ctlTabindex()"
+                      class="strct-dg__expandbtn"
+                      [class.strct-dg__expandbtn--open]="isExpanded(row)"
+                      [attr.aria-expanded]="isExpanded(row)"
+                      [attr.aria-label]="L().toggleDetail"
+                      (click)="toggleExpand(row)"
+                    >
+                      <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
+                    </button>
+                  </td>
+                }
+                @if (hasSelectionColumn()) {
+                  <td
+                    class="strct-dg__sel"
+                    [class.strct-dg__cell--sticky]="stickyActive()"
+                    [style.insetInlineStart.px]="utilLeft('sel')"
+                  >
+                    @if (mode() === 'single') {
+                      <!-- A native radio group: one name per grid, so the
+                           arrow keys move between rows and Space picks,
+                           without the grid inventing its own keyboarding. -->
+                      <input
+                        type="radio"
+                        class="strct-dg__radio"
+                        [name]="radioName"
+                        [attr.aria-label]="selectRowLabel(row)"
+                        [attr.aria-description]="lockedReason(row) || null"
+                        [checked]="isSelected(row)"
+                        [disabled]="lockedReason(row) !== null"
+                        [attr.tabindex]="ctlTabindex()"
+                        (change)="selectSingle(row)"
+                        (click)="$event.stopPropagation()"
+                      />
+                    } @else {
+                      <!-- click fires (and bubbles) before the input's change,
+                           so the modifier is recorded by the time toggleRow runs. -->
+                      <strct-checkbox
+                        [ariaLabel]="selectRowLabel(row)"
+                        [attr.aria-description]="lockedReason(row) || null"
+                        [checked]="isSelected(row)"
+                        [disabled]="lockedReason(row) !== null"
+                        [tabIndex]="ctlTabindex()"
+                        (click)="noteRangeIntent($event); $event.stopPropagation()"
+                        (checkedChange)="toggleRow(row)"
+                      />
+                    }
+                  </td>
+                }
+                @for (col of visibleColumns(); track col.key; let colIdx = $index) {
+                  <td
+                    [style.text-align]="col.align ?? (col.numeric ? 'end' : 'start')"
+                    [class.strct-dg__cell--mono]="col.mono"
+                    [class.strct-dg__cell--muted]="col.muted"
+                    [class.strct-dg__cell--numeric]="col.numeric"
+                    [class.strct-dg__cell--sticky]="isSticky(col)"
+                    [class.strct-dg__cell--sticky-last]="col.key === lastStickyKey()"
+                    [class.strct-dg__cell--editable]="col.editable"
+                    [style.insetInlineStart.px]="stickyLeft(col.key)"
+                    [attr.data-edit]="col.editable ? '' : null"
+                    [attr.tabindex]="col.editable ? editCellTabindex(row, col) : null"
+                    [attr.aria-describedby]="col.editable ? editHintId : null"
+                    (dblclick)="col.editable && startEdit(row, col)"
+                    (focus)="col.editable && onEditCellFocus(row, col)"
+                    (keydown)="col.editable && onEditCellKeydown(row, col, $event)"
+                  >
+                    @if (childrenKey() && colIdx === 0) {
+                      <span
+                        class="strct-dg__treepad"
+                        [style.width.px]="treeDepth(row) * 18"
+                        aria-hidden="true"
+                      ></span>
+                      @if (treeHasChildren(row)) {
+                        <button
+                          type="button"
+                          class="strct-dg__treebtn"
+                          [class.strct-dg__treebtn--open]="treeExpanded(row)"
+                          [attr.aria-expanded]="treeExpanded(row)"
+                          [attr.aria-label]="L().toggleChildren"
+                          (click)="toggleTreeRow(row)"
+                        >
+                          <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
+                        </button>
+                      } @else {
+                        <span
+                          class="strct-dg__treebtn strct-dg__treebtn--leaf"
+                          aria-hidden="true"
+                        ></span>
+                      }
+                    }
+                    @if (isEditingCell(row, col)) {
+                      @switch (col.editor ?? 'text') {
+                        @case ('select') {
+                          <!-- Choosing is the commit: there is nothing to
+                               confirm with Enter once an option is picked. -->
+                          <strct-select
+                            class="strct-dg__editselect"
+                            [options]="editorOptionsFor(row, col)"
+                            [listLabel]="L().editCell + ': ' + col.label"
+                            [ngModel]="row[col.key]"
+                            (ngModelChange)="commitValue(row, col, $event)"
+                            (keydown.escape)="cancelEdit($event)"
+                            (click)="$event.stopPropagation()"
+                          />
+                        }
+                        @case ('number') {
+                          <strct-number
+                            class="strct-dg__editnumber"
+                            [ariaLabel]="L().editCell + ': ' + col.label"
+                            [min]="col.editorMin ?? null"
+                            [max]="col.editorMax ?? null"
+                            [step]="col.editorStep ?? 1"
+                            [ngModel]="row[col.key]"
+                            (ngModelChange)="editDraft.set($event)"
+                            (keydown.enter)="commitDraft(row, col, $event)"
+                            (keydown.escape)="cancelEdit($event)"
+                            (focusout)="commitOnLeave(row, col, $event)"
+                            (click)="$event.stopPropagation()"
+                          />
+                        }
+                        @default {
+                          <input
+                            class="strct-dg__editinput"
+                            type="text"
+                            [value]="row[col.key] ?? ''"
+                            [attr.aria-label]="L().editCell + ': ' + col.label"
+                            (keydown.enter)="commitEdit(row, col, $event)"
+                            (keydown.escape)="cancelEdit($event)"
+                            (blur)="commitEdit(row, col, $event)"
+                            (click)="$event.stopPropagation()"
+                          />
+                        }
+                      }
+                    } @else if (cellTemplate(col.key); as tpl) {
+                      <ng-container
+                        [ngTemplateOutlet]="tpl"
+                        [ngTemplateOutletContext]="{
+                          $implicit: row,
+                          row,
+                          value: row[col.key],
+                          column: col,
+                        }"
+                      />
+                    } @else if (isBlank(row, col)) {
+                      <span class="strct-dg__empty" [attr.aria-label]="col.emptyLabel || null">{{
+                        col.emptyText
+                      }}</span>
+                    } @else {
+                      {{ displayValue(row, col) }}
+                      @if (col.descriptionKey && row[col.descriptionKey]) {
+                        <span class="strct-dg__celldesc">{{ row[col.descriptionKey] }}</span>
+                      }
+                    }
+                    <!-- The affordance a mouse never needed: a cell that
+                         can be edited says so on hover and on focus. -->
+                    @if (col.editable && editHint() && !isEditingCell(row, col)) {
+                      <strct-icon
+                        class="strct-dg__editpencil"
+                        name="pencil"
+                        [size]="12"
+                        [strokeWidth]="1.6"
+                        aria-hidden="true"
+                      />
+                    }
+                  </td>
+                }
+                @if (canActions()) {
+                  <td class="strct-dg__actioncell">
+                    <button
+                      type="button"
+                      [attr.tabindex]="ctlTabindex()"
+                      class="strct-dg__kebab"
+                      [attr.aria-label]="L().rowActions"
+                      (click)="openRowMenu(row, $event)"
+                    >
+                      <strct-icon name="dots" [size]="16" />
+                    </button>
+                  </td>
+                }
+              </tr>
+              @if (canExpand() && isExpanded(row)) {
+                <tr class="strct-dg__detailrow">
+                  <td [attr.colspan]="colspan()">
+                    <div class="strct-dg__detail">
+                      <ng-container
+                        [ngTemplateOutlet]="detailDef()!.template"
+                        [ngTemplateOutletContext]="{ $implicit: row, row }"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          } @empty {
+            <!-- "Nothing here" and "nothing matches what you typed" are
+                 different states: the second one can be undone, and
+                 saying so is the whole point. -->
+            <tr>
+              <td class="strct-dg__emptyrow" [attr.colspan]="colspan()">
+                @if (filteredAway()) {
+                  <strct-empty-state
+                    size="sm"
+                    [titleLevel]="null"
+                    [title]="L().noMatches"
+                    [description]="noMatchesDescription()"
+                  >
+                    <button strct-button variant="flat" size="sm" (click)="clearAllFilters()">
+                      {{ L().clearFilters }}
+                    </button>
+                  </strct-empty-state>
+                } @else {
+                  <!-- Not a heading: a grid is a region of a page, and an
+                       empty one used to put an <h3> in its outline. -->
+                  <strct-empty-state size="sm" [titleLevel]="null" [title]="emptyText()" />
+                }
+              </td>
+            </tr>
+          }
+          @if (virtual() && bottomPad() > 0) {
+            <tr class="strct-dg__vspacer" aria-hidden="true">
+              <td [attr.colspan]="colspan()" [style.height.px]="bottomPad()"></td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (paneOpen()) {
+    <aside class="strct-dg__pane">
+      <div class="strct-dg__pane-head">
+        @if (narrowPane()) {
+          <!-- The pane has taken the list's place, so there is a way back. -->
+          <button
+            type="button"
+            class="strct-dg__pane-back"
+            [attr.aria-label]="L().backToList"
+            (click)="closePane()"
+          >
+            <strct-icon name="chevronLeft" [size]="13" />
+          </button>
+        }
+        <span class="strct-dg__pane-title">
+          <ng-content select="[strctDetailPaneTitle]" />
+          @if (!paneTitleDef()) {
+            {{ activeRow()![columns()[0].key] }}
+          }
+        </span>
+        <span class="strct-dg__pane-meta">
+          <ng-content select="[strctDetailPaneMeta]" />
+        </span>
+        <span class="strct-dg__pane-actions">
+          <ng-content select="[strctDetailPaneActions]" />
+        </span>
+        <button
+          type="button"
+          class="strct-dg__pane-close"
+          [attr.aria-label]="L().closeDetail"
+          (click)="closePane()"
+        >
+          <strct-icon name="close" [size]="13" />
+        </button>
+      </div>
+      <div class="strct-dg__pane-body">
+        <ng-container
+          [ngTemplateOutlet]="detailDef()!.template"
+          [ngTemplateOutletContext]="{ $implicit: activeRow(), row: activeRow() }"
+        />
+      </div>
+    </aside>
+  }
+</div>
+
+@if (showFooter()) {
+  <div class="strct-dg__foot">
+    <div class="strct-dg__foot-left">
+      @if (columnChooser() || sync()) {
+        <div class="strct-dg__actions">
+          <strct-button-group>
+            @if (columnChooser()) {
+              <button
+                strct-button
+                size="sm"
+                [class.is-open]="chooserOpen()"
+                [disabled]="footerActionsDisabled()"
+                [attr.aria-label]="L().chooseColumns"
+                (click)="toggleChooser($event)"
+              >
+                <strct-icon name="settings" [size]="16" />
+              </button>
+            }
+            @if (sync()) {
+              <button
+                strct-button
+                size="sm"
+                [disabled]="footerActionsDisabled()"
+                [attr.aria-label]="L().refresh"
+                (click)="syncChange.emit()"
+              >
+                <strct-icon name="refresh" [size]="16" />
+              </button>
+            }
+          </strct-button-group>
+          @if (columnChooser() && chooserOpen()) {
+            <div class="strct-dg__chooser-menu">
+              @for (col of columns(); track col.key) {
+                <!-- The whole row toggles; the checkbox's own click must not
+                     reach the row or the column would flip twice. -->
+                <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+                <div
+                  class="strct-dg__chooser-item"
+                  (click)="toggleColumn(col.key, hiddenColumns().has(col.key))"
+                >
+                  <strct-checkbox
+                    [checked]="!hiddenColumns().has(col.key)"
+                    (checkedChange)="toggleColumn(col.key, $event)"
+                    (click)="$event.stopPropagation()"
+                  />
+                  <span>{{ col.label }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+      <span class="strct-dg__count">
+        @if (paging() === 'more') {
+          {{ L().showing(rows().length, moreTotal() ?? undefined) }}
+        } @else {
+          {{ totalCount() }} {{ totalCount() === 1 ? L().row : L().rows }}
+        }
+        @if (selectedCount() && mode() !== 'single') {
+          <span class="strct-dg__count-sep">|</span>
+          <span class="strct-dg__count-sel">{{ selectedCount() }} {{ L().selected }}</span>
+        }
+      </span>
+    </div>
+    <div class="strct-dg__foot-right">
+      <!-- A feed that pages by cursor loads more at the end: page numbers
+           are something a cursor API cannot answer. It takes the pager's
+           place — the column chooser, the sync button and the count are
+           the footer's, not the pager's. -->
+      @if (paging() === 'more') {
+        @if (hasMore()) {
+          <button
+            strct-button
+            size="sm"
+            class="strct-dg__more"
+            [disabled]="loadingMore()"
+            (click)="loadMore.emit()"
+          >
+            @if (loadingMore()) {
+              <strct-spinner size="sm" />
+            }
+            {{ L().loadMore }}
+          </button>
+        }
+      } @else if (pageSize() > 0 && !groupBy()) {
+        <strct-pagination
+          [total]="totalCount()"
+          [pageSize]="pageSize()"
+          [page]="page()"
+          (pageChange)="goToPage($event)"
+        />
+      }
+    </div>
+  </div>
+}

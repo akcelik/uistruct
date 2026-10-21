@@ -1,0 +1,1055 @@
+.strct-dg__radio {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--acc);
+  cursor: pointer;
+}
+.strct-dg__radio:disabled {
+  cursor: not-allowed;
+}
+/* A locked row keeps its colours — it is still worth reading — and only
+   its control shows that it cannot be picked. */
+.strct-dg__row--locked .strct-dg__sel {
+  opacity: 0.55;
+}
+
+.strct-dg__actioncaption:empty {
+  display: none;
+}
+.strct-dg__actioncaption {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  color: var(--t2);
+}
+
+/* Enclosed chrome: the action bar, grid and footer share one frame so the
+ * whole component reads as a single object on the page. */
+/* Out of flow on purpose: .strct-sr-only is an in-flow inline-block, and
+   a 1px inline-block still opens a line box — it pushed the whole grid
+   down 21px, which the visual gate caught. Auto offsets keep it at its
+   static position, so it cannot extend anything either. */
+.strct-dg__bulk {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--b2);
+  background: var(--acc-s);
+  color: var(--t2);
+  font-size: var(--text-md);
+}
+.strct-dg__announcer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.strct-dg-host {
+  display: block;
+  border: 1px solid var(--b2);
+  border-radius: var(--radius-lg);
+  background: var(--bg-2);
+  box-shadow: var(--shadow-rest);
+}
+/* Inside a panel that already has a border, the grid has none of its
+   own — instead of the consumer reaching into .strct-dg-host to strip
+   them. */
+.strct-dg-host--flush {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.strct-dg__more strct-spinner {
+  margin-inline-end: 4px;
+}
+.strct-dg__caption {
+  caption-side: top;
+  text-align: start;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--t2);
+}
+/* Scoped through the table, because .strct-dg td already declares a
+   colour — a bare class would lose to it. */
+.strct-dg td.strct-dg__cell--mono {
+  font-family: var(--mono);
+  font-size: var(--text-sm);
+}
+/* --t3 is the faint token: measured over a grid cell it is 4.27-4.45:1
+   in the three dark schemes, under AA. Text that has to be read takes
+   --t2 (5.11-6.20:1 on the same cell); --t3 stays for glyphs and rails,
+   where 3:1 is the bar. */
+.strct-dg td.strct-dg__cell--muted {
+  color: var(--t2);
+}
+.strct-dg td.strct-dg__cell--numeric {
+  font-variant-numeric: tabular-nums;
+}
+.strct-dg__empty {
+  color: var(--t2);
+}
+/* A name with a muted hint under it, in the row height singleLine + 1
+   line gives. */
+.strct-dg__celldesc {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--t2);
+  line-height: 1.3;
+}
+.strct-dg__scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+/* Virtual mode — and maxHeight on any grid, grouped or not: a
+   fixed-height y-scroll viewport with a sticky header. */
+.strct-dg-host--virtual .strct-dg__scroll,
+.strct-dg-host--bounded .strct-dg__scroll {
+  overflow-y: auto;
+}
+.strct-dg-host--virtual .strct-dg thead th,
+.strct-dg-host--bounded .strct-dg thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-raised);
+}
+.strct-dg__vspacer td {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+/* Column drag-reorder affordances. */
+.strct-dg th[draggable] {
+  cursor: grab;
+}
+.strct-dg__th--drop {
+  box-shadow: inset 3px 0 0 var(--acc);
+}
+/* Row-group header rows. */
+.strct-dg__grouprow td {
+  background: var(--bg-2) !important;
+  padding: 0;
+}
+.strct-dg__groupbtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 13px;
+  border: 0;
+  background: transparent;
+  color: var(--t1);
+  font-family: var(--font);
+  /* 12.5px was on no rung of the scale (12/13/14/16/22). */
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  text-align: start;
+}
+.strct-dg__groupbtn:hover {
+  background: var(--bg-3);
+}
+.strct-dg__groupbtn:focus-visible {
+  outline: 2px solid var(--acc50);
+  outline-offset: -2px;
+}
+.strct-dg__groupchev {
+  display: inline-flex;
+  color: var(--t3);
+  transition: transform 0.15s ease;
+}
+.strct-dg__groupchev--open {
+  transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .strct-dg__groupchev {
+    transition: none;
+  }
+}
+/* A group's tone, drawn: the template has always written these class
+   names and the stylesheet had a rule for none of them, so four groups
+   of different severity looked identical. The label takes the status
+   colour, the count its wash — the badge's language. */
+.strct-dg__grouplabel--critical {
+  color: var(--critical);
+}
+.strct-dg__grouplabel--warning {
+  color: var(--warning);
+}
+.strct-dg__grouplabel--success {
+  color: var(--success);
+}
+.strct-dg__grouplabel--accent {
+  color: var(--acc);
+}
+.strct-dg__grouplabel--neutral,
+.strct-dg__grouplabel--none {
+  color: var(--t1);
+}
+/* The note is a second voice, not a continuation of the heading: it was
+   drawn in the button's own 600 weight and primary colour, so the two
+   read as one bold line. */
+.strct-dg__groupnote {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  font-weight: 400;
+  color: var(--t2);
+}
+.strct-dg__groupcount {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border-radius: 4px;
+  background: var(--acc-m);
+  color: var(--acc);
+  font-variant-numeric: tabular-nums;
+}
+.strct-dg__groupcount--critical {
+  background: var(--critical-bg);
+  color: var(--critical);
+}
+.strct-dg__groupcount--warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+.strct-dg__groupcount--success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+.strct-dg__groupcount--neutral,
+.strct-dg__groupcount--none {
+  background: var(--bg-3);
+  color: var(--t2);
+}
+/* Sticky cells require border-collapse: separate (collapse breaks
+   position: sticky on table cells in Chromium); per-cell bottom borders
+   keep the visuals identical. width: max-content lets declared column
+   widths win so frozen offsets stay exact. */
+/* BUG-54-01 — a collapsed table paints a clipped cell's background
+   inside its padding box only, so --b1 composites over the table's
+   --bg-2 under each row line: invisible in dark, 1.7x heavy in light.
+   singleLine clips every cell, so it needs separate borders too — but
+   it keeps the table's own overflow clip, which is what rounds the
+   frame's corners (BUG-57-02); only the scrolling hosts below give
+   that up. A host that is both takes the rule that follows. */
+.strct-dg-host--singleline .strct-dg {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.strct-dg-host--sticky .strct-dg,
+.strct-dg-host--virtual .strct-dg,
+.strct-dg-host--bounded .strct-dg {
+  border-collapse: separate;
+  border-spacing: 0;
+  /* overflow: hidden on the table (corner rounding) would become the
+     sticky containing block and defeat position: sticky entirely. */
+  overflow: visible;
+  border-radius: 0;
+}
+.strct-dg-host--sticky .strct-dg {
+  width: max-content;
+  min-width: 100%;
+}
+/* Frozen columns: pinned against horizontal scroll, opaque over content. */
+.strct-dg .strct-dg__cell--sticky {
+  position: sticky;
+  z-index: calc(var(--z-base) + 2);
+}
+/* th.….--sticky (0-2-2) must beat the virtual-mode "thead th" rule of the
+   same specificity by source order, so corner cells paint above both the
+   scrolled header cells and the frozen body cells. */
+.strct-dg thead th.strct-dg__cell--sticky {
+  z-index: calc(var(--z-raised) + 1);
+}
+.strct-dg .strct-dg__cell--sticky-last::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-end: -1px;
+  width: 7px;
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.14), transparent);
+}
+[dir='rtl'] .strct-dg .strct-dg__cell--sticky-last::after {
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.14), transparent);
+}
+/* Fixed utility-column widths so frozen offsets stay exact. */
+.strct-dg-host--sticky .strct-dg__expandcol,
+.strct-dg-host--sticky .strct-dg__expandcell {
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  box-sizing: border-box;
+}
+.strct-dg-host--sticky .strct-dg__sel {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  box-sizing: border-box;
+}
+/* Sticky header cells need an opaque ground (thead th already has bg-2;
+   utility body cells inherit the row background rules below). */
+.strct-dg-host--sticky tbody .strct-dg__cell--sticky {
+  background: var(--bg-1);
+}
+[data-theme='dark'] .strct-dg-host--sticky tbody .strct-dg__cell--sticky {
+  background: var(--bg-3);
+}
+/* Hover / selected tints can be translucent — composite them over the
+   opaque base so scrolled content never shows through a frozen cell. */
+.strct-dg-host--sticky tbody tr:hover .strct-dg__cell--sticky {
+  background: linear-gradient(var(--acc-s), var(--acc-s)) var(--bg-1);
+}
+[data-theme='dark'] .strct-dg-host--sticky tbody tr:hover .strct-dg__cell--sticky {
+  background: linear-gradient(var(--acc-s), var(--acc-s)) var(--bg-3);
+}
+.strct-dg-host--sticky tbody .strct-dg__row--selected .strct-dg__cell--sticky {
+  background: linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-1);
+}
+[data-theme='dark'] .strct-dg-host--sticky tbody .strct-dg__row--selected .strct-dg__cell--sticky {
+  background: linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-3);
+}
+.strct-dg {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  overflow: hidden;
+  background: var(--bg-2);
+}
+/* The table rounds only the frame corners it actually touches (no
+ * toolbar above / no footer below); interior edges stay square. */
+.strct-dg-host:not(:has(.strct-dg__toolbar)) .strct-dg {
+  border-start-start-radius: 4px;
+  border-start-end-radius: 4px;
+}
+.strct-dg-host:not(:has(.strct-dg__foot)) .strct-dg {
+  border-end-start-radius: 4px;
+  border-end-end-radius: 4px;
+}
+.strct-dg th,
+.strct-dg td {
+  padding: 9px 13px;
+  text-align: start;
+  border-bottom: 1px solid var(--b1);
+}
+.strct-dg tbody td {
+  background: var(--bg-1);
+}
+/* In dark mode, body cells should read slightly lighter than the header
+ * so the grid feels like a raised surface rather than a recessed pit. */
+[data-theme='dark'] .strct-dg tbody td {
+  background: var(--bg-3);
+}
+.strct-dg-host--compact .strct-dg th,
+.strct-dg-host--compact .strct-dg td {
+  padding: 5px 11px;
+}
+/* Single-line rows: cells never wrap; long values truncate with an
+ * ellipsis (capped per cell) so row height stays uniform. */
+.strct-dg-host--singleline .strct-dg tbody tr:not(.strct-dg__detailrow) > td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 360px;
+}
+.strct-dg th {
+  position: relative;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--t2);
+  background: var(--bg-2);
+  white-space: nowrap;
+  user-select: none;
+}
+.strct-dg__th--sortable {
+  cursor: pointer;
+}
+.strct-dg__th--sortable:hover {
+  color: var(--t1);
+}
+.strct-dg__sortbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  /* The font shorthand carries neither of these, and a browser resets
+     both inside a button: a header row with one plain column drew
+     "Name  Kind  Size  USED BY". */
+  text-transform: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.strct-dg__sortbtn:focus-visible {
+  outline: 2px solid var(--acc50);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.strct-dg__th--sortable:focus-visible {
+  outline: 2px solid var(--acc50);
+  outline-offset: -2px;
+}
+.strct-dg__hd {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.strct-dg__sorticon {
+  color: var(--t3);
+}
+.strct-dg__th--sortable:hover .strct-dg__sorticon {
+  color: var(--acc);
+}
+.strct-dg__resize {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  z-index: calc(var(--z-base) + 1);
+}
+.strct-dg__resize:hover {
+  background: var(--acc);
+}
+.strct-dg td {
+  color: var(--t1);
+}
+.strct-dg tbody tr:last-child td {
+  border-bottom: 0;
+}
+/* BUG-57-01 — these tints are translucent, so setting them as the
+   background *replaces* the cell's own opaque surface and what shows
+   through is the table's --bg-2: in dark a selected row differed from
+   its neighbours by +0.9 luminance, and hovering a dark row darkened
+   it. Composite over the surface instead, as the sticky rules do. */
+.strct-dg tbody tr:not(.strct-dg__detailrow):hover td {
+  background: linear-gradient(var(--acc-s), var(--acc-s)) var(--bg-1);
+}
+[data-theme='dark'] .strct-dg tbody tr:not(.strct-dg__detailrow):hover td {
+  background: linear-gradient(var(--acc-s), var(--acc-s)) var(--bg-3);
+}
+/* BUG-54-02 — the themed body-cell rules (0,1,2 and 0,2,2) out-specified
+   this fill (0,1,1), so a selected row looked unselected. */
+.strct-dg tbody .strct-dg__row--selected td {
+  background: linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-1);
+}
+[data-theme='dark'] .strct-dg tbody .strct-dg__row--selected td {
+  background: linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-3);
+}
+/* Hovering a selected row must not read as less selected than resting.
+   The hover rules carry a tr element selector, so these have to as
+   well to reach the same specificity and win on source order. */
+.strct-dg tbody tr.strct-dg__row--selected:hover td {
+  background:
+    linear-gradient(var(--acc-s), var(--acc-s)),
+    linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-1);
+}
+[data-theme='dark'] .strct-dg tbody tr.strct-dg__row--selected:hover td {
+  background:
+    linear-gradient(var(--acc-s), var(--acc-s)),
+    linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-3);
+}
+.strct-dg__sel {
+  width: 1%;
+  white-space: nowrap;
+}
+.strct-dg__sel .strct-cb,
+.strct-dg__sel .strct-dg__radio,
+.strct-dg__expandbtn {
+  position: relative;
+}
+/* The pad fills the cell it sits in (the negative inset is the cell's
+   own padding), so the target is the whole cell — well past 24x24 —
+   and the row's height is untouched. */
+.strct-dg__sel .strct-cb::after,
+.strct-dg__sel .strct-dg__radio::after,
+.strct-dg__expandbtn::after {
+  content: '';
+  position: absolute;
+  inset: -11px -13px;
+  min-width: 24px;
+  min-height: 24px;
+}
+.strct-dg-host--compact .strct-dg__sel .strct-cb::after,
+.strct-dg-host--compact .strct-dg__sel .strct-dg__radio::after,
+.strct-dg-host--compact .strct-dg__expandbtn::after {
+  inset: -7px -11px;
+}
+.strct-dg__sel input {
+  accent-color: var(--acc);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.strct-dg__expandcol,
+.strct-dg__expandcell {
+  width: 1%;
+  white-space: nowrap;
+}
+.strct-dg__actioncol,
+.strct-dg__actioncell {
+  width: 1%;
+  white-space: nowrap;
+  text-align: end;
+}
+.strct-dg__kebab {
+  display: inline-flex;
+  padding: 4px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  transition:
+    color 0.14s ease,
+    background 0.14s ease;
+}
+.strct-dg__kebab:hover {
+  color: var(--t1);
+  background: var(--bg-3);
+}
+/* WCAG 2.2 (2.5.8) asks 24x24 of a target; the chevron was 18x18 and
+   the row tick 25x17. The target grows, the layout does not: a
+   min-height on these made every row 3.5px taller, which is a density
+   change nobody asked for. An absolutely placed pad inside the control
+   takes the pointer without taking any space. */
+.strct-dg__expandbtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    color 0.15s ease;
+}
+.strct-dg__expandbtn:hover {
+  color: var(--t1);
+  background: var(--bg-3);
+}
+.strct-dg__expandbtn--open {
+  transform: rotate(90deg);
+  color: var(--acc);
+}
+.strct-dg__detailbtn {
+  display: inline-flex;
+  padding: 3px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  transition:
+    color 0.14s ease,
+    background 0.14s ease;
+}
+.strct-dg__detailbtn:hover {
+  color: var(--acc);
+  background: var(--bg-3);
+}
+.strct-dg__detailbtn--active {
+  color: var(--acc);
+  background: var(--acc-m);
+}
+.strct-dg__detailrow td {
+  background: var(--bg-2);
+  padding: 0;
+}
+.strct-dg__detail {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--t2);
+}
+
+/* Detail pane: grid collapses to one column, content opens beside it. */
+.strct-dg__layout {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+}
+.strct-dg__layout--paned {
+  gap: 0;
+}
+/* The width belongs to the scroller alone. Giving it to the table too
+   made a percentage compound — paneListWidth="40%" drew a list at 40%
+   of the layout and a table at 40% of THAT. And both were descendant
+   selectors, so a datagrid drawn inside the pane was squeezed by the
+   outer grid's rules; the child combinators keep them to this list. */
+.strct-dg__layout--paned > .strct-dg__scroll {
+  flex: 0 0 auto;
+  width: var(--strct-dg-pane-list-w, 260px);
+  min-width: var(--strct-dg-pane-list-w, 260px);
+  max-width: var(--strct-dg-pane-list-w, 260px);
+}
+.strct-dg__layout--paned > .strct-dg__scroll > .strct-dg {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  flex-shrink: 0;
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+/* Narrow: the pane takes the list's place rather than squeezing both. */
+.strct-dg__layout--panetakeover > .strct-dg__scroll {
+  display: none;
+}
+.strct-dg__layout--panetakeover > .strct-dg__pane {
+  flex: 1;
+  min-width: 0;
+}
+.strct-dg__pane-meta,
+.strct-dg__pane-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.strct-dg__pane-meta:empty,
+.strct-dg__pane-actions:empty {
+  display: none;
+}
+.strct-dg__pane-actions {
+  margin-inline-start: auto;
+}
+.strct-dg__pane-back {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  background: none;
+  color: var(--t2);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+}
+.strct-dg__row--clickable {
+  cursor: pointer;
+}
+.strct-dg tbody .strct-dg__row--active td {
+  background: linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-1);
+}
+[data-theme='dark'] .strct-dg tbody .strct-dg__row--active td {
+  background: linear-gradient(var(--acc-m), var(--acc-m)) var(--bg-3);
+}
+/* Caret on the active row that points toward the open detail pane. */
+.strct-dg__layout--paned .strct-dg__row--active td:last-child {
+  position: relative;
+  padding-inline-end: 26px;
+}
+.strct-dg__layout--paned .strct-dg__row--active td:last-child::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: 11px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-top: 1.6px solid var(--acc);
+  border-inline-end: 1.6px solid var(--acc);
+  transform: translateY(-50%) rotate(45deg);
+}
+.strct-dg__pane {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  background: var(--bg-1);
+  border: 1px solid var(--b2);
+  border-inline-start: 2px solid var(--acc);
+  border-radius: 4px;
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  overflow: hidden;
+  animation: strct-dg-pane-in 0.14s ease;
+}
+.strct-dg__pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--b1);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t1);
+}
+.strct-dg__pane-close {
+  display: inline-flex;
+  padding: 3px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+}
+.strct-dg__pane-close:hover {
+  color: var(--t1);
+  background: var(--bg-3);
+}
+.strct-dg__pane-body {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--t2);
+}
+@keyframes strct-dg-pane-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+}
+
+@keyframes strct-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+.strct-dg__skeleton-block {
+  height: 12px;
+  border-radius: var(--radius-sm);
+  /* A moving sweep, not an opacity pulse — --bg-3 sits one step from the
+     cell background on dark themes, so pulsing bars read as EMPTY rows.
+     --skeleton-hi lets a theme tune the highlight without overrides. */
+  background: linear-gradient(
+    90deg,
+    var(--bg-3) 25%,
+    var(--skeleton-hi, var(--acc18)) 50%,
+    var(--bg-3) 75%
+  );
+  background-size: 200% 100%;
+  animation: strct-dg-skeleton-sweep 1.1s linear infinite;
+}
+@keyframes strct-dg-skeleton-sweep {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .strct-dg__skeleton-block {
+    animation: none;
+    background: var(--skeleton-hi, var(--acc18));
+  }
+}
+.strct-dg__skeleton-row td {
+  border-bottom: 1px solid var(--b1);
+}
+.strct-dg__empty {
+  text-align: center;
+  color: var(--t2);
+  padding: 22px;
+}
+.strct-dg__quickfilter {
+  min-width: 180px;
+  max-width: 260px;
+}
+/* align end: action verbs lead, the view control sits at the far right. */
+.strct-dg__quickfilter--end {
+  order: 2;
+  margin-inline-start: auto;
+}
+.strct-dg__filternote--end {
+  order: 3;
+}
+.strct-dg__filternote {
+  font-size: var(--text-sm);
+  color: var(--t2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* Persistent action bar (toolbar) above the grid — always visible. */
+.strct-dg__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--b2);
+}
+
+.strct-dg__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 14px;
+  border-top: 1px solid var(--b2);
+  flex-wrap: wrap;
+}
+.strct-dg__foot-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.strct-dg__foot-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.strct-dg__actions {
+  position: relative;
+}
+.strct-dg__chooser-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  inset-inline-start: 0;
+  z-index: var(--z-sticky);
+  min-width: 180px;
+  background: var(--bg-1);
+  border: 1px solid var(--b2);
+  border-radius: 4px;
+  box-shadow: var(--shadow-pop);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.strct-dg__chooser-menu--right {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+}
+.strct-dg__chooser-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--t1);
+  transition: background 0.1s ease;
+  user-select: none;
+}
+.strct-dg__chooser-item:hover {
+  background: var(--bg-3);
+}
+.strct-dg__count {
+  font-size: 12px;
+  color: var(--t2);
+}
+.strct-dg__count-sep {
+  margin: 0 8px;
+  color: var(--b2);
+}
+.strct-dg__count-sel {
+  color: var(--acc);
+}
+/* ── Column filter popover ─────────────────────────────── */
+.strct-dg__filterbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-inline-start: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  vertical-align: middle;
+}
+.strct-dg__filterbtn:hover {
+  color: var(--t1);
+  background: var(--bg-3);
+}
+.strct-dg__filterbtn--active {
+  color: var(--acc);
+}
+.strct-dg__filterbtn:focus-visible {
+  outline: 2px solid var(--acc50);
+  outline-offset: 1px;
+}
+.strct-dg__filterpanel {
+  position: absolute;
+  z-index: calc(var(--z-dropdown) + 10);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+  padding: 10px;
+  background: var(--bg-1);
+  border: 1px solid var(--b2);
+  border-radius: 3px;
+  box-shadow: var(--shh);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+.strct-dg__filterinput {
+  padding: 5px 8px;
+  border: 1px solid var(--b2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  color: var(--t1);
+  font-family: var(--font);
+  font-size: 12px;
+}
+.strct-dg__filterinput:focus-visible {
+  outline: 2px solid var(--acc50);
+  outline-offset: 1px;
+}
+.strct-dg__filteropt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--t1);
+  cursor: pointer;
+}
+.strct-dg__filterclear {
+  align-self: flex-start;
+  padding: 3px 8px;
+  border: 1px solid var(--b2);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--t2);
+  font-family: var(--font);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.strct-dg__filterclear:hover:not(:disabled) {
+  color: var(--t1);
+  background: var(--bg-3);
+}
+.strct-dg__filterclear:disabled {
+  color: var(--t4);
+  cursor: default;
+}
+
+/* ── Tree-grid ─────────────────────────────────────────── */
+/* Roving-tabindex rows (the treegrid keyboard contract) need a visible
+   focus ring — cells, not the row box, paint the backgrounds. */
+.strct-dg tbody tr[tabindex]:focus-visible {
+  outline: 2px solid var(--acc50);
+  outline-offset: -2px;
+}
+.strct-dg__treepad {
+  display: inline-block;
+  height: 1px;
+  vertical-align: middle;
+}
+.strct-dg__treebtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-inline-end: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--t3);
+  cursor: pointer;
+  vertical-align: middle;
+}
+.strct-dg__treebtn:hover {
+  color: var(--t1);
+  background: var(--bg-3);
+}
+.strct-dg__treebtn:focus-visible {
+  outline: 2px solid var(--acc50);
+  outline-offset: 1px;
+}
+.strct-dg__treebtn strct-icon {
+  transition: transform 0.15s ease;
+}
+.strct-dg__treebtn--open strct-icon {
+  transform: rotate(90deg);
+}
+.strct-dg__treebtn--leaf {
+  cursor: default;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .strct-dg__treebtn strct-icon {
+    transition: none;
+  }
+}
+
+/* ── Inline cell editing ───────────────────────────────── */
+.strct-dg__cell--editable {
+  cursor: text;
+  position: relative;
+}
+.strct-dg__cell--editable:hover {
+  box-shadow: inset 0 0 0 1px var(--b2);
+}
+/* The cell is a tab stop of its own now, so it needs a focus ring —
+   inset, because a td cannot show an outline outside a scroll box. */
+.strct-dg__cell--editable:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--acc50);
+}
+.strct-dg__editpencil {
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 6px;
+  transform: translateY(-50%);
+  color: var(--t3);
+  opacity: 0;
+  pointer-events: none;
+}
+td:hover > .strct-dg__editpencil,
+td:focus-within > .strct-dg__editpencil {
+  opacity: 1;
+}
+.strct-dg__editinput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 3px 6px;
+  border: 1px solid var(--acc);
+  border-radius: var(--radius-sm);
+  background: var(--bg-1);
+  color: var(--t1);
+  font: inherit;
+}
+/* The editors fill the cell without pushing the row taller than a text
+   edit does. */
+.strct-dg__editselect,
+.strct-dg__editnumber {
+  display: block;
+  width: 100%;
+}
+.strct-dg__editinput:focus-visible {
+  outline: 2px solid var(--acc50);
+  outline-offset: 1px;
+}
