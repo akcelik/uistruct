@@ -3091,3 +3091,128 @@ describe('StrctDatagrid — a group count is heard with the grid noun', () => {
     expect(chips.map((c) => c.textContent!.trim())).toEqual(['2', '1']);
   });
 });
+
+// 6.x step 1: the grid's 54 inputs are more than a template can read, so each
+// cluster becomes one object. The flat inputs keep working through 5.x — this
+// is the layer that lets a consumer move a screen at a time.
+describe('StrctDatagrid — the feature objects', () => {
+  const rows: StrctRow[] = Array.from({ length: 7 }, (_, i) => ({ id: String(i), name: 'r' + i }));
+  const cols: StrctDatagridColumn[] = [{ key: 'name', label: 'Name' }];
+
+  function make(inputs: Record<string, unknown>) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('rowId', 'id');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      bodyRows: () => el.querySelectorAll('tbody tr:not(.strct-dg__grouprow)').length,
+    };
+  }
+
+  it('[paging] carries what six flat inputs carried', () => {
+    const flat = make({ pageSize: 2 });
+    expect(flat.bodyRows()).toBe(2);
+    const object = make({ paging: { mode: 'pages', pageSize: 3 } });
+    expect(object.bodyRows()).toBe(3);
+    // The mode on its own is what it always was.
+    const mode = make({ paging: 'more', hasMore: true });
+    expect(mode.el.querySelector('.strct-dg__more')).toBeTruthy();
+  });
+
+  it('the object wins where both are given', () => {
+    const both = make({ pageSize: 5, paging: { pageSize: 2 } });
+    expect(both.bodyRows()).toBe(2);
+  });
+
+  it('[selection] turns the tick column on, and keeps [(selectedIds)] where it is', () => {
+    const { fixture, el } = make({ selection: { enabled: true }, selectedIds: ['1', '2'] });
+    expect(el.querySelectorAll('tbody strct-checkbox').length).toBe(rows.length);
+    expect(el.querySelectorAll('.strct-dg__row--selected').length).toBe(2);
+
+    // Two-way state stays flat on purpose: [(selectedIds)] cannot bind
+    // through a property of an object.
+    el.querySelector<HTMLElement>('tbody .strct-cb input')!.click();
+    fixture.detectChanges();
+    expect([...(fixture.componentInstance.selectedIds() ?? [])].length).toBe(3);
+  });
+
+  it('[selection] takes the single-row mode and drops the control column', () => {
+    const { el } = make({ selection: { enabled: true, mode: 'single', column: 'none' } });
+    expect(el.querySelectorAll('tbody input[type="radio"]').length).toBe(0);
+    expect(el.querySelector('tbody tr')!.getAttribute('aria-selected')).toBe('false');
+  });
+
+  it('[virtual] and [pane] still take the bare attribute, and now an object', () => {
+    const flag = make({ virtual: true });
+    expect(flag.el.querySelector('.strct-dg__scroll')).toBeTruthy();
+    const object = make({ virtual: { viewportHeight: 120, rowHeight: 20 } });
+    const scroll = object.el.querySelector<HTMLElement>('.strct-dg__scroll')!;
+    // An object turns the feature on without saying `enabled` twice, and
+    // carries what the satellite inputs carried.
+    expect(scroll.style.maxHeight).toBe('120px');
+    expect(object.fixture.componentInstance.virtual()).toBe(true);
+    expect(object.fixture.componentInstance.rowHeight()).toBe(20);
+
+    // The pane is drawn when a row is active; what the object carries is the
+    // configuration, which is what this asserts.
+    const pane = make({ pane: { listWidth: '40%' }, activeRowId: '1' });
+    expect(pane.fixture.componentInstance.detailPane()).toBe(true);
+    expect(pane.fixture.componentInstance.paneListWidth()).toBe('40%');
+  });
+
+  it('[grouping], [filtering] and [state] carry their clusters', () => {
+    const grouped = make({ grouping: { by: 'name' } });
+    expect(grouped.el.querySelectorAll('.strct-dg__grouprow').length).toBe(rows.length);
+
+    const filtered = make({ filtering: { quick: true, align: 'start' } });
+    const quick = filtered.el.querySelector('.strct-dg__quickfilter')!;
+    expect(quick).toBeTruthy();
+    expect(quick.classList).not.toContain('strct-dg__quickfilter--end');
+    expect(
+      make({ filtering: { quick: true } }).el.querySelector('.strct-dg__quickfilter')!.classList,
+    ).toContain('strct-dg__quickfilter--end');
+
+    const stated = make({ state: { key: 'grid-3', sync: true } });
+    expect(stated.el.querySelector('button[aria-label="Refresh data"]')).toBeTruthy();
+    expect(stated.fixture.componentInstance.stateKey()).toBe('grid-3');
+  });
+
+  it('names the flat inputs that have moved, once per app run', async () => {
+    resetStrctDevWarnings();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      make({ pageSize: 2, selectable: true, stateKey: 'grid-1' });
+      await new Promise((r) => setTimeout(r));
+      const said = warn.mock.calls.map((c) => String(c[0])).join('\n');
+      expect(said).toContain('removed in 6.0');
+      expect(said).toContain('pageSize → [paging].pageSize');
+      expect(said).toContain('selectable → [selection].enabled');
+      expect(said).toContain('stateKey → [state].key');
+
+      // A second grid with the same inputs says nothing more.
+      const before = warn.mock.calls.length;
+      make({ pageSize: 3, selectable: true });
+      await new Promise((r) => setTimeout(r));
+      expect(warn.mock.calls.length).toBe(before);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('says nothing for a grid written in the new shape', async () => {
+    resetStrctDevWarnings();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      make({ paging: { pageSize: 4 }, selection: { enabled: true }, state: { key: 'grid-2' } });
+      await new Promise((r) => setTimeout(r));
+      expect(warn.mock.calls.filter((c) => String(c[0]).includes('[strct-datagrid]'))).toEqual([]);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+});

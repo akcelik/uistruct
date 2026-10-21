@@ -19,7 +19,19 @@ export function strctDevWarn(key: string, message: string): void {
   console.warn(message);
 }
 
+/**
+ * A diagnostic that keeps its own state (one that collects names and reports
+ * them together, say) registers how to forget it, so the test hook below
+ * stays the one way to reset dev-mode diagnostics.
+ */
+const resetters = new Set<() => void>();
+
+export function strctOnDevWarnReset(forget: () => void): void {
+  resetters.add(forget);
+}
+
 /** Test hook: forget which warnings have fired. Not part of the public API. */
 export function resetStrctDevWarnings(): void {
   warned.clear();
+  for (const forget of resetters) forget();
 }

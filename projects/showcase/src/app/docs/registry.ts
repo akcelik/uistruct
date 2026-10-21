@@ -3673,6 +3673,13 @@ export const DOCS: DocCategory[] = [
         lead: 'A richer grid with sorting, selection, batch actions, pagination and expandable rows. Columns can be `sortable` and aligned. Use `*strctCell="key"` templates for custom cells (status pills, links, action buttons), and set `rowId` so selection / expansion survive live data refreshes.',
         inputs: [
           {
+            name: 'selection / paging / pane / virtual / grouping / filtering / state',
+            type: 'StrctDatagridSelection · StrctDatagridPaging · StrctDatagridPane · StrctDatagridVirtual · StrctDatagridGrouping · StrctDatagridFiltering · StrctDatagridState',
+            default: '{}',
+            description:
+              '**The grid\'s features, as objects (5.30.0).** 54 inputs are more than a template can read, so each cluster of related ones became a single object: `[selection]="{ enabled: true, mode: \'single\', column: \'none\', rowSelectable, groupSelect, initial }"`, `[paging]="{ mode, pageSize, hasMore, loadingMore, moreTotal, lazy, total }"`, `[pane]="{ enabled, listWidth, takeoverWidth }"`, `[virtual]="{ enabled, viewportHeight, rowHeight, maxHeight }"`, `[grouping]="{ by, groups, showEmpty, childrenKey }"`, `[filtering]="{ quick, fields, align }"`, `[state]="{ key, sync }"`.\n\n`paging` still takes the mode on its own, and `pane` / `virtual` still take the bare attribute. The **flat inputs below keep working through 5.x** and are removed in 6.0; a development build names each one in use, once per app run, with the object it has moved into (see `docs/migration-6.md`).\n\nWhat stays flat on purpose: the two-way state (`[(selectedIds)]`, `[(filters)]`, `[(columnState)]`, `[(collapsedGroups)]`, `[(quickFilter)]`, `[(activeRowId)]`, `[(selectedId)]`), since `[(…)]` cannot bind through a property of an object — and the grid\'s core (`columns`, `rows`, `rowId`, `labels`) with the look flags.',
+          },
+          {
             name: 'groups / showEmptyGroups / [(collapsedGroups)]',
             type: 'StrctDatagridGroup[] | null · boolean · unknown[]',
             default: 'null · false · []',

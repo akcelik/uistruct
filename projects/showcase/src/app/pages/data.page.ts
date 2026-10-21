@@ -502,8 +502,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="datagrid-virtual"
       owner="datagrid"
       heading="Virtual scroll — 20.000 rows"
-      description="virtual keeps only the viewport (plus a small overscan) in the DOM, so tens of thousands of rows scroll smoothly with a sticky header. The first column is frozen (sticky), headers can be drag-reordered (reorderable — order persists under stateKey along with widths and visibility), and the whole set exports as CSV or a real dependency-free .xlsx."
-      code='<strct-datagrid [columns]="cols" [rows]="rows20k" virtual reorderable stateKey="inventory" #g /> … g.downloadXLSX()'
+      description="virtual keeps only the viewport (plus a small overscan) in the DOM, so tens of thousands of rows scroll smoothly with a sticky header. The first column is frozen (sticky), headers can be drag-reordered (order persists under the state key along with widths and visibility), and the whole set exports as CSV or a real dependency-free .xlsx. This grid is written in the 5.30.0 shape: the clusters of related inputs are objects — [virtual], [selection], [state] — and the flat inputs they replace keep working through 5.x, with dev mode naming each one that has moved. See docs/migration-6.md."
+      code='<strct-datagrid [columns]="cols" [rows]="rows20k" [virtual]="&#123; viewportHeight: 380 &#125;" [selection]="&#123; enabled: true &#125;" [state]="&#123; key: &apos;inventory&apos; &#125;" #g /> … g.downloadXLSX()'
     >
       <div class="dg-wrap">
         <strct-datagrid
@@ -512,13 +512,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="vCols"
           [rows]="vRows"
           rowId="id"
-          virtual
-          [viewportHeight]="380"
-          selectable
+          [virtual]="{ viewportHeight: 380 }"
+          [selection]="{ enabled: true }"
+          [state]="{ key: 'docs-inventory' }"
           resizable
           reorderable
           columnChooser
-          stateKey="docs-inventory"
           [labels]="{ rows: 'hosts' }"
         />
         <div style="display: flex; gap: 10px; align-items: center;">
