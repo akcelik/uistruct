@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.31.0] - 2026-10-21
+
+The second step toward 6.0: the datagrid becomes four files instead of one.
+No API, no markup and no style changed.
+
+### Changed
+
+- **`strct-datagrid` is split by kind, behind the same selector.** 4 461 lines
+  in one file meant every change — a style, a label, one branch of the
+  template — re-read the whole thing, and the component stylesheet had pushed
+  the `anyComponentStyle` budget from 14 kB to 18 kB over five releases with
+  no way to review it on its own.
+
+  | file                | what it holds                                           | lines |
+  | ------------------- | ------------------------------------------------------- | ----- |
+  | `datagrid.ts`       | the component: inputs, state, behaviour                 | 2 649 |
+  | `datagrid.css`      | the stylesheet, reviewable on its own                   | 1 060 |
+  | `datagrid.html`     | the template                                            | 789   |
+  | `datagrid.types.ts` | columns, labels, the feature objects, the output shapes | 331   |
+  - The template and the stylesheet moved **verbatim** — neither carried an
+    interpolation, so the files are the same bytes the template literals held.
+    Every visual baseline matches.
+  - `datagrid.ts` re-exports `./datagrid.types`, so **every import path that
+    worked before still works**: `import { StrctDatagridColumn } from
+'strct'` is unchanged.
+  - `SortDir` is exported at last. It is what `(lazyLoad)` carries in
+    `sortDir`, and it had been module-local — a consumer could receive the
+    value but not name its type.
+  - The library build (ng-packagr) inlines the template and the stylesheet as
+    before, so the published package is the same shape.
+
 ## [5.30.0] - 2026-10-21
 
 The first step toward 6.0: the datagrid's features become objects, and
