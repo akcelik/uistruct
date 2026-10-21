@@ -67,10 +67,10 @@ rest.
 | ------------------------ | ------------------------------------- |
 | `[viewportHeight]="520"` | `[virtual]="{ viewportHeight: 520 }"` |
 | `[rowHeight]="32"`       | `[virtual]="{ rowHeight: 32 }"`       |
-| `[maxHeight]="400"`      | `[virtual]="{ maxHeight: 400 }"`      |
 
-`maxHeight` caps a grid that is not virtual too; it lives here because it is
-the same measurement.
+`maxHeight` does **not** move. It caps a grid that is not virtual, and every
+property of `[virtual]` turns virtual scrolling on — a grid given a height cap
+would have lost its grouping with it. It stays an input of its own.
 
 ### `[grouping]`
 

@@ -245,7 +245,12 @@ export interface StrctDatagridPane {
   takeoverWidth?: number;
 }
 
-/** Virtual scrolling. Replaces `viewportHeight`, `rowHeight`, `maxHeight`. */
+/**
+ * Virtual scrolling. Replaces `viewportHeight` and `rowHeight` — both of
+ * which mean nothing unless the grid virtualises, which is why an object
+ * here turns it on. `maxHeight` is NOT one of them: it caps a grid that is
+ * not virtual, so it stays an input of its own (5.33.0).
+ */
 export interface StrctDatagridVirtual {
   /** Render only the rows in view. */
   enabled?: boolean;
@@ -253,8 +258,6 @@ export interface StrctDatagridVirtual {
   viewportHeight?: number;
   /** One row's height in px — the measure the window is computed from. */
   rowHeight?: number;
-  /** A cap on the grid's height outside virtual mode. */
-  maxHeight?: number | null;
 }
 
 /** How rows are grouped. Replaces `groupBy`, `groups`, `showEmptyGroups`, `childrenKey`. */

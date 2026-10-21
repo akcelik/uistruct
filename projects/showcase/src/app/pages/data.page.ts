@@ -563,7 +563,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       owner="datagrid"
       heading="Row grouping"
       description="groupBy renders a collapsible header row per distinct value with a count — sorting still applies within groups. Click a group header to collapse it. maxHeight bounds the grid's own scroll box with a sticky header — what viewportHeight does for virtual, for every other grid: a grouped picker inside a dialog scrolls instead of growing the page."
-      code='<strct-datagrid [columns]="cols" [rows]="rows" [grouping]="&#123; by: &apos;type&apos; &#125;" [virtual]="&#123; maxHeight: 220 &#125;" />'
+      code='<strct-datagrid [columns]="cols" [rows]="rows" [grouping]="&#123; by: &apos;type&apos; &#125;" [maxHeight]="220" />'
     >
       <div class="dg-wrap">
         <div style="display: flex; gap: 18px; flex-wrap: wrap">
@@ -579,7 +579,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="dgCols"
           [rows]="dgRows"
           rowId="name"
-          [virtual]="{ maxHeight: bounded() ? 220 : null }"
+          [maxHeight]="bounded() ? 220 : null"
           [grouping]="{ by: grouped() ? 'type' : null }"
         >
           <ng-template strctCell="status" let-value="value">
