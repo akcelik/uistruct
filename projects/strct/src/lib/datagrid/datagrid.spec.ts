@@ -51,8 +51,7 @@ describe('StrctDatagrid', () => {
     ] satisfies StrctDatagridColumn[]);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('virtual', true);
-    fixture.componentRef.setInput('viewportHeight', 380);
-    fixture.componentRef.setInput('rowHeight', 38);
+    fixture.componentRef.setInput('virtual', { viewportHeight: 380, rowHeight: 38 });
     fixture.detectChanges();
     const host = fixture.nativeElement as HTMLElement;
     const rendered = host.querySelectorAll('tbody tr:not(.strct-dg__vspacer)').length;
@@ -72,9 +71,7 @@ describe('StrctDatagrid', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', COLS);
     fixture.componentRef.setInput('rows', ROWS);
-    fixture.componentRef.setInput('lazy', true);
-    fixture.componentRef.setInput('total', 500);
-    fixture.componentRef.setInput('pageSize', 3);
+    fixture.componentRef.setInput('paging', { lazy: true, total: 500, pageSize: 3 });
     const emitted: StrctDatagridLazyState[] = [];
     fixture.componentInstance.lazyLoad.subscribe((s) => emitted.push(s));
     fixture.detectChanges();
@@ -108,7 +105,7 @@ describe('StrctDatagrid', () => {
       { key: 'c', label: 'C' },
     ] satisfies StrctDatagridColumn[]);
     fixture.componentRef.setInput('rows', [{ a: 1, b: 2, c: 3 }]);
-    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('selection', { enabled: true });
     fixture.detectChanges();
     const host = fixture.nativeElement as HTMLElement;
     expect(host.classList).toContain('strct-dg-host--sticky');
@@ -153,7 +150,7 @@ describe('StrctDatagrid', () => {
       { vm: 'b', owner: 'dev' },
       { vm: 'c', owner: 'ops' },
     ]);
-    fixture.componentRef.setInput('groupBy', 'owner');
+    fixture.componentRef.setInput('grouping', { by: 'owner' });
     fixture.detectChanges();
     const host = fixture.nativeElement as HTMLElement;
     const headers = [...host.querySelectorAll('.strct-dg__groupbtn')];
@@ -261,7 +258,7 @@ describe('StrctDatagrid', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', COLS);
     fixture.componentRef.setInput('rows', ROWS);
-    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('selection', { enabled: true });
     fixture.detectChanges();
     const cmp = fixture.componentInstance;
 
@@ -278,14 +275,13 @@ describe('StrctDatagrid', () => {
     fixture.componentRef.setInput('columns', COLS);
     fixture.componentRef.setInput('rows', ROWS);
     fixture.componentRef.setInput('rowId', 'n');
-    fixture.componentRef.setInput('selectable', true);
-    fixture.componentRef.setInput('pageSize', 10);
-    fixture.componentRef.setInput('initialSelection', ['alpha', 'beta']);
+    fixture.componentRef.setInput('selection', { enabled: true, initial: ['alpha', 'beta'] });
+    fixture.componentRef.setInput('paging', { pageSize: 10 });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.strct-dg__row--selected').length).toBe(2);
 
     // Assigning a new array re-seeds.
-    fixture.componentRef.setInput('initialSelection', ['gamma']);
+    fixture.componentRef.setInput('selection', { enabled: true, initial: ['gamma'] });
     fixture.detectChanges();
     const sel = [...fixture.nativeElement.querySelectorAll('.strct-dg__row--selected')].map((r) =>
       (r as HTMLElement).textContent!.trim(),
@@ -301,7 +297,7 @@ describe('StrctDatagrid', () => {
     ]);
     fixture.componentRef.setInput('rows', [{ a: '1', b: '2' }]);
     fixture.componentRef.setInput('columnChooser', true);
-    fixture.componentRef.setInput('pageSize', 10);
+    fixture.componentRef.setInput('paging', { pageSize: 10 });
     fixture.detectChanges();
 
     const btn = fixture.nativeElement.querySelector('.strct-dg__actions button');
@@ -413,8 +409,7 @@ describe('StrctDatagrid column filters', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
-    fixture.componentRef.setInput('lazy', true);
-    fixture.componentRef.setInput('pageSize', 10);
+    fixture.componentRef.setInput('paging', { lazy: true, pageSize: 10 });
     fixture.componentInstance.lazyLoad.subscribe((s) => (last = s));
     fixture.detectChanges();
     fixture.componentRef.setInput('filters', { name: 'web' });
@@ -439,7 +434,7 @@ describe('StrctDatagrid tree-grid', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
-    fixture.componentRef.setInput('childrenKey', 'kids');
+    fixture.componentRef.setInput('grouping', { childrenKey: 'kids' });
     fixture.componentRef.setInput('rowId', 'name');
     for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
     fixture.detectChanges();
@@ -708,16 +703,16 @@ describe('StrctDatagrid quick filter (FR-16-02)', () => {
   });
 
   it('quickFilterFields restricts the scanned columns', () => {
-    const fixture = make({ quickFilter: 'db-prod', quickFilterFields: ['name'] });
+    const fixture = make({ quickFilter: 'db-prod', filtering: { fields: ['name'] } });
     expect(names(fixture)).toEqual(['db-prod-01']);
   });
 
   it('ANDs with per-column filters and preserves selection identity', () => {
     const fixture = make({
-      selectable: true,
       rowId: 'name',
       quickFilter: 'vm',
       filters: { name: 'web' },
+      selection: { enabled: true },
     });
     // With selectable on, the first cell is the checkbox — name is cell 2.
     const visibleNames = () =>
@@ -740,16 +735,16 @@ describe('StrctDatagrid quick filter (FR-16-02)', () => {
   });
 
   it('quick filter aligns end by default; start opts out', () => {
-    const fixture = make({ quickFilterable: true });
+    const fixture = make({ filtering: { quick: true } });
     const box = fixture.nativeElement.querySelector('.strct-dg__quickfilter')!;
     expect(box.classList).toContain('strct-dg__quickfilter--end');
-    fixture.componentRef.setInput('quickFilterAlign', 'start');
+    fixture.componentRef.setInput('filtering', { align: 'start' });
     fixture.detectChanges();
     expect(box.classList).not.toContain('strct-dg__quickfilter--end');
   });
 
   it('quickFilterable renders the toolbar searchbox and the N / M note', () => {
-    const fixture = make({ quickFilterable: true });
+    const fixture = make({ filtering: { quick: true } });
     const box = fixture.nativeElement.querySelector('.strct-dg__quickfilter input')!;
     expect(box).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.strct-dg__filternote')).toBeNull();
@@ -767,8 +762,7 @@ describe('StrctDatagrid quick filter (FR-16-02)', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
-    fixture.componentRef.setInput('lazy', true);
-    fixture.componentRef.setInput('pageSize', 10);
+    fixture.componentRef.setInput('paging', { lazy: true, pageSize: 10 });
     fixture.componentInstance.lazyLoad.subscribe((st) => (last = st));
     fixture.detectChanges();
     fixture.componentRef.setInput('quickFilter', 'db-prod');
@@ -835,7 +829,7 @@ describe('StrctDatagrid transient surfaces (focus lifecycle)', () => {
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('columnChooser', true);
-    fixture.componentRef.setInput('pageSize', 10);
+    fixture.componentRef.setInput('paging', { pageSize: 10 });
     fixture.detectChanges();
     return fixture;
   }
@@ -960,10 +954,10 @@ describe('StrctDatagrid selection integrity', () => {
       { vm: 'b', owner: 'dev' },
       { vm: 'c', owner: 'ops' },
     ]);
-    fixture.componentRef.setInput('groupBy', 'owner');
-    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('grouping', { by: 'owner' });
+    fixture.componentRef.setInput('selection', { enabled: true });
     fixture.componentRef.setInput('rowId', 'vm');
-    fixture.componentRef.setInput('pageSize', 2);
+    fixture.componentRef.setInput('paging', { pageSize: 2 });
     fixture.detectChanges();
     const cmp = fixture.componentInstance;
     let emitted: StrctRow[] = [];
@@ -992,11 +986,9 @@ describe('StrctDatagrid selection integrity', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', COLS);
     fixture.componentRef.setInput('rows', page1);
-    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('selection', { enabled: true });
     fixture.componentRef.setInput('rowId', 'n');
-    fixture.componentRef.setInput('lazy', true);
-    fixture.componentRef.setInput('pageSize', 1);
-    fixture.componentRef.setInput('total', 2);
+    fixture.componentRef.setInput('paging', { lazy: true, pageSize: 1, total: 2 });
     fixture.detectChanges();
     const cmp = fixture.componentInstance;
     let emitted: StrctRow[] = [];
@@ -1029,7 +1021,7 @@ describe('StrctDatagrid selection integrity', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', COLS);
     fixture.componentRef.setInput('rows', ROWS);
-    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('selection', { enabled: true });
     fixture.componentRef.setInput('rowId', 'n');
     fixture.detectChanges();
     const ariaLabels = () =>
@@ -1047,7 +1039,7 @@ describe('StrctDatagrid selection integrity', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', COLS);
     fixture.componentRef.setInput('rows', ROWS);
-    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('selection', { enabled: true });
     fixture.detectChanges();
     const labels = [...fixture.nativeElement.querySelectorAll('tbody strct-checkbox input')].map(
       (i) => (i as HTMLElement).getAttribute('aria-label'),
@@ -1082,7 +1074,7 @@ describe('StrctDatagrid shift-range selection', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', COLS);
     fixture.componentRef.setInput('rows', RANGE_ROWS);
-    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('selection', { enabled: true });
     fixture.componentRef.setInput('rowId', 'n');
     fixture.detectChanges();
     return fixture;
@@ -1196,7 +1188,7 @@ describe('StrctDatagrid unresolvable rowId', () => {
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', rowId);
-    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('selection', { enabled: true });
     fixture.detectChanges();
     return fixture;
   }
@@ -1243,7 +1235,7 @@ describe('StrctDatagrid unresolvable rowId', () => {
       expect(emitted).toEqual([rows[i]]);
     }
     // And the id — not the object — is still the key: a seed of 0 and '' hits.
-    fixture.componentRef.setInput('initialSelection', [0, '']);
+    fixture.componentRef.setInput('selection', { initial: [0, ''] });
     fixture.detectChanges();
     expect(rowBoxes(fixture).map((b) => b.checked)).toEqual([true, true, false]);
   });
@@ -1264,7 +1256,7 @@ describe('StrctDatagrid unresolvable rowId', () => {
         [rows]="rows"
         rowId="id"
         [expandable]="!pane"
-        [detailPane]="pane"
+        [pane]="{ enabled: pane }"
       >
         <ng-template strctRowDetail let-row>{{ row['conn'] }} detail</ng-template>
       </strct-datagrid>
@@ -1335,8 +1327,7 @@ describe('StrctDatagrid silent-failure diagnostics', () => {
     const { messages } = make({
       rowId: 'id',
       rows: [{ id: 'a' }, { id: 'b' }],
-      selectable: true,
-      initialSelection: ['x', 'y'],
+      selection: { enabled: true, initial: ['x', 'y'] },
     });
     expect(messages()).toEqual([
       expect.stringContaining(
@@ -1350,12 +1341,11 @@ describe('StrctDatagrid silent-failure diagnostics', () => {
       make({
         rowId: 'id',
         rows: [{ id: 'a' }, { id: 0 }],
-        selectable: true,
-        initialSelection: ['a', 'gone'],
+        selection: { enabled: true, initial: ['a', 'gone'] },
       }).messages(),
     ).toEqual([]);
     expect(
-      make({ rowId: 'id', rows: [], selectable: true, initialSelection: ['a'] }).messages(),
+      make({ rowId: 'id', rows: [], selection: { enabled: true, initial: ['a'] } }).messages(),
     ).toEqual([]);
   });
 
@@ -1363,10 +1353,8 @@ describe('StrctDatagrid silent-failure diagnostics', () => {
     const { messages } = make({
       rowId: 'id',
       rows: [{ id: 'a' }],
-      lazy: true,
-      total: 100,
-      selectable: true,
-      initialSelection: ['on-page-7'],
+      paging: { lazy: true, total: 100 },
+      selection: { enabled: true, initial: ['on-page-7'] },
     });
     expect(messages()).toEqual([]);
   });
@@ -1421,7 +1409,7 @@ describe('StrctDatagrid — single selection, row locks, group select-all (FR-48
   }
 
   it('single mode draws one radio group; picking a row replaces the previous pick', () => {
-    const { fixture, el, radios, rows } = make({ selectionMode: 'single' });
+    const { fixture, el, radios, rows } = make({ selection: { mode: 'single' } });
     let emitted: StrctRow[] = [];
     fixture.componentInstance.selectionChange.subscribe((s) => (emitted = s));
     expect(radios().length).toBe(3);
@@ -1443,7 +1431,7 @@ describe('StrctDatagrid — single selection, row locks, group select-all (FR-48
   });
 
   it('single mode: a click anywhere on the row picks it, and the footer count is hidden', () => {
-    const { fixture, el, rows } = make({ selectionMode: 'single' });
+    const { fixture, el, rows } = make({ selection: { mode: 'single' } });
     rows()[1].click();
     fixture.detectChanges();
     expect(fixture.componentInstance.selectedId()).toBe('h2');
@@ -1452,7 +1440,9 @@ describe('StrctDatagrid — single selection, row locks, group select-all (FR-48
 
   it('rowSelectable locks a row, says why, and refuses the pick', () => {
     const lock = (row: StrctRow) => (row['ready'] ? true : 'Agent too old');
-    const { fixture, el, radios, rows } = make({ selectionMode: 'single', rowSelectable: lock });
+    const { fixture, el, radios, rows } = make({
+      selection: { mode: 'single', rowSelectable: lock },
+    });
     const locked = radios()[1];
     expect(locked.disabled).toBe(true);
     expect(locked.getAttribute('aria-description')).toBe('Agent too old');
@@ -1467,7 +1457,7 @@ describe('StrctDatagrid — single selection, row locks, group select-all (FR-48
 
   it('a locked row is skipped by multi-select and by select-all', () => {
     const lock = (row: StrctRow) => row['ready'] === true;
-    const { fixture, boxes } = make({ selectable: true, rowSelectable: lock });
+    const { fixture, boxes } = make({ selection: { enabled: true, rowSelectable: lock } });
     let emitted: StrctRow[] = [];
     fixture.componentInstance.selectionChange.subscribe((s) => (emitted = s));
     expect(boxes()[1].disabled).toBe(true);
@@ -1483,9 +1473,8 @@ describe('StrctDatagrid — single selection, row locks, group select-all (FR-48
 
   it('groupSelect puts a tri-state checkbox on the group header', () => {
     const { fixture, el } = make({
-      selectable: true,
-      groupBy: 'pool',
-      groupSelect: true,
+      selection: { enabled: true, groupSelect: true },
+      grouping: { by: 'pool' },
     });
     const groupBox = () =>
       el.querySelector<HTMLInputElement>('.strct-dg__grouprow strct-checkbox input')!;
@@ -1506,10 +1495,12 @@ describe('StrctDatagrid — single selection, row locks, group select-all (FR-48
 
   it('group select-all ignores locked rows', () => {
     const { fixture, el } = make({
-      selectable: true,
-      groupBy: 'pool',
-      groupSelect: true,
-      rowSelectable: (row: StrctRow) => row['ready'] === true,
+      selection: {
+        enabled: true,
+        groupSelect: true,
+        rowSelectable: (row: StrctRow) => row['ready'] === true,
+      },
+      grouping: { by: 'pool' },
     });
     let emitted: StrctRow[] = [];
     fixture.componentInstance.selectionChange.subscribe((s) => (emitted = s));
@@ -1531,7 +1522,7 @@ describe('StrctDatagrid — single selection, row locks, group select-all (FR-48
   });
 
   it('selectable stays the boolean spelling of multiple selection', () => {
-    const { el, boxes } = make({ selectable: true });
+    const { el, boxes } = make({ selection: { enabled: true } });
     expect(boxes().length).toBe(3);
     expect(el.querySelector('thead strct-checkbox')).toBeTruthy();
     expect(el.querySelectorAll('.strct-dg__radio').length).toBe(0);
@@ -1614,7 +1605,7 @@ describe('StrctDatagrid presentation and cursor paging', () => {
 
   describe('paging="more"', () => {
     it('shows the count and a Load more button that emits', () => {
-      const { fixture, el } = make({ paging: 'more', hasMore: true, moreTotal: 812 });
+      const { fixture, el } = make({ paging: { mode: 'more', hasMore: true, moreTotal: 812 } });
       expect(el.querySelector('strct-pagination')).toBeNull();
       // FR-49-04 — "more" takes the pager's place, and the footer itself stays.
       expect(el.querySelector('.strct-dg__foot .strct-dg__count')?.textContent?.trim()).toBe(
@@ -1627,11 +1618,11 @@ describe('StrctDatagrid presentation and cursor paging', () => {
     });
 
     it('drops the button when there is no more, and waits while loading', () => {
-      const { el } = make({ paging: 'more', hasMore: false });
+      const { el } = make({ paging: { mode: 'more', hasMore: false } });
       expect(el.querySelector('.strct-dg__more')).toBeNull();
       expect(el.querySelector('.strct-dg__count')?.textContent?.trim()).toBe('Showing 2');
 
-      const { el: busy } = make({ paging: 'more', hasMore: true, loadingMore: true });
+      const { el: busy } = make({ paging: { mode: 'more', hasMore: true, loadingMore: true } });
       const button = busy.querySelector('.strct-dg__more') as HTMLButtonElement;
       expect(button.disabled).toBe(true);
       expect(button.querySelector('strct-spinner')).toBeTruthy();
@@ -1652,7 +1643,7 @@ describe('StrctDatagrid — selectedId drives the checked row', () => {
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
-    fixture.componentRef.setInput('selectionMode', 'single');
+    fixture.componentRef.setInput('selection', { mode: 'single' });
     const changes: unknown[][] = [];
     fixture.componentInstance.selectionChange.subscribe((e) => changes.push(e));
     fixture.detectChanges();
@@ -1698,8 +1689,7 @@ describe('StrctDatagrid — selectedId drives the checked row', () => {
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
-    fixture.componentRef.setInput('selectable', true);
-    fixture.componentRef.setInput('initialSelection', ['h1', 'h2']);
+    fixture.componentRef.setInput('selection', { enabled: true, initial: ['h1', 'h2'] });
     const changes: unknown[][] = [];
     fixture.componentInstance.selectionChange.subscribe((e) => changes.push(e));
     fixture.detectChanges();
@@ -1879,7 +1869,7 @@ describe('StrctDatagrid — two-way selectedIds', () => {
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
-    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('selection', { enabled: true });
     for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
     const emitted: StrctRow[][] = [];
     fixture.componentInstance.selectionChange.subscribe((s) => emitted.push(s));
@@ -1928,7 +1918,7 @@ describe('StrctDatagrid — two-way selectedIds', () => {
   });
 
   it('is left alone when the consumer does not use it', () => {
-    const { fixture, boxes } = make({ initialSelection: ['h2'] });
+    const { fixture, boxes } = make({ selection: { initial: ['h2'] } });
     expect(boxes().map((b) => b.checked)).toEqual([false, true, false]);
     expect(fixture.componentInstance.selectedIds()).toBeNull();
     boxes()[0].click();
@@ -1952,7 +1942,11 @@ describe('StrctDatagrid — footer and chrome combinations', () => {
   }
 
   it('paging="more" takes the pager’s place and leaves the rest of the footer', () => {
-    const { el } = make({ paging: 'more', hasMore: true, columnChooser: true, sync: true });
+    const { el } = make({
+      columnChooser: true,
+      paging: { mode: 'more', hasMore: true },
+      state: { sync: true },
+    });
     expect(el.querySelector('strct-pagination')).toBeNull();
     expect(el.querySelector('.strct-dg__more')).toBeTruthy();
     // The chooser and the sync button used to go with the pager.
@@ -1961,19 +1955,19 @@ describe('StrctDatagrid — footer and chrome combinations', () => {
   });
 
   it('paging="more" does not hide rows behind a pager it never draws', () => {
-    const { el } = make({ paging: 'more', pageSize: 2, hasMore: true });
+    const { el } = make({ paging: { mode: 'more', pageSize: 2, hasMore: true } });
     expect(el.querySelectorAll('tbody tr').length).toBe(5);
     expect(el.querySelector('strct-pagination')).toBeNull();
   });
 
   it('a chooser or a sync button is enough to draw the footer', () => {
     expect(make({ columnChooser: true }).el.querySelector('.strct-dg__foot')).toBeTruthy();
-    expect(make({ sync: true }).el.querySelector('.strct-dg__foot')).toBeTruthy();
+    expect(make({ state: { sync: true } }).el.querySelector('.strct-dg__foot')).toBeTruthy();
     expect(make({}).el.querySelector('.strct-dg__foot')).toBeNull();
   });
 
   it('maxHeight bounds any grid, not only a virtual one', () => {
-    const { el } = make({ maxHeight: 320, groupBy: 'name' });
+    const { el } = make({ maxHeight: 320, grouping: { by: 'name' } });
     const scroll = el.querySelector('.strct-dg__scroll') as HTMLElement;
     expect(scroll.style.maxHeight).toBe('320px');
     expect(el.classList).toContain('strct-dg-host--bounded');
@@ -1996,7 +1990,7 @@ describe('StrctDatagrid — a seeded pick survives, and a row that returns is st
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
-    fixture.componentRef.setInput('selectable', true);
+    fixture.componentRef.setInput('selection', { enabled: true });
     for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
     const emitted: StrctRow[][] = [];
     fixture.componentInstance.selectionChange.subscribe((s) => emitted.push(s));
@@ -2014,7 +2008,7 @@ describe('StrctDatagrid — a seeded pick survives, and a row that returns is st
 
   // BUG-50-01 — an unbound selectedId is "not driven", not "cleared".
   it('keeps what initialSelection seeded in single mode, and a binding still wins', () => {
-    const { fixture, radios } = make({ selectionMode: 'single', initialSelection: ['h2'] });
+    const { fixture, radios } = make({ selection: { mode: 'single', initial: ['h2'] } });
     expect(radios().map((r) => r.checked)).toEqual([false, true]);
 
     // Binding it still decides.
@@ -2030,7 +2024,7 @@ describe('StrctDatagrid — a seeded pick survives, and a row that returns is st
 
   // BUG-50-02.1 — the row leaves and comes back: switch host, switch back.
   it('re-applies the single pick when its row returns', () => {
-    const { fixture, radios } = make({ selectionMode: 'single' });
+    const { fixture, radios } = make({ selection: { mode: 'single' } });
     fixture.componentInstance.selectedId.set('h2');
     fixture.detectChanges();
     expect(radios()[1].checked).toBe(true);
@@ -2045,7 +2039,7 @@ describe('StrctDatagrid — a seeded pick survives, and a row that returns is st
 
   // BUG-50-02.2 — a poll that blanks the array is not a delete.
   it('does not prune on an empty re-emit, nor while loading', () => {
-    const { fixture, emitted, selected } = make({ initialSelection: ['h1', 'h2'] });
+    const { fixture, emitted, selected } = make({ selection: { initial: ['h1', 'h2'] } });
     expect(selected()).toBe(2);
 
     fixture.componentRef.setInput('rows', []);
@@ -2077,8 +2071,7 @@ describe('StrctDatagrid — utility columns have names', () => {
     fixture.componentRef.setInput('rows', [{ id: 'h1', name: 'hv-01' }]);
     fixture.componentRef.setInput('rowId', 'id');
     fixture.componentRef.setInput('expandable', true);
-    fixture.componentRef.setInput('selectable', true);
-    fixture.componentRef.setInput('selectionMode', 'single');
+    fixture.componentRef.setInput('selection', { enabled: true, mode: 'single' });
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     const heads = [...el.querySelectorAll('thead th')];
@@ -2089,7 +2082,7 @@ describe('StrctDatagrid — utility columns have names', () => {
     ).toContain('Select row');
 
     // Multiple mode keeps the checkbox rather than the hidden word.
-    fixture.componentRef.setInput('selectionMode', 'multiple');
+    fixture.componentRef.setInput('selection', { enabled: true, mode: 'multiple' });
     fixture.detectChanges();
     expect(el.querySelector('thead .strct-dg__sel strct-checkbox')).toBeTruthy();
     expect(el.querySelector('thead .strct-dg__sel .strct-sr-only')).toBeNull();
@@ -2289,7 +2282,7 @@ describe('StrctDatagrid — groups the consumer defines', () => {
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
-    fixture.componentRef.setInput('groupBy', 'state');
+    fixture.componentRef.setInput('grouping', { by: 'state' });
     for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
@@ -2775,7 +2768,7 @@ describe('StrctDatagrid — interactionMode="grid"', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', COLS);
     fixture.componentRef.setInput('rows', ROWS);
-    fixture.componentRef.setInput('selectionMode', 'multiple');
+    fixture.componentRef.setInput('selection', { mode: 'multiple' });
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('table')!.getAttribute('role')).toBeNull();
@@ -2876,10 +2869,9 @@ describe('StrctDatagrid — column state is read first', () => {
       [columns]="cols"
       [rows]="rows"
       rowId="id"
-      [stateKey]="key()"
+      [state]="{ key: key() }"
       [columnState]="bound()"
-      [lazy]="lazy()"
-      [total]="99"
+      [paging]="{ lazy: lazy(), total: 99 }"
       (lazyLoad)="asks.push($event)"
     />`,
   })
@@ -3026,7 +3018,7 @@ describe('StrctDatagrid — the empty row is not a heading', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', [{ name: 'hv-01' }]);
-    fixture.componentRef.setInput('quickFilterable', true);
+    fixture.componentRef.setInput('filtering', { quick: true });
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     const input = el.querySelector<HTMLInputElement>('.strct-dg__quickfilter input')!;
@@ -3058,7 +3050,7 @@ describe('StrctDatagrid — a group count is heard with the grid noun', () => {
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
-    fixture.componentRef.setInput('groupBy', 'state');
+    fixture.componentRef.setInput('grouping', { by: 'state' });
     if (labels) fixture.componentRef.setInput('labels', labels);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
@@ -3083,7 +3075,7 @@ describe('StrctDatagrid — a group count is heard with the grid noun', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
-    fixture.componentRef.setInput('groupBy', 'state');
+    fixture.componentRef.setInput('grouping', { by: 'state' });
     fixture.detectChanges();
     const chips = [
       ...(fixture.nativeElement as HTMLElement).querySelectorAll('.strct-dg__groupcount'),

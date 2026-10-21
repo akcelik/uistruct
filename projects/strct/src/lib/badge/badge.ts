@@ -24,8 +24,6 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
     '[class.strct-badge--accent]': "status() === 'accent'",
     '[class.strct-badge--success]': "status() === 'success'",
     '[class.strct-badge--warning]': "status() === 'warning'",
-    // Deprecated alias of --warning (original typo), kept so consumer CSS keeps matching.
-    '[class.strct-badge--warninging]': "status() === 'warning'",
     '[class.strct-badge--critical]': "status() === 'critical'",
     '[class.strct-badge--solid]': 'solid()',
     '[class.strct-badge--tone]': 'tone()',

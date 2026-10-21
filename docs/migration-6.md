@@ -118,6 +118,28 @@ took the one badge slot away from health.
 - `<strct-context-menu>`, the projected component. Use the data-driven
   `[strctContextMenu]` directive.
 
+## One thing to know: an object replaces, it does not merge
+
+`[selection]`, `[paging]` and the rest are ordinary inputs, so a second
+binding replaces the first — there is no per-property merge:
+
+```html
+<!-- the second one wins; `by` is gone -->
+<strct-datagrid [grouping]="{ by: 'state' }" [grouping]="{ groups }" />
+```
+
+That matters wherever a grid's inputs are layered — a wrapper component with
+defaults, a test helper that sets a base and then applies a caller's record.
+Merge them yourself:
+
+```ts
+const grouping = { by: 'state', ...(overrides.grouping ?? {}) };
+```
+
+The flat inputs never had this problem, because each was its own input. It is
+the price of the smaller surface, and it is worth saying out loud before the
+upgrade rather than after.
+
 ## The codemod
 
 `scripts/migrate-6.mjs` does the rewriting. It reads `.html` files and the

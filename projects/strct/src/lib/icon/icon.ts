@@ -601,20 +601,7 @@ export function registerStrctIcon(
  * green disc ▶ running · amber disc ⏸ paused · grey disc ■ off.
  */
 export type StrctIconBadge =
-  | 'none'
-  | 'success'
-  | 'warning'
-  | 'critical'
-  | 'running'
-  | 'paused'
-  | 'off'
-  | 'info'
-  /**
-   * @deprecated Since 5.29.0 — use `mode="maintenance"`. An amber disc was
-   * the same silhouette and hue as `paused` at 16px, and it took the one
-   * badge slot away from health. It still works: it draws the mode tile.
-   */
-  | 'maintenance';
+  'none' | 'success' | 'warning' | 'critical' | 'running' | 'paused' | 'off' | 'info';
 
 /**
  * A mode the operator put the object in, as opposed to its health: it takes no
@@ -906,8 +893,6 @@ let warnedCountOverMode = false;
       .strct-icon__badge--info::before {
         content: 'i';
       }
-      /* badge="maintenance" draws the mode tile now (FR-61-01), so no badge
-         element is rendered for it and its rules are gone with it. */
     `,
   ],
 })
@@ -935,8 +920,7 @@ export class StrctIcon {
   readonly badge = input<StrctIconBadge>('none');
   /**
    * A mode the operator chose, drawn in its own (top-end) corner so it never
-   * displaces the health badge. `badge="maintenance"` is still read as
-   * `mode="maintenance"`, which is where it belongs; it is deprecated.
+   * displaces the health badge.
    */
   readonly mode = input<StrctIconMode>('none');
   /** The mode's words, joined to the icon's name when it has one (i18n). */
@@ -974,20 +958,11 @@ export class StrctIcon {
   });
   /** 1.2em of the icon size, floored at 14px, as the badge's box. */
   protected readonly countFontSize = computed(() => Math.max(9, Math.round(this.size() * 0.58)));
-  /**
-   * The mode as drawn: its own, or the one `badge="maintenance"` meant before
-   * there was a mode (back-compat — the amber disc read as `paused` at 16px).
-   */
-  readonly shownMode = computed<StrctIconMode>(() => {
-    const mode = this.mode();
-    if (mode !== 'none') return mode;
-    return this.badge() === 'maintenance' ? 'maintenance' : 'none';
-  });
+  /** The mode as drawn. */
+  readonly shownMode = computed<StrctIconMode>(() => this.mode());
 
-  /** The badge as drawn: `maintenance` has become a mode, so it draws none. */
-  readonly shownBadge = computed<StrctIconBadge>(() =>
-    this.badge() === 'maintenance' ? 'none' : this.badge(),
-  );
+  /** The badge as drawn. */
+  readonly shownBadge = computed<StrctIconBadge>(() => this.badge());
 
   /** The label the glyph carries: its own, plus the count and the mode. */
   protected readonly accessibleLabel = computed(() => {
