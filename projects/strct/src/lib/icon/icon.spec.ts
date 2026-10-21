@@ -315,3 +315,74 @@ describe('StrctIcon', () => {
     });
   });
 });
+
+// FR-61-01: a mode the operator chose is not a health state. It has its own
+// corner, its own silhouette (a rounded square, the one no badge uses), and
+// it never displaces health.
+describe('StrctIcon — a mode of its own', () => {
+  const make = (inputs: Record<string, unknown>) => {
+    const fixture = TestBed.createComponent(StrctIcon);
+    fixture.componentRef.setInput('name', 'host');
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  };
+
+  it('draws the tile outside the badge, with its stripes', () => {
+    const el = make({ mode: 'maintenance' });
+    const tile = el.querySelector('.strct-icon__mode--maintenance')!;
+    expect(tile).toBeTruthy();
+    expect(tile.closest('.strct-icon__badge')).toBeNull();
+    expect(tile.querySelector('svg path')!.getAttribute('d')).toContain('M1.2 7.4L7.4 1.2');
+    expect(tile.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('a mode and a badge are two marks, not one', () => {
+    const el = make({ mode: 'maintenance', badge: 'critical' });
+    expect(el.querySelector('.strct-icon__mode--maintenance')).toBeTruthy();
+    expect(el.querySelector('.strct-icon__badge--critical')).toBeTruthy();
+  });
+
+  it('badge="maintenance" is read as the mode it always meant', () => {
+    const el = make({ badge: 'maintenance' });
+    expect(el.querySelector('.strct-icon__mode--maintenance')).toBeTruthy();
+    expect(el.querySelector('.strct-icon__badge')).toBeNull();
+  });
+
+  it('entering maintenance is the same tile, hollow', () => {
+    const el = make({ mode: 'maintenanceEntering' });
+    expect(el.querySelector('.strct-icon__mode--maintenanceEntering')).toBeTruthy();
+    expect(el.querySelector('.strct-icon__mode--maintenance')).toBeNull();
+  });
+
+  it('a count wins the corner, and says so once in dev mode', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const el = make({ mode: 'maintenance', count: 7, ariaLabel: 'Alarms' });
+      expect(el.querySelector('.strct-icon__count')).toBeTruthy();
+      expect(el.querySelector('.strct-icon__mode')).toBeNull();
+      make({ mode: 'maintenance', count: 3, ariaLabel: 'Alarms' });
+      expect(warn.mock.calls.filter((c) => String(c[0]).includes('top-end corner')).length).toBe(1);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('the mode joins the name when the icon has one', () => {
+    const named = make({ mode: 'maintenance', ariaLabel: 'Host' });
+    expect(named.querySelector('svg[role="img"]')!.getAttribute('aria-label')).toBe(
+      'Host, in maintenance',
+    );
+    const localised = make({
+      mode: 'maintenanceEntering',
+      ariaLabel: 'Sunucu',
+      modeLabel: () => 'bakıma alınıyor',
+    });
+    expect(localised.querySelector('svg[role="img"]')!.getAttribute('aria-label')).toBe(
+      'Sunucu, bakıma alınıyor',
+    );
+    // Unnamed stays hidden: the mode is not a name of its own.
+    const plain = make({ mode: 'maintenance' });
+    expect(plain.querySelector('svg[role="img"]')!.getAttribute('aria-hidden')).toBe('true');
+  });
+});

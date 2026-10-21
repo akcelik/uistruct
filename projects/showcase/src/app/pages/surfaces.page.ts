@@ -515,6 +515,16 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="tree-state"
+      owner="tree"
+      heading="A node's state, seen and heard"
+      description="A mode the operator chose — drained for patching — is not a health state, so it has its own corner of the icon: mode=&quot;maintenance&quot; draws a neutral striped tile at the top end (hollow while the object is still draining) and the badge keeps the bottom one. A host in maintenance with an open alarm shows both, which the single slot could never do. The row also says it: aria-description carries the words (&quot;In maintenance, Warning&quot;) without touching the node's name or the tree's type-ahead — stateWords translates them once per tree, and a node's own stateLabel overrides it (or '' says nothing, for a tree that already puts the words in its label)."
+      code='{ label: "HV-NODE-02", icon: "host", mode: "maintenance", badge: "warning" }'
+    >
+      <strct-tree style="width: 100%; max-width: 360px;" [nodes]="stateTree" />
+    </app-demo>
+
+    <app-demo
       anchor="tree-lazy"
       owner="tree"
       heading="Read the children on expand"
@@ -1421,6 +1431,38 @@ export class SurfacesPage {
   }
 
   // Trailing marks: what the row says after the label.
+  // A mode and a health badge on the same object — the case the one slot
+  // could never show (FR-61-01), and the words a reader hears (FR-61-02).
+  protected readonly stateTree: StrctTreeNodeData[] = [
+    {
+      id: 's-cluster',
+      label: 'cluster-01',
+      icon: 'cluster',
+      expanded: true,
+      children: [
+        { id: 's-hv1', label: 'HV-NODE-01', icon: 'host', badge: 'running' },
+        {
+          id: 's-hv2',
+          label: 'HV-NODE-02',
+          icon: 'host',
+          mode: 'maintenance',
+          badge: 'warning',
+          meta: 'drained',
+        },
+        {
+          id: 's-hv3',
+          label: 'HV-NODE-03',
+          icon: 'host',
+          mode: 'maintenanceEntering',
+          badge: 'running',
+          meta: 'evacuating',
+        },
+        { id: 's-hv4', label: 'HV-NODE-04', icon: 'host', badge: 'critical' },
+        { id: 's-csv', label: 'Volume1', icon: 'storage', mode: 'maintenance' },
+      ],
+    },
+  ];
+
   protected readonly trailingTree: StrctTreeNodeData[] = [
     {
       id: 't-cluster',

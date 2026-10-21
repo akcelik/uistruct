@@ -85,6 +85,10 @@ const ROUTES = [
     undefined,
     '#flow-topology strct-flow',
   ],
+  // FR-61-01 / FR-61-02: a mode the operator chose, in its own corner of the
+  // icon, beside a health badge — at the tree's 16px, where the amber disc it
+  // replaces was indistinguishable from "paused".
+  ['tree-state', '/components/tree', '#tree-state', undefined, '#tree-state strct-tree'],
   ['tree', '/components/tree'],
   // What a node says after its label: the quiet meta and the status tag, which
   // have to sit on the row without pushing the label out of it.

@@ -14,7 +14,7 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { StrctIcon, StrctIconBadge } from '../icon/icon';
+import { StrctIcon, StrctIconBadge, StrctIconMode } from '../icon/icon';
 import { StrctBadge, StrctBadgeStatus } from '../badge/badge';
 import { StrctSpinner } from '../spinner/spinner';
 import { StrctContextMenuTrigger, StrctMenuItem } from '../context-menu/menu';
@@ -33,6 +33,18 @@ export interface StrctTreeNodeData {
   icon?: string;
   /** Status dot on the icon (running / maintenance / off …). */
   badge?: StrctIconBadge;
+  /**
+   * A mode the operator put the object in — drained for patching — drawn in
+   * the icon's own top-end corner, so health keeps the bottom one and a host
+   * that is both in maintenance and alarmed shows both.
+   */
+  mode?: StrctIconMode;
+  /**
+   * What a screen reader hears about this node's state, after its label.
+   * Built from the mode and the badge when absent; `''` says nothing, for a
+   * tree that already puts the words in the label.
+   */
+  stateLabel?: string;
   /** Highlight as the selected node. */
   active?: boolean;
   /** Initial expanded state. */
@@ -85,6 +97,25 @@ export interface StrctTreeMenuEvent {
   item: StrctMenuItem;
 }
 
+/**
+ * What a node's state is called, after its label. One object, so a tree is
+ * translated in one place (FR-61-02).
+ */
+export type StrctTreeStateWords = Partial<Record<StrctIconBadge | StrctIconMode, string>>;
+
+/** The library's words for the badge and mode states. */
+export const defaultStateWords: StrctTreeStateWords = {
+  maintenance: 'In maintenance',
+  maintenanceEntering: 'Entering maintenance',
+  critical: 'Critical',
+  warning: 'Warning',
+  success: 'Healthy',
+  info: 'Information',
+  running: 'Running',
+  paused: 'Paused',
+  off: 'Off',
+};
+
 /** Default chevron aria-label factory — mirrors the `chevronAriaLabel` input default. */
 const defaultChevronAriaLabel = (expanded: boolean, label: string): string =>
   `${expanded ? 'Collapse' : 'Expand'} ${label}`;
@@ -116,6 +147,7 @@ let treeNodeCounter = 0;
       [attr.aria-setsize]="setSize()"
       [attr.aria-posinset]="posInSet()"
       [attr.aria-selected]="displayActive()"
+      [attr.aria-description]="stateDescription() || null"
       [attr.aria-expanded]="hasChildren() ? isOpen() : null"
       [attr.aria-busy]="node()?.loading ? true : null"
       [attr.aria-owns]="hasChildren() && isOpen() ? groupId : null"
@@ -159,6 +191,7 @@ let treeNodeCounter = 0;
           [size]="iconSize()"
           [strokeWidth]="1.3"
           [badge]="displayBadge()"
+          [mode]="displayMode()"
         />
       }
       <span class="strct-tnode__label">{{ displayLabel() }}</span>
@@ -329,6 +362,10 @@ export class StrctTreeNode {
   readonly icon = input<string | undefined>(undefined);
   /** Status dot variant. */
   readonly badge = input<StrctIconBadge>('none');
+  /** A mode the operator chose (content mode) — drawn in the icon's own corner. */
+  readonly mode = input<StrctIconMode>('none');
+  /** What a reader hears after the label (content mode); '' says nothing. */
+  readonly stateLabel = input<string | undefined>(undefined);
   /** Whether the item is active / selected. */
   readonly active = input(false, { transform: booleanAttribute });
   /** Whether the panel is open (two-way). */
@@ -433,6 +470,27 @@ export class StrctTreeNode {
   protected readonly displayBadge = computed<StrctIconBadge>(
     () => this.node()?.badge ?? this.badge(),
   );
+  protected readonly displayMode = computed<StrctIconMode>(() => this.node()?.mode ?? this.mode());
+
+  /**
+   * FR-61-02: a treeitem's name is its label, so a running VM, an alarmed host
+   * and a drained one all read the same. The state goes in `aria-description`,
+   * which leaves the name — and the tree's type-ahead — untouched.
+   */
+  protected readonly stateDescription = computed(() => {
+    const own = this.node()?.stateLabel ?? this.stateLabel();
+    if (own !== undefined && own !== null && own !== '') return own;
+    if (own === '') return '';
+    const words = this.tree?.stateWords() ?? defaultStateWords;
+    const parts: string[] = [];
+    const mode = this.displayMode();
+    const badge = this.displayBadge();
+    // `badge="maintenance"` is read as the mode it always meant.
+    const effectiveMode = mode !== 'none' ? mode : badge === 'maintenance' ? 'maintenance' : 'none';
+    if (effectiveMode !== 'none') parts.push(words[effectiveMode] ?? '');
+    if (badge !== 'none' && badge !== 'maintenance') parts.push(words[badge] ?? '');
+    return parts.filter(Boolean).join(', ');
+  });
   protected readonly displayActive = computed(() => this.node()?.active ?? this.active());
 
   /** Data-mode siblings (null in content mode): the parent's children, else the tree roots. */
@@ -705,6 +763,8 @@ export class StrctTree {
   readonly dropRefused = output<StrctTreeDropRefusal>();
   /** Wording of the row shown under a node whose children are being read (`node.loading`). */
   readonly loadingLabel = input('Loading…');
+  /** What each state is called after a node's label — translate once per tree. */
+  readonly stateWords = input<StrctTreeStateWords>(defaultStateWords);
   /** Accessible label of each node's chevron toggle; receives the expanded state and the node label. */
   readonly chevronAriaLabel =
     input<(expanded: boolean, label: string) => string>(defaultChevronAriaLabel);
