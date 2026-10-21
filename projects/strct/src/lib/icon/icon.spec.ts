@@ -343,12 +343,6 @@ describe('StrctIcon — a mode of its own', () => {
     expect(el.querySelector('.strct-icon__badge--critical')).toBeTruthy();
   });
 
-  it('badge="maintenance" is read as the mode it always meant', () => {
-    const el = make({ badge: 'maintenance' });
-    expect(el.querySelector('.strct-icon__mode--maintenance')).toBeTruthy();
-    expect(el.querySelector('.strct-icon__badge')).toBeNull();
-  });
-
   it('entering maintenance is the same tile, hollow', () => {
     const el = make({ mode: 'maintenanceEntering' });
     expect(el.querySelector('.strct-icon__mode--maintenanceEntering')).toBeTruthy();

@@ -476,7 +476,6 @@ export class IconsPage {
     { badge: 'success', label: 'Healthy' },
     { badge: 'warning', label: 'Degraded' },
     { badge: 'critical', label: 'Critical' },
-    { badge: 'maintenance', label: 'Maint' },
   ];
 
   protected readonly groups = STRCT_ICON_GROUPS;

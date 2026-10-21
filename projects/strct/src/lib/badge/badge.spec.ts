@@ -38,12 +38,13 @@ describe('StrctBadge', () => {
     expect(el.style.getPropertyValue('--strct-badge-fg')).toBe('');
   });
 
-  it('emits the corrected --warning class plus the deprecated --warninging alias', () => {
+  it('emits the corrected --warning class', () => {
     const fixture = TestBed.createComponent(StrctBadge);
     fixture.componentRef.setInput('status', 'warning');
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.classList).toContain('strct-badge--warning');
-    expect(el.classList).toContain('strct-badge--warninging');
+    // 6.0 dropped the `--warninging` alias the original typo left behind.
+    expect([...el.classList].some((c) => c.includes('warninging'))).toBe(false);
   });
 });

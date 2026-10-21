@@ -40,7 +40,7 @@ import { StrctOverlay } from '../overlay/overlay';
 import { focusFirstIn, restoreFocus } from '../overlay/focus';
 import { StrctSearchbox } from '../searchbox/searchbox';
 import { XlsxValue, buildXlsx } from './xlsx';
-import { strctDevWarn, strctOnDevWarnReset } from '../util/dev-warn';
+import { strctDevWarn } from '../util/dev-warn';
 // The grid's vocabulary lives beside it now, and is re-exported here so every
 // import path that worked before the split still works.
 export * from './datagrid.types';
@@ -51,7 +51,6 @@ import {
   StrctDatagridColumnState,
   StrctDatagridFiltering,
   StrctDatagridFilters,
-  StrctDatagridGroup,
   StrctDatagridGrouping,
   StrctDatagridLabels,
   StrctDatagridLazyState,
@@ -77,15 +76,6 @@ import {
  * object; and the grid's core (`columns`, `rows`, `rowId`, `labels`) with the
  * handful of look flags.
  */
-
-/** Flat inputs already named in a deprecation warning, per app run. */
-const warnedFlatInputs = new Set<string>();
-const pendingFlatInputWarnings = new Set<string>();
-let flatInputWarningQueued = false;
-strctOnDevWarnReset(() => {
-  warnedFlatInputs.clear();
-  pendingFlatInputWarnings.clear();
-});
 
 /**
  * `virtual` and `pane` take the flag they always took — including the bare
@@ -161,7 +151,7 @@ export class StrctDatagridActionBar {}
  * Interactive data table: sortable columns, row selection (Shift-click a row
  * checkbox to carry its new state across a whole block), expandable detail
  * rows, a batch action bar and built-in paging.
- *   <strct-datagrid [columns]="cols" [rows]="data" selectable expandable [pageSize]="10">
+ *   <strct-datagrid [columns]="cols" [rows]="data" [selection]="{ enabled: true }" [paging]="{ pageSize: 10 }" expandable>
  *     <button strct-button strctDatagridActions size="sm">Migrate</button>
  *     <ng-template strctRowDetail let-row> … </ng-template>
  *   </strct-datagrid>
@@ -204,26 +194,19 @@ export class StrctDatagrid {
   readonly columns = input.required<StrctDatagridColumn[]>();
   /** Data rows. */
   readonly rows = input.required<StrctRow[]>();
-  /** Rows per page (0 disables paging). */
-  readonly pageSizeFlat = input(0, { alias: 'pageSize' });
-  /** Enable row selection. */
-  readonly selectableFlat = input(false, { alias: 'selectable', transform: booleanAttribute });
   /** Expand a row in place to reveal its detail template below it. */
   readonly expandable = input(false, { transform: booleanAttribute });
   /** Collapse the grid to a single column and open a side detail pane for the
    *  clicked row (distinct from {@link expandable}). */
-  readonly detailPaneFlat = input(false, { alias: 'detailPane', transform: booleanAttribute });
   /**
    * How wide the list column is while the pane is open — px or any CSS width.
    * 260px cuts a test name like "Validate Switch Enabled Teaming
    * Configurations" in half and hides its status.
    */
-  readonly paneListWidthFlat = input<string>('260px', { alias: 'paneListWidth' });
   /**
    * Below this container width (px) the pane takes the list's place, with a
    * way back in its header, rather than squeezing both into a phone.
    */
-  readonly paneTakeoverWidthFlat = input(900, { alias: 'paneTakeoverWidth' });
   /**
    * The row whose pane is open, two-way: a "what to do next" chip opens the
    * finding it settles, a URL fragment deep-links to a test, `null` closes it.
@@ -244,8 +227,6 @@ export class StrctDatagrid {
   readonly resizable = input(false, { transform: booleanAttribute });
   /** Show a column-chooser dropdown in the footer. */
   readonly columnChooser = input(false, { transform: booleanAttribute });
-  /** Show a refresh button in the footer. */
-  readonly syncFlat = input(false, { alias: 'sync', transform: booleanAttribute });
   /** Disable all footer action buttons (sync, column chooser, etc.). */
   readonly footerActionsDisabled = input(false, { transform: booleanAttribute });
   /**
@@ -260,9 +241,6 @@ export class StrctDatagrid {
    * exactly one row is grid behaviour rather than a column of radios the
    * consumer builds and wires by hand.
    */
-  readonly selectionModeFlat = input<'none' | 'multiple' | 'single'>('none', {
-    alias: 'selectionMode',
-  });
   /** Two-way single selection: the row id (per `rowId`), or null. */
   readonly selectedId = model<unknown>(null);
   /**
@@ -270,23 +248,12 @@ export class StrctDatagrid {
    * it AND say why — shown as the row's tooltip and given to assistive tech as
    * the control's description, following the `hint` convention.
    */
-  readonly rowSelectableFlat = input<((row: StrctRow) => boolean | string) | null>(null, {
-    alias: 'rowSelectable',
-  });
   /** No outer border, radius or shadow — for a grid inside a bordered panel. */
   readonly flush = input(false, { transform: booleanAttribute });
   /** The grid's title, rendered above the header and used as its accessible name. */
   readonly caption = input('');
-  /** Whether there is another slice to ask for. */
-  readonly hasMoreFlat = input(false, { alias: 'hasMore', transform: booleanAttribute });
-  /** A slice is on its way: the button waits with a spinner. */
-  readonly loadingMoreFlat = input(false, { alias: 'loadingMore', transform: booleanAttribute });
-  /** The grand total, when the API knows it — "Showing the latest 50 of 812". */
-  readonly moreTotalFlat = input<number | null>(null, { alias: 'moreTotal' });
   /** The user asked for the next slice. */
   readonly loadMore = output<void>();
-  /** With `groupBy` and multiple selection: a tri-state checkbox per group. */
-  readonly groupSelectFlat = input(false, { alias: 'groupSelect', transform: booleanAttribute });
   /**
    * Per-row action menu resolver. When set, each row gets a trailing actions
    * column with a vertical-dots (kebab) button that opens this row's menu.
@@ -299,9 +266,6 @@ export class StrctDatagrid {
    * `selectable`. Assigning a new array (e.g. when opening a dialog) re-seeds the
    * selection; the user's subsequent toggles are preserved until the next change.
    */
-  readonly initialSelectionFlat = input<readonly unknown[] | null>(null, {
-    alias: 'initialSelection',
-  });
   /**
    * The selection itself, two-way, for `selectionMode="multiple"` — what
    * `selectedId` is for single mode. Write it and the grid checks those rows
@@ -314,30 +278,22 @@ export class StrctDatagrid {
   readonly labels = input<Partial<StrctDatagridLabels>>({});
   /** Effective labels (defaults + overrides). */
   protected readonly L = computed(() => ({ ...DG_LABELS, ...this.labels() }));
-  /** Scroll viewport height in px (virtual mode). */
-  readonly viewportHeightFlat = input(360, { alias: 'viewportHeight' });
   /**
    * Show a pencil on an editable cell when it is hovered or focused. A mouse
    * user finds an editable cell by double-clicking one; nothing said so.
    */
   readonly editHint = input(false, { transform: booleanAttribute });
-  /** Uniform row height in px (virtual mode; tune when `compact`). */
-  readonly rowHeightFlat = input(38, { alias: 'rowHeight' });
   /**
    * Server-side mode: the grid never sorts or slices `rows` itself — it shows
    * them as given and emits `(lazyLoad)` with `{ page, pageSize, sortKey,
    * sortDir }` whenever the user pages or sorts (and once on init). Provide
    * `total` so the pager and count reflect the full server-side set.
    */
-  readonly lazyFlat = input(false, { alias: 'lazy', transform: booleanAttribute });
-  /** Total row count on the server (lazy mode). */
-  readonly totalFlat = input<number | null>(null, { alias: 'total' });
   /**
    * Persist the user's column widths + hidden columns under this key in
    * localStorage (`strct-dg:<key>`), restoring them on init. For full control
    * use the two-way `columnState` instead (both may be combined).
    */
-  readonly stateKeyFlat = input<string | null>(null, { alias: 'stateKey' });
   /** User column preferences (two-way): widths from resize, hidden from the chooser. */
   readonly columnState = model<StrctDatagridColumnState | null>(null);
   /** Let the user reorder data columns by dragging their headers. */
@@ -347,18 +303,11 @@ export class StrctDatagrid {
    * per distinct value (with a count), respecting the current sort within
    * groups. Paging is bypassed while grouped; not combinable with `virtual`.
    */
-  readonly groupByFlat = input<string | null>(null, { alias: 'groupBy' });
   /**
    * The groups themselves, beside `groupBy`: their order, their labels, a
    * tone, a note, whether they start folded and a count of the consumer's
    * own. Values no group mentions follow, in the order the rows arrived.
    */
-  readonly groupsFlat = input<readonly StrctDatagridGroup[] | null>(null, { alias: 'groups' });
-  /** Keep a declared group that holds no rows, rather than dropping it. */
-  readonly showEmptyGroupsFlat = input(false, {
-    alias: 'showEmptyGroups',
-    transform: booleanAttribute,
-  });
   /**
    * Which groups are folded, two-way — so a summary counter elsewhere on the
    * page can open the group it counts.
@@ -377,20 +326,12 @@ export class StrctDatagrid {
    * paging client-side; passed through on `lazyLoad` in server mode.
    */
   readonly quickFilter = model('');
-  /** Columns the quick term scans. Defaults to every column's `key`. */
-  readonly quickFilterFieldsFlat = input<string[] | null>(null, { alias: 'quickFilterFields' });
-  /** Render the built-in quick-filter searchbox in the toolbar. */
-  readonly quickFilterableFlat = input(false, {
-    alias: 'quickFilterable',
-    transform: booleanAttribute,
-  });
   /**
    * Where the built-in box sits in the toolbar. `'end'` (default) follows the
    * console convention: action verbs lead on the left, view controls sit at
    * the far right — and the box keeps a stable position across grids whose
    * button sets differ.
    */
-  readonly quickFilterAlignFlat = input<'start' | 'end'>('end', { alias: 'quickFilterAlign' });
   /**
    * Tree-grid: the row property holding a row's children array. Rows render
    * hierarchically with indent + carets; sorting applies per sibling level;
@@ -403,7 +344,6 @@ export class StrctDatagrid {
    * ArrowLeft collapses an expanded one. There is no cell-level navigation —
    * Tab walks the interactive elements inside each row as usual.
    */
-  readonly childrenKeyFlat = input<string | null>(null, { alias: 'childrenKey' });
   /**
    * `'table'` (the default) is what the grid has always been: a table whose
    * controls each take a tab stop. `'grid'` is the APG grid: the table claims
@@ -421,7 +361,6 @@ export class StrctDatagrid {
    * file list selects by clicking the row, not a control in it. The row is
    * then the control, so pair it with `interactionMode="grid"`.
    */
-  readonly selectionColumnFlat = input<'auto' | 'none'>('auto', { alias: 'selectionColumn' });
   /**
    * The row was opened: a double-click, or Enter on the focused row in grid
    * mode. Selection is "which rows do I mean"; activation is "go".
@@ -470,31 +409,31 @@ export class StrctDatagrid {
   /** How rows are picked — replaces six flat inputs. */
   readonly selectionCfg = input<StrctDatagridSelection>({}, { alias: 'selection' });
   /** The detail pane — replaces three. `[pane]` on its own turns it on. */
-  readonly paneFlat = input<boolean | StrctDatagridPane, boolean | '' | StrctDatagridPane>(false, {
+  readonly paneInput = input<boolean | StrctDatagridPane, boolean | '' | StrctDatagridPane>(false, {
     alias: 'pane',
     transform: objectOrBoolean,
   });
   protected readonly paneCfg = computed<StrctDatagridPane>(() => {
-    const v = this.paneFlat();
+    const v = this.paneInput();
     return typeof v === 'boolean' ? (v ? { enabled: true } : {}) : { enabled: true, ...v };
   });
   /** How rows are paged. Takes the mode on its own, as before, or the object. */
-  readonly pagingFlat = input<'pages' | 'more' | StrctDatagridPaging>('pages', {
+  readonly pagingInput = input<'pages' | 'more' | StrctDatagridPaging>('pages', {
     alias: 'paging',
   });
   protected readonly pagingCfg = computed<StrctDatagridPaging>(() => {
-    const v = this.pagingFlat();
+    const v = this.pagingInput();
     return typeof v === 'string' ? { mode: v } : v;
   });
   /** Numbered pages or a "load more" footer. */
   readonly paging = computed(() => this.pagingCfg().mode ?? 'pages');
   /** Virtual scrolling. Takes the flag on its own, as before, or the object. */
-  readonly virtualFlat = input<boolean | StrctDatagridVirtual, boolean | '' | StrctDatagridVirtual>(
-    false,
-    { alias: 'virtual', transform: objectOrBoolean },
-  );
+  readonly virtualInput = input<
+    boolean | StrctDatagridVirtual,
+    boolean | '' | StrctDatagridVirtual
+  >(false, { alias: 'virtual', transform: objectOrBoolean });
   protected readonly virtualCfg = computed<StrctDatagridVirtual>(() => {
-    const v = this.virtualFlat();
+    const v = this.virtualInput();
     return typeof v === 'boolean' ? (v ? { enabled: true } : {}) : { enabled: true, ...v };
   });
   /** Whether the grid renders only the rows in view. */
@@ -506,142 +445,59 @@ export class StrctDatagrid {
   /** Remembered state — replaces `stateKey` and `sync`. */
   readonly stateCfg = input<StrctDatagridState>({}, { alias: 'state' });
 
-  /**
-   * The flat inputs this grid is actually given, with the object each has
-   * moved into. "Given" is read as "not its default", which is what a
-   * template can be checked against from inside the component.
-   */
-  private readonly flatInputsInUse: readonly [string, () => boolean, string][] = [
-    ['pageSize', () => this.pageSizeFlat() !== 0, '[paging].pageSize'],
-    ['selectable', () => this.selectableFlat(), '[selection].enabled'],
-    ['detailPane', () => this.detailPaneFlat(), '[pane].enabled'],
-    ['paneListWidth', () => this.paneListWidthFlat() !== '260px', '[pane].listWidth'],
-    ['paneTakeoverWidth', () => this.paneTakeoverWidthFlat() !== 900, '[pane].takeoverWidth'],
-    ['sync', () => this.syncFlat(), '[state].sync'],
-    ['selectionMode', () => this.selectionModeFlat() !== 'none', '[selection].mode'],
-    ['rowSelectable', () => this.rowSelectableFlat() !== null, '[selection].rowSelectable'],
-    ['hasMore', () => this.hasMoreFlat(), '[paging].hasMore'],
-    ['loadingMore', () => this.loadingMoreFlat(), '[paging].loadingMore'],
-    ['moreTotal', () => this.moreTotalFlat() !== null, '[paging].moreTotal'],
-    ['groupSelect', () => this.groupSelectFlat(), '[selection].groupSelect'],
-    ['initialSelection', () => this.initialSelectionFlat() !== null, '[selection].initial'],
-    ['viewportHeight', () => this.viewportHeightFlat() !== 360, '[virtual].viewportHeight'],
-    ['rowHeight', () => this.rowHeightFlat() !== 38, '[virtual].rowHeight'],
-    ['lazy', () => this.lazyFlat(), '[paging].lazy'],
-    ['total', () => this.totalFlat() !== null, '[paging].total'],
-    ['stateKey', () => this.stateKeyFlat() !== null, '[state].key'],
-    ['groupBy', () => this.groupByFlat() !== null, '[grouping].by'],
-    ['groups', () => this.groupsFlat() !== null, '[grouping].groups'],
-    ['showEmptyGroups', () => this.showEmptyGroupsFlat(), '[grouping].showEmpty'],
-    ['quickFilterFields', () => this.quickFilterFieldsFlat() !== null, '[filtering].fields'],
-    ['quickFilterable', () => this.quickFilterableFlat(), '[filtering].quick'],
-    ['quickFilterAlign', () => this.quickFilterAlignFlat() !== 'end', '[filtering].align'],
-    ['childrenKey', () => this.childrenKeyFlat() !== null, '[grouping].childrenKey'],
-    ['selectionColumn', () => this.selectionColumnFlat() !== 'auto', '[selection].column'],
-  ];
+  /** From `[paging].pageSize`. */
+  readonly pageSize = computed(() => this.pagingCfg().pageSize ?? 0);
+  /** From `[selection].enabled`. */
+  readonly selectable = computed(() => this.selectionCfg().enabled ?? false);
+  /** From `[pane].enabled`. */
+  readonly detailPane = computed(() => this.paneCfg().enabled ?? false);
+  /** From `[pane].listWidth`. */
+  readonly paneListWidth = computed(() => this.paneCfg().listWidth ?? '260px');
+  /** From `[pane].takeoverWidth`. */
+  readonly paneTakeoverWidth = computed(() => this.paneCfg().takeoverWidth ?? 900);
+  /** From `[state].sync`. */
+  readonly sync = computed(() => this.stateCfg().sync ?? false);
+  /** From `[selection].mode`. */
+  readonly selectionMode = computed(() => this.selectionCfg().mode ?? 'none');
+  /** From `[selection].rowSelectable`. */
+  readonly rowSelectable = computed(() => this.selectionCfg().rowSelectable ?? null);
+  /** From `[paging].hasMore`. */
+  readonly hasMore = computed(() => this.pagingCfg().hasMore ?? false);
+  /** From `[paging].loadingMore`. */
+  readonly loadingMore = computed(() => this.pagingCfg().loadingMore ?? false);
+  /** From `[paging].moreTotal`. */
+  readonly moreTotal = computed(() => this.pagingCfg().moreTotal ?? null);
+  /** From `[selection].groupSelect`. */
+  readonly groupSelect = computed(() => this.selectionCfg().groupSelect ?? false);
+  /** From `[selection].initial`. */
+  readonly initialSelection = computed(() => this.selectionCfg().initial ?? null);
+  /** From `[virtual].viewportHeight`. */
+  readonly viewportHeight = computed(() => this.virtualCfg().viewportHeight ?? 360);
 
-  /**
-   * Dev mode says, once per app run, which flat inputs have moved — a
-   * console line per name would be a wall in a screen with four grids, so
-   * the names are collected and reported together.
-   */
-  private reportFlatInputs(): void {
-    const fresh = this.flatInputsInUse
-      .filter(([name, given]) => given() && !warnedFlatInputs.has(name))
-      .map(([name, , to]) => {
-        warnedFlatInputs.add(name);
-        return `  ${name} → ${to}`;
-      });
-    if (!fresh.length) return;
-    for (const line of fresh) pendingFlatInputWarnings.add(line);
-    if (flatInputWarningQueued) return;
-    flatInputWarningQueued = true;
-    setTimeout(() => {
-      flatInputWarningQueued = false;
-      const lines = [...pendingFlatInputWarnings].sort();
-      pendingFlatInputWarnings.clear();
-      console.warn(
-        `[strct-datagrid] ${lines.length} input(s) have moved into a feature ` +
-          `object and are removed in 6.0. They keep working through 5.x:\n` +
-          lines.join('\n') +
-          `\nThe objects are [selection], [paging], [pane], [virtual], ` +
-          `[grouping], [filtering] and [state]; two-way state ` +
-          `(selectedIds, filters, columnState, …) stays where it is.`,
-      );
-    });
-  }
-
-  /** `[paging].pageSize` when it is set, else the flat `pageSize` (deprecated). */
-  readonly pageSize = computed(() => this.pagingCfg().pageSize ?? this.pageSizeFlat());
-  /** `[selection].enabled` when it is set, else the flat `selectable` (deprecated). */
-  readonly selectable = computed(() => this.selectionCfg().enabled ?? this.selectableFlat());
-  /** `[pane].enabled` when it is set, else the flat `detailPane` (deprecated). */
-  readonly detailPane = computed(() => this.paneCfg().enabled ?? this.detailPaneFlat());
-  /** `[pane].listWidth` when it is set, else the flat `paneListWidth` (deprecated). */
-  readonly paneListWidth = computed(() => this.paneCfg().listWidth ?? this.paneListWidthFlat());
-  /** `[pane].takeoverWidth` when it is set, else the flat `paneTakeoverWidth` (deprecated). */
-  readonly paneTakeoverWidth = computed(
-    () => this.paneCfg().takeoverWidth ?? this.paneTakeoverWidthFlat(),
-  );
-  /** `[state].sync` when it is set, else the flat `sync` (deprecated). */
-  readonly sync = computed(() => this.stateCfg().sync ?? this.syncFlat());
-  /** `[selection].mode` when it is set, else the flat `selectionMode` (deprecated). */
-  readonly selectionMode = computed(() => this.selectionCfg().mode ?? this.selectionModeFlat());
-  /** `[selection].rowSelectable` when it is set, else the flat `rowSelectable` (deprecated). */
-  readonly rowSelectable = computed(
-    () => this.selectionCfg().rowSelectable ?? this.rowSelectableFlat(),
-  );
-  /** `[paging].hasMore` when it is set, else the flat `hasMore` (deprecated). */
-  readonly hasMore = computed(() => this.pagingCfg().hasMore ?? this.hasMoreFlat());
-  /** `[paging].loadingMore` when it is set, else the flat `loadingMore` (deprecated). */
-  readonly loadingMore = computed(() => this.pagingCfg().loadingMore ?? this.loadingMoreFlat());
-  /** `[paging].moreTotal` when it is set, else the flat `moreTotal` (deprecated). */
-  readonly moreTotal = computed(() => this.pagingCfg().moreTotal ?? this.moreTotalFlat());
-  /** `[selection].groupSelect` when it is set, else the flat `groupSelect` (deprecated). */
-  readonly groupSelect = computed(() => this.selectionCfg().groupSelect ?? this.groupSelectFlat());
-  /** `[selection].initial` when it is set, else the flat `initialSelection` (deprecated). */
-  readonly initialSelection = computed(
-    () => this.selectionCfg().initial ?? this.initialSelectionFlat(),
-  );
-  /** `[virtual].viewportHeight` when it is set, else the flat `viewportHeight` (deprecated). */
-  readonly viewportHeight = computed(
-    () => this.virtualCfg().viewportHeight ?? this.viewportHeightFlat(),
-  );
-
-  /** `[virtual].rowHeight` when it is set, else the flat `rowHeight` (deprecated). */
-  readonly rowHeight = computed(() => this.virtualCfg().rowHeight ?? this.rowHeightFlat());
-  /** `[paging].lazy` when it is set, else the flat `lazy` (deprecated). */
-  readonly lazy = computed(() => this.pagingCfg().lazy ?? this.lazyFlat());
-  /** `[paging].total` when it is set, else the flat `total` (deprecated). */
-  readonly total = computed(() => this.pagingCfg().total ?? this.totalFlat());
-  /** `[state].key` when it is set, else the flat `stateKey` (deprecated). */
-  readonly stateKey = computed(() => this.stateCfg().key ?? this.stateKeyFlat());
-  /** `[grouping].by` when it is set, else the flat `groupBy` (deprecated). */
-  readonly groupBy = computed(() => this.groupingCfg().by ?? this.groupByFlat());
-  /** `[grouping].groups` when it is set, else the flat `groups` (deprecated). */
-  readonly groups = computed(() => this.groupingCfg().groups ?? this.groupsFlat());
-  /** `[grouping].showEmpty` when it is set, else the flat `showEmptyGroups` (deprecated). */
-  readonly showEmptyGroups = computed(
-    () => this.groupingCfg().showEmpty ?? this.showEmptyGroupsFlat(),
-  );
-  /** `[filtering].fields` when it is set, else the flat `quickFilterFields` (deprecated). */
-  readonly quickFilterFields = computed(
-    () => this.filteringCfg().fields ?? this.quickFilterFieldsFlat(),
-  );
-  /** `[filtering].quick` when it is set, else the flat `quickFilterable` (deprecated). */
-  readonly quickFilterable = computed(
-    () => this.filteringCfg().quick ?? this.quickFilterableFlat(),
-  );
-  /** `[filtering].align` when it is set, else the flat `quickFilterAlign` (deprecated). */
-  readonly quickFilterAlign = computed(
-    () => this.filteringCfg().align ?? this.quickFilterAlignFlat(),
-  );
-  /** `[grouping].childrenKey` when it is set, else the flat `childrenKey` (deprecated). */
-  readonly childrenKey = computed(() => this.groupingCfg().childrenKey ?? this.childrenKeyFlat());
-  /** `[selection].column` when it is set, else the flat `selectionColumn` (deprecated). */
-  readonly selectionColumn = computed(
-    () => this.selectionCfg().column ?? this.selectionColumnFlat(),
-  );
+  /** From `[virtual].rowHeight`. */
+  readonly rowHeight = computed(() => this.virtualCfg().rowHeight ?? 38);
+  /** From `[paging].lazy`. */
+  readonly lazy = computed(() => this.pagingCfg().lazy ?? false);
+  /** From `[paging].total`. */
+  readonly total = computed(() => this.pagingCfg().total ?? null);
+  /** From `[state].key`. */
+  readonly stateKey = computed(() => this.stateCfg().key ?? null);
+  /** From `[grouping].by`. */
+  readonly groupBy = computed(() => this.groupingCfg().by ?? null);
+  /** From `[grouping].groups`. */
+  readonly groups = computed(() => this.groupingCfg().groups ?? null);
+  /** From `[grouping].showEmpty`. */
+  readonly showEmptyGroups = computed(() => this.groupingCfg().showEmpty ?? false);
+  /** From `[filtering].fields`. */
+  readonly quickFilterFields = computed(() => this.filteringCfg().fields ?? null);
+  /** From `[filtering].quick`. */
+  readonly quickFilterable = computed(() => this.filteringCfg().quick ?? false);
+  /** From `[filtering].align`. */
+  readonly quickFilterAlign = computed(() => this.filteringCfg().align ?? 'end');
+  /** From `[grouping].childrenKey`. */
+  readonly childrenKey = computed(() => this.groupingCfg().childrenKey ?? null);
+  /** From `[selection].column`. */
+  readonly selectionColumn = computed(() => this.selectionCfg().column ?? 'auto');
 
   private readonly menu = inject(StrctMenuService);
 
@@ -2114,11 +1970,6 @@ export class StrctDatagrid {
         this.lastLazyKey = key;
         this.lazyLoad.emit(state);
       });
-    });
-    // The inputs are bound by the first render, so this is where they can be
-    // read and reported.
-    afterNextRender(() => {
-      if (typeof ngDevMode !== 'undefined' && ngDevMode) this.reportFlatInputs();
     });
     // Below `paneTakeoverWidth` the pane replaces the list. The grid's own
     // width decides, not the viewport: the same grid is wide in a page and

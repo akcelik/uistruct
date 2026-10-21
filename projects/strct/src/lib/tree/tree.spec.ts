@@ -805,13 +805,6 @@ describe('StrctTree — a node says its state in words', () => {
     expect(row('hv-03').hasAttribute('aria-description')).toBe(false);
   });
 
-  it('the old badge="maintenance" is read as the mode, and drawn as one', () => {
-    const row = build([{ id: 'csv', label: 'Volume1', icon: 'storage', badge: 'maintenance' }]);
-    expect(row('csv').getAttribute('aria-description')).toBe('In maintenance');
-    expect(row('csv').querySelector('.strct-icon__mode--maintenance')).toBeTruthy();
-    expect(row('csv').querySelector('.strct-icon__badge')).toBeNull();
-  });
-
   it('a node can say it itself, or say nothing', () => {
     const row = build([
       { id: 'a', label: 'A', badge: 'critical', stateLabel: 'Down since 09:12' },

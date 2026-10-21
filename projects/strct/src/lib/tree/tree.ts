@@ -485,10 +485,8 @@ export class StrctTreeNode {
     const parts: string[] = [];
     const mode = this.displayMode();
     const badge = this.displayBadge();
-    // `badge="maintenance"` is read as the mode it always meant.
-    const effectiveMode = mode !== 'none' ? mode : badge === 'maintenance' ? 'maintenance' : 'none';
-    if (effectiveMode !== 'none') parts.push(words[effectiveMode] ?? '');
-    if (badge !== 'none' && badge !== 'maintenance') parts.push(words[badge] ?? '');
+    if (mode !== 'none') parts.push(words[mode] ?? '');
+    if (badge !== 'none') parts.push(words[badge] ?? '');
     return parts.filter(Boolean).join(', ');
   });
   protected readonly displayActive = computed(() => this.node()?.active ?? this.active());

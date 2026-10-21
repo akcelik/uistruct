@@ -11,7 +11,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import {
   StrctBadge,
-  StrctContextMenu,
+  StrctContextMenuTrigger,
+  StrctMenuItem,
   StrctDropdownItem,
   StrctIcon,
   StrctStack,
@@ -49,7 +50,7 @@ function badgeFor(status: DcObject['status']) {
     StrctStackItem,
     StrctTabs,
     StrctTab,
-    StrctContextMenu,
+    StrctContextMenuTrigger,
     StrctDropdownItem,
   ],
   template: `
@@ -58,39 +59,27 @@ function badgeFor(status: DcObject['status']) {
         <div class="object-list__header">{{ categoryLabel() }}</div>
         <nav class="object-list__nav">
           @for (obj of objectsWithStatus(); track obj.id) {
-            <strct-context-menu>
-              <a
-                class="object-list__item"
-                [routerLink]="['/', category(), obj.id]"
-                [class.is-active]="obj.id === activeId()"
-              >
-                <strct-icon
-                  [name]="obj.id === 'default-appliance' ? 'box' : 'server'"
-                  [size]="16"
-                  [strokeWidth]="1.6"
-                />
-                <span class="object-list__name">{{ obj.name }}</span>
-                <span
-                  class="object-list__status"
-                  [class.is-running]="obj.status === 'running'"
-                  [class.is-warning]="obj.status === 'warning'"
-                  [class.is-stopped]="obj.status === 'stopped'"
-                  [class.is-maintenance]="obj.status === 'maintenance'"
-                ></span>
-              </a>
-
-              <ng-container strctContextMenuItems>
-                @if (obj.status === 'maintenance') {
-                  <strct-dropdown-item (click)="toggleMaintenance(obj.id, false)">
-                    Exit Maintenance
-                  </strct-dropdown-item>
-                } @else {
-                  <strct-dropdown-item (click)="toggleMaintenance(obj.id, true)">
-                    Enter Maintenance
-                  </strct-dropdown-item>
-                }
-              </ng-container>
-            </strct-context-menu>
+            <a
+              class="object-list__item"
+              [routerLink]="['/', category(), obj.id]"
+              [class.is-active]="obj.id === activeId()"
+              [strctContextMenu]="menuFor(obj)"
+              (menuSelect)="onMenuPick(obj.id, $event)"
+            >
+              <strct-icon
+                [name]="obj.id === 'default-appliance' ? 'box' : 'server'"
+                [size]="16"
+                [strokeWidth]="1.6"
+              />
+              <span class="object-list__name">{{ obj.name }}</span>
+              <span
+                class="object-list__status"
+                [class.is-running]="obj.status === 'running'"
+                [class.is-warning]="obj.status === 'warning'"
+                [class.is-stopped]="obj.status === 'stopped'"
+                [class.is-maintenance]="obj.status === 'maintenance'"
+              ></span>
+            </a>
           }
         </nav>
       </aside>
@@ -341,6 +330,21 @@ export class CategoryPage {
         this.lastVisited.set(cat, id);
       }
     });
+  }
+
+  /** The row's menu: one item, which reads from the row's own state. */
+  protected menuFor(obj: { id: string; status: string }): StrctMenuItem[] {
+    return [
+      {
+        label: obj.status === 'maintenance' ? 'Exit Maintenance' : 'Enter Maintenance',
+        data: 'maintenance',
+      },
+    ];
+  }
+
+  protected onMenuPick(id: string, item: StrctMenuItem): void {
+    if (item.data !== 'maintenance') return;
+    this.toggleMaintenance(id, !this.maintenanceIds().has(id));
   }
 
   toggleMaintenance(id: string, enter: boolean): void {
