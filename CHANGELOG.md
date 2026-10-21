@@ -5,6 +5,34 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.32.0] - 2026-10-21
+
+The codemod that does the 6.0 rewrite, and the showcase moved with it.
+
+### Added
+
+- **`scripts/migrate-6.mjs`** — rewrites `<strct-datagrid>` templates from the
+  flat inputs to the feature objects. It reads `.html` files and the inline
+  `template:` of `.ts` files, folds each cluster into its object, and leaves
+  everything else where it is.
+  - Deliberately conservative: an attribute it does not know stays, the
+    two-way state is never touched, an element inside a quoted attribute value
+    (a code sample stored in a string) is skipped, and an element it cannot
+    parse is reported rather than guessed at.
+  - `node scripts/migrate-6.mjs` is a dry run; `--write` applies; a path
+    narrows it.
+
+### Changed
+
+- **The showcase is written in the new shape.** The codemod rewrote **34
+  inputs on 14 grids in 3 files**, and the documentation samples were updated
+  by hand (the tool does not edit strings, on purpose). Every visual baseline
+  matches: the objects resolve to exactly what the flat inputs did.
+- **`scripts/dev-warnings.mjs` now reports `✓ Nothing deprecated left in the
+showcase: ready for 6.0`.** The library's own consumer is migrated; what
+  remains before the major is HyperStruct's screens, which the same tool
+  rewrites.
+
 ## [5.31.0] - 2026-10-21
 
 The second step toward 6.0: the datagrid becomes four files instead of one.

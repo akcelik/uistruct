@@ -118,6 +118,32 @@ took the one badge slot away from health.
 - `<strct-context-menu>`, the projected component. Use the data-driven
   `[strctContextMenu]` directive.
 
+## The codemod
+
+`scripts/migrate-6.mjs` does the rewriting. It reads `.html` files and the
+inline `template:` of `.ts` files, finds each `<strct-datagrid …>` and folds
+the flat attributes into the objects.
+
+```
+node scripts/migrate-6.mjs                 # dry run over the repo
+node scripts/migrate-6.mjs src --write     # apply, under src/
+```
+
+It is deliberately conservative:
+
+- an attribute it does not know stays where it is;
+- the two-way state is never touched;
+- an element inside a quoted attribute value — a code sample stored in a
+  string — is skipped, because a wrong rewrite inside a string is worse than
+  a missed one;
+- an element it cannot parse is reported and skipped.
+
+Run your formatter afterwards: removing attributes leaves the tag's line
+breaks to the formatter, not to the tool.
+
+It was written against this repo's own showcase: **34 inputs on 14 grids in
+3 files**, after which the readiness check below prints nothing.
+
 ## How to check a screen is ready
 
 1. Run it in a development build.

@@ -129,8 +129,8 @@ interface Alert {
       [columns]="cols"
       [rows]="rows()"
       rowId="id"
-      selectable
-      [pageSize]="8"
+      [selection]="{ enabled: true }"
+      [paging]="{ pageSize: 8 }"
       [rowActions]="rowMenu"
       (selectionChange)="selected.set($event)"
       (rowAction)="onRowAction($event)"
