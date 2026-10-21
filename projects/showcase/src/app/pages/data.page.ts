@@ -355,7 +355,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="datagrid"
       heading="Datagrid"
       description="Sortable columns, row selection, expandable detail rows, a batch action bar, paging, resizable columns and a column chooser. Populated with cluster rows; status renders as a badge. Opens with two rows pre-checked via [initialSelection] (ids matching rowId) — ideal for a picker dialog seeded with the current members."
-      code='<strct-datagrid [columns]="cols" [rows]="rows" rowId="name" selectable [initialSelection]="preChecked" expandable>&#10;  <ng-template strctCell="status" let-value="value">…</ng-template>&#10;</strct-datagrid>'
+      code='<strct-datagrid [columns]="cols" [rows]="rows" rowId="name" [selection]="&#123; enabled: true, initial: preChecked &#125;" expandable>&#10;  <ng-template strctCell="status" let-value="value">…</ng-template>&#10;</strct-datagrid>'
     >
       <div class="dg-wrap">
         <strct-checkbox [ngModel]="dense()" (ngModelChange)="dense.set($event)"
@@ -367,16 +367,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="dgCols"
           [rows]="dgRows"
           rowId="name"
-          selectable
-          [initialSelection]="preChecked"
+          [selection]="{ enabled: true, initial: preChecked }"
+          [state]="{ sync: true }"
+          [paging]="{ pageSize: 5 }"
           expandable
           resizable
           columnChooser
-          sync
           [footerActionsDisabled]="refreshing()"
           (syncChange)="onRefresh()"
           [compact]="dense()"
-          [pageSize]="5"
         >
           <ng-template strctCell="status" let-value="value">
             <strct-badge [status]="badgeFor(value)">{{ value }}</strct-badge>
@@ -413,7 +412,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       owner="datagrid"
       heading="Picking one row, and rows that cannot be picked"
       description="selectionMode=&quot;single&quot; makes the grid its own picker: a native radio group, one name per grid, so the arrow keys move between rows and Space picks — without a radio column wired by hand outside the grid. Clicking anywhere on the row picks it, [(selectedId)] carries the row id, and (selectionChange) still fires with a one-element array so existing listeners keep working. rowSelectable locks a row and can say why: the reason becomes the row's tooltip and the control's accessible description, and a locked row keeps its normal colours because a locked candidate is still worth reading."
-      code='<strct-datagrid selectionMode="single" [(selectedId)]="targetId" [rowSelectable]="canDeploy" rowId="id" />'
+      code='<strct-datagrid [selection]="&#123; mode: &apos;single&apos;, rowSelectable: canDeploy &#125;" [(selectedId)]="targetId" rowId="id" />'
     >
       <div class="dg-wrap">
         <strct-datagrid
@@ -421,9 +420,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="pickCols"
           [rows]="pickRows"
           rowId="id"
-          selectionMode="single"
+          [selection]="{ mode: 'single', rowSelectable: canDeploy }"
           [(selectedId)]="pickedHost"
-          [rowSelectable]="canDeploy"
         />
         <span class="echo">Target: {{ pickedHost() ?? 'none chosen' }}</span>
       </div>
@@ -434,7 +432,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       owner="datagrid"
       heading="The grid interaction model (opt-in)"
       description='interactionMode="grid" turns the table into the APG grid: the whole grid is one tab stop instead of two per row, the cursor row carries it, ↑/↓ move it, Home/End jump, →/← step through that row&apos;s own controls and Escape comes back out, Space picks and Enter activates. It also makes a selected row say so — aria-selected on a row reaches no screen reader outside a grid. selectionColumn="none" drops the tick column where the row itself is the control (a file list), and (rowActivate) fires on a double-click or Enter, which is how a console opens a row. It is opt-in because it changes what Tab does inside the table.'
-      code='<strct-datagrid interactionMode="grid" selectionMode="single" selectionColumn="none" (rowActivate)="open($event)" />'
+      code='<strct-datagrid interactionMode="grid" [selection]="&#123; mode: &apos;single&apos;, column: &apos;none&apos; &#125;" (rowActivate)="open($event)" />'
     >
       <div class="dg-wrap">
         <strct-datagrid
@@ -443,8 +441,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [rows]="pickRows"
           rowId="id"
           interactionMode="grid"
-          selectionMode="single"
-          selectionColumn="none"
+          [selection]="{ mode: 'single', column: 'none' }"
           [(selectedId)]="gridPicked"
           (rowActivate)="gridOpened.set($any($event)['name'])"
         />
@@ -460,7 +457,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       owner="datagrid"
       heading="Select all in a group"
       description="With groupBy and multiple selection, groupSelect puts a tri-state checkbox on each group header: checked when every selectable row of the group is selected, indeterminate when only some are, and it skips locked rows entirely."
-      code='<strct-datagrid selectable groupBy="pool" groupSelect [rowSelectable]="canDeploy" rowId="id" />'
+      code='<strct-datagrid [selection]="&#123; enabled: true, groupSelect: true, rowSelectable: canDeploy &#125;" [grouping]="&#123; by: &apos;pool&apos; &#125;" rowId="id" />'
     >
       <div class="dg-wrap">
         <strct-datagrid
@@ -468,10 +465,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="pickCols"
           [rows]="pickRows"
           rowId="id"
-          selectable
-          groupBy="pool"
-          groupSelect
-          [rowSelectable]="canDeploy"
+          [selection]="{ enabled: true, groupSelect: true, rowSelectable: canDeploy }"
+          [grouping]="{ by: 'pool' }"
           (selectionChange)="pickedGroup.set($event.length)"
         />
         <span class="echo">{{ pickedGroup() }} selected</span>
@@ -547,7 +542,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       owner="datagrid"
       heading="Server-side data (lazy)"
       description="With lazy the grid never sorts or slices rows itself — it emits (lazyLoad) with { page, pageSize, sortKey, sortDir } whenever you page or sort (and once on init), and you fetch that window from your API. total drives the pager. Below, a fake 500-row server answers with 300ms latency."
-      code='<strct-datagrid [columns]="cols" [rows]="pageRows()" lazy [total]="500" [pageSize]="8" [loading]="busy()" (lazyLoad)="fetch($event)" />'
+      code='<strct-datagrid [columns]="cols" [rows]="pageRows()" [paging]="&#123; lazy: true, total: 500, pageSize: 8 &#125;" [loading]="busy()" (lazyLoad)="fetch($event)" />'
     >
       <div class="dg-wrap">
         <strct-datagrid
@@ -555,9 +550,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="lzCols"
           [rows]="lzRows()"
           rowId="id"
-          lazy
-          [total]="500"
-          [pageSize]="8"
+          [paging]="{ lazy: true, total: 500, pageSize: 8 }"
           [loading]="lzLoading()"
           (lazyLoad)="onLazyLoad($event)"
         />
@@ -570,7 +563,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       owner="datagrid"
       heading="Row grouping"
       description="groupBy renders a collapsible header row per distinct value with a count — sorting still applies within groups. Click a group header to collapse it. maxHeight bounds the grid's own scroll box with a sticky header — what viewportHeight does for virtual, for every other grid: a grouped picker inside a dialog scrolls instead of growing the page."
-      code='<strct-datagrid [columns]="cols" [rows]="rows" groupBy="type" [maxHeight]="220" />'
+      code='<strct-datagrid [columns]="cols" [rows]="rows" [grouping]="&#123; by: &apos;type&apos; &#125;" [virtual]="&#123; maxHeight: 220 &#125;" />'
     >
       <div class="dg-wrap">
         <div style="display: flex; gap: 18px; flex-wrap: wrap">
@@ -586,8 +579,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="dgCols"
           [rows]="dgRows"
           rowId="name"
-          [maxHeight]="bounded() ? 220 : null"
-          [groupBy]="grouped() ? 'type' : null"
+          [virtual]="{ maxHeight: bounded() ? 220 : null }"
+          [grouping]="{ by: grouped() ? 'type' : null }"
         >
           <ng-template strctCell="status" let-value="value">
             <strct-badge [status]="badgeFor(value)">{{ value }}</strct-badge>
@@ -601,7 +594,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       owner="datagrid"
       heading="Groups the consumer defines, in their own tone"
       description="groups[] names the order, the label, the count, a status and a note — a results page grouped by what the operator must do. The status tints the label and its count chip the way strct-badge does, and the note is a second, quieter voice after it rather than a continuation of the heading. A screen reader hears the three as one sentence: “Needs your decision, 2. Blocks the join until fixed or accepted by name.”"
-      code='<strct-datagrid [groups]="[{ value: &#39;block&#39;, label: &#39;Needs your decision&#39;, status: &#39;critical&#39;, note: &#39;Blocks the join…&#39; }]" groupBy="severity" />'
+      code='<strct-datagrid [groups]="[{ value: &#39;block&#39;, label: &#39;Needs your decision&#39;, status: &#39;critical&#39;, note: &#39;Blocks the join…&#39; }]" [grouping]="&#123; by: &apos;severity&apos; &#125;" />'
     >
       <div class="dg-wrap">
         <strct-datagrid
@@ -609,8 +602,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="checkCols"
           [rows]="checkRows"
           rowId="id"
-          groupBy="severity"
-          [groups]="checkGroups"
+          [grouping]="{ by: 'severity', groups: checkGroups }"
         />
       </div>
     </app-demo>
@@ -620,7 +612,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       owner="datagrid"
       heading="Filters — quick + per-column"
       description="quickFilterable renders the built-in quick-filter box: one term OR-matched across every column (the console-standard fast filter), with a filtered-from-total count. Per-column filters (contains-text popover / checkbox value set) AND on top. Both reset paging and ride on (lazyLoad) in server mode."
-      code='<strct-datagrid quickFilterable [(quickFilter)]="q" [(filters)]="filters" … />  ·  cols = [{ key: "name", filterable: true }, { key: "status", filterOptions: [...] }]'
+      code='<strct-datagrid [filtering]="&#123; quick: true &#125;" [(quickFilter)]="q" [(filters)]="filters" … />  ·  cols = [{ key: "name", filterable: true }, { key: "status", filterOptions: [...] }]'
     >
       <div class="dg-wrap">
         <strct-datagrid
@@ -628,7 +620,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="dgFilterCols"
           [rows]="dgRows"
           rowId="name"
-          quickFilterable
+          [filtering]="{ quick: true }"
           [(quickFilter)]="dgQuickFilter"
           [(filters)]="dgFilters"
         >
@@ -645,13 +637,13 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       owner="datagrid"
       heading="Tree grid"
       description="childrenKey renders hierarchical rows with indentation and carets — the vCenter inventory shape. Sorting applies per sibling level; a text filter shows matches with their ancestors force-expanded."
-      code='<strct-datagrid [columns]="cols" [rows]="tree" childrenKey="children" rowId="name" />'
+      code='<strct-datagrid [columns]="cols" [rows]="tree" [grouping]="&#123; childrenKey: &apos;children&apos; &#125;" rowId="name" />'
     >
       <strct-datagrid
         style="width: 100%;"
         [columns]="dgTreeCols"
         [rows]="dgTreeRows"
-        childrenKey="children"
+        [grouping]="{ childrenKey: 'children' }"
         rowId="name"
       >
         <ng-template strctCell="status" let-value="value">
@@ -721,7 +713,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="taskCols"
           [rows]="taskRows"
           rowId="id"
-          [pageSize]="0"
+          [paging]="{ pageSize: 0 }"
         />
       </div>
     </app-demo>
@@ -731,7 +723,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       owner="datagrid"
       heading="Cursor paging"
       description='A feed that pages by cursor loads more at the end — an event log, an audit trail. lazy speaks page numbers, which a cursor API cannot answer, so paging="more" takes the pager’s place — the count, the column chooser and the sync button are the footer’s, not the pager’s, and they stay: (loadMore) asks for the next slice, loadingMore puts a spinner in the button while it arrives, hasMore drops the button at the end, and the consumer appends the rows. moreTotal fills in “of 812” when the API knows the total.'
-      code='<strct-datagrid paging="more" [hasMore]="hasMore()" [loadingMore]="busy()" [moreTotal]="812" (loadMore)="next()" />'
+      code='<strct-datagrid [paging]="&#123; mode: &apos;more&apos;, hasMore: hasMore(), loadingMore: busy(), moreTotal: 812 &#125;" (loadMore)="next()" />'
     >
       <div class="dg-wrap">
         <strct-datagrid
@@ -739,12 +731,14 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="eventCols"
           [rows]="eventRows()"
           rowId="id"
-          paging="more"
+          [state]="{ sync: true }"
+          [paging]="{
+            hasMore: eventsHasMore(),
+            loadingMore: eventsLoading(),
+            moreTotal: 24,
+            mode: 'more',
+          }"
           columnChooser
-          sync
-          [hasMore]="eventsHasMore()"
-          [loadingMore]="eventsLoading()"
-          [moreTotal]="24"
           (loadMore)="loadMoreEvents()"
           (syncChange)="eventsSynced.set(eventsSynced() + 1)"
         />
@@ -759,14 +753,14 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="detailpane"
       heading="Detail pane"
       description="A different pattern from expandable rows: click the » button to collapse the grid to a single column and open a side pane with that row's details (the » keeps row cells free to select/copy). Click it again or the × to return."
-      code='<strct-datagrid [columns]="cols" [rows]="rows" detailPane>…</strct-datagrid>'
+      code='<strct-datagrid [columns]="cols" [rows]="rows" pane>…</strct-datagrid>'
     >
       <strct-datagrid
         style="width: 100%;"
         [columns]="dgCols"
         [rows]="dgRows"
-        detailPane
-        [pageSize]="6"
+        [pane]="{ enabled: true }"
+        [paging]="{ pageSize: 6 }"
       >
         <ng-template strctRowDetail let-row>
           <strct-stack style="max-width: 340px;">

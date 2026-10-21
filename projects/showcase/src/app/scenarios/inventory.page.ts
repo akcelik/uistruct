@@ -98,12 +98,12 @@ import {
       [columns]="cols"
       [rows]="rows()"
       rowId="id"
-      selectable
+      [selection]="{ enabled: true }"
+      [state]="{ sync: true }"
+      [paging]="{ pageSize: 8 }"
       expandable
       resizable
       columnChooser
-      sync
-      [pageSize]="8"
       [rowActions]="rowMenu"
       (selectionChange)="selected.set($event.length)"
       (syncChange)="onSync()"
