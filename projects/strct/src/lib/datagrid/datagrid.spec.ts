@@ -12,6 +12,38 @@ import {
 import { StrctCellDef, StrctRow } from '../table/table';
 import { resetStrctDevWarnings } from '../util/dev-warn';
 
+/**
+ * 6.0: a feature object REPLACES, it does not merge — so a fixture that sets
+ * its own `grouping: { by }` and then applies a test's `grouping: { groups }`
+ * would lose the `by`. Every helper below goes through this, which merges
+ * each object with what the component already holds. A consumer with a
+ * wrapper component around the grid needs the same (docs/migration-6.md).
+ */
+const OBJECT_INPUTS = new Set([
+  'selection',
+  'paging',
+  'pane',
+  'virtual',
+  'grouping',
+  'filtering',
+  'state',
+]);
+
+function applyInputs(
+  fixture: { componentRef: { setInput(n: string, v: unknown): void }; componentInstance: unknown },
+  inputs: Record<string, unknown>,
+): void {
+  for (const [k, v] of Object.entries(inputs)) {
+    if (OBJECT_INPUTS.has(k) && v && typeof v === 'object') {
+      const held = (fixture.componentInstance as Record<string, () => unknown>)[k + 'Cfg'];
+      const current = typeof held === 'function' ? ((held() as object) ?? {}) : {};
+      fixture.componentRef.setInput(k, { ...current, ...(v as object) });
+    } else {
+      fixture.componentRef.setInput(k, v);
+    }
+  }
+}
+
 const COLS: StrctDatagridColumn[] = [{ key: 'n', label: 'N', sortable: true }];
 const ROWS: StrctRow[] = [{ n: 'gamma' }, { n: 'alpha' }, { n: 'beta' }];
 
@@ -339,7 +371,7 @@ describe('StrctDatagrid column filters', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     return fixture;
   }
@@ -436,7 +468,7 @@ describe('StrctDatagrid tree-grid', () => {
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('grouping', { childrenKey: 'kids' });
     fixture.componentRef.setInput('rowId', 'name');
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     return fixture;
   }
@@ -687,7 +719,7 @@ describe('StrctDatagrid quick filter (FR-16-02)', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     return fixture;
   }
@@ -738,7 +770,7 @@ describe('StrctDatagrid quick filter (FR-16-02)', () => {
     const fixture = make({ filtering: { quick: true } });
     const box = fixture.nativeElement.querySelector('.strct-dg__quickfilter')!;
     expect(box.classList).toContain('strct-dg__quickfilter--end');
-    fixture.componentRef.setInput('filtering', { align: 'start' });
+    fixture.componentRef.setInput('filtering', { quick: true, align: 'start' });
     fixture.detectChanges();
     expect(box.classList).not.toContain('strct-dg__quickfilter--end');
   });
@@ -893,7 +925,7 @@ describe('StrctDatagrid detail pane (focus lifecycle)', () => {
   @Component({
     imports: [StrctDatagrid, StrctRowDetailDef],
     template: `
-      <strct-datagrid [columns]="cols" [rows]="rows" detailPane>
+      <strct-datagrid [columns]="cols" [rows]="rows" pane>
         <ng-template strctRowDetail let-row>{{ row['n'] }} detail</ng-template>
       </strct-datagrid>
     `,
@@ -1235,7 +1267,8 @@ describe('StrctDatagrid unresolvable rowId', () => {
       expect(emitted).toEqual([rows[i]]);
     }
     // And the id — not the object — is still the key: a seed of 0 and '' hits.
-    fixture.componentRef.setInput('selection', { initial: [0, ''] });
+    // An object replaces: the tick column has to be asked for again.
+    fixture.componentRef.setInput('selection', { enabled: true, initial: [0, ''] });
     fixture.detectChanges();
     expect(rowBoxes(fixture).map((b) => b.checked)).toEqual([true, true, false]);
   });
@@ -1303,7 +1336,7 @@ describe('StrctDatagrid silent-failure diagnostics', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', [{ key: 'n', label: 'N' }]);
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     return { fixture, messages: () => warn.mock.calls.map((c) => String(c[0])) };
   }
@@ -1396,7 +1429,7 @@ describe('StrctDatagrid — single selection, row locks, group select-all (FR-48
     fixture.componentRef.setInput('columns', COLUMNS);
     fixture.componentRef.setInput('rows', HOSTS);
     fixture.componentRef.setInput('rowId', 'id');
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     return {
@@ -1546,7 +1579,7 @@ describe('StrctDatagrid presentation and cursor paging', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
-    for (const [k, v] of Object.entries(extra)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, extra);
     fixture.detectChanges();
     return { fixture, el: fixture.nativeElement as HTMLElement };
   }
@@ -1727,7 +1760,7 @@ describe('StrctDatagrid — keyboard access to editable cells', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     const edits: { value: string; previous: unknown }[] = [];
     fixture.componentInstance.cellEdit.subscribe((e) => edits.push(e));
     fixture.detectChanges();
@@ -1870,7 +1903,7 @@ describe('StrctDatagrid — two-way selectedIds', () => {
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
     fixture.componentRef.setInput('selection', { enabled: true });
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     const emitted: StrctRow[][] = [];
     fixture.componentInstance.selectionChange.subscribe((s) => emitted.push(s));
     fixture.detectChanges();
@@ -1936,7 +1969,7 @@ describe('StrctDatagrid — footer and chrome combinations', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     return { fixture, el: fixture.nativeElement as HTMLElement };
   }
@@ -1991,7 +2024,7 @@ describe('StrctDatagrid — a seeded pick survives, and a row that returns is st
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
     fixture.componentRef.setInput('selection', { enabled: true });
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     const emitted: StrctRow[][] = [];
     fixture.componentInstance.selectionChange.subscribe((s) => emitted.push(s));
     fixture.detectChanges();
@@ -2140,13 +2173,13 @@ describe('StrctDatagrid — a count worth showing, and a picker per row', () => 
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     return { fixture, el: fixture.nativeElement as HTMLElement };
   }
 
   it('shows the footer once something is selected, with no pager at all', () => {
-    const { fixture, el } = make({ selectable: true });
+    const { fixture, el } = make({ selection: { enabled: true } });
     expect(el.querySelector('.strct-dg__foot')).toBeNull();
 
     fixture.componentInstance.toggleRow(rows[0]);
@@ -2201,7 +2234,7 @@ describe('StrctDatagrid — sort values, hidden columns, exports', () => {
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     return {
@@ -2250,7 +2283,7 @@ describe('StrctDatagrid — sort values, hidden columns, exports', () => {
   });
 
   it('remembers the sort with the rest of the column state', () => {
-    const { fixture, sortBy } = make({ stateKey: 'spec-sort' });
+    const { fixture, sortBy } = make({ state: { key: 'spec-sort' } });
     sortBy('Name');
     const state = fixture.componentInstance.columnState();
     expect(state!.sortKey).toBe('name');
@@ -2283,7 +2316,7 @@ describe('StrctDatagrid — groups the consumer defines', () => {
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
     fixture.componentRef.setInput('grouping', { by: 'state' });
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     return {
@@ -2299,15 +2332,17 @@ describe('StrctDatagrid — groups the consumer defines', () => {
 
   it('renders the declared order, labels, counts, tone and note; the rest follow', () => {
     const { el, groups } = make({
-      groups: [
-        {
-          value: 'needs',
-          label: 'Needs your decision',
-          status: 'critical',
-          note: 'Blocks the join',
-        },
-        { value: 'passed', label: 'Passed', collapsed: true },
-      ],
+      grouping: {
+        groups: [
+          {
+            value: 'needs',
+            label: 'Needs your decision',
+            status: 'critical',
+            note: 'Blocks the join',
+          },
+          { value: 'passed', label: 'Passed', collapsed: true },
+        ],
+      },
       collapsedGroups: ['passed'],
     });
     expect(groups()).toEqual(['Needs your decision', 'Passed', 'other']);
@@ -2324,9 +2359,9 @@ describe('StrctDatagrid — groups the consumer defines', () => {
 
   it('counts what the consumer says, and can keep an empty group', () => {
     const empty = [{ value: 'nobody', label: 'Not applicable', count: 11 }];
-    expect(make({ groups: empty }).groups()).not.toContain('Not applicable');
+    expect(make({ grouping: { groups: empty } }).groups()).not.toContain('Not applicable');
 
-    const { el, groups } = make({ groups: empty, showEmptyGroups: true });
+    const { el, groups } = make({ grouping: { groups: empty, showEmpty: true } });
     expect(groups()).toContain('Not applicable');
     expect(
       [...el.querySelectorAll('.strct-dg__groupcount')].map((c) => c.textContent!.trim()),
@@ -2363,8 +2398,7 @@ describe('StrctDatagrid — a usable detail pane', () => {
         [columns]="cols"
         [rows]="rows"
         rowId="id"
-        detailPane
-        paneListWidth="420px"
+        [pane]="{ listWidth: '420px' }"
         [(activeRowId)]="active"
       >
         <span strctDetailPaneTitle class="ptitle">The finding</span>
@@ -2511,7 +2545,7 @@ describe('StrctDatagrid — the grid says what it does', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', COLS);
     fixture.componentRef.setInput('rows', ROWS);
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     return {
@@ -2567,7 +2601,7 @@ describe('StrctDatagrid — the grid says what it does', () => {
   });
 
   it('says where the pager went, and how much a filter left', () => {
-    const { fixture, el, said } = make({ pageSize: 2, quickFilterable: true });
+    const { fixture, el, said } = make({ paging: { pageSize: 2 }, filtering: { quick: true } });
     const pager = el.querySelector('.strct-pg') as HTMLElement;
     const second = [...pager.querySelectorAll('button')].find(
       (b) => b.textContent!.trim() === '2',
@@ -2635,7 +2669,7 @@ describe('StrctDatagrid — interactionMode="grid"', () => {
     fixture.componentRef.setInput('rows', ROWS);
     fixture.componentRef.setInput('rowId', 'id');
     fixture.componentRef.setInput('interactionMode', 'grid');
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     const rows = () => [...el.querySelectorAll<HTMLElement>('tbody tr')];
@@ -2672,7 +2706,7 @@ describe('StrctDatagrid — interactionMode="grid"', () => {
   });
 
   it('picks with Space and activates with Enter', () => {
-    const { fixture, rows, press } = make({ selectionMode: 'single' });
+    const { fixture, rows, press } = make({ selection: { mode: 'single' } });
     const picked: unknown[] = [];
     const activated: unknown[] = [];
     fixture.componentInstance.selectionChange.subscribe((r: StrctRow[]) =>
@@ -2707,7 +2741,7 @@ describe('StrctDatagrid — interactionMode="grid"', () => {
 
   it('steps through the row’s own controls with the arrows, and Escape comes back', () => {
     const { el, rows, press } = make({
-      selectionMode: 'multiple',
+      selection: { mode: 'multiple' },
       rowActions: () => [{ id: 'open', label: 'Open' }],
     });
     const row = rows()[0];
@@ -2737,9 +2771,8 @@ describe('StrctDatagrid — interactionMode="grid"', () => {
           [rows]="rows"
           rowId="id"
           interactionMode="grid"
-          selectionMode="single"
-          selectionColumn="none"
-          detailPane
+          [selection]="{ mode: 'single', column: 'none' }"
+          pane
         >
           <ng-template strctRowDetail let-row>{{ row['name'] }} detail</ng-template>
         </strct-datagrid>
@@ -2789,7 +2822,7 @@ describe('StrctDatagrid — empty states and the bulk escape', () => {
     fixture.componentRef.setInput('columns', COLS);
     fixture.componentRef.setInput('rows', ROWS);
     fixture.componentRef.setInput('rowId', 'id');
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     return { fixture, el: fixture.nativeElement as HTMLElement };
   }
@@ -2800,7 +2833,7 @@ describe('StrctDatagrid — empty states and the bulk escape', () => {
     expect(empty.textContent).toContain('No data');
     expect(empty.querySelector('button')).toBeNull();
 
-    const filtered = make({ quickFilterable: true, quickFilter: 'zzzz' });
+    const filtered = make({ quickFilter: 'zzzz', filtering: { quick: true } });
     const state = filtered.el.querySelector('strct-empty-state')!;
     expect(state.textContent).toContain('No rows match the filter');
     // The query is named, and there is a way back.
@@ -2809,7 +2842,7 @@ describe('StrctDatagrid — empty states and the bulk escape', () => {
   });
 
   it('clears the filter from the empty state and the rows come back', () => {
-    const { fixture, el } = make({ quickFilterable: true, quickFilter: 'zzzz' });
+    const { fixture, el } = make({ quickFilter: 'zzzz', filtering: { quick: true } });
     expect(el.querySelectorAll('tbody tr').length).toBe(1);
 
     el.querySelector<HTMLButtonElement>('strct-empty-state button')!.click();
@@ -2819,7 +2852,7 @@ describe('StrctDatagrid — empty states and the bulk escape', () => {
   });
 
   it('offers the rest of the set once the page is selected, then offers to clear', () => {
-    const { fixture, el } = make({ selectable: true, pageSize: 3 });
+    const { fixture, el } = make({ selection: { enabled: true }, paging: { pageSize: 3 } });
     expect(el.querySelector('.strct-dg__bulk')).toBeNull();
 
     el.querySelector<HTMLInputElement>('thead .strct-cb__native')!.click();
@@ -2836,13 +2869,16 @@ describe('StrctDatagrid — empty states and the bulk escape', () => {
   });
 
   it('does not offer what it cannot do: one page, or a lazy grid', () => {
-    const onePage = make({ selectable: true });
+    const onePage = make({ selection: { enabled: true } });
     onePage.el.querySelector<HTMLInputElement>('thead .strct-cb__native')!.click();
     onePage.fixture.detectChanges();
     // Every row is already on the page — there is no "rest" to offer.
     expect(onePage.el.querySelector('.strct-dg__bulk')).toBeNull();
 
-    const lazy = make({ selectable: true, pageSize: 3, lazy: true, total: 99 });
+    const lazy = make({
+      selection: { enabled: true },
+      paging: { pageSize: 3, lazy: true, total: 99 },
+    });
     lazy.el.querySelector<HTMLInputElement>('thead .strct-cb__native')!.click();
     lazy.fixture.detectChanges();
     // The grid cannot name rows the server has not sent.
@@ -2998,7 +3034,7 @@ describe('StrctDatagrid — the empty row is not a heading', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', []);
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     return { fixture, el: fixture.nativeElement as HTMLElement };
   }
@@ -3096,7 +3132,7 @@ describe('StrctDatagrid — the feature objects', () => {
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     return {
@@ -3107,18 +3143,11 @@ describe('StrctDatagrid — the feature objects', () => {
   }
 
   it('[paging] carries what six flat inputs carried', () => {
-    const flat = make({ pageSize: 2 });
-    expect(flat.bodyRows()).toBe(2);
     const object = make({ paging: { mode: 'pages', pageSize: 3 } });
     expect(object.bodyRows()).toBe(3);
     // The mode on its own is what it always was.
-    const mode = make({ paging: 'more', hasMore: true });
+    const mode = make({ paging: { mode: 'more', hasMore: true } });
     expect(mode.el.querySelector('.strct-dg__more')).toBeTruthy();
-  });
-
-  it('the object wins where both are given', () => {
-    const both = make({ pageSize: 5, paging: { pageSize: 2 } });
-    expect(both.bodyRows()).toBe(2);
   });
 
   it('[selection] turns the tick column on, and keeps [(selectedIds)] where it is', () => {
@@ -3140,7 +3169,7 @@ describe('StrctDatagrid — the feature objects', () => {
   });
 
   it('[virtual] and [pane] still take the bare attribute, and now an object', () => {
-    const flag = make({ virtual: true });
+    const flag = make({ virtual: { enabled: true } });
     expect(flag.el.querySelector('.strct-dg__scroll')).toBeTruthy();
     const object = make({ virtual: { viewportHeight: 120, rowHeight: 20 } });
     const scroll = object.el.querySelector<HTMLElement>('.strct-dg__scroll')!;
@@ -3173,40 +3202,6 @@ describe('StrctDatagrid — the feature objects', () => {
     expect(stated.el.querySelector('button[aria-label="Refresh data"]')).toBeTruthy();
     expect(stated.fixture.componentInstance.stateKey()).toBe('grid-3');
   });
-
-  it('names the flat inputs that have moved, once per app run', async () => {
-    resetStrctDevWarnings();
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      make({ pageSize: 2, selectable: true, stateKey: 'grid-1' });
-      await new Promise((r) => setTimeout(r));
-      const said = warn.mock.calls.map((c) => String(c[0])).join('\n');
-      expect(said).toContain('removed in 6.0');
-      expect(said).toContain('pageSize → [paging].pageSize');
-      expect(said).toContain('selectable → [selection].enabled');
-      expect(said).toContain('stateKey → [state].key');
-
-      // A second grid with the same inputs says nothing more.
-      const before = warn.mock.calls.length;
-      make({ pageSize: 3, selectable: true });
-      await new Promise((r) => setTimeout(r));
-      expect(warn.mock.calls.length).toBe(before);
-    } finally {
-      warn.mockRestore();
-    }
-  });
-
-  it('says nothing for a grid written in the new shape', async () => {
-    resetStrctDevWarnings();
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      make({ paging: { pageSize: 4 }, selection: { enabled: true }, state: { key: 'grid-2' } });
-      await new Promise((r) => setTimeout(r));
-      expect(warn.mock.calls.filter((c) => String(c[0]).includes('[strct-datagrid]'))).toEqual([]);
-    } finally {
-      warn.mockRestore();
-    }
-  });
 });
 
 // A height cap is not a virtual setting. It was folded into [virtual] in
@@ -3229,7 +3224,7 @@ describe('StrctDatagrid — a height cap is not virtual scrolling', () => {
     fixture.componentRef.setInput('columns', cols);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('rowId', 'id');
-    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    applyInputs(fixture, inputs);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     return {
@@ -3264,7 +3259,7 @@ describe('StrctDatagrid — a height cap is not virtual scrolling', () => {
     resetStrctDevWarnings();
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
-      const { groupRows } = make({ grouping: { by: 'type' }, virtual: true });
+      const { groupRows } = make({ grouping: { by: 'type' }, virtual: { enabled: true } });
       expect(groupRows()).toBe(0); // the rows render ungrouped, as before
       const said = warn.mock.calls.map((c) => String(c[0])).join('\n');
       expect(said).toContain('[grouping] is ignored while virtual scrolling is on');

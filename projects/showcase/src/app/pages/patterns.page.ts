@@ -9,7 +9,6 @@ import {
   StrctChatThread,
   StrctStack,
   StrctCheckbox,
-  StrctContextMenu,
   StrctContextMenuTrigger,
   StrctDropdownDivider,
   StrctDropdownItem,
@@ -44,7 +43,6 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctCheckbox,
     StrctButton,
     StrctIcon,
-    StrctContextMenu,
     StrctContextMenuTrigger,
     StrctDropdownItem,
     StrctDropdownDivider,
@@ -236,45 +234,20 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="contextmenu"
       heading="Context menu"
-      description="Right-click the area below. The menu opens at the cursor and reuses dropdown items."
-      code="<strct-context-menu><div>…</div><ng-container strctContextMenuItems>…</ng-container></strct-context-menu>"
+      description="Right-click the area below: [strctContextMenu] takes the items as data, portals the menu into the body so no overflow can clip it, and reports the chosen one through (menuSelect). Submenus, dividers, icons, hints and a critical entry are all fields on the item."
+      code='<div [strctContextMenu]="items" (menuSelect)="run($event)">…</div>'
     >
-      <strct-context-menu>
-        <div class="ctx-target">
-          <strct-icon name="grid" [size]="18" />
-          <span>Right-click anywhere in this panel</span>
-          @if (lastAction()) {
-            <span class="ctx-echo">last action: {{ lastAction() }}</span>
-          }
-        </div>
-        <ng-container strctContextMenuItems>
-          <strct-dropdown-item (click)="lastAction.set('Open')">
-            <strct-icon name="search" [size]="14" /> Open
-          </strct-dropdown-item>
-          <strct-dropdown-item (click)="lastAction.set('Rename')">
-            <strct-icon name="form" [size]="14" /> Rename
-          </strct-dropdown-item>
-          <strct-dropdown-item (click)="lastAction.set('Duplicate')">
-            <strct-icon name="layers" [size]="14" /> Duplicate
-          </strct-dropdown-item>
-          <strct-dropdown-divider />
-          <strct-submenu label="Power">
-            <strct-dropdown-item (click)="lastAction.set('Power on')">
-              <strct-icon name="power" [size]="14" /> Power on
-            </strct-dropdown-item>
-            <strct-dropdown-item (click)="lastAction.set('Power off')">
-              <strct-icon name="stopped" [size]="14" /> Power off
-            </strct-dropdown-item>
-            <strct-dropdown-item (click)="lastAction.set('Restart')">
-              <strct-icon name="sync" [size]="14" /> Restart
-            </strct-dropdown-item>
-          </strct-submenu>
-          <strct-dropdown-divider />
-          <strct-dropdown-item critical (click)="lastAction.set('Delete')">
-            <strct-icon name="close" [size]="14" /> Delete
-          </strct-dropdown-item>
-        </ng-container>
-      </strct-context-menu>
+      <div
+        class="ctx-target"
+        [strctContextMenu]="ctxItems"
+        (menuSelect)="lastAction.set($event.label ?? '')"
+      >
+        <strct-icon name="grid" [size]="18" />
+        <span>Right-click anywhere in this panel</span>
+        @if (lastAction()) {
+          <span class="ctx-echo">last action: {{ lastAction() }}</span>
+        }
+      </div>
     </app-demo>
 
     <app-demo
@@ -751,6 +724,23 @@ export class PatternsPage {
   /** Tiny "system healthy" trend in the login aside's status strip. */
   protected readonly loginTrend = [62, 64, 63, 66, 65, 68, 67, 70, 69, 71];
   protected readonly lastAction = signal('');
+  /** The context menu as data — what the directive takes. */
+  protected readonly ctxItems: StrctMenuItem[] = [
+    { label: 'Open', icon: 'search' },
+    { label: 'Rename', icon: 'form' },
+    { label: 'Duplicate', icon: 'layers' },
+    { divider: true },
+    {
+      label: 'Power',
+      children: [
+        { label: 'Power on', icon: 'power' },
+        { label: 'Power off', icon: 'stopped' },
+        { label: 'Restart', icon: 'sync' },
+      ],
+    },
+    { divider: true },
+    { label: 'Delete', icon: 'close', critical: true },
+  ];
 
   protected readonly menuItems: StrctMenuItem[] = [
     { label: 'Open console', icon: 'search' },

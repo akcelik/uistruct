@@ -5,6 +5,60 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] - 2026-10-21
+
+**A release that only removes.** Everything it takes away has had a
+replacement since 5.29.0 or 5.30.0, the flat inputs kept working for the whole
+5.x line, and `scripts/migrate-6.mjs` does the rewrite. Nothing is added and
+no behaviour changes — the upgrade is a find-and-replace, and
+`docs/migration-6.md` is the before/after for every name.
+
+### Removed
+
+- **`strct-datagrid`: the 27 flat inputs that moved into the feature
+  objects** (5.30.0). The component's surface is **54 inputs → 33**:
+  `[selection]`, `[paging]`, `[pane]`, `[virtual]`, `[grouping]`,
+  `[filtering]` and `[state]` carry what `selectable`, `selectionMode`,
+  `selectionColumn`, `rowSelectable`, `groupSelect`, `initialSelection`,
+  `pageSize`, `hasMore`, `loadingMore`, `moreTotal`, `lazy`, `total`,
+  `detailPane`, `paneListWidth`, `paneTakeoverWidth`, `viewportHeight`,
+  `rowHeight`, `groupBy`, `groups`, `showEmptyGroups`, `childrenKey`,
+  `quickFilterable`, `quickFilterFields`, `quickFilterAlign`, `stateKey` and
+  `sync` used to.
+  - The dev-mode deprecation notice goes with them.
+  - **The two-way state did not move** and does not: `[(selectedIds)]`,
+    `[(selectedId)]`, `[(activeRowId)]`, `[(filters)]`, `[(quickFilter)]`,
+    `[(columnState)]`, `[(collapsedGroups)]`. Nor did the grid's core
+    (`columns`, `rows`, `rowId`, `labels`), the look flags, or `maxHeight`.
+- **`badge="maintenance"` on `strct-icon`.** Use `mode="maintenance"`
+  (5.29.0): a mode the operator chose has its own corner, and the amber disc
+  was the same silhouette and hue as `paused` at 16 px.
+- **The `.strct-badge--warninging` class alias**, kept since the original
+  typo. Use `.strct-badge--warning`.
+- **`<strct-context-menu>`**, the projected component. Use the data-driven
+  `[strctContextMenu]` directive, which takes its items as data, portals the
+  menu out of any overflow and reports the choice through `(menuSelect)`.
+
+### One thing to know
+
+A feature object **replaces, it does not merge**: a second binding wins
+outright, so a wrapper component that sets its own `[grouping]` and then
+applies a caller's must merge them itself
+(`{ ...mine, ...theirs }`). The flat inputs never had this, and it is the one
+behaviour worth reading about before upgrading — `docs/migration-6.md` has
+the detail.
+
+### Upgrading
+
+```
+npm i @akcelik/strct@6
+node scripts/migrate-6.mjs src --write     # from the package, or copy it in
+```
+
+Then run a development build: it is clean when nothing deprecated is left. The
+library's own showcase went through exactly this (34 inputs on 14 grids), and
+every visual baseline matched afterwards.
+
 ## [5.33.0] - 2026-10-21
 
 A height cap is not virtual scrolling. Fixes a regression 5.30.0 introduced.
