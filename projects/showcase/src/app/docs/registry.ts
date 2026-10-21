@@ -118,7 +118,7 @@ export const DOCS: DocCategory[] = [
             type: 'string',
             default: `''`,
             description:
-              'Why the action cannot be taken. With one, the button keeps its tab stop and refuses through `aria-disabled` instead of the native attribute — a disabled button takes no focus, so a reason it carries can never be read — and the sentence appears on hover and on focus, as `aria-describedby`. The click is refused by the component.',
+              'Why the action cannot be taken. With one, the button keeps its tab stop and refuses through `aria-disabled` instead of the native attribute — a disabled button takes no focus, so a reason it carries can never be read — and the sentence appears on hover and on focus, as `aria-describedby`. The click is refused in the **capture** phase, before any listener on the element, so a `(click)` in your own template does not run either (since 5.29.0).',
           },
           {
             name: 'disabledReasonPosition',
@@ -1817,6 +1817,7 @@ export const DOCS: DocCategory[] = [
           'StrctTreeNodeMenuFn',
           'StrctTreeDropEvent',
           'StrctTreeDropRefusal',
+          'StrctTreeStateWords',
         ],
         summary: 'Nested, expandable nodes with icons.',
         lead: 'Nested, expandable nodes with optional icons, status badges and active state. Compose `strct-tree-node` manually, or pass `[nodes]` for a fully data-driven, self-recursing tree of any depth. Add `[nodeMenu]` for a per-node right-click menu.',
@@ -1826,7 +1827,7 @@ export const DOCS: DocCategory[] = [
             type: 'StrctTreeNodeData[]',
             default: 'null',
             description:
-              'On `strct-tree`: data-driven node list (`{ id?; label; icon?; badge?; active?; expanded?; children?; meta?; tag?; hasChildren?; loading?; data? }`). When set, projected content is ignored and the tree recurses itself. An `id` gives each node a stable key (trackBy + expansion state + a `data-node-id` attribute); it falls back to `label`. `meta` is a quiet trailing word and `tag: { label; status? }` a trailing badge — what `[strctTreeTrailing]` is for a projected node. `hasChildren: true` gives the row its chevron and `aria-expanded` before `children` arrives, so a listing can be read on expand (`(nodeToggled)`); `loading: true` puts one captioned row under it and `aria-busy` on it, and a node that turns out to be empty (`hasChildren: false`, `children: []`) loses its chevron again.',
+              'On `strct-tree`: data-driven node list (`{ id?; label; icon?; badge?; mode?; stateLabel?; active?; expanded?; children?; meta?; tag?; hasChildren?; loading?; data? }`). When set, projected content is ignored and the tree recurses itself. An `id` gives each node a stable key (trackBy + expansion state + a `data-node-id` attribute); it falls back to `label`. `meta` is a quiet trailing word and `tag: { label; status? }` a trailing badge — what `[strctTreeTrailing]` is for a projected node. `hasChildren: true` gives the row its chevron and `aria-expanded` before `children` arrives, so a listing can be read on expand (`(nodeToggled)`); `loading: true` puts one captioned row under it and `aria-busy` on it, and a node that turns out to be empty (`hasChildren: false`, `children: []`) loses its chevron again.',
           },
           {
             name: 'canDrag',
@@ -1883,6 +1884,19 @@ export const DOCS: DocCategory[] = [
             description: 'On `strct-tree-node`: optional leading icon.',
           },
           {
+            name: 'mode',
+            type: `'none' | 'maintenance' | 'maintenanceEntering'`,
+            default: `'none'`,
+            description:
+              "On `strct-tree-node` (or `StrctTreeNodeData.mode`): a mode the operator chose — drained for patching — drawn in the icon's own top-end corner, so health keeps the bottom one and a host that is both in maintenance and alarmed shows both.",
+          },
+          {
+            name: 'stateLabel',
+            type: 'string',
+            description:
+              "On `StrctTreeNodeData` (or `strct-tree-node`): what a reader hears after the node's label. Built from the mode and the badge when absent (\"In maintenance, Warning\"); `''` says nothing, for a tree that already puts the words in the label. It goes in `aria-description`, so the name — and the tree's type-ahead — is untouched.",
+          },
+          {
             name: 'badge',
             type: 'StrctIconBadge',
             default: `'none'`,
@@ -1900,6 +1914,13 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description: 'On `strct-tree-node`: two-way open state (`[(expanded)]`).',
+          },
+          {
+            name: 'stateWords',
+            type: 'StrctTreeStateWords',
+            default: "the library's English words",
+            description:
+              'On `strct-tree`: what each badge and mode state is called in a node\'s `aria-description` — `{ maintenance: "In maintenance", critical: "Critical", … }`. Translated once per tree.',
           },
           {
             name: 'loadingLabel',
@@ -3355,6 +3376,18 @@ export const DOCS: DocCategory[] = [
             type: 'StrctStatus | null · string',
             description:
               'On `strct-desc`: a status dot and an icon before the label, and a quiet second line under the value — so "Agent · connected · last seen 12 s ago" is one row rather than three.',
+          },
+          {
+            name: 'href / routerLink / target',
+            type: 'string · string | unknown[] | null · string',
+            description:
+              'On `strct-desc`: the value is a destination, so the whole value becomes the link, with the library\'s link and focus style — instead of an `<a>` hand-made inside the value slot. `target="_blank"` brings `rel="noopener noreferrer"` with it.',
+          },
+          {
+            name: 'queryParams / queryParamsHandling / fragment',
+            type: "Record<string, unknown> | null · 'merge' | 'preserve' | null · string",
+            description:
+              'On `strct-desc`, beside `routerLink`: `/vms/vm-1?action=updates#now` is `routerLink="/vms/vm-1"` with `[queryParams]="{ action: \'updates\' }"` and `fragment="now"`. A `?` written inside `routerLink` is part of the path, and encoded as one.',
           },
         ],
         do: [

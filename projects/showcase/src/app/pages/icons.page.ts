@@ -5,6 +5,7 @@ import {
   StrctButtonGroup,
   StrctIcon,
   StrctIconBadge,
+  StrctIconMode,
   StrctIconName,
   registerStrctIcon,
 } from 'strct';
@@ -14,6 +15,7 @@ interface StateExample {
   name: string;
   object: string;
   badge: StrctIconBadge;
+  mode?: StrctIconMode;
   label: string;
 }
 
@@ -91,13 +93,19 @@ interface StateExample {
     <app-demo
       anchor="states"
       heading="Object states"
-      description="The same object glyph carries any state via a status badge. Two families: lifecycle speaks vCenter's media language (▶ running · ⏸ paused · ■ off), health is silhouette-coded (circle ✓ · triangle ! · diamond × · wrench) — both read without color."
-      code='<strct-icon name="vm" badge="running" />  <!-- running VM -->'
+      description='The same object glyph carries any state. Two families on the badge (bottom end): lifecycle speaks vCenter&apos;s media language (▶ running · ⏸ paused · ■ off) and health is silhouette-coded (circle ✓ · triangle ! · diamond ×) — both read without colour. A mode the operator chose is not either of those, so it has its own corner (top end): mode="maintenance" draws a neutral striped tile, filled when the object is out of service and hollow while it is still draining. The two never displace each other, which is the common case — a host drained for patching that also has a disk warning. badge="maintenance" still works and draws the tile; it is deprecated since 5.29.0, because an amber disc was indistinguishable from paused at 16px.'
+      code='<strct-icon name="host" mode="maintenance" badge="warning" />'
     >
       <div class="ig-states">
         @for (s of states; track s.label) {
           <div class="ig-state">
-            <strct-icon [name]="s.object" [size]="28" [strokeWidth]="1.3" [badge]="s.badge" />
+            <strct-icon
+              [name]="s.object"
+              [size]="28"
+              [strokeWidth]="1.3"
+              [badge]="s.badge"
+              [mode]="s.mode ?? 'none'"
+            />
             <span class="ig-state__label">{{ s.label }}</span>
           </div>
         }
@@ -494,20 +502,43 @@ export class IconsPage {
   protected readonly states: StateExample[] = [
     { name: 'host-run', object: 'host', badge: 'running', label: 'Host · running' },
     { name: 'host-off', object: 'host', badge: 'off', label: 'Host · powered off' },
-    { name: 'host-maint', object: 'host', badge: 'maintenance', label: 'Host · maintenance' },
+    {
+      name: 'host-maint',
+      object: 'host',
+      badge: 'none',
+      mode: 'maintenance',
+      label: 'Host · in maintenance',
+    },
+    {
+      name: 'host-entering',
+      object: 'host',
+      badge: 'none',
+      mode: 'maintenanceEntering',
+      label: 'Host · entering maintenance',
+    },
+    {
+      // The case the one slot could never show: a host drained for patching
+      // that also has an open alarm. Mode top end, health bottom end.
+      name: 'host-maint-warn',
+      object: 'host',
+      badge: 'warning',
+      mode: 'maintenance',
+      label: 'Host · in maintenance + warning',
+    },
     { name: 'host-critical', object: 'host', badge: 'critical', label: 'Host · critical' },
     { name: 'vm-run', object: 'vm', badge: 'running', label: 'VM · running' },
     { name: 'vm-paused', object: 'vm', badge: 'paused', label: 'VM · paused' },
     { name: 'vm-off', object: 'vm', badge: 'off', label: 'VM · stopped' },
-    { name: 'vm-maint', object: 'vm', badge: 'warning', label: 'VM · maintenance' },
+    { name: 'vm-maint', object: 'vm', badge: 'warning', label: 'VM · degraded' },
     { name: 'vm-critical', object: 'vm', badge: 'critical', label: 'VM · critical' },
     { name: 'cluster-ok', object: 'cluster', badge: 'success', label: 'Cluster · healthy' },
     { name: 'cluster-degraded', object: 'cluster', badge: 'warning', label: 'Cluster · degraded' },
     {
       name: 'cluster-maint',
       object: 'cluster',
-      badge: 'maintenance',
-      label: 'Cluster · maintenance',
+      badge: 'none',
+      mode: 'maintenance',
+      label: 'Cluster · in maintenance',
     },
     { name: 'cluster-critical', object: 'cluster', badge: 'critical', label: 'Cluster · critical' },
     { name: 'cluster-off', object: 'cluster', badge: 'off', label: 'Cluster · stopped' },

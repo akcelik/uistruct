@@ -777,3 +777,54 @@ describe('StrctTree data nodes', () => {
     expect(r.getAttribute('aria-expanded')).toBeNull();
   });
 });
+
+// FR-61-02: a treeitem's name is its label, so a running VM, an alarmed host
+// and a drained one all read the same. The state goes beside the name.
+describe('StrctTree — a node says its state in words', () => {
+  const build = (nodes: StrctTreeNodeData[], inputs: Record<string, unknown> = {}) => {
+    const fixture = TestBed.createComponent(StrctTree);
+    fixture.componentRef.setInput('nodes', nodes);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return (id: string) =>
+      el.querySelector<HTMLElement>(`[data-node-id="${id}"] > .strct-tnode__row`)!;
+  };
+
+  it('names the mode and the badge, and leaves the label alone', () => {
+    const row = build([
+      { id: 'hv-01', label: 'HV-NODE-02', icon: 'host', mode: 'maintenance', badge: 'warning' },
+      { id: 'hv-02', label: 'HV-NODE-03', icon: 'host', badge: 'paused' },
+      { id: 'hv-03', label: 'HV-NODE-04', icon: 'host' },
+    ]);
+    expect(row('hv-01').getAttribute('aria-description')).toBe('In maintenance, Warning');
+    expect(row('hv-01').querySelector('.strct-tnode__label')!.textContent!.trim()).toBe(
+      'HV-NODE-02',
+    );
+    expect(row('hv-02').getAttribute('aria-description')).toBe('Paused');
+    expect(row('hv-03').hasAttribute('aria-description')).toBe(false);
+  });
+
+  it('the old badge="maintenance" is read as the mode, and drawn as one', () => {
+    const row = build([{ id: 'csv', label: 'Volume1', icon: 'storage', badge: 'maintenance' }]);
+    expect(row('csv').getAttribute('aria-description')).toBe('In maintenance');
+    expect(row('csv').querySelector('.strct-icon__mode--maintenance')).toBeTruthy();
+    expect(row('csv').querySelector('.strct-icon__badge')).toBeNull();
+  });
+
+  it('a node can say it itself, or say nothing', () => {
+    const row = build([
+      { id: 'a', label: 'A', badge: 'critical', stateLabel: 'Down since 09:12' },
+      { id: 'b', label: 'B (Maintenance Mode)', mode: 'maintenance', stateLabel: '' },
+    ]);
+    expect(row('a').getAttribute('aria-description')).toBe('Down since 09:12');
+    expect(row('b').hasAttribute('aria-description')).toBe(false);
+  });
+
+  it('the words are translated once per tree', () => {
+    const row = build([{ id: 'a', label: 'A', mode: 'maintenance', badge: 'critical' }], {
+      stateWords: { maintenance: 'Bakımda', critical: 'Kritik' },
+    });
+    expect(row('a').getAttribute('aria-description')).toBe('Bakımda, Kritik');
+  });
+});

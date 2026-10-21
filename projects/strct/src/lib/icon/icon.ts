@@ -609,7 +609,19 @@ export type StrctIconBadge =
   | 'paused'
   | 'off'
   | 'info'
+  /**
+   * @deprecated Since 5.29.0 — use `mode="maintenance"`. An amber disc was
+   * the same silhouette and hue as `paused` at 16px, and it took the one
+   * badge slot away from health. It still works: it draws the mode tile.
+   */
   | 'maintenance';
+
+/**
+ * A mode the operator put the object in, as opposed to its health: it takes no
+ * new work. Drawn in its own corner, so a drained host with an open alarm
+ * shows both.
+ */
+export type StrctIconMode = 'none' | 'maintenance' | 'maintenanceEntering';
 
 /**
  * Inline stroke icon. `<strct-icon name="host" badge="success" />` renders the host
@@ -619,6 +631,8 @@ export type StrctIconBadge =
 // One warning per unknown name per app run — enough to surface the bug
 // without flooding the console from a list render.
 const warnedUnknownIcons = new Set<string>();
+/** One warning per app run for a count and a mode asking for the same corner. */
+let warnedCountOverMode = false;
 
 @Component({
   selector: 'strct-icon',
@@ -656,22 +670,26 @@ const warnedUnknownIcons = new Set<string>();
         aria-hidden="true"
         >{{ text }}</span
       >
-    } @else if (badge() !== 'none') {
-      <span class="strct-icon__badge strct-icon__badge--{{ badge() }}">
-        @if (badge() === 'maintenance') {
-          <svg
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path
-              d="M3.5 2.5c-1.5 0-2.5 1.5-1.5 3l3.5 3.5c-.5 1.5 0 3 1.5 3.5s3 0 3.5-1.5M6.5 5.5l6 6M7.5 10.5c1 1.5 2.5 2.5 4 1.5s1.5-2.5.5-4"
-            />
-          </svg>
-        }
+    } @else if (shownBadge() !== 'none') {
+      <span class="strct-icon__badge strct-icon__badge--{{ shownBadge() }}"></span>
+    }
+    @if (!countText() && shownMode() !== 'none') {
+      <!-- The mode's own corner (top end), so health keeps the bottom one and
+           neither hides the other: a host drained for patching with a disk
+           warning is both at once. A rounded square is the one silhouette no
+           badge uses, and the stripes are the barrier mark for out of
+           service — readable at the tree's 9px tile, where a wrench is a
+           smudge (FR-61-01). -->
+      <span class="strct-icon__mode strct-icon__mode--{{ shownMode() }}" aria-hidden="true">
+        <svg
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.25"
+          stroke-linecap="butt"
+        >
+          <path d="M1.2 7.4L7.4 1.2M4.6 10.8L10.8 4.6" />
+        </svg>
       </span>
     }`,
   host: { class: 'strct-icon' },
@@ -724,6 +742,44 @@ const warnedUnknownIcons = new Set<string>();
       }
       .strct-icon__count--critical {
         background: var(--critical);
+      }
+      /* The mode tile: a rounded square in the top-end corner, 56% of the
+         icon (9px at the tree's 16px, 12px at 24px), ringed in the surface so
+         it separates from the glyph under it. Neutral on purpose — amber is
+         "warning" and "paused", and the accent sits beside --warning in
+         ember and --success in sage. */
+      .strct-icon__mode {
+        position: absolute;
+        inset-inline-end: -3px;
+        top: -3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56%;
+        height: 56%;
+        min-width: 9px;
+        min-height: 9px;
+        max-width: 12px;
+        max-height: 12px;
+        box-sizing: border-box;
+        border-radius: 22%;
+        box-shadow: 0 0 0 1.5px var(--bg-1);
+      }
+      .strct-icon__mode > svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      /* Filled: it is in maintenance. */
+      .strct-icon__mode--maintenance {
+        background: color-mix(in srgb, var(--t1), var(--bg-1) 10%);
+        color: var(--inv);
+      }
+      /* Hollow: it is on its way in (draining, evacuating). */
+      .strct-icon__mode--maintenanceEntering {
+        background: var(--bg-1);
+        border: 1.5px solid color-mix(in srgb, var(--t1), var(--bg-1) 10%);
+        color: color-mix(in srgb, var(--t1), var(--bg-1) 10%);
       }
       .strct-icon__badge {
         position: absolute;
@@ -850,27 +906,8 @@ const warnedUnknownIcons = new Set<string>();
       .strct-icon__badge--info::before {
         content: 'i';
       }
-      .strct-icon__badge--maintenance {
-        background: var(--warning);
-        inset-inline-end: -2px;
-        bottom: -2px;
-        width: 58%;
-        height: 58%;
-        min-width: 10px;
-        min-height: 10px;
-        max-width: 16px;
-        max-height: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1px;
-        box-shadow: 0 0 0 1.5px var(--bg-1);
-      }
-      .strct-icon__badge--maintenance svg {
-        width: 84%;
-        height: 84%;
-        color: var(--inv);
-      }
+      /* badge="maintenance" draws the mode tile now (FR-61-01), so no badge
+         element is rendered for it and its rules are gone with it. */
     `,
   ],
 })
@@ -896,6 +933,20 @@ export class StrctIcon {
   readonly strokeWidth = input(1.4);
   /** Optional status dot overlaid on the glyph (object state). */
   readonly badge = input<StrctIconBadge>('none');
+  /**
+   * A mode the operator chose, drawn in its own (top-end) corner so it never
+   * displaces the health badge. `badge="maintenance"` is still read as
+   * `mode="maintenance"`, which is where it belongs; it is deprecated.
+   */
+  readonly mode = input<StrctIconMode>('none');
+  /** The mode's words, joined to the icon's name when it has one (i18n). */
+  readonly modeLabel = input<(mode: StrctIconMode) => string>((mode) =>
+    mode === 'maintenance'
+      ? 'in maintenance'
+      : mode === 'maintenanceEntering'
+        ? 'entering maintenance'
+        : '',
+  );
   /** Accessible label for the icon. When empty the icon is hidden from assistive tech. */
   readonly ariaLabel = input<string>('');
   /**
@@ -923,12 +974,40 @@ export class StrctIcon {
   });
   /** 1.2em of the icon size, floored at 14px, as the badge's box. */
   protected readonly countFontSize = computed(() => Math.max(9, Math.round(this.size() * 0.58)));
-  /** The label the glyph carries: its own, plus the count when both are set. */
+  /**
+   * The mode as drawn: its own, or the one `badge="maintenance"` meant before
+   * there was a mode (back-compat — the amber disc read as `paused` at 16px).
+   */
+  readonly shownMode = computed<StrctIconMode>(() => {
+    const mode = this.mode();
+    if (mode !== 'none') return mode;
+    return this.badge() === 'maintenance' ? 'maintenance' : 'none';
+  });
+
+  /** The badge as drawn: `maintenance` has become a mode, so it draws none. */
+  readonly shownBadge = computed<StrctIconBadge>(() =>
+    this.badge() === 'maintenance' ? 'none' : this.badge(),
+  );
+
+  /** The label the glyph carries: its own, plus the count and the mode. */
   protected readonly accessibleLabel = computed(() => {
     const base = this.ariaLabel();
+    if (!base) return base;
+    const parts = [base];
+    const mode = this.shownMode();
+    if (mode !== 'none') parts.push(this.modeLabel()(mode));
     const n = this.count();
-    if (!base || n == null || n <= 0) return base;
-    return `${base}, ${this.countLabel()(n)}`;
+    if (n != null && n > 0) parts.push(this.countLabel()(n));
+    // A count and a mode want the same corner: the count wins, and dev mode
+    // says so once, as an unknown icon name does.
+    if (n != null && n > 0 && mode !== 'none' && isDevMode() && !warnedCountOverMode) {
+      warnedCountOverMode = true;
+      console.warn(
+        `[strct-icon] count and mode both ask for the top-end corner — ` +
+          `the count is drawn. Put the mode on the object's own icon instead.`,
+      );
+    }
+    return parts.filter(Boolean).join(', ');
   });
 
   /** The effective name: `strictName` wins when set. */

@@ -3,6 +3,7 @@ import { StrctTooltipPosition, strctShowTooltip } from '../tooltip/tooltip';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   OnDestroy,
   ViewEncapsulation,
@@ -51,7 +52,6 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
     '[attr.disabled]': 'nativeDisabled() ? "" : null',
     '[attr.aria-disabled]': 'softDisabled() ? "true" : null',
     '[attr.aria-describedby]': 'reasonId()',
-    '(click)': 'onClick($event)',
     '(mouseenter)': 'showReason()',
     '(focus)': 'showReason()',
     '(mouseleave)': 'hideReason()',
@@ -260,12 +260,24 @@ export class StrctButton implements OnDestroy {
   /** Disabled with a reason: focusable, and refusing clicks itself. */
   protected readonly softDisabled = computed(() => this.disabled() && !!this.disabledReason());
 
-  protected onClick(event: Event): void {
-    if (!this.softDisabled()) return;
-    // A link is the other half of this: an <a strct-button> has no disabled
-    // attribute at all, so the click is stopped here either way.
-    event.preventDefault();
-    event.stopImmediatePropagation();
+  constructor() {
+    // The refusal runs in the CAPTURE phase, registered on the element
+    // itself. A host listener is a bubble listener, and Angular attaches a
+    // (click) written in the consumer's template to the element before the
+    // component's own — so the consumer's handler had already run by the time
+    // a bubble-phase refusal saw the event (BUG-60-01). At the target,
+    // capture listeners run before bubble ones, so stopImmediatePropagation
+    // here stops the element's own listeners and the bubbling with them.
+    const el = this.hostEl.nativeElement;
+    const refuse = (event: Event) => {
+      if (!this.softDisabled()) return;
+      // A link is the other half of this: an <a strct-button> has no disabled
+      // attribute at all, so the click is stopped here either way.
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    el.addEventListener('click', refuse, { capture: true });
+    inject(DestroyRef).onDestroy(() => el.removeEventListener('click', refuse, { capture: true }));
   }
 
   protected showReason(): void {

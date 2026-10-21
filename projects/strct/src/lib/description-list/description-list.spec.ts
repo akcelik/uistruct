@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { StrctDesc, StrctDescItem, StrctDescriptionList } from './description-list';
 
 @Component({
@@ -181,6 +181,26 @@ describe('StrctDesc — a value that is a link', () => {
     const link = el.querySelector('a.strct-desc__link')!;
     expect(link.getAttribute('target')).toBe('_blank');
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  // FR-60-01: the address a value opens often carries a query —
+  // /vms/vm-1?action=updates. A `?` inside routerLink is path, and encoded.
+  it('takes query parameters and a fragment beside the routerLink', async () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: '**', children: [] }])] });
+    const fixture = TestBed.createComponent(StrctDesc);
+    fixture.componentRef.setInput('label', 'Guest agent');
+    fixture.componentRef.setInput('routerLink', '/vms/vm-1');
+    fixture.componentRef.setInput('queryParams', { action: 'updates' });
+    fixture.componentRef.setInput('fragment', 'now');
+    fixture.detectChanges();
+    const link = (fixture.nativeElement as HTMLElement).querySelector('a.strct-desc__link')!;
+    expect(link.getAttribute('href')).toBe('/vms/vm-1?action=updates#now');
+
+    // And the click routes rather than loading the page again.
+    const router = TestBed.inject(Router);
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 }));
+    await fixture.whenStable();
+    expect(router.url).toBe('/vms/vm-1?action=updates#now');
   });
 
   it('routes when the destination is a routerLink', async () => {

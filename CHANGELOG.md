@@ -5,6 +5,61 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.29.0] - 2026-10-21
+
+HyperStruct's two new reports: a "disabled" button that acted, a routed value
+that could not carry a query, and a maintenance mode an operator can see at
+tree size (BUG-60-01, FR-60-01, FR-61-01, FR-61-02).
+
+### Fixed
+
+- **`strct-button [disabledReason]` let the consumer's own `(click)` through**
+  (BUG-60-01). The refusal was a host listener, which is a _bubble_ listener,
+  and Angular attaches a `(click)` written in the consumer's template to the
+  element **first** — so the usual way to write a button,
+  `(click)="act()"` beside the reason, performed the action of a "disabled"
+  button on a click, and on Enter or Space with it. Measured by HyperStruct on
+  5.28.0 (`inner` 1) and here on the previous code. The refusal now runs in
+  the **capture** phase, registered on the element itself: at the target,
+  capture listeners run before bubble ones, so nothing on the element and
+  nothing above it sees the click.
+
+### Added
+
+- **`strct-desc`: query parameters beside the routed value** (FR-60-01).
+  `queryParams`, `queryParamsHandling` and `fragment` are passed to the inner
+  `RouterLink`, so `/vms/vm-1?action=updates#now` is a routed link rather than
+  a path with an encoded `?` — which is what a `?` inside `routerLink` is.
+- **`strct-icon [mode]`: a mode in its own corner** (FR-61-01). A mode the
+  **operator** chose — drained, taking no new work — is not a health state,
+  and `badge="maintenance"` could say only one of the two. It is drawn now as
+  a neutral **striped tile in the top-end corner**, leaving health the bottom
+  one: a host drained for patching with a disk warning shows both.
+  - `maintenance` is filled, `maintenanceEntering` the same tile hollow —
+    "asked for, still draining".
+  - A rounded square is the one silhouette no badge uses since 0.28.0 retired
+    the square `off`; the amber disc it replaces was the same shape **and**
+    hue as `paused` at the tree's 16 px, where the wrench glyph inside it was
+    a ~0.7 px smudge.
+  - Neutral on purpose: amber is `warning` and `paused`, and the accent sits
+    beside `--warning` in ember and `--success` in sage. Measured at a 16 px
+    icon in all six schemes — the tile is **9 × 9** with a 22 % radius, and
+    tile-vs-surface / stripes-vs-tile read **7.9 – 13.2 : 1** (WCAG 1.4.11
+    asks 3).
+  - `modeLabel` joins the mode's words to a named icon ("Host, in
+    maintenance"); a `count` still wins the corner and says so once in dev
+    mode.
+  - **`badge="maintenance"` keeps working** and draws this tile, with nothing
+    in the bottom corner. It is deprecated in favour of `mode`.
+- **`strct-tree`: a node says its state in words** (FR-61-02). A treeitem's
+  name is its label, so a running VM, an alarmed host and a drained one all
+  read the same. The mode's and the badge's words now go in
+  **`aria-description`** ("In maintenance, Warning"), which leaves the name —
+  and the tree's type-ahead — untouched. `stateWords` translates them once per
+  tree; a node's own `stateLabel` overrides it, and `''` says nothing, for a
+  tree that already puts the words in its label. `StrctTreeNodeData.mode`
+  reaches the node's icon, as `badge` does.
+
 ## [5.28.0] - 2026-10-20
 
 The last item of HyperStruct's 5.24 report: a topology you can walk

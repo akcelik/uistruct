@@ -95,6 +95,70 @@ describe('StrctButton — disabledReason', () => {
     expect(document.getElementById(id)).toBeNull();
   });
 
+  // BUG-60-01: the refusal has to run before the consumer's own handler. A
+  // host listener is a bubble listener, and Angular attaches a (click) from
+  // the consumer's template to the element first — so the "disabled" button
+  // performed its action on a click, and on Enter / Space with it.
+  it("refuses a (click) written in the consumer's template, and the parent's", () => {
+    @Component({
+      imports: [StrctButton],
+      template: `
+        <!-- A clickable region around the button: its handler must not fire
+             either, because the refused click never bubbles. -->
+        <div
+          role="button"
+          tabindex="0"
+          (click)="outer = outer + 1"
+          (keyup.enter)="outer = outer + 1"
+        >
+          <button
+            strct-button
+            [disabled]="off()"
+            disabledReason="Why not"
+            (click)="inner = inner + 1"
+          >
+            Go
+          </button>
+        </div>
+      `,
+    })
+    class TemplateHost {
+      off = signal(true);
+      inner = 0;
+      outer = 0;
+      late = 0;
+    }
+
+    const fixture = TestBed.createComponent(TemplateHost);
+    fixture.detectChanges();
+    const host = fixture.componentInstance;
+    const btn = (fixture.nativeElement as HTMLElement).querySelector('button')!;
+    // A listener added after the element exists, which the old refusal did stop.
+    btn.addEventListener('click', () => host.late++);
+
+    btn.click();
+    expect({ inner: host.inner, outer: host.outer, late: host.late }).toEqual({
+      inner: 0,
+      outer: 0,
+      late: 0,
+    });
+    // A button's keyboard activation is a click, and it is refused the same way.
+    const keyActivation = new MouseEvent('click', { bubbles: true, cancelable: true, detail: 0 });
+    btn.dispatchEvent(keyActivation);
+    expect(keyActivation.defaultPrevented).toBe(true);
+    expect(host.inner).toBe(0);
+
+    // Enabled again, every one of them runs.
+    host.off.set(false);
+    fixture.detectChanges();
+    btn.click();
+    expect({ inner: host.inner, outer: host.outer, late: host.late }).toEqual({
+      inner: 1,
+      outer: 1,
+      late: 1,
+    });
+  });
+
   it('refuses the click it can no longer refuse natively', () => {
     const { fixture, host, btn } = build();
     fixture.componentInstance.why.set('Not while a job is running');

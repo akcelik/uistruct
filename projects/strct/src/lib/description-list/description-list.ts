@@ -248,6 +248,9 @@ export class StrctDescriptionList {
         <a
           class="strct-desc__link"
           [routerLink]="routerLink()"
+          [queryParams]="queryParams()"
+          [queryParamsHandling]="queryParamsHandling()"
+          [fragment]="fragment() || undefined"
           [attr.target]="target() || null"
           [attr.rel]="relFor(target())"
         >
@@ -298,6 +301,16 @@ export class StrctDesc {
   readonly href = input('');
   /** The same, routed — takes what `[routerLink]` takes. */
   readonly routerLink = input<string | unknown[] | null>(null);
+  /**
+   * Query parameters for the routed destination: `/vms/vm-1?action=updates`
+   * is `routerLink="/vms/vm-1"` with `[queryParams]="{ action: 'updates' }"`.
+   * A `?` inside `routerLink` is part of the path, and encoded as one.
+   */
+  readonly queryParams = input<Record<string, unknown> | null>(null);
+  /** What happens to the parameters already on the page. */
+  readonly queryParamsHandling = input<'merge' | 'preserve' | '' | null>(null);
+  /** The `#fragment` of the routed destination. */
+  readonly fragment = input('');
   /** `target="_blank"` opens a new tab; the safe `rel` comes with it. */
   readonly target = input('');
 
