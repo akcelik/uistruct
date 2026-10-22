@@ -46,6 +46,7 @@ import { strctDevWarn } from '../util/dev-warn';
       pointer or Enter/Space — bubbles here; the strctDropdownTrigger
       directive puts aria-haspopup/aria-expanded on the button itself.
     -->
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
     <div #trigger class="strct-dd__trigger" (click)="toggle()">
       <ng-content select="[strctDropdownTrigger]" />
     </div>

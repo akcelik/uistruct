@@ -30,6 +30,9 @@ export type StrctSpeedDialDirection = 'up' | 'down' | 'left' | 'right';
   template: `
     <div class="strct-sd" [class]="'strct-sd--' + direction()">
       @if (open()) {
+        <!-- Catches the click bubbling from a projected action button (pointer,
+             Enter or Space alike) to close the dial; the buttons are the stops. -->
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
         <div class="strct-sd__actions" (click)="onActionClick()"><ng-content /></div>
       }
       <button

@@ -12,10 +12,12 @@ _Nothing open._ Every document HyperStruct has filed is in
 [`hyperstruct-hand-built-audit.md`](hyperstruct-hand-built-audit.md) is the
 index of the 2026-09 full audit (all 45 asks shipped).
 
-One item is deferred rather than open: **D1** of the datagrid audit (the
-component's API surface — 52 inputs, 6 outputs, 3 805 lines), held for 6.x
-because grouping those inputs into `[paging]` / `[selection]` / `[pane]`
-objects touches every consumer's template.
+The one item that had been deferred — **D1** of the datagrid audit (the
+component's API surface: 52 inputs, 6 outputs, 3 805 lines) — has shipped:
+the inputs became feature objects (`[selection]`, `[paging]`, `[pane]`,
+`[virtual]`, `[grouping]`, `[filtering]`, `[state]`) in **v5.30.0**, the
+component split into four files in **v5.31.0**, the codemod landed in
+**v5.32.0**, and **v6.0.0** removed the flat inputs (54 inputs → 33).
 
 ## Status ledger
 

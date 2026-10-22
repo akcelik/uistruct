@@ -46,12 +46,18 @@ Until 1.0, the practical policy already in force:
 - Deprecations live for at least one minor with a console-free, docs-visible
   notice before removal in the next major.
 
-## Under consideration (post-1.0)
+## Under consideration
 
-- Datagrid: column reordering (drag), row grouping, Excel export.
-- Charts: stacked series, log scale, time-axis (Date-based) domain.
 - Overlay: portal-based rendering option for modal/drawer in embedded hosts.
-- Theming: palette-builder playground with exportable token sets.
+
+### Shipped from this list
+
+- Datagrid: column reordering by drag (`reorderable`), row grouping
+  (`groupBy`, now `[grouping]`) and Excel export (`toXLSX()`) — **v1.1.0**.
+- Charts: stacked series (`stacked`), log scale (`scale="log"`) and a
+  time-axis domain (`times`) — **v1.2.0**.
+- Theming: palette-builder playground with exportable token sets —
+  `/theme-playground` on the docs site (confirmed in **v1.10.0**).
 
 ## Continuity
 

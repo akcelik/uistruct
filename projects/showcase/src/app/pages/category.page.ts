@@ -13,7 +13,6 @@ import {
   StrctBadge,
   StrctContextMenuTrigger,
   StrctMenuItem,
-  StrctDropdownItem,
   StrctIcon,
   StrctStack,
   StrctStackItem,
@@ -51,7 +50,6 @@ function badgeFor(status: DcObject['status']) {
     StrctTabs,
     StrctTab,
     StrctContextMenuTrigger,
-    StrctDropdownItem,
   ],
   template: `
     <div class="category-page">

@@ -63,12 +63,14 @@ import {
 } from './datagrid.types';
 
 /*
- * ── The grid's features, as objects (5.30.0) ──────────────────────────────
+ * ── The grid's features, as objects (5.30.0; the only API since 6.0) ───────
  *
  * The component grew to 54 inputs, which is more than a template can read.
- * Each cluster of them becomes one object; the flat inputs keep working
- * through 5.x and dev mode says which object each has moved into, so a
- * consumer upgrades a screen at a time. They are removed in 6.0.
+ * Each cluster of them became one object — `[selection]`, `[paging]`,
+ * `[pane]`, `[virtual]`, `[grouping]`, `[filtering]`, `[state]` — and the
+ * flat inputs they replaced were removed in 6.0 (54 inputs → 33).
+ * `docs/migration-6.md` maps every old name; `scripts/migrate-6.mjs` rewrites
+ * templates.
  *
  * What stays flat on purpose: the two-way state (`selectedIds`, `filters`,
  * `columnState`, `collapsedGroups`, `quickFilter`, `activeRowId`,

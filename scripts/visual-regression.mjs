@@ -19,12 +19,12 @@ import {
   readFileSync,
   writeFileSync,
 } from 'node:fs';
-import { join, extname } from 'node:path';
+import { join, extname, resolve, sep } from 'node:path';
 import { spawn, execSync } from 'node:child_process';
 import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
 
-const ROOT = 'dist/showcase/browser';
+const ROOT = resolve('dist/showcase/browser');
 const BASE_DIR = 'tests/visual/baseline';
 const OUT_DIR = 'visual-artifacts';
 const PORT = 4698;
@@ -209,11 +209,24 @@ mkdirSync(BASE_DIR, { recursive: true });
 mkdirSync(OUT_DIR, { recursive: true });
 
 const server = createServer((req, res) => {
-  let p = join(ROOT, decodeURIComponent(req.url.split('?')[0]));
+  // The request path is attacker-shaped: decode it safely and refuse anything
+  // that resolves outside ROOT (`/../../etc/passwd`, `%2e%2e%2f…`).
+  let rel;
+  try {
+    rel = decodeURIComponent(req.url.split('?')[0]);
+  } catch {
+    res.statusCode = 400;
+    return res.end();
+  }
+  let p = resolve(ROOT, `.${rel}`);
+  if (p !== ROOT && !p.startsWith(ROOT + sep)) {
+    res.statusCode = 403;
+    return res.end();
+  }
   if (!existsSync(p) || statSync(p).isDirectory()) p = join(ROOT, 'index.html');
   res.setHeader('Content-Type', MIME[extname(p)] ?? 'application/octet-stream');
   createReadStream(p).pipe(res);
-}).listen(PORT);
+}).listen(PORT, '127.0.0.1'); // loopback only — never expose the build on the LAN
 
 const chromeBin =
   process.env.CHROME_BIN ??

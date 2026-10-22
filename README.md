@@ -7,7 +7,7 @@ A standalone Angular workspace containing **`@akcelik/strct`** — a reusable UI
 component library — and a showcase application that documents it. Independent of
 any other project. Built for **datacenter / infrastructure-management consoles**.
 
-**80 components · 181 icons · 3 palettes × dark/light · zero runtime dependencies.**
+**102 components · 185 icons · 3 palettes × dark/light · zero runtime dependencies.**
 
 ![UIStruct dashboard scenario — dark, Arctic palette](docs/assets/dashboard-dark.png)
 
@@ -146,7 +146,7 @@ limit eye strain during long, all-day console sessions:
 
 ## Stability & support
 
-UIStruct is **1.0 — a stability contract**, not just a version number:
+Since **1.0**, UIStruct's version number is **a stability contract**:
 
 - **Semver, for real.** Patches fix; minors are additive (new inputs default
   to previous behavior; visual changes are opt-in); majors are reserved for

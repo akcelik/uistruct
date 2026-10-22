@@ -67,6 +67,9 @@ let comboboxCounter = 0;
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => StrctCombobox), multi: true },
   ],
   template: `
+    <!-- Pointer convenience: a click on the field's padding or chip row focuses
+         the real <input> inside, which owns the whole keyboard path. -->
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
     <div
       #field
       class="strct-cbx__field"

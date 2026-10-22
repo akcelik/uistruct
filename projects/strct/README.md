@@ -19,8 +19,10 @@ attribute swap re-skins the whole library.
 npm install @akcelik/strct
 ```
 
-`@angular/core`, `@angular/common`, `@angular/forms` and
-`@angular/platform-browser` are peer dependencies (Angular 21.2+).
+`@angular/core`, `@angular/common`, `@angular/forms`,
+`@angular/platform-browser` and `@angular/router` are peer dependencies
+(Angular 22+). Keep your own copies patched — `npm audit` in your app is what
+sees them.
 
 > **Consuming a local build?** Install the packed tarball
 > (`ng build strct && npm pack dist/strct`, then `npm i ../akcelik-strct-x.y.z.tgz`)
@@ -75,7 +77,7 @@ Import only what you use — every component is standalone.
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Layout      | `strct-shell`, `strct-header`, `strct-footer`, `strct-vertical-nav`, `strct-nav` / `strct-nav-item`, `strct-rail` (collapsible icon nav), `strct-login`                                                                                                                                                    |
 | Controls    | `button[strct-button]`, `strct-button-group`, `strct-speed-dial`, `strct-badge`, `strct-tag`, `strct-avatar`, `strct-progress`, `strct-spinner`, `strct-skeleton`                                                                                                                                          |
-| Surfaces    | `strct-card` (+ header/block/footer), `strct-accordion`, `strct-tabs`, `strct-tree`, `strct-modal`, `strct-drawer` (edge-anchored panel), `strct-dropdown`, `strct-context-menu` (+ `strct-submenu`), `strct-wizard`, `strct-divider`                                                                      |
+| Surfaces    | `strct-card` (+ header/block/footer), `strct-accordion`, `strct-tabs`, `strct-tree`, `strct-modal`, `strct-drawer` (edge-anchored panel), `strct-dropdown` (+ `strct-submenu`), `[strctContextMenu]` (data-driven), `strct-wizard`, `strct-divider`                                                        |
 | Navigation  | `strct-breadcrumb` / `strct-breadcrumb-item`, `strct-pagination`                                                                                                                                                                                                                                           |
 | Forms       | `strctInput`, `strct-checkbox`, `strct-toggle`, `strct-radio-group` / `strct-radio`, `strct-range`, `strct-combobox`, `strct-cascade-select`, `strct-datepicker`, `strct-password`, `strct-file`, `strct-color-picker`, `strct-rating`, `strct-chips`, `strct-input-otp`, `strct-knob`, `strct-input-mask` |
 | Data        | `strct-table`, `strct-datagrid` (sort / select / expandable rows / detail pane / batch bar / per-row kebab menu / resizable / column chooser), `strct-timeline` / `strct-timeline-item`, `strct-stack` / `strct-stack-item`                                                                                |

@@ -5922,15 +5922,10 @@ export const DOCS: DocCategory[] = [
       {
         id: 'contextmenu',
         title: 'Context menu',
-        selector: '[strctContextMenu], strct-context-menu',
-        importNames: [
-          'StrctContextMenuTrigger',
-          'StrctMenuItem',
-          'StrctContextMenu',
-          'StrctSubmenu',
-        ],
+        selector: '[strctContextMenu]',
+        importNames: ['StrctContextMenuTrigger', 'StrctMenuItem', 'StrctMenuService'],
         summary: 'Data-driven right-click menu with submenus.',
-        lead: 'Two flavours. **Recommended:** the `[strctContextMenu]="items"` directive — attach a `StrctMenuItem[]` to any element; the menu portals into the body (no clipping), positions by its real size, supports full keyboard navigation and nested submenus, and runs each item\'s `action`. A content-projection `strct-context-menu` element (with `strct-submenu` fly-outs) also remains for static menus.',
+        lead: 'The `[strctContextMenu]="items"` directive — attach a `StrctMenuItem[]` to any element; the menu portals into the body (no clipping), positions by its real size, supports full keyboard navigation and nested submenus (item `children`), and runs each item\'s `action`. `StrctMenuService.open()` opens the same menu from code. (The content-projection `strct-context-menu` element was removed in 6.0 — see `docs/migration-6.md`.)',
         inputs: [
           {
             name: 'strctContextMenu',

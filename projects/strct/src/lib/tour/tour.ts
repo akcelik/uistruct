@@ -43,7 +43,9 @@ let tourCounter = 0;
   imports: [StrctButton],
   template: `
     @if (open() && current(); as step) {
-      <!-- Always the click-catcher; dims only when no ring (its shadow dims). -->
+      <!-- Always the click-catcher; dims only when no ring (its shadow dims).
+           Pointer-only: keyboard users close with Escape or Skip on the card. -->
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <div
         class="strct-tour__backdrop"
         [class.strct-tour__backdrop--dim]="!spot()"

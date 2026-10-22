@@ -578,6 +578,13 @@ export const STRCT_RAW_ICONS: Record<string, string> = {};
  * Register an icon at runtime.
  *   registerStrctIcon('mything', '<path d="…"/>');                 // stroke glyph
  *   registerStrctIcon('vendorDell', '<svg viewBox="…">…</svg>', { raw: true });
+ *
+ * **Security:** `content` is trusted markup. `strct-icon` renders it through
+ * `bypassSecurityTrustHtml`, so Angular does not sanitize it — markup with
+ * `<script>`, `on*=` handlers or `javascript:` URLs would run in your app.
+ * Register only SVG you ship yourself (bundled assets, build-time imports);
+ * never pass strings from users, URLs, an API or a CMS without sanitizing
+ * them first.
  */
 export function registerStrctIcon(
   name: string,

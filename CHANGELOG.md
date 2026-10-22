@@ -5,6 +5,69 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.1] - 2026-10-22
+
+A security and housekeeping patch. No API, markup or style changed — every
+visual baseline matches.
+
+### Security
+
+- **Angular 22.1 → 22.2.3 in the workspace.** `@angular/router` 22.0.0–22.2.0
+  carries three SSR-only denial-of-service advisories (fixed in 22.2.1). The
+  showcase does not server-render, but the lockfile pinned the affected range.
+  The CLI, builder and `ng-packagr` move with it; `vitest` moves to 4.1.12
+  (two `@vitest/mocker` advisories). `npm audit --omit=dev` is clean.
+  - **Consumers:** the library's peer range (`^22.0.0`) is unchanged, and it
+    cannot patch your copy. If you server-render, run `npm audit` in your app
+    and take `@angular/*` to at least 22.2.1.
+- **The statically served build no longer leaks the disk.** The servers in
+  `scripts/` (a11y, dev-warnings, perf, visual) joined the request path onto
+  the build directory without checking the result, so `/../../…` read any
+  file the user could. They now resolve the path, refuse anything outside
+  the build with `403` (and an undecodable path with `400`), and listen on
+  `127.0.0.1` only.
+- **`serve-showcase.js` is gone**, with the `serve.log` it left behind. It had
+  the same traversal, listened on every interface with
+  `Access-Control-Allow-Origin: *`, nothing called it, and it had no SPA
+  fallback. Use `ng serve` (or `ng serve --configuration production`).
+- **`registerStrctIcon()` says what it trusts.** Registered markup is
+  rendered through `bypassSecurityTrustHtml`; the doc comment and
+  `SECURITY.md` now say so plainly — register SVG you ship, never user, API
+  or CMS strings.
+
+### Fixed
+
+- **`tsc -p projects/showcase/tsconfig.app.json` type-checks again.** Under
+  TypeScript 6 `rootDir` defaults to the config's own folder, and the
+  showcase imports the library from source, so plain `tsc` (and editors that
+  use it) reported a TS6059 per library file. Both showcase configs set
+  `rootDir` to the workspace; `ng build` was never affected.
+
+### Changed
+
+- **Template a11y lint rules are errors.** `click-events-have-key-events` and
+  `interactive-supports-focus` were warnings, and 13 of them had piled up in
+  eight components. Each one was a deliberate pointer-only target or a
+  composite-widget container whose keyboard path lives on its children
+  (combobox field, submenu panel, dropdown trigger wrapper, hotkeys backdrop,
+  rating group, speed-dial actions, tab list, tour backdrop); each now says
+  where that keyboard path is, as modal, drawer and command palette already
+  did. A new one has to make the same argument to land.
+- **Docs caught up with 6.0.** The showcase's context-menu page no longer
+  documents the removed `strct-context-menu` element or lists `StrctContextMenu`
+  as an import; the library README lists `[strctContextMenu]`, states the
+  real peer range (Angular 22+, router included) and the root README the real
+  counts (102 components, 185 icons). `CONTRIBUTING.md` has the real test and
+  route counts, the roadmap moves the items shipped in 1.1.0 / 1.2.0 out of
+  "under consideration", the FR ledger records D1 as shipped, and the
+  datagrid's own header comment no longer says the flat inputs still work.
+- `a11y-artifacts/` (CI output) is no longer committed; it is ignored with
+  `visual-artifacts/` and `*.log`.
+- The showcase's patterns and category pages stop importing
+  `StrctDropdownItem`, `StrctDropdownDivider` and `StrctSubmenu`, left over
+  from the projected context-menu demo 6.0 removed — the build's four NG8113
+  "not used within the template" warnings are gone.
+
 ## [6.0.0] - 2026-10-21
 
 **A release that only removes.** Everything it takes away has had a

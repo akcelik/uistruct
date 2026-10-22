@@ -12,7 +12,8 @@ import { StrctIcon } from '../icon/icon';
 import { focusFirstIn } from '../overlay/focus';
 
 /**
- * A nested fly-out inside a `strct-context-menu` or `strct-dropdown`. Opens on
+ * A nested fly-out inside a `strct-dropdown` (data-driven `[strctContextMenu]`
+ * menus nest through item `children` instead). Opens on
  * hover, click/tap, or the keyboard (Enter / Space / → — focus then moves into
  * the fly-out, ← / Escape hand it back to the trigger), and flips to the left
  * near the right edge of the viewport, upward near the bottom edge.
@@ -59,6 +60,9 @@ import { focusFirstIn } from '../overlay/focus';
         />
       </div>
       @if (open()) {
+        <!-- A role="menu" container: keydown bubbles up from the focused
+             menuitem inside it (roving focus), the container is never a stop. -->
+        <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
         <div
           #panel
           class="strct-submenu__panel"

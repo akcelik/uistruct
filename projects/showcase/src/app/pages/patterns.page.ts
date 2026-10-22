@@ -10,8 +10,6 @@ import {
   StrctStack,
   StrctCheckbox,
   StrctContextMenuTrigger,
-  StrctDropdownDivider,
-  StrctDropdownItem,
   StrctField,
   StrctIcon,
   StrctInput,
@@ -24,7 +22,6 @@ import {
   StrctMenuService,
   StrctPassword,
   StrctSparkline,
-  StrctSubmenu,
   StrctBadge,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
@@ -44,10 +41,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctButton,
     StrctIcon,
     StrctContextMenuTrigger,
-    StrctDropdownItem,
-    StrctDropdownDivider,
     StrctSparkline,
-    StrctSubmenu,
     StrctCard,
     StrctChatAttachment,
     StrctChatComposer,

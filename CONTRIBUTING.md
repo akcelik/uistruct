@@ -15,9 +15,9 @@ build on anything older, and several distro packages still ship 22.22.x.
 npm ci
 npx ng build strct      # library
 npx ng build showcase   # docs app
-npm test                # both projects — 783 library + 2 showcase tests
-npx ng lint
-node scripts/a11y-smoke.mjs          # axe-core gate over 8 key routes (needs Chrome)
+npm test                # both projects — 1 271 library + 2 showcase tests
+npx ng lint             # template a11y rules are errors: justify any opt-out inline
+node scripts/a11y-smoke.mjs          # axe-core gate over 12 key routes (needs Chrome)
 node scripts/visual-regression.mjs   # pixel-diff key routes vs committed baselines
 ```
 

@@ -60,6 +60,9 @@ export class StrctTab {
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `
+    <!-- A tablist container: keydown bubbles up from the focused tab button
+         inside it (roving tabindex), the list itself is never a stop. -->
+    <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
     <div class="strct-tabs__bar" role="tablist" #bar (keydown)="onKeydown($event, bar)">
       @for (tab of tabs(); track tab; let i = $index) {
         <button
