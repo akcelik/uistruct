@@ -54,4 +54,8 @@ Thumbs.db
 
 # Package tarballs
 *.tgz
+
+# Script output — CI uploads these as artifacts; they are never source
 visual-artifacts/
+a11y-artifacts/
+*.log

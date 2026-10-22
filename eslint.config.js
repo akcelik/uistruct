@@ -43,18 +43,21 @@ module.exports = tseslint.config(
       ...angular.configs.templateAccessibility,
     ],
     rules: {
-      '@angular-eslint/template/click-events-have-key-events': 'warn',
-      '@angular-eslint/template/interactive-supports-focus': 'warn',
+      // Errors, not warnings: every pointer-only handler in the library carries
+      // an eslint-disable comment that says where its keyboard path lives, so
+      // a new one has to make the same argument to land.
+      '@angular-eslint/template/click-events-have-key-events': 'error',
+      '@angular-eslint/template/interactive-supports-focus': 'error',
     },
   },
   {
-    // The datagrid's 5.30.0 compatibility layer: each flat input that has
-    // moved into a feature object is declared as `xxxFlat` with
-    // `alias: 'xxx'`, so the template-facing name is unchanged while the
-    // component — and the template — read a resolved signal of the original
-    // name (the object first, the flat input second). The alias is the
-    // mechanism that keeps the public API stable, which is the opposite of
-    // what the rule guards against. Removed with the flat inputs in 6.0.
+    // The datagrid's feature-object inputs (5.30.0, sole API since 6.0): each
+    // object is declared as `xxxCfg` / `xxxInput` with `alias: 'xxx'`, so the
+    // template-facing name is `[selection]`, `[paging]`, `[pane]`, `[virtual]`,
+    // `[grouping]`, `[filtering]` and `[state]`, while the class keeps the
+    // plain name free for the resolved signal it derives (`paging()`,
+    // `virtual()`, …). The alias is how the public name and the derived
+    // signal coexist — not a rename to guard against.
     files: ['projects/strct/src/lib/datagrid/datagrid.ts'],
     rules: { '@angular-eslint/no-input-rename': 'off' },
   },

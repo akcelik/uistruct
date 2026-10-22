@@ -52,4 +52,4 @@ override with `CHROME_BIN=/path/to/chrome`.
 - Numbers vary with hardware; the shape of the result is the point — constant
   DOM, near-frame-budget window swaps, and linear-but-fast client sorting.
 - The a11y story is verified the same way: `scripts/a11y-smoke.mjs` runs
-  axe-core over eight key routes in CI and fails on serious/critical findings.
+  axe-core over twelve key routes in CI and fails on serious/critical findings.

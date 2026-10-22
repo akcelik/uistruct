@@ -20,6 +20,9 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => StrctRating), multi: true },
   ],
   template: `
+    <!-- A radiogroup container: arrow / Home / End keydown bubbles up from the
+         focused star button inside it; the stars are the stops, never the group. -->
+    <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
     <div
       class="strct-rating"
       role="radiogroup"

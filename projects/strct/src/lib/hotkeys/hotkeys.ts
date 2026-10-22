@@ -129,6 +129,9 @@ function isTyping(event: KeyboardEvent): boolean {
   imports: [StrctIcon, StrctKbd],
   template: `
     @if (open()) {
+      <!-- Backdrop: pointer-only dismiss target. Keyboard users close with
+           Escape (onEscape) or the labelled close button in the header. -->
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <div class="strct-hkh__backdrop" (click)="open.set(false)"></div>
       <div class="strct-hkh" role="dialog" aria-modal="true" [attr.aria-label]="title()">
         <div class="strct-hkh__head">

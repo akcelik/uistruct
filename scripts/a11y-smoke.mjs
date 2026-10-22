@@ -15,10 +15,10 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { extname, join } from 'node:path';
+import { extname, join, resolve, sep } from 'node:path';
 import { execSync, spawn } from 'node:child_process';
 
-const ROOT = process.argv[2] ?? 'dist/showcase/browser';
+const ROOT = resolve(process.argv[2] ?? 'dist/showcase/browser');
 const PORT = 4173;
 const ROUTES = [
   '/',
@@ -51,7 +51,20 @@ const MIME = {
   '.ico': 'image/x-icon',
 };
 const server = createServer((req, res) => {
-  let f = join(ROOT, decodeURIComponent(req.url.split('?')[0]));
+  // The request path is attacker-shaped: decode it safely and refuse anything
+  // that resolves outside ROOT (`/../../etc/passwd`, `%2e%2e%2f…`).
+  let rel;
+  try {
+    rel = decodeURIComponent(req.url.split('?')[0]);
+  } catch {
+    res.writeHead(400);
+    return res.end();
+  }
+  let f = resolve(ROOT, `.${rel}`);
+  if (f !== ROOT && !f.startsWith(ROOT + sep)) {
+    res.writeHead(403);
+    return res.end();
+  }
   if (!existsSync(f) || statSync(f).isDirectory()) {
     if (extname(req.url)) {
       res.writeHead(404);
@@ -61,7 +74,7 @@ const server = createServer((req, res) => {
   }
   res.writeHead(200, { 'content-type': MIME[extname(f)] ?? 'application/octet-stream' });
   createReadStream(f).pipe(res);
-}).listen(PORT);
+}).listen(PORT, '127.0.0.1'); // loopback only — never expose the build on the LAN
 
 const chromeBin =
   process.env.CHROME_BIN ??
@@ -100,7 +113,7 @@ async function connect() {
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
     try {
-      const list = await (await fetch('http://localhost:9222/json/list')).json();
+      const list = await (await fetch('http://127.0.0.1:9222/json/list')).json();
       const page = list.find((t) => t.type === 'page');
       if (page) return new WebSocket(page.webSocketDebuggerUrl);
     } catch {
@@ -136,7 +149,7 @@ await send('Runtime.enable');
 
 let failures = 0;
 for (const route of ROUTES) {
-  await send('Page.navigate', { url: `http://localhost:${PORT}${route}` });
+  await send('Page.navigate', { url: `http://127.0.0.1:${PORT}${route}` });
   await sleep(2500);
   await send('Runtime.evaluate', { expression: axeSource });
   const { result } = await send('Runtime.evaluate', {
@@ -166,7 +179,7 @@ for (const route of ROUTES) {
 const SCHEMES = ['arctic', 'ember', 'sage'].flatMap((palette) =>
   ['dark', 'light'].map((mode) => ({ palette, mode })),
 );
-await send('Page.navigate', { url: `http://localhost:${PORT}/components/button` });
+await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/components/button` });
 await sleep(2500);
 // The colour maths, shared by the two readings below.
 const COLOUR_HELPERS = `
@@ -264,7 +277,7 @@ const { result: contrastResult } = await send('Runtime.evaluate', {
 // A product's accent is the app's to pick, and the library documents the
 // subtree that carries it — so the same check that guards --acc runs on every
 // [data-accent] the showcase declares, in all six schemes.
-await send('Page.navigate', { url: `http://localhost:${PORT}/components/product-switcher` });
+await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/components/product-switcher` });
 await sleep(2500);
 const { result: accentResult } = await send('Runtime.evaluate', {
   returnByValue: true,
@@ -305,7 +318,7 @@ const PAIRS = [
 ];
 const pairResults = [];
 for (const [route, selector, name] of PAIRS) {
-  await send('Page.navigate', { url: `http://localhost:${PORT}${route}` });
+  await send('Page.navigate', { url: `http://127.0.0.1:${PORT}${route}` });
   await sleep(2500);
   const { result } = await send('Runtime.evaluate', {
     returnByValue: true,
