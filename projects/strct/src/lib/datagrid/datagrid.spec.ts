@@ -1623,6 +1623,46 @@ describe('StrctDatagrid presentation and cursor paging', () => {
     expect(el.classList).toContain('strct-dg-host--flush');
   });
 
+  // Two grids on one page had two landmarks each with the same name — "rows"
+  // and "Pagination" — which a landmark list cannot tell apart (axe
+  // `landmark-unique`). The caption tells them apart.
+  it('names its landmarks after the caption, so two grids are told apart', () => {
+    const many = Array.from({ length: 12 }, (_, i) => ({ name: `hv-${i}` }));
+    const grid = (caption: string) => {
+      const fixture = TestBed.createComponent(StrctDatagrid);
+      applyInputs(fixture, {
+        columns: [{ key: 'name', label: 'Host' }],
+        rows: many,
+        paging: { pageSize: 5 },
+        caption,
+      });
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      return {
+        region: el.querySelector('.strct-dg__scroll')!.getAttribute('aria-label'),
+        pager: el.querySelector('strct-pagination')!.getAttribute('aria-label'),
+      };
+    };
+
+    expect(grid('Hosts')).toEqual({ region: 'Hosts rows', pager: 'Hosts Pagination' });
+    expect(grid('Tasks')).toEqual({ region: 'Tasks rows', pager: 'Tasks Pagination' });
+    // No caption: the names it always had.
+    expect(grid('')).toEqual({ region: 'rows', pager: 'Pagination' });
+  });
+
+  it('localizes the pager landmark through labels.pagination', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    applyInputs(fixture, {
+      columns: [{ key: 'name', label: 'Host' }],
+      rows: Array.from({ length: 12 }, (_, i) => ({ name: `hv-${i}` })),
+      paging: { pageSize: 5 },
+      labels: { pagination: 'Seitennavigation' },
+    });
+    fixture.detectChanges();
+    const pager = (fixture.nativeElement as HTMLElement).querySelector('strct-pagination')!;
+    expect(pager.getAttribute('aria-label')).toBe('Seitennavigation');
+  });
+
   it('is unchanged without any of them', () => {
     const fixture = TestBed.createComponent(StrctDatagrid);
     fixture.componentRef.setInput('columns', [{ key: 'name', label: 'Host' }]);

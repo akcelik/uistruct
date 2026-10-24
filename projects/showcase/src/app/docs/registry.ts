@@ -4278,19 +4278,25 @@ export const DOCS: DocCategory[] = [
       {
         id: 'stack',
         title: 'Stack view',
-        selector: 'strct-stack, strct-stack-item',
+        selector: 'strct-stack, div[strctStackItem]',
         importNames: ['StrctStack', 'StrctStackItem'],
         summary: 'Key / value detail list.',
-        lead: 'A label / value list for read-only object details. Each `strct-stack-item` has a `label`; the value is projected content.',
+        lead: 'A label / value list for read-only object details. Each row is a `<div strctStackItem>` with a `label`; the value is projected content.',
         inputs: [
           {
             name: 'label',
             type: 'string',
-            description: 'On `strct-stack-item`: the field label. Required.',
+            description: 'On `div[strctStackItem]`: the field label. Required.',
           },
         ],
-        do: ['Use for compact read-only property lists (an object’s summary).'],
+        do: [
+          'Use for compact read-only property lists (an object’s summary).',
+          'Write each row as `<div strctStackItem>`. The `<strct-stack-item>` element still renders, but a custom element between a `<dl>` and its `dt` / `dd` breaks the list’s content model.',
+        ],
         dont: ['Do not use a stack view for editable forms.'],
+        a11y: [
+          'A real `<dl>`: each row is a `<div>` wrapping one `<dt>` (the label) and one `<dd>` (the value), so a screen reader announces it as a list of terms and definitions.',
+        ],
       },
     ],
   },

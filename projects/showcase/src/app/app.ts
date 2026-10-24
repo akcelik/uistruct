@@ -84,6 +84,8 @@ export class App {
   protected readonly count = COMPONENT_COUNT;
   /** Derived from the library's package.json so it never goes stale. */
   protected readonly version = strctPkg.version;
+  /** Names the sidebar's page list: the visible group title is its label. */
+  protected readonly panelTitleId = 'app-nav-panel-title';
 
   /** Icon strip + secondary panel source. Foundations first, then component categories. */
   protected readonly groups: NavGroup[] = [

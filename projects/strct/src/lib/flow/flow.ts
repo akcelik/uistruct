@@ -123,51 +123,80 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
             @if (!col.nodes.length && col.emptyText) {
               <p class="strct-flow__colempty">{{ col.emptyText }}</p>
             }
-            <ul class="strct-flow__boxes">
-              @for (node of col.nodes; track node.id) {
-                <li
-                  class="strct-flow__box strct-flow__box--{{ node.status ?? 'neutral' }}"
-                  [class.strct-flow__box--surface]="node.emphasis === 'surface'"
-                  [class.strct-flow__box--navigable]="navigable()"
-                  [attr.data-flow-node]="node.id"
-                  [attr.role]="navigable() ? 'button' : null"
-                  [attr.tabindex]="navigable() ? (isCursor(node) ? 0 : -1) : null"
-                  (click)="activate(node)"
-                  (focus)="cursor.set(node.id)"
-                  (keydown)="onNodeKeydown($event, node)"
-                >
-                  @if (nodeTpl(); as tpl) {
+            <!-- A read-only diagram is a list of items. A navigable one is a
+                 group of buttons: an <li> may not take role="button" and a <ul>
+                 may only hold list items (axe \`aria-allowed-role\` / \`list\`),
+                 so its boxes are plain <div>s inside a plain <div>. -->
+            @if (navigable()) {
+              <div class="strct-flow__boxes">
+                @for (node of col.nodes; track node.id) {
+                  <div
+                    class="strct-flow__box strct-flow__box--navigable strct-flow__box--{{
+                      node.status ?? 'neutral'
+                    }}"
+                    [class.strct-flow__box--surface]="node.emphasis === 'surface'"
+                    [attr.data-flow-node]="node.id"
+                    role="button"
+                    [attr.tabindex]="isCursor(node) ? 0 : -1"
+                    (click)="activate(node)"
+                    (focus)="cursor.set(node.id)"
+                    (keydown)="onNodeKeydown($event, node)"
+                  >
                     <ng-container
-                      [ngTemplateOutlet]="tpl"
-                      [ngTemplateOutletContext]="{ $implicit: node, node }"
+                      [ngTemplateOutlet]="boxContent"
+                      [ngTemplateOutletContext]="{ $implicit: node }"
                     />
-                  } @else {
-                    @if (node.icon) {
-                      <strct-icon
-                        class="strct-flow__icon"
-                        [name]="node.icon"
-                        [size]="15"
-                        [strokeWidth]="1.4"
-                      />
-                    }
-                    <span class="strct-flow__label">{{ node.label }}</span>
-                    @if (node.role) {
-                      <span class="strct-flow__role">{{ node.role }}</span>
-                    }
-                    @if (node.sublabel) {
-                      <span class="strct-flow__sub">{{ node.sublabel }}</span>
-                    }
-                  }
-                  <span class="strct-flow__sr">{{ nodeSummary(node) }}</span>
-                </li>
-              }
-            </ul>
+                  </div>
+                }
+              </div>
+            } @else {
+              <ul class="strct-flow__boxes">
+                @for (node of col.nodes; track node.id) {
+                  <li
+                    class="strct-flow__box strct-flow__box--{{ node.status ?? 'neutral' }}"
+                    [class.strct-flow__box--surface]="node.emphasis === 'surface'"
+                    [attr.data-flow-node]="node.id"
+                  >
+                    <ng-container
+                      [ngTemplateOutlet]="boxContent"
+                      [ngTemplateOutletContext]="{ $implicit: node }"
+                    />
+                  </li>
+                }
+              </ul>
+            }
           </div>
         }
       </div>
       @if (label()) {
         <div class="strct-flow__caption">{{ label() }}</div>
       }
+      <!-- One box's content, shared by the list and the button forms. -->
+      <ng-template #boxContent let-node>
+        @if (nodeTpl(); as tpl) {
+          <ng-container
+            [ngTemplateOutlet]="tpl"
+            [ngTemplateOutletContext]="{ $implicit: node, node }"
+          />
+        } @else {
+          @if (node.icon) {
+            <strct-icon
+              class="strct-flow__icon"
+              [name]="node.icon"
+              [size]="15"
+              [strokeWidth]="1.4"
+            />
+          }
+          <span class="strct-flow__label">{{ node.label }}</span>
+          @if (node.role) {
+            <span class="strct-flow__role">{{ node.role }}</span>
+          }
+          @if (node.sublabel) {
+            <span class="strct-flow__sub">{{ node.sublabel }}</span>
+          }
+        }
+        <span class="strct-flow__sr">{{ nodeSummary(node) }}</span>
+      </ng-template>
     } @else {
       <div class="strct-flow__row">
         @for (node of nodes(); track node.id; let last = $last) {

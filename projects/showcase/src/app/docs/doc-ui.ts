@@ -282,7 +282,7 @@ export interface PageRef {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink],
   template: `
-    <nav class="pn">
+    <nav class="pn" aria-label="Previous and next component">
       @if (prev()) {
         <a class="pn__card pn__card--prev" [routerLink]="['/components', prev()!.id]">
           <span class="pn__dir">← Previous</span>

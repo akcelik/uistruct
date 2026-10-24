@@ -61,7 +61,14 @@ export class PageHeader {
       <section class="demo" [id]="anchor()" data-toc [attr.data-toc-label]="heading()">
         <div class="demo__head">
           <div class="demo__headtext">
-            <h3 class="demo__title">{{ heading() }}</h3>
+            <!-- On a component's docs page the demos sit under its "Examples"
+                 h2, so they are h3s; on a page of their own (Icons, Theming)
+                 they sit straight under the page's h1, so they are h2s. -->
+            @if (nested) {
+              <h3 class="demo__title">{{ heading() }}</h3>
+            } @else {
+              <h2 class="demo__title">{{ heading() }}</h2>
+            }
             @if (description()) {
               <p class="demo__desc">{{ description() }}</p>
             }
@@ -205,6 +212,8 @@ export class DemoBlock {
   protected readonly copied = signal(false);
 
   private readonly filter = inject(DemoFilter, { optional: true });
+  /** Hosted inside a component docs page (under its "Examples" h2). */
+  protected readonly nested = this.filter !== null;
   private readonly ownerId = computed(() => this.owner() || this.anchor());
   protected readonly hidden = computed(() => {
     const only = this.filter?.only();

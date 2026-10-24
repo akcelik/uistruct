@@ -62,10 +62,15 @@ describe('StrctResizeHandle', () => {
     const { fixture, el } = build();
     el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
     fixture.detectChanges();
-    expect(el.getAttribute('aria-expanded')).toBe('false');
+    // Value text and a value of 0, not aria-expanded, which a separator may
+    // not carry (axe aria-allowed-attr).
+    expect(el.hasAttribute('aria-expanded')).toBe(false);
+    expect(el.getAttribute('aria-valuetext')).toBe('Collapsed');
+    expect(el.getAttribute('aria-valuenow')).toBe('0');
     el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
     fixture.detectChanges();
-    expect(el.getAttribute('aria-expanded')).toBe('true');
+    expect(el.getAttribute('aria-valuetext')).toBeNull();
+    expect(el.getAttribute('data-collapsed')).toBe('false');
     expect(fixture.componentInstance.height()).toBe(256);
   });
 });

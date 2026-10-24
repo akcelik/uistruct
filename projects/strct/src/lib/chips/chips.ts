@@ -4,11 +4,13 @@ import {
   ViewEncapsulation,
   booleanAttribute,
   forwardRef,
+  inject,
   input,
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctTag } from '../tag/tag';
+import { StrctField } from '../forms/field';
 
 /**
  * Tag input — type a word and press Enter to add a chip; Backspace on an empty
@@ -24,14 +26,13 @@ import { StrctTag } from '../tag/tag';
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => StrctChips), multi: true },
   ],
   template: `
-    <div
-      class="strct-chips"
-      role="button"
-      tabindex="0"
-      (click)="input.focus()"
-      (keydown.enter)="input.focus()"
-      (keydown.space)="input.focus()"
-    >
+    <!-- Pointer convenience only: a click on the field's padding focuses the
+         real <input>, which is the tab stop and owns the keyboard path. It was
+         a role="button" tab stop wrapping the input and the chips' remove
+         buttons — an interactive inside an interactive (axe nested-interactive)
+         and one Tab press that did nothing. -->
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+    <div class="strct-chips" (click)="input.focus()">
       @for (chip of value(); track $index) {
         <strct-tag status="accent" removable [disabled]="isDisabled()" (removed)="remove($index)">{{
           chip
@@ -41,6 +42,7 @@ import { StrctTag } from '../tag/tag';
         #input
         type="text"
         class="strct-chips__input"
+        [attr.aria-label]="ariaLabel() || (inField ? null : placeholder() || null)"
         [value]="draft()"
         [placeholder]="value().length ? '' : placeholder()"
         [disabled]="isDisabled()"
@@ -93,6 +95,23 @@ import { StrctTag } from '../tag/tag';
 export class StrctChips implements ControlValueAccessor {
   /** Placeholder text when empty. */
   readonly placeholder = input('');
+  /**
+   * Accessible name of the text field. Outside a `strct-field` it falls back
+   * to `placeholder`; inside one, the field's `<label for>` names it and the
+   * placeholder stays a placeholder.
+   */
+  readonly ariaLabel = input('');
+  /**
+   * Inside a `strct-field`, whose `<label for>` names the text field.
+   *
+   * Asked through DI rather than with `closest('strct-field')`: projected
+   * content is not under the field in the DOM yet when this class is built,
+   * so the DOM answered no while the template said yes — and the fallback
+   * below then overrode the field's visible label with the placeholder's
+   * wording (WCAG 2.5.3). The element injector follows the template the
+   * consumer wrote, so it answers correctly even in a view inserted later.
+   */
+  protected readonly inField = !!inject(StrctField, { optional: true });
   /** Allow duplicate tags. */
   readonly allowDuplicates = input(false, { transform: booleanAttribute });
 

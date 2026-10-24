@@ -114,12 +114,17 @@ describe('StrctSplitter', () => {
     it('collapses and restores the pane with Enter', () => {
       const { fixture, el } = build({ unit: 'px', split: 280, collapsible: true });
       const g = gutter(el);
-      expect(g.getAttribute('aria-expanded')).toBe('true');
+      // A separator may not carry aria-expanded (axe aria-allowed-attr): the
+      // state is a value of 0 with value text, and data-collapsed for styling.
+      expect(g.hasAttribute('aria-expanded')).toBe(false);
+      expect(g.getAttribute('aria-valuetext')).toBeNull();
+      expect(g.getAttribute('data-collapsed')).toBe('false');
       g.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
       fixture.detectChanges();
       expect(fixture.componentInstance.collapsed()).toBe(true);
       expect(pane(el).style.flexBasis).toBe('0px');
-      expect(g.getAttribute('aria-expanded')).toBe('false');
+      expect(g.getAttribute('aria-valuetext')).toBe('Collapsed');
+      expect(g.getAttribute('data-collapsed')).toBe('true');
       expect(g.getAttribute('aria-valuenow')).toBe('0');
       g.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
       fixture.detectChanges();
@@ -132,7 +137,8 @@ describe('StrctSplitter', () => {
       expect(pane(el).style.flexBasis).toBe('50%');
       const g = gutter(el);
       expect(g.getAttribute('aria-valuemin')).toBe('15');
-      expect(g.getAttribute('aria-expanded')).toBeNull();
+      expect(g.getAttribute('aria-valuetext')).toBeNull();
+      expect(g.getAttribute('data-collapsed')).toBeNull();
       g.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
       fixture.detectChanges();
       expect(fixture.componentInstance.split()).toBe(53);

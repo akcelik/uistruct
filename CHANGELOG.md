@@ -5,6 +5,76 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.2] - 2026-10-24
+
+An accessibility pass over what axe could not see from the outside, and the
+gate that keeps the docs honest. No API removed. One layout fix, described
+below: text written for screen readers no longer takes a slot in the layout.
+
+### Fixed
+
+- **A screen-reader-only element no longer moves what is beside it.**
+  `.strct-sr-only` was a 1x1 `inline-block` — still a box, so in a flex or
+  grid container it took a slot. Measured in Chrome by restoring the old rule
+  at runtime: on the showcase's landing page the first feature card moved
+  **248.5px** sideways, and a grid with 35 hidden announcements stacked up
+  **21px per announcement**. It is `position: absolute` now, with the same
+  1px size and `clip-path` keeping it unseen, so it costs the layout nothing.
+  If you use the class in a flex or grid row, that row loses a slot it never
+  wanted — the only visual change in this release.
+
+- **`strct-chips` inside a `strct-field` is named by the field's label
+  again.** The component decided by asking the DOM for a `strct-field`
+  ancestor in its constructor, where projected content is not under the field
+  yet — so the answer was always no, and the placeholder-derived `aria-label`
+  overrode the field's visible label (WCAG 2.5.3). It asks the injector now,
+  which follows the template the consumer wrote and answers correctly even in
+  a view inserted later. Two specs cover it; both failed on the previous code.
+- **A control inside a control.** `strct-chips` wrapped its input and its
+  chips' remove buttons in a `role="button"` tab stop: axe's
+  `nested-interactive`, and one Tab press that did nothing. The wrapper is a
+  pointer convenience now; the real `<input>` is the tab stop and owns the
+  keyboard path.
+- **A navigable `strct-flow` is a group of buttons, not a list.** An `<li>`
+  may not take `role="button"` and a `<ul>` may only hold list items
+  (`aria-allowed-role`, `list`). A read-only diagram is still a list; a
+  navigable one draws plain elements.
+- **A separator may not say it is expanded.** `strct-splitter` and
+  `[strctResizeHandle]` carried `aria-expanded` on a `role="separator"`
+  (`aria-allowed-attr`). A collapsed pane now reads through `aria-valuenow`
+  and `aria-valuetext`. If you styled `[aria-expanded="false"]` on a gutter or
+  handle, style `[data-collapsed="true"]` instead — it carries the same state
+  for CSS.
+- **`aria-posinset` / `aria-setsize` only where a role takes them**
+  (`strct-reorder`), and the drag instructions moved inside a landmark
+  (`region`).
+- **`strct-stack`'s label rows keep the list content model** — nothing may sit
+  between a list and its `dt` / `dd`.
+- **Labels that contain what is shown** (WCAG 2.5.3): `strct-searchbox` in
+  trigger mode names the button with its label and its hint chip before the
+  spoken form, and `strct-copy` keeps a visible label in its name. A voice
+  user says what they see.
+- **Landmarks are named, and named apart**: `strct-layout`'s header and footer
+  take `banner` / `contentinfo`, a datagrid's regions are prefixed with the
+  grid's `caption`, and the showcase's section panel is a named `nav`.
+
+### Added
+
+- **`scripts/check-docs.mjs`**, run in CI: every docs page's `importNames`
+  must be exported from the public API, and every page id must be unique. The
+  import line on a docs page is copied verbatim into consumers' code, so a
+  stale name there is a compile error for them — 6.0.1 found
+  `StrctContextMenu` still listed after 6.0 removed it.
+
+### Changed
+
+- **Dependencies**: `eslint` 10.13, `angular-eslint` 22.6,
+  `typescript-eslint` 8.72, `axe-core` 4.14, `prettier` 3.9.10,
+  `lint-staged` 17.6, and a `vite@8.3.5` override — which closes the two
+  dev-server advisories 6.0.1 had to leave open. `npm audit` is clean.
+- The library's lint run is clean: the 13 template warnings that had been
+  carried for months are gone with the fixes above.
+
 ## [6.0.1] - 2026-10-22
 
 A security and housekeeping patch. No API, markup or style changed — every

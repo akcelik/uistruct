@@ -91,12 +91,12 @@ import {
             <strct-card-header><span>Overview</span></strct-card-header>
             <strct-card-block>
               <strct-stack>
-                <strct-stack-item label="Cluster">Prod-B</strct-stack-item>
-                <strct-stack-item label="Hypervisor">Hyper-V Server 2022</strct-stack-item>
-                <strct-stack-item label="CPU">2× Intel Xeon Gold 6248R · 48 cores</strct-stack-item>
-                <strct-stack-item label="Memory">512 GB DDR4</strct-stack-item>
-                <strct-stack-item label="IP address">10.0.1.13</strct-stack-item>
-                <strct-stack-item label="Uptime">201 days</strct-stack-item>
+                <div strctStackItem label="Cluster">Prod-B</div>
+                <div strctStackItem label="Hypervisor">Hyper-V Server 2022</div>
+                <div strctStackItem label="CPU">2× Intel Xeon Gold 6248R · 48 cores</div>
+                <div strctStackItem label="Memory">512 GB DDR4</div>
+                <div strctStackItem label="IP address">10.0.1.13</div>
+                <div strctStackItem label="Uptime">201 days</div>
               </strct-stack>
             </strct-card-block>
           </strct-card>

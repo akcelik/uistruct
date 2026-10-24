@@ -31,6 +31,16 @@ describe('StrctHeader', () => {
     expect(host.classList).toContain('strct-header');
   });
 
+  // A custom element is not a <header>, so without the role the brand and the
+  // header actions sat outside every landmark (axe `region`, 6.0.2).
+  it('is the page banner landmark', () => {
+    TestBed.configureTestingModule({ providers: [StrctShellService] });
+    const fixture = TestBed.createComponent(StrctHeader);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).getAttribute('role')).toBe('banner');
+  });
+
   // FR-52-02 / FR-53-05 — which product you are in, and a header that fits a
   // phone without an app overriding the library's own selector.
   it('draws an accent line without taking any height, and only when asked', () => {
@@ -103,6 +113,13 @@ describe('StrctFooter', () => {
 
     const host = fixture.nativeElement as HTMLElement;
     expect(host.classList).toContain('strct-footer');
+  });
+
+  it('is the page contentinfo landmark', () => {
+    const fixture = TestBed.createComponent(StrctFooter);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).getAttribute('role')).toBe('contentinfo');
   });
 });
 

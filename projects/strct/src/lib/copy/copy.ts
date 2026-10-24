@@ -32,7 +32,7 @@ import { StrctIcon } from '../icon/icon';
       [class.strct-copy--done]="done()"
       [class.strct-copy--error]="error()"
       [attr.aria-label]="
-        done() ? copiedLabel() : error() ? failedLabel() : ariaLabel() || copyLabel()
+        done() ? copiedLabel() : error() ? failedLabel() : ariaLabel() || label() || copyLabel()
       "
       (click)="copy()"
     >
@@ -113,7 +113,11 @@ export class StrctCopy {
   readonly text = input.required<string>();
   /** Optional visible label next to the icon (icon-only by default). */
   readonly label = input('');
-  /** Accessible label; falls back to `copyLabel`. */
+  /**
+   * Accessible label; falls back to the visible `label`, then `copyLabel`.
+   * With a visible label, keep it in the name (WCAG 2.5.3, label in name): a
+   * button that shows "Copy UUID" but is named "Copy" cannot be voice-clicked.
+   */
   readonly ariaLabel = input('');
   /** Localizable strings. */
   readonly copyLabel = input('Copy');

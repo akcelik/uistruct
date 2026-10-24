@@ -45,7 +45,8 @@ import {
       [attr.aria-valuenow]="collapsed() ? 0 : clamped()"
       [attr.aria-valuemin]="lowerBound()"
       [attr.aria-valuemax]="upperBound()"
-      [attr.aria-expanded]="collapsible() ? !collapsed() : null"
+      [attr.aria-valuetext]="collapsible() && collapsed() ? collapsedLabel() : null"
+      [attr.data-collapsed]="collapsible() ? collapsed() : null"
       (pointerdown)="onDragStart($event)"
       (keydown)="onKeydown($event)"
     >
@@ -145,6 +146,15 @@ export class StrctSplitter {
   readonly vertical = input(false, { transform: booleanAttribute });
   /** Accessible name of the separator (localizable). */
   readonly gutterLabel = input('Resize panes');
+  /**
+   * What the separator announces while the pane is collapsed (localizable).
+   * A `separator` may not carry `aria-expanded` (axe `aria-allowed-attr`,
+   * critical), so the state is its value text, beside a value of 0. For CSS
+   * the gutter carries `data-collapsed`; the collapsed pane keeps its
+   * `.strct-split__pane--collapsed` class, which is what this component
+   * styles by.
+   */
+  readonly collapsedLabel = input('Collapsed');
   /** Keyboard nudge step in percent. */
   readonly step = input(3);
 

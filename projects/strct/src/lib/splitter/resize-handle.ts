@@ -31,10 +31,15 @@ import {
     '[class.strct-resize--y]': "axis() === 'y'",
     '[class.strct-resize--dragging]': 'dragging()',
     '[attr.aria-orientation]': "axis() === 'y' ? 'horizontal' : 'vertical'",
-    '[attr.aria-valuenow]': 'size()',
+    '[attr.aria-valuenow]': 'collapsible() && collapsed() ? 0 : size()',
     '[attr.aria-valuemin]': 'min()',
     '[attr.aria-valuemax]': 'max()',
-    '[attr.aria-expanded]': 'collapsible() ? !collapsed() : null',
+    // A separator may not carry aria-expanded (axe aria-allowed-attr); the
+    // collapsed state is announced as its value text instead. Styling it was
+    // the attribute's other use, so data-collapsed takes that over — the
+    // directive itself styles nothing by it.
+    '[attr.aria-valuetext]': 'collapsible() && collapsed() ? collapsedLabel() : null',
+    '[attr.data-collapsed]': 'collapsible() ? collapsed() : null',
     '(pointerdown)': 'onDown($event)',
     '(keydown)': 'onKeydown($event)',
   },
@@ -53,6 +58,8 @@ export class StrctResizeHandle {
   readonly collapsible = input(false, { transform: booleanAttribute });
   /** Whether it is collapsed (two-way). */
   readonly collapsed = model(false);
+  /** What the handle announces while collapsed (localizable). */
+  readonly collapsedLabel = input('Collapsed');
   /**
    * Which side of the handle the sized pane is on. `'before'` (default) grows
    * the pane as the pointer moves toward the inline/block end.

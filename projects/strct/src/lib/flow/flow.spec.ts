@@ -332,6 +332,23 @@ describe('StrctFlow — a navigable topology', () => {
     expect(picked).toEqual([]);
   });
 
+  // An <li> may not take role="button", and a <ul> may only hold list items:
+  // axe reported aria-allowed-role and list (serious) on every navigable flow.
+  it('a navigable column is a group of buttons; a read-only one is a list', () => {
+    const nav = build(true);
+    expect(nav.box('p1').tagName).toBe('DIV');
+    expect(nav.box('p1').parentElement!.tagName).toBe('DIV');
+    expect(nav.el.querySelector('ul, li')).toBeNull();
+
+    const ro = build(false);
+    expect(ro.box('p1').tagName).toBe('LI');
+    expect(ro.box('p1').parentElement!.tagName).toBe('UL');
+    // Same look either way.
+    expect(ro.box('p1').classList).toContain('strct-flow__box');
+    expect(nav.box('p1').classList).toContain('strct-flow__box');
+    expect(nav.box('p1').classList).toContain('strct-flow__box--navigable');
+  });
+
   it('a node can carry an icon, and still says where it leads', () => {
     const { box } = build();
     expect(box('p1').querySelector('strct-icon')).toBeTruthy();
