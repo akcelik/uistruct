@@ -159,6 +159,10 @@ export class StrctReorder implements OnDestroy {
       if (text && !this.hint) {
         this.hint = this.renderer.createElement('span') as HTMLElement;
         this.renderer.setAttribute(this.hint, 'id', this.instructionsId);
+        // Only ever read through the items' aria-describedby, which still
+        // resolves a hidden element. Hidden, it is not a stray text node at
+        // the end of <body> outside every landmark (axe `region`).
+        this.renderer.setAttribute(this.hint, 'hidden', '');
         this.hint.style.cssText =
           'position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;';
         this.renderer.appendChild(this.doc.body, this.hint);
@@ -234,6 +238,31 @@ export class StrctReorder implements OnDestroy {
 @Directive({ selector: '[strctReorderHandle]', host: { class: 'strct-reorder__handle' } })
 export class StrctReorderHandle {}
 
+/**
+ * Roles that support `aria-posinset` / `aria-setsize` (WAI-ARIA 1.2), and the
+ * elements whose implicit role is one of them. Anything else — a plain `<div>`
+ * card on a board — must not carry the two attributes.
+ */
+const SET_MEMBER_ROLES = new Set([
+  'listitem',
+  'option',
+  'row',
+  'treeitem',
+  'menuitem',
+  'menuitemcheckbox',
+  'menuitemradio',
+  'radio',
+  'tab',
+  'article',
+  'comment',
+]);
+const SET_MEMBER_TAGS = new Set(['LI', 'TR', 'OPTION', 'ARTICLE']);
+
+function takesSetPosition(el: HTMLElement): boolean {
+  const role = el.getAttribute('role')?.trim().split(/\s+/)[0];
+  return role ? SET_MEMBER_ROLES.has(role) : SET_MEMBER_TAGS.has(el.tagName);
+}
+
 /** One draggable row inside a `[strctReorder]` container. */
 @Directive({
   selector: '[strctReorderItem]',
@@ -247,8 +276,11 @@ export class StrctReorderHandle {}
     // instructions that do not apply.
     '[attr.aria-roledescription]': "list.reorderDisabled() ? null : 'sortable'",
     '[attr.aria-keyshortcuts]': 'list.reorderDisabled() ? null : shortcuts()',
-    '[attr.aria-posinset]': 'list.reorderDisabled() ? null : index() + 1',
-    '[attr.aria-setsize]': 'list.reorderDisabled() ? null : list.items().length',
+    // Position is only meaningful — and only allowed — on a role that is a
+    // member of a set (a listitem, a row, an option…). On a plain <div> card
+    // ARIA forbids it (axe `aria-allowed-attr`, serious), so it is left off.
+    '[attr.aria-posinset]': 'list.reorderDisabled() || !inSet ? null : index() + 1',
+    '[attr.aria-setsize]': 'list.reorderDisabled() || !inSet ? null : list.items().length',
     '[attr.aria-describedby]':
       'list.reorderDisabled() || !list.instructions() ? null : list.instructionsId',
   },
@@ -258,6 +290,8 @@ export class StrctReorderItem {
   private readonly el = inject<ElementRef<HTMLElement>>(ElementRef);
   // Captured before our own binding ever writes tabindex, so it never flips.
   private readonly hadOwnTabindex = this.el.nativeElement.hasAttribute('tabindex');
+  /** Whether the element's role takes aria-posinset / aria-setsize. */
+  protected readonly inSet = takesSetPosition(this.el.nativeElement);
 
   protected hostTabindex(): number | null {
     if (this.hadOwnTabindex) return null;

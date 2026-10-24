@@ -147,11 +147,11 @@ import {
       <!-- Expandable detail -->
       <ng-template strctRowDetail let-row>
         <strct-stack style="max-width: 460px;">
-          <strct-stack-item label="Cluster">{{ row['cluster'] }}</strct-stack-item>
-          <strct-stack-item label="Power">{{ row['power'] }}</strct-stack-item>
-          <strct-stack-item label="Operating system">{{ row['os'] }}</strct-stack-item>
-          <strct-stack-item label="IP address">{{ row['ip'] }}</strct-stack-item>
-          <strct-stack-item label="Uptime">{{ row['uptime'] }}</strct-stack-item>
+          <div strctStackItem label="Cluster">{{ row['cluster'] }}</div>
+          <div strctStackItem label="Power">{{ row['power'] }}</div>
+          <div strctStackItem label="Operating system">{{ row['os'] }}</div>
+          <div strctStackItem label="IP address">{{ row['ip'] }}</div>
+          <div strctStackItem label="Uptime">{{ row['uptime'] }}</div>
         </strct-stack>
       </ng-template>
     </strct-datagrid>

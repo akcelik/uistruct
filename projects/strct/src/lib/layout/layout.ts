@@ -220,7 +220,12 @@ export class StrctHeaderAction {
   readonly template = inject<TemplateRef<unknown>>(TemplateRef);
 }
 
-/** Top application bar. Holds brand on the left and actions on the right. */
+/**
+ * Top application bar. Holds brand on the left and actions on the right.
+ *
+ * It is the page's `banner` landmark, so the brand and header actions are
+ * inside a landmark a screen reader can jump to. Use one per page.
+ */
 @Component({
   selector: 'strct-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -304,6 +309,7 @@ export class StrctHeaderAction {
   `,
   host: {
     class: 'strct-header',
+    role: 'banner',
     '[class.strct-header--accent]': 'accent()',
     '[style.--strct-header-accent]': 'accent() || null',
   },
@@ -551,13 +557,16 @@ export class StrctHeader {
   }
 }
 
-/** Bottom status bar. */
+/**
+ * Bottom status bar. It is the page's `contentinfo` landmark, so its text is
+ * inside a landmark a screen reader can jump to. Use one per page.
+ */
 @Component({
   selector: 'strct-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `<ng-content />`,
-  host: { class: 'strct-footer' },
+  host: { class: 'strct-footer', role: 'contentinfo' },
   styles: [
     `
       .strct-footer {

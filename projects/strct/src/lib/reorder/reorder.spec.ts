@@ -75,6 +75,14 @@ describe('StrctReorder', () => {
     expect(document.getElementById(id)!.textContent).toBe('Alt+Pfeiltasten zum Verschieben');
   });
 
+  // Read only through aria-describedby, which resolves a hidden element; as a
+  // visible node at the end of <body> it sat outside every landmark.
+  it('keeps the instructions element hidden — a description, not page content', () => {
+    const { rows } = setup();
+    const hint = document.getElementById(rows()[0].getAttribute('aria-describedby')!)!;
+    expect(hint.hidden).toBe(true);
+  });
+
   it('drag from one row to another emits and the consumer array reorders', () => {
     const { fixture, rows, labels } = setup();
     const [a, , c] = rows();
@@ -307,5 +315,44 @@ describe('StrctReorderItem — reorderDisabled', () => {
     fixture.detectChanges();
     expect(item.getAttribute('tabindex')).toBe('0');
     expect(item.getAttribute('aria-roledescription')).toBe('sortable');
+  });
+});
+
+// aria-posinset / aria-setsize are only allowed on a role that is a member of
+// a set; on a board's plain <div> cards axe reported aria-allowed-attr
+// (serious) for every card.
+@Component({
+  imports: [StrctReorder, StrctReorderItem],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
+    <div strctReorder class="cards">
+      <div strctReorderItem>Card A</div>
+      <div strctReorderItem>Card B</div>
+    </div>
+    <div strctReorder role="list" class="roled">
+      <div strctReorderItem role="listitem">One</div>
+      <div strctReorderItem role="listitem">Two</div>
+    </div>
+  `,
+})
+class SetPositionHost {}
+
+describe('StrctReorderItem — set position', () => {
+  it('sets position only on elements whose role is a member of a set', () => {
+    const fixture = TestBed.createComponent(SetPositionHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    for (const card of el.querySelectorAll<HTMLElement>('.cards > div')) {
+      expect(card.getAttribute('aria-posinset')).toBeNull();
+      expect(card.getAttribute('aria-setsize')).toBeNull();
+      // Everything else about sorting still applies to a card.
+      expect(card.getAttribute('aria-roledescription')).toBe('sortable');
+    }
+
+    const [one, two] = el.querySelectorAll<HTMLElement>('.roled > div');
+    expect(one.getAttribute('aria-posinset')).toBe('1');
+    expect(two.getAttribute('aria-posinset')).toBe('2');
+    expect(two.getAttribute('aria-setsize')).toBe('2');
   });
 });

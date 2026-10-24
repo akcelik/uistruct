@@ -25,7 +25,7 @@
         class="hdr-search"
         trigger
         hint="⌘K"
-        ariaLabel="Search (Ctrl or Cmd K)"
+        ariaLabel="Ctrl or Cmd K"
         (activated)="openPalette()"
       />
     </ng-container>
@@ -64,20 +64,24 @@
           }
         </div>
 
-        <div class="panel">
-          <div class="panel__title">{{ activeGroup().label }}</div>
-          <nav class="panel__list">
+        <!-- The whole panel is the navigation landmark, named by its visible
+             group title: the title is inside a landmark, and a screen reader's
+             landmark list tells it from the breadcrumb and prev / next navs. -->
+        <nav class="panel" [attr.aria-labelledby]="panelTitleId">
+          <div class="panel__title" [id]="panelTitleId">{{ activeGroup().label }}</div>
+          <div class="panel__list">
             @for (item of activeGroup().items; track item.path) {
               <a
                 class="panel__item"
                 [class.is-active]="isActiveItem(item.path)"
+                [attr.aria-current]="isActiveItem(item.path) ? 'page' : null"
                 [routerLink]="item.path"
               >
                 {{ item.label }}
               </a>
             }
-          </nav>
-        </div>
+          </div>
+        </nav>
       </div>
     </strct-vertical-nav>
   }

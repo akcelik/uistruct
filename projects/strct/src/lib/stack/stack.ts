@@ -23,9 +23,21 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation, input } from '@a
 })
 export class StrctStack {}
 
-/** A label + value row. The value is projected content. */
+/**
+ * A label + value row. The value is projected content.
+ *
+ * Use **`<div strctStackItem>`** inside `strct-stack`: `<dl>` allows only
+ * `dt` / `dd` pairs or `<div>` wrappers as children, so a custom element
+ * between the list and its `dt` / `dd` breaks the content model (axe
+ * `definition-list` / `dlitem`, both serious) — the BUG-49-05 fix
+ * `strct-desc` got in 5.0.1. The element form still renders identically.
+ *
+ *   <strct-stack>
+ *     <div strctStackItem label="Cluster">Prod-B</div>
+ *   </strct-stack>
+ */
 @Component({
-  selector: 'strct-stack-item',
+  selector: 'strct-stack-item, div[strctStackItem]',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `

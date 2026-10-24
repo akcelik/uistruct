@@ -68,7 +68,7 @@
     class="strct-dg__scroll"
     tabindex="0"
     role="region"
-    [attr.aria-label]="L().rows"
+    [attr.aria-label]="regionName(L().rows)"
     [style.max-height.px]="virtual() ? viewportHeight() : maxHeight()"
     (scroll)="virtual() && onScroll($event)"
   >
@@ -781,6 +781,7 @@
           [total]="totalCount()"
           [pageSize]="pageSize()"
           [page]="page()"
+          [regionLabel]="regionName(L().pagination)"
           (pageChange)="goToPage($event)"
         />
       }

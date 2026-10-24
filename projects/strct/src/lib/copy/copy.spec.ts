@@ -16,6 +16,22 @@ describe('StrctCopy', () => {
     expect(el.querySelector('.strct-copy__label')).toBeNull();
   });
 
+  // WCAG 2.5.3 (label in name): a button that shows "Copy UUID" was named
+  // "Copy", so a voice user saying what they saw could not press it.
+  it('names a labelled button with its visible label', () => {
+    expect(
+      make({ text: 'x', label: 'Copy UUID' })
+        .el.querySelector('button')!
+        .getAttribute('aria-label'),
+    ).toBe('Copy UUID');
+    // An explicit ariaLabel still wins.
+    expect(
+      make({ text: 'x', label: 'Copy UUID', ariaLabel: 'Copy UUID of hv-01' })
+        .el.querySelector('button')!
+        .getAttribute('aria-label'),
+    ).toBe('Copy UUID of hv-01');
+  });
+
   it('copies via the clipboard API, emits (copied) and flips to the ✓ state', async () => {
     const written: string[] = [];
     Object.assign(navigator, {

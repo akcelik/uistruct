@@ -21,6 +21,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      # The docs pages' import lines are copied verbatim into consumers' code,
+      # so a name the package no longer exports is a compile error for them.
+      # 6.0.1 found `StrctContextMenu` still listed after 6.0 removed it.
+      - name: Assert the docs describe the library that ships
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-docs.mjs
 
   test:
     runs-on: ubuntu-latest

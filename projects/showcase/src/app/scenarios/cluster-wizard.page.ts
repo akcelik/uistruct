@@ -156,15 +156,15 @@ interface HostOption {
         <!-- 4 · Review -->
         <strct-step label="Review">
           <strct-stack style="max-width: 460px;">
-            <strct-stack-item label="Name">{{ name() }}</strct-stack-item>
-            <strct-stack-item label="Datacenter">{{ datacenter() }}</strct-stack-item>
-            <strct-stack-item label="Hosts">{{ selectedHosts().length }} selected</strct-stack-item>
-            <strct-stack-item label="HA">{{
-              ha() ? 'Enabled · ' + failoverHosts() + ' failover host(s)' : 'Disabled'
-            }}</strct-stack-item>
-            <strct-stack-item label="Optimization">{{
-              drs() ? 'Enabled · ' + automation() : 'Disabled'
-            }}</strct-stack-item>
+            <div strctStackItem label="Name">{{ name() }}</div>
+            <div strctStackItem label="Datacenter">{{ datacenter() }}</div>
+            <div strctStackItem label="Hosts">{{ selectedHosts().length }} selected</div>
+            <div strctStackItem label="HA">
+              {{ ha() ? 'Enabled · ' + failoverHosts() + ' failover host(s)' : 'Disabled' }}
+            </div>
+            <div strctStackItem label="Optimization">
+              {{ drs() ? 'Enabled · ' + automation() : 'Disabled' }}
+            </div>
           </strct-stack>
         </strct-step>
       </strct-wizard>

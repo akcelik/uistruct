@@ -7,7 +7,6 @@ import {
   StrctChatComposer,
   StrctChatMessage,
   StrctChatThread,
-  StrctStack,
   StrctCheckbox,
   StrctContextMenuTrigger,
   StrctField,
@@ -47,7 +46,6 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctChatComposer,
     StrctChatMessage,
     StrctChatThread,
-    StrctStack,
     StrctLiveIndicator,
     StrctQr,
     StrctTag,
@@ -189,7 +187,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           </ng-container>
           <strct-live-indicator strctLoginStatus state="live" [interval]="5000" />
           <ng-container strctLoginMain>
-            <strct-stack gap="3">
+            <!-- A vertical run of controls, not a key/value list: strct-stack
+                 is a <dl>, and a form inside one broke its content model. -->
+            <div class="col col--3">
               <h3 style="margin: 0; font-size: 16px;">Sign in</h3>
               <strct-field label="Email">
                 <input strctInput type="email" placeholder="you@example.com" />
@@ -198,7 +198,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
                 <strct-password placeholder="••••••••" />
               </strct-field>
               <button strct-button variant="primary" solid block>Sign in</button>
-            </strct-stack>
+            </div>
           </ng-container>
         </strct-login>
       </div>
@@ -217,11 +217,11 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           errorCorrection="Q"
           label="Scan with your authenticator app"
         />
-        <strct-stack gap="2">
+        <div class="col col--2">
           <span style="font-size: 12px; color: var(--t3);">Or enter the secret by hand</span>
           <strct-tag mono>JBSWY3DPEHPK3PXP</strct-tag>
           <span style="font-size: 12px; color: var(--t3);">TOTP · 6 digits · 30 s</span>
-        </strct-stack>
+        </div>
       </div>
     </app-demo>
 
@@ -286,7 +286,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
               {{ m.text }}
               @if (m.approval) {
                 <strct-card strctChatAttachment status="warning" dense>
-                  <strct-stack gap="2">
+                  <div class="col col--2">
                     <span>Move 4 VMs off hv-02 and put it in maintenance?</span>
                     <div style="display: flex; gap: 8px;">
                       <button strct-button size="sm" variant="primary" (click)="approve()">
@@ -296,7 +296,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
                         Not now
                       </button>
                     </div>
-                  </strct-stack>
+                  </div>
                 </strct-card>
               }
             </strct-chat-message>
@@ -334,6 +334,19 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      /* A vertical run of blocks; the modifier is the --space-N step. */
+      .col {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .col--2 {
+        gap: var(--space-2);
+      }
+      .col--3 {
+        gap: var(--space-3);
+        align-items: stretch;
+      }
       .chat-stage {
         display: flex;
         flex-direction: column;

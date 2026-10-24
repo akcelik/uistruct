@@ -62,7 +62,9 @@ interface Feature {
       </div>
     </section>
 
-    <section class="features">
+    <section class="features" aria-labelledby="landing-features">
+      <!-- The cards are h3s under this h2 — the outline went h1 → h3 before. -->
+      <h2 id="landing-features" class="strct-sr-only">Why UIStruct</h2>
       @for (f of features; track f.title) {
         <div class="feat">
           <span class="feat__icon"
@@ -77,7 +79,9 @@ interface Feature {
     <section class="cats">
       <div class="cats__head">
         <h2>{{ count }} components, organised</h2>
-        <p>Eight categories — from buttons to datagrids, charts and full page patterns.</p>
+        <p>
+          {{ cats.length }} categories — from buttons to datagrids, charts and full page patterns.
+        </p>
       </div>
       <div class="cats__grid">
         @for (cat of cats; track cat.id) {

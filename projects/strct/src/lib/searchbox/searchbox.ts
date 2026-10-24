@@ -4,6 +4,7 @@ import {
   ElementRef,
   ViewEncapsulation,
   booleanAttribute,
+  computed,
   forwardRef,
   inject,
   input,
@@ -38,11 +39,14 @@ import { StrctIcon } from '../icon/icon';
   ],
   template: `
     @if (trigger()) {
+      <!-- The accessible name must contain everything the button shows (WCAG
+           2.5.3, label in name): a voice user says what they see — "Search"
+           and the "⌘K" chip. See triggerName(). -->
       <button
         type="button"
         class="strct-sb strct-sb--trigger"
         [disabled]="isDisabled()"
-        [attr.aria-label]="ariaLabel() || placeholder()"
+        [attr.aria-label]="triggerName()"
         (click)="activated.emit()"
       >
         <strct-icon class="strct-sb__icon" name="search" [size]="14" [strokeWidth]="1.6" />
@@ -212,8 +216,24 @@ export class StrctSearchbox implements ControlValueAccessor {
   readonly trigger = input(false, { transform: booleanAttribute });
   /** Show the × clear button when there is a value. */
   readonly clearable = input(true, { transform: booleanAttribute });
-  /** Accessible label; falls back to `placeholder`. */
+  /**
+   * Accessible label; falls back to `placeholder`.
+   *
+   * In trigger mode the button's name always starts with what it shows — the
+   * label, then the hint chip — and this is added after them as the spoken
+   * form ("Search ⌘K, Ctrl or Cmd K"). An ariaLabel that already starts with
+   * the label is taken as the full name. WCAG 2.5.3 (label in name): a voice
+   * user says the words they see, so those words must be in the name.
+   */
   readonly ariaLabel = input('');
+  /** The trigger button's name: the visible text first, then the extra words. */
+  protected readonly triggerName = computed(() => {
+    const label = this.placeholder().trim();
+    const extra = this.ariaLabel().trim();
+    if (extra && label && extra.toLowerCase().startsWith(label.toLowerCase())) return extra;
+    const visible = [label, this.hint().trim()].filter(Boolean).join(' ');
+    return [visible, extra].filter(Boolean).join(', ');
+  });
   /** Accessible label of the clear button (localizable). */
   readonly clearLabel = input('Clear search');
   /** Current text (two-way; also drives the CVA value). */

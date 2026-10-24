@@ -252,7 +252,12 @@ export class StrctDatagrid {
    */
   /** No outer border, radius or shadow — for a grid inside a bordered panel. */
   readonly flush = input(false, { transform: booleanAttribute });
-  /** The grid's title, rendered above the header and used as its accessible name. */
+  /**
+   * The grid's title, rendered above the header and used as its accessible
+   * name. It also names the grid's landmarks — "<caption> rows" and
+   * "<caption> pagination" — so several grids on one page are told apart in a
+   * screen reader's landmark list.
+   */
   readonly caption = input('');
   /** The user asked for the next slice. */
   readonly loadMore = output<void>();
@@ -280,6 +285,11 @@ export class StrctDatagrid {
   readonly labels = input<Partial<StrctDatagridLabels>>({});
   /** Effective labels (defaults + overrides). */
   protected readonly L = computed(() => ({ ...DG_LABELS, ...this.labels() }));
+  /** A landmark's name, prefixed with the caption when the grid has one. */
+  protected regionName(base: string): string {
+    const caption = this.caption().trim();
+    return caption ? `${caption} ${base}` : base;
+  }
   /**
    * Show a pencil on an editable cell when it is hovered or focused. A mouse
    * user finds an editable cell by double-clicking one; nothing said so.

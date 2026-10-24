@@ -96,7 +96,7 @@ function badgeFor(status: DcObject['status']) {
                   <div class="detail-card__title">Specifications</div>
                   <strct-stack style="width: 100%; max-width: 480px;">
                     @for (entry of specEntries(); track entry.key) {
-                      <strct-stack-item [label]="entry.key">{{ entry.value }}</strct-stack-item>
+                      <div strctStackItem [label]="entry.key">{{ entry.value }}</div>
                     }
                   </strct-stack>
                 </div>
@@ -115,15 +115,11 @@ function badgeFor(status: DcObject['status']) {
               <div class="detail-card">
                 <div class="detail-card__title">Category Summary</div>
                 <strct-stack style="width: 100%; max-width: 480px;">
-                  <strct-stack-item label="Total objects">{{
-                    objectsWithStatus().length
-                  }}</strct-stack-item>
-                  <strct-stack-item label="Running">{{ runningCount() }}</strct-stack-item>
-                  <strct-stack-item label="Warnings">{{ warningCount() }}</strct-stack-item>
-                  <strct-stack-item label="Stopped">{{ stoppedCount() }}</strct-stack-item>
-                  <strct-stack-item label="In Maintenance">{{
-                    maintenanceCount()
-                  }}</strct-stack-item>
+                  <div strctStackItem label="Total objects">{{ objectsWithStatus().length }}</div>
+                  <div strctStackItem label="Running">{{ runningCount() }}</div>
+                  <div strctStackItem label="Warnings">{{ warningCount() }}</div>
+                  <div strctStackItem label="Stopped">{{ stoppedCount() }}</div>
+                  <div strctStackItem label="In Maintenance">{{ maintenanceCount() }}</div>
                 </strct-stack>
               </div>
             </div>

@@ -397,10 +397,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 
           <ng-template strctRowDetail let-row>
             <strct-stack style="max-width: 380px;">
-              <strct-stack-item label="Cluster">{{ row['name'] }}</strct-stack-item>
-              <strct-stack-item label="Type">{{ row['type'] }}</strct-stack-item>
-              <strct-stack-item label="Hosts">{{ row['hosts'] }}</strct-stack-item>
-              <strct-stack-item label="Status">{{ row['status'] }}</strct-stack-item>
+              <div strctStackItem label="Cluster">{{ row['name'] }}</div>
+              <div strctStackItem label="Type">{{ row['type'] }}</div>
+              <div strctStackItem label="Hosts">{{ row['hosts'] }}</div>
+              <div strctStackItem label="Status">{{ row['status'] }}</div>
             </strct-stack>
           </ng-template>
         </strct-datagrid>
@@ -764,10 +764,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       >
         <ng-template strctRowDetail let-row>
           <strct-stack style="max-width: 340px;">
-            <strct-stack-item label="Cluster">{{ row['name'] }}</strct-stack-item>
-            <strct-stack-item label="Type">{{ row['type'] }}</strct-stack-item>
-            <strct-stack-item label="Hosts">{{ row['hosts'] }}</strct-stack-item>
-            <strct-stack-item label="Status">{{ row['status'] }}</strct-stack-item>
+            <div strctStackItem label="Cluster">{{ row['name'] }}</div>
+            <div strctStackItem label="Type">{{ row['type'] }}</div>
+            <div strctStackItem label="Hosts">{{ row['hosts'] }}</div>
+            <div strctStackItem label="Status">{{ row['status'] }}</div>
           </strct-stack>
         </ng-template>
       </strct-datagrid>
@@ -853,11 +853,11 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       description="A read-only key/value definition list."
     >
       <strct-stack style="width: 100%; max-width: 420px;">
-        <strct-stack-item label="Service">api-gateway</strct-stack-item>
-        <strct-stack-item label="Region">eu-west</strct-stack-item>
-        <strct-stack-item label="Replicas">4</strct-stack-item>
-        <strct-stack-item label="Status">Running</strct-stack-item>
-        <strct-stack-item label="Last deploy">Jun 3, 2026 · 09:24</strct-stack-item>
+        <div strctStackItem label="Service">api-gateway</div>
+        <div strctStackItem label="Region">eu-west</div>
+        <div strctStackItem label="Replicas">4</div>
+        <div strctStackItem label="Status">Running</div>
+        <div strctStackItem label="Last deploy">Jun 3, 2026 · 09:24</div>
       </strct-stack>
     </app-demo>
 

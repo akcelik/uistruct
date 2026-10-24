@@ -44,12 +44,37 @@ describe('StrctSearchbox', () => {
     const { el, cmp } = make({ trigger: true, placeholder: 'Search', hint: '⌘K' });
     const btn = el.querySelector<HTMLButtonElement>('button.strct-sb--trigger')!;
     expect(btn).toBeTruthy();
-    expect(btn.getAttribute('aria-label')).toBe('Search');
+    expect(btn.getAttribute('aria-label')).toBe('Search ⌘K');
     expect(el.querySelector('.strct-sb__input')).toBeNull();
     let fired = 0;
     cmp.activated.subscribe(() => fired++);
     btn.click();
     expect(fired).toBe(1);
+  });
+
+  // WCAG 2.5.3 (label in name): a voice user says what they see, so the
+  // trigger's name must contain the label and the chip. An ariaLabel used to
+  // replace both outright ("Search (Ctrl or Cmd K)" against "Search ⌘K").
+  it('trigger mode names the button with what it shows, then the extra words', () => {
+    const name = (inputs: Record<string, unknown>) =>
+      make({ trigger: true, ...inputs })
+        .el.querySelector('button.strct-sb--trigger')!
+        .getAttribute('aria-label');
+
+    // The visible label and chip come first, the spoken form after them.
+    expect(name({ placeholder: 'Search', hint: '⌘K', ariaLabel: 'Ctrl or Cmd K' })).toBe(
+      'Search ⌘K, Ctrl or Cmd K',
+    );
+    expect(name({ placeholder: 'Search', ariaLabel: 'hosts and VMs' })).toBe(
+      'Search, hosts and VMs',
+    );
+    // An ariaLabel that already starts with the label is the whole name.
+    expect(name({ placeholder: 'Search', hint: '⌘K', ariaLabel: 'Search everything' })).toBe(
+      'Search everything',
+    );
+    // No ariaLabel: the visible text alone.
+    expect(name({ placeholder: 'Search', hint: '⌘K' })).toBe('Search ⌘K');
+    expect(name({ placeholder: 'Find a host' })).toBe('Find a host');
   });
 
   it('implements CVA: writeValue / disabled state', () => {

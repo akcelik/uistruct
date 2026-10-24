@@ -14,7 +14,10 @@ export type SortDir = 'asc' | 'desc';
 /** Every user-visible / assistive string in the grid, overridable for i18n. */
 export interface StrctDatagridLabels {
   row: string;
+  /** Name of the scrolling rows region (prefixed with `caption`, if any). */
   rows: string;
+  /** Name of the pager's navigation landmark (prefixed with `caption`, if any). */
+  pagination: string;
   selected: string;
   selectAll: string;
   /** Base row-checkbox label; superseded by {@link selectRowFor}, which
@@ -79,6 +82,7 @@ export const DG_LABELS: StrctDatagridLabels = {
     total === undefined ? `Showing ${shown}` : `Showing the latest ${shown} of ${total}`,
   row: 'row',
   rows: 'rows',
+  pagination: 'Pagination',
   selected: 'selected',
   selectAll: 'Select all rows on this page',
   selectRow: 'Select row',

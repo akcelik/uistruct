@@ -197,8 +197,14 @@ kbd,
    it, an instruction a pointer user never needs. In flow and 1x1, so it never
    extends a page's scrollable area the way an out-of-flow box can. The
    library had this inlined in five components. */
+/* Read, never seen — and never in the layout. It was an inline-block 1x1
+   box, which is still a box: in a flex or grid container it took a slot and
+   moved what was beside it (a hidden heading shifted the landing page's
+   cards; the datagrid's announcer had to carry its own copy of this rule for
+   the same reason). Out of flow it costs the layout nothing, and the clip
+   keeps it unseen. */
 .strct-sr-only {
-  display: inline-block;
+  position: absolute;
   width: 1px;
   height: 1px;
   overflow: hidden;

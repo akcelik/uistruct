@@ -29,10 +29,6 @@
 
 /* Enclosed chrome: the action bar, grid and footer share one frame so the
  * whole component reads as a single object on the page. */
-/* Out of flow on purpose: .strct-sr-only is an in-flow inline-block, and
-   a 1px inline-block still opens a line box — it pushed the whole grid
-   down 21px, which the visual gate caught. Auto offsets keep it at its
-   static position, so it cannot extend anything either. */
 .strct-dg__bulk {
   display: flex;
   align-items: center;
@@ -45,6 +41,9 @@
   color: var(--t2);
   font-size: var(--text-md);
 }
+/* Spoken, never seen, and out of flow on purpose: a 1px inline-block still
+   opens a line box, which once pushed the whole grid down 21px. Auto offsets
+   keep it at its static position, so it cannot extend anything either. */
 .strct-dg__announcer {
   position: absolute;
   width: 1px;
