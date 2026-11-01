@@ -30,22 +30,7 @@
 @if (hasEditableColumn()) {
   <!-- What the editable cells point at with aria-describedby: a keyboard
        user is told the cell can be edited, and how. -->
-  <!-- In flow, not absolutely positioned: an out-of-flow box whose
-       containing block is the page extends the document's scrollable area
-       from wherever the grid happens to sit. 1x1 and clipped is enough. -->
-  <span
-    class="strct-sr-only"
-    style="
-      display: inline-block;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-    "
-    [id]="editHintId"
-    >{{ L().editCellInstructions }}</span
-  >
+  <span class="strct-sr-only" [id]="editHintId">{{ L().editCellInstructions }}</span>
 }
 
 @if (bulkHint(); as hint) {
@@ -95,8 +80,10 @@
             <th
               class="strct-dg__expandcol"
               scope="col"
+              data-col="@detail"
               [class.strct-dg__cell--sticky]="stickyActive()"
               [style.insetInlineStart.px]="utilLeft('detail')"
+              [style.width.px]="utilWidth('@detail')"
             >
               <span class="strct-sr-only">{{ L().detailColumn }}</span>
             </th>
@@ -105,8 +92,10 @@
             <th
               class="strct-dg__expandcol"
               scope="col"
+              data-col="@expand"
               [class.strct-dg__cell--sticky]="stickyActive()"
               [style.insetInlineStart.px]="utilLeft('expand')"
+              [style.width.px]="utilWidth('@expand')"
             >
               <span class="strct-sr-only">{{ L().expandColumn }}</span>
             </th>
@@ -115,8 +104,10 @@
             <th
               class="strct-dg__sel"
               scope="col"
+              data-col="@sel"
               [class.strct-dg__cell--sticky]="stickyActive()"
               [style.insetInlineStart.px]="utilLeft('sel')"
+              [style.width.px]="utilWidth('@sel')"
             >
               @if (mode() === 'multiple') {
                 <strct-checkbox
@@ -134,7 +125,7 @@
             <th
               scope="col"
               [style.text-align]="col.align ?? (col.numeric ? 'end' : 'start')"
-              [style.width]="colWidth(col.key) ?? col.width ?? null"
+              [style.width]="headerWidth(col)"
               [class.strct-dg__th--sortable]="col.sortable"
               [class.strct-dg__th--drop]="col.key === dropKey()"
               [class.strct-dg__cell--sticky]="isSticky(col)"
@@ -248,7 +239,22 @@
             </th>
           }
           @if (canActions()) {
-            <th class="strct-dg__actioncol" scope="col" [attr.aria-label]="L().actions"></th>
+            <th
+              class="strct-dg__actioncol"
+              scope="col"
+              data-col="@actions"
+              [attr.aria-label]="L().actions"
+              [style.width.px]="utilWidth('@actions')"
+            ></th>
+          }
+          @if (widthsApplied()) {
+            <!-- The leftover lives here, so every column keeps the width it
+                 was given: with each column stated the browser scales them
+                 all to fit (200px asked, 231px drawn), and with one cell
+                 left free they are exact and the remainder lands in it. A
+                 presentational cell, so it says nothing and, once the stated
+                 widths fill the grid, takes no width either. -->
+            <td class="strct-dg__filler" aria-hidden="true"></td>
           }
         </tr>
       </thead>
@@ -280,6 +286,9 @@
               }
               @if (canActions()) {
                 <td class="strct-dg__actioncell"></td>
+              }
+              @if (widthsApplied()) {
+                <td class="strct-dg__filler" aria-hidden="true"></td>
               }
             </tr>
           }
@@ -597,6 +606,9 @@
                       <strct-icon name="dots" [size]="16" />
                     </button>
                   </td>
+                }
+                @if (widthsApplied()) {
+                  <td class="strct-dg__filler" aria-hidden="true"></td>
                 }
               </tr>
               @if (canExpand() && isExpanded(row)) {

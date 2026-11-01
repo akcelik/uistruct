@@ -371,6 +371,47 @@
   text-overflow: ellipsis;
   max-width: 360px;
 }
+/* A `variant="link"` button is `display: inline; white-space: normal` so it
+   reads as a word in running text — which also means it ignored the cell's
+   nowrap and wrapped to several lines inside it. Measured: a single-line row
+   holding one stood 48px tall against 35px for the text beside it. Here it
+   takes the cell's rules and ends in the same ellipsis. */
+.strct-dg-host--singleline .strct-dg tbody tr:not(.strct-dg__detailrow) > td .strct-btn--link {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: inherit;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+/* ── Widths lay the table out, not the content (BUG-62-01) ─────────────────
+   Under `table-layout: auto` a column's width was a hint: one asked for
+   120px, drew 323px because its text did, and the table stood 836px wide in
+   a 600px pane. Measured in Chrome: with the widths in charge the same drag
+   lands on 88px exactly and the table is 600px in a 600px pane. `box-sizing`
+   goes with it — `width` is content-box by default, so 200px asked drew
+   224px, and a handle that reads `offsetWidth` would have grown the column
+   by its padding on every grab. */
+.strct-dg-host--fixedcols .strct-dg {
+  table-layout: fixed;
+}
+/* `width: max-content` turns fixed layout back into auto layout, and it is
+   not needed here: a row of stated widths wider than the grid overflows and
+   scrolls on its own (measured 1250px of columns in a 600px pane). */
+.strct-dg-host--fixedcols.strct-dg-host--sticky .strct-dg {
+  width: 100%;
+  min-width: 0;
+}
+.strct-dg-host--fixedcols .strct-dg th,
+.strct-dg-host--fixedcols .strct-dg td {
+  box-sizing: border-box;
+}
+/* Nothing to see: it is the row's leftover width, and it keeps the row's
+   bottom border running to the edge. */
+.strct-dg__filler {
+  padding: 0;
+}
 .strct-dg th {
   position: relative;
   font-size: 12px;
