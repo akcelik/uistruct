@@ -7,7 +7,14 @@ stays here until it goes quiet.
 
 ## Open
 
-Nothing. Every document HyperStruct has filed is in [`archive/`](archive/)
+- [`icon-size-follows-control.md`](icon-size-follows-control.md) — FR-64-01…02:
+  an icon the size of the control it sits in. Measured: the same small button
+  carries a 14px icon in thirteen places and a 16px one in seven, and a large
+  button's icon is 14px like a small one's. Left out of 6.2.0 because
+  `strct-icon`'s `size` has a default rather than an unset state, so a control
+  imposing its own would silently overrule an explicit one.
+
+Everything HyperStruct has filed is in [`archive/`](archive/)
 with the version that closed it, and
 [`hyperstruct-hand-built-audit.md`](hyperstruct-hand-built-audit.md) is the
 index of the 2026-09 full audit (all 45 asks shipped). The last two closed in
