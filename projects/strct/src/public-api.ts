@@ -8,6 +8,7 @@ export * from './lib/theme/theme-switcher';
 
 // Foundations
 export * from './lib/status';
+export * from './lib/control-size';
 export * from './lib/icon/icon';
 export * from './lib/overlay/overlay';
 

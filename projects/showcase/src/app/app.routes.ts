@@ -15,6 +15,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/overview.page').then((m) => m.OverviewPage),
   },
   {
+    path: 'foundations/controls',
+    loadComponent: () => import('./pages/control-heights.page').then((m) => m.ControlHeightsPage),
+  },
+  {
     path: 'foundations/icons',
     loadComponent: () => import('./pages/icons.page').then((m) => m.IconsPage),
   },

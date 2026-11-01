@@ -5,6 +5,77 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.0] - 2026-11-01
+
+One height, for every control of a size.
+
+### Added
+
+- **`--control-h-sm` (26px), `--control-h-md` (32px), `--control-h-lg` (38px)
+  and `--control-h`** (FR-63-01, filed by HyperStruct). Every single-line
+  control draws `height: var(--control-h)` with `box-sizing: border-box` and
+  no vertical padding, so its height comes from the token and from nothing
+  else. Override them in one place to change a whole application's density.
+
+- **`StrctControlSize` (`sm | md | lg`) and a `size` input on twelve
+  controls** — `strctInput`, `strct-select`, `strct-combobox`,
+  `strct-cascade-select`, `strct-tree-select`, `strct-number`,
+  `strct-password`, `strct-input-mask`, `strct-datepicker`,
+  `strct-datetime-picker`, `strct-color-picker` and `strct-searchbox`
+  (FR-63-02). Before this, `size` existed on two controls in the whole
+  library, so a `size="sm"` button stood beside a field that could not be
+  made to match it.
+
+- **`[strctControlSize]`**, which sets the height for everything inside it:
+
+  ```html
+  <div strctControlSize="sm">
+    <input strctInput /> <strct-select /> <button strct-button>Apply</button>
+  </div>
+  ```
+
+  A control states nothing of its own until it is given a `size`, so the
+  container wins unless the control says otherwise.
+
+- **`scripts/control-height.mjs`**, run in CI: 144 control boxes — every
+  control, in every size, with and without an icon, disabled, loading, set
+  directly and set by a container, across three palettes — each measured
+  against the token its size names. Removing the one height rule turns 63 of
+  them red. jsdom has no layout, so this is the only place the claim can be
+  checked (FR-63-04).
+
+- A **Control heights** page under Foundations, where every control stands in
+  a row per size: the fastest way to see a regression.
+
+### Changed
+
+- **Every control of a size is now exactly as tall as the others.** Measured
+  in Chrome before and after:
+
+  | control                                                       | before               | md     | sm     |
+  | ------------------------------------------------------------- | -------------------- | ------ | ------ |
+  | `strctInput`, `strct-select` and the rest of `.strct-control` | 34.9px               | **32** | **26** |
+  | `strct-button`                                                | 31px (md), 22px (sm) | **32** | **26** |
+  | `strct-button` icon-only                                      | 33px (md), 24px (sm) | **32** | **26** |
+  | `strct-searchbox`                                             | 28px and 30px        | **32** | **26** |
+  | `strct-segmented`                                             | 31px (md), 26px (sm) | **32** | **26** |
+
+  A field beside a small button was 12.9px taller than it; now a row of
+  controls of one size lines up. **This moves every control by a few pixels**,
+  so a form or toolbar laid out around today's numbers shifts a little.
+
+- `StrctSegmentedSize` is an alias of `StrctControlSize`, which gives the
+  segmented control a `lg`. `StrctButtonSize` is the shared type plus the
+  button's own `mini` (22px, below the scale on purpose).
+
+- An icon, a spinner, a badge, `loading` or a longer label cannot change a
+  control's height any more (FR-63-03). The icon inside a button does **not**
+  resize with the control, which that FR also asked for: `strct-icon`'s
+  `size` has a default rather than an unset state, so a button cannot tell an
+  icon the author sized from one that took the default, and forcing a size
+  would silently override an explicit `[size]`. The heights do not depend on
+  it.
+
 ## [6.1.0] - 2026-11-01
 
 A column's width was a hint. It is a width now.

@@ -8,6 +8,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { StrctControlSize, strctControlHeight } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
 
@@ -67,7 +68,7 @@ const LEVEL_COLORS = [
       </div>
     }
   `,
-  host: { class: 'strct-pw' },
+  host: { class: 'strct-pw', '[style.--control-h]': 'controlHeight()' },
   styles: [
     `
       .strct-pw {
@@ -124,6 +125,18 @@ const LEVEL_COLORS = [
   ],
 })
 export class StrctPassword implements ControlValueAccessor {
+  /**
+   * Control size — the shared scale, so this lines up with the buttons and
+   * fields beside it. Left unset it follows an enclosing [strctControlSize],
+   * or the default height when there is none.
+   */
+  readonly size = input<StrctControlSize | undefined>(undefined);
+  /** The height its size asks for; nothing while it states no size. */
+  protected readonly controlHeight = computed(() => {
+    const s = this.size();
+    return s ? strctControlHeight(s) : null;
+  });
+
   /** Placeholder text when empty. */
   readonly placeholder = input('');
   /** Show a strength meter. */
