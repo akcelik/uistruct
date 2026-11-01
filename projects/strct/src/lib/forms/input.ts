@@ -1,5 +1,5 @@
 import { Directive, booleanAttribute, computed, input } from '@angular/core';
-import { StrctControlSize, strctControlHeight } from '../control-size';
+import { StrctControlSize, strctControlHeight, strctIconSize } from '../control-size';
 
 /**
  * Applies the shared `.strct-control` look to a native input / textarea / select.
@@ -22,6 +22,7 @@ import { StrctControlSize, strctControlHeight } from '../control-size';
     class: 'strct-control',
     '[class.strct-control--mono]': 'mono()',
     '[style.--control-h]': 'controlHeight()',
+    '[style.--icon-size]': 'controlIconSize()',
   },
 })
 export class StrctInput {
@@ -35,6 +36,11 @@ export class StrctInput {
   protected readonly controlHeight = computed(() => {
     const s = this.size();
     return s ? strctControlHeight(s) : null;
+  });
+  /** And the icon size that goes with it, for the icons it holds. */
+  protected readonly controlIconSize = computed(() => {
+    const s = this.size();
+    return s ? strctIconSize(s) : null;
   });
 
   /** Monospace text with tabular figures — a PEM block, an id, a mapping. */

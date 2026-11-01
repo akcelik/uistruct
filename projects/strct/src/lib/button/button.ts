@@ -210,18 +210,22 @@ export type StrctButtonSize = StrctControlSize | 'mini';
 
       .strct-btn--sm {
         --control-h: var(--control-h-sm);
+        --icon-size: var(--icon-size-sm);
         padding: 0 var(--space-3);
         font-size: 12px;
         border-radius: var(--radius-sm);
       }
       .strct-btn--lg {
         --control-h: var(--control-h-lg);
+        --icon-size: var(--icon-size-lg);
         padding: 0 var(--space-5);
         font-size: 14px;
       }
       /* mini is the button's own: a 22px chip for a toolbar's corner, below
          the shared scale on purpose. It keeps its own height. */
+      /* mini keeps a 14px icon: at 18px tall a 16px one has nowhere to sit. */
       .strct-btn--mini {
+        --icon-size: var(--icon-size-sm);
         height: auto;
         padding: 2px var(--space-2);
         font-size: 12px;

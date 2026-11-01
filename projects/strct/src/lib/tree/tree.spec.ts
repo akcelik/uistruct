@@ -86,7 +86,11 @@ describe('StrctTree — density', () => {
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('.strct-tree')!.classList).not.toContain('strct-tree--comfortable');
-    expect((el.querySelector('.strct-tnode__icon svg') as SVGElement).style.width).toBe('16px');
+    // 6.3.0: an icon's size is a custom property on its host, not a width on
+    // its svg, so a control can answer for an icon that states none.
+    expect(
+      (el.querySelector('.strct-tnode__icon') as HTMLElement).style.getPropertyValue('--icon-size'),
+    ).toBe('16px');
   });
 
   it('comfortable adds the modifier class and scales icons to 18px', () => {
@@ -95,7 +99,9 @@ describe('StrctTree — density', () => {
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('.strct-tree')!.classList).toContain('strct-tree--comfortable');
-    expect((el.querySelector('.strct-tnode__icon svg') as SVGElement).style.width).toBe('18px');
+    expect(
+      (el.querySelector('.strct-tnode__icon') as HTMLElement).style.getPropertyValue('--icon-size'),
+    ).toBe('18px');
   });
 });
 

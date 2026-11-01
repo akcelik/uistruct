@@ -43,7 +43,7 @@ import {
         <h2 class="st__h">No clusters yet</h2>
         <p class="st__p">Create your first cluster to start placing hosts and virtual machines.</p>
         <button strct-button variant="primary" solid size="sm" routerLink="/scenarios/new-cluster">
-          <strct-icon name="cluster" [size]="14" /> New cluster
+          <strct-icon name="cluster" /> New cluster
         </button>
       </section>
 
@@ -54,7 +54,7 @@ import {
         <h2 class="st__h">Page not found</h2>
         <p class="st__p">The object you’re looking for may have been moved or decommissioned.</p>
         <button strct-button size="sm" routerLink="/scenarios/dashboard">
-          <strct-icon name="chevronLeft" [size]="14" /> Back to dashboard
+          <strct-icon name="chevronLeft" /> Back to dashboard
         </button>
       </section>
 
@@ -68,9 +68,7 @@ import {
         <p class="st__p">
           You don’t have permission to view this resource. Contact your administrator.
         </p>
-        <button strct-button size="sm">
-          <strct-icon name="universalAccess" [size]="14" /> Request access
-        </button>
+        <button strct-button size="sm"><strct-icon name="universalAccess" /> Request access</button>
       </section>
 
       <!-- Loading -->

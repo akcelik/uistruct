@@ -512,7 +512,7 @@ const PLAYGROUND: PlaygroundCmp[] = [
       <div class="pg__code-bar">
         <span>Generated code</span>
         <button strct-button size="mini" (click)="copy()">
-          <strct-icon [name]="copied() ? 'check' : 'copy'" [size]="13" />
+          <strct-icon [name]="copied() ? 'check' : 'copy'" />
           {{ copied() ? 'Copied' : 'Copy' }}
         </button>
       </div>

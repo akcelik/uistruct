@@ -633,12 +633,7 @@ let warnedCountOverMode = false;
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   template: `@if (isRaw()) {
-      <span
-        class="strct-icon__raw"
-        [style.width.px]="size()"
-        [style.height.px]="size()"
-        [innerHTML]="rawSvg()"
-      ></span>
+      <span class="strct-icon__raw" [innerHTML]="rawSvg()"></span>
     } @else {
       <svg
         viewBox="0 0 16 16"
@@ -647,8 +642,6 @@ let warnedCountOverMode = false;
         [attr.stroke-width]="strokeWidth()"
         stroke-linecap="round"
         stroke-linejoin="round"
-        [style.width.px]="size()"
-        [style.height.px]="size()"
         [innerHTML]="svg()"
         role="img"
         [attr.aria-label]="accessibleLabel() || null"
@@ -658,12 +651,9 @@ let warnedCountOverMode = false;
     @if (countText(); as text) {
       <!-- A bell with seven alarms says 7: the count replaces the status dot,
            and carries its own text for assistive tech when the icon is named. -->
-      <span
-        class="strct-icon__count strct-icon__count--{{ countStatus() }}"
-        [style.fontSize.px]="countFontSize()"
-        aria-hidden="true"
-        >{{ text }}</span
-      >
+      <span class="strct-icon__count strct-icon__count--{{ countStatus() }}" aria-hidden="true">{{
+        text
+      }}</span>
     } @else if (shownBadge() !== 'none') {
       <span class="strct-icon__badge strct-icon__badge--{{ shownBadge() }}"></span>
     }
@@ -686,7 +676,7 @@ let warnedCountOverMode = false;
         </svg>
       </span>
     }`,
-  host: { class: 'strct-icon' },
+  host: { class: 'strct-icon', '[style.--icon-size.px]': 'size()' },
   styles: [
     `
       .strct-icon {
@@ -695,6 +685,16 @@ let warnedCountOverMode = false;
         align-items: center;
         justify-content: center;
         line-height: 0;
+      }
+      /* The size comes from a property, not from a binding, so a control can
+         answer for an icon that was given no size of its own: a button sets
+         --icon-size beside its --control-h and the icon in it follows. An
+         icon that states a size sets the same property on itself, which is
+         nearer, so it still wins. */
+      .strct-icon > svg,
+      .strct-icon__raw {
+        width: var(--icon-size, 16px);
+        height: var(--icon-size, 16px);
       }
       .strct-icon__raw {
         display: inline-flex;
@@ -719,6 +719,9 @@ let warnedCountOverMode = false;
         box-sizing: border-box;
         border-radius: 999px;
         font-family: var(--font);
+        /* 58% of the icon, never under 9px — in CSS rather than in a computed,
+           because the icon's size can now come from the control around it. */
+        font-size: max(9px, calc(var(--icon-size, 16px) * 0.58));
         font-weight: 600;
         line-height: 1;
         color: var(--inv);
@@ -919,8 +922,17 @@ export class StrctIcon {
    * are set. Use `name` for runtime-registered custom icons.
    */
   readonly strictName = input<StrctIconName | null>(null);
-  /** Icon size in pixels. */
-  readonly size = input(16);
+  /**
+   * Icon size in pixels.
+   *
+   * Left unset, the icon is the size its surroundings ask for: a control
+   * sets `--icon-size` beside its `--control-h`, so an icon in a small
+   * button is 14px and the same icon in a large one is 18px without either
+   * call site saying so. With no control around it the icon is 16px, as it
+   * always was. Setting this still wins — it writes the same property on the
+   * icon itself, which is nearer than anything enclosing it (FR-64-01).
+   */
+  readonly size = input<number | undefined>(undefined);
   /** Stroke width for outline icons. */
   readonly strokeWidth = input(1.4);
   /** Optional status dot overlaid on the glyph (object state). */
@@ -964,7 +976,7 @@ export class StrctIcon {
     return n > max ? `${max}+` : String(n);
   });
   /** 1.2em of the icon size, floored at 14px, as the badge's box. */
-  protected readonly countFontSize = computed(() => Math.max(9, Math.round(this.size() * 0.58)));
+
   /** The mode as drawn. */
   readonly shownMode = computed<StrctIconMode>(() => this.mode());
 

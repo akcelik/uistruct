@@ -167,18 +167,18 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 
       <strct-button-group>
         <button strct-button iconOnly aria-label="Previous">
-          <strct-icon name="chevronLeft" [size]="15" />
+          <strct-icon name="chevronLeft" />
         </button>
         <button strct-button iconOnly aria-label="Refresh">
-          <strct-icon name="sync" [size]="15" />
+          <strct-icon name="sync" />
         </button>
         <button strct-button iconOnly aria-label="Next">
-          <strct-icon name="chevronRight" [size]="15" />
+          <strct-icon name="chevronRight" />
         </button>
       </strct-button-group>
 
       <button strct-button iconOnly variant="primary" solid aria-label="Add">
-        <strct-icon name="upload" [size]="15" />
+        <strct-icon name="upload" />
       </button>
     </app-demo>
 
@@ -198,7 +198,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             strctTooltip="Snapshot"
             tooltipPosition="left"
           >
-            <strct-icon name="snapshot" [size]="15" />
+            <strct-icon name="snapshot" />
           </button>
           <button
             strct-button
@@ -208,7 +208,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             strctTooltip="Restart"
             tooltipPosition="left"
           >
-            <strct-icon name="sync" [size]="15" />
+            <strct-icon name="sync" />
           </button>
           <button
             strct-button
@@ -218,13 +218,13 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             strctTooltip="Migrate"
             tooltipPosition="left"
           >
-            <strct-icon name="upload" [size]="15" />
+            <strct-icon name="upload" />
           </button>
         </strct-speed-dial>
 
         <strct-speed-dial icon="ellipsis" direction="right">
-          <button strct-button iconOnly><strct-icon name="search" [size]="15" /></button>
-          <button strct-button iconOnly><strct-icon name="bell" [size]="15" /></button>
+          <button strct-button iconOnly><strct-icon name="search" /></button>
+          <button strct-button iconOnly><strct-icon name="bell" /></button>
         </strct-speed-dial>
       </div>
     </app-demo>

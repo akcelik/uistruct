@@ -64,9 +64,9 @@ export const STRCT_TIME_RANGE_PRESETS: StrctTimeRangePreset[] = [
         strctDropdownTrigger
         class="strct-tr__trigger"
       >
-        <strct-icon name="clock" [size]="13" />
+        <strct-icon name="clock" />
         <span class="strct-tr__label">{{ triggerLabel() }}</span>
-        <strct-icon name="chevronDown" [size]="12" />
+        <strct-icon name="chevronDown" />
       </button>
 
       <div class="strct-tr__panel">

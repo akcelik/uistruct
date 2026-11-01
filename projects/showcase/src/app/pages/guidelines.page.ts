@@ -41,7 +41,7 @@ interface Row {
       </div>
       <div class="gl__demo">
         <button strct-button variant="critical" (click)="confirmOpen.set(true)">
-          <strct-icon name="close" [size]="14" /> Delete cluster
+          <strct-icon name="close" /> Delete cluster
         </button>
         @if (lastAction()) {
           <strct-badge status="accent">{{ lastAction() }}</strct-badge>
@@ -72,10 +72,10 @@ interface Row {
           <div class="gl__bulkbar">
             <span class="gl__bulkcount">{{ selected().length }} selected</span>
             <button strct-button size="sm" (click)="bulk('Exported')">
-              <strct-icon name="download" [size]="13" /> Export
+              <strct-icon name="download" /> Export
             </button>
             <button strct-button size="sm" variant="critical" (click)="bulk('Deleted')">
-              <strct-icon name="close" [size]="13" /> Delete
+              <strct-icon name="close" /> Delete
             </button>
             <button strct-button size="sm" variant="flat" (click)="clear()">Clear</button>
           </div>

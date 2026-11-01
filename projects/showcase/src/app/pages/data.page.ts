@@ -339,7 +339,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           <button strct-button size="sm">Enter maintenance</button>
           <strct-toolbar-spacer />
           <button strct-button iconOnly size="sm" aria-label="Export">
-            <strct-icon name="download" [size]="14" />
+            <strct-icon name="download" />
           </button>
         </strct-toolbar>
         <div style="display: flex; gap: 10px; align-items: center;">
@@ -388,10 +388,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           </ng-template>
           <div strctDatagridActionBar>
             <button strct-button variant="primary" size="sm">
-              <strct-icon name="upload" [size]="14" /> Add host
+              <strct-icon name="upload" /> Add host
             </button>
             <button strct-button iconOnly size="sm" aria-label="Export">
-              <strct-icon name="download" [size]="14" />
+              <strct-icon name="download" />
             </button>
           </div>
 
@@ -527,7 +527,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             variant="neutral"
             (click)="vgrid.downloadCSV('inventory.csv')"
           >
-            <strct-icon name="download" [size]="14" /> CSV
+            <strct-icon name="download" /> CSV
           </button>
           <button
             strct-button
@@ -535,7 +535,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             variant="neutral"
             (click)="vgrid.downloadXLSX('inventory.xlsx')"
           >
-            <strct-icon name="download" [size]="14" /> Excel (.xlsx)
+            <strct-icon name="download" /> Excel (.xlsx)
           </button>
           <span class="echo">DOM'da yalnızca görünür satırlar render edilir</span>
         </div>

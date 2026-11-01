@@ -74,12 +74,10 @@ import {
         </div>
       </div>
       <div class="det__actions">
-        <button strct-button size="sm">
-          <strct-icon name="compass" [size]="14" /> Open console
-        </button>
-        <button strct-button size="sm"><strct-icon name="sync" [size]="14" /> Migrate</button>
+        <button strct-button size="sm"><strct-icon name="compass" /> Open console</button>
+        <button strct-button size="sm"><strct-icon name="sync" /> Migrate</button>
         <button strct-button variant="critical" size="sm">
-          <strct-icon name="maintenance" [size]="14" /> Maintenance
+          <strct-icon name="maintenance" /> Maintenance
         </button>
       </div>
     </header>

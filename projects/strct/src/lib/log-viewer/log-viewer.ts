@@ -109,7 +109,7 @@ const NON_SGR_CSI_RE = /\u001b\[[0-9;]*[A-LN-Za-ln-z]/g;
         [attr.aria-pressed]="follow()"
         (click)="toggleFollow()"
       >
-        <strct-icon name="chevronDoubleDown" [size]="12" />
+        <strct-icon name="chevronDoubleDown" />
         {{ followLabel() }}
       </button>
     </div>

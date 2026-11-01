@@ -103,10 +103,10 @@ const HEAT: number[][] = [
       <div class="dash__actions">
         <strct-notification-center />
         <button strct-button size="sm" (click)="refresh()">
-          <strct-icon name="sync" [size]="14" /> Refresh
+          <strct-icon name="sync" /> Refresh
         </button>
         <button strct-button variant="primary" solid size="sm">
-          <strct-icon name="cluster" [size]="14" /> New cluster
+          <strct-icon name="cluster" /> New cluster
         </button>
       </div>
     </header>

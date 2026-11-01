@@ -338,7 +338,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         </div>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
           <button strct-button size="sm" variant="neutral" (click)="exportPng(zoomChart)">
-            <strct-icon name="download" [size]="14" /> PNG olarak indir
+            <strct-icon name="download" /> PNG olarak indir
           </button>
           <span class="echo">
             {{

@@ -1,5 +1,7 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StrctIcon, STRCT_ICONS, STRCT_ICON_GROUPS, STRCT_ICON_NAMES } from './icon';
+import { StrctButton } from '../button/button';
 
 describe('StrctIcon', () => {
   it('applies the base host class', () => {
@@ -378,5 +380,56 @@ describe('StrctIcon — a mode of its own', () => {
     // Unnamed stays hidden: the mode is not a name of its own.
     const plain = make({ mode: 'maintenance' });
     expect(plain.querySelector('svg[role="img"]')!.getAttribute('aria-hidden')).toBe('true');
+  });
+});
+
+/**
+ * FR-64-01. The size is a custom property now, so a control can answer for an
+ * icon that was given none. The resolved pixels are a browser matter
+ * (`scripts/control-height.mjs` measures them); what is testable here is
+ * which element ends up declaring the property.
+ */
+describe('StrctIcon size', () => {
+  it('declares nothing of its own until it is given a size', () => {
+    const fixture = TestBed.createComponent(StrctIcon);
+    fixture.componentRef.setInput('name', 'check');
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.style.getPropertyValue('--icon-size')).toBe('');
+    // And no px of its own on the drawing, which is what let a binding win
+    // over the property before.
+    const svg = host.querySelector('svg') as SVGElement;
+    expect(svg.style.width).toBe('');
+  });
+
+  it('writes the size it is given on itself, which is nearer than any container', () => {
+    const fixture = TestBed.createComponent(StrctIcon);
+    fixture.componentRef.setInput('name', 'check');
+    fixture.componentRef.setInput('size', 14);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.style.getPropertyValue('--icon-size')).toBe('14px');
+  });
+
+  it('a button names the icon size that goes with its own', () => {
+    @Component({
+      imports: [StrctButton, StrctIcon],
+      template: `
+        <button strct-button size="sm"><strct-icon name="check" /></button>
+        <button strct-button size="lg"><strct-icon name="check" /></button>
+      `,
+    })
+    class Host {}
+
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const buttons = [...fixture.nativeElement.querySelectorAll('button')] as HTMLElement[];
+    // The class is the declaration; the property it sets is in the stylesheet.
+    expect(buttons[0].classList.contains('strct-btn--sm')).toBe(true);
+    expect(buttons[1].classList.contains('strct-btn--lg')).toBe(true);
+    // Neither icon states a size, so neither has a property of its own and
+    // both take their button's.
+    for (const icon of fixture.nativeElement.querySelectorAll('strct-icon'))
+      expect((icon as HTMLElement).style.getPropertyValue('--icon-size')).toBe('');
   });
 });

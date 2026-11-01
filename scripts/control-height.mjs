@@ -136,18 +136,32 @@ const MEASURE = `(() => {
   for (const row of document.querySelectorAll('.ch__row')) {
     const size = row.dataset.size;
     const want = token('--control-h-' + size);
+    const wantIcon = token('--icon-size-' + size);
     for (const strip of row.querySelectorAll('.ch__strip')) {
       const via = strip.hasAttribute('strctControlSize') ? 'container' : 'size';
       for (const el of strip.children) {
         // The control's own box — a custom element's host is the control.
         const h = Math.round(el.getBoundingClientRect().height * 100) / 100;
-        rows.push({
-          size,
-          via,
-          what: (el.tagName.toLowerCase() + ' ' + (el.getAttribute('aria-label') ?? el.textContent.trim().slice(0, 18))).trim(),
-          want,
-          got: h,
-        });
+        const what = (
+          el.tagName.toLowerCase() +
+          ' ' +
+          (el.getAttribute('aria-label') ?? el.textContent.trim().slice(0, 18))
+        ).trim();
+        rows.push({ size, via, what, want, got: h });
+        // FR-64-01: and the icon it holds is the size that goes with it,
+        // unless it was given one of its own.
+        for (const icon of el.querySelectorAll('strct-icon')) {
+          if (icon.style.getPropertyValue('--icon-size')) continue;
+          const svg = icon.querySelector('svg');
+          if (!svg) continue;
+          rows.push({
+            size,
+            via,
+            what: what + ' › icon',
+            want: wantIcon,
+            got: Math.round(svg.getBoundingClientRect().height * 100) / 100,
+          });
+        }
       }
     }
   }
@@ -201,7 +215,7 @@ try {
   server.close();
 }
 
-console.log(`Measured ${measured} control boxes across ${THEMES.length} themes.`);
+console.log(`Measured ${measured} control and icon boxes across ${THEMES.length} themes.`);
 if (bad.length) {
   console.error(`\n${bad.length} are not the height their size asks for:\n`);
   for (const b of bad.slice(0, 40))
@@ -210,4 +224,4 @@ if (bad.length) {
     );
   process.exit(1);
 }
-console.log('Every control is exactly the height its size asks for.');
+console.log('Every control, and every icon in one, is exactly the size it should be.');

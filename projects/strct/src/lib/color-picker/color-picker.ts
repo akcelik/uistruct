@@ -11,7 +11,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { StrctControlSize, strctControlHeight } from '../control-size';
+import { StrctControlSize, strctControlHeight, strctIconSize } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctOverlay } from '../overlay/overlay';
 import { restoreFocus, saveFocusedElement } from '../overlay/focus';
@@ -87,7 +87,11 @@ const HEX = /^#([0-9a-f]{6})$/i;
       </div>
     }
   `,
-  host: { class: 'strct-cp', '[style.--control-h]': 'controlHeight()' },
+  host: {
+    class: 'strct-cp',
+    '[style.--control-h]': 'controlHeight()',
+    '[style.--icon-size]': 'controlIconSize()',
+  },
   styles: [
     `
       .strct-cp {
@@ -176,6 +180,11 @@ export class StrctColorPicker implements ControlValueAccessor {
   protected readonly controlHeight = computed(() => {
     const s = this.size();
     return s ? strctControlHeight(s) : null;
+  });
+  /** And the icon size that goes with it, for the icons it holds. */
+  protected readonly controlIconSize = computed(() => {
+    const s = this.size();
+    return s ? strctIconSize(s) : null;
   });
 
   private readonly host = inject(ElementRef<HTMLElement>);

@@ -72,10 +72,10 @@ import {
           />
           <button strct-button [size]="size">Save view</button>
           <button strct-button [size]="size" variant="primary">
-            <strct-icon name="check" [size]="14" /> With an icon
+            <strct-icon name="check" /> With an icon
           </button>
           <button strct-button [size]="size" variant="neutral" icon aria-label="Refresh">
-            <strct-icon name="refresh" [size]="14" />
+            <strct-icon name="refresh" />
           </button>
           <button strct-button [size]="size" variant="neutral" disabled>Disabled</button>
           <button strct-button [size]="size" variant="neutral">

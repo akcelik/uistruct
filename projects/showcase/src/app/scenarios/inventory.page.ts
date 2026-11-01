@@ -73,10 +73,10 @@ import {
       divided
     >
       <button strct-button size="sm" [disabled]="!selected()" (click)="batch('Migrate')">
-        <strct-icon name="sync" [size]="14" /> Migrate
+        <strct-icon name="sync" /> Migrate
       </button>
       <button strct-button size="sm" [disabled]="!selected()" (click)="batch('Enter maintenance')">
-        <strct-icon name="maintenance" [size]="14" /> Maintenance
+        <strct-icon name="maintenance" /> Maintenance
       </button>
       <button
         strct-button
@@ -85,11 +85,11 @@ import {
         [disabled]="!selected()"
         (click)="confirmDecommission()"
       >
-        <strct-icon name="close" [size]="14" /> Decommission
+        <strct-icon name="close" /> Decommission
       </button>
       <strct-toolbar-spacer />
       <button strct-button variant="primary" solid size="sm">
-        <strct-icon name="host" [size]="14" /> Add host
+        <strct-icon name="host" /> Add host
       </button>
     </strct-toolbar>
 
