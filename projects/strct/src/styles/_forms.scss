@@ -2,6 +2,22 @@
 // (which simply applies the `.strct-control` class). Kept in the theme layer so
 // inputs / selects / textareas share one definition.
 
+/* One height per size, for every single-line control.
+ *
+ * Each control used to work its own height out from its padding, its
+ * line-height and whatever it held: measured in Chrome, a field stood 34.9px
+ * (13px over a 1.3 line, plus 8+8 of padding and the border) beside a small
+ * button's 22px, a searchbox's 28px and a segmented control's 31px. Nothing
+ * could make them agree, because there was no height to agree on, and only
+ * two controls even had a `size` (FR-63-01). Now the height is the token,
+ * the box is border-box and the vertical padding is zero, so what a control
+ * holds — an icon, a spinner, a longer word — cannot change how tall it is.
+ *
+ * `--control-h` is what a control without a size uses; `size` and
+ * `[strctControlSize]` set it to one of the three below. A whole application
+ * changes density by overriding the tokens in one place.
+ *
+ * A textarea is not a single-line control and keeps its own height. */
 .strct-control {
   display: block;
   width: 100%;
@@ -64,6 +80,19 @@ select.strct-control {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 9px center;
+}
+
+.strct-control:not(textarea) {
+  box-sizing: border-box;
+  height: var(--control-h);
+  padding-block: 0;
+}
+/* The ones that are a box around a control rather than the control itself —
+   a select's trigger, a number's field with its steppers — centre what they
+   hold in that height instead of stretching to it. */
+.strct-control:not(textarea, input, select) {
+  display: flex;
+  align-items: center;
 }
 
 textarea.strct-control {

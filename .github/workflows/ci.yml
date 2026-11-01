@@ -67,6 +67,11 @@ jobs:
       # cover the plumbing and this covers the claim (BUG-62-01).
       - name: Assert the grid's columns obey their widths
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/grid-layout.mjs
+      # One height per size: every control, every size, with and without an
+      # icon, disabled, loading, in three palettes — measured against the
+      # token it is supposed to be (FR-63-04).
+      - name: Assert every control is the height its size asks for
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/control-height.mjs
       # The library's dev-mode diagnostics are for consumers, so the library's
       # own showcase must never trigger one. Production compiles them out, so
       # this needs the development build.

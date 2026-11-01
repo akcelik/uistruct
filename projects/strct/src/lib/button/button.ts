@@ -13,11 +13,16 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { StrctControlSize } from '../control-size';
 
 /** Button visual variants. */
 export type StrctButtonVariant = 'primary' | 'critical' | 'outline' | 'flat' | 'neutral' | 'link';
-/** Button size variants. */
-export type StrctButtonSize = 'md' | 'sm' | 'mini';
+/**
+ * The shared control sizes, plus the button's own `mini` — a 22px chip for a
+ * toolbar's corner, below the scale on purpose and the one size that does not
+ * line up with a field.
+ */
+export type StrctButtonSize = StrctControlSize | 'mini';
 
 /**
  * Styles a native `<button>` / `<a>` so it stays fully accessible and form-aware.
@@ -43,6 +48,7 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
     '[class.strct-btn--link]': "variant() === 'link'",
     '[class.strct-btn--solid]': 'solid()',
     '[class.strct-btn--sm]': "size() === 'sm'",
+    '[class.strct-btn--lg]': "size() === 'lg'",
     '[class.strct-btn--mini]': "size() === 'mini'",
     '[class.strct-btn--block]': 'block()',
     '[class.strct-btn--icon]': 'iconOnly()',
@@ -69,7 +75,13 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
         font-size: 13px;
         font-weight: 500;
         line-height: 1;
-        padding: var(--space-2) var(--space-4);
+        /* The height is the token, not the sum of the padding and whatever
+           the button holds: an icon used to add 1-4px and a spinner another,
+           so two buttons of one size stood 31px and 32px side by side, and a
+           field beside them stood 34.9px (FR-63-01). */
+        box-sizing: border-box;
+        height: var(--control-h);
+        padding: 0 var(--space-4);
         border-radius: var(--radius-md);
         cursor: pointer;
         user-select: none;
@@ -140,6 +152,7 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
          reached with Tab. */
       .strct-btn--link {
         display: inline;
+        height: auto;
         padding: 0;
         border: 0;
         border-radius: 0;
@@ -196,11 +209,20 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
       }
 
       .strct-btn--sm {
-        padding: var(--space-1) var(--space-3);
+        --control-h: var(--control-h-sm);
+        padding: 0 var(--space-3);
         font-size: 12px;
         border-radius: var(--radius-sm);
       }
+      .strct-btn--lg {
+        --control-h: var(--control-h-lg);
+        padding: 0 var(--space-5);
+        font-size: 14px;
+      }
+      /* mini is the button's own: a 22px chip for a toolbar's corner, below
+         the shared scale on purpose. It keeps its own height. */
       .strct-btn--mini {
+        height: auto;
         padding: 2px var(--space-2);
         font-size: 12px;
         border-radius: var(--radius-sm);
@@ -210,14 +232,16 @@ export type StrctButtonSize = 'md' | 'sm' | 'mini';
         width: 100%;
       }
 
-      /* Square icon-only button. */
+      /* Square icon-only button: as wide as it is tall, whatever icon it
+         holds. It used to be its icon plus its padding — 33px around a 16px
+         icon, 24px around a 13px one — so two icon buttons of one size were
+         different heights. */
       .strct-btn--icon {
-        padding: var(--space-2);
-      }
-      .strct-btn--icon.strct-btn--sm {
-        padding: var(--space-1);
+        width: var(--control-h);
+        padding: 0;
       }
       .strct-btn--icon.strct-btn--mini {
+        width: auto;
         padding: 3px;
       }
     `,

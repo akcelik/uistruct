@@ -99,6 +99,11 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  /* One height per size, for every single-line control (see _forms.scss). */
+  --control-h-sm: 26px;
+  --control-h-md: 32px;
+  --control-h-lg: 38px;
+  --control-h: var(--control-h-md);
   --radius-sm: 2px;
   --radius-md: 3px;
   --radius-lg: 4px;
@@ -164,6 +169,11 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  /* One height per size, for every single-line control (see _forms.scss). */
+  --control-h-sm: 26px;
+  --control-h-md: 32px;
+  --control-h-lg: 38px;
+  --control-h: var(--control-h-md);
   --radius-sm: 2px;
   --radius-md: 3px;
   --radius-lg: 4px;
@@ -229,6 +239,11 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  /* One height per size, for every single-line control (see _forms.scss). */
+  --control-h-sm: 26px;
+  --control-h-md: 32px;
+  --control-h-lg: 38px;
+  --control-h: var(--control-h-md);
   --radius-sm: 2px;
   --radius-md: 3px;
   --radius-lg: 4px;
@@ -294,6 +309,11 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  /* One height per size, for every single-line control (see _forms.scss). */
+  --control-h-sm: 26px;
+  --control-h-md: 32px;
+  --control-h-lg: 38px;
+  --control-h: var(--control-h-md);
   --radius-sm: 2px;
   --radius-md: 3px;
   --radius-lg: 4px;
@@ -359,6 +379,11 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  /* One height per size, for every single-line control (see _forms.scss). */
+  --control-h-sm: 26px;
+  --control-h-md: 32px;
+  --control-h-lg: 38px;
+  --control-h: var(--control-h-md);
   --radius-sm: 2px;
   --radius-md: 3px;
   --radius-lg: 4px;
@@ -424,6 +449,11 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  /* One height per size, for every single-line control (see _forms.scss). */
+  --control-h-sm: 26px;
+  --control-h-md: 32px;
+  --control-h-lg: 38px;
+  --control-h: var(--control-h-md);
   --radius-sm: 2px;
   --radius-md: 3px;
   --radius-lg: 4px;

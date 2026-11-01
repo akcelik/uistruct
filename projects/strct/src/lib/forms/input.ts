@@ -1,4 +1,5 @@
-import { Directive, booleanAttribute, input } from '@angular/core';
+import { Directive, booleanAttribute, computed, input } from '@angular/core';
+import { StrctControlSize, strctControlHeight } from '../control-size';
 
 /**
  * Applies the shared `.strct-control` look to a native input / textarea / select.
@@ -20,9 +21,22 @@ import { Directive, booleanAttribute, input } from '@angular/core';
   host: {
     class: 'strct-control',
     '[class.strct-control--mono]': 'mono()',
+    '[style.--control-h]': 'controlHeight()',
   },
 })
 export class StrctInput {
+  /**
+   * Control size — the shared scale, so this lines up with the buttons and
+   * fields beside it. Left unset it follows an enclosing [strctControlSize],
+   * or the default height when there is none.
+   */
+  readonly size = input<StrctControlSize | undefined>(undefined);
+  /** The height its size asks for; nothing while it states no size. */
+  protected readonly controlHeight = computed(() => {
+    const s = this.size();
+    return s ? strctControlHeight(s) : null;
+  });
+
   /** Monospace text with tabular figures — a PEM block, an id, a mapping. */
   readonly mono = input(false, { transform: booleanAttribute });
 }

@@ -12,6 +12,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { StrctControlSize, strctControlHeight } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
 
@@ -88,7 +89,7 @@ import { StrctIcon } from '../icon/icon';
       </div>
     }
   `,
-  host: { class: 'strct-sb-host' },
+  host: { class: 'strct-sb-host', '[style.--control-h]': 'controlHeight()' },
   styles: [
     `
       .strct-sb-host {
@@ -104,7 +105,11 @@ import { StrctIcon } from '../icon/icon';
         gap: 8px;
         width: 100%;
         min-width: 0;
-        padding: 5px 8px 5px 10px;
+        /* The shared control height: it stood 28px beside a 34.9px field and
+           a 31px button (FR-63-01). */
+        box-sizing: border-box;
+        height: var(--control-h);
+        padding: 0 8px 0 10px;
         border: 1px solid var(--strct-sb-border, var(--b2));
         border-radius: 3px;
         background: var(--strct-sb-bg, var(--bg-2));
@@ -206,6 +211,18 @@ import { StrctIcon } from '../icon/icon';
   ],
 })
 export class StrctSearchbox implements ControlValueAccessor {
+  /**
+   * Control size — the shared scale, so this lines up with the buttons and
+   * fields beside it. Left unset it follows an enclosing [strctControlSize],
+   * or the default height when there is none.
+   */
+  readonly size = input<StrctControlSize | undefined>(undefined);
+  /** The height its size asks for; nothing while it states no size. */
+  protected readonly controlHeight = computed(() => {
+    const s = this.size();
+    return s ? strctControlHeight(s) : null;
+  });
+
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /** Placeholder text (and the trigger mode's label). */

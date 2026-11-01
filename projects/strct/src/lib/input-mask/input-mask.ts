@@ -3,10 +3,12 @@ import {
   Component,
   ViewEncapsulation,
   booleanAttribute,
+  computed,
   forwardRef,
   input,
   signal,
 } from '@angular/core';
+import { StrctControlSize, strctControlHeight } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 /** Ready-made masks for common datacenter / form fields. */
@@ -29,6 +31,7 @@ export const STRCT_MASKS = {
  */
 @Component({
   selector: 'strct-input-mask',
+  host: { '[style.--control-h]': 'controlHeight()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   providers: [
@@ -57,6 +60,18 @@ export const STRCT_MASKS = {
   ],
 })
 export class StrctInputMask implements ControlValueAccessor {
+  /**
+   * Control size — the shared scale, so this lines up with the buttons and
+   * fields beside it. Left unset it follows an enclosing [strctControlSize],
+   * or the default height when there is none.
+   */
+  readonly size = input<StrctControlSize | undefined>(undefined);
+  /** The height its size asks for; nothing while it states no size. */
+  protected readonly controlHeight = computed(() => {
+    const s = this.size();
+    return s ? strctControlHeight(s) : null;
+  });
+
   /** Mask pattern (9=digit, A=letter, H=hex, *=alnum). */
   readonly mask = input.required<string>();
   /** Placeholder text when empty. */

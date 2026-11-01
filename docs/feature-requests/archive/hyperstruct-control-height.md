@@ -1,5 +1,45 @@
 # HyperStruct — one control height (6.0.2)
 
+> **SHIPPED in 6.2.0**, measured in Chrome on the showcase (the heights below
+> were re-measured in this repo before the change and match the report):
+>
+> | control                                                       | before      | after (md / sm) |
+> | ------------------------------------------------------------- | ----------- | --------------- |
+> | `strctInput`, `strct-select` and the rest of `.strct-control` | 34.9px      | **32 / 26**     |
+> | `strct-button` md · sm                                        | 31 · 22px   | **32 / 26**     |
+> | `strct-button` icon-only md · sm                              | 33 · 24px   | **32 / 26**     |
+> | `strct-searchbox`                                             | 28 and 30px | **32 / 26**     |
+> | `strct-segmented` md · sm                                     | 31 · 26px   | **32 / 26**     |
+>
+> - **FR-63-01** — `--control-h-sm: 26px`, `--control-h-md: 32px`,
+>   `--control-h-lg: 38px` and `--control-h`, in `_tokens.scss`. Every
+>   single-line control draws `height: var(--control-h)` with
+>   `box-sizing: border-box` and no vertical padding.
+> - **FR-63-02** — `StrctControlSize` (`sm | md | lg`) and a `size` input on
+>   twelve controls, plus `[strctControlSize]`, which sets the height for
+>   everything inside it. A control states nothing until it is given a size,
+>   so the container wins unless the control says otherwise.
+>   `StrctSegmentedSize` is an alias of the shared type now;
+>   `StrctButtonSize` is the shared type plus the button's own `mini`.
+> - **FR-63-03** — follows from the fixed height: an icon, a spinner, a badge,
+>   `loading` or a longer label leaves the height alone. The button already
+>   had `white-space: nowrap`.
+> - **FR-63-04** — `scripts/control-height.mjs`, run in CI: **144 control
+>   boxes** across three palettes, each measured against the token its size
+>   names. Removing the one height rule turns 63 of them red.
+>
+> **Not done, deliberately:** the icon inside a button does not resize with
+> the control (FR-63-03's second sentence). `strct-icon`'s `size` has a
+> default rather than an unset state, so the button cannot tell an icon the
+> author sized from one that took the default — forcing 16px would silently
+> override an explicit `[size]="14"` wherever a consumer had chosen it. The
+> heights do not depend on it: an icon cannot change a control's height any
+> more. Filing a separate FR for an inheriting icon size would be the way in.
+>
+> Row targets like `strct-toolbar` and `strct-filter-bar` take no `size` of
+> their own; `[strctControlSize]` on them does the same job, which is why
+> FR-63-02 proposed it.
+
 Filed 2026-11-01 by HyperStruct. The operator: buttons and input boxes standing side by side have very
 different heights on many pages, and it damages the visual unity of the product. Measured in Chrome (2× DPR,
 1600×1000) with strct 6.0.2 by reading `getBoundingClientRect` of every control on 135 screens of the app: 173

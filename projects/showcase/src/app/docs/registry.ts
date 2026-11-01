@@ -62,6 +62,13 @@ const disabledRow: ApiRow = {
   default: 'false',
   description: 'Disables interaction and dims the control.',
 };
+const controlSizeRow: ApiRow = {
+  name: 'size',
+  type: `'sm' | 'md' | 'lg'`,
+  default: '—',
+  description:
+    'Control size, on the scale every single-line control shares, so this is exactly as tall as the buttons and fields beside it (`--control-h-sm` 26px, `-md` 32px, `-lg` 38px). Left unset it follows an enclosing `[strctControlSize]`, or the default height when there is none.',
+};
 const cvaA11y =
   'Implements ControlValueAccessor, so it participates in form validation, dirty/touched state and disabled handling.';
 
@@ -704,6 +711,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Click-to-edit text.',
         lead: 'Display text that swaps to an input on click (or via the pencil affordance that appears on hover/focus). Enter commits, Escape cancels, blur commits; the committed value is announced in a live region. ControlValueAccessor-compatible over `string`.',
         inputs: [
+          controlSizeRow,
           {
             name: 'mono',
             type: 'boolean',
@@ -751,6 +759,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Select-only combobox with a token-styled listbox.',
         lead: 'A single choice from a fixed list, rendered as a button trigger opening a token-styled listbox — so the options match the theme instead of the OS popup a native `<select>` shows. The current choice carries a leading ✓ and gets the highlight when reopening. ControlValueAccessor-compatible.',
         inputs: [
+          controlSizeRow,
           {
             name: 'ariaLabel',
             type: 'string | null',
@@ -810,6 +819,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Custom checkbox with form binding.',
         lead: 'A custom-drawn checkbox that is ControlValueAccessor-compatible, so it works with ngModel and reactive forms. Project the label as content.',
         inputs: [
+          controlSizeRow,
           model('boolean', 'Checked state.'),
           {
             name: 'description',
@@ -931,6 +941,7 @@ export const DOCS: DocCategory[] = [
         summary: 'One-of-N as a joined segmented control.',
         lead: 'A single-select segmented control with managed selected state — distinct from `StrctTabs` (panel switching) and a button group (visual cluster only). Reach for it for mode pickers and list filters. CVA-compatible.',
         inputs: [
+          controlSizeRow,
           {
             name: 'options[].count / countStatus / countLabel',
             type: 'number · StrctStatus · (count) => string',
@@ -1004,6 +1015,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Numeric stepper with − / + buttons.',
         lead: 'A numeric stepper: − / + buttons flanking a text field, with a `number | null` value (null = empty). Typing is free-form — intermediate states like "-" are kept and clamped to `min`/`max` on blur; the buttons and keyboard clamp immediately. ControlValueAccessor-compatible.',
         inputs: [
+          controlSizeRow,
           {
             name: 'ariaLabel',
             type: 'string',
@@ -1054,6 +1066,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Type to filter; single or multiple, groups, icons, custom values.',
         lead: 'A filterable select: type to narrow the list — the match is emphasised in each label — and click or press Enter to choose. An aligned ✓ lead slot marks the current choice. `multiple` switches the value to an array with removable chips; options can carry `group` headers, `disabled`, a leading `icon` and a secondary `description` line. `allowCustomValue` lets the typed text itself be committed as a free-form value. ControlValueAccessor-compatible.',
         inputs: [
+          controlSizeRow,
           model('unknown', 'Selected value — an array when `multiple` is set.'),
           {
             name: 'options',
@@ -1118,6 +1131,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Calendar popover; ISO date value.',
         lead: 'A calendar popover whose value is an ISO date string (`YYYY-MM-DD`). ControlValueAccessor-compatible.',
         inputs: [
+          controlSizeRow,
           model('string', 'Selected date as an ISO string.'),
           {
             name: 'placeholder',
@@ -1138,6 +1152,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Date + time in one control; ISO local value.',
         lead: 'A composition over `strct-datepicker` plus hour/minute selects sharing one field skin. The value is an ISO local datetime string (`YYYY-MM-DDTHH:mm`); picking a time before a date keeps the value empty until a date is picked. ControlValueAccessor-compatible.',
         inputs: [
+          controlSizeRow,
           model('string', 'Selected date + time as an ISO local string.'),
           {
             name: 'placeholder',
@@ -1189,6 +1204,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Reveal toggle and optional strength meter.',
         lead: 'A password field with a show/hide toggle and an optional strength meter. ControlValueAccessor-compatible.',
         inputs: [
+          controlSizeRow,
           model('string', 'Password value.'),
           { name: 'placeholder', type: 'string', default: `''`, description: 'Empty-state hint.' },
           {
@@ -1238,6 +1254,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Preset swatches plus a hex field.',
         lead: 'A color picker with preset swatches and a hex input; value is a `#rrggbb` string. ControlValueAccessor-compatible.',
         inputs: [
+          controlSizeRow,
           model('string', 'Selected color as #rrggbb.'),
           {
             name: 'swatches',
@@ -1260,6 +1277,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Pick a leaf from nested groups.',
         lead: 'Selects a leaf value from nested groups — e.g. a port group under a virtual switch. ControlValueAccessor-compatible.',
         inputs: [
+          controlSizeRow,
           model('unknown', 'Selected leaf value.'),
           {
             name: 'options',
@@ -1286,6 +1304,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Tree picker in a dropdown.',
         lead: 'A trigger button that opens an overlay panel hosting a data-driven `strct-tree`. Single-selects a node key (`id`, falling back to `label`); the trigger shows the selected node’s full label path (`Parent / Child`). ControlValueAccessor-compatible.',
         inputs: [
+          controlSizeRow,
           model('string | null', 'Selected node key; null means empty.'),
           {
             name: 'nodes',
@@ -1485,6 +1504,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Formatted entry with mask tokens.',
         lead: 'Formatted text entry. Mask tokens: `9` = digit, `A` = letter, `*` = alphanumeric, `H` = hex; everything else is a literal. ControlValueAccessor-compatible.',
         inputs: [
+          controlSizeRow,
           model('string', 'Raw or formatted value.'),
           {
             name: 'mask',
@@ -2887,6 +2907,7 @@ export const DOCS: DocCategory[] = [
         summary: 'Compact search pill — input or palette trigger.',
         lead: 'The docs-header search pattern as a component: a leading search icon, a label / input and an optional keyboard-hint chip. Default mode is a real search field (two-way `value`, CVA-compatible, Enter emits `(search)`, Escape / × clears). `trigger` mode renders a button that only emits `(activated)` — the classic "fake search that opens the command palette" header pattern. The docs header itself runs on it.',
         inputs: [
+          controlSizeRow,
           {
             name: 'placeholder',
             type: 'string',
@@ -6003,6 +6024,7 @@ export const GUIDES: { id: string; label: string; icon: string; items: GuideLink
     { label: 'Get started', path: '/get-started' },
     { label: 'Theming', path: '/foundations/theming' },
     { label: 'Icons', path: '/foundations/icons' },
+    { label: 'Control heights', path: '/foundations/controls' },
     { label: 'Playground', path: '/playground' },
     { label: 'Theme playground', path: '/theme-playground' },
     { label: 'Guidelines', path: '/guidelines' },

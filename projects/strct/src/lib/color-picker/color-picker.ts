@@ -1,9 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ViewEncapsulation,
   ElementRef,
   HostListener,
+  ViewEncapsulation,
   booleanAttribute,
   computed,
   forwardRef,
@@ -11,6 +11,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { StrctControlSize, strctControlHeight } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctOverlay } from '../overlay/overlay';
 import { restoreFocus, saveFocusedElement } from '../overlay/focus';
@@ -86,7 +87,7 @@ const HEX = /^#([0-9a-f]{6})$/i;
       </div>
     }
   `,
-  host: { class: 'strct-cp' },
+  host: { class: 'strct-cp', '[style.--control-h]': 'controlHeight()' },
   styles: [
     `
       .strct-cp {
@@ -165,6 +166,18 @@ const HEX = /^#([0-9a-f]{6})$/i;
   ],
 })
 export class StrctColorPicker implements ControlValueAccessor {
+  /**
+   * Control size — the shared scale, so this lines up with the buttons and
+   * fields beside it. Left unset it follows an enclosing [strctControlSize],
+   * or the default height when there is none.
+   */
+  readonly size = input<StrctControlSize | undefined>(undefined);
+  /** The height its size asks for; nothing while it states no size. */
+  protected readonly controlHeight = computed(() => {
+    const s = this.size();
+    return s ? strctControlHeight(s) : null;
+  });
+
   private readonly host = inject(ElementRef<HTMLElement>);
   /** Custom palette swatches. */
   readonly swatches = input<string[]>(DEFAULT_SWATCHES);

@@ -1,9 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ViewEncapsulation,
   ElementRef,
   HostListener,
+  ViewEncapsulation,
   booleanAttribute,
   computed,
   forwardRef,
@@ -12,6 +12,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { StrctControlSize, strctControlHeight } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon, StrctIconName } from '../icon/icon';
 import { StrctOverlay } from '../overlay/overlay';
@@ -203,7 +204,7 @@ let comboboxCounter = 0;
       </div>
     }
   `,
-  host: { class: 'strct-cbx' },
+  host: { class: 'strct-cbx', '[style.--control-h]': 'controlHeight()' },
   styles: [
     `
       /* Full width of its container by default — no artificial cap. */
@@ -415,6 +416,18 @@ let comboboxCounter = 0;
   ],
 })
 export class StrctCombobox implements ControlValueAccessor {
+  /**
+   * Control size — the shared scale, so this lines up with the buttons and
+   * fields beside it. Left unset it follows an enclosing [strctControlSize],
+   * or the default height when there is none.
+   */
+  readonly size = input<StrctControlSize | undefined>(undefined);
+  /** The height its size asks for; nothing while it states no size. */
+  protected readonly controlHeight = computed(() => {
+    const s = this.size();
+    return s ? strctControlHeight(s) : null;
+  });
+
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly inputEl = viewChild.required<ElementRef<HTMLInputElement>>('input');
   protected readonly listId = `strct-cbx-${++comboboxCounter}`;

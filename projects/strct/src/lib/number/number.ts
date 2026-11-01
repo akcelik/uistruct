@@ -8,6 +8,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { StrctControlSize, strctControlHeight } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
 
@@ -69,7 +70,7 @@ import { StrctIcon } from '../icon/icon';
       </button>
     </div>
   `,
-  host: { class: 'strct-num' },
+  host: { class: 'strct-num', '[style.--control-h]': 'controlHeight()' },
   styles: [
     `
       .strct-num {
@@ -116,6 +117,18 @@ import { StrctIcon } from '../icon/icon';
   ],
 })
 export class StrctNumber implements ControlValueAccessor {
+  /**
+   * Control size — the shared scale, so this lines up with the buttons and
+   * fields beside it. Left unset it follows an enclosing [strctControlSize],
+   * or the default height when there is none.
+   */
+  readonly size = input<StrctControlSize | undefined>(undefined);
+  /** The height its size asks for; nothing while it states no size. */
+  protected readonly controlHeight = computed(() => {
+    const s = this.size();
+    return s ? strctControlHeight(s) : null;
+  });
+
   /** Minimum allowed value; null = unbounded. */
   readonly min = input<number | null>(null);
   /** Maximum allowed value; null = unbounded. */

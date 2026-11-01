@@ -1,9 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ViewEncapsulation,
   ElementRef,
   HostListener,
+  ViewEncapsulation,
   booleanAttribute,
   computed,
   forwardRef,
@@ -11,6 +11,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { StrctControlSize, strctControlHeight } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
 import { StrctOverlay } from '../overlay/overlay';
@@ -89,7 +90,7 @@ import { StrctTree, StrctTreeNodeData } from '../tree/tree';
       </div>
     }
   `,
-  host: { class: 'strct-tsel' },
+  host: { class: 'strct-tsel', '[style.--control-h]': 'controlHeight()' },
   styles: [
     `
       .strct-tsel {
@@ -173,6 +174,18 @@ import { StrctTree, StrctTreeNodeData } from '../tree/tree';
   ],
 })
 export class StrctTreeSelect implements ControlValueAccessor {
+  /**
+   * Control size — the shared scale, so this lines up with the buttons and
+   * fields beside it. Left unset it follows an enclosing [strctControlSize],
+   * or the default height when there is none.
+   */
+  readonly size = input<StrctControlSize | undefined>(undefined);
+  /** The height its size asks for; nothing while it states no size. */
+  protected readonly controlHeight = computed(() => {
+    const s = this.size();
+    return s ? strctControlHeight(s) : null;
+  });
+
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /** Root nodes rendered by the embedded `<strct-tree>` (data-driven mode). */

@@ -10,6 +10,7 @@ import {
   signal,
   viewChildren,
 } from '@angular/core';
+import { StrctControlSize } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
 import { StrctStatus } from '../status';
@@ -37,7 +38,8 @@ export interface StrctSegmentedOption {
 }
 
 /** Segment size. */
-export type StrctSegmentedSize = 'sm' | 'md';
+/** The shared control scale, so a segmented track lines up with the row. */
+export type StrctSegmentedSize = StrctControlSize;
 
 /**
  * One-of-N selection rendered as a joined segmented control with managed
@@ -92,6 +94,7 @@ export type StrctSegmentedSize = 'sm' | 'md';
     class: 'strct-seg',
     role: 'radiogroup',
     '[class.strct-seg--sm]': "size() === 'sm'",
+    '[class.strct-seg--lg]': "size() === 'lg'",
     '[class.strct-seg--block]': 'block()',
     '[class.strct-seg--disabled]': 'isDisabled()',
     '(keydown)': 'onKeydown($event)',
@@ -118,6 +121,10 @@ export type StrctSegmentedSize = 'sm' | 'md';
       .strct-seg {
         display: inline-flex;
         gap: 2px;
+        /* The track is the control: its options fill it, so the height comes
+           from the token and a longer word cannot change it (FR-63-01). */
+        box-sizing: border-box;
+        height: var(--control-h);
         padding: 2px;
         background: var(--bg-2);
         border: 1px solid var(--b2);
@@ -134,7 +141,7 @@ export type StrctSegmentedSize = 'sm' | 'md';
         justify-content: center;
         gap: var(--space-1);
         flex: 1 1 auto;
-        padding: 6px 14px;
+        padding: 0 14px;
         border: 0;
         border-radius: calc(var(--radius-md) - 2px);
         background: transparent;
@@ -149,8 +156,18 @@ export type StrctSegmentedSize = 'sm' | 'md';
           background 0.14s ease,
           color 0.14s ease;
       }
+      .strct-seg--sm {
+        --control-h: var(--control-h-sm);
+      }
+      .strct-seg--lg {
+        --control-h: var(--control-h-lg);
+      }
+      .strct-seg--lg .strct-seg__opt {
+        padding: 0 18px;
+        font-size: 14px;
+      }
       .strct-seg--sm .strct-seg__opt {
-        padding: 4px 10px;
+        padding: 0 10px;
         font-size: 12px;
       }
       .strct-seg__opt:hover:not(:disabled):not(.strct-seg__opt--selected) {
