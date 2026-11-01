@@ -3339,6 +3339,7 @@ describe('StrctDatagrid fixed column widths (BUG-62-01)', () => {
    *  Both stay in place for the whole block, so no after-render hook can run
    *  outside them. */
   let widthSpy: ReturnType<typeof vi.spyOn> | null = null;
+  let roomSpy: ReturnType<typeof vi.spyOn> | null = null;
 
   beforeEach(() => {
     vi.stubGlobal(
@@ -3357,10 +3358,14 @@ describe('StrctDatagrid fixed column widths (BUG-62-01)', () => {
       },
     );
     widthSpy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(120);
+    // The room the grid has: shares are a proportion of it, so without one
+    // there is nothing to take a share of.
+    roomSpy = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(600);
   });
   afterEach(() => {
     widthSpy?.mockRestore();
-    widthSpy = null;
+    roomSpy?.mockRestore();
+    widthSpy = roomSpy = null;
     vi.unstubAllGlobals();
   });
 
@@ -3370,38 +3375,36 @@ describe('StrctDatagrid fixed column widths (BUG-62-01)', () => {
     return fixture;
   }
 
-  it('leaves the content in charge until the header has been measured', () => {
-    widthSpy!.mockReturnValue(0); // a grid in a closed drawer measures nothing
-    const f = make({ resizable: true });
+  it('leaves a grid that states nothing content-laid-out until it is dragged', async () => {
+    // BUG-65-03: fixed layout is for being exact about a width somebody
+    // asked for. With nothing asked for there is nothing to be exact about,
+    // and content layout is what fits any container.
+    const f = await measured(make({ resizable: true }));
     const host = f.nativeElement as HTMLElement;
     expect(host.classList.contains('strct-dg-host--fixedcols')).toBe(false);
     expect(host.querySelector('.strct-dg__filler')).toBeNull();
     expect((host.querySelector('thead th') as HTMLElement).style.width).toBe('');
   });
 
-  it('hands every column its measured width, and the leftover to the filler', async () => {
-    const f = await measured(make({ resizable: true }));
+  it('makes a stated width the column\u2019s share of the row', async () => {
+    // Four columns stating 1000px between them drew 1000px in a 518px box
+    // and scrolled sideways. A share keeps the proportions at any width.
+    const f = await measured(
+      make({
+        columns: [
+          { key: 'name', label: 'Name', width: '300px' },
+          { key: 'state', label: 'State', width: '100px' },
+        ] satisfies StrctDatagridColumn[],
+      }),
+    );
     const host = f.nativeElement as HTMLElement;
     expect(host.classList.contains('strct-dg-host--fixedcols')).toBe(true);
     expect(
       [...host.querySelectorAll('thead th')].map((th) => (th as HTMLElement).style.width),
-    ).toEqual(['120px', '120px']);
+    ).toEqual(['75%', '25%']);
     // One in the header row, one in the single body row.
     expect(host.querySelectorAll('.strct-dg__filler').length).toBe(2);
     expect(host.querySelector('.strct-dg__filler')!.getAttribute('aria-hidden')).toBe('true');
-  });
-
-  it('turns on for a stated width too, and states it rather than measuring it', async () => {
-    const f = await measured(
-      make({
-        columns: [
-          { key: 'name', label: 'Name', width: '220px' },
-          { key: 'state', label: 'State' },
-        ] satisfies StrctDatagridColumn[],
-      }),
-    );
-    const ths = [...f.nativeElement.querySelectorAll('thead th')] as HTMLElement[];
-    expect(ths.map((th) => th.style.width)).toEqual(['220px', '120px']);
   });
 
   it('a dragged width wins, and is the width the handle was dragged to', async () => {
@@ -3419,9 +3422,49 @@ describe('StrctDatagrid fixed column widths (BUG-62-01)', () => {
   });
 
   it('spans the filler with the rows that span the table', async () => {
-    const f = await measured(make({ resizable: true, rows: [] }));
+    const f = await measured(
+      make({
+        rows: [],
+        columns: [
+          { key: 'name', label: 'Name', width: '300px' },
+          { key: 'state', label: 'State', width: '100px' },
+        ] satisfies StrctDatagridColumn[],
+      }),
+    );
     const empty = f.nativeElement.querySelector('.strct-dg__emptyrow') as HTMLElement;
     // 2 columns + the filler.
     expect(empty.getAttribute('colspan')).toBe('3');
+  });
+});
+
+/**
+ * BUG-65-02: a focusable `role="separator"` owes ARIA a value. The handle's
+ * came from the header sweep, which needs layout — so wherever nothing has a
+ * width (a consumer's jsdom accessibility gate, a grid in a hidden tab) every
+ * handle was an `aria-required-attr` violation, critical.
+ */
+describe('StrctDatagrid resize handles without a measurement', () => {
+  const cols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Name' },
+    { key: 'state', label: 'State', width: '180px' },
+  ];
+  const rows: StrctRow[] = [{ name: 'web-01', state: 'running' }];
+
+  it('gives every handle a value even where nothing can be measured', () => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    fixture.componentRef.setInput('resizable', true);
+    fixture.detectChanges();
+
+    const handles = [
+      ...fixture.nativeElement.querySelectorAll('.strct-dg__resize'),
+    ] as HTMLElement[];
+    expect(handles.length).toBe(2);
+    for (const h of handles) expect(h.getAttribute('aria-valuenow')).not.toBeNull();
+    // The one that states a width says that width; the other falls back to
+    // the floor a drag could not go below anyway.
+    expect(handles[1].getAttribute('aria-valuenow')).toBe('180');
+    expect(handles[0].getAttribute('aria-valuenow')).toBe('40');
   });
 });

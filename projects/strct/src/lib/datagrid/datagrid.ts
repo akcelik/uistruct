@@ -44,6 +44,11 @@ import { strctDevWarn } from '../util/dev-warn';
 // The grid's vocabulary lives beside it now, and is re-exported here so every
 // import path that worked before the split still works.
 export * from './datagrid.types';
+
+/** The narrowest a column can be dragged, and what a handle says while
+ *  nothing has been measured. */
+const STRCT_DG_MIN_COL_WIDTH = 40;
+import { StrctControlSize, strctControlHeight, strctIconSize } from '../control-size';
 import {
   DG_LABELS,
   SortDir,
@@ -237,6 +242,16 @@ export class StrctDatagrid {
    * until someone drags something.
    */
   readonly resizable = input(false, { transform: booleanAttribute });
+  /**
+   * The control size of the grid's toolbar — the quick filter and whatever
+   * is projected into `[strctDatagridActionBar]`, which share that row.
+   *
+   * The quick filter had no size, so it stood at 32px beside an action bar
+   * of small buttons and fields at 26px, and nothing could make the two
+   * agree (BUG-65-01). Setting this sizes the row: the projected content is
+   * inside the toolbar, so it follows without being told.
+   */
+  readonly toolbarSize = input<StrctControlSize | undefined>(undefined);
   /** Show a column-chooser dropdown in the footer. */
   readonly columnChooser = input(false, { transform: booleanAttribute });
   /** Disable all footer action buttons (sync, column chooser, etc.). */
@@ -562,47 +577,134 @@ export class StrctDatagrid {
   /**
    * Whether the columns' widths lay the table out instead of their content.
    *
-   * Under `table-layout: auto` a width was a hint: measured in Chrome, a
-   * column asked for 120px and drew 323px because its text did, dragging its
-   * handle 120px to the left left it at 323px, and the table stood 836px wide
-   * in a 600px pane with no ellipsis anywhere (BUG-62-01). With the widths in
-   * charge the same drag lands on 88px exactly and the table is 600px in a
-   * 600px pane. A grid opts in by being `resizable`, or by stating a width on
-   * a column — in both cases someone has said what a width should mean.
+   * Under `table-layout: auto` a width was a hint the content could outvote:
+   * measured in Chrome, a column asked for 120px and drew 323px because its
+   * text did, dragging its handle 120px to the left left it at 323px, and the
+   * table stood 836px wide in a 600px pane (BUG-62-01).
+   *
+   * A grid opts in by stating a width somewhere, or by having been dragged.
+   * A `resizable` grid that nobody has dragged and that states nothing stays
+   * content-laid-out, because there is nothing yet to be exact about, and
+   * that is the layout that fits its container at any size (BUG-65-03).
    */
-  protected readonly fixedColumns = computed(
-    () => this.resizable() || this.visibleColumns().some((c) => !!c.width),
-  );
+  protected readonly anyStatedWidth = computed(() => this.visibleColumns().some((c) => !!c.width));
+  /** A width in `columnWidths` is one an operator dragged, or restored state. */
+  protected readonly anyDragged = computed(() => this.columnWidths().size > 0);
+  protected readonly fixedColumns = computed(() => this.anyStatedWidth() || this.anyDragged());
 
   /**
    * Fixed layout splits the space equally between columns that state no
-   * width, which is not what this grid looked like a frame ago. So the widths
-   * the content asked for are swept first (see {@link sweepHeaderWidths}) and
-   * the mode waits for them: the grid draws exactly as it always did until
-   * someone drags a handle.
+   * width, so after a drag the widths the content asked for are swept first
+   * (see {@link sweepHeaderWidths}) and held: the grid draws as it did, and
+   * the one column that was dragged is exact.
    */
-  protected readonly widthsApplied = computed(
-    () => this.fixedColumns() && this.measuredWidths().size > 0,
-  );
+  protected readonly widthsApplied = computed(() => {
+    if (!this.fixedColumns()) return false;
+    // Not before there is something to apply: the first pass has to be the
+    // natural one, or the widths it measures are the ones fixed layout
+    // invented (every column equal), and the shares below would be worked
+    // out from those.
+    return this.anyDragged() ? this.measuredWidths().size > 0 : this.sharePercent().size > 0;
+  });
+
+  /** Stated widths in px, for the shares below; a non-px width has no share. */
+  private readonly statedPx = computed(() => {
+    const out = new Map<string, number>();
+    for (const c of this.visibleColumns()) {
+      const m = /^(\d+(?:\.\d+)?)px$/.exec((c.width ?? '').trim());
+      if (m) out.set(c.key, Number(m[1]));
+    }
+    return out;
+  });
 
   /**
-   * The width the header cell gets: what was dragged, else what the column
-   * stated, else what the content asked for on the first pass. Every column
-   * keeps its own width — the leftover goes to the filler cell at the end of
-   * the row, which is why none of them has to give any of it back.
+   * The width the header cell gets.
+   *
+   * **Before anything is dragged** a stated width is the column's share of
+   * the row: `min(300px, 30%)` — its own width where there is room for it,
+   * and its proportion of what there is where there is not. Four columns
+   * stating 1000px between them drew 1000px in a 518px box and scrolled
+   * sideways (BUG-65-03); they now draw 518px, in the proportions they asked
+   * for, at any container width, because a percentage is re-laid out by the
+   * browser rather than frozen by a sweep. A column that states nothing
+   * states nothing, and takes what is left.
+   *
+   * **Once a column has been dragged** that column is exact, and the others
+   * hold the widths they were drawing, so no neighbour pays for the drag
+   * (BUG-62-01) — and the table may then be wider than its container, which
+   * is the one case where it scrolls, because an operator asked for it.
    */
   protected headerWidth(col: StrctDatagridColumn): string | null {
     const dragged = this.columnWidths().get(col.key);
     if (dragged != null) return `${dragged}px`;
-    if (col.width) return col.width;
-    if (!this.widthsApplied()) return null;
-    const px = this.measuredWidths().get(col.key);
-    return px != null ? `${px}px` : null;
+    if (this.anyDragged()) {
+      if (!this.widthsApplied()) return col.width ?? null;
+      const px = this.measuredWidths().get(col.key);
+      return px != null ? `${px}px` : (col.width ?? null);
+    }
+    const pct = this.sharePercent().get(col.key);
+    return pct != null ? `${pct}%` : (col.width ?? null);
   }
 
-  /** A utility column's swept width, under the keys the sweep stores them by. */
+  /**
+   * Each data column's share of the row, as a percentage of the table.
+   *
+   * A percentage is the only form a fixed table honours: measured in Chrome,
+   * `30%` and `calc(100% * 0.3)` both draw 180px of 600, while
+   * `min(300px, 30%)` and `calc((100% - 91px) * 0.3)` are dropped and the
+   * columns split the row equally. So the selection and action columns'
+   * pixels are taken off in the arithmetic here rather than in the CSS, and
+   * the percentages are recomputed whenever the grid is resized — which is
+   * what keeps a share a share instead of a frozen width (BUG-65-03).
+   */
+  private readonly sharePercent = computed(() => {
+    const out = new Map<string, number>();
+    const room = this.hostWidth();
+    if (!room) return out;
+    const stated = this.statedPx();
+    const natural = this.naturalWidths();
+    const cols = this.visibleColumns();
+    let total = 0;
+    const weights = new Map<string, number>();
+    for (const c of cols) {
+      const w = stated.get(c.key) ?? natural.get(c.key) ?? 0;
+      if (w > 0) weights.set(c.key, w);
+      total += w;
+    }
+    if (!total || weights.size !== cols.length) return out;
+    // What is left for the data columns once the affordances have theirs.
+    const share = ((room - this.utilTotal()) / room) * 100;
+    if (share <= 0) return out;
+    for (const [k, w] of weights) out.set(k, Math.round((w / total) * share * 100) / 100);
+    return out;
+  });
+
+  /**
+   * What the utility columns take before the data columns share the rest.
+   *
+   * From the first sighting, not the latest: once the shares are applied the
+   * affordances are whatever is left over, so measuring them again would
+   * shrink them a little on every pass (44/51/50px became 26/26/26).
+   */
+  private readonly utilTotal = computed(() => {
+    let px = 0;
+    for (const [k, w] of this.naturalWidths()) if (k.startsWith('@')) px += w;
+    return px;
+  });
+
+  /** The height and icon size the toolbar row asks for, or nothing. */
+  protected readonly toolbarHeight = computed(() => {
+    const size = this.toolbarSize();
+    return size ? strctControlHeight(size) : null;
+  });
+  protected readonly toolbarIconSize = computed(() => {
+    const size = this.toolbarSize();
+    return size ? strctIconSize(size) : null;
+  });
+
+  /** A utility column's width, under the keys the sweep stores them by. */
   protected utilWidth(key: string): number | null {
-    return this.widthsApplied() ? (this.measuredWidths().get(key) ?? null) : null;
+    return this.widthsApplied() ? (this.naturalWidths().get(key) ?? null) : null;
   }
 
   /**
@@ -612,9 +714,24 @@ export class StrctDatagrid {
    * `aria-required-attr` violation (12 of them on the showcase's own page).
    */
   private readonly measuredWidths = signal<Map<string, number>>(new Map());
+  /**
+   * The width each column asked for the first time it was seen, and the room
+   * the grid had. The shares below are worked out from these: re-reading them
+   * once the shares are applied would measure the shares, not the content.
+   */
+  private readonly naturalWidths = signal<Map<string, number>>(new Map());
+  private readonly hostWidth = signal(0);
 
-  protected separatorValue(key: string): number | null {
-    return this.columnWidths().get(key) ?? this.measuredWidths().get(key) ?? null;
+  protected separatorValue(key: string): number {
+    const known = this.columnWidths().get(key) ?? this.measuredWidths().get(key);
+    if (known != null) return known;
+    // Nothing has been measured: a grid in a closed drawer, or a consumer's
+    // jsdom accessibility gate, where every handle was an
+    // `aria-required-attr` violation while it waited (BUG-65-02). The width
+    // the column states is the honest answer, and the resize floor is the
+    // honest answer when it states none — a drag could not go below it.
+    const stated = this.statedPx().get(key);
+    return stated ?? STRCT_DG_MIN_COL_WIDTH;
   }
 
   private sweepHeaderWidths(): void {
@@ -628,6 +745,22 @@ export class StrctDatagrid {
       // would be emitted as `width: 0px` on every column. No measurement
       // means no fixed layout until there is one.
       if (key && th.offsetWidth > 0) next.set(key, Math.round(th.offsetWidth));
+    }
+    const box =
+      this.hostRef.nativeElement.querySelector<HTMLElement>('.strct-dg__scroll') ??
+      this.hostRef.nativeElement;
+    if (box.clientWidth > 0) this.hostWidth.set(box.clientWidth);
+    if (next.size) {
+      this.naturalWidths.update((m) => {
+        let added = false;
+        const out = new Map(m);
+        for (const [k, w] of next)
+          if (!out.has(k)) {
+            out.set(k, w);
+            added = true;
+          }
+        return added ? out : m;
+      });
     }
     const current = this.measuredWidths();
     if (next.size === current.size && [...next].every(([k, v]) => current.get(k) === v)) return;
@@ -650,7 +783,7 @@ export class StrctDatagrid {
     else return;
     event.preventDefault();
     if (next === null) this.resetWidth(key);
-    else this.setColumnWidth(key, Math.max(40, next));
+    else this.setColumnWidth(key, Math.max(STRCT_DG_MIN_COL_WIDTH, next));
   }
 
   /** Give the column back the width the content asks for. */
@@ -678,7 +811,7 @@ export class StrctDatagrid {
   private onResizeMove(e: MouseEvent) {
     if (!this.resizeState) return;
     const diff = e.clientX - this.resizeState.startX;
-    const newWidth = Math.max(40, this.resizeState.startWidth + diff);
+    const newWidth = Math.max(STRCT_DG_MIN_COL_WIDTH, this.resizeState.startWidth + diff);
     this.columnWidths.update((m) => {
       const next = new Map(m);
       next.set(this.resizeState!.key, newWidth);

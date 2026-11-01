@@ -2,7 +2,11 @@
      paging and filtering all change the rows without saying so. -->
 <span class="strct-dg__announcer" role="status" aria-live="polite">{{ announcement() }}</span>
 @if (actionBarDef() || quickFilterable() || actionBarCaptionDef()) {
-  <div class="strct-dg__toolbar">
+  <div
+    class="strct-dg__toolbar"
+    [style.--control-h]="toolbarHeight()"
+    [style.--icon-size]="toolbarIconSize()"
+  >
     @if (quickFilterable()) {
       <strct-searchbox
         class="strct-dg__quickfilter"
