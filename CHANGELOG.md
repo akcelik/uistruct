@@ -5,6 +5,61 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.4.0] - 2026-11-01
+
+A stated width is the column's share again.
+
+### Fixed
+
+- **A grid whose columns state more width than it has, fits it again**
+  (BUG-65-03, filed by HyperStruct while adopting 6.3.0 — it blocked the
+  adoption). 6.1.0 made every width exact so that a _dragged_ width would be,
+  and swept the rest once; widths written as hints stopped being hints, and
+  the sweep froze what it found. Measured in Chrome, four columns stating
+  1000px between them in a 518px box:
+
+  |             | before                                | after                                                      |
+  | ----------- | ------------------------------------- | ---------------------------------------------------------- |
+  | the table   | **1000px — 482px of sideways scroll** | **518px in 518px**                                         |
+  | the columns | 300 / 300 / 200 / 200                 | **155 / 155 / 104 / 104** — the 30/30/20/20 they asked for |
+
+  Before anything is dragged a stated width is the column's share of the row,
+  emitted as a percentage: the grid fits its container at any size and
+  re-lays itself out when that size changes, because a percentage is not a
+  frozen width. **Once a column has been dragged** that column is exact and
+  the others hold what they were drawing — which is what 6.1.0 was for — and
+  only then may the table be wider than its container, and scroll.
+
+  A grid that states no width and has not been dragged is content-laid-out,
+  as before 6.1.0: there is nothing yet to be exact about.
+
+  Measured on the way, and the reason the arithmetic is in TypeScript rather
+  than in the CSS: a fixed table honours `30%` and `calc(100% * 0.3)` (180px
+  of 600) and silently drops `min(300px, 30%)` and `calc((100% - 91px) * 0.3)`,
+  splitting the row equally instead.
+
+- **A resize handle has a value before anything is measured** (BUG-65-02). A
+  focusable `role="separator"` owes ARIA an `aria-valuenow`; it came from the
+  header sweep, so wherever nothing has a width — a consumer's jsdom
+  accessibility gate, a grid in a closed drawer — every handle was an
+  `aria-required-attr` violation, critical. It falls back to the width the
+  column states, and to the resize floor of 40 where it states none.
+
+### Added
+
+- **`toolbarSize` on `strct-datagrid`** (BUG-65-01). The quick filter had no
+  size, so it stood at **32px** beside an action bar of small buttons at
+  **26px**, with nothing able to close the gap. `toolbarSize="sm"` sizes the
+  row: measured 26 / 26 / 26 across the filter and both buttons. The
+  projected `[strctDatagridActionBar]` shares that row in the DOM, so it
+  follows without being told.
+
+- `scripts/grid-layout.mjs` grew from 8 checks to 11: over-stated widths fit
+  and keep their proportions, and a sized toolbar row is one height.
+
+- A **Column widths that do not add up** demo on the datagrid page — four
+  columns stating 1000px in a 520px box, which is what the gate measures.
+
 ## [6.3.0] - 2026-11-01
 
 An icon the size of the control it sits in.

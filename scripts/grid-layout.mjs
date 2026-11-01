@@ -181,11 +181,6 @@ try {
 
   const before = await evaluate(send, GRID('strct-datagrid'));
   check(
-    'a resizable grid lays out from its widths',
-    before?.layout === 'fixed',
-    `table-layout: ${before?.layout}`,
-  );
-  check(
     'the table fits its container before any drag',
     before.overflow === 0 && Math.abs(before.table - before.container) <= 1,
     `table ${before.table}px in ${before.container}px, overflow ${before.overflow}px`,
@@ -210,6 +205,65 @@ try {
       .join(', ') || 'every other column kept its width',
   );
   check('the table still fits its container', after.overflow === 0, `overflow ${after.overflow}px`);
+  check(
+    'and the widths are in charge once one is worth being exact about',
+    after.layout === 'fixed',
+    `table-layout: ${after.layout}`,
+  );
+
+  // ── BUG-65-03: widths that do not add up are shares, not overflow ────────
+  await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/components/datagrid` });
+  for (let i = 0; i < 80; i++) {
+    if (
+      await evaluate(send, `!!document.querySelector('#datagrid-widths strct-datagrid thead th')`)
+    )
+      break;
+    await sleep(200);
+  }
+  await sleep(600);
+  const wide = await evaluate(send, GRID('#datagrid-widths strct-datagrid'));
+  const stated = { name: 300, owner: 300, cu: 200, state: 200 };
+  const statedTotal = Object.values(stated).reduce((a, b) => a + b, 0);
+  check(
+    'columns stating more than the grid is wide still fit it',
+    wide.overflow === 0 && Math.abs(wide.table - wide.container) <= 1,
+    `they ask for ${statedTotal}px; the table is ${wide.table}px in ${wide.container}px`,
+  );
+  const drawn = Object.keys(stated).reduce((a, k) => a + wide.widths[k], 0);
+  const off = Object.entries(stated).filter(
+    ([k, w]) => Math.abs(wide.widths[k] / drawn - w / statedTotal) > 0.01,
+  );
+  check(
+    'and keep the proportions they asked for',
+    off.length === 0,
+    Object.entries(stated)
+      .map(
+        ([k, w]) =>
+          `${k} ${Math.round((w / statedTotal) * 100)}%→${Math.round((wide.widths[k] / drawn) * 100)}%`,
+      )
+      .join('  '),
+  );
+
+  // ── BUG-65-01: the toolbar row agrees with itself ────────────────────────
+  const toolbar = await evaluate(
+    send,
+    `(() => {
+       const tb = [...document.querySelectorAll('.strct-dg__toolbar')].find((t) => t.querySelector('strct-searchbox'));
+       if (!tb) return null;
+       return [...tb.querySelectorAll('strct-searchbox, button.strct-btn')].map((el) => ({
+         what: el.tagName.toLowerCase(),
+         h: Math.round(el.getBoundingClientRect().height * 100) / 100,
+       }));
+     })()`,
+  );
+  if (!toolbar)
+    check('a sized toolbar row is one height', false, 'no toolbar with a quick filter found');
+  else
+    check(
+      'a sized toolbar row is one height, quick filter and action bar alike',
+      new Set(toolbar.map((t) => t.h)).size === 1,
+      toolbar.map((t) => `${t.what}=${t.h}px`).join('  '),
+    );
 
   // ── A single-line row is one line tall, link button or not ───────────────
   await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/components/datagrid` });

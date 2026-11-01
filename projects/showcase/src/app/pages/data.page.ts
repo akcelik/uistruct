@@ -499,6 +499,18 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="datagrid-widths"
+      owner="datagrid"
+      heading="Column widths that do not add up"
+      description="These four columns state 1000px between them inside a grid half that wide, and the grid is not resizable. A stated width is the column's share: the table fits its container and the columns keep their proportions. Drag a handle on a resizable grid and that column becomes exact instead — the one thing an operator asked for is the one thing that is not negotiable, and only then may the table run past its container and scroll."
+      code='cols = [{ key: "name", width: "300px" }, { key: "owner", width: "300px" }, …]'
+    >
+      <div class="dg-wrap" style="max-width: 520px;">
+        <strct-datagrid style="width: 100%;" [columns]="wideCols" [rows]="wideRows" singleLine />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="datagrid-virtual"
       owner="datagrid"
       heading="Virtual scroll — 20.000 rows"
@@ -616,7 +628,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="datagrid-filters"
       owner="datagrid"
       heading="Filters — quick + per-column"
-      description="quickFilterable renders the built-in quick-filter box: one term OR-matched across every column (the console-standard fast filter), with a filtered-from-total count. Per-column filters (contains-text popover / checkbox value set) AND on top. Both reset paging and ride on (lazyLoad) in server mode."
+      description="toolbarSize sizes the toolbar row — the quick filter and the projected action bar take it together, so a bar of small buttons no longer stands beside a 32px filter box. quickFilterable renders the built-in quick-filter box: one term OR-matched across every column (the console-standard fast filter), with a filtered-from-total count. Per-column filters (contains-text popover / checkbox value set) AND on top. Both reset paging and ride on (lazyLoad) in server mode."
       code='<strct-datagrid [filtering]="&#123; quick: true &#125;" [(quickFilter)]="q" [(filters)]="filters" … />  ·  cols = [{ key: "name", filterable: true }, { key: "status", filterOptions: [...] }]'
     >
       <div class="dg-wrap">
@@ -628,7 +640,15 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [filtering]="{ quick: true }"
           [(quickFilter)]="dgQuickFilter"
           [(filters)]="dgFilters"
+          toolbarSize="sm"
         >
+          <!-- toolbarSize sizes the row the quick filter and this bar share. -->
+          <div strctDatagridActionBar class="dg-bar">
+            <button strct-button size="sm" variant="neutral">
+              <strct-icon name="download" /> Export
+            </button>
+            <button strct-button size="sm" variant="neutral">Columns</button>
+          </div>
           <ng-template strctCell="status" let-value="value">
             <strct-badge [status]="badgeFor(value)">{{ value }}</strct-badge>
           </ng-template>
@@ -1293,6 +1313,34 @@ mtu = 9000`;
   }
 
   // Single-line demo: one column carries a deliberately long value.
+  /** BUG-65-03: stated widths that come to 1000px in a 520px box. */
+  protected readonly wideCols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Host', width: '300px' },
+    { key: 'owner', label: 'Owner', width: '300px' },
+    { key: 'cu', label: 'Target CU', width: '200px' },
+    { key: 'state', label: 'State', width: '200px' },
+  ];
+  protected readonly wideRows = [
+    {
+      name: 'o304-rack12-blade07.dc.internal',
+      owner: 'platform-infra',
+      cu: 'CU-2026.3',
+      state: 'Compliant',
+    },
+    {
+      name: 'o305-rack12-blade01.dc.internal',
+      owner: 'platform-infra',
+      cu: 'CU-2026.3',
+      state: 'Pending',
+    },
+    {
+      name: 'o311-rack14-blade04.dc.internal',
+      owner: 'storage-team',
+      cu: 'CU-2026.2',
+      state: 'Compliant',
+    },
+  ];
+
   protected readonly slCols: StrctDatagridColumn[] = [
     { key: 'name', label: 'Alarm' },
     { key: 'object', label: 'Object' },
