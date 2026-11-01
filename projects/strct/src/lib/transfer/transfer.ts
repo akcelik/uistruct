@@ -79,7 +79,7 @@ export interface StrctTransferItem {
         [attr.aria-label]="assignLabel()"
         (click)="assign()"
       >
-        <strct-icon name="chevronRight" [size]="14" />
+        <strct-icon name="chevronRight" />
       </button>
       <button
         strct-button
@@ -89,7 +89,7 @@ export interface StrctTransferItem {
         [attr.aria-label]="unassignLabel()"
         (click)="unassign()"
       >
-        <strct-icon name="chevronLeft" [size]="14" />
+        <strct-icon name="chevronLeft" />
       </button>
     </div>
 

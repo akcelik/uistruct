@@ -158,9 +158,11 @@ export type StrctSegmentedSize = StrctControlSize;
       }
       .strct-seg--sm {
         --control-h: var(--control-h-sm);
+        --icon-size: var(--icon-size-sm);
       }
       .strct-seg--lg {
         --control-h: var(--control-h-lg);
+        --icon-size: var(--icon-size-lg);
       }
       .strct-seg--lg .strct-seg__opt {
         padding: 0 18px;

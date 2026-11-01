@@ -694,7 +694,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       <strct-dropdown align="start">
         <button strct-button strctDropdownTrigger>
           Actions
-          <strct-icon name="chevronDown" [size]="13" />
+          <strct-icon name="chevronDown" />
         </button>
         <strct-dropdown-item>Rename</strct-dropdown-item>
         <strct-dropdown-item>Duplicate</strct-dropdown-item>
@@ -712,7 +712,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       <strct-dropdown>
         <button strct-button strctDropdownTrigger>
           Sort: {{ ddSort() }}
-          <strct-icon strictName="chevronDown" [size]="13" />
+          <strct-icon strictName="chevronDown" />
         </button>
         @for (opt of ddSortOptions; track opt) {
           <strct-dropdown-item [selected]="ddSort() === opt" (click)="ddSort.set(opt)">
@@ -733,7 +733,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <strct-dropdown>
           <button strct-button strctDropdownTrigger>
             Saved views
-            <strct-icon strictName="chevronDown" [size]="13" />
+            <strct-icon strictName="chevronDown" />
           </button>
           @for (v of savedViews(); track v) {
             <strct-dropdown-item (click)="viewEcho.set('opened ' + v)">
@@ -747,7 +747,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
                 [attr.aria-label]="'Delete ' + v"
                 (click)="removeView(v)"
               >
-                <strct-icon strictName="close" [size]="12" />
+                <strct-icon strictName="close" />
               </button>
             </strct-dropdown-item>
           } @empty {
@@ -770,7 +770,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       <strct-dropdown>
         <button strct-button strctDropdownTrigger>
           Products
-          <strct-icon strictName="chevronDown" [size]="13" />
+          <strct-icon strictName="chevronDown" />
         </button>
         <strct-dropdown-group label="Products">
           @for (p of products; track p.id) {
@@ -802,9 +802,9 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     >
       <strct-dropdown popover popoverLabel="Alarm filters">
         <button strct-button strctDropdownTrigger>
-          <strct-icon name="filter" [size]="13" />
+          <strct-icon name="filter" />
           Filters
-          <strct-icon name="chevronDown" [size]="13" />
+          <strct-icon name="chevronDown" />
         </button>
         <div class="stack" style="min-width: 220px;">
           <strct-field label="Severity">
@@ -823,7 +823,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 
       <strct-dropdown popover popoverLabel="Account" focusable align="end">
         <button strct-button strctDropdownTrigger>
-          <strct-icon name="user" [size]="13" />
+          <strct-icon name="user" />
           Ada Lovelace
         </button>
         <strct-dropdown-item>Profile</strct-dropdown-item>

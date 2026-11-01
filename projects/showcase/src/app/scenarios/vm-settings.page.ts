@@ -236,7 +236,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
       </div>
       <div class="vms__headactions">
         <button strct-button variant="critical" size="sm" (click)="confirmPowerOff()">
-          <strct-icon name="power" [size]="14" /> Power off
+          <strct-icon name="power" /> Power off
         </button>
       </div>
     </header>
@@ -563,13 +563,13 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
                       aria-label="Remove disk"
                       (click)="removeDisk(d.id)"
                     >
-                      <strct-icon name="trash" [size]="14" />
+                      <strct-icon name="trash" />
                     </button>
                   </div>
                 }
               </div>
               <button strct-button variant="outline" size="sm" (click)="openAdd()">
-                <strct-icon name="plus" [size]="14" /> Add hardware
+                <strct-icon name="plus" /> Add hardware
               </button>
             }
 
@@ -632,13 +632,13 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
                       aria-label="Remove adapter"
                       (click)="removeAdapter(a.id)"
                     >
-                      <strct-icon name="trash" [size]="14" />
+                      <strct-icon name="trash" />
                     </button>
                   </div>
                 }
               </div>
               <button strct-button variant="outline" size="sm" (click)="openAdd()">
-                <strct-icon name="plus" [size]="14" /> Add hardware
+                <strct-icon name="plus" /> Add hardware
               </button>
             }
 

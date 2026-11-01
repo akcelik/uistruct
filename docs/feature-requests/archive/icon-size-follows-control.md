@@ -1,5 +1,40 @@
 # An icon the size of the control it sits in
 
+> **SHIPPED in 6.3.0**, measured in Chrome on the showcase:
+>
+> |                              | before                           | after                |
+> | ---------------------------- | -------------------------------- | -------------------- |
+> | icon in a `size="sm"` button | 14px in 13 places, **16px in 7** | **14px**, everywhere |
+> | icon in a `size="md"` button | 14px                             | **16px**             |
+> | icon in a `size="lg"` button | 14px — the same as a small one's | **18px**             |
+>
+> - **FR-64-01** — `strct-icon`'s `size` is `input<number | undefined>(undefined)`.
+>   The icon's width and height come from `--icon-size` in CSS, which a
+>   control sets beside its `--control-h`; an icon that states a size writes
+>   the same property on itself, which is nearer, so it still wins. New
+>   tokens: `--icon-size-sm` (14px), `--icon-size-md` (16px), `--icon-size-lg`
+>   (18px) and `--icon-size`. The count bubble's font size moved into CSS with
+>   it (`max(9px, calc(var(--icon-size, 16px) * 0.58))`), since the size is no
+>   longer a number TypeScript holds.
+> - **FR-64-02** — 51 hand-written sizes came out of the showcase and 7 out of
+>   the library's own buttons (the datagrid's sync and column-chooser, the log
+>   viewer's jump-to-bottom, the time-range trigger, the transfer lists'
+>   arrows). A diff that mostly deletes, as the report asked for.
+> - **Gate** — `scripts/control-height.mjs` measures the icons too: **162
+>   boxes** across three palettes instead of 144, each against the token its
+>   control's size names. An icon that states a size is skipped, because the
+>   point is that it wins.
+>
+> **Left alone, deliberately:** a component's own affordances — a select's
+> caret, a combobox chip's 10px close, a checkbox's tick, a searchbox's
+> magnifier, the datagrid's sort and filter marks. They are parts of the
+> control rather than content inside it, each sized for its spot, and they
+> keep their sizes through the same rule that lets any explicit size win.
+>
+> **Not revisited:** whether `strokeWidth` should scale with the size. 1.4 was
+> drawn for 16px and a 14px icon at the same stroke reads a little heavier;
+> the question is one layer down and nothing measured here needed it.
+
 Filed 2026-11-01 by the maintainer, out of **FR-63-03**. The control-height
 work (v6.2.0) gave every single-line control one height per size and closed
 the rest of that report; this is the sentence it could not close, written up

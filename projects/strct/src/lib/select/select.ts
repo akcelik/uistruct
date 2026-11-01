@@ -11,7 +11,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { StrctControlSize, strctControlHeight } from '../control-size';
+import { StrctControlSize, strctControlHeight, strctIconSize } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
 import { StrctOverlay } from '../overlay/overlay';
@@ -103,7 +103,11 @@ let selectCounter = 0;
       </div>
     }
   `,
-  host: { class: 'strct-sel', '[style.--control-h]': 'controlHeight()' },
+  host: {
+    class: 'strct-sel',
+    '[style.--control-h]': 'controlHeight()',
+    '[style.--icon-size]': 'controlIconSize()',
+  },
   styles: [
     `
       .strct-sel {
@@ -198,6 +202,11 @@ export class StrctSelect implements ControlValueAccessor {
   protected readonly controlHeight = computed(() => {
     const s = this.size();
     return s ? strctControlHeight(s) : null;
+  });
+  /** And the icon size that goes with it, for the icons it holds. */
+  protected readonly controlIconSize = computed(() => {
+    const s = this.size();
+    return s ? strctIconSize(s) : null;
   });
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);

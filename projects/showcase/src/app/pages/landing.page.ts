@@ -27,7 +27,7 @@ interface Feature {
       <div class="hero__install">
         <code>npm install {{ pkg }}</code>
         <button strct-button size="sm" iconOnly aria-label="Copy install command" (click)="copy()">
-          <strct-icon [name]="copied() ? 'check' : 'copy'" [size]="15" />
+          <strct-icon [name]="copied() ? 'check' : 'copy'" />
         </button>
       </div>
 
@@ -41,7 +41,7 @@ interface Feature {
           target="_blank"
           rel="noreferrer"
         >
-          <strct-icon name="code" [size]="15" /> GitHub
+          <strct-icon name="code" /> GitHub
         </a>
       </div>
 

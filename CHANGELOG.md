@@ -5,6 +5,64 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.3.0] - 2026-11-01
+
+An icon the size of the control it sits in.
+
+### Changed
+
+- **`strct-icon`'s `size` is unset by default** (FR-64-01). The icon's width
+  and height come from `--icon-size`, which a control sets beside its
+  `--control-h`, so an icon with no size of its own is the size its
+  surroundings ask for. Measured in Chrome across nine showcase routes:
+
+  |                              | before                           | after               |
+  | ---------------------------- | -------------------------------- | ------------------- |
+  | icon in a `size="sm"` button | 14px in 13 places, **16px in 7** | **14px** everywhere |
+  | icon in a `size="md"` button | 14px                             | **16px**            |
+  | icon in a `size="lg"` button | 14px — the same as a small one's | **18px**            |
+
+  Each of the 49 call sites used to pick a number, which is why the same
+  small button carried two different icon sizes and a large button's icon was
+  the size a small one's is.
+
+  **An icon that states a `size` still wins**, because it writes the same
+  property on itself and that is nearer than anything enclosing it. Nothing
+  that sets a size changes.
+
+- **New tokens**: `--icon-size-sm` (14px), `--icon-size-md` (16px),
+  `--icon-size-lg` (18px) and `--icon-size`. `[strctControlSize]` and every
+  control's `size` set them alongside the height.
+
+- **58 hand-written icon sizes came out** — 51 in the showcase and 7 in the
+  library's own buttons (the datagrid's sync and column-chooser, the log
+  viewer's jump-to-bottom, the time-range trigger, the transfer lists'
+  arrows), which now follow the button they sit in.
+
+- The count bubble's font size moved from a computed into CSS
+  (`max(9px, calc(var(--icon-size, 16px) * 0.58))`), since the size is no
+  longer a number TypeScript holds.
+
+- `scripts/control-height.mjs` measures the icons too: **162 boxes** across
+  three palettes instead of 144, each against the token its control's size
+  names. An icon that states a size is skipped, because the point is that it
+  wins.
+
+### Unchanged on purpose
+
+A component's own affordances keep their sizes — a select's caret, a
+combobox chip's 10px close, a checkbox's tick, a searchbox's magnifier, the
+datagrid's sort and filter marks. They are parts of the control rather than
+content inside it, each sized for its spot, and they keep their sizes through
+the same rule that lets any explicit size win.
+
+### If you are upgrading
+
+`size` reads `number | undefined` now rather than `number`. An
+`<strct-icon [size]="14" />` is untouched; an icon inside a control with no
+size of its own moves to that control's icon size, which is the point. An
+icon outside a control with no size is 16px, as it always was.
+
 ## [6.2.0] - 2026-11-01
 
 One height, for every control of a size.

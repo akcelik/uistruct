@@ -8,7 +8,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { StrctControlSize, strctControlHeight } from '../control-size';
+import { StrctControlSize, strctControlHeight, strctIconSize } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
 
@@ -68,7 +68,11 @@ const LEVEL_COLORS = [
       </div>
     }
   `,
-  host: { class: 'strct-pw', '[style.--control-h]': 'controlHeight()' },
+  host: {
+    class: 'strct-pw',
+    '[style.--control-h]': 'controlHeight()',
+    '[style.--icon-size]': 'controlIconSize()',
+  },
   styles: [
     `
       .strct-pw {
@@ -135,6 +139,11 @@ export class StrctPassword implements ControlValueAccessor {
   protected readonly controlHeight = computed(() => {
     const s = this.size();
     return s ? strctControlHeight(s) : null;
+  });
+  /** And the icon size that goes with it, for the icons it holds. */
+  protected readonly controlIconSize = computed(() => {
+    const s = this.size();
+    return s ? strctIconSize(s) : null;
   });
 
   /** Placeholder text when empty. */

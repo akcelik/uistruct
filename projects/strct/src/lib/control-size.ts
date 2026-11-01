@@ -18,6 +18,15 @@ export function strctControlHeight(size: StrctControlSize): string {
 }
 
 /**
+ * The icon size that goes with a control size — 14px at sm, 16px at md, 18px
+ * at lg. A control sets this beside its height so an icon inside it needs no
+ * size of its own; an icon that states one still wins (FR-64-01).
+ */
+export function strctIconSize(size: StrctControlSize): string {
+  return `var(--icon-size-${size})`;
+}
+
+/**
  * Sets the control size for everything inside it.
  *
  * ```html
@@ -33,10 +42,11 @@ export function strctControlHeight(size: StrctControlSize): string {
  */
 @Directive({
   selector: '[strctControlSize]',
-  host: { '[style.--control-h]': 'height()' },
+  host: { '[style.--control-h]': 'height()', '[style.--icon-size]': 'iconSize()' },
 })
 export class StrctControlSizeDirective {
   /** The size for the controls inside. */
   readonly strctControlSize = input<StrctControlSize>('md');
   protected readonly height = computed(() => strctControlHeight(this.strctControlSize()));
+  protected readonly iconSize = computed(() => strctIconSize(this.strctControlSize()));
 }

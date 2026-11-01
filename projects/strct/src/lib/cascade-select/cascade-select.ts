@@ -13,7 +13,7 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { StrctControlSize, strctControlHeight } from '../control-size';
+import { StrctControlSize, strctControlHeight, strctIconSize } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
 import { StrctOverlay } from '../overlay/overlay';
@@ -339,7 +339,11 @@ export class StrctCascadeColumn {
       />
     }
   `,
-  host: { class: 'strct-cs', '[style.--control-h]': 'controlHeight()' },
+  host: {
+    class: 'strct-cs',
+    '[style.--control-h]': 'controlHeight()',
+    '[style.--icon-size]': 'controlIconSize()',
+  },
   styles: [
     `
       .strct-cs {
@@ -392,6 +396,11 @@ export class StrctCascadeSelect extends StrctCascadeHost implements ControlValue
   protected readonly controlHeight = computed(() => {
     const s = this.size();
     return s ? strctControlHeight(s) : null;
+  });
+  /** And the icon size that goes with it, for the icons it holds. */
+  protected readonly controlIconSize = computed(() => {
+    const s = this.size();
+    return s ? strctIconSize(s) : null;
   });
 
   private readonly elementRef = inject(ElementRef<HTMLElement>);

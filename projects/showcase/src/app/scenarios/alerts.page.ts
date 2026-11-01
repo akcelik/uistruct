@@ -107,7 +107,7 @@ interface Alert {
         [disabled]="!selected().length"
         (click)="acknowledgeSelected()"
       >
-        <strct-icon name="check" [size]="14" /> Acknowledge
+        <strct-icon name="check" /> Acknowledge
       </button>
       <button
         strct-button
@@ -116,11 +116,11 @@ interface Alert {
         [disabled]="!selected().length"
         (click)="confirmDeleteSelected()"
       >
-        <strct-icon name="trash" [size]="14" /> Delete
+        <strct-icon name="trash" /> Delete
       </button>
       <strct-toolbar-spacer />
       <button strct-button variant="outline" size="sm" (click)="raiseTestAlert()">
-        <strct-icon name="warning" [size]="14" /> Raise test alert
+        <strct-icon name="warning" /> Raise test alert
       </button>
     </strct-toolbar>
 

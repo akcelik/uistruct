@@ -8,7 +8,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { StrctControlSize, strctControlHeight } from '../control-size';
+import { StrctControlSize, strctControlHeight, strctIconSize } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 /** Ready-made masks for common datacenter / form fields. */
@@ -31,7 +31,7 @@ export const STRCT_MASKS = {
  */
 @Component({
   selector: 'strct-input-mask',
-  host: { '[style.--control-h]': 'controlHeight()' },
+  host: { '[style.--control-h]': 'controlHeight()', '[style.--icon-size]': 'controlIconSize()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   providers: [
@@ -70,6 +70,11 @@ export class StrctInputMask implements ControlValueAccessor {
   protected readonly controlHeight = computed(() => {
     const s = this.size();
     return s ? strctControlHeight(s) : null;
+  });
+  /** And the icon size that goes with it, for the icons it holds. */
+  protected readonly controlIconSize = computed(() => {
+    const s = this.size();
+    return s ? strctIconSize(s) : null;
   });
 
   /** Mask pattern (9=digit, A=letter, H=hex, *=alnum). */
