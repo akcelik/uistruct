@@ -130,6 +130,12 @@ export interface StrctDatagridColumn {
   label: string;
   sortable?: boolean;
   align?: 'start' | 'center' | 'end';
+  /**
+   * The column's width — a CSS length. Stating one puts the table's widths in
+   * charge of its layout (as `resizable` does), so the column is this wide
+   * rather than as wide as its content needs; the rest of the columns keep
+   * the widths they were drawing. Before 6.1.0 the content could outvote it.
+   */
   width?: string;
   /** Allow the user to resize this column by dragging its right edge.
    *  Defaults to the global {@link StrctDatagrid#resizable} setting. */

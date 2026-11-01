@@ -477,8 +477,8 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="datagrid-singleline"
       owner="datagrid"
       heading="Single-line rows"
-      description="By default cells wrap, so a long value can make one row much taller than the rest. Enable singleLine to keep every row exactly one line tall — long values truncate with an ellipsis and the grid's rhythm stays intact. Hover a clipped cell to reveal its full value; cells that fit get no tooltip."
-      code='<strct-datagrid [columns]="cols" [rows]="rows" singleLine />'
+      description="By default cells wrap, so a long value can make one row much taller than the rest. Enable singleLine to keep every row exactly one line tall — long values truncate with an ellipsis and the grid's rhythm stays intact. Hover a clipped cell to reveal its full value; cells that fit get no tooltip. A link button in a cell truncates with the text beside it instead of wrapping out of the row. The grid is resizable too: drag a header's edge and the column takes the width you drag it to, the table stays inside its container, and the value is cut with an ellipsis there — a width is a width, not a hint (6.1.0)."
+      code='<strct-datagrid [columns]="cols" [rows]="rows" singleLine resizable />'
     >
       <div class="dg-wrap">
         <strct-checkbox [ngModel]="oneLine()" (ngModelChange)="oneLine.set($event)"
@@ -489,7 +489,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [columns]="slCols"
           [rows]="slRows"
           [singleLine]="oneLine()"
-        />
+          resizable
+        >
+          <ng-template strctCell="object" let-value="value">
+            <button strct-button variant="link">{{ value }}</button>
+          </ng-template>
+        </strct-datagrid>
       </div>
     </app-demo>
 
@@ -1296,7 +1301,7 @@ mtu = 9000`;
   protected readonly slRows = [
     {
       name: 'Datastore usage',
-      object: 'datastore-a',
+      object: 'datastore-a.cluster-prod-01.datacenter.internal.example.com',
       description:
         'Usage on disk exceeded the warning threshold of 75% — consider migrating one of the powered-off virtual machines to another datastore or expanding the backing volume to restore headroom.',
     },

@@ -5,6 +5,60 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.1.0] - 2026-11-01
+
+A column's width was a hint. It is a width now.
+
+### Fixed
+
+- **A `resizable` column could only ever get wider, and the table overflowed
+  its container** (BUG-62-01, filed by HyperStruct). The table was laid out by
+  its content (`table-layout: auto`), so a width was a suggestion the content
+  could outvote. Measured in Chrome on the showcase's own inventory grid,
+  dragging a 195px column 120px to the left:
+
+  |                       | before                                                             | after                                 |
+  | --------------------- | ------------------------------------------------------------------ | ------------------------------------- |
+  | the dragged column    | 85px                                                               | **75px**, the width it was dragged to |
+  | the columns beside it | grew to pay for it — type 113→142, cluster 147→184, status 182→227 | unchanged                             |
+  | 300px further left    | 85px: nothing moved, the column had reached its content            | **40px**, the resize floor            |
+
+  A grid now lays out from its widths — `table-layout: fixed` with
+  `box-sizing: border-box`, so the px a handle is dragged to is the px the
+  column gets — as soon as it is `resizable` or a column states a `width`.
+  Until the first measurement it draws exactly as it always did, so a grid
+  that nobody drags looks untouched; the content widths are swept once and
+  become the starting point.
+
+  The leftover width goes to a presentational filler cell at the end of each
+  row. That is what lets every column keep its own width: with all of them
+  stated the browser scales them to fit (200px asked, 231px drawn), and with
+  one cell left free they are exact.
+
+- **A link button wrapped out of a single-line row.** `variant="link"` is
+  `display: inline; white-space: normal` so it reads as a word in running
+  text, which also meant it ignored the cell's `nowrap`. Measured: the button
+  stood **39px** tall against a 20px line, taking its row to **58px** against
+  39px for the rows beside it. Inside a single-line cell it now takes the
+  cell's rules and ends in the same ellipsis — 20px, and the row is 39px.
+
+### Added
+
+- **`scripts/grid-layout.mjs`**, run in CI: eight measurements in headless
+  Chrome — the layout mode, the table inside its container, a dragged column
+  landing on the width it was dragged to, no neighbour paying for it, and a
+  single-line row staying one line tall with a link button in it. jsdom has
+  no layout, so the specs cover the plumbing and this covers the claim. It
+  fails on 6.0.2 with four of the eight red.
+
+### Changed
+
+- A grid that is `resizable`, or that states a width on any column, lays its
+  columns out from those widths. A column whose stated width was being
+  outvoted by its content will now be the width it asked for, which is a
+  visible change on such a grid. Nothing else moves: the widths a grid was
+  drawing are measured and kept.
+
 ## [6.0.2] - 2026-10-24
 
 An accessibility pass over what axe could not see from the outside, and the

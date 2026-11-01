@@ -61,6 +61,12 @@ jobs:
       - run: npx ng build showcase
       - name: Run axe-core a11y smoke (+ page screenshots)
         run: node scripts/a11y-smoke.mjs
+      # Geometry only a browser can answer: a column is the width it was
+      # given, the table stays inside its container, and a single-line row is
+      # one line tall whatever it holds. jsdom has no layout, so the specs
+      # cover the plumbing and this covers the claim (BUG-62-01).
+      - name: Assert the grid's columns obey their widths
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/grid-layout.mjs
       # The library's dev-mode diagnostics are for consumers, so the library's
       # own showcase must never trigger one. Production compiles them out, so
       # this needs the development build.

@@ -3308,3 +3308,120 @@ describe('StrctDatagrid — a height cap is not virtual scrolling', () => {
     }
   });
 });
+
+/**
+ * BUG-62-01: a width was a hint under `table-layout: auto` — a column asked
+ * for 120px, drew what its text needed, and the table overflowed its
+ * container. The layout itself is a browser matter (`scripts/grid-layout.mjs`
+ * measures it in Chrome); what is testable here is the plumbing: when the
+ * mode turns on, where each width comes from, and the filler cell that holds
+ * the leftover so no other column has to give any of its own width back.
+ */
+describe('StrctDatagrid fixed column widths (BUG-62-01)', () => {
+  const cols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Name' },
+    { key: 'state', label: 'State' },
+  ];
+  const rows: StrctRow[] = [{ name: 'web-01', state: 'running' }];
+
+  function make(inputs: Record<string, unknown> = {}) {
+    const { columns = cols, rows: ownRows = rows, ...rest } = inputs;
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', columns);
+    fixture.componentRef.setInput('rows', ownRows);
+    applyInputs(fixture, rest);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  /** jsdom has neither layout nor a ResizeObserver; the component needs both
+   *  to have a measurement at all, and a measurement is what is under test.
+   *  Both stay in place for the whole block, so no after-render hook can run
+   *  outside them. */
+  let widthSpy: ReturnType<typeof vi.spyOn> | null = null;
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        readonly watched: Element[] = [];
+        observe(el: Element) {
+          this.watched.push(el);
+        }
+        unobserve(el: Element) {
+          this.watched.splice(this.watched.indexOf(el), 1);
+        }
+        disconnect() {
+          this.watched.length = 0;
+        }
+      },
+    );
+    widthSpy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(120);
+  });
+  afterEach(() => {
+    widthSpy?.mockRestore();
+    widthSpy = null;
+    vi.unstubAllGlobals();
+  });
+
+  async function measured(fixture: ReturnType<typeof make>) {
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('leaves the content in charge until the header has been measured', () => {
+    widthSpy!.mockReturnValue(0); // a grid in a closed drawer measures nothing
+    const f = make({ resizable: true });
+    const host = f.nativeElement as HTMLElement;
+    expect(host.classList.contains('strct-dg-host--fixedcols')).toBe(false);
+    expect(host.querySelector('.strct-dg__filler')).toBeNull();
+    expect((host.querySelector('thead th') as HTMLElement).style.width).toBe('');
+  });
+
+  it('hands every column its measured width, and the leftover to the filler', async () => {
+    const f = await measured(make({ resizable: true }));
+    const host = f.nativeElement as HTMLElement;
+    expect(host.classList.contains('strct-dg-host--fixedcols')).toBe(true);
+    expect(
+      [...host.querySelectorAll('thead th')].map((th) => (th as HTMLElement).style.width),
+    ).toEqual(['120px', '120px']);
+    // One in the header row, one in the single body row.
+    expect(host.querySelectorAll('.strct-dg__filler').length).toBe(2);
+    expect(host.querySelector('.strct-dg__filler')!.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('turns on for a stated width too, and states it rather than measuring it', async () => {
+    const f = await measured(
+      make({
+        columns: [
+          { key: 'name', label: 'Name', width: '220px' },
+          { key: 'state', label: 'State' },
+        ] satisfies StrctDatagridColumn[],
+      }),
+    );
+    const ths = [...f.nativeElement.querySelectorAll('thead th')] as HTMLElement[];
+    expect(ths.map((th) => th.style.width)).toEqual(['220px', '120px']);
+  });
+
+  it('a dragged width wins, and is the width the handle was dragged to', async () => {
+    const f = await measured(make({ resizable: true }));
+    const grid = f.componentInstance;
+    const th = f.nativeElement.querySelector('thead th') as HTMLElement;
+    grid.onResizeStart(
+      { clientX: 500, preventDefault: () => {}, target: th } as unknown as MouseEvent,
+      'name',
+    );
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 460 }));
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    f.detectChanges();
+    expect((f.nativeElement.querySelector('thead th') as HTMLElement).style.width).toBe('80px');
+  });
+
+  it('spans the filler with the rows that span the table', async () => {
+    const f = await measured(make({ resizable: true, rows: [] }));
+    const empty = f.nativeElement.querySelector('.strct-dg__emptyrow') as HTMLElement;
+    // 2 columns + the filler.
+    expect(empty.getAttribute('colspan')).toBe('3');
+  });
+});

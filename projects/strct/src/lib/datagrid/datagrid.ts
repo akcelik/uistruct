@@ -184,6 +184,7 @@ export class StrctDatagridActionBar {}
     '[attr.aria-busy]': 'loading() || loadingMore() ? "true" : null',
     '[class.strct-dg-host--compact]': 'compact()',
     '[class.strct-dg-host--singleline]': 'singleLine()',
+    '[class.strct-dg-host--fixedcols]': 'widthsApplied()',
     '[class.strct-dg-host--virtual]': 'virtual()',
     '[class.strct-dg-host--bounded]': '!virtual() && maxHeight() !== null',
     '[class.strct-dg-host--sticky]': 'stickyActive()',
@@ -225,7 +226,16 @@ export class StrctDatagrid {
   readonly emptyText = input('No data');
   /** Show skeleton rows while data is loading. */
   readonly loading = input(false, { transform: booleanAttribute });
-  /** Enable column resizing by dragging column headers. */
+  /**
+   * Enable column resizing by dragging column headers.
+   *
+   * It also puts the widths in charge of the table's layout, because a drag
+   * is worth nothing otherwise: under `table-layout: auto` the content could
+   * outvote the width, so a handle could only ever widen a column and the
+   * table could overflow its container (BUG-62-01, 6.1.0). The widths the
+   * content asked for are measured once and kept, so the grid looks the same
+   * until someone drags something.
+   */
   readonly resizable = input(false, { transform: booleanAttribute });
   /** Show a column-chooser dropdown in the footer. */
   readonly columnChooser = input(false, { transform: booleanAttribute });
@@ -550,6 +560,52 @@ export class StrctDatagrid {
   }
 
   /**
+   * Whether the columns' widths lay the table out instead of their content.
+   *
+   * Under `table-layout: auto` a width was a hint: measured in Chrome, a
+   * column asked for 120px and drew 323px because its text did, dragging its
+   * handle 120px to the left left it at 323px, and the table stood 836px wide
+   * in a 600px pane with no ellipsis anywhere (BUG-62-01). With the widths in
+   * charge the same drag lands on 88px exactly and the table is 600px in a
+   * 600px pane. A grid opts in by being `resizable`, or by stating a width on
+   * a column — in both cases someone has said what a width should mean.
+   */
+  protected readonly fixedColumns = computed(
+    () => this.resizable() || this.visibleColumns().some((c) => !!c.width),
+  );
+
+  /**
+   * Fixed layout splits the space equally between columns that state no
+   * width, which is not what this grid looked like a frame ago. So the widths
+   * the content asked for are swept first (see {@link sweepHeaderWidths}) and
+   * the mode waits for them: the grid draws exactly as it always did until
+   * someone drags a handle.
+   */
+  protected readonly widthsApplied = computed(
+    () => this.fixedColumns() && this.measuredWidths().size > 0,
+  );
+
+  /**
+   * The width the header cell gets: what was dragged, else what the column
+   * stated, else what the content asked for on the first pass. Every column
+   * keeps its own width — the leftover goes to the filler cell at the end of
+   * the row, which is why none of them has to give any of it back.
+   */
+  protected headerWidth(col: StrctDatagridColumn): string | null {
+    const dragged = this.columnWidths().get(col.key);
+    if (dragged != null) return `${dragged}px`;
+    if (col.width) return col.width;
+    if (!this.widthsApplied()) return null;
+    const px = this.measuredWidths().get(col.key);
+    return px != null ? `${px}px` : null;
+  }
+
+  /** A utility column's swept width, under the keys the sweep stores them by. */
+  protected utilWidth(key: string): number | null {
+    return this.widthsApplied() ? (this.measuredWidths().get(key) ?? null) : null;
+  }
+
+  /**
    * A focusable separator owes ARIA a value, and a column that has never been
    * resized has no stored width — so the header's real width is swept after
    * render and whenever the grid resizes. Without it every handle was an
@@ -562,13 +618,16 @@ export class StrctDatagrid {
   }
 
   private sweepHeaderWidths(): void {
-    if (!this.resizable()) return;
+    if (!this.fixedColumns()) return;
     const next = new Map<string, number>();
     for (const th of this.hostRef.nativeElement.querySelectorAll<HTMLElement>(
       'thead th[data-col]',
     )) {
       const key = th.dataset['col'];
-      if (key) next.set(key, Math.round(th.offsetWidth));
+      // A grid in a closed drawer or an inactive tab measures 0, and a 0 here
+      // would be emitted as `width: 0px` on every column. No measurement
+      // means no fixed layout until there is one.
+      if (key && th.offsetWidth > 0) next.set(key, Math.round(th.offsetWidth));
     }
     const current = this.measuredWidths();
     if (next.size === current.size && [...next].every(([k, v]) => current.get(k) === v)) return;
@@ -2167,7 +2226,8 @@ export class StrctDatagrid {
       (this.hasSelectionColumn() ? 1 : 0) +
       (this.canExpand() ? 1 : 0) +
       (this.canDetail() ? 1 : 0) +
-      (this.canActions() ? 1 : 0)
+      (this.canActions() ? 1 : 0) +
+      (this.widthsApplied() ? 1 : 0)
     );
   }
 
