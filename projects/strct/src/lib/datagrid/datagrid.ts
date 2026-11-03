@@ -132,8 +132,23 @@ interface DgItem {
 
 let datagridCounter = 0;
 
-/** Utility-column widths used when sticky columns are active (px). */
-const UTIL_W = { detail: 36, expand: 36, sel: 40 } as const;
+/**
+ * Utility-column widths (px): what the selection, expand, detail and action
+ * columns are worth whatever the sweep measured.
+ *
+ * They are a floor, not a measurement. A utility column holds an affordance
+ * whose size the column cannot see: in single-selection mode the header is an
+ * `.strct-sr-only` span, so with no rows yet it measures its own padding —
+ * 22px compact — and `naturalWidths` froze that for good. Under fixed layout
+ * that is the whole column, and the radio inside it showed 6 of its 15px
+ * (BUG-66-01). Sticky columns have used these numbers since 5.x; now every
+ * fixed-column grid does.
+ */
+const UTIL_W = { detail: 36, expand: 36, sel: 40, actions: 44 } as const;
+/** The floor for a utility column, by the key the sweep stores it under. */
+function utilFloor(key: string): number {
+  return UTIL_W[key.slice(1) as keyof typeof UTIL_W] ?? 0;
+}
 /** Fallback width for a sticky column without an explicit px width. */
 const STICKY_FALLBACK_W = 120;
 
@@ -688,7 +703,8 @@ export class StrctDatagrid {
    */
   private readonly utilTotal = computed(() => {
     let px = 0;
-    for (const [k, w] of this.naturalWidths()) if (k.startsWith('@')) px += w;
+    for (const [k, w] of this.naturalWidths())
+      if (k.startsWith('@')) px += Math.max(w, utilFloor(k));
     return px;
   });
 
@@ -702,9 +718,13 @@ export class StrctDatagrid {
     return size ? strctIconSize(size) : null;
   });
 
-  /** A utility column's width, under the keys the sweep stores them by. */
+  /** A utility column's width: what it measured, never below its floor. */
   protected utilWidth(key: string): number | null {
-    return this.widthsApplied() ? (this.naturalWidths().get(key) ?? null) : null;
+    if (!this.widthsApplied()) return null;
+    const measured = this.naturalWidths().get(key);
+    const floor = utilFloor(key);
+    if (measured == null) return floor || null;
+    return Math.max(measured, floor);
   }
 
   /**
@@ -750,7 +770,11 @@ export class StrctDatagrid {
       this.hostRef.nativeElement.querySelector<HTMLElement>('.strct-dg__scroll') ??
       this.hostRef.nativeElement;
     if (box.clientWidth > 0) this.hostWidth.set(box.clientWidth);
-    if (next.size) {
+    // The first sighting is kept for good, so it has to be a real one: with
+    // no rows a column measures whatever its header alone needs, which for a
+    // utility column is its padding and for a data column is its label
+    // (BUG-66-01). Rows arriving from a request are the normal case.
+    if (next.size && this.renderRows().length) {
       this.naturalWidths.update((m) => {
         let added = false;
         const out = new Map(m);

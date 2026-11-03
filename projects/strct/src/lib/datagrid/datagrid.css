@@ -371,6 +371,15 @@
   text-overflow: ellipsis;
   max-width: 360px;
 }
+/* A radio with its browser margin, or the detail button, fits its cell but
+   not its content box, so the ellipsis drew a speck of dots beside it. These
+   cells hold an affordance, not text: there is nothing to elide. */
+.strct-dg-host--singleline
+  .strct-dg
+  tbody
+  td:is(.strct-dg__sel, .strct-dg__expandcell, .strct-dg__actioncell) {
+  text-overflow: clip;
+}
 /* A `variant="link"` button is `display: inline; white-space: normal` so it
    reads as a word in running text — which also means it ignored the cell's
    nowrap and wrapped to several lines inside it. Measured: a single-line row

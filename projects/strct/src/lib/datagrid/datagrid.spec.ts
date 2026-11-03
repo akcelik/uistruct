@@ -3468,3 +3468,93 @@ describe('StrctDatagrid resize handles without a measurement', () => {
     expect(handles[0].getAttribute('aria-valuenow')).toBe('40');
   });
 });
+
+/**
+ * BUG-66-01: a utility column measured before its rows arrive stayed clipped.
+ *
+ * In single-selection mode the `@sel` header holds only an `.strct-sr-only`
+ * span, so with no rows it measures its own padding — and `naturalWidths`
+ * keeps the first sighting for good. Under fixed layout that became the whole
+ * column and the radio showed 6 of its 15px. The browser half is measured by
+ * `scripts/grid-layout.mjs`; these are the two decisions behind it.
+ */
+describe('StrctDatagrid utility columns (BUG-66-01)', () => {
+  const cols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Name', width: '300px' },
+    { key: 'state', label: 'State', width: '100px' },
+  ];
+  const rows: StrctRow[] = [{ name: 'web-01', state: 'running' }];
+
+  let widthSpy: ReturnType<typeof vi.spyOn> | null = null;
+  let roomSpy: ReturnType<typeof vi.spyOn> | null = null;
+
+  /** What the grid's own ResizeObserver would call when its rows arrive. */
+  let observers: (() => void)[] = [];
+
+  beforeEach(() => {
+    observers = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        readonly watched: Element[] = [];
+        constructor(cb: () => void) {
+          observers.push(cb);
+        }
+        observe(el: Element) {
+          this.watched.push(el);
+        }
+        unobserve(el: Element) {
+          this.watched.splice(this.watched.indexOf(el), 1);
+        }
+        disconnect() {
+          this.watched.length = 0;
+        }
+      },
+    );
+    // What the header alone measures when the column holds nothing else.
+    widthSpy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(22);
+    roomSpy = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(900);
+  });
+  afterEach(() => {
+    widthSpy?.mockRestore();
+    roomSpy?.mockRestore();
+    widthSpy = roomSpy = null;
+    vi.unstubAllGlobals();
+  });
+
+  async function make(withRows: boolean) {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', withRows ? rows : []);
+    fixture.componentRef.setInput('selection', { enabled: true, mode: 'single' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('never gives a utility column less than the affordance in it needs', async () => {
+    const f = await make(true);
+    const sel = f.nativeElement.querySelector('thead th[data-col="@sel"]') as HTMLElement;
+    expect(sel).toBeTruthy();
+    // 22px is what the header measured; 40 is what a radio needs.
+    expect(sel.style.width).toBe('40px');
+  });
+
+  it('does not keep a sighting taken before the rows arrived', async () => {
+    // Drawn empty first, as a grid whose rows come from a request is.
+    const f = await make(false);
+    const width = (): string =>
+      (f.nativeElement.querySelector('thead th[data-col="@sel"]') as HTMLElement).style.width;
+    expect(width()).toBe('40px'); // the floor, since nothing was measurable
+
+    // The rows arrive, and now the column really is as wide as the radio in it.
+    widthSpy!.mockReturnValue(45);
+    f.componentRef.setInput('rows', rows);
+    f.detectChanges();
+    // The grid grew by a row, which is what makes the browser re-measure it.
+    for (const fire of observers) fire();
+    f.detectChanges();
+    expect(width()).toBe('45px');
+  });
+});
