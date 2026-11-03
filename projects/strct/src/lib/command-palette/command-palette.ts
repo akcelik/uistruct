@@ -211,7 +211,7 @@ export interface StrctCommandItem {
         border: 0;
         background: transparent;
         color: var(--t1);
-        font-size: 15px;
+        font-size: var(--text-lg);
         font-family: var(--font);
         outline: none;
       }

@@ -979,7 +979,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 12.5px;
+  font-size: var(--text-md);
   color: var(--t1);
   cursor: pointer;
 }

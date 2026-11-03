@@ -132,13 +132,13 @@ import { StrctIcon } from '../icon/icon';
         }
       }
       .strct-code__title {
-        font-size: 12.5px;
+        font-size: var(--text-md);
         font-weight: 600;
         color: var(--t1);
       }
       .strct-code__lang {
         font-family: var(--mono);
-        font-size: 10px;
+        font-size: var(--text-xs);
         letter-spacing: 0.6px;
         text-transform: uppercase;
         color: var(--t3);

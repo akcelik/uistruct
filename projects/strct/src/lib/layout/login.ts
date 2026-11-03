@@ -231,7 +231,7 @@ import { StrctIcon } from '../icon/icon';
         position: relative;
       }
       .strct-login__kicker {
-        font-size: 11.5px;
+        font-size: var(--text-sm);
         font-weight: 700;
         letter-spacing: 1.6px;
         text-transform: uppercase;

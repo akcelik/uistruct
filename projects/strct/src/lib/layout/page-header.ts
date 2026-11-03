@@ -129,7 +129,7 @@ export class StrctPageHeaderTitleMeta {}
            acceptance asks for. The scale jumps 16 → 22, so this one sits
            between its steps rather than reaching for --text-lg, which is 14
            and left a pane title smaller than the body text beside it. */
-        font-size: 18px;
+        font-size: var(--text-xl);
         font-weight: 600;
         letter-spacing: 0;
       }

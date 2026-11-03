@@ -164,7 +164,7 @@ function uniqueOrder(values: string[]): string[] {
       }
       .strct-heatmap__label {
         fill: var(--t3);
-        font-size: 10px;
+        font-size: var(--text-xs);
       }
       .strct-heatmap__label--row {
         font-family: var(--font);

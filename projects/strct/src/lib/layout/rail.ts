@@ -220,7 +220,7 @@ export interface StrctRailItem {
         background: transparent;
         color: var(--t2);
         cursor: pointer;
-        font-size: 13.5px;
+        font-size: var(--text-md);
         font-family: var(--font);
         text-align: start;
         text-decoration: none;
@@ -351,7 +351,7 @@ export interface StrctRailItem {
         background: transparent;
         color: var(--t3);
         cursor: pointer;
-        font-size: 12.5px;
+        font-size: var(--text-md);
         font-family: var(--font);
       }
       .strct-rail--collapsed .strct-rail__toggle {

@@ -5,6 +5,93 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.0] - 2026-11-03
+
+Stage 2 of [FR-67](docs/feature-requests/visual-language-2026-11.md): the token
+layer. **No public API changed** — no input, no output, no exported name — so
+every template that compiled against 6.5.0 compiles against this unchanged.
+What changed is the look of every screen, which is what makes it a major. See
+[docs/migration-7.md](docs/migration-7.md), and `data-visual="6"` if you need
+the old look while you work through your screens.
+
+6.5.0 made the scale load-bearing without moving a pixel. This is the release
+that moves them.
+
+### Changed
+
+- **A type scale whose steps are steps.** `--text-xs` and `--text-sm` were both
+  `12px` — two names for one value, so a caption could never recede below the
+  text it captioned — and across fifteen component pages the largest size the
+  library actually used was 14px.
+
+  | token        | was  | now      |
+  | ------------ | ---- | -------- |
+  | `--text-xs`  | 12px | **11px** |
+  | `--text-lg`  | 14px | **15px** |
+  | `--text-xl`  | 16px | **18px** |
+  | `--text-3xl` | 26px | **28px** |
+
+  `--text-sm` (12px), `--text-md` (13px) and `--text-2xl` (22px) do not move;
+  `--text-md` is the body and data size and the library is built on it. Every
+  adjacent pair is now at least 8% apart, which `scripts/token-scale.mjs`
+  asserts.
+
+- **A radius scale wide enough to tell its steps apart.** Four steps spanning
+  4px is 6% to 19% of a 32px control, which at arm's length is a right angle:
+  `--radius-xs` 1→**2px**, `--radius-sm` 2→**4px**, `--radius-md` 3→**6px**,
+  `--radius-lg` 4→**10px**, `--radius-xl` 6→**14px**. A button goes from 3px to
+  6px (a small or mini one from 2px to 4px), a card from 4px to 10px. Each step is at least 1.4× the one below it,
+  asserted.
+
+- **A surface ramp that separates without a line on it.** The light ramp spanned
+  1.142:1 end to end and two of its six tokens were the same colour to the eye
+  — the app canvas `--bg-0` against the subtle fill `--bg-2` measured 1.016:1 in
+  Arctic, **1.001:1 in Ember** and 1.002:1 in Sage. The light palettes were
+  re-laddered against `--bg-1`; the dark ones only needed `--bg-2` deepened and
+  `--bg-0` taken down with it, because their ramp already worked. Afterwards, in
+  all six palettes: `--bg-1`→`--bg-2` ≥ 1.10:1, `--bg-2`→`--bg-3` ≥ 1.07:1,
+  `--bg-0` against `--bg-2` ≥ 1.04:1. The full table is in the migration guide.
+
+- **Muted text got darker in light**, because the deeper `--bg-3` would have put
+  it at 4.44–4.51:1, under AA. `--t3` moves to `rgba(0, 0, 0, 0.57)` in Arctic,
+  `rgba(70, 50, 30, 0.765)` in Ember and `rgba(30, 60, 42, 0.76)` in Sage, and
+  now clears **4.6:1 on all six light surfaces** — better than before on every
+  one of them.
+
+- **The last 52 literal sizes were rounded onto the new scale**, emptying the
+  exception list 6.5.0 shipped with: `font-size` 10, 10.5 and 11px →
+  `--text-xs`; 11.5 → `--text-sm`; 12.5 and 13.5 → `--text-md`; 15 →
+  `--text-lg`; 17 and 18 → `--text-xl`; `border-radius` 5px → `--radius-md` and
+  7px → `--radius-lg`. Every size in the library now comes from the scale, and
+  the gate's `allowed` map is empty and must stay empty.
+
+### Fixed
+
+- **A solid button got lighter when hovered in Arctic light.** `--bg-h` was
+  `#f0f1f4` against a `--bg-3` rest state of `#eef0f3`, so the hover receded
+  instead of advancing. The new ladder puts `--bg-h` one step beyond `--bg-3`
+  in every palette. Ember and Sage were already the right way round.
+
+### Added
+
+- **`data-visual="6"`** — set it on the element carrying `data-palette` and
+  `data-theme` to get 6.5.0's type, radius and surfaces back for one major. It
+  restores tokens only: the component weight changes of stage 3 are not reverted
+  by it, and it does not restore `--t3`, because a compatibility flag should not
+  undo an accessibility fix. Removed in 8.0.
+- `scripts/token-scale.mjs` grew from counting literals to asserting the scale's
+  shape: the type steps, the radius steps, and the three ramp thresholds in all
+  six palettes. It found the one shortfall in this work itself — Ember dark's
+  canvas sat 1.035:1 from its fill, under the 1.04 floor.
+
+### Verified
+
+- All 38 visual baselines re-taken deliberately; 33 of them had moved. A clean
+  re-run matches.
+- `scripts/a11y-smoke.mjs` passes on the new surfaces, as do
+  `scripts/grid-layout.mjs` (13 checks), `scripts/control-height.mjs` (162
+  boxes) and 1 299 specs.
+
 ## [6.5.0] - 2026-11-03
 
 The first of the four stages in

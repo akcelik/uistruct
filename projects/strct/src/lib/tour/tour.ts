@@ -126,7 +126,7 @@ let tourCounter = 0;
         box-shadow: var(--shh);
       }
       .strct-tour__step {
-        font-size: 10.5px;
+        font-size: var(--text-xs);
         font-weight: 600;
         letter-spacing: 0.6px;
         color: var(--t3);
@@ -134,13 +134,13 @@ let tourCounter = 0;
         font-variant-numeric: tabular-nums;
       }
       .strct-tour__title {
-        font-size: 13.5px;
+        font-size: var(--text-md);
         font-weight: 650;
         color: var(--t1);
         margin-bottom: 6px;
       }
       .strct-tour__body {
-        font-size: 12.5px;
+        font-size: var(--text-md);
         line-height: 1.5;
         color: var(--t2);
         margin-bottom: 12px;

@@ -154,6 +154,12 @@ component stylesheet writes a literal `font-size` or `border-radius` (allowing
 
 ### FR-67-01 — a type scale with real intervals
 
+> **SHIPPED in 7.0.0** as asked: `11 / 12 / 13 / 15 / 18 / 22 / 28`, with
+> `--text-md` held at 13px. Every adjacent pair is at least 8% apart and
+> `scripts/token-scale.mjs` asserts it. One measured side effect: dropping
+> `--text-xs` from 12 to 11px took 12px off the height of the grouped dropdown
+> baseline, which is the caption receding, as intended.
+
 **Today:** `12 / 12 / 13 / 14 / 16 / 22 / 26`. `--text-xs` and `--text-sm` are
 the same value, so a caption cannot recede below the text it captions.
 
@@ -173,6 +179,16 @@ times and does not move.
 
 ### FR-67-02 — a surface ramp that separates without a line
 
+> **SHIPPED in 7.0.0.** The light palettes were re-laddered against `--bg-1`;
+> the dark ones only needed `--bg-2` deepened, with `--bg-0` taken down to keep
+> its distance. All three thresholds hold in all six palettes and the gate
+> asserts them — it caught Ember dark at 1.035:1, under the 1.04 floor, during
+> this work. Two things the item did not foresee: `--t3` had to darken in light
+> (4.44–4.51:1 on the new `--bg-3` would have been under AA; it now clears
+> 4.6:1 on all six light surfaces), and Arctic light turned out to have
+> `--bg-h` lighter than `--bg-3`, so a solid button receded on hover. Both
+> fixed.
+
 **Today:** the ramp spans 1.142:1 and two of its six tokens are the same colour.
 
 **Asked:** keep the six roles (`--bg-0` canvas, `--bg-1` surface, `--bg-2`
@@ -190,6 +206,14 @@ card can sit on the canvas with no border and still read as a card.
 re-checked by `scripts/a11y-smoke.mjs`, which already runs axe on the showcase.
 
 ### FR-67-03 — a second line weight, and a radius scale that is a scale
+
+> **PARTLY SHIPPED in 7.0.0.** The radius half shipped as recommended —
+> `2 / 4 / 6 / 10 / 14`, each step at least 1.4× the one below, asserted — and
+> the last two literal radii (5px, 7px) were rounded onto it. **The second line
+> weight did not ship.** `--b-strong` is a component decision, not a token one:
+> which single boundary per region earns it is answered by the drawer, the
+> alert and the card, so it moves to stage 3 where those components are
+> already being opened. Nothing in 7.0.0 depends on it.
 
 **Today:** 175 of 176 bordered elements draw 1px, and `--radius-sm/md/lg/xl` are
 `2 / 3 / 4 / 6` — a four-step scale spanning 4px, which at a 32px control height
@@ -326,12 +350,12 @@ card: 8 today, 4 after (the card's own). Visual-regression pair.
 
 Each stage is a release that stands on its own and passes every gate.
 
-| Stage | Version | Contents                               | Why here                                                                                                                                   |
-| ----- | ------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1     | 6.5.0   | FR-67-00 and `scripts/token-scale.mjs` | No visual change at all: literals become the tokens that hold their current values. The gate lands first so every later stage is enforced. |
-| 2     | 7.0.0   | FR-67-01, -02, -03                     | The token layer. One release, because type, surface and radius read as one change and splitting them means three rounds of re-baselining.  |
-| 3     | 7.0.0   | FR-67-04, -05, -06, -08                | The component weights. They depend on stage 2's surfaces and are meaningless before it, so they ship in the same major.                    |
-| 4     | 7.1.0   | FR-67-07                               | The list grid is the one item that changes layout rather than appearance; it gets its own release so a regression is attributable.         |
+| Stage | Version | Contents                                                                      | Why here                                                                                                                                   |
+| ----- | ------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1     | 6.5.0   | FR-67-00 and `scripts/token-scale.mjs`                                        | No visual change at all: literals become the tokens that hold their current values. The gate lands first so every later stage is enforced. |
+| 2 ✓   | 7.0.0   | FR-67-01, -02, -03 (the radius half; the second line weight moved to stage 3) | The token layer. One release, because type, surface and radius read as one change and splitting them means three rounds of re-baselining.  |
+| 3     | 7.0.0   | FR-67-04, -05, -06, -08                                                       | The component weights. They depend on stage 2's surfaces and are meaningless before it, so they ship in the same major.                    |
+| 4     | 7.1.0   | FR-67-07                                                                      | The list grid is the one item that changes layout rather than appearance; it gets its own release so a regression is attributable.         |
 
 Stage 1 is genuinely behaviour-free and should be verifiable by
 `scripts/visual-regression.mjs` passing **without** re-baselining. If it does

@@ -152,7 +152,7 @@ const MAX_BADGE = 99;
         border-radius: var(--radius-pill);
         background: var(--critical);
         color: var(--inv);
-        font-size: 10px;
+        font-size: var(--text-xs);
         font-weight: 700;
         line-height: 1.2;
         text-align: center;

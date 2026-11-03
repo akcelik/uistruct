@@ -145,7 +145,7 @@ export const STRCT_TIME_RANGE_PRESETS: StrctTimeRangePreset[] = [
         min-width: 150px;
       }
       .strct-tr__head {
-        font-size: 10.5px;
+        font-size: var(--text-xs);
         font-weight: 600;
         letter-spacing: 0.7px;
         text-transform: uppercase;
@@ -159,7 +159,7 @@ export const STRCT_TIME_RANGE_PRESETS: StrctTimeRangePreset[] = [
         border-radius: var(--radius-sm);
         background: transparent;
         font-family: var(--font);
-        font-size: 12.5px;
+        font-size: var(--text-md);
         color: var(--t1);
         cursor: pointer;
       }
@@ -180,7 +180,7 @@ export const STRCT_TIME_RANGE_PRESETS: StrctTimeRangePreset[] = [
         display: flex;
         flex-direction: column;
         gap: 3px;
-        font-size: 11.5px;
+        font-size: var(--text-sm);
         color: var(--t2);
         margin-bottom: 7px;
       }
@@ -194,7 +194,7 @@ export const STRCT_TIME_RANGE_PRESETS: StrctTimeRangePreset[] = [
         font-size: var(--text-sm);
       }
       .strct-tr__error {
-        font-size: 11.5px;
+        font-size: var(--text-sm);
         color: var(--critical);
         margin-bottom: 6px;
       }

@@ -315,7 +315,7 @@ let comboboxCounter = 0;
       }
       .strct-cbx__group {
         padding: 7px 10px 3px;
-        font-size: 11px;
+        font-size: var(--text-xs);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.04em;
@@ -369,7 +369,7 @@ let comboboxCounter = 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-size: 11px;
+        font-size: var(--text-xs);
         font-weight: 400;
         color: var(--t3);
       }
