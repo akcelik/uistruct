@@ -78,6 +78,11 @@ jobs:
       # token it is supposed to be (FR-63-04).
       - name: Assert every control is the height its size asks for
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/control-height.mjs
+      # Weight carries rank, a field is a recess, severity rides on surface and
+      # a card groups by tone — FR-67-04/05/06/08, read from the rendered page.
+      # 19 of its 28 checks fail on 6.5.0.
+      - name: Assert the weight ladder holds
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/weight-ladder.mjs
       # The library's dev-mode diagnostics are for consumers, so the library's
       # own showcase must never trigger one. Production compiles them out, so
       # this needs the development build.

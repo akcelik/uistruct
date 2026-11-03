@@ -85,7 +85,7 @@ export const DOCS: DocCategory[] = [
         selector: 'button[strct-button], a[strct-button]',
         importNames: ['StrctButton'],
         summary: 'Restrained, token-driven buttons in six variants and three sizes.',
-        lead: 'Applies button styling to a native `<button>` or `<a>`, so it stays fully accessible and form-aware. Restrained by default — outlined / ghost surfaces with color carried by a subtle border and text accent, never a loud fill. Add `solid` for a rare filled call to action.',
+        lead: 'Applies button styling to a native `<button>` or `<a>`, so it stays fully accessible and form-aware. Weight carries rank: `primary` and `critical` are filled, the default `neutral` is a solid with an edge, `outline` is quieter still, `flat` is a word, and a disabled action is the lightest thing in the row rather than the heaviest.',
         inputs: [
           {
             name: 'variant',
@@ -5341,7 +5341,7 @@ export const DOCS: DocCategory[] = [
         selector: 'strct-alert',
         importNames: ['StrctAlert', 'StrctAlertActions'],
         summary: 'Inline semantic banner.',
-        lead: 'An inline banner for contextual messages, in four semantic tones. Uses a neutral surface with a colored left rail; add `closable` for a dismiss button.',
+        lead: 'An inline banner for contextual messages, in four semantic tones. Severity rides on surface and weight as well as hue: info and success stay on the neutral surface behind a 3px rail, a warning takes its tone fill and a 4px rail, and a critical takes its fill, a 5px rail and a heavier body. Add `closable` for a dismiss button.',
         inputs: [
           {
             name: '[strctAlertActions]',

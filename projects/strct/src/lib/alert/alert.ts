@@ -60,7 +60,8 @@ export class StrctAlertActions {}
   },
   styles: [
     `
-      /* Restrained: neutral surface with a colored left rail + colored icon,
+      /* Severity on surface, weight and hue (7.0): a rail and an icon in the
+         tone, and for warning and critical a tone fill and a heavier rail,
        instead of a fully tinted background. */
       .strct-alert {
         display: block;
@@ -71,6 +72,25 @@ export class StrctAlertActions {}
         background: var(--bg-1);
         border: 1px solid var(--b2);
         border-inline-start: 3px solid var(--acc);
+      }
+      /* Severity rides on surface and weight, not hue alone (FR-67-06). The
+         rail is a rail, not a border weight: 3px for a note, 4px for a
+         warning, 5px for a critical.
+         Before 7.0 all four tones were the same --bg-1 rectangle behind the
+         same 3px rail, so at arm's length a critical note and an
+         informational one were the same object. The tone fills the palettes
+         already carried — --warning-bg, --critical-bg — were never used. */
+      .strct-alert--warning {
+        background: var(--warning-bg);
+        border-inline-start-width: 4px;
+      }
+      .strct-alert--critical {
+        background: var(--critical-bg);
+        border-inline-start-width: 5px;
+        box-shadow: 0 1px 0 var(--b1);
+      }
+      .strct-alert--critical .strct-alert__body {
+        font-weight: 500;
       }
       .strct-alert__row {
         display: flex;

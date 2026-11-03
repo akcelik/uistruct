@@ -50,6 +50,11 @@ import { StrctStatus } from '../status';
   },
   styles: [
     `
+      /* A card groups by tone, not by a second fence (FR-67-08). The header's
+         rule and the footer's rule are gone; the footer's --bg-2 fill does the
+         separating now that 7.0's ramp makes a fill visible on its own. A
+         composed card drew eight border edges before its contents and draws
+         four. */
       .strct-card {
         position: relative;
         display: block;
@@ -290,7 +295,6 @@ export class StrctCard {
         justify-content: space-between;
         gap: var(--space-2);
         padding: var(--strct-card-py, var(--space-3)) var(--strct-card-px, var(--space-4));
-        border-bottom: 1px solid var(--b1);
         font-size: var(--text-md);
         font-weight: 600;
         color: var(--t1);
@@ -488,7 +492,6 @@ export class StrctCardBlock {}
         justify-content: flex-end;
         gap: var(--space-2);
         padding: var(--strct-card-py, var(--space-3)) var(--strct-card-px, var(--space-4));
-        border-top: 1px solid var(--b1);
         background: var(--bg-2);
       }
     `,
