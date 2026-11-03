@@ -43,7 +43,7 @@ export type StrctSpeedDialDirection = 'up' | 'down' | 'left' | 'right';
         [attr.aria-label]="ariaLabel()"
         (click)="toggle()"
       >
-        <strct-icon [name]="icon()" [size]="18" [strokeWidth]="1.5" />
+        <strct-icon [name]="icon()" [size]="18" />
       </button>
     </div>
   `,

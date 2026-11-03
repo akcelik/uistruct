@@ -126,7 +126,7 @@ import {
       <!-- Templated cells -->
       <ng-template strctCell="type" let-value="value">
         <span class="typecell"
-          ><strct-icon [name]="typeIcon(value)" [size]="15" [strokeWidth]="1.4" /> {{ value }}</span
+          ><strct-icon [name]="typeIcon(value)" [size]="15" /> {{ value }}</span
         >
       </ng-template>
       <ng-template strctCell="cpu" let-value="value">

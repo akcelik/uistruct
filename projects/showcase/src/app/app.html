@@ -1,7 +1,7 @@
 <strct-shell skipLinkTarget="main-content">
   <strct-header>
     <a class="brand" routerLink="/">
-      <strct-icon name="hexagon" [size]="22" [strokeWidth]="1.4" />
+      <strct-icon name="hexagon" [size]="22" />
       <div class="brand__text">
         <strong>UIStruct</strong>
         <span>Component Library</span>
@@ -59,7 +59,7 @@
               [label]="group.label"
               [routerLink]="group.items[0].path"
             >
-              <strct-icon [name]="group.icon" [size]="17" [strokeWidth]="1.4" />
+              <strct-icon [name]="group.icon" [size]="17" />
             </strct-nav-item>
           }
         </div>

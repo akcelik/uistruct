@@ -41,7 +41,7 @@ import { StrctIcon } from '../icon/icon';
         [disabled]="isDisabled() || atMin()"
         (click)="stepBy(-1)"
       >
-        <strct-icon strictName="minus" [size]="12" [strokeWidth]="1.8" />
+        <strct-icon strictName="minus" [size]="12" />
       </button>
       <input
         type="text"
@@ -66,7 +66,7 @@ import { StrctIcon } from '../icon/icon';
         [disabled]="isDisabled() || atMax()"
         (click)="stepBy(1)"
       >
-        <strct-icon strictName="plus" [size]="12" [strokeWidth]="1.8" />
+        <strct-icon strictName="plus" [size]="12" />
       </button>
     </div>
   `,

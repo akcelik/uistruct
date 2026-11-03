@@ -62,12 +62,7 @@ export abstract class StrctCascadeHost {
           >
             <span class="strct-csn__label">{{ opt.label }}</span>
             @if (opt.children?.length) {
-              <strct-icon
-                class="strct-csn__arrow"
-                name="chevronRight"
-                [size]="12"
-                [strokeWidth]="1.6"
-              />
+              <strct-icon class="strct-csn__arrow" name="chevronRight" [size]="12" />
             }
           </button>
           @if (openSubIndex() === i && opt.children?.length) {

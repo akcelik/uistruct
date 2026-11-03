@@ -126,9 +126,7 @@ const HEAT: number[][] = [
     <section class="dash__kpis">
       @for (k of kpis; track k.label) {
         <div class="kpi">
-          <span class="kpi__icon"
-            ><strct-icon [name]="k.icon" [size]="20" [strokeWidth]="1.4"
-          /></span>
+          <span class="kpi__icon"><strct-icon [name]="k.icon" [size]="20" /></span>
           <div class="kpi__body">
             <span class="kpi__value">{{ k.value }}</span>
             <span class="kpi__label">{{ k.label }}</span>

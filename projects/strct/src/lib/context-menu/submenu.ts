@@ -45,19 +45,14 @@ import { focusFirstIn } from '../overlay/focus';
         (keydown.escape)="$event.stopPropagation(); open.set(false)"
       >
         @if (icon()) {
-          <strct-icon class="strct-submenu__icon" [name]="icon()" [size]="16" [strokeWidth]="1.3" />
+          <strct-icon class="strct-submenu__icon" [name]="icon()" [size]="16" />
         } @else {
           <span class="strct-submenu__icon-spacer" aria-hidden="true"></span>
         }
         <span class="strct-submenu__label"
           >{{ label() }}<ng-content select="[strctSubmenuLabel]"
         /></span>
-        <strct-icon
-          class="strct-submenu__arrow"
-          name="chevronRight"
-          [size]="12"
-          [strokeWidth]="1.6"
-        />
+        <strct-icon class="strct-submenu__arrow" name="chevronRight" [size]="12" />
       </div>
       @if (open()) {
         <!-- A role="menu" container: keydown bubbles up from the focused

@@ -115,7 +115,7 @@ let dpUid = 0;
             [attr.aria-label]="prevMonthLabel()"
             (click)="shiftMonth(-1)"
           >
-            <strct-icon name="chevronLeft" [size]="14" [strokeWidth]="1.7" />
+            <strct-icon name="chevronLeft" [size]="14" />
           </button>
           <span class="strct-dp__title" [id]="titleId" aria-live="polite">{{ monthLabel() }}</span>
           <button
@@ -124,7 +124,7 @@ let dpUid = 0;
             [attr.aria-label]="nextMonthLabel()"
             (click)="shiftMonth(1)"
           >
-            <strct-icon name="chevronRight" [size]="14" [strokeWidth]="1.7" />
+            <strct-icon name="chevronRight" [size]="14" />
           </button>
         </div>
         <!-- ARIA grid (APG date-picker dialog pattern): focus roves the day

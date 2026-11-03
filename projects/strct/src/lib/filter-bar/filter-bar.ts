@@ -53,7 +53,7 @@ export interface StrctFilterChip {
           [attr.aria-label]="removeLabel() + ' ' + chip.label"
           (click)="removeChip(chip, $index)"
         >
-          <strct-icon name="close" [size]="10" [strokeWidth]="1.9" />
+          <strct-icon name="close" [size]="10" />
         </button>
       </span>
     }

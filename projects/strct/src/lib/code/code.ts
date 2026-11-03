@@ -41,7 +41,6 @@ import { StrctIcon } from '../icon/icon';
             <strct-icon
               name="chevronRight"
               [size]="12"
-              [strokeWidth]="1.7"
               [class.strct-code__chev--open]="!collapsed()"
             />
           </button>

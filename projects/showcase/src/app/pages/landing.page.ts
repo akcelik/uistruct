@@ -17,7 +17,7 @@ interface Feature {
   imports: [RouterLink, StrctButton, StrctIcon, StrctThemeSwitcher],
   template: `
     <section class="hero">
-      <div class="hero__mark"><strct-icon name="hexagon" [size]="40" [strokeWidth]="1.3" /></div>
+      <div class="hero__mark"><strct-icon name="hexagon" [size]="40" /></div>
       <h1 class="hero__title">UIStruct</h1>
       <p class="hero__tagline">
         A standalone Angular component library for infrastructure &amp; datacenter UIs. One token
@@ -67,9 +67,7 @@ interface Feature {
       <h2 id="landing-features" class="strct-sr-only">Why UIStruct</h2>
       @for (f of features; track f.title) {
         <div class="feat">
-          <span class="feat__icon"
-            ><strct-icon [name]="f.icon" [size]="20" [strokeWidth]="1.4"
-          /></span>
+          <span class="feat__icon"><strct-icon [name]="f.icon" [size]="20" /></span>
           <h3 class="feat__title">{{ f.title }}</h3>
           <p class="feat__body">{{ f.body }}</p>
         </div>
@@ -86,9 +84,7 @@ interface Feature {
       <div class="cats__grid">
         @for (cat of cats; track cat.id) {
           <a class="cat" [routerLink]="['/components', cat.components[0].id]">
-            <span class="cat__icon"
-              ><strct-icon [name]="cat.icon" [size]="18" [strokeWidth]="1.4"
-            /></span>
+            <span class="cat__icon"><strct-icon [name]="cat.icon" [size]="18" /></span>
             <span class="cat__text">
               <span class="cat__label">{{ cat.label }}</span>
               <span class="cat__count">{{ cat.components.length }} components</span>

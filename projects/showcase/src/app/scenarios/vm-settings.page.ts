@@ -225,7 +225,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
           <strct-icon name="chevronLeft" [size]="13" /> Inventory
         </a>
         <div class="vms__title">
-          <span class="vms__avatar"><strct-icon name="vm" [size]="20" [strokeWidth]="1.4" /></span>
+          <span class="vms__avatar"><strct-icon name="vm" [size]="20" /></span>
           <h1 class="vms__name">{{ original().name }}</h1>
           <strct-badge status="success">Running</strct-badge>
           <strct-tag>Generation {{ original().generation }}</strct-tag>
@@ -254,7 +254,7 @@ const clone = (v: VmSettings): VmSettings => JSON.parse(JSON.stringify(v)) as Vm
               [class.is-active]="active() === sec.id"
               (click)="active.set(sec.id)"
             >
-              <strct-icon class="vms__navicon" [name]="sec.icon" [size]="16" [strokeWidth]="1.5" />
+              <strct-icon class="vms__navicon" [name]="sec.icon" [size]="16" />
               <span class="vms__navlabel">{{ sec.label }}</span>
               @if (sec.restart) {
                 <strct-icon class="vms__navrestart" name="sync" [size]="11" />

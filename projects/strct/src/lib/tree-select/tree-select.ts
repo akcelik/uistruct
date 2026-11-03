@@ -65,7 +65,7 @@ import { StrctTree, StrctTreeNodeData } from '../tree/tree';
           [attr.aria-label]="clearLabel()"
           (click)="clear($event)"
         >
-          <strct-icon strictName="close" [size]="12" [strokeWidth]="1.6" />
+          <strct-icon strictName="close" [size]="12" />
         </button>
       }
     </div>

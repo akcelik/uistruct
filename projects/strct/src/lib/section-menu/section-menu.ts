@@ -72,21 +72,11 @@ export interface StrctMenuSection {
     <!-- What every entry holds, whatever element carries it. -->
     <ng-template #rowContent let-item>
       @if (showIcons() && item.icon) {
-        <strct-icon
-          class="strct-sm__item-icon"
-          [name]="item.icon"
-          [size]="16"
-          [strokeWidth]="1.4"
-        />
+        <strct-icon class="strct-sm__item-icon" [name]="item.icon" [size]="16" />
       }
       <span class="strct-sm__item-label">{{ item.label }}</span>
       @if (item.trailingIcon) {
-        <strct-icon
-          class="strct-sm__trailing"
-          [name]="item.trailingIcon"
-          [size]="14"
-          [strokeWidth]="1.5"
-        />
+        <strct-icon class="strct-sm__trailing" [name]="item.trailingIcon" [size]="14" />
       }
       @if (item.badge !== undefined && item.badge !== null && item.badge !== '') {
         <span class="strct-sm__badge strct-sm__badge--{{ item.badgeStatus ?? 'accent' }}">
@@ -152,15 +142,10 @@ export interface StrctMenuSection {
               (click)="toggle(sec)"
             >
               <span class="strct-sm__chevron" [class.strct-sm__chevron--open]="isOpen(sec)">
-                <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
+                <strct-icon name="chevronRight" [size]="12" />
               </span>
               @if (showIcons() && sec.icon) {
-                <strct-icon
-                  class="strct-sm__cat-icon"
-                  [name]="sec.icon"
-                  [size]="16"
-                  [strokeWidth]="1.4"
-                />
+                <strct-icon class="strct-sm__cat-icon" [name]="sec.icon" [size]="16" />
               }
               <span class="strct-sm__cat-label">{{ sec.label }}</span>
             </button>

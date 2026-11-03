@@ -43,7 +43,7 @@ let checkboxCounter = 0;
         (blur)="onTouched()"
       />
       <span class="strct-cb__box">
-        <strct-icon name="check" [size]="11" [strokeWidth]="2" />
+        <strct-icon name="check" [size]="11" />
       </span>
       <span class="strct-cb__text">
         <!-- The projected slot is declared first so its selector wins over the

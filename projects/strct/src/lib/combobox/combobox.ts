@@ -92,7 +92,7 @@ let comboboxCounter = 0;
               [disabled]="isDisabled()"
               (click)="removeValue(v, $event)"
             >
-              <strct-icon strictName="close" [size]="10" [strokeWidth]="1.8" />
+              <strct-icon strictName="close" [size]="10" />
             </button>
           </span>
         }
@@ -124,7 +124,7 @@ let comboboxCounter = 0;
           [attr.aria-label]="clearLabel()"
           (click)="clear($event)"
         >
-          <strct-icon strictName="close" [size]="12" [strokeWidth]="1.6" />
+          <strct-icon strictName="close" [size]="12" />
         </button>
       }
       <strct-icon class="strct-cbx__caret" strictName="chevronDown" [size]="14" />
@@ -162,7 +162,7 @@ let comboboxCounter = 0;
               >
                 <span class="strct-cbx__check" aria-hidden="true">
                   @if (isSelected(row.opt!.value)) {
-                    <strct-icon strictName="check" [size]="12" [strokeWidth]="1.8" />
+                    <strct-icon strictName="check" [size]="12" />
                   }
                 </span>
                 @if (row.opt!.icon) {

@@ -85,7 +85,7 @@ export interface StrctLegendItem {
                      is simply not picked, so it is not struck through. -->
                 <span class="strct-legend__check" aria-hidden="true">
                   @if (!item.off) {
-                    <strct-icon name="check" [size]="12" [strokeWidth]="2" />
+                    <strct-icon name="check" [size]="12" />
                   }
                 </span>
               }

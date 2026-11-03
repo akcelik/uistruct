@@ -180,12 +180,7 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
           />
         } @else {
           @if (node.icon) {
-            <strct-icon
-              class="strct-flow__icon"
-              [name]="node.icon"
-              [size]="15"
-              [strokeWidth]="1.4"
-            />
+            <strct-icon class="strct-flow__icon" [name]="node.icon" [size]="15" />
           }
           <span class="strct-flow__label">{{ node.label }}</span>
           @if (node.role) {

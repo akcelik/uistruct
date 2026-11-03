@@ -92,23 +92,13 @@ export interface StrctMenuItem {
               (click)="onItemClick(item, i, $event)"
             >
               @if (item.icon) {
-                <strct-icon
-                  class="strct-menu__icon"
-                  [name]="item.icon"
-                  [size]="16"
-                  [strokeWidth]="1.3"
-                />
+                <strct-icon class="strct-menu__icon" [name]="item.icon" [size]="16" />
               } @else {
                 <span class="strct-menu__icon-spacer" aria-hidden="true"></span>
               }
               <span class="strct-menu__label">{{ item.label }}</span>
               @if (item.children?.length) {
-                <strct-icon
-                  class="strct-menu__arrow"
-                  name="chevronRight"
-                  [size]="12"
-                  [strokeWidth]="1.6"
-                />
+                <strct-icon class="strct-menu__arrow" name="chevronRight" [size]="12" />
               }
             </button>
             @if (item.hint) {

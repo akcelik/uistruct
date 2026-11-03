@@ -86,7 +86,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 
             <div class="auth-brand">
               <span class="auth-brand__mark">
-                <strct-icon name="hexagon" [size]="18" [strokeWidth]="1.5" />
+                <strct-icon name="hexagon" [size]="18" />
               </span>
               <span class="auth-brand__name">STRUCT OPS</span>
               <span class="auth-brand__env">CONSOLE</span>
@@ -140,10 +140,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
             <div class="auth-divider" role="separator"><span>or continue with</span></div>
             <div class="auth-sso">
               <button strct-button variant="outline" type="button">
-                <strct-icon name="shield" [strokeWidth]="1.5" /> Corporate SSO
+                <strct-icon name="shield" /> Corporate SSO
               </button>
               <button strct-button variant="outline" type="button">
-                <strct-icon name="key" [strokeWidth]="1.5" /> Passkey
+                <strct-icon name="key" /> Passkey
               </button>
             </div>
 

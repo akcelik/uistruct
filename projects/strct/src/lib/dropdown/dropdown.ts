@@ -382,7 +382,7 @@ const DD_ITEM = 'strct-dropdown-item, a[strctDropdownItem]';
   template: `@if (selected() !== null) {
       <span class="strct-dd__check" aria-hidden="true">
         @if (selected()) {
-          <strct-icon strictName="check" [size]="12" [strokeWidth]="1.8" />
+          <strct-icon strictName="check" [size]="12" />
         }
       </span>
     }

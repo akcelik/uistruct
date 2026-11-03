@@ -65,7 +65,7 @@ export class StrctAccordionPanelMeta {}
         (click)="toggle()"
       >
         <span class="strct-acc__chevron" [class.strct-acc__chevron--open]="expanded()">
-          <strct-icon name="chevronRight" [size]="13" [strokeWidth]="1.7" />
+          <strct-icon name="chevronRight" [size]="13" />
         </span>
         <span class="strct-acc__title">{{ heading() }}</span>
       </button>

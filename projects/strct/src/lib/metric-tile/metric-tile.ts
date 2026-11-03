@@ -38,7 +38,7 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
         <span class="strct-mt__label">{{ label() }}</span>
         @if (hasDelta()) {
           <span class="strct-mt__delta strct-mt__delta--{{ deltaTone() }}">
-            <strct-icon [name]="deltaIcon()" [size]="11" [strokeWidth]="2" />
+            <strct-icon [name]="deltaIcon()" [size]="11" />
             <span aria-hidden="true">{{ absDelta() }}{{ deltaSuffix() }}</span>
             <span class="strct-mt__sr">{{ deltaText() }}</span>
           </span>

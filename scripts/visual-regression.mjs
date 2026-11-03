@@ -89,6 +89,13 @@ const ROUTES = [
   // it — every page it held either had no list or had one whose rows carried
   // leading markers of one width.
   ['list-alignment', '/components/list', '#list', undefined, '#list .strct-list'],
+  // FR-68-01: one glyph at 16 / 20 / 24 / 32px. A stroke width is in user
+  // units, so before 7.2 the default of 1.4 painted 1.4, 1.75, 2.1 and 2.8px
+  // on those four — the same icon drawn with four pens. Nothing else in this
+  // suite could see it: the change is thin and everywhere, so it moved 0.026%
+  // of a page's pixels against a 0.5% threshold. Clipped to the row, it
+  // moves 4%.
+  ['icon-pen', '/foundations/icons', '#sizes', undefined, '#sizes .ig-sizes'],
   ['tree', '/components/tree'],
   // What a node says after its label: the quiet meta and the status tag, which
   // have to sit on the row without pushing the label out of it.

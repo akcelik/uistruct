@@ -37,9 +37,7 @@ import {
     <div class="st__grid">
       <!-- Empty collection -->
       <section class="st__card">
-        <span class="st__art st__art--accent"
-          ><strct-icon name="datacenter" [size]="34" [strokeWidth]="1.2"
-        /></span>
+        <span class="st__art st__art--accent"><strct-icon name="datacenter" [size]="34" /></span>
         <h2 class="st__h">No clusters yet</h2>
         <p class="st__p">Create your first cluster to start placing hosts and virtual machines.</p>
         <button strct-button variant="primary" solid size="sm" routerLink="/scenarios/new-cluster">
@@ -49,7 +47,7 @@ import {
 
       <!-- 404 -->
       <section class="st__card">
-        <span class="st__art"><strct-icon name="compass" [size]="34" [strokeWidth]="1.2" /></span>
+        <span class="st__art"><strct-icon name="compass" [size]="34" /></span>
         <div class="st__code">404</div>
         <h2 class="st__h">Page not found</h2>
         <p class="st__p">The object you’re looking for may have been moved or decommissioned.</p>
@@ -60,9 +58,7 @@ import {
 
       <!-- 403 -->
       <section class="st__card">
-        <span class="st__art st__art--critical"
-          ><strct-icon name="lock" [size]="32" [strokeWidth]="1.3"
-        /></span>
+        <span class="st__art st__art--critical"><strct-icon name="lock" [size]="32" /></span>
         <div class="st__code">403</div>
         <h2 class="st__h">Access denied</h2>
         <p class="st__p">

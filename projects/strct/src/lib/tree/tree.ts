@@ -179,7 +179,7 @@ let treeNodeCounter = 0;
           (keydown.enter)="$event.stopPropagation(); toggle()"
           (keydown.space)="$event.preventDefault(); $event.stopPropagation(); toggle()"
         >
-          <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.5" />
+          <strct-icon name="chevronRight" [size]="12" />
         </span>
       } @else {
         <span class="strct-tnode__spacer"></span>
@@ -189,7 +189,6 @@ let treeNodeCounter = 0;
           class="strct-tnode__icon"
           [name]="displayIcon()!"
           [size]="iconSize()"
-          [strokeWidth]="1.3"
           [badge]="displayBadge()"
           [mode]="displayMode()"
         />

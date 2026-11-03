@@ -170,6 +170,8 @@ const MEASURE = `(() => {
 
 const bad = [];
 let measured = 0;
+let icons = 0;
+const pen = new Set();
 
 try {
   const target = await cdpTarget();
@@ -209,19 +211,74 @@ try {
       // A whole number of pixels, and the number the token names.
       if (r.got !== r.want) bad.push({ theme: palette + '/' + theme, ...r });
     }
+
+    // One pen, at every size (FR-68-01). A stroke width is in user units, so
+    // the 16-unit glyph scaled it with the icon: the library's own default of
+    // 1.4 painted 1.23px in a small button and 2.28px in a 26px icon, and 50
+    // call sites across 34 components picked their own number besides. The
+    // glyph carries vector-effect="non-scaling-stroke" now, so the number is
+    // the painted thickness. The 12-unit mode badge is out of scope on
+    // purpose: it is a 7-9px mark tuned by eye for FR-61-01.
+    const pens = await evaluate(
+      send,
+      `(() => {
+        const seen = {};
+        for (const svg of document.querySelectorAll('strct-icon > svg')) {
+          const box = (svg.getAttribute('viewBox') ?? '').split(/\\s+/);
+          const units = Number(box[2]);
+          if (units !== 16) continue;
+          const w = svg.getBoundingClientRect().width;
+          if (!w) continue;
+          const n = Number(svg.getAttribute('stroke-width') ?? 1.4);
+          // vector-effect is not inherited, so it has to be read off a shape
+          // that draws, not off the <svg> that holds them.
+          const shape = svg.querySelector('path, circle, rect, line, polyline, polygon');
+          const painted =
+            shape && getComputedStyle(shape).vectorEffect === 'non-scaling-stroke'
+              ? n
+              : n * (w / units);
+          const k = (Math.round(painted * 100) / 100).toFixed(2);
+          seen[k] = (seen[k] ?? 0) + 1;
+        }
+        return seen;
+      })()`,
+    );
+    const widths = Object.keys(pens);
+    icons += Object.values(pens).reduce((a, b) => a + b, 0);
+    if (widths.length > 1)
+      bad.push({
+        theme: palette + '/' + theme,
+        what: 'the icon pen',
+        want: 'one width',
+        got: widths.map((w) => `${w}px×${pens[w]}`).join(', '),
+      });
+    else if (widths.length === 1) pen.add(widths[0]);
   }
 } finally {
   chrome.kill();
   server.close();
 }
 
-console.log(`Measured ${measured} control and icon boxes across ${THEMES.length} themes.`);
+console.log(
+  `Measured ${measured} control and icon boxes across ${THEMES.length} themes, ` +
+    `and the pen on ${icons} icons.`,
+);
+if (pen.size > 1)
+  bad.push({
+    theme: 'across themes',
+    what: 'the icon pen',
+    want: 'one width',
+    got: [...pen].join(', '),
+  });
 if (bad.length) {
-  console.error(`\n${bad.length} are not the height their size asks for:\n`);
+  console.error(`\n${bad.length} are not what their token asks for:\n`);
   for (const b of bad.slice(0, 40))
     console.error(
-      `  ${b.theme}  ${b.size ?? ''} ${b.via ?? ''}  ${b.what}: wanted ${b.want}px, drew ${b.got}px`,
+      `  ${b.theme}  ${b.size ?? ''} ${b.via ?? ''}  ${b.what}: wanted ${b.want}, drew ${b.got}`,
     );
   process.exit(1);
 }
-console.log('Every control, and every icon in one, is exactly the size it should be.');
+console.log(
+  `Every control, and every icon in one, is exactly the size it should be, ` +
+    `and every glyph is drawn with the same ${[...pen][0]}px pen.`,
+);
