@@ -62,9 +62,17 @@ describe('StrctChart', () => {
     expect(build({ data: [1, 2, 3], glow: true }).classList).toContain('strct-chart--glow');
   });
 
-  it('applies the strokeWidth to the line', () => {
-    const el = build({ data: [1, 2, 3], strokeWidth: 3 });
-    expect(el.querySelector('.strct-chart__line')?.getAttribute('stroke-width')).toBe('3');
+  it('applies the strokeWidth to the line, and takes the token when it is not set', () => {
+    // The pen is --data-stroke unless the call site states one. It states it
+    // by setting the property on the host, which is nearer than the rule that
+    // reads the token — a presentation attribute would have lost to that rule
+    // (FR-68-02).
+    const stated = build({ data: [1, 2, 3], strokeWidth: 3 });
+    expect(stated.style.getPropertyValue('--strct-chart-pen')).toBe('3');
+    expect(stated.querySelector('.strct-chart__line')?.getAttribute('stroke-width')).toBeNull();
+
+    const plain = build({ data: [1, 2, 3] });
+    expect(plain.style.getPropertyValue('--strct-chart-pen')).toBe('');
   });
 
   it('renders a crosshair + value tooltip when a point is hovered', () => {

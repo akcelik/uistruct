@@ -5,6 +5,49 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.3.0] - 2026-11-03
+
+The close of the data-component review the icon pen came out of. Most of what
+that review looked for was **not** there, and this entry says so as plainly as
+it says what was.
+
+### Added
+
+- **`--data-stroke: 1.75` and `--data-stroke-sm: 1.5`** — the pen a data line
+  is drawn with. A chart's line was 1.75, a sparkline's 1.6 and a flow edge's
+  1.5: three numbers within 0.25px of each other, none of them named. By the
+  library's own rule — FR-67-01, a step under 8% is not a step — 1.5 to 1.6
+  is not a step, so the three become two. The only pixel that moves is the
+  sparkline's, from 1.6 to 1.5.
+- A chart states its own pen by setting `--strct-chart-pen` on the host rather
+  than a `stroke-width` attribute, because a presentation attribute loses to
+  the rule that reads the token. `[strokeWidth]` behaves as before and its
+  spec now covers both halves: stated wins, unstated takes the token.
+
+### Measured and left alone
+
+- **The label sizes are already a system.** `timeline` uses `--text-md`,
+  `legend` `--text-sm`, `heatmap` `--text-xs` — three sizes for three roles,
+  which is correct. The census's reading of 15px on the timeline page was the
+  demo's own heading, not the component.
+- **The grid behind a chart is 1px everywhere**, in every chart type. That is
+  a rule, not a reading, and it holds.
+- **The heatmap's 49 inks** are `color-mix()` steps of a continuous scale, not
+  49 decisions.
+- **The knockout ring around a data dot stays a literal 1.5**, with a comment
+  saying what it is. It is a ring in the surface colour so a dot on its own
+  line still reads as a dot — not a reading, so it does not belong in
+  `--data-stroke-sm`. Forcing an unrelated thing into a token is how a token
+  stops meaning anything; `--b-strong` was dropped in 7.0.0 for the same
+  reason.
+
+### A note on the visual suite
+
+The sparkline's 0.1px is under its resolution, as the icon pen's 0.3px was:
+all 42 baselines match without re-baselining. The instrument for this class of
+change is the rendered gates, which count every glyph and every stroke, not a
+picture of a page.
+
 ## [7.2.1] - 2026-11-03
 
 **7.2.0 did not finish what it claimed.** It said every icon in the library is

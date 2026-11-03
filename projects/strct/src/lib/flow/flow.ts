@@ -305,7 +305,7 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
       }
       .strct-flow__edge {
         stroke: var(--b3);
-        stroke-width: 1.5;
+        stroke-width: var(--data-stroke-sm);
       }
       .strct-flow__edge--accent {
         stroke: var(--acc);

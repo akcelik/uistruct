@@ -419,7 +419,6 @@ interface SeriesRender {
                     <path
                       class="strct-chart__line"
                       fill="none"
-                      [attr.stroke-width]="strokeWidth()"
                       [attr.stroke-dasharray]="s.dash"
                       [attr.d]="s.path"
                       [attr.stroke]="s.color"
@@ -438,7 +437,6 @@ interface SeriesRender {
                     [class.strct-chart__line--draw]="drawOn()"
                     fill="none"
                     pathLength="1"
-                    [attr.stroke-width]="strokeWidth()"
                     [attr.d]="linePath()"
                     [attr.stroke]="color()"
                   />
@@ -647,6 +645,7 @@ interface SeriesRender {
     '[class.strct-chart--glow]': 'glow()',
     '[class.strct-chart--brush]': 'brush() || zoom()',
     '[style.--strct-chart-c]': 'color()',
+    '[style.--strct-chart-pen]': 'strokeWidth()',
   },
   styles: [
     `
@@ -690,6 +689,10 @@ interface SeriesRender {
         vector-effect: non-scaling-stroke;
       }
       .strct-chart__line {
+        /* The pen is the token unless the call site states one, which it does
+           by setting --strct-chart-pen on the host — nearer than this rule,
+           so it wins. A presentation attribute would lose to it (FR-68-02). */
+        stroke-width: var(--strct-chart-pen, var(--data-stroke));
         vector-effect: non-scaling-stroke;
         stroke-linejoin: round;
         stroke-linecap: round;
@@ -703,6 +706,10 @@ interface SeriesRender {
       .strct-chart__dot,
       .strct-chart__hoverdot,
       .strct-chart__head-dot {
+        /* Not a reading: a knockout ring in the surface colour, so a dot
+           sitting on its own line still reads as a dot. It is deliberately
+           not --data-stroke-sm — forcing an unrelated thing into a token is
+           how a token stops meaning anything. */
         stroke: var(--bg-1);
         stroke-width: 1.5;
       }
@@ -1018,7 +1025,8 @@ export class StrctChart {
   /** Hover crosshair + value tooltip. */
   readonly interactive = input(true, { transform: booleanAttribute });
   /** Line thickness in pixels. */
-  readonly strokeWidth = input(1.75);
+  /** The pen the line is drawn with; defaults to the --data-stroke token. */
+  readonly strokeWidth = input<number | undefined>(undefined);
   /** Show the horizontal gridlines. */
   readonly grid = input(true, { transform: booleanAttribute });
   /** Show a dot at each data point (single-series). */
