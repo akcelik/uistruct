@@ -50,7 +50,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         flex: 1;
         appearance: none;
         height: 5px;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         cursor: pointer;
         background: linear-gradient(
           to right,
@@ -97,7 +97,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
       .strct-range__value {
         min-width: 30px;
         text-align: end;
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-family: var(--mono);
         color: var(--t2);
       }

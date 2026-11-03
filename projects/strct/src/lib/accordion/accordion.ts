@@ -23,7 +23,7 @@ import { StrctStatus } from '../status';
         display: flex;
         flex-direction: column;
         border: 1px solid var(--b2);
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         overflow: hidden;
         background: var(--bg-1);
       }
@@ -139,7 +139,7 @@ export class StrctAccordionPanelMeta {}
         background: transparent;
         cursor: pointer;
         font-family: var(--font);
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 500;
         color: var(--t1);
         text-align: start;
@@ -168,7 +168,7 @@ export class StrctAccordionPanelMeta {}
         padding: 4px 14px 14px;
         padding-inline-start: 32px;
         color: var(--t2);
-        font-size: 13px;
+        font-size: var(--text-md);
         border-top: 1px solid var(--b1);
       }
 

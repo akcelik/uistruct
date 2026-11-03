@@ -111,6 +111,33 @@ how the defect stayed invisible.
 
 ### FR-67-00 — the scale becomes load-bearing
 
+> **SHIPPED in 6.5.0**, and `scripts/visual-regression.mjs` passed all 38
+> baselines without re-baselining one, which is the proof that nothing moved.
+>
+> 249 of the 298 literals became the tokens that already held their values —
+> 140 `font-size` and 109 `border-radius`. The remaining 52 are sizes the scale
+> cannot express at all (10, 10.5, 11, 11.5, 12.5, 13.5, 15, 17, 18px, and the
+> 5px and 7px radii), and rounding them now would have moved pixels, so they
+> are listed site by site in the gate's `allowed` map, which only ratchets
+> down. They are the worklist for FR-67-01 and FR-67-03.
+>
+> Two things the report did not anticipate:
+>
+> - **The scale was declared six times.** `--text-*`, `--radius-*`,
+>   `--space-*`, `--control-h-*`, `--icon-size-*`, `--leading-*` and
+>   `--disabled-opacity` sat in all six `[data-palette][data-theme]` blocks,
+>   174 declarations, byte-for-byte identical. They are palette- and
+>   theme-independent, so they moved to `:root` — which is also why FR-67-01,
+>   -02 and -03 are now a one-place edit rather than a six-place one. Two side
+>   effects, both improvements: the tokens resolve with no palette attribute
+>   set, and an app overriding one on `:root` now wins instead of losing to the
+>   palette's copy on specificity.
+> - **Two radius tokens were missing rather than mis-set.** `--radius-xs: 1px`
+>   (the rounding on a 2–4px graphic — a bar cap, a swatch, a tick: 20 sites)
+>   and `--radius-pill: 999px` (a shape, not a length: 9 sites, spelled `99px`
+>   at five of them and `999px` at four, rendering identically because both
+>   clamp to half the box).
+
 **Today:** 190 literal font sizes against 75 token references; 108 literal radii
 against 87.
 

@@ -717,7 +717,7 @@ let warnedCountOverMode = false;
         height: 14px;
         padding-inline: 4px;
         box-sizing: border-box;
-        border-radius: 999px;
+        border-radius: var(--radius-pill);
         font-family: var(--font);
         /* 58% of the icon, never under 9px — in CSS rather than in a computed,
            because the icon's size can now come from the control around it. */
@@ -816,7 +816,7 @@ let warnedCountOverMode = false;
       }
       .strct-icon__badge--warning {
         background: var(--warning);
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         clip-path: polygon(50% 10%, 92% 90%, 8% 90%);
         box-shadow: none;
         filter: drop-shadow(0 0 1.5px var(--bg-1));
@@ -842,7 +842,7 @@ let warnedCountOverMode = false;
       /* Critical: diamond silhouette (vSphere-style alarm language). */
       .strct-icon__badge--critical {
         background: var(--critical);
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
         box-shadow: none;
         filter: drop-shadow(0 0 1.5px var(--bg-1));
@@ -895,7 +895,7 @@ let warnedCountOverMode = false;
         min-width: 3.5px;
         min-height: 3.5px;
         background: var(--inv);
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
       }
       .strct-icon__badge--info {
         background: var(--acc);

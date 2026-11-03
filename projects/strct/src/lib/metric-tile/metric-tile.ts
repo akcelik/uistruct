@@ -147,10 +147,10 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
         padding: 6px 10px;
       }
       .strct-mt--sm .strct-mt__label {
-        font-size: 12px;
+        font-size: var(--text-sm);
       }
       .strct-mt--sm .strct-mt__value {
-        font-size: 16px;
+        font-size: var(--text-xl);
       }
       .strct-mt--sm .strct-mt__icon strct-icon {
         width: 13px;
@@ -167,7 +167,7 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
         flex-shrink: 0;
       }
       .strct-mt__label {
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 500;
         color: var(--t3);
         white-space: nowrap;
@@ -179,7 +179,7 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
         align-items: center;
         gap: 2px;
         margin-inline-start: auto;
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         font-variant-numeric: tabular-nums;
         flex-shrink: 0;
@@ -247,13 +247,13 @@ export type StrctMetricStatus = 'neutral' | 'accent' | 'success' | 'warning' | '
         color: var(--critical);
       }
       .strct-mt__unit {
-        font-size: 14px;
+        font-size: var(--text-lg);
         font-weight: 500;
         color: var(--t3);
         letter-spacing: 0;
       }
       .strct-mt__caption {
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t3);
       }
       /* "2 down" is the warning; the 14 nodes above it are not — so the tone

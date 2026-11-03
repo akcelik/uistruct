@@ -495,7 +495,7 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
         line-height: 1.2;
       }
       .strct-flow__role {
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 700;
         letter-spacing: 0.4px;
         color: var(--t3);
@@ -523,7 +523,7 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
       .strct-flow__line {
         position: absolute;
         inset: 0;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         background: linear-gradient(
           to right,
           var(--b3),

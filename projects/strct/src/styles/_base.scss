@@ -34,7 +34,7 @@ body {
 }
 *::-webkit-scrollbar-thumb {
   background: var(--sb);
-  border-radius: 3px;
+  border-radius: var(--radius-md);
   border: 2px solid transparent;
   background-clip: padding-box;
 }
@@ -154,7 +154,7 @@ kbd,
   width: 3px;
   height: 34px;
   transform: translate(-50%, -50%);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--b2);
   transition: background 0.14s ease;
 }

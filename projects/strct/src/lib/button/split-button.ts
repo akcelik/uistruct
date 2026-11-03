@@ -107,7 +107,7 @@ import { StrctMenuItem } from '../context-menu/menu';
         background: transparent;
         color: var(--acc);
         font-family: var(--font);
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 600;
         line-height: 1;
         cursor: pointer;

@@ -149,7 +149,7 @@ export class StrctFieldGroup {}
         gap: 6px;
       }
       .strct-field__label {
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         color: var(--t2);
       }
@@ -186,7 +186,7 @@ export class StrctFieldGroup {}
         padding-inline-end: 32px;
       }
       .strct-field__msg {
-        font-size: 12px;
+        font-size: var(--text-sm);
         line-height: 1.4;
       }
       .strct-field__msg--hint,
@@ -210,7 +210,7 @@ export class StrctFieldGroup {}
         display: none;
         align-items: center;
         flex: none;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t3);
       }
       .strct-field__addon--prefix {

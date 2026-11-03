@@ -421,9 +421,9 @@ const DD_ITEM = 'strct-dropdown-item, a[strctDropdownItem]';
         align-items: center;
         gap: 8px;
         padding: 9px 10px;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         cursor: pointer;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
       }
       .strct-dd__item:hover,

@@ -168,11 +168,11 @@ export interface StrctMenuItem {
         width: 100%;
         padding: 7px 8px 7px 10px;
         border: 0;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         cursor: pointer;
         background: transparent;
         color: var(--t1);
-        font-size: 13px;
+        font-size: var(--text-md);
         font-family: var(--font);
         text-align: start;
       }

@@ -109,7 +109,7 @@ import { StrctThemeService } from './theme.service';
         display: inline-flex;
         padding: 2px;
         gap: 2px;
-        border-radius: 3px;
+        border-radius: var(--radius-md);
         background: color-mix(in srgb, var(--strct-ts-fg, var(--hdr-fg)) 12%, transparent);
       }
       .strct-ts__pbtn {
@@ -119,7 +119,7 @@ import { StrctThemeService } from './theme.service';
         width: 26px;
         height: 22px;
         border: 0;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         cursor: pointer;
         background: transparent;
         color: color-mix(in srgb, var(--strct-ts-fg, var(--hdr-fg)) 65%, transparent);

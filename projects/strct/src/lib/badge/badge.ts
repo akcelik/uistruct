@@ -41,7 +41,7 @@ export type StrctBadgeStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'c
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 500;
         line-height: 1;
         letter-spacing: 0.2px;

@@ -68,7 +68,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
       .strct-otp__sep {
         margin-inline: 3px;
         color: var(--t3);
-        font-size: 16px;
+        font-size: var(--text-xl);
         user-select: none;
       }
       .strct-otp__box {
@@ -80,7 +80,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         color: var(--t1);
         background: var(--bg-2);
         border: 1px solid var(--b2);
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         transition:
           border-color 0.14s ease,
           box-shadow 0.14s ease,

@@ -216,13 +216,13 @@ import { StrctIcon } from '../icon/icon';
         justify-content: center;
         width: 34px;
         height: 34px;
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         background: var(--acc-m);
         border: 1px solid var(--acc30);
         color: var(--acc);
       }
       .strct-login__brandname {
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 700;
         letter-spacing: 2px;
         color: var(--t1);

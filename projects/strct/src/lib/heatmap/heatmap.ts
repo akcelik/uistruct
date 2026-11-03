@@ -159,7 +159,7 @@ function uniqueOrder(values: string[]): string[] {
         align-items: center;
         justify-content: center;
         min-height: 60px;
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t3);
       }
       .strct-heatmap__label {

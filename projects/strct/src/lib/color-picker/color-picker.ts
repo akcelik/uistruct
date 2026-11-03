@@ -103,10 +103,10 @@ const HEX = /^#([0-9a-f]{6})$/i;
         align-items: center;
         gap: 9px;
         padding: 6px 11px 6px 7px;
-        border-radius: 3px;
+        border-radius: var(--radius-md);
         cursor: pointer;
         font-family: var(--font);
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
         background: var(--bg-2);
         border: 1px solid var(--b2);
@@ -117,14 +117,14 @@ const HEX = /^#([0-9a-f]{6})$/i;
       .strct-cp__swatch {
         width: 20px;
         height: 20px;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         flex-shrink: 0;
         border: 1px solid var(--b3);
         background-clip: padding-box;
       }
       .strct-cp__value {
         font-family: var(--mono);
-        font-size: 12px;
+        font-size: var(--text-sm);
       }
       .strct-cp__panel {
         position: absolute;
@@ -135,7 +135,7 @@ const HEX = /^#([0-9a-f]{6})$/i;
         padding: 10px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         box-shadow: var(--shh);
       }
       .strct-cp__grid {
@@ -146,7 +146,7 @@ const HEX = /^#([0-9a-f]{6})$/i;
       }
       .strct-cp__chip {
         aspect-ratio: 1;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         cursor: pointer;
         padding: 0;
         border: 1px solid var(--b2);
@@ -163,7 +163,7 @@ const HEX = /^#([0-9a-f]{6})$/i;
       }
       .strct-cp__hex {
         font-family: var(--mono);
-        font-size: 12px;
+        font-size: var(--text-sm);
         text-transform: lowercase;
       }
     `,

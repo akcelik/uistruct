@@ -139,7 +139,7 @@ export class StrctRadioGroup implements ControlValueAccessor {
         align-items: center;
         gap: 8px;
         cursor: pointer;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
         user-select: none;
       }

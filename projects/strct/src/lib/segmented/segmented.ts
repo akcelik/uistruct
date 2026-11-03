@@ -147,7 +147,7 @@ export type StrctSegmentedSize = StrctControlSize;
         background: transparent;
         color: var(--t2);
         font-family: var(--font);
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 500;
         line-height: 1;
         white-space: nowrap;
@@ -166,11 +166,11 @@ export type StrctSegmentedSize = StrctControlSize;
       }
       .strct-seg--lg .strct-seg__opt {
         padding: 0 18px;
-        font-size: 14px;
+        font-size: var(--text-lg);
       }
       .strct-seg--sm .strct-seg__opt {
         padding: 0 10px;
-        font-size: 12px;
+        font-size: var(--text-sm);
       }
       .strct-seg__opt:hover:not(:disabled):not(.strct-seg__opt--selected) {
         color: var(--t1);

@@ -90,7 +90,7 @@ import { StrctIcon } from '../icon/icon';
         color: var(--t2);
         background: var(--bg-2);
         border: 1px dashed var(--b3);
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         transition:
           border-color 0.14s ease,
           background 0.14s ease,
@@ -116,7 +116,7 @@ import { StrctIcon } from '../icon/icon';
         cursor: not-allowed;
       }
       .strct-file__prompt {
-        font-size: 13px;
+        font-size: var(--text-md);
       }
       .strct-file__browse {
         color: var(--acc);
@@ -137,10 +137,10 @@ import { StrctIcon } from '../icon/icon';
         align-items: center;
         gap: 10px;
         padding: 7px 10px;
-        font-size: 13px;
+        font-size: var(--text-md);
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 3px;
+        border-radius: var(--radius-md);
       }
       .strct-file__name {
         flex: 1;
@@ -150,7 +150,7 @@ import { StrctIcon } from '../icon/icon';
         color: var(--t1);
       }
       .strct-file__size {
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t3);
         font-family: var(--mono);
       }
@@ -158,7 +158,7 @@ import { StrctIcon } from '../icon/icon';
         display: inline-flex;
         padding: 3px;
         border: 0;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         background: transparent;
         color: var(--t3);
         cursor: pointer;

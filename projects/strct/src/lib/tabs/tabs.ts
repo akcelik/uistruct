@@ -103,7 +103,7 @@ export class StrctTab {
         border: 0;
         cursor: pointer;
         font-family: var(--font);
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 500;
         color: var(--t2);
         padding: 9px 14px;

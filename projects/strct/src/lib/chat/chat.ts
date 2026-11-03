@@ -276,7 +276,7 @@ export class StrctChatThread {
         border-radius: var(--radius-lg);
         background: var(--bg-2);
         color: var(--t1);
-        font-size: 13px;
+        font-size: var(--text-md);
         line-height: 1.5;
         min-width: 0;
         overflow-wrap: anywhere;
@@ -432,7 +432,7 @@ export class StrctChatMessage {
         resize: none;
         padding: 6px 0;
         font-family: var(--font);
-        font-size: 13px;
+        font-size: var(--text-md);
         line-height: 20px;
         color: var(--t1);
         overflow-y: auto;
@@ -460,7 +460,7 @@ export class StrctChatMessage {
       .strct-composer__stopmark {
         width: 10px;
         height: 10px;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         background: currentColor;
       }
       .strct-composer__send:disabled {

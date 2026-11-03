@@ -143,7 +143,7 @@ export class StrctPageHeaderTitleMeta {}
       }
       .strct-ph__subtitle {
         margin: 6px 0 0;
-        font-size: 13px;
+        font-size: var(--text-md);
         line-height: 1.55;
         color: var(--t2);
         max-width: 72ch;

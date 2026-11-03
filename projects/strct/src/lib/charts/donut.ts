@@ -166,7 +166,7 @@ const round = (n: number): number => Math.round(n * 100) / 100;
         transition: color 0.16s ease;
       }
       .strct-donut__label {
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t2);
         margin-top: 3px;
       }
@@ -187,7 +187,7 @@ const round = (n: number): number => Math.round(n * 100) / 100;
         gap: 8px;
         padding: 3px 6px;
         border-radius: var(--radius-sm);
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t2);
         transition:
           background 0.14s ease,
@@ -203,7 +203,7 @@ const round = (n: number): number => Math.round(n * 100) / 100;
       .strct-donut__swatch {
         width: 9px;
         height: 9px;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         flex-shrink: 0;
       }
       .strct-donut__leg-label {

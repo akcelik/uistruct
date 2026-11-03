@@ -232,14 +232,14 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         width: 22px;
         height: 22px;
         border-radius: 50%;
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         color: var(--t2);
         background: var(--bg-3);
         border: 1px solid var(--b2);
       }
       .strct-wiz__label {
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t2);
       }
       .strct-wiz__step--active .strct-wiz__dot {
@@ -268,9 +268,9 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         min-height: 80px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         color: var(--t2);
-        font-size: 13px;
+        font-size: var(--text-md);
       }
       .strct-wiz__foot {
         display: flex;
@@ -315,7 +315,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
            aside — the aside adds to the total, it never carves the form. */
         grid-template-columns: 232px minmax(var(--strct-wiz-content-min, 864px), 1fr);
         border: 1px solid var(--b2);
-        border-radius: 6px;
+        border-radius: var(--radius-xl);
         background: var(--bg-1);
         overflow: hidden;
       }
@@ -360,7 +360,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       }
       .strct-wiz__ctitle {
         margin: 0;
-        font-size: 16px;
+        font-size: var(--text-xl);
         font-weight: 600;
         letter-spacing: -0.2px;
         color: var(--t1);
@@ -407,7 +407,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       }
       .strct-wiz__pbar {
         height: 4px;
-        border-radius: 99px;
+        border-radius: var(--radius-pill);
         background: var(--bg-a);
         overflow: hidden;
         flex: none;
@@ -415,7 +415,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       .strct-wiz__pbar i {
         display: block;
         height: 100%;
-        border-radius: 99px;
+        border-radius: var(--radius-pill);
         background: var(--acc);
         transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       }
@@ -463,7 +463,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       }
       .strct-wiz__vlabel {
         display: block;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t2);
         transition: color 0.15s;
       }

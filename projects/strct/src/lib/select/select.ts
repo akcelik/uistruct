@@ -149,7 +149,7 @@ let selectCounter = 0;
         padding: 4px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 3px;
+        border-radius: var(--radius-md);
         box-shadow: var(--shh);
       }
       .strct-sel__opt {
@@ -157,9 +157,9 @@ let selectCounter = 0;
         align-items: center;
         gap: 8px;
         padding: 9px 10px;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         cursor: pointer;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
       }
       .strct-sel__opt--highlight {
@@ -185,7 +185,7 @@ let selectCounter = 0;
       }
       .strct-sel__empty {
         padding: 9px 10px;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t3);
       }
     `,

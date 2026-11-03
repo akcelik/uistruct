@@ -245,9 +245,9 @@ let treeNodeCounter = 0;
         align-items: center;
         gap: 6px;
         padding: 4px 9px;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         cursor: pointer;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
         user-select: none;
       }
@@ -347,7 +347,7 @@ let treeNodeCounter = 0;
         align-items: center;
         gap: 6px;
         padding: 4px 9px;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t3);
       }
     `,
@@ -701,8 +701,8 @@ export class StrctTreeNode {
       .strct-tree--comfortable .strct-tnode__row {
         gap: 7px;
         padding: 6px 10px;
-        border-radius: 3px;
-        font-size: 14px;
+        border-radius: var(--radius-md);
+        font-size: var(--text-lg);
       }
       .strct-tree--comfortable .strct-tnode__chevron {
         margin: -4px;

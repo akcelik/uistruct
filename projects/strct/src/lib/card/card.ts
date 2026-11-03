@@ -291,7 +291,7 @@ export class StrctCard {
         gap: var(--space-2);
         padding: var(--strct-card-py, var(--space-3)) var(--strct-card-px, var(--space-4));
         border-bottom: 1px solid var(--b1);
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 600;
         color: var(--t1);
       }
@@ -466,7 +466,7 @@ export class StrctCardHeaderActions {}
         display: block;
         padding: var(--strct-card-pb, var(--space-4)) var(--strct-card-px, var(--space-4));
         color: var(--t2);
-        font-size: 13px;
+        font-size: var(--text-md);
       }
     `,
   ],

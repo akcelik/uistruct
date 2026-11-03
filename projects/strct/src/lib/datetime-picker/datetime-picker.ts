@@ -127,7 +127,7 @@ import {
         flex: none;
         padding: 4px 6px;
         font-family: var(--font);
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
         background: transparent;
         border: 1px solid var(--b2);

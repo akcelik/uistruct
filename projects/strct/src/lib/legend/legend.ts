@@ -203,7 +203,7 @@ export interface StrctLegendItem {
       .strct-legend__swatch--square {
         width: 9px;
         height: 9px;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
       }
       .strct-legend__swatch--dot {
         width: 9px;
@@ -213,7 +213,7 @@ export interface StrctLegendItem {
       .strct-legend__swatch--line {
         width: 14px;
         height: 2px;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
       }
       /* A dashed edge reads as dashed in the key too. */
       .strct-legend__swatch--dash {

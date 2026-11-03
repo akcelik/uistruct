@@ -131,7 +131,7 @@ export class StrctCellDef {
       .strct-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 13px;
+        font-size: var(--text-md);
         border: 1px solid var(--b2);
         border-radius: var(--radius-lg);
         overflow: hidden;
@@ -143,7 +143,7 @@ export class StrctCellDef {
         border-bottom: 1px solid var(--b1);
       }
       .strct-table th {
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.4px;

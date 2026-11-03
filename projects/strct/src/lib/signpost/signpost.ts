@@ -68,17 +68,17 @@ export type StrctSignpostPosition = 'top' | 'bottom' | 'left' | 'right';
         width: max-content;
         max-width: 280px;
         padding: 12px 14px;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         box-shadow: var(--shh);
         animation: strct-sp-in 0.11s ease;
       }
       .strct-sp__panel h4 {
         margin: 0 0 6px;
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 600;
       }
       .strct-sp__panel p {

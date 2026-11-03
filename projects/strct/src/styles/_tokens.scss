@@ -52,6 +52,48 @@
   --z-modal: 1000;
   --z-overlay: 1100;
   --z-toast: 1200;
+
+  /* The scale: type, radius, space, control height and icon size.
+     These are palette- and theme-independent, so they live here rather than
+     being repeated identically in all six palette blocks (FR-67-00). On :root
+     they also resolve when no [data-palette][data-theme] is set, which the
+     literals they replaced used to do on their own, and an app that sets one
+     of them on :root now wins instead of losing to the palette's copy. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  /* One height per size, for every single-line control (see _forms.scss). */
+  --control-h-sm: 26px;
+  --control-h-md: 32px;
+  --control-h-lg: 38px;
+  --control-h: var(--control-h-md);
+  /* The icon that sits in a control of that size (see icon.ts). */
+  --icon-size-sm: 14px;
+  --icon-size-md: 16px;
+  --icon-size-lg: 18px;
+  --icon-size: var(--icon-size-md);
+  /* --radius-xs is the rounding on a 2-4px graphic (a bar cap, a swatch, a
+     tick); --radius-pill is a shape, not a length, and clamps to half the box. */
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-pill: 999px;
+  --text-xs: 12px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-lg: 14px;
+  --text-xl: 16px;
+  --text-2xl: 22px;
+  --text-3xl: 26px;
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-loose: 1.6;
+  --disabled-opacity: 0.5;
 }
 
 [data-palette='arctic'][data-theme='dark'] {
@@ -93,40 +135,9 @@
   --shh: 0 4px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--b2);
   --sb: rgba(255, 255, 255, 0.08);
   --dn: rgba(255, 255, 255, 0.06);
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  /* One height per size, for every single-line control (see _forms.scss). */
-  --control-h-sm: 26px;
-  --control-h-md: 32px;
-  --control-h-lg: 38px;
-  --control-h: var(--control-h-md);
-  /* The icon that sits in a control of that size (see icon.ts). */
-  --icon-size-sm: 14px;
-  --icon-size-md: 16px;
-  --icon-size-lg: 18px;
-  --icon-size: var(--icon-size-md);
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
   --shadow-rest: var(--sh);
   --shadow-elevated: var(--shh);
   --shadow-floating: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--b2);
-  --text-xs: 12px;
-  --text-sm: 12px;
-  --text-md: 13px;
-  --text-lg: 14px;
-  --text-xl: 16px;
-  --text-2xl: 22px;
-  --text-3xl: 26px;
-  --leading-tight: 1.2;
-  --leading-normal: 1.5;
-  --leading-loose: 1.6;
-  --disabled-opacity: 0.5;
 }
 
 [data-palette='arctic'][data-theme='light'] {
@@ -168,40 +179,9 @@
   --shh: 0 4px 14px rgba(0, 0, 0, 0.09), 0 0 0 1px var(--b2);
   --sb: rgba(0, 0, 0, 0.1);
   --dn: rgba(0, 0, 0, 0.04);
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  /* One height per size, for every single-line control (see _forms.scss). */
-  --control-h-sm: 26px;
-  --control-h-md: 32px;
-  --control-h-lg: 38px;
-  --control-h: var(--control-h-md);
-  /* The icon that sits in a control of that size (see icon.ts). */
-  --icon-size-sm: 14px;
-  --icon-size-md: 16px;
-  --icon-size-lg: 18px;
-  --icon-size: var(--icon-size-md);
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
   --shadow-rest: var(--sh);
   --shadow-elevated: var(--shh);
   --shadow-floating: 0 8px 30px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--b2);
-  --text-xs: 12px;
-  --text-sm: 12px;
-  --text-md: 13px;
-  --text-lg: 14px;
-  --text-xl: 16px;
-  --text-2xl: 22px;
-  --text-3xl: 26px;
-  --leading-tight: 1.2;
-  --leading-normal: 1.5;
-  --leading-loose: 1.6;
-  --disabled-opacity: 0.5;
 }
 
 [data-palette='ember'][data-theme='dark'] {
@@ -243,40 +223,9 @@
   --shh: 0 4px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--b2);
   --sb: rgba(255, 235, 210, 0.08);
   --dn: rgba(255, 235, 210, 0.05);
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  /* One height per size, for every single-line control (see _forms.scss). */
-  --control-h-sm: 26px;
-  --control-h-md: 32px;
-  --control-h-lg: 38px;
-  --control-h: var(--control-h-md);
-  /* The icon that sits in a control of that size (see icon.ts). */
-  --icon-size-sm: 14px;
-  --icon-size-md: 16px;
-  --icon-size-lg: 18px;
-  --icon-size: var(--icon-size-md);
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
   --shadow-rest: var(--sh);
   --shadow-elevated: var(--shh);
   --shadow-floating: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--b2);
-  --text-xs: 12px;
-  --text-sm: 12px;
-  --text-md: 13px;
-  --text-lg: 14px;
-  --text-xl: 16px;
-  --text-2xl: 22px;
-  --text-3xl: 26px;
-  --leading-tight: 1.2;
-  --leading-normal: 1.5;
-  --leading-loose: 1.6;
-  --disabled-opacity: 0.5;
 }
 
 [data-palette='ember'][data-theme='light'] {
@@ -318,40 +267,9 @@
   --shh: 0 4px 14px rgba(40, 25, 10, 0.1), 0 0 0 1px var(--b2);
   --sb: rgba(60, 40, 20, 0.1);
   --dn: rgba(60, 40, 20, 0.04);
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  /* One height per size, for every single-line control (see _forms.scss). */
-  --control-h-sm: 26px;
-  --control-h-md: 32px;
-  --control-h-lg: 38px;
-  --control-h: var(--control-h-md);
-  /* The icon that sits in a control of that size (see icon.ts). */
-  --icon-size-sm: 14px;
-  --icon-size-md: 16px;
-  --icon-size-lg: 18px;
-  --icon-size: var(--icon-size-md);
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
   --shadow-rest: var(--sh);
   --shadow-elevated: var(--shh);
   --shadow-floating: 0 8px 30px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--b2);
-  --text-xs: 12px;
-  --text-sm: 12px;
-  --text-md: 13px;
-  --text-lg: 14px;
-  --text-xl: 16px;
-  --text-2xl: 22px;
-  --text-3xl: 26px;
-  --leading-tight: 1.2;
-  --leading-normal: 1.5;
-  --leading-loose: 1.6;
-  --disabled-opacity: 0.5;
 }
 
 [data-palette='sage'][data-theme='dark'] {
@@ -393,40 +311,9 @@
   --shh: 0 4px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--b2);
   --sb: rgba(210, 240, 225, 0.08);
   --dn: rgba(210, 240, 225, 0.05);
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  /* One height per size, for every single-line control (see _forms.scss). */
-  --control-h-sm: 26px;
-  --control-h-md: 32px;
-  --control-h-lg: 38px;
-  --control-h: var(--control-h-md);
-  /* The icon that sits in a control of that size (see icon.ts). */
-  --icon-size-sm: 14px;
-  --icon-size-md: 16px;
-  --icon-size-lg: 18px;
-  --icon-size: var(--icon-size-md);
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
   --shadow-rest: var(--sh);
   --shadow-elevated: var(--shh);
   --shadow-floating: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--b2);
-  --text-xs: 12px;
-  --text-sm: 12px;
-  --text-md: 13px;
-  --text-lg: 14px;
-  --text-xl: 16px;
-  --text-2xl: 22px;
-  --text-3xl: 26px;
-  --leading-tight: 1.2;
-  --leading-normal: 1.5;
-  --leading-loose: 1.6;
-  --disabled-opacity: 0.5;
 }
 
 [data-palette='sage'][data-theme='light'] {
@@ -468,40 +355,9 @@
   --shh: 0 4px 14px rgba(10, 30, 20, 0.1), 0 0 0 1px var(--b2);
   --sb: rgba(20, 60, 40, 0.1);
   --dn: rgba(20, 60, 40, 0.04);
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  /* One height per size, for every single-line control (see _forms.scss). */
-  --control-h-sm: 26px;
-  --control-h-md: 32px;
-  --control-h-lg: 38px;
-  --control-h: var(--control-h-md);
-  /* The icon that sits in a control of that size (see icon.ts). */
-  --icon-size-sm: 14px;
-  --icon-size-md: 16px;
-  --icon-size-lg: 18px;
-  --icon-size: var(--icon-size-md);
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
   --shadow-rest: var(--sh);
   --shadow-elevated: var(--shh);
   --shadow-floating: 0 8px 30px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--b2);
-  --text-xs: 12px;
-  --text-sm: 12px;
-  --text-md: 13px;
-  --text-lg: 14px;
-  --text-xl: 16px;
-  --text-2xl: 22px;
-  --text-3xl: 26px;
-  --leading-tight: 1.2;
-  --leading-normal: 1.5;
-  --leading-loose: 1.6;
-  --disabled-opacity: 0.5;
 }
 
 // A product's own accent, independent of the operator's palette (FR-52-03).

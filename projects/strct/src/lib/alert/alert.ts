@@ -66,7 +66,7 @@ export class StrctAlertActions {}
         display: block;
         padding: var(--space-2) var(--space-3);
         border-radius: var(--radius-lg);
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
         background: var(--bg-1);
         border: 1px solid var(--b2);

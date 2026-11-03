@@ -26,7 +26,7 @@ import {
         margin: 0;
         padding: 0;
         list-style: none;
-        font-size: 13px;
+        font-size: var(--text-md);
       }
       .strct-bc__item:not(:last-child)::after {
         content: '/';

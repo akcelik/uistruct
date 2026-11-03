@@ -143,7 +143,7 @@ export interface StrctTransferItem {
         padding: 10px;
         background: var(--bg-2);
         border: 1px solid var(--b2);
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
       }
       .strct-tf__head {
         display: flex;
@@ -178,7 +178,7 @@ export interface StrctTransferItem {
         display: flex;
         align-items: center;
         padding: 2px 4px;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         color: var(--t1);
         font-size: 12.5px;
       }
@@ -199,7 +199,7 @@ export interface StrctTransferItem {
       }
       .strct-tf__empty {
         padding: 12px 8px;
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t3);
       }
       .strct-tf__mid {

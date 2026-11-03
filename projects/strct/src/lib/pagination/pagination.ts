@@ -65,7 +65,7 @@ type PageToken = number | 'dots';
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t2);
       }
       .strct-pg__btn {
@@ -75,9 +75,9 @@ type PageToken = number | 'dots';
         min-width: 30px;
         height: 30px;
         padding: 0 7px;
-        border-radius: 3px;
+        border-radius: var(--radius-md);
         font-family: var(--font);
-        font-size: 12px;
+        font-size: var(--text-sm);
         cursor: pointer;
         color: var(--t2);
         background: transparent;

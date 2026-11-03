@@ -77,7 +77,7 @@ import { focusFirstIn, keepTabInside, restoreFocus, saveFocusedElement } from '.
         width: max-content;
         max-width: var(--strct-popover-max-w, 320px);
         padding: var(--space-3);
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
         background: var(--bg-1);
         border: 1px solid var(--b2);

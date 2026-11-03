@@ -733,7 +733,7 @@ export class StrctWindowDockItem {}
         border: 1px solid var(--b2);
         border-radius: var(--radius-full, 999px);
         background: var(--bg-1);
-        font-size: 12px;
+        font-size: var(--text-sm);
       }
       .strct-windock__open,
       .strct-windock__close {

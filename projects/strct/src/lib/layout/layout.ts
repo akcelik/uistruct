@@ -389,10 +389,10 @@ export class StrctHeaderAction {
         box-sizing: border-box;
         padding: 9px 10px;
         border: 0;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         background: transparent;
         color: var(--t1);
-        font-size: 13px;
+        font-size: var(--text-md);
         font-family: var(--font);
         text-align: start;
         cursor: pointer;
@@ -455,7 +455,7 @@ export class StrctHeaderAction {
         justify-content: center;
         padding: 4px;
         border: 0;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         background: transparent;
         color: color-mix(in srgb, var(--hdr-fg) 85%, transparent);
         cursor: pointer;
@@ -577,7 +577,7 @@ export class StrctHeader {
         padding: 0 16px;
         background: var(--bg-1);
         border-top: 1px solid var(--b2);
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t2);
       }
     `,

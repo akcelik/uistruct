@@ -195,7 +195,7 @@ let dpUid = 0;
         display: inline-flex;
         padding: 5px;
         border: 0;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         background: transparent;
         color: var(--t2);
         cursor: pointer;
@@ -213,7 +213,7 @@ let dpUid = 0;
         padding: 10px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         box-shadow: var(--shh);
       }
       .strct-dp__head {
@@ -223,7 +223,7 @@ let dpUid = 0;
         margin-bottom: 8px;
       }
       .strct-dp__title {
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 600;
         color: var(--t1);
       }
@@ -231,7 +231,7 @@ let dpUid = 0;
         display: inline-flex;
         padding: 5px;
         border: 0;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         background: transparent;
         color: var(--t2);
         cursor: pointer;
@@ -247,7 +247,7 @@ let dpUid = 0;
       }
       .strct-dp__dow span {
         text-align: center;
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         color: var(--t3);
         padding: 4px 0;
@@ -263,11 +263,11 @@ let dpUid = 0;
         align-items: center;
         justify-content: center;
         border: 0;
-        border-radius: 3px;
+        border-radius: var(--radius-md);
         background: transparent;
         cursor: pointer;
         font-family: var(--font);
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t1);
       }
       .strct-dp__day:hover {

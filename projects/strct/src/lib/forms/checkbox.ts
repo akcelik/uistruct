@@ -67,7 +67,7 @@ let checkboxCounter = 0;
         align-items: center;
         gap: 8px;
         cursor: pointer;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
         user-select: none;
       }
@@ -87,7 +87,7 @@ let checkboxCounter = 0;
         justify-content: center;
         width: 17px;
         height: 17px;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         flex-shrink: 0;
         background: var(--bg-2);
         border: 1px solid var(--b3);
@@ -125,7 +125,7 @@ let checkboxCounter = 0;
         margin: auto;
         width: 9px;
         height: 2px;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         background: var(--inv);
       }
       .strct-cb__native:focus-visible + .strct-cb__box {
