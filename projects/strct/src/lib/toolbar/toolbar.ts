@@ -136,7 +136,7 @@ function isTextEntry(el: HTMLElement | null): boolean {
         border-radius: var(--radius-md);
         background: var(--acc-m);
         color: var(--acc);
-        font-size: 12px;
+        font-size: var(--text-sm);
         white-space: nowrap;
       }
       .strct-tb__clear {

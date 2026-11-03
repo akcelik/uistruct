@@ -61,7 +61,7 @@ export type StrctAvatarStatus = 'none' | 'online' | 'busy' | 'offline';
         background: var(--bg-3);
         color: var(--t1);
         overflow: visible;
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 600;
         user-select: none;
         border: 1px solid var(--b2);
@@ -104,7 +104,7 @@ export type StrctAvatarStatus = 'none' | 'online' | 'busy' | 'offline';
       .strct-av--sm {
         width: 26px;
         height: 26px;
-        font-size: 12px;
+        font-size: var(--text-sm);
       }
       .strct-av--lg {
         width: 48px;

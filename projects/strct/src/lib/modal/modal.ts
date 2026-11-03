@@ -200,7 +200,7 @@ export class StrctModalContent {
         background: color-mix(in srgb, var(--bg-2) 55%, transparent);
       }
       .strct-modal__title {
-        font-size: 14px;
+        font-size: var(--text-lg);
         font-weight: 600;
         color: var(--t1);
       }
@@ -208,7 +208,7 @@ export class StrctModalContent {
         display: inline-flex;
         padding: 4px;
         border: 0;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         background: transparent;
         color: var(--t3);
         cursor: pointer;
@@ -221,7 +221,7 @@ export class StrctModalContent {
         padding: var(--space-4);
         overflow-y: auto;
         color: var(--t2);
-        font-size: 13px;
+        font-size: var(--text-md);
       }
       /* Chromeless: the hosted content (a flush vertical wizard) IS the
          dialog — no head, no body inset, no footer. Keep cancelable on the

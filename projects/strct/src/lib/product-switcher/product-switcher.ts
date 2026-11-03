@@ -244,7 +244,7 @@ export interface StrctProductItem {
         background: transparent;
         color: inherit;
         font: inherit;
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 600;
         cursor: pointer;
       }

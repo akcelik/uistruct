@@ -226,7 +226,7 @@ export class StrctNav {}
         justify-content: center;
         width: 34px;
         height: 34px;
-        border-radius: 3px;
+        border-radius: var(--radius-md);
         cursor: pointer;
         color: var(--t2);
         transition:

@@ -5,6 +5,68 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.5.0] - 2026-11-03
+
+The first of the four stages in
+[FR-67](docs/feature-requests/visual-language-2026-11.md), and the one that
+moves no pixels. The census behind that report found the library had a token
+scale that almost nothing consulted: **190 literal `font-size` declarations
+against 75 that went through a token, and 108 literal `border-radius` against
+87**. The literals were not the token values either — `font-size` appeared as
+10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 15, 16, 17 and 18px, four of them
+half-pixels and eight of them sizes the scale does not have. So the finding was
+not that the scale was too narrow. It was that there was no scale in force, and
+retuning one nobody reads would have changed nothing.
+
+### Added
+
+- **`scripts/token-scale.mjs`**, wired into CI beside `check-docs`. It fails the
+  build when a library stylesheet writes a literal `font-size` or
+  `border-radius`, and it fails when its own exception list promises more
+  literals than a file still has, so the list can only shrink. The 52 sizes
+  still listed are the ones the scale cannot yet express; they are the worklist
+  for the next stage, which retunes the scale and can then round them onto it.
+- **`--radius-xs: 1px`** — the rounding on a 2–4px graphic: a bar cap, a legend
+  swatch, a checkbox tick, a splitter grip. Written out 20 times before it had
+  a name.
+- **`--radius-pill: 999px`** — a shape rather than a length. It replaces the
+  `99px` and `999px` spellings that were used interchangeably at nine sites;
+  both clamp to half the box, and every one of those boxes is a chip, a badge
+  or a 4px progress bar, so the two spellings rendered identically.
+
+### Changed
+
+- **249 literal sizes became the tokens that already held their values**, across
+  82 files: 140 `font-size` (12 → `--text-sm`, 13 → `--text-md`,
+  14 → `--text-lg`, 16 → `--text-xl`) and 109 `border-radius` including the
+  four logical longhands in `datagrid.css`.
+- **The scale moved to `:root`.** `--text-*`, `--radius-*`, `--space-*`,
+  `--control-h-*`, `--icon-size-*`, `--leading-*` and `--disabled-opacity` were
+  declared identically in all six `[data-palette][data-theme]` blocks — 174
+  duplicated declarations, byte-for-byte equal. They are palette- and
+  theme-independent, so they now live once on `:root`, where the next stage can
+  retune them in one place. Two consequences worth stating: the tokens now
+  resolve even when no `[data-palette][data-theme]` is set, which the literals
+  they replaced used to do on their own; and an app that sets one of them on
+  `:root` now wins, where before the palette's copy beat it on specificity.
+
+### Verified
+
+- `scripts/visual-regression.mjs` passes against all 38 committed baselines
+  **without re-baselining a single one**. That was the whole point of shipping
+  this separately: if a literal had not been equal to the token that replaced
+  it, a baseline would have moved. None did.
+- `scripts/a11y-smoke.mjs`, `scripts/grid-layout.mjs` (13 checks) and
+  `scripts/control-height.mjs` (162 boxes) pass unchanged, as do 1 299 specs.
+- `datagrid.css` grew 285 source bytes (29 732 → 30 017) because
+  `var(--radius-lg)` is longer than `4px`; built, it is 18.41kB against the
+  20kB `anyComponentStyle` error budget, so the budget is untouched.
+
+### Nothing is deprecated
+
+No public API changed and no component's appearance changed. The visual changes
+FR-67 asks for are stages 2 to 4 and land in 7.0.0 and 7.1.0.
+
 ## [6.4.1] - 2026-11-03
 
 ### Fixed

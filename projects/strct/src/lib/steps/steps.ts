@@ -134,7 +134,7 @@ export class StrctStepAction {}
         gap: 6px;
         padding: 4px 10px;
         border: 1px solid var(--b2);
-        border-radius: 999px;
+        border-radius: var(--radius-pill);
         font-size: var(--text-sm);
         color: var(--t2);
         background: var(--bg-1);

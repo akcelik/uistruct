@@ -198,7 +198,7 @@ export type StrctDrawerSize = 'sm' | 'md' | 'lg';
         display: inline-flex;
         padding: 4px;
         border: 0;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         background: transparent;
         color: var(--t3);
         cursor: pointer;
@@ -215,7 +215,7 @@ export type StrctDrawerSize = 'sm' | 'md' | 'lg';
         min-height: 0;
         overflow-y: auto;
         padding: 16px 18px;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
       }
       .strct-drawer__foot {

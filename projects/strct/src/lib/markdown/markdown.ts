@@ -317,7 +317,7 @@ export class StrctMarkdownToken {
       .strct-md {
         display: block;
         color: var(--t1);
-        font-size: 13px;
+        font-size: var(--text-md);
         line-height: 1.55;
       }
       .strct-md__p {
@@ -328,7 +328,7 @@ export class StrctMarkdownToken {
       }
       .strct-md__h {
         margin: var(--space-3) 0 var(--space-2);
-        font-size: 14px;
+        font-size: var(--text-lg);
         font-weight: 600;
         color: var(--t1);
       }

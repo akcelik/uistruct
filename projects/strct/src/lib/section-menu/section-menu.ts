@@ -197,10 +197,10 @@ export interface StrctMenuSection {
         width: 100%;
         padding: 7px 9px;
         border: 0;
-        border-radius: 3px;
+        border-radius: var(--radius-md);
         background: transparent;
         color: var(--t2);
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 500;
         font-family: var(--font);
         cursor: pointer;
@@ -239,7 +239,7 @@ export interface StrctMenuSection {
       }
       .strct-sm__cat-static {
         padding: 11px 10px 5px;
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -261,10 +261,10 @@ export interface StrctMenuSection {
         text-decoration: none;
         padding: 7px 10px;
         border: 0;
-        border-radius: 3px;
+        border-radius: var(--radius-md);
         background: transparent;
         color: var(--t1);
-        font-size: 13px;
+        font-size: var(--text-md);
         font-family: var(--font);
         cursor: pointer;
         text-align: start;
@@ -313,10 +313,10 @@ export interface StrctMenuSection {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         line-height: 1;
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         font-variant-numeric: tabular-nums;
       }
       .strct-sm__badge--accent {

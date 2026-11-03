@@ -211,7 +211,7 @@ function isTyping(event: KeyboardEvent): boolean {
         display: inline-flex;
         padding: 4px;
         border: 0;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         background: transparent;
         color: var(--t3);
         cursor: pointer;

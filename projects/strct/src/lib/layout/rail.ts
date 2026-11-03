@@ -216,7 +216,7 @@ export interface StrctRailItem {
         box-sizing: border-box;
         padding: 8px 10px;
         border: 0;
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         background: transparent;
         color: var(--t2);
         cursor: pointer;
@@ -268,10 +268,10 @@ export interface StrctRailItem {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         line-height: 1;
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         font-variant-numeric: tabular-nums;
       }
       .strct-rail__badge--dot {

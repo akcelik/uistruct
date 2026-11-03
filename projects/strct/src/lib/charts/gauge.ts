@@ -105,12 +105,12 @@ const COLOR: Record<StrctChartStatus, string> = {
         line-height: 1;
       }
       .strct-gauge__pct {
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t2);
         margin-inline-start: 1px;
       }
       .strct-gauge__label {
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t2);
         margin-top: 3px;
       }

@@ -26,6 +26,12 @@ jobs:
       # 6.0.1 found `StrctContextMenu` still listed after 6.0 removed it.
       - name: Assert the docs describe the library that ships
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-docs.mjs
+      # A component stylesheet may not invent a size. FR-67 counted 190 literal
+      # font-sizes against 75 token references — the scale existed and nothing
+      # consulted it. The gate holds what 6.5.0 converted and lets the list of
+      # sizes the scale cannot yet express only shrink.
+      - name: Assert every size comes from the scale
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/token-scale.mjs
 
   test:
     runs-on: ubuntu-latest

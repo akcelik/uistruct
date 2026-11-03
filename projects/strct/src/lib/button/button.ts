@@ -72,7 +72,7 @@ export type StrctButtonSize = StrctControlSize | 'mini';
         justify-content: center;
         gap: var(--space-1);
         font-family: var(--font);
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 500;
         line-height: 1;
         /* The height is the token, not the sum of the padding and whatever
@@ -212,14 +212,14 @@ export type StrctButtonSize = StrctControlSize | 'mini';
         --control-h: var(--control-h-sm);
         --icon-size: var(--icon-size-sm);
         padding: 0 var(--space-3);
-        font-size: 12px;
+        font-size: var(--text-sm);
         border-radius: var(--radius-sm);
       }
       .strct-btn--lg {
         --control-h: var(--control-h-lg);
         --icon-size: var(--icon-size-lg);
         padding: 0 var(--space-5);
-        font-size: 14px;
+        font-size: var(--text-lg);
       }
       /* mini is the button's own: a 22px chip for a toolbar's corner, below
          the shared scale on purpose. It keeps its own height. */
@@ -228,7 +228,7 @@ export type StrctButtonSize = StrctControlSize | 'mini';
         --icon-size: var(--icon-size-sm);
         height: auto;
         padding: 2px var(--space-2);
-        font-size: 12px;
+        font-size: var(--text-sm);
         border-radius: var(--radius-sm);
       }
       .strct-btn--block {

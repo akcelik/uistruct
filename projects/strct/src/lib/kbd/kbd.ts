@@ -16,7 +16,7 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
         display: inline-flex;
       }
       .strct-kbd__key {
-        font-size: 12px;
+        font-size: var(--text-sm);
         line-height: 1;
         padding: 3px 6px;
         border: 1px solid var(--b2);

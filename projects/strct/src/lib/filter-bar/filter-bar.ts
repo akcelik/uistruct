@@ -88,10 +88,10 @@ export interface StrctFilterChip {
         gap: 5px;
         padding: 3px 4px 3px 9px;
         border: 1px solid var(--b2);
-        border-radius: 99px;
+        border-radius: var(--radius-pill);
         background: var(--acc-m);
         color: var(--acc);
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 500;
       }
       .strct-fb__chip-x {
@@ -117,11 +117,11 @@ export interface StrctFilterChip {
       .strct-fb__clear {
         border: 0;
         padding: 3px 6px;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         background: transparent;
         color: var(--t3);
         font-family: var(--font);
-        font-size: 12px;
+        font-size: var(--text-sm);
         cursor: pointer;
       }
       .strct-fb__clear:hover {
@@ -136,7 +136,7 @@ export interface StrctFilterChip {
         flex: 1;
       }
       .strct-fb__count {
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t3);
         font-variant-numeric: tabular-nums;
         white-space: nowrap;

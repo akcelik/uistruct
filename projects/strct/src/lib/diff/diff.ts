@@ -239,7 +239,7 @@ export function strctComputeDiff(before: string, after: string): StrctDiffRow[] 
       .strct-diff {
         display: block;
         border: 1px solid var(--b2);
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         background: var(--bg-2);
         overflow: hidden;
       }
@@ -262,7 +262,7 @@ export function strctComputeDiff(before: string, after: string): StrctDiffRow[] 
         text-transform: uppercase;
         color: var(--t3);
         border: 1px solid var(--b2);
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         padding: 2px 6px;
       }
       .strct-diff__stat {
@@ -300,7 +300,7 @@ export function strctComputeDiff(before: string, after: string): StrctDiffRow[] 
         width: 100%;
         border-collapse: collapse;
         font-family: var(--mono);
-        font-size: 12px;
+        font-size: var(--text-sm);
         line-height: 1.55;
       }
       .strct-diff__no {

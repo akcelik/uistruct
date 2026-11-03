@@ -171,7 +171,7 @@ import { StrctTree, StrctTreeNodeData } from '../tree/tree';
       }
       .strct-tsel__empty {
         padding: 9px 10px;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t3);
       }
     `,

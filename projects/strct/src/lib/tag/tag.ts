@@ -96,8 +96,8 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
         gap: 5px;
         padding-block: 3px;
         padding-inline: 9px 4px;
-        border-radius: 2px;
-        font-size: 12px;
+        border-radius: var(--radius-sm);
+        font-size: var(--text-sm);
         font-weight: 500;
         color: var(--t1);
         background: var(--bg-3);
@@ -147,7 +147,7 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
       }
       .strct-tag--interactive .strct-tag__text {
         cursor: pointer;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
       }
       .strct-tag--interactive:hover {
         border-color: var(--b3);
@@ -168,7 +168,7 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
         padding-inline-end: 10px;
       }
       .strct-tag--pill .strct-tag__remove {
-        border-radius: 999px;
+        border-radius: var(--radius-pill);
       }
       .strct-tag--mono {
         font-family: var(--mono);
@@ -177,7 +177,7 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
         display: inline-flex;
         padding: 2px;
         border: 0;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         background: transparent;
         color: currentColor;
         opacity: 0.65;

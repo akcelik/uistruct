@@ -86,13 +86,13 @@ export class StrctTimeline {}
         padding-bottom: 18px;
       }
       .strct-tli__title {
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 600;
         color: var(--t1);
       }
       .strct-tli__body {
         margin-top: 3px;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t2);
       }
 

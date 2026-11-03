@@ -87,9 +87,9 @@ import { focusFirstIn } from '../overlay/focus';
         align-items: center;
         gap: 8px;
         padding: 7px 8px 7px 10px;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         cursor: default;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
       }
       .strct-submenu__trigger:hover {

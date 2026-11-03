@@ -149,7 +149,7 @@ const MAX_BADGE = 99;
         inset-inline-end: -5px;
         min-width: 15px;
         padding: 1px 4px;
-        border-radius: 99px;
+        border-radius: var(--radius-pill);
         background: var(--critical);
         color: var(--inv);
         font-size: 10px;
@@ -181,7 +181,7 @@ const MAX_BADGE = 99;
         border-bottom: 1px solid var(--b1);
       }
       .strct-nc__title {
-        font-size: 13px;
+        font-size: var(--text-md);
         font-weight: 600;
         color: var(--t1);
         margin-inline-end: auto;
@@ -191,7 +191,7 @@ const MAX_BADGE = 99;
         background: transparent;
         padding: 2px 4px;
         border-radius: var(--radius-sm);
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--acc);
         cursor: pointer;
         white-space: nowrap;
@@ -220,7 +220,7 @@ const MAX_BADGE = 99;
         border: 0;
         background: transparent;
         text-align: start;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t2);
         cursor: pointer;
         border-radius: var(--radius-sm);
@@ -261,7 +261,7 @@ const MAX_BADGE = 99;
         margin-inline-start: var(--space-2);
       }
       .strct-nc__time {
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t3);
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
@@ -274,7 +274,7 @@ const MAX_BADGE = 99;
       }
       .strct-nc__empty {
         padding: var(--space-4) var(--space-3);
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t3);
         text-align: center;
       }

@@ -110,7 +110,7 @@ import {
       .strct-split__grip {
         width: 1.5px;
         height: 26px;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         background: var(--b2);
       }
       .strct-split--vertical .strct-split__grip {

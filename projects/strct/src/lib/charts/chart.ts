@@ -681,7 +681,7 @@ interface SeriesRender {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t3);
       }
       .strct-chart__grid {
@@ -749,11 +749,11 @@ interface SeriesRender {
         top: 0;
         transform: translateX(-50%);
         pointer-events: none;
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         background: var(--bg-1);
         padding: 0 3px;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         white-space: nowrap;
       }
 
@@ -778,11 +778,11 @@ interface SeriesRender {
         gap: 5px;
         padding: 2px 9px;
         border: 1px solid var(--b2);
-        border-radius: 99px;
+        border-radius: var(--radius-pill);
         background: var(--bg-a);
         color: var(--t2);
         font-family: var(--font);
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         cursor: pointer;
       }
@@ -799,7 +799,7 @@ interface SeriesRender {
         top: 6px;
       }
       .strct-chart__tip-ann {
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
       }
 
@@ -824,7 +824,7 @@ interface SeriesRender {
         transform: translateY(-50%);
         pointer-events: none;
         font-family: var(--mono);
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t3);
         font-variant-numeric: tabular-nums;
       }
@@ -833,12 +833,12 @@ interface SeriesRender {
         right: 2px;
         transform: translateY(-50%);
         pointer-events: none;
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         font-variant-numeric: tabular-nums;
         background: var(--bg-1);
         padding: 0 3px;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
       }
       .strct-chart__axis-y {
         position: absolute;
@@ -850,7 +850,7 @@ interface SeriesRender {
         background: var(--bg-a);
         border: 1px solid var(--b2);
         font-family: var(--mono);
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         color: var(--t2);
         font-variant-numeric: tabular-nums;
@@ -867,7 +867,7 @@ interface SeriesRender {
         flex-wrap: wrap;
         gap: 6px 14px;
         margin-bottom: 8px;
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t2);
       }
       .strct-chart__leg {
@@ -878,7 +878,7 @@ interface SeriesRender {
       .strct-chart__leg-sw {
         width: 9px;
         height: 3px;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         flex-shrink: 0;
       }
 
@@ -904,7 +904,7 @@ interface SeriesRender {
         gap: 3px;
       }
       .strct-chart__tip-v {
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 700;
         color: var(--t1);
         font-variant-numeric: tabular-nums;
@@ -915,7 +915,7 @@ interface SeriesRender {
         gap: 5px;
       }
       .strct-chart__tip-delta {
-        font-size: 12px;
+        font-size: var(--text-sm);
         font-weight: 600;
         color: var(--t3);
         font-variant-numeric: tabular-nums;
@@ -927,19 +927,19 @@ interface SeriesRender {
         color: var(--critical);
       }
       .strct-chart__tip-l {
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t3);
       }
       .strct-chart__tip-row {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        font-size: 12px;
+        font-size: var(--text-sm);
       }
       .strct-chart__tip-sw {
         width: 8px;
         height: 3px;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         flex-shrink: 0;
       }
       .strct-chart__tip-rl {
@@ -956,7 +956,7 @@ interface SeriesRender {
         position: relative;
         height: 15px;
         margin-top: 6px;
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t3);
       }
       .strct-chart__labels span {

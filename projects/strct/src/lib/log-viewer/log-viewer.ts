@@ -151,7 +151,7 @@ const NON_SGR_CSI_RE = /\u001b\[[0-9;]*[A-LN-Za-ln-z]/g;
       .strct-lv {
         display: block;
         border: 1px solid var(--b2);
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         background: var(--bg-2);
         overflow: hidden;
       }
@@ -198,7 +198,7 @@ const NON_SGR_CSI_RE = /\u001b\[[0-9;]*[A-LN-Za-ln-z]/g;
         line-height: var(--strct-lv-line-height, 20px);
         padding-inline: 10px;
         font-family: var(--mono);
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t1);
         white-space: pre;
       }

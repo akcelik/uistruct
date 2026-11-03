@@ -31,7 +31,7 @@ import {
         gap: 12px;
         width: 100%;
         color: var(--t3);
-        font-size: 12px;
+        font-size: var(--text-sm);
         text-transform: uppercase;
         letter-spacing: 0.5px;
       }

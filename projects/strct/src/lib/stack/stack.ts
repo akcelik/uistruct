@@ -12,7 +12,7 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation, input } from '@a
       .strct-stack {
         display: block;
         border: 1px solid var(--b2);
-        border-radius: 4px;
+        border-radius: var(--radius-lg);
         overflow: hidden;
       }
       .strct-stack__list {
@@ -53,7 +53,7 @@ export class StrctStack {}
         gap: 12px;
         padding: 10px 14px;
         border-bottom: 1px solid var(--b1);
-        font-size: 13px;
+        font-size: var(--text-md);
       }
       .strct-stack__item:last-child {
         border-bottom: 0;

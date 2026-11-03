@@ -244,7 +244,7 @@ let comboboxCounter = 0;
         min-width: 60px;
         padding: 2px 0;
         font: inherit;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
         background: none;
         border: none;
@@ -256,7 +256,7 @@ let comboboxCounter = 0;
         gap: 4px;
         max-width: 100%;
         padding: 2px 4px 2px 8px;
-        font-size: 12px;
+        font-size: var(--text-sm);
         color: var(--t1);
         background: var(--bg-3);
         border: 1px solid var(--b2);
@@ -269,7 +269,7 @@ let comboboxCounter = 0;
         color: var(--t3);
         background: none;
         border: none;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         cursor: pointer;
       }
       .strct-cbx__chip-x:hover {
@@ -287,7 +287,7 @@ let comboboxCounter = 0;
         color: var(--t3);
         background: none;
         border: none;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         cursor: pointer;
       }
       .strct-cbx__clear:hover {
@@ -310,7 +310,7 @@ let comboboxCounter = 0;
         padding: 4px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 3px;
+        border-radius: var(--radius-md);
         box-shadow: var(--shh);
       }
       .strct-cbx__group {
@@ -326,9 +326,9 @@ let comboboxCounter = 0;
         align-items: center;
         gap: 8px;
         padding: 9px 10px;
-        border-radius: 2px;
+        border-radius: var(--radius-sm);
         cursor: pointer;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
       }
       .strct-cbx__opt--highlight {
@@ -413,7 +413,7 @@ let comboboxCounter = 0;
       }
       .strct-cbx__empty {
         padding: 9px 10px;
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t3);
       }
     `,

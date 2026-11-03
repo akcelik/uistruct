@@ -64,7 +64,7 @@ import { StrctField } from '../forms/field';
         padding: 5px 8px;
         background: var(--bg-2);
         border: 1px solid var(--b2);
-        border-radius: 3px;
+        border-radius: var(--radius-md);
         cursor: text;
         transition:
           border-color 0.14s ease,
@@ -82,7 +82,7 @@ import { StrctField } from '../forms/field';
         outline: none;
         background: transparent;
         font-family: var(--font);
-        font-size: 13px;
+        font-size: var(--text-md);
         color: var(--t1);
         padding: 3px 2px;
       }
