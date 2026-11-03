@@ -83,6 +83,12 @@
   --radius-lg: 10px;
   --radius-xl: 14px;
   --radius-pill: 999px;
+  /* The pen a data line is drawn with. Two steps, because three numbers
+     within 0.25px of each other are not a scale: a chart's line and the
+     smaller line of a sparkline or a flow edge. The grid behind them stays
+     at 1px, which is a rule and not a reading. */
+  --data-stroke: 1.75;
+  --data-stroke-sm: 1.5;
   --text-xs: 11px;
   --text-sm: 12px;
   --text-md: 13px;

@@ -53,7 +53,7 @@ const STROKE: Record<StrctChartStatus, string> = {
         line-height: 0;
       }
       .strct-spark__line {
-        stroke-width: 1.6;
+        stroke-width: var(--data-stroke-sm);
         vector-effect: non-scaling-stroke;
         stroke-linejoin: round;
         stroke-linecap: round;
