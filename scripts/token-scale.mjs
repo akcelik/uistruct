@@ -182,7 +182,8 @@ for (let i = 1; i < radius.length; i++) {
     );
 }
 
-/** The surface ramp has to separate without a line drawn on it. */
+/** The surface ramp has to separate without a line drawn on it, and the text
+    has to stay readable on every surface the ramp moves. */
 const srgbToLinear = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
 function luminance(hex) {
   const [r, g, b] = [1, 3, 5].map((i) => srgbToLinear(parseInt(hex.slice(i, i + 2), 16) / 255));
@@ -192,6 +193,24 @@ function contrast(a, b) {
   const [x, y] = [luminance(a) + 0.05, luminance(b) + 0.05];
   return Math.max(x, y) / Math.min(x, y);
 }
+/** An rgba text token painted over an opaque surface. */
+function composite(css, surface) {
+  const m = css.match(/rgba?\(\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\s*\)/);
+  if (!m) return null;
+  const a = Number(m[4] ?? 1);
+  const fg = [1, 2, 3].map((i) => Number(m[i]));
+  const bg = [1, 3, 5].map((i) => parseInt(surface.slice(i, i + 2), 16));
+  return fg.map((v, i) => v * a + bg[i] * (1 - a));
+}
+function contrastRgb(a, b) {
+  const lum = (rgb) => {
+    const [r, g, bl] = rgb.map((v) => srgbToLinear(v / 255));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+  };
+  const [x, y] = [lum(a) + 0.05, lum(b) + 0.05];
+  return Math.max(x, y) / Math.min(x, y);
+}
+
 const RAMP = [
   ['--bg-1', '--bg-2', 1.1, 'a fill on a surface'],
   ['--bg-2', '--bg-3', 1.07, 'a deeper fill on a fill'],
@@ -212,6 +231,27 @@ for (const [, palette, theme, body] of tokens.matchAll(
           `${what} has to read without a border`,
       );
   }
+
+  // Text on every surface it can land on. Nothing guarded this before 7.1.1:
+  // 7.0.0 deepened --bg-3 and had to darken --t3 to keep AA, and it was a
+  // hand calculation that noticed, not a gate.
+  const rgba = (name) => body.match(new RegExp(`^\\s*${name}: (rgba?\\([^;]+\\));`, 'm'))?.[1];
+  for (const t of ['--t1', '--t2', '--t3']) {
+    for (const s of ['--bg-0', '--bg-1', '--bg-2', '--bg-3']) {
+      const [fg, surface] = [rgba(t), hex(s)];
+      if (!fg || !surface) continue;
+      const painted = composite(fg, surface);
+      if (!painted) continue;
+      const got = contrastRgb(
+        painted,
+        [1, 3, 5].map((i) => parseInt(surface.slice(i, i + 2), 16)),
+      );
+      if (got < 4.5)
+        problems.push(
+          `${palette}/${theme}: ${t} on ${s} is ${got.toFixed(3)}:1, under the 4.5:1 AA floor`,
+        );
+    }
+  }
 }
 
 for (const line of stale) console.log(`  stale  ${line}`);
@@ -229,6 +269,7 @@ if (stale.length) {
 }
 console.log(
   `✓ ${SCALE.length} scale tokens on :root, declared once, each step a step; ` +
+    `the ramp separates and text clears AA on it in all six palettes; ` +
     (literals === 0
       ? 'every size in the library comes from the scale.'
       : `${literals} literal size${literals === 1 ? '' : 's'} left, all of them listed.`),

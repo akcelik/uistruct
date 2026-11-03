@@ -5,6 +5,40 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.1.1] - 2026-11-03
+
+No library code changed. Two gates that were quietly narrower than they looked
+now cover what they claim to.
+
+### Changed
+
+- **`scripts/weight-ladder.mjs` runs in all six palettes, from two**, and got
+  faster doing it: 28 checks to **115**, 90s to **12s**. It used to load five
+  pages per palette; it now loads each page once and applies the six schemes to
+  the loaded page. Everything FR-67 asserts about Arctic — a filled primary, a
+  field that reads as a recess, severity on surface, a card that groups by
+  tone, a list that aligns — is now asserted about Ember and Sage too, in both
+  themes. Reverting `alert.ts` to 6.5.0 fails 12 of the 115, two per palette.
+- **The gate checks its own instrument first.** Six schemes applied to one
+  loaded page is fast, and a fast green is worth distrusting: if the attribute
+  swap ever stopped working, all 114 checks would pass six times over on one
+  palette and say nothing. The first check now asserts that the six schemes
+  produce six different `--acc` / `--bg-1` pairs.
+- **`scripts/token-scale.mjs` asserts text contrast**, for `--t1`, `--t2` and
+  `--t3` on `--bg-0` … `--bg-3`, in all six palettes — 72 pairings against the
+  4.5:1 AA floor. All 72 pass today, the worst at 4.710:1 (Arctic dark, `--t3`
+  on `--bg-3`), so this found no defect. It closes a hole in the process
+  instead: 7.0.0 deepened `--bg-3`, which would have pushed muted text to
+  4.44–4.51:1, and the thing that noticed was a hand calculation. Lightening
+  Arctic's `--t3` from 0.57 to 0.47 now fails the build with four named
+  pairings.
+
+### Not changed
+
+The visual baselines, every component, and every public name. `npm test`,
+`lint`, `check-docs`, `a11y-smoke`, `grid-layout`, `control-height` and
+`visual-regression` pass untouched.
+
 ## [7.1.0] - 2026-11-03
 
 The last stage of [FR-67](docs/feature-requests/visual-language-2026-11.md),
