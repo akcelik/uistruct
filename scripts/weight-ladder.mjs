@@ -21,6 +21,11 @@
  *             the same one, however wide each row's leading marker is.
  *             Before 7.1 three titles began at x 395, 401 and 375.
  *
+ * Every check runs in all six palettes. Before 7.1.1 it ran in two, which is
+ * how a palette could have drifted without anything saying so: the pages are
+ * loaded once each and the six schemes are applied to the loaded page, so six
+ * palettes cost barely more than two did.
+ *
  * jsdom has no layout and no computed colour, so this is the only place the
  * claims can be checked. Exits non-zero naming each one that failed.
  */
@@ -166,10 +171,15 @@ const PAINTED = `((el) => { let n = el.parentElement;
     if (b && !/, ?0\\)$/.test(b) && b !== 'transparent') return b; n = n.parentElement; }
   return getComputedStyle(document.body).backgroundColor; })`;
 
-const THEMES = [
+const PALETTES = [
   ['arctic', 'light'],
   ['arctic', 'dark'],
+  ['ember', 'light'],
+  ['ember', 'dark'],
+  ['sage', 'light'],
+  ['sage', 'dark'],
 ];
+
 const problems = [];
 let checks = 0;
 const check = (ok, line) => {
@@ -193,45 +203,70 @@ try {
     mobile: false,
   });
 
-  for (const [palette, theme] of THEMES) {
-    const open = async (route, ready) => {
-      await send('Page.navigate', { url: `http://127.0.0.1:${PORT}${route}` });
-      for (let i = 0; i < 120; i++) {
-        if (await evaluate(send, `!!document.querySelector(${JSON.stringify(ready)})`)) break;
-        await sleep(200);
-      }
+  /** Load a route once; the palettes are then applied to the loaded page. */
+  const open = async (route, ready) => {
+    await send('Page.navigate', { url: `http://127.0.0.1:${PORT}${route}` });
+    for (let i = 0; i < 120; i++) {
+      if (await evaluate(send, `!!document.querySelector(${JSON.stringify(ready)})`)) break;
+      await sleep(200);
+    }
+    await sleep(400);
+  };
+  const wear = async (palette, theme) => {
+    await evaluate(
+      send,
+      `document.documentElement.setAttribute('data-palette', ${JSON.stringify(palette)}),
+       document.documentElement.setAttribute('data-theme', ${JSON.stringify(theme)})`,
+    );
+    await sleep(220);
+  };
+
+  // ── the harness checks itself first ────────────────────────────────────
+  // Applying six schemes to one loaded page is fast, and a fast green is
+  // worth distrusting: if the attribute swap stopped working, every check
+  // below would pass six times over on one palette and say nothing.
+  await open('/components/button', '.doc__examples .strct-btn');
+  const seen = new Map();
+  for (const [palette, theme] of PALETTES) {
+    await wear(palette, theme);
+    seen.set(
+      `${palette}/${theme}`,
       await evaluate(
         send,
-        `document.documentElement.setAttribute('data-palette', ${JSON.stringify(palette)}),
-         document.documentElement.setAttribute('data-theme', ${JSON.stringify(theme)})`,
-      );
-      await sleep(400);
-    };
-    const where = `${palette}/${theme}`;
-
-    // ── actions ──────────────────────────────────────────────────────────
-    await open('/components/button', '.doc__examples .strct-btn');
-    const actions = await evaluate(
-      send,
-      `(() => {
-        const row = document.querySelector('.doc__examples');
-        const pick = (sel) => row.querySelector(sel);
-        const read = (el) => el && {
-          bg: getComputedStyle(el).backgroundColor,
-          border: getComputedStyle(el).borderTopColor,
-          weight: getComputedStyle(el).fontWeight,
-        };
-        return {
-          surface: ${PAINTED}(row.querySelector('.strct-btn')),
-          primary: read(pick('.strct-btn--primary')),
-          critical: read(pick('.strct-btn--critical')),
-          outline: read(pick('.strct-btn--outline')),
-          flat: read(pick('.strct-btn--flat')),
-          disabled: read(pick('.strct-btn:disabled')),
-          neutral: read(pick('.strct-btn:not([class*="strct-btn--"])')),
-        };
-      })()`,
+        `getComputedStyle(document.documentElement).getPropertyValue('--acc').trim() + ' ' +
+         getComputedStyle(document.documentElement).getPropertyValue('--bg-1').trim()`,
+      ),
     );
+  }
+  check(
+    new Set(seen.values()).size === PALETTES.length,
+    `the six schemes did not produce six different palettes — ` +
+      [...seen].map(([k, v]) => `${k} ${v}`).join(', '),
+  );
+
+  // ── actions ────────────────────────────────────────────────────────────
+  const READ_ACTIONS = `(() => {
+    const row = document.querySelector('.doc__examples');
+    const pick = (sel) => row.querySelector(sel);
+    const read = (el) => el && {
+      bg: getComputedStyle(el).backgroundColor,
+      border: getComputedStyle(el).borderTopColor,
+      weight: getComputedStyle(el).fontWeight,
+    };
+    return {
+      surface: ${PAINTED}(row.querySelector('.strct-btn')),
+      primary: read(pick('.strct-btn--primary')),
+      critical: read(pick('.strct-btn--critical')),
+      outline: read(pick('.strct-btn--outline')),
+      flat: read(pick('.strct-btn--flat')),
+      disabled: read(pick('.strct-btn:disabled')),
+      neutral: read(pick('.strct-btn:not([class*="strct-btn--"])')),
+    };
+  })()`;
+  for (const [palette, theme] of PALETTES) {
+    await wear(palette, theme);
+    const where = `${palette}/${theme}`;
+    const actions = await evaluate(send, READ_ACTIONS);
     for (const name of ['primary', 'critical']) {
       const v = actions[name];
       check(v && opaque(v.bg), `${where}: a ${name} action is not filled (background ${v?.bg})`);
@@ -260,24 +295,24 @@ try {
           `neutral's is ${loud.toFixed(3)}:1 — the disabled one has to be the quieter`,
       );
     }
+  }
 
-    // ── field ────────────────────────────────────────────────────────────
-    await open('/components/input', '.doc__examples .strct-control');
-    const field = await evaluate(
-      send,
-      `(async () => {
-        const el = document.querySelector('.doc__examples .strct-control:not(:disabled)');
-        const surface = ${PAINTED}(el);
-        const rest = { bg: getComputedStyle(el).backgroundColor, border: getComputedStyle(el).borderTopColor };
-        el.focus();
-        await new Promise((r) => setTimeout(r, 300));
-        const focused = { border: getComputedStyle(el).borderTopColor };
-        el.blur();
-        return { rest, focused, surface,
-                 accent: getComputedStyle(document.documentElement).getPropertyValue('--acc').trim() };
-      })()`,
-      true,
-    );
+  // ── field ──────────────────────────────────────────────────────────────
+  await open('/components/input', '.doc__examples .strct-control');
+  const READ_FIELD = `(async () => {
+    const el = document.querySelector('.doc__examples .strct-control:not(:disabled)');
+    const surface = ${PAINTED}(el);
+    const rest = { bg: getComputedStyle(el).backgroundColor, border: getComputedStyle(el).borderTopColor };
+    el.focus();
+    await new Promise((r) => setTimeout(r, 300));
+    const focused = { border: getComputedStyle(el).borderTopColor };
+    el.blur();
+    return { rest, focused, surface };
+  })()`;
+  for (const [palette, theme] of PALETTES) {
+    await wear(palette, theme);
+    const where = `${palette}/${theme}`;
+    const field = await evaluate(send, READ_FIELD, true);
     check(
       !opaque(field.rest.border),
       `${where}: a field still draws a border at rest (${field.rest.border}) — it should read as a recess`,
@@ -291,20 +326,22 @@ try {
       field.focused.border !== field.rest.border && opaque(field.focused.border),
       `${where}: focus does not give the field an edge back (${field.focused.border})`,
     );
+  }
 
-    // ── severity ─────────────────────────────────────────────────────────
-    await open('/components/alert', '.doc__examples .strct-alert');
-    const alerts = await evaluate(
-      send,
-      `(() => {
-        const read = (sel) => { const el = document.querySelector('.doc__examples ' + sel);
-          return el && { bg: getComputedStyle(el).backgroundColor, rail: getComputedStyle(el).borderInlineStartWidth }; };
-        return { info: read('.strct-alert:not([class*="--"])') ?? read('.strct-alert--info'),
-                 success: read('.strct-alert--success'),
-                 warning: read('.strct-alert--warning'),
-                 critical: read('.strct-alert--critical') };
-      })()`,
-    );
+  // ── severity ───────────────────────────────────────────────────────────
+  await open('/components/alert', '.doc__examples .strct-alert');
+  const READ_ALERTS = `(() => {
+    const read = (sel) => { const el = document.querySelector('.doc__examples ' + sel);
+      return el && { bg: getComputedStyle(el).backgroundColor, rail: getComputedStyle(el).borderInlineStartWidth }; };
+    return { info: read('.strct-alert:not([class*="--"])') ?? read('.strct-alert--info'),
+             success: read('.strct-alert--success'),
+             warning: read('.strct-alert--warning'),
+             critical: read('.strct-alert--critical') };
+  })()`;
+  for (const [palette, theme] of PALETTES) {
+    await wear(palette, theme);
+    const where = `${palette}/${theme}`;
+    const alerts = await evaluate(send, READ_ALERTS);
     const tones = Object.entries(alerts).filter(([, v]) => v);
     const surfaces = new Set(tones.map(([, v]) => v.bg));
     check(
@@ -316,30 +353,54 @@ try {
       rail('warning') > rail('info') && rail('critical') > rail('warning'),
       `${where}: the rails do not step with severity (info ${alerts.info?.rail}, warning ${alerts.warning?.rail}, critical ${alerts.critical?.rail})`,
     );
+  }
 
-    // ── list ─────────────────────────────────────────────────────────────
-    await open('/components/list', '.doc__examples .strct-li');
-    const spreads = await evaluate(
-      send,
-      `(() => {
-        const out = [];
-        for (const list of document.querySelectorAll('.doc__examples .strct-list')) {
-          const titles = [...list.querySelectorAll('.strct-li__title')];
-          const leads = [...list.querySelectorAll('.strct-li__leading')].filter((e) => e.textContent.trim());
-          // Only a list whose leading words differ in LENGTH can show the
-          // defect. Their rendered widths cannot be the filter: once the fix
-          // is in they share a track, so the test would stop testing.
-          if (titles.length < 2 || leads.length < 2) continue;
-          const words = new Set(leads.map((e) => e.textContent.trim().length));
-          if (words.size < 2) continue;
-          const x = (els) => els.map((e) => Math.round(e.getBoundingClientRect().left));
-          const metas = [...list.querySelectorAll('.strct-li__meta')].filter((e) => e.textContent.trim());
-          const spread = (v) => (v.length ? Math.max(...v) - Math.min(...v) : 0);
-          out.push({ rows: titles.length, titles: spread(x(titles)), metas: spread(x(metas).map((n, i, a) => n)) });
-        }
-        return out;
-      })()`,
+  // ── card ───────────────────────────────────────────────────────────────
+  await open('/components/card', '.doc__examples .strct-card');
+  const READ_CARD = `(() => {
+    const card = document.querySelector('.doc__examples .strct-card');
+    const sides = ['Top', 'Right', 'Bottom', 'Left'];
+    const drawn = (el) => { const s = getComputedStyle(el);
+      return sides.filter((d) => s['border' + d + 'Width'] !== '0px'
+        && s['border' + d + 'Style'] !== 'none'
+        && !/, 0\\)$/.test(s['border' + d + 'Color'])).length; };
+    let total = drawn(card);
+    for (const el of card.querySelectorAll('.strct-card__header, .strct-card__block, .strct-card__footer')) total += drawn(el);
+    return total;
+  })()`;
+  for (const [palette, theme] of PALETTES) {
+    await wear(palette, theme);
+    const edges = await evaluate(send, READ_CARD);
+    check(
+      edges <= 4,
+      `${palette}/${theme}: a composed card draws ${edges} border edges — a card groups by tone, not by a second fence`,
     );
+  }
+
+  // ── list ───────────────────────────────────────────────────────────────
+  await open('/components/list', '.doc__examples .strct-li');
+  const READ_LISTS = `(() => {
+    const out = [];
+    for (const list of document.querySelectorAll('.doc__examples .strct-list')) {
+      const titles = [...list.querySelectorAll('.strct-li__title')];
+      const leads = [...list.querySelectorAll('.strct-li__leading')].filter((e) => e.textContent.trim());
+      // Only a list whose leading words differ in LENGTH can show the defect.
+      // Their rendered widths cannot be the filter: once the fix is in they
+      // share a track, so the test would stop testing.
+      if (titles.length < 2 || leads.length < 2) continue;
+      const words = new Set(leads.map((e) => e.textContent.trim().length));
+      if (words.size < 2) continue;
+      const x = (els) => els.map((e) => Math.round(e.getBoundingClientRect().left));
+      const metas = [...list.querySelectorAll('.strct-li__meta')].filter((e) => e.textContent.trim());
+      const spread = (v) => (v.length ? Math.max(...v) - Math.min(...v) : 0);
+      out.push({ rows: titles.length, titles: spread(x(titles)), metas: spread(x(metas)) });
+    }
+    return out;
+  })()`;
+  for (const [palette, theme] of PALETTES) {
+    await wear(palette, theme);
+    const where = `${palette}/${theme}`;
+    const spreads = await evaluate(send, READ_LISTS);
     check(
       spreads.length > 0,
       `${where}: no list on the page has leading markers of differing width, so the alignment cannot be read`,
@@ -351,27 +412,6 @@ try {
       );
       check(metas === 0, `${where}: a ${rows}-row list's metas start ${metas}px apart`);
     }
-
-    // ── card ─────────────────────────────────────────────────────────────
-    await open('/components/card', '.doc__examples .strct-card');
-    const edges = await evaluate(
-      send,
-      `(() => {
-        const card = document.querySelector('.doc__examples .strct-card');
-        const sides = ['Top', 'Right', 'Bottom', 'Left'];
-        const drawn = (el) => { const s = getComputedStyle(el);
-          return sides.filter((d) => s['border' + d + 'Width'] !== '0px'
-            && s['border' + d + 'Style'] !== 'none'
-            && !/, 0\\)$/.test(s['border' + d + 'Color'])).length; };
-        let total = drawn(card);
-        for (const el of card.querySelectorAll('.strct-card__header, .strct-card__block, .strct-card__footer')) total += drawn(el);
-        return total;
-      })()`,
-    );
-    check(
-      edges <= 4,
-      `${where}: a composed card draws ${edges} border edges — a card groups by tone, not by a second fence`,
-    );
   }
 } finally {
   chrome.kill();
@@ -385,6 +425,6 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `✓ ${checks} checks: weight carries rank, a field is a recess, severity rides on surface, ` +
-    `a card groups by tone, a list aligns down its columns.`,
+  `✓ ${checks} checks in ${PALETTES.length} palettes: weight carries rank, a field is a recess, ` +
+    `severity rides on surface, a card groups by tone, a list aligns down its columns.`,
 );
