@@ -5,6 +5,41 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.2.1] - 2026-11-03
+
+**7.2.0 did not finish what it claimed.** It said every icon in the library is
+drawn at 1.40px. Five were not.
+
+### Fixed
+
+- **`datagrid.html` kept five `[strokeWidth]` overrides** — 1.6 and 1.7 on the
+  grid's chevrons — so 19 rendered icons on the datagrid page were still off
+  the pen. The grid is the one component whose template lives in its own
+  `.html` file, and both 7.2.0's cleanup and the source gate it shipped walked
+  only `.ts`, `.css` and `.scss`. Neither could see it.
+- **The rendered check could not see it either**, because it reads
+  `/foundations/controls` and the grid is not on that page. It reads
+  `/components/datagrid` as well now: **606 icons checked, up from 138.**
+- **`scripts/token-scale.mjs` walks `.html`.** Restoring one override fails
+  both gates — the source one naming `datagrid/datagrid.html`, the rendered
+  one reporting `1.40px×195, 1.70px×7`.
+
+### A note on how this was missed
+
+7.2.0's own gates passed, and the claim in its changelog was still wrong. Two
+instruments agreed with each other because they shared an assumption — that a
+component's markup lives in its `.ts` file — and nothing in the release
+questioned it. What found it was going back to the measurement that started
+the work: re-running the census and asking why the datagrid still showed two
+stroke widths.
+
+The visual suite did not see this one either: seven 12–13px chevrons moving
+0.3px is far under the 0.5% page threshold. That is the same blind spot the
+`icon-pen` baseline was added for, and the answer here is the rendered gate
+rather than a third clipped baseline — a check that counts every glyph on two
+routes is a better instrument for a thin-and-everywhere change than a picture
+of one row.
+
 ## [7.2.0] - 2026-11-03
 
 [FR-68-01](docs/feature-requests/icon-pen.md): one pen for the glyph. This is
@@ -22,7 +57,7 @@ pen was left behind.
   the most common — was drawn at **1.30, 1.40 and 1.50px on the same screens**,
   and the painted width ran from 1.10px at 11px to 2.28px at 26px. The glyph's
   shapes now carry `vector-effect: non-scaling-stroke`, so the number is the
-  painted thickness, and every icon in the library is drawn at **1.40px**.
+  painted thickness, and every icon is drawn at **1.40px** — except five in `datagrid.html`, which 7.2.0 missed and 7.2.1 finished.
 - **The 50 call-site overrides are gone**, along with 23 more in the showcase.
   The component's docstring already said "keep strokes at 1.3–1.5 for
   crispness" and 24 of the 50 were outside that range; the rule now holds by

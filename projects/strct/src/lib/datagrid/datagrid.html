@@ -331,7 +331,7 @@
                       class="strct-dg__groupchev"
                       [class.strct-dg__groupchev--open]="!grp.collapsed"
                     >
-                      <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
+                      <strct-icon name="chevronRight" [size]="12" />
                     </span>
                     @if (groupHeaderDef(); as tpl) {
                       <!-- The consumer draws the row; the button, its
@@ -421,7 +421,7 @@
                       [attr.aria-label]="L().openDetail"
                       (click)="openDetail(row)"
                     >
-                      <strct-icon name="chevronDoubleRight" [size]="13" [strokeWidth]="1.6" />
+                      <strct-icon name="chevronDoubleRight" [size]="13" />
                     </button>
                   </td>
                 }
@@ -440,7 +440,7 @@
                       [attr.aria-label]="L().toggleDetail"
                       (click)="toggleExpand(row)"
                     >
-                      <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
+                      <strct-icon name="chevronRight" [size]="12" />
                     </button>
                   </td>
                 }
@@ -513,7 +513,7 @@
                           [attr.aria-label]="L().toggleChildren"
                           (click)="toggleTreeRow(row)"
                         >
-                          <strct-icon name="chevronRight" [size]="12" [strokeWidth]="1.7" />
+                          <strct-icon name="chevronRight" [size]="12" />
                         </button>
                       } @else {
                         <span
@@ -592,7 +592,6 @@
                         class="strct-dg__editpencil"
                         name="pencil"
                         [size]="12"
-                        [strokeWidth]="1.6"
                         aria-hidden="true"
                       />
                     }
