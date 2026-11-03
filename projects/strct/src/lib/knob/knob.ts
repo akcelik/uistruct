@@ -128,7 +128,7 @@ const COLOR: Record<StrctKnobStatus, string> = {
         pointer-events: none;
       }
       .strct-knob__num {
-        font-size: 18px;
+        font-size: var(--text-xl);
         font-weight: 600;
         color: var(--t1);
         line-height: 1;

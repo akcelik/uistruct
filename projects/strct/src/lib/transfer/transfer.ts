@@ -151,12 +151,12 @@ export interface StrctTransferItem {
         gap: 8px;
       }
       .strct-tf__title {
-        font-size: 12.5px;
+        font-size: var(--text-md);
         font-weight: 600;
         color: var(--t1);
       }
       .strct-tf__count {
-        font-size: 11px;
+        font-size: var(--text-xs);
         color: var(--t3);
         font-variant-numeric: tabular-nums;
       }
@@ -180,7 +180,7 @@ export interface StrctTransferItem {
         padding: 2px 4px;
         border-radius: var(--radius-sm);
         color: var(--t1);
-        font-size: 12.5px;
+        font-size: var(--text-md);
       }
       .strct-tf__item strct-icon {
         margin-inline-end: 6px;

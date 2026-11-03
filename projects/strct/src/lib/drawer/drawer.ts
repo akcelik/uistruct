@@ -190,7 +190,7 @@ export type StrctDrawerSize = 'sm' | 'md' | 'lg';
         flex-shrink: 0;
       }
       .strct-drawer__title {
-        font-size: 15px;
+        font-size: var(--text-lg);
         font-weight: 600;
         color: var(--t1);
       }

@@ -165,7 +165,7 @@ import { StrctIcon } from '../icon/icon';
         background: transparent;
         color: var(--t1);
         font-family: var(--font);
-        font-size: 12.5px;
+        font-size: var(--text-md);
         outline: none;
       }
       .strct-sb__input::placeholder {
@@ -175,7 +175,7 @@ import { StrctIcon } from '../icon/icon';
       .strct-sb__kbd {
         flex-shrink: 0;
         font-family: var(--mono);
-        font-size: 10px;
+        font-size: var(--text-xs);
         line-height: 1;
         padding: 3px 5px;
         border: 1px solid var(--strct-sb-kbd-border, var(--b2));

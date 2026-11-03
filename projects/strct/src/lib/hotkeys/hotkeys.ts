@@ -188,7 +188,7 @@ function isTyping(event: KeyboardEvent): boolean {
         padding: 16px 18px;
         background: var(--bg-1);
         border: 1px solid var(--b2);
-        border-radius: 5px;
+        border-radius: var(--radius-md);
         box-shadow: var(--shh);
       }
       .strct-hkh__head {
@@ -198,7 +198,7 @@ function isTyping(event: KeyboardEvent): boolean {
         margin-bottom: 10px;
       }
       .strct-hkh__title {
-        font-size: 13.5px;
+        font-size: var(--text-md);
         font-weight: 650;
         color: var(--t1);
       }
@@ -224,7 +224,7 @@ function isTyping(event: KeyboardEvent): boolean {
         margin-bottom: 12px;
       }
       .strct-hkh__groupname {
-        font-size: 10.5px;
+        font-size: var(--text-xs);
         font-weight: 600;
         letter-spacing: 0.7px;
         text-transform: uppercase;
@@ -239,7 +239,7 @@ function isTyping(event: KeyboardEvent): boolean {
         padding: 4px 0;
       }
       .strct-hkh__desc {
-        font-size: 12.5px;
+        font-size: var(--text-md);
         color: var(--t1);
       }
       .strct-hkh__keys {
@@ -247,7 +247,7 @@ function isTyping(event: KeyboardEvent): boolean {
         gap: 4px;
       }
       .strct-hkh__empty {
-        font-size: 12.5px;
+        font-size: var(--text-md);
         color: var(--t3);
       }
     `,

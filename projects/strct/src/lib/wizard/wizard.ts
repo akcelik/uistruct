@@ -368,7 +368,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       }
       .strct-wiz__clede {
         margin: 2px 0 0;
-        font-size: 12.5px;
+        font-size: var(--text-md);
         color: var(--t3);
         /* The band height is a layout guarantee — a long lede truncates
            instead of growing the band out of alignment. */
@@ -399,7 +399,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
         padding-top: 18px;
       }
       .strct-wiz__vtitle {
-        font-size: 15px;
+        font-size: var(--text-lg);
         font-weight: 600;
         letter-spacing: -0.2px;
         line-height: 1.3;
@@ -421,7 +421,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       }
       .strct-wiz__pcount {
         font-family: var(--mono);
-        font-size: 10.5px;
+        font-size: var(--text-xs);
         letter-spacing: 0.4px;
         color: var(--t3);
         margin: 7px 0 14px;
@@ -469,7 +469,7 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       }
       .strct-wiz__vdesc {
         display: block;
-        font-size: 11px;
+        font-size: var(--text-xs);
         color: var(--t3);
         margin-top: 1px;
         opacity: 0;

@@ -151,7 +151,7 @@ export interface StrctMenubarItem {
         background: transparent;
         color: var(--t1);
         font-family: var(--font);
-        font-size: 12.5px;
+        font-size: var(--text-md);
         cursor: pointer;
         white-space: nowrap;
       }
@@ -191,7 +191,7 @@ export interface StrctMenubarItem {
         background: transparent;
         color: var(--t1);
         font-family: var(--font);
-        font-size: 12.5px;
+        font-size: var(--text-md);
         text-align: start;
         cursor: pointer;
         white-space: nowrap;

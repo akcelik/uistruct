@@ -163,12 +163,12 @@ const NON_SGR_CSI_RE = /\u001b\[[0-9;]*[A-LN-Za-ln-z]/g;
         border-bottom: 1px solid var(--b1);
       }
       .strct-lv__title {
-        font-size: 12.5px;
+        font-size: var(--text-md);
         font-weight: 600;
         color: var(--t1);
       }
       .strct-lv__count {
-        font-size: 11px;
+        font-size: var(--text-xs);
         color: var(--t3);
         font-variant-numeric: tabular-nums;
       }
@@ -239,7 +239,7 @@ const NON_SGR_CSI_RE = /\u001b\[[0-9;]*[A-LN-Za-ln-z]/g;
       }
       .strct-lv__empty {
         padding: 14px 12px;
-        font-size: 12.5px;
+        font-size: var(--text-md);
         color: var(--t3);
       }
       /* ANSI palette — semantic tokens first, chart hues for the rest. */

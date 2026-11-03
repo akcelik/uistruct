@@ -97,7 +97,7 @@ const VARIANTS: Record<StrctEmptyVariant, { icon: string; tone: string }> = {
         justify-content: center;
         width: 56px;
         height: 56px;
-        border-radius: 7px;
+        border-radius: var(--radius-lg);
         margin-bottom: 2px;
       }
       .strct-empty__icon--neutral {

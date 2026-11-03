@@ -76,7 +76,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         height: 46px;
         text-align: center;
         font-family: var(--mono);
-        font-size: 18px;
+        font-size: var(--text-xl);
         color: var(--t1);
         background: var(--bg-2);
         border: 1px solid var(--b2);

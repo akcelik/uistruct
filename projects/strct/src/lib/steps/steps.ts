@@ -169,7 +169,7 @@ export class StrctStepAction {}
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        font-size: 11px;
+        font-size: var(--text-xs);
         font-weight: 600;
         background: var(--bg-3);
         color: var(--t2);

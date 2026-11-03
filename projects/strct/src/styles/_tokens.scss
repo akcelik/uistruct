@@ -77,19 +77,19 @@
   --icon-size: var(--icon-size-md);
   /* --radius-xs is the rounding on a 2-4px graphic (a bar cap, a swatch, a
      tick); --radius-pill is a shape, not a length, and clamps to half the box. */
-  --radius-xs: 1px;
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
   --radius-pill: 999px;
-  --text-xs: 12px;
+  --text-xs: 11px;
   --text-sm: 12px;
   --text-md: 13px;
-  --text-lg: 14px;
-  --text-xl: 16px;
+  --text-lg: 15px;
+  --text-xl: 18px;
   --text-2xl: 22px;
-  --text-3xl: 26px;
+  --text-3xl: 28px;
   --leading-tight: 1.2;
   --leading-normal: 1.5;
   --leading-loose: 1.6;
@@ -97,7 +97,7 @@
 }
 
 [data-palette='arctic'][data-theme='dark'] {
-  --bg-0: #0e1015;
+  --bg-0: #0c0e12;
   /* Categorical data palette (FR-CHART-15): fixed slot order per palette
      (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade
      chroma. Validator-passed per surface — see docs/chart-palette.md. */
@@ -110,7 +110,7 @@
   --chart-7: #9085e9;
   --chart-8: #e66767;
   --bg-1: #1c2028;
-  --bg-2: #161920;
+  --bg-2: #14161d;
   --bg-3: #23282f;
   --bg-h: #272c35;
   --bg-a: #2e343e;
@@ -141,7 +141,7 @@
 }
 
 [data-palette='arctic'][data-theme='light'] {
-  --bg-0: #f3f4f6;
+  --bg-0: #ebecee;
   /* Categorical data palette (FR-CHART-15): fixed slot order per palette
      (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade
      chroma. Validator-passed per surface — see docs/chart-palette.md. */
@@ -154,16 +154,16 @@
   --chart-7: #4a3aa7;
   --chart-8: #e34948;
   --bg-1: #ffffff;
-  --bg-2: #f4f6f8;
-  --bg-3: #eef0f3;
-  --bg-h: #f0f1f4;
-  --bg-a: #e6e8ec;
+  --bg-2: #f0f2f4;
+  --bg-3: #e5e7ea;
+  --bg-h: #dedfe2;
+  --bg-a: #d4d6d9;
   --b1: rgba(0, 0, 0, 0.05);
   --b2: rgba(0, 0, 0, 0.09);
   --b3: rgba(0, 0, 0, 0.15);
   --t1: rgba(0, 0, 0, 0.9);
   --t2: rgba(0, 0, 0, 0.62);
-  --t3: rgba(0, 0, 0, 0.55);
+  --t3: rgba(0, 0, 0, 0.57);
   --t4: rgba(0, 0, 0, 0.14);
   --inv: #ffffff;
   --acc: #4a6b8f;
@@ -185,7 +185,7 @@
 }
 
 [data-palette='ember'][data-theme='dark'] {
-  --bg-0: #12100d;
+  --bg-0: #0d0b09;
   /* Categorical data palette (FR-CHART-15): fixed slot order per palette
      (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade
      chroma. Validator-passed per surface — see docs/chart-palette.md. */
@@ -198,7 +198,7 @@
   --chart-7: #9085e9;
   --chart-8: #e66767;
   --bg-1: #211e1a;
-  --bg-2: #1a1714;
+  --bg-2: #171411;
   --bg-3: #2a2621;
   --bg-h: #302b25;
   --bg-a: #37312a;
@@ -229,7 +229,7 @@
 }
 
 [data-palette='ember'][data-theme='light'] {
-  --bg-0: #f5f2ee;
+  --bg-0: #eeebe7;
   /* Categorical data palette (FR-CHART-15): fixed slot order per palette
      (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade
      chroma. Validator-passed per surface — see docs/chart-palette.md. */
@@ -242,16 +242,16 @@
   --chart-7: #4a3aa7;
   --chart-8: #e34948;
   --bg-1: #fffefc;
-  --bg-2: #f5f2ed;
-  --bg-3: #f0ece7;
-  --bg-h: #eee9e3;
-  --bg-a: #e5e0d8;
+  --bg-2: #f4f1ec;
+  --bg-3: #e9e5e0;
+  --bg-h: #e3ded8;
+  --bg-a: #d9d4cd;
   --b1: rgba(80, 50, 20, 0.06);
   --b2: rgba(80, 50, 20, 0.1);
   --b3: rgba(80, 50, 20, 0.16);
   --t1: rgba(50, 35, 20, 0.9);
   --t2: rgba(60, 40, 20, 0.74);
-  --t3: rgba(70, 50, 30, 0.715);
+  --t3: rgba(70, 50, 30, 0.765);
   --t4: rgba(80, 55, 30, 0.14);
   --inv: #fdfcfa;
   --acc: #7d5e3f;
@@ -273,7 +273,7 @@
 }
 
 [data-palette='sage'][data-theme='dark'] {
-  --bg-0: #0d1210;
+  --bg-0: #0a0e0d;
   /* Categorical data palette (FR-CHART-15): fixed slot order per palette
      (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade
      chroma. Validator-passed per surface — see docs/chart-palette.md. */
@@ -286,7 +286,7 @@
   --chart-7: #9085e9;
   --chart-8: #e66767;
   --bg-1: #1a211e;
-  --bg-2: #141a17;
+  --bg-2: #121714;
   --bg-3: #222a26;
   --bg-h: #283530;
   --bg-a: #2f3b36;
@@ -317,7 +317,7 @@
 }
 
 [data-palette='sage'][data-theme='light'] {
-  --bg-0: #f2f5f3;
+  --bg-0: #eaecea;
   /* Categorical data palette (FR-CHART-15): fixed slot order per palette
      (the CVD-safety mechanism), slot 1 tracks the accent hue at data-grade
      chroma. Validator-passed per surface — see docs/chart-palette.md. */
@@ -330,16 +330,16 @@
   --chart-7: #4a3aa7;
   --chart-8: #e34948;
   --bg-1: #fdfffe;
-  --bg-2: #f1f5f2;
-  --bg-3: #eaf0ec;
-  --bg-h: #e8eeea;
-  --bg-a: #dfe6e1;
+  --bg-2: #eff3f0;
+  --bg-3: #e2e8e4;
+  --bg-h: #dbe0dc;
+  --bg-a: #d0d7d2;
   --b1: rgba(20, 60, 40, 0.06);
   --b2: rgba(20, 60, 40, 0.1);
   --b3: rgba(20, 60, 40, 0.16);
   --t1: rgba(18, 45, 30, 0.9);
   --t2: rgba(25, 55, 38, 0.76);
-  --t3: rgba(30, 60, 42, 0.71);
+  --t3: rgba(30, 60, 42, 0.76);
   --t4: rgba(35, 65, 45, 0.14);
   --inv: #fafcfb;
   --acc: #3f7355;
@@ -389,6 +389,63 @@
   --acc50: color-mix(in srgb, var(--acc) 50%, transparent);
   --acc30: color-mix(in srgb, var(--acc) 30%, transparent);
   --acc18: color-mix(in srgb, var(--acc) 18%, transparent);
+}
+
+// The 6.x look, for one major. An app that pinned its screens to the old
+// scale sets [data-visual='6'] on the same element that carries
+// [data-palette][data-theme] and gets 6.5.0's type, radius and surfaces back.
+// It restores tokens only: the component weight changes of 7.0.0 (a filled
+// primary, a field that reads as a recess, severity on surface, a card that
+// groups by tone) are not reverted by it, and the list grid of 7.1.0 will not
+// be either. --t3 is deliberately not restored — 7.0.0 darkened it so muted
+// text clears 4.6:1 on every light surface, and the shim does not undo an
+// accessibility fix. Removed in 8.0.0; see docs/migration-7.md.
+[data-visual='6'] {
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --text-xs: 12px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-lg: 14px;
+  --text-xl: 16px;
+  --text-2xl: 22px;
+  --text-3xl: 26px;
+}
+[data-palette='arctic'][data-theme='dark'][data-visual='6'] {
+  --bg-0: #0e1015;
+  --bg-2: #161920;
+}
+[data-palette='arctic'][data-theme='light'][data-visual='6'] {
+  --bg-0: #f3f4f6;
+  --bg-2: #f4f6f8;
+  --bg-3: #eef0f3;
+  --bg-h: #f0f1f4;
+  --bg-a: #e6e8ec;
+}
+[data-palette='ember'][data-theme='dark'][data-visual='6'] {
+  --bg-0: #12100d;
+  --bg-2: #1a1714;
+}
+[data-palette='ember'][data-theme='light'][data-visual='6'] {
+  --bg-0: #f5f2ee;
+  --bg-2: #f5f2ed;
+  --bg-3: #f0ece7;
+  --bg-h: #eee9e3;
+  --bg-a: #e5e0d8;
+}
+[data-palette='sage'][data-theme='dark'][data-visual='6'] {
+  --bg-0: #0d1210;
+  --bg-2: #141a17;
+}
+[data-palette='sage'][data-theme='light'][data-visual='6'] {
+  --bg-0: #f2f5f3;
+  --bg-2: #f1f5f2;
+  --bg-3: #eaf0ec;
+  --bg-h: #e8eeea;
+  --bg-a: #dfe6e1;
 }
 
 // Honour the OS "increase contrast" preference (low-vision users / bright ambient

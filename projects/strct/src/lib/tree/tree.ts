@@ -329,7 +329,7 @@ let treeNodeCounter = 0;
         flex-shrink: 0;
       }
       .strct-tnode__meta {
-        font-size: 11px;
+        font-size: var(--text-xs);
         color: var(--t3);
         font-variant-numeric: tabular-nums;
       }
@@ -674,7 +674,7 @@ export class StrctTreeNode {
         pointer-events: none;
         max-inline-size: 260px;
         padding: 5px 8px;
-        font-size: 11px;
+        font-size: var(--text-xs);
         font-weight: 500;
         line-height: 1.4;
         color: var(--t1);

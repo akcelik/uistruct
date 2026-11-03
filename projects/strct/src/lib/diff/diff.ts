@@ -251,13 +251,13 @@ export function strctComputeDiff(before: string, after: string): StrctDiffRow[] 
         border-bottom: 1px solid var(--b1);
       }
       .strct-diff__title {
-        font-size: 12.5px;
+        font-size: var(--text-md);
         font-weight: 600;
         color: var(--t1);
       }
       .strct-diff__lang {
         font-family: var(--mono);
-        font-size: 10px;
+        font-size: var(--text-xs);
         letter-spacing: 0.6px;
         text-transform: uppercase;
         color: var(--t3);
@@ -267,7 +267,7 @@ export function strctComputeDiff(before: string, after: string): StrctDiffRow[] 
       }
       .strct-diff__stat {
         font-family: var(--mono);
-        font-size: 11px;
+        font-size: var(--text-xs);
         font-weight: 600;
         font-variant-numeric: tabular-nums;
       }
@@ -285,7 +285,7 @@ export function strctComputeDiff(before: string, after: string): StrctDiffRow[] 
         grid-template-columns: 1fr 1fr;
         padding: 4px 10px;
         border-bottom: 1px solid var(--b1);
-        font-size: 11px;
+        font-size: var(--text-xs);
         font-weight: 600;
         color: var(--t3);
       }
@@ -359,7 +359,7 @@ export function strctComputeDiff(before: string, after: string): StrctDiffRow[] 
         background: var(--bg-3);
         color: var(--t3);
         font-family: var(--mono);
-        font-size: 11px;
+        font-size: var(--text-xs);
         cursor: pointer;
       }
       .strct-diff__skip:hover {
