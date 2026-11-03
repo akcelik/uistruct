@@ -511,6 +511,25 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="datagrid-late-rows"
+      owner="datagrid"
+      heading="Rows that arrive after the first draw"
+      description="The ordinary case: the grid is drawn, then its rows come back from a request. A column's width is measured once and kept, so a measurement taken while the grid was empty would be kept too — the selection column would be as wide as its own padding and the radio in it would be cut in half (BUG-66-01). A utility column is never narrower than the affordance it holds, and a measurement taken with no rows is not the one that is kept."
+      code='<strct-datagrid compact singleLine [selection]="&#123; mode: &apos;single&apos; &#125;" [columns]="cols" [rows]="rows()" />'
+    >
+      <div class="dg-wrap" style="max-width: 560px;">
+        <strct-datagrid
+          style="width: 100%;"
+          compact
+          singleLine
+          [selection]="{ enabled: true, mode: 'single' }"
+          [columns]="lateCols"
+          [rows]="lateRows()"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="datagrid-virtual"
       owner="datagrid"
       heading="Virtual scroll — 20.000 rows"
@@ -1313,6 +1332,26 @@ mtu = 9000`;
   }
 
   // Single-line demo: one column carries a deliberately long value.
+  /** BUG-66-01: the rows arrive after the first draw, as they do from a request. */
+  protected readonly lateCols: StrctDatagridColumn[] = [
+    { key: 'name', label: 'Host', width: '260px' },
+    { key: 'cluster', label: 'Cluster', width: '140px' },
+    { key: 'state', label: 'State', width: '120px' },
+  ];
+  protected readonly lateRows = signal<StrctRow[]>([]);
+
+  constructor() {
+    // A request would take a moment; a microtask is the same shape and makes
+    // the demo deterministic for the gate that measures it.
+    queueMicrotask(() =>
+      this.lateRows.set([
+        { name: 'hv-prod-01.dc.internal', cluster: 'prod-a', state: 'Running' },
+        { name: 'hv-prod-04.dc.internal', cluster: 'prod-a', state: 'Running' },
+        { name: 'hv-edge-02.dc.internal', cluster: 'edge', state: 'Maintenance' },
+      ]),
+    );
+  }
+
   /** BUG-65-03: stated widths that come to 1000px in a 520px box. */
   protected readonly wideCols: StrctDatagridColumn[] = [
     { key: 'name', label: 'Host', width: '300px' },

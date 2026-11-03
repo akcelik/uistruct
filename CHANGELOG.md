@@ -5,6 +5,48 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.4.1] - 2026-11-03
+
+### Fixed
+
+- **A selection column measured before its rows arrived stayed that narrow**
+  (BUG-66-01, filed by HyperStruct against 6.4.0 — a regression from the
+  inline `utilWidth` of 6.1.0 and the first-sighting `naturalWidths` of
+  6.4.0). In single-selection mode the `@sel` header holds only an
+  `.strct-sr-only` span, so a grid drawn before its rows came back measured
+  that column's own padding and kept it. Under `table-layout: fixed` that was
+  the whole column. Measured in Chrome on a grid of the reported shape
+  (`compact singleLine`, stated widths, rows set after the first draw):
+
+  |                   | before                | after          |
+  | ----------------- | --------------------- | -------------- |
+  | the `@sel` column | **22px**              | **40px**       |
+  | the radio in it   | **6 of 15px visible** | **15 of 15px** |
+
+  Three changes, as the report asked:
+
+  - **A floor.** `UTIL_W` gained `actions: 44` beside the `sel: 40` and
+    `detail` / `expand: 36` it already held, and a utility column is never
+    drawn narrower than it. `utilTotal` uses the same numbers, so the data
+    columns' shares still add up to the row.
+  - **A measurement taken with no rows is not kept.** The sweep records a
+    column's natural width only while the grid has rows. This also fixes the
+    report's last note: a data column stating no width no longer freezes the
+    width of its header alone, so its share stops ignoring its content.
+  - **The affordance cells no longer elide.** A radio with its browser margin
+    fits its cell but not its content box, so `singleLine` drew a speck of
+    ellipsis beside it; the selection, expand and action cells clip instead.
+
+- `scripts/grid-layout.mjs` grew from 11 checks to 13: it reads the radio
+  against its cell on a demo whose rows arrive after the first draw. Two specs
+  cover the plumbing; both fail on 6.4.0 with the reported 22px.
+
+### Changed
+
+- The `anyComponentStyle` error budget moves from 18 kB to 20 kB.
+  `datagrid.css` is 18.1 kB after this fix, having grown with the layout work
+  of 6.1 through 6.4.
+
 ## [6.4.0] - 2026-11-01
 
 A stated width is the column's share again.

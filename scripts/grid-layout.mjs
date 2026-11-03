@@ -244,6 +244,45 @@ try {
       .join('  '),
   );
 
+  // ── BUG-66-01: a column measured before its rows arrived ─────────────────
+  const late = await evaluate(
+    send,
+    `(() => {
+       const host = document.querySelector('#datagrid-late-rows strct-datagrid');
+       if (!host) return null;
+       const th = host.querySelector('thead th[data-col="@sel"]');
+       const radio = host.querySelector('tbody .strct-dg__sel input, tbody .strct-dg__sel .strct-dg__radio');
+       if (!th || !radio) return { rows: host.querySelectorAll('tbody tr').length };
+       const cell = radio.closest('td');
+       const c = cell.getBoundingClientRect(), r = radio.getBoundingClientRect();
+       return {
+         rows: host.querySelectorAll('tbody tr').length,
+         column: Math.round(c.width),
+         radio: Math.round(r.width),
+         // How much of the radio the cell actually shows.
+         visible: Math.round(Math.max(0, Math.min(c.right, r.right) - Math.max(c.left, r.left))),
+       };
+     })()`,
+  );
+  if (!late || late.column == null)
+    check(
+      'a selection column holds its radio when the rows arrive late',
+      false,
+      `no single-selection grid with late rows on /components/datagrid (rows: ${late?.rows ?? 'none'})`,
+    );
+  else {
+    check(
+      'a selection column holds its radio when the rows arrive late',
+      late.visible >= late.radio,
+      `the radio is ${late.radio}px and ${late.visible}px of it shows, in a ${late.column}px column`,
+    );
+    check(
+      'and that column is never narrower than the affordance in it',
+      late.column >= 40,
+      `${late.column}px against a floor of 40`,
+    );
+  }
+
   // ── BUG-65-01: the toolbar row agrees with itself ────────────────────────
   const toolbar = await evaluate(
     send,
