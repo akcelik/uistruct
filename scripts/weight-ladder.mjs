@@ -1,5 +1,5 @@
 /**
- * Weight carries rank: the four claims of FR-67-04, -05, -06 and -08, read
+ * Weight carries rank: the claims of FR-67-04, -05, -06, -07 and -08, read
  * from the rendered page rather than asserted.
  *
  *   ng build showcase && node scripts/weight-ladder.mjs
@@ -17,6 +17,9 @@
  *   severity  the four alert tones do not share one surface, and the rails
  *             step 3 / 4 / 5px. Before 7.0 all four were --bg-1 behind 3px.
  *   card      a composed card draws four border edges, not eight.
+ *   list      every title in a list starts at the same x and every meta at
+ *             the same one, however wide each row's leading marker is.
+ *             Before 7.1 three titles began at x 395, 401 and 375.
  *
  * jsdom has no layout and no computed colour, so this is the only place the
  * claims can be checked. Exits non-zero naming each one that failed.
@@ -314,6 +317,41 @@ try {
       `${where}: the rails do not step with severity (info ${alerts.info?.rail}, warning ${alerts.warning?.rail}, critical ${alerts.critical?.rail})`,
     );
 
+    // ── list ─────────────────────────────────────────────────────────────
+    await open('/components/list', '.doc__examples .strct-li');
+    const spreads = await evaluate(
+      send,
+      `(() => {
+        const out = [];
+        for (const list of document.querySelectorAll('.doc__examples .strct-list')) {
+          const titles = [...list.querySelectorAll('.strct-li__title')];
+          const leads = [...list.querySelectorAll('.strct-li__leading')].filter((e) => e.textContent.trim());
+          // Only a list whose leading words differ in LENGTH can show the
+          // defect. Their rendered widths cannot be the filter: once the fix
+          // is in they share a track, so the test would stop testing.
+          if (titles.length < 2 || leads.length < 2) continue;
+          const words = new Set(leads.map((e) => e.textContent.trim().length));
+          if (words.size < 2) continue;
+          const x = (els) => els.map((e) => Math.round(e.getBoundingClientRect().left));
+          const metas = [...list.querySelectorAll('.strct-li__meta')].filter((e) => e.textContent.trim());
+          const spread = (v) => (v.length ? Math.max(...v) - Math.min(...v) : 0);
+          out.push({ rows: titles.length, titles: spread(x(titles)), metas: spread(x(metas).map((n, i, a) => n)) });
+        }
+        return out;
+      })()`,
+    );
+    check(
+      spreads.length > 0,
+      `${where}: no list on the page has leading markers of differing width, so the alignment cannot be read`,
+    );
+    for (const { rows, titles, metas } of spreads) {
+      check(
+        titles === 0,
+        `${where}: a ${rows}-row list's titles start ${titles}px apart — a list is a table that hides its header`,
+      );
+      check(metas === 0, `${where}: a ${rows}-row list's metas start ${metas}px apart`);
+    }
+
     // ── card ─────────────────────────────────────────────────────────────
     await open('/components/card', '.doc__examples .strct-card');
     const edges = await evaluate(
@@ -347,5 +385,6 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `✓ ${checks} checks: weight carries rank, a field is a recess, severity rides on surface, a card groups by tone.`,
+  `✓ ${checks} checks: weight carries rank, a field is a recess, severity rides on surface, ` +
+    `a card groups by tone, a list aligns down its columns.`,
 );

@@ -5,6 +5,64 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.1.0] - 2026-11-03
+
+The last stage of [FR-67](docs/feature-requests/visual-language-2026-11.md),
+and the only one that moves layout rather than appearance. No public API
+changed.
+
+### Changed
+
+- **A list aligns down its columns** (FR-67-07). Each row used to lay itself
+  out, so the width of its leading marker decided where its title started.
+  Measured on the List page: three titles began at x **395, 401 and 375** — a
+  26px spread — and their times at **698, 697 and 714**. A list of alarms is a
+  table that hides its header, so `strct-list` is now one grid and the rows and
+  their main areas are **subgrids** of it: one set of axes for the whole list,
+  with the tracks sized from the content of every row rather than stated.
+  After: **0px spread on both**, titles at 401 and metas at 685.
+
+  This is the default, not an opt-in, because the defect was silent — a list
+  whose leading markers happen to be the same width looked fine, which is why
+  it survived this long.
+
+  Three smaller things came with it:
+
+  - **The gap moved from the row into its parts.** A grid charges the gap
+    whether the cell has content or not, so a row with no leading marker would
+    have paid 8px of dead space at its start. The spacing now lives on
+    `.strct-li__leading`, `.strct-li__meta` and `.strct-li__trailing`, which
+    already collapse when empty.
+  - **A meta is right-aligned and set in tabular figures**, so a column of
+    times reads as a column.
+  - **Below a 360px container** the meta still drops to its own line; it does
+    it by taking the second grid row instead of wrapping a flex line.
+
+  `strct-list` requires `grid-template-columns: subgrid`, which has been in
+  Chrome since 117, Safari since 16 and Firefox since 71 — the same baseline as
+  the `container-type` the component already used.
+
+### Added
+
+- **`list-alignment` joins the visual suite**, at 40 baselines from 38. The
+  suite could not see this release: with `list.ts` reverted, every one of the
+  38 existing baselines still matched, because each held either no list or one
+  whose rows carried leading markers of a single width. The new page fails by
+  0.90% of its pixels when the grid is taken away.
+- `scripts/weight-ladder.mjs` grew from 28 checks to 38: for every list on the
+  page whose leading words differ in **length**, the titles' spread and the
+  metas' spread must both be 0px. The filter is deliberately on the text's
+  length and not on the rendered widths — once the fix is in, those widths are
+  equal by construction, so filtering on them would have quietly stopped
+  testing anything. On 7.0.0 the six new checks fail with exactly the 26px and
+  17px from the report.
+
+### Verified
+
+`a11y-smoke` (the list keeps its explicit `role="list"` / `role="listitem"`, so
+the grid does not touch its semantics), `grid-layout`, `control-height`,
+`token-scale`, `check-docs`, lint and 1 299 specs.
+
 ## [7.0.0] - 2026-11-03
 
 Stage 2 of [FR-67](docs/feature-requests/visual-language-2026-11.md): the token

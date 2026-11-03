@@ -78,17 +78,17 @@ const ROUTES = [
   ['badge', '/components/badge', '#badge', undefined, '.doc__examples'],
   // FR-59-08: a topology — columns, edges, icons and a node that can be
   // walked to. The crop is the diagram, so a change to its geometry shows.
-  [
-    'flow-topology',
-    '/components/flow',
-    '#flow-topology',
-    undefined,
-    '#flow-topology strct-flow',
-  ],
+  ['flow-topology', '/components/flow', '#flow-topology', undefined, '#flow-topology strct-flow'],
   // FR-61-01 / FR-61-02: a mode the operator chose, in its own corner of the
   // icon, beside a health badge — at the tree's 16px, where the amber disc it
   // replaces was indistinguishable from "paused".
   ['tree-state', '/components/tree', '#tree-state', undefined, '#tree-state strct-tree'],
+  // FR-67-07: three alarm rows whose leading badges are 'Critical', 'Warning'
+  // and 'Info'. Before 7.1 their titles started at x 395, 401 and 375 and
+  // their times at 698, 697 and 714, and no baseline in this suite could see
+  // it — every page it held either had no list or had one whose rows carried
+  // leading markers of one width.
+  ['list-alignment', '/components/list', '#list', undefined, '#list .strct-list'],
   ['tree', '/components/tree'],
   // What a node says after its label: the quiet meta and the status tag, which
   // have to sit on the row without pushing the label out of it.

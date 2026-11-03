@@ -145,6 +145,28 @@ longer draws a top one. The footer keeps its `--bg-2` fill, which now reads on
 its own. **If you had added your own divider inside a card to compensate for
 these, remove it.**
 
+## 7.1: a list aligns down its columns
+
+`strct-list` became one grid, with the rows and their main areas as subgrids of
+it, so every title in a list starts at the same x and every meta ends at the
+same one however wide each row's leading marker is. Nothing in your templates
+changes.
+
+What to look at:
+
+- **A list of two or three rows whose leading markers differ a lot in width**
+  now reserves the widest of them for all of them. That is the alignment; it is
+  also the one case where a list gets visibly wider in its first column.
+- **If you styled `.strct-li__main` yourself** — a `gap`, a `flex` property, an
+  order — it is a grid now, not a flex row. The row's spacing moved out of
+  `gap` and onto `.strct-li__leading`, `.strct-li__meta` and
+  `.strct-li__trailing`, each of which collapses when empty.
+- **A meta is right-aligned and set in tabular figures.** If you were
+  right-aligning it yourself, you can stop.
+- **`strct-list` needs `grid-template-columns: subgrid`** — Chrome 117, Safari
+  16, Firefox 71. That is the same baseline as the `container-type` the
+  component already relied on, so if the list worked before, it works now.
+
 ## The 6.x flag
 
 Set `data-visual="6"` on the same element that carries `data-palette` and

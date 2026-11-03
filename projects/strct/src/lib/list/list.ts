@@ -78,9 +78,9 @@ export class StrctListItemTrailing {}
   styles: [
     `
       .strct-li {
-        display: flex;
+        display: grid;
+        grid-template-columns: subgrid;
         align-items: center;
-        gap: var(--space-2);
         padding-inline: var(--space-3);
         position: relative;
       }
@@ -94,10 +94,10 @@ export class StrctListItemTrailing {}
         border-block-start: 1px solid var(--b1);
       }
       .strct-li__main {
-        display: flex;
+        display: grid;
+        grid-template-columns: subgrid;
+        grid-column: 1 / 4;
         align-items: center;
-        gap: var(--space-2);
-        flex: 1;
         min-width: 0;
         /* The row's own height; dense trims it to 32px. */
         min-height: 44px;
@@ -189,16 +189,18 @@ export class StrctListItemTrailing {}
       .strct-li__trailing:empty {
         display: none;
       }
+      /* The gap moved into the parts: a row with no leading marker and no
+         meta has no dead track to pay for, which a grid gap would charge it
+         whether the cell was there or not. */
       .strct-li__leading {
         display: inline-flex;
         align-items: center;
-        flex: none;
+        padding-inline-end: var(--space-2);
       }
       .strct-li__text {
         display: flex;
         flex-direction: column;
         gap: 1px;
-        flex: 1;
         min-width: 0;
       }
       .strct-li__title {
@@ -220,25 +222,31 @@ export class StrctListItemTrailing {}
       .strct-li__meta {
         display: inline-flex;
         align-items: center;
-        flex: none;
+        justify-content: flex-end;
+        padding-inline-start: var(--space-3);
         font-size: var(--text-sm);
         color: var(--t3);
         white-space: nowrap;
+        font-variant-numeric: tabular-nums;
       }
       .strct-li__trailing {
+        grid-column: 4;
         display: inline-flex;
         align-items: center;
         gap: var(--space-2);
-        flex: none;
+        padding-inline-start: var(--space-2);
       }
       /* Narrow: the meta drops under the description instead of squeezing the
          title to nothing. */
       @container (max-width: 360px) {
-        .strct-li__main {
-          flex-wrap: wrap;
+        .strct-li__leading,
+        .strct-li__text {
+          grid-row: 1;
         }
         .strct-li__meta {
-          flex-basis: 100%;
+          grid-column: 1 / -1;
+          grid-row: 2;
+          justify-content: flex-start;
           padding-inline-start: 0;
         }
       }
@@ -312,9 +320,23 @@ export class StrctListItem {
   },
   styles: [
     `
+      /* A list of alarms is a table that hides its header (FR-67-07). Before
+         7.1 each row laid itself out, so the width of its leading badge
+         decided where its title started: measured on the List page, three
+         titles began at x 395, 401 and 375 and their times at 698, 697 and
+         714. One grid for the whole list, with the rows and their main areas
+         as subgrids of it, puts the titles on one axis and the metas on
+         another. The tracks are sized from the content of the whole list, so
+         they stay derived rather than stated. */
       .strct-list {
-        display: block;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
         container-type: inline-size;
+      }
+      /* Anything that is not a row — the empty note, a header an app projects
+         — spans the lot instead of landing in the leading track. */
+      .strct-list > * {
+        grid-column: 1 / -1;
       }
       .strct-list__empty {
         margin: 0;
