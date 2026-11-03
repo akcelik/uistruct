@@ -38,11 +38,7 @@ const VARIANTS: Record<StrctEmptyVariant, { icon: string; tone: string }> = {
       @if (variant() === 'loading') {
         <strct-spinner [size]="size() === 'sm' ? 'sm' : 'md'" [label]="title()" />
       } @else {
-        <strct-icon
-          [name]="resolvedIcon()"
-          [size]="size() === 'sm' ? 16 : 26"
-          [strokeWidth]="1.4"
-        />
+        <strct-icon [name]="resolvedIcon()" [size]="size() === 'sm' ? 16 : 26" />
       }
     </span>
     <!-- A zero state on a page is a heading; a loading state inside a card is

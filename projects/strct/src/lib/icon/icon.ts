@@ -12,7 +12,8 @@ import { StrctStatus } from '../status';
 
 /**
  * Inner markup (path/shape contents) for each icon, drawn on a 0 0 16 16
- * viewBox with `currentColor` stroke. Keep strokes at 1.3–1.5 for crispness.
+ * viewBox with `currentColor` stroke. The pen is one number for the whole
+ * library — see `strokeWidth`; a call site should not be picking one.
  *
  * RENDER SIZES ("16 Native" policy): object / semantic glyphs must render at the
  * grid's native 16px or larger — never downscaled (fractional scaling blurs
@@ -696,6 +697,15 @@ let warnedCountOverMode = false;
         width: var(--icon-size, 16px);
         height: var(--icon-size, 16px);
       }
+      /* One pen, at every size (FR-68-01). A stroke width is in user units,
+         so the 16-unit glyph scaled it with the icon and the one default of
+         1.4 painted 1.4px at 16px and 2.8px at 32px — the same drawing with
+         four different pens. vector-effect is not an inherited property and
+         the attribute form on the <svg> does nothing for the shapes inside
+         it, which are what draw; it has to reach them, so it is set here. */
+      .strct-icon > svg * {
+        vector-effect: non-scaling-stroke;
+      }
       .strct-icon__raw {
         display: inline-flex;
       }
@@ -933,7 +943,21 @@ export class StrctIcon {
    * icon itself, which is nearer than anything enclosing it (FR-64-01).
    */
   readonly size = input<number | undefined>(undefined);
-  /** Stroke width for outline icons. */
+  /**
+   * The pen the glyph is drawn with, in rendered pixels.
+   *
+   * It is a device pixel, not a user unit: the glyph carries
+   * `vector-effect="non-scaling-stroke"`, so the same number is the same
+   * thickness whether the icon is 11px or 26px (FR-68-01). Before 7.2 the
+   * number was scaled by the 16-unit viewBox, so the library's own default of
+   * 1.4 drew a 1.23px line in a small button and a 2.28px line in a 26px
+   * icon, and 55 call sites across 34 components each picked their own
+   * number besides — measured at 380 icons over twelve routes, a 16px icon
+   * was drawn at 1.30, 1.40 and 1.50px on the same screens.
+   *
+   * Setting it is for a glyph that genuinely needs a different pen, not for
+   * correcting the size.
+   */
   readonly strokeWidth = input(1.4);
   /** Optional status dot overlaid on the glyph (object state). */
   readonly badge = input<StrctIconBadge>('none');

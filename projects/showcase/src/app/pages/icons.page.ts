@@ -57,7 +57,7 @@ interface StateExample {
                 (click)="copyName(name)"
                 [title]="'Copy “' + name + '”'"
               >
-                <strct-icon [name]="name" [size]="22" [strokeWidth]="1.4" />
+                <strct-icon [name]="name" [size]="22" />
                 <span class="ig-name">{{ copied() === name ? 'copied!' : name }}</span>
               </button>
             }
@@ -76,14 +76,14 @@ interface StateExample {
       <div class="ig-sizes">
         @for (sz of [16, 20, 24, 32]; track sz) {
           <div class="ig-size">
-            <strct-icon name="host" [size]="sz" [strokeWidth]="1.4" badge="running" />
+            <strct-icon name="host" [size]="sz" badge="running" />
             <span class="ig-name">{{ sz }}px</span>
           </div>
         }
         <div class="ig-size ig-size--sep"></div>
         @for (sz of [12, 14]; track sz) {
           <div class="ig-size">
-            <strct-icon name="chevronRight" [size]="sz" [strokeWidth]="1.5" />
+            <strct-icon name="chevronRight" [size]="sz" />
             <span class="ig-name">{{ sz }}px · simple</span>
           </div>
         }
@@ -99,13 +99,7 @@ interface StateExample {
       <div class="ig-states">
         @for (s of states; track s.label) {
           <div class="ig-state">
-            <strct-icon
-              [name]="s.object"
-              [size]="28"
-              [strokeWidth]="1.3"
-              [badge]="s.badge"
-              [mode]="s.mode ?? 'none'"
-            />
+            <strct-icon [name]="s.object" [size]="28" [badge]="s.badge" [mode]="s.mode ?? 'none'" />
             <span class="ig-state__label">{{ s.label }}</span>
           </div>
         }
@@ -150,7 +144,7 @@ interface StateExample {
               [class.is-active]="activeObject() === obj.name"
               (click)="activeObject.set(obj.name)"
             >
-              <strct-icon [name]="obj.icon" [size]="18" [strokeWidth]="1.4" />
+              <strct-icon [name]="obj.icon" [size]="18" />
               <span>{{ obj.label }}</span>
             </button>
           }
@@ -158,12 +152,7 @@ interface StateExample {
 
         <!-- Large icon stage -->
         <div class="ig-interactive__stage">
-          <strct-icon
-            [name]="activeObjectData().icon"
-            [size]="56"
-            [strokeWidth]="1.2"
-            [badge]="activeState()"
-          />
+          <strct-icon [name]="activeObjectData().icon" [size]="56" [badge]="activeState()" />
           <span class="ig-interactive__state"
             >{{ activeObjectData().label }} · {{ activeStateLabel() }}</span
           >

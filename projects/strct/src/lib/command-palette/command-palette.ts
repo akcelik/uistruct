@@ -130,12 +130,7 @@ export interface StrctCommandItem {
                     (mousemove)="activeIndex.set(row.index)"
                   >
                     @if (row.item.icon) {
-                      <strct-icon
-                        class="strct-cmdp__icon"
-                        [name]="row.item.icon"
-                        [size]="16"
-                        [strokeWidth]="1.4"
-                      />
+                      <strct-icon class="strct-cmdp__icon" [name]="row.item.icon" [size]="16" />
                     }
                     <span class="strct-cmdp__text">
                       <span class="strct-cmdp__label">{{ row.item.label }}</span>

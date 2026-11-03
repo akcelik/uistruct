@@ -45,7 +45,6 @@ export class StrctPageHeaderTitleMeta {}
               class="strct-ph__icon"
               [name]="icon()"
               [size]="size() === 'pane' ? 18 : 22"
-              [strokeWidth]="1.4"
             />
           }
           <!-- A header can be a page's h1 or a pane's h2; the level is the

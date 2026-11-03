@@ -36,7 +36,7 @@ import { StrctIcon } from '../icon/icon';
       "
       (click)="copy()"
     >
-      <strct-icon [name]="done() ? 'check' : 'copy'" [size]="13" [strokeWidth]="1.6" />
+      <strct-icon [name]="done() ? 'check' : 'copy'" [size]="13" />
       @if (label()) {
         <span class="strct-copy__label">{{
           done() ? copiedLabel() : error() ? failedLabel() : label()

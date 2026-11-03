@@ -74,7 +74,7 @@ export type StrctTagStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'cri
         [attr.aria-label]="removeLabel()"
         (click)="removed.emit()"
       >
-        <strct-icon name="close" [size]="11" [strokeWidth]="1.6" />
+        <strct-icon name="close" [size]="11" />
       </button>
     }
   `,

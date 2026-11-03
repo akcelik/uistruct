@@ -51,7 +51,7 @@ const LEVEL_COLORS = [
         [disabled]="isDisabled()"
         (click)="revealed.set(!revealed())"
       >
-        <strct-icon [name]="revealed() ? 'eyeOff' : 'eye'" [size]="16" [strokeWidth]="1.3" />
+        <strct-icon [name]="revealed() ? 'eyeOff' : 'eye'" [size]="16" />
       </button>
     </div>
     @if (meter() && value()) {

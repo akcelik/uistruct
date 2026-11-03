@@ -387,7 +387,7 @@ export class StrctChatMessage {
         @if (busy()) {
           <span class="strct-composer__stopmark" aria-hidden="true"></span>
         } @else {
-          <strct-icon strictName="arrowUp" [size]="15" [strokeWidth]="1.8" />
+          <strct-icon strictName="arrowUp" [size]="15" />
         }
       </button>
     </div>

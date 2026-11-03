@@ -133,6 +133,23 @@ for (const [file, byProp] of Object.entries(allowed)) {
   }
 }
 
+// One pen for the glyph, in one place (FR-68-01). A stroke width is in user
+// units, so the 16-unit glyph scaled it with the icon: the library's own
+// default of 1.4 painted 1.23px in a small button and 2.28px in a 26px icon,
+// and 50 call sites across 34 components picked their own number besides. The
+// rendered side is asserted by scripts/control-height.mjs, but that reads one
+// route, so the source side is asserted here, where it covers every component.
+for (const path of sheets(LIB)) {
+  const src = readFileSync(path, 'utf8');
+  if (path.endsWith(`${sep}icon.ts`)) continue;
+  const hits = [...src.matchAll(/\[strokeWidth\]="([0-9.]+)"/g)];
+  for (const [, value] of hits)
+    problems.push(
+      `${relative(LIB, path).split(sep).join('/')}: [strokeWidth]="${value}" on a strct-icon — ` +
+        `the pen is one number, in icon.ts`,
+    );
+}
+
 // The scale lives on :root, once — plus, for one major, once more inside the
 // [data-visual='6'] shim that hands an app back the 6.x values.
 const tokens = readFileSync(TOKENS, 'utf8');

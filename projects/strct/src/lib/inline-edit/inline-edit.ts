@@ -65,7 +65,7 @@ import { StrctIcon } from '../icon/icon';
             [attr.aria-label]="editLabel()"
             (click)="startEdit()"
           >
-            <strct-icon strictName="pencil" [size]="12" [strokeWidth]="1.6" />
+            <strct-icon strictName="pencil" [size]="12" />
           </button>
         }
       </span>

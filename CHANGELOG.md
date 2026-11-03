@@ -5,6 +5,52 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.2.0] - 2026-11-03
+
+[FR-68-01](docs/feature-requests/icon-pen.md): one pen for the glyph. This is
+FR-63 / FR-64 one property over — those made a control's height, and then its
+icon's size, follow a token instead of a number each call site picked, and the
+pen was left behind.
+
+### Fixed
+
+- **An icon's stroke is a painted pixel, not a user unit.** `stroke-width` in
+  SVG is in user units and the glyph's viewBox is `0 0 16 16`, so a stroke of
+  1.4 painted `1.4 × size / 16` device pixels: the pen grew with the icon. On
+  top of that, **50 call sites across 34 components set their own number**.
+  Measured on 380 icons over twelve routes, a 16px icon — the default size and
+  the most common — was drawn at **1.30, 1.40 and 1.50px on the same screens**,
+  and the painted width ran from 1.10px at 11px to 2.28px at 26px. The glyph's
+  shapes now carry `vector-effect: non-scaling-stroke`, so the number is the
+  painted thickness, and every icon in the library is drawn at **1.40px**.
+- **The 50 call-site overrides are gone**, along with 23 more in the showcase.
+  The component's docstring already said "keep strokes at 1.3–1.5 for
+  crispness" and 24 of the 50 were outside that range; the rule now holds by
+  construction instead of by hope.
+
+### Added
+
+- `scripts/control-height.mjs` asserts the pen as well as the height: every
+  16-unit glyph on the page paints the same width, in all three palettes. It
+  fails on 7.1.1 naming the six widths it found in one view — 1.05, 1.22,
+  1.40, 1.49, 1.58 and 1.92px.
+- `scripts/token-scale.mjs` refuses `[strokeWidth]` on a `strct-icon` anywhere
+  in the library. The rendered check reads one route; this covers the rest.
+- An `icon-pen` baseline, clipped to the sizes row, at **42 baselines from
+  40**. Nothing else in the suite could see this change: thin and everywhere,
+  it moves 0.026% of a page's pixels against a 0.5% threshold. Clipped to the
+  row it moves 0.66%, and with the pen removed it is the only page that fails.
+
+### Not changed
+
+The **mode badge** inside the icon — the out-of-service stripes drawn at 7–9px
+on a tree tile. It has its own 12-unit viewBox and its weight was tuned by eye
+for FR-61-01, so the pen rule is not applied to it and the gate skips it on
+purpose.
+
+`strokeWidth` remains an input, for a glyph that genuinely needs a different
+pen. It is no longer something a call site has to set.
+
 ## [7.1.1] - 2026-11-03
 
 No library code changed. Two gates that were quietly narrower than they looked

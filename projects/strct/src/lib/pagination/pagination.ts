@@ -28,7 +28,7 @@ type PageToken = number | 'dots';
       [attr.aria-label]="prevLabel()"
       (click)="go(page() - 1)"
     >
-      <strct-icon name="chevronLeft" [size]="13" [strokeWidth]="1.7" />
+      <strct-icon name="chevronLeft" [size]="13" />
     </button>
 
     @for (token of pages(); track $index) {
@@ -55,7 +55,7 @@ type PageToken = number | 'dots';
       [attr.aria-label]="nextLabel()"
       (click)="go(page() + 1)"
     >
-      <strct-icon name="chevronRight" [size]="13" [strokeWidth]="1.7" />
+      <strct-icon name="chevronRight" [size]="13" />
     </button>
   `,
   host: { class: 'strct-pg', role: 'navigation', '[attr.aria-label]': 'regionLabel()' },

@@ -225,7 +225,7 @@ export class StrctCard {
            it first. A drag grip leads the title this way. -->
       <ng-content select="[strctCardHeaderLeading]" />
       @if (icon()) {
-        <strct-icon class="strct-card__hicon" [name]="icon()" [size]="16" [strokeWidth]="1.4" />
+        <strct-icon class="strct-card__hicon" [name]="icon()" [size]="16" />
       }
       @if (heading()) {
         <!-- A card title belongs in the page outline when the consumer says
@@ -271,7 +271,6 @@ export class StrctCard {
         <strct-icon
           name="chevronDown"
           [size]="14"
-          [strokeWidth]="1.6"
           [class.strct-card__chev--collapsed]="card!.collapsed()"
         />
       </button>

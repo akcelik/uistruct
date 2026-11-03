@@ -54,7 +54,7 @@ import { StrctIcon } from '../icon/icon';
             <div class="strct-login__brand">
               @if (brandIcon()) {
                 <span class="strct-login__mark">
-                  <strct-icon [name]="brandIcon()" [size]="18" [strokeWidth]="1.5" />
+                  <strct-icon [name]="brandIcon()" [size]="18" />
                 </span>
               }
               @if (brandName()) {

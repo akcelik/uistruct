@@ -50,7 +50,7 @@ import { StrctIcon } from '../icon/icon';
         [attr.aria-label]="triggerName()"
         (click)="activated.emit()"
       >
-        <strct-icon class="strct-sb__icon" name="search" [size]="14" [strokeWidth]="1.6" />
+        <strct-icon class="strct-sb__icon" name="search" [size]="14" />
         <span class="strct-sb__label">{{ placeholder() }}</span>
         @if (hint()) {
           <kbd class="strct-sb__kbd">{{ hint() }}</kbd>
@@ -58,7 +58,7 @@ import { StrctIcon } from '../icon/icon';
       </button>
     } @else {
       <div class="strct-sb" [class.strct-sb--disabled]="isDisabled()">
-        <strct-icon class="strct-sb__icon" name="search" [size]="14" [strokeWidth]="1.6" />
+        <strct-icon class="strct-sb__icon" name="search" [size]="14" />
         <input
           #field
           class="strct-sb__input"
@@ -81,7 +81,7 @@ import { StrctIcon } from '../icon/icon';
             [attr.aria-label]="clearLabel()"
             (click)="clear(); field.focus()"
           >
-            <strct-icon name="close" [size]="11" [strokeWidth]="1.8" />
+            <strct-icon name="close" [size]="11" />
           </button>
         } @else if (hint() && !focused()) {
           <kbd class="strct-sb__kbd">{{ hint() }}</kbd>

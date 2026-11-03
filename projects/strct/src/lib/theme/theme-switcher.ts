@@ -40,7 +40,7 @@ import { StrctThemeService } from './theme.service';
         [attr.aria-pressed]="!theme.isDark()"
         (click)="theme.setMode('light')"
       >
-        <strct-icon name="sun" [size]="16" [strokeWidth]="1.5" />
+        <strct-icon name="sun" [size]="16" />
       </button>
       <button
         type="button"
@@ -51,7 +51,7 @@ import { StrctThemeService } from './theme.service';
         [attr.aria-pressed]="theme.isDark()"
         (click)="theme.setMode('dark')"
       >
-        <strct-icon name="moon" [size]="16" [strokeWidth]="1.5" />
+        <strct-icon name="moon" [size]="16" />
       </button>
     </div>
   `,

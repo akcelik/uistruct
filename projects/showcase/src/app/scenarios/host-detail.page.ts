@@ -63,9 +63,7 @@ import {
           <strct-icon name="chevronLeft" [size]="13" /> Inventory
         </a>
         <div class="det__titlerow">
-          <span class="det__avatar"
-            ><strct-icon name="host" [size]="22" [strokeWidth]="1.4"
-          /></span>
+          <span class="det__avatar"><strct-icon name="host" [size]="22" /></span>
           <h1 class="det__title">
             <strct-inline-edit [(ngModel)]="hostName" editLabel="Edit host name" />
           </h1>

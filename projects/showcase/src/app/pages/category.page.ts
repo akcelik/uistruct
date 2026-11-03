@@ -64,11 +64,7 @@ function badgeFor(status: DcObject['status']) {
               [strctContextMenu]="menuFor(obj)"
               (menuSelect)="onMenuPick(obj.id, $event)"
             >
-              <strct-icon
-                [name]="obj.id === 'default-appliance' ? 'box' : 'server'"
-                [size]="16"
-                [strokeWidth]="1.6"
-              />
+              <strct-icon [name]="obj.id === 'default-appliance' ? 'box' : 'server'" [size]="16" />
               <span class="object-list__name">{{ obj.name }}</span>
               <span
                 class="object-list__status"

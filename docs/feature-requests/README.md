@@ -7,6 +7,13 @@ stays here until it goes quiet.
 
 ## Open
 
+[**`icon-pen.md`**](icon-pen.md) — FR-68-01, **shipped in v7.2.0**. An icon's
+stroke was in user units, so the one default of 1.4 painted 1.10px at 11px and
+2.28px at 26px, and 50 call sites across 34 components set their own number
+besides: a 16px icon was drawn at 1.30, 1.40 and 1.50px on the same screens.
+The glyph's shapes carry `vector-effect: non-scaling-stroke` now and every icon
+is 1.40px. FR-63 / FR-64 one property over.
+
 [**`visual-language-2026-11.md`**](visual-language-2026-11.md) — FR-67-00 … 08,
 filed 2026-11-03 against 6.4.1 by an internal design review rather than by a
 consumer app. A census of 15 showcase routes found one line weight (175 of 176

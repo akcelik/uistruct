@@ -79,7 +79,7 @@ function isTextEntry(el: HTMLElement | null): boolean {
             [attr.aria-label]="clearLabel()"
             (click)="cleared.emit()"
           >
-            <strct-icon strictName="close" [size]="11" [strokeWidth]="1.8" />
+            <strct-icon strictName="close" [size]="11" />
           </button>
         </span>
         <span class="strct-tb__sep" role="separator" aria-orientation="vertical"></span>

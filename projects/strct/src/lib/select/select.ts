@@ -92,7 +92,7 @@ let selectCounter = 0;
           >
             <span class="strct-sel__check" aria-hidden="true">
               @if (isSelected(opt.value)) {
-                <strct-icon strictName="check" [size]="12" [strokeWidth]="1.8" />
+                <strct-icon strictName="check" [size]="12" />
               }
             </span>
             {{ opt.label }}

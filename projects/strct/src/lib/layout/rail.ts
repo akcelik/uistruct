@@ -64,16 +64,11 @@ export interface StrctRailItem {
   template: `
     <!-- Shared row content: icon, label, trailing indicator, badge / dot. -->
     <ng-template #rowContent let-item>
-      <strct-icon class="strct-rail__icon" [name]="item.icon" [size]="18" [strokeWidth]="1.6" />
+      <strct-icon class="strct-rail__icon" [name]="item.icon" [size]="18" />
       @if (!collapsed()) {
         <span class="strct-rail__label">{{ item.label }}</span>
         @if (item.trailingIcon) {
-          <strct-icon
-            class="strct-rail__trailing"
-            [name]="item.trailingIcon"
-            [size]="14"
-            [strokeWidth]="1.5"
-          />
+          <strct-icon class="strct-rail__trailing" [name]="item.trailingIcon" [size]="14" />
         }
       }
       @if (item.badge !== undefined && item.badge !== null && item.badge !== '') {
