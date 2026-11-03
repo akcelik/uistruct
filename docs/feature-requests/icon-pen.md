@@ -61,6 +61,20 @@ different pen; it stops being the thing every call site has to set.
   suite can see this change: thin and everywhere, it moves 0.026% of a page's
   pixels against a 0.5% threshold. Clipped to the row it moves **0.66%**.
 
+## Shipped
+
+**v7.2.0**, and finished in **v7.2.1**. 7.2.0 claimed every icon was on the pen
+and five were not: `datagrid.html` is the one component template that lives in
+its own `.html` file, and both the cleanup and the source gate walked only
+`.ts`, `.css` and `.scss`. The rendered check could not see them either, since
+it read one route and the grid is not on it. 7.2.1 walks `.html`, reads
+`/components/datagrid` too — 606 icons from 138 — and both gates fail when one
+override is put back.
+
+The lesson is not the five call sites. It is that the gate and the cleanup
+shared an assumption, so they agreed with each other and the claim shipped
+anyway. What caught it was re-running the census that started the work.
+
 ## What this does not cover
 
 The 12-unit **mode badge** inside the icon — the out-of-service stripes drawn

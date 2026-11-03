@@ -80,7 +80,10 @@ function sheets(root) {
   for (const name of readdirSync(root)) {
     const path = join(root, name);
     if (statSync(path).isDirectory()) out.push(...sheets(path));
-    else if (/\.(ts|css|scss)$/.test(name) && path !== TOKENS) out.push(path);
+    // .html is in the list because it was not, and that is how the datagrid
+    // kept five [strokeWidth] overrides through 7.2.0: its template lives in
+    // a separate file and both the cleanup and this gate walked only .ts.
+    else if (/\.(ts|html|css|scss)$/.test(name) && path !== TOKENS) out.push(path);
   }
   return out;
 }

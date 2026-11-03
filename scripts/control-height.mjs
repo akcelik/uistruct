@@ -168,6 +168,29 @@ const MEASURE = `(() => {
   return rows;
 })()`;
 
+/** Every 16-unit glyph on the page, by the width it actually paints. */
+const PENS = `(() => {
+        const seen = {};
+        for (const svg of document.querySelectorAll('strct-icon > svg')) {
+          const box = (svg.getAttribute('viewBox') ?? '').split(/\\s+/);
+          const units = Number(box[2]);
+          if (units !== 16) continue;
+          const w = svg.getBoundingClientRect().width;
+          if (!w) continue;
+          const n = Number(svg.getAttribute('stroke-width') ?? 1.4);
+          // vector-effect is not inherited, so it has to be read off a shape
+          // that draws, not off the <svg> that holds them.
+          const shape = svg.querySelector('path, circle, rect, line, polyline, polygon');
+          const painted =
+            shape && getComputedStyle(shape).vectorEffect === 'non-scaling-stroke'
+              ? n
+              : n * (w / units);
+          const k = (Math.round(painted * 100) / 100).toFixed(2);
+          seen[k] = (seen[k] ?? 0) + 1;
+        }
+        return seen;
+      })()`;
+
 const bad = [];
 let measured = 0;
 let icons = 0;
@@ -219,30 +242,22 @@ try {
     // glyph carries vector-effect="non-scaling-stroke" now, so the number is
     // the painted thickness. The 12-unit mode badge is out of scope on
     // purpose: it is a 7-9px mark tuned by eye for FR-61-01.
-    const pens = await evaluate(
-      send,
-      `(() => {
-        const seen = {};
-        for (const svg of document.querySelectorAll('strct-icon > svg')) {
-          const box = (svg.getAttribute('viewBox') ?? '').split(/\\s+/);
-          const units = Number(box[2]);
-          if (units !== 16) continue;
-          const w = svg.getBoundingClientRect().width;
-          if (!w) continue;
-          const n = Number(svg.getAttribute('stroke-width') ?? 1.4);
-          // vector-effect is not inherited, so it has to be read off a shape
-          // that draws, not off the <svg> that holds them.
-          const shape = svg.querySelector('path, circle, rect, line, polyline, polygon');
-          const painted =
-            shape && getComputedStyle(shape).vectorEffect === 'non-scaling-stroke'
-              ? n
-              : n * (w / units);
-          const k = (Math.round(painted * 100) / 100).toFixed(2);
-          seen[k] = (seen[k] ?? 0) + 1;
-        }
-        return seen;
-      })()`,
-    );
+    const pens = await evaluate(send, PENS);
+    // One route is not the library. 7.2.0 left five overrides in
+    // datagrid.html — a template in its own file, which neither the cleanup
+    // nor the source gate walked — and this check could not see them because
+    // the grid is not on /foundations/controls.
+    await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/components/datagrid` });
+    for (let i = 0; i < 110; i++) {
+      if (await evaluate(send, `!!document.querySelector('.doc__examples strct-icon svg')`)) break;
+      await sleep(200);
+    }
+    await sleep(600);
+    const more = await evaluate(send, PENS);
+    for (const [k, n] of Object.entries(more)) pens[k] = (pens[k] ?? 0) + n;
+    await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/foundations/controls` });
+    await sleep(300);
+
     const widths = Object.keys(pens);
     icons += Object.values(pens).reduce((a, b) => a + b, 0);
     if (widths.length > 1)
