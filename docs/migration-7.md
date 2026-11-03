@@ -55,8 +55,9 @@ height — at arm's length every corner was a right angle.
 | `--radius-xl`   | 6px   | **14px** |
 | `--radius-pill` | 999px | 999px    |
 
-A button is `--radius-sm` and goes from 2px to 4px; a card is `--radius-lg` and
-goes from 4px to 10px.
+A button is `--radius-md` and goes from 3px to 6px; a small or mini button is
+`--radius-sm` and goes from 2px to 4px; a card is `--radius-lg` and goes from 4px
+to 10px.
 
 ### The surface ramp
 

@@ -39,8 +39,8 @@ that moves them.
 - **A radius scale wide enough to tell its steps apart.** Four steps spanning
   4px is 6% to 19% of a 32px control, which at arm's length is a right angle:
   `--radius-xs` 1→**2px**, `--radius-sm` 2→**4px**, `--radius-md` 3→**6px**,
-  `--radius-lg` 4→**10px**, `--radius-xl` 6→**14px**. A button goes from 2px to
-  4px, a card from 4px to 10px. Each step is at least 1.4× the one below it,
+  `--radius-lg` 4→**10px**, `--radius-xl` 6→**14px**. A button goes from 3px to
+  6px (a small or mini one from 2px to 4px), a card from 4px to 10px. Each step is at least 1.4× the one below it,
   asserted.
 
 - **A surface ramp that separates without a line on it.** The light ramp spanned
