@@ -337,6 +337,23 @@ the same change for consistency.
 
 ### FR-67-07 — a list aligns down its columns
 
+> **SHIPPED in 7.1.0, as the default.** `strct-list` is one grid and the rows
+> and their main areas are subgrids of it, so the tracks are sized from the
+> content of the whole list rather than stated — which was the condition the
+> item put on making it the default. Measured on the List page: titles 395 /
+> 401 / 375 → **401 / 401 / 401**, metas 698 / 697 / 714 → **685 / 685 / 685**.
+>
+> Two things the item did not foresee:
+>
+> - **A grid charges its gap whether the cell has content or not**, so a row
+>   with no leading marker would have paid 8px of dead space at its start. The
+>   spacing moved out of the row's `gap` and onto the parts, which already
+>   collapse when empty.
+> - **The visual suite could not see this release.** With `list.ts` reverted,
+>   all 38 baselines still matched: each held either no list or one whose rows
+>   carried leading markers of a single width. A `list-alignment` page was
+>   added, and it fails by 0.90% of its pixels when the grid is taken away.
+
 **Today:** titles 26px apart, times 17px apart, because `.strct-li__main` is a
 flex row and each row sizes itself.
 
@@ -390,7 +407,7 @@ Each stage is a release that stands on its own and passes every gate.
 | 1     | 6.5.0   | FR-67-00 and `scripts/token-scale.mjs`                                        | No visual change at all: literals become the tokens that hold their current values. The gate lands first so every later stage is enforced. |
 | 2 ✓   | 7.0.0   | FR-67-01, -02, -03 (the radius half; the second line weight moved to stage 3) | The token layer. One release, because type, surface and radius read as one change and splitting them means three rounds of re-baselining.  |
 | 3 ✓   | 7.0.0   | FR-67-04, -05, -08 and -06 for the alert (hero and card follow later)         | The component weights. They depend on stage 2's surfaces and are meaningless before it, so they ship in the same major.                    |
-| 4     | 7.1.0   | FR-67-07                                                                      | The list grid is the one item that changes layout rather than appearance; it gets its own release so a regression is attributable.         |
+| 4 ✓   | 7.1.0   | FR-67-07                                                                      | The list grid is the one item that changes layout rather than appearance; it gets its own release so a regression is attributable.         |
 
 Stage 1 is genuinely behaviour-free and should be verifiable by
 `scripts/visual-regression.mjs` passing **without** re-baselining. If it does
