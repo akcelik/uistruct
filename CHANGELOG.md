@@ -65,6 +65,50 @@ that moves them.
   7px → `--radius-lg`. Every size in the library now comes from the scale, and
   the gate's `allowed` map is empty and must stay empty.
 
+### Changed — the component weights (stage 3)
+
+- **Weight carries rank in a row of actions** (FR-67-04). Before this, every
+  variant was the same 32px box with the same radius and a 1px border and only
+  the text colour changed, so a toolbar had nothing for the eye to land on, the
+  destructive action weighed the same as the safe one, and the **disabled
+  button was the only one carrying a fill**. Now: `primary` and `critical` are
+  filled and set in 600; the default `neutral` is a `--bg-1` solid on a `--b3`
+  edge; `outline` is transparent on the lighter `--b2`; `flat` is a word in the
+  accent with tighter inline padding; and a disabled action is transparent on
+  `--b1` at weight 400 — the lightest thing in the row rather than the heaviest.
+  `solid` is kept and still fills a neutral; on a primary or a critical it is
+  now what the variant already is.
+
+- **A field is a recess, a control is a solid** (FR-67-05). `.strct-control`
+  and `.strct-btn` both resolved to 13px type, a 3px radius, a 1px border and a
+  32px height, and the only thing that distinguished them — the fill — measured
+  **1.000:1 against the surface it sat on** in the showcase. A field now takes
+  the `--bg-3` fill with a transparent border and a 1px inset shadow, and
+  focus gives it a full `--acc` edge back. Disabled flattens the recess to
+  `--bg-2`.
+
+- **Severity rides on surface and weight, not hue alone** (FR-67-06). All four
+  alert tones were the same `--bg-1` rectangle behind the same 3px rail. The
+  palettes already carried `--warning-bg` and `--critical-bg` at 12% tone and
+  the alert never used them. A warning now takes its tone fill and a 4px rail;
+  a critical takes its fill, a 5px rail, a 500-weight body and a `--b1` bottom
+  edge; info and success stay quiet.
+
+- **A card groups by tone, not by a second fence** (FR-67-08). The header's
+  bottom rule and the footer's top rule are gone; the footer's `--bg-2` fill
+  does the separating now that the new ramp makes a fill visible on its own.
+  The showcase's composed card drew **6 border edges and draws 4**.
+
+### Not shipped, and why
+
+- **`--b-strong`, the second line weight**, was deferred from stage 2 to be
+  decided alongside the components. Having opened them, it has no honest user:
+  stage 2 made a surface carry the grouping and stage 3 made severity carry the
+  weight, so the one boundary that needed a heavier line turned out to be the
+  alert's rail — which is a rail, and belongs to the alert as 3 / 4 / 5px, not
+  to the token layer. Shipping a global token with one contrived call site is
+  the `--text-xs` == `--text-sm` mistake the census found in the first place.
+
 ### Fixed
 
 - **A solid button got lighter when hovered in Arctic light.** `--bg-h` was
@@ -79,6 +123,14 @@ that moves them.
   restores tokens only: the component weight changes of stage 3 are not reverted
   by it, and it does not restore `--t3`, because a compatibility flag should not
   undo an accessibility fix. Removed in 8.0.
+- **`scripts/weight-ladder.mjs`**, in CI beside `control-height`. 28 checks in
+  two themes reading the rendered page: that a primary and a critical are
+  filled and heavier, that outline and flat are not, that a disabled action's
+  edge is quieter than a neutral's, that a field has no border at rest and a
+  fill at least 1.07:1 from what is behind it and an accent edge on focus, that
+  the four alert tones do not share one surface and their rails step, and that
+  a composed card draws no more than four border edges. **19 of the 28 fail on
+  6.5.0**, which is why they are worth having.
 - `scripts/token-scale.mjs` grew from counting literals to asserting the scale's
   shape: the type steps, the radius steps, and the three ramp thresholds in all
   six palettes. It found the one shortfall in this work itself — Ember dark's
@@ -88,9 +140,9 @@ that moves them.
 
 - All 38 visual baselines re-taken deliberately; 33 of them had moved. A clean
   re-run matches.
-- `scripts/a11y-smoke.mjs` passes on the new surfaces, as do
-  `scripts/grid-layout.mjs` (13 checks), `scripts/control-height.mjs` (162
-  boxes) and 1 299 specs.
+- `scripts/a11y-smoke.mjs` passes on the new surfaces and the new weights, as
+  do `scripts/grid-layout.mjs` (13 checks), `scripts/control-height.mjs` (162
+  boxes), `scripts/weight-ladder.mjs` (28 checks) and 1 299 specs.
 
 ## [6.5.0] - 2026-11-03
 

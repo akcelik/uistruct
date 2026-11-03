@@ -46,7 +46,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="button"
       heading="Button"
-      description="Restrained by default — outlined / ghost surfaces with color used only as a subtle border and text accent, never a loud fill."
+      description="Weight carries rank — one filled action, one outlined, the rest as words. A disabled action is the lightest thing in the row, never the heaviest."
       code='<button strct-button variant="primary">Primary</button>'
     >
       <button strct-button variant="primary">Primary</button>
@@ -90,7 +90,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="button-solid"
       owner="button"
       heading="Solid (opt-in)"
-      description="Add the solid attribute for a rare filled call to action."
+      description="solid fills a neutral button. On a primary or a critical it is now what the variant already is, and is kept so templates written before 7.0 still compile."
       code='<button strct-button variant="primary" solid>Deploy</button>'
     >
       <button strct-button variant="primary" solid>Deploy</button>

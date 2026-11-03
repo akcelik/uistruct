@@ -27,9 +27,11 @@ export type StrctButtonSize = StrctControlSize | 'mini';
 /**
  * Styles a native `<button>` / `<a>` so it stays fully accessible and form-aware.
  *
- * Buttons are restrained by default: outlined / ghost surfaces with color used
- * only as a subtle border + text accent. Add `solid` for a rare filled call to
- * action.
+ * Weight carries rank (7.0): `primary` and `critical` are filled, the default
+ * `neutral` is a solid with an edge, `outline` is quieter still, `flat` is a
+ * word, and a disabled action is the lightest thing in the row. `solid` still
+ * fills a neutral; on a primary or a critical it is now what the variant
+ * already is.
  *   <button strct-button variant="primary">Save</button>
  *   <button strct-button variant="primary" solid>Deploy</button>
  *   <a strct-button variant="flat" size="sm" href="...">Cancel</a>
@@ -86,7 +88,10 @@ export type StrctButtonSize = StrctControlSize | 'mini';
         cursor: pointer;
         user-select: none;
         color: var(--t1);
-        background: transparent;
+        /* Neutral is the outlined rank: a solid object with an edge, so a
+           filled primary beside it reads as one step up rather than as the
+           only thing on the row (FR-67-04). */
+        background: var(--bg-1);
         border: 1px solid var(--b3);
         transition:
           background 0.14s ease,
@@ -96,54 +101,64 @@ export type StrctButtonSize = StrctControlSize | 'mini';
         text-decoration: none;
         white-space: nowrap;
       }
-      .strct-btn:hover {
+      .strct-btn:not(:disabled):not([aria-disabled='true']):hover {
         background: var(--bg-3);
         text-decoration: none;
       }
-      .strct-btn:active {
+      .strct-btn:not(:disabled):not([aria-disabled='true']):active {
         background: var(--bg-a);
       }
-      .strct-btn:disabled,
-      .strct-btn[aria-disabled='true'] {
-        opacity: 0.45;
-        cursor: not-allowed;
-      }
 
-      /* Emphasis via accent border + text only — not a colored fill. */
+      /* Weight carries rank. A primary action is heavier, not merely bluer
+         (FR-67-04): before 7.0 every variant was a 1px outline at the same
+         height and radius and only the text colour changed, so a toolbar had
+         nothing for the eye to land on and the destructive action weighed the
+         same as the safe one. */
       .strct-btn--primary {
-        border-color: var(--acc50);
-        color: var(--acc);
-      }
-      .strct-btn--primary:hover {
-        background: var(--acc-m);
+        background: var(--acc);
         border-color: var(--acc);
+        color: var(--inv);
+        font-weight: 600;
+      }
+      .strct-btn--primary:not(:disabled):not([aria-disabled='true']):hover {
+        background: var(--acc);
+        border-color: var(--acc);
+        filter: brightness(1.08);
       }
 
       .strct-btn--critical {
+        background: var(--critical);
         border-color: var(--critical);
-        color: var(--critical);
+        color: var(--inv);
+        font-weight: 600;
       }
-      .strct-btn--critical:hover {
-        background: var(--critical-bg);
+      .strct-btn--critical:not(:disabled):not([aria-disabled='true']):hover {
+        background: var(--critical);
+        border-color: var(--critical);
+        filter: brightness(1.08);
       }
 
-      /* Neutral outline (explicit). */
+      /* Quieter than neutral: no surface, a lighter edge. */
       .strct-btn--outline {
-        border-color: var(--b3);
-        color: var(--t1);
-      }
-      .strct-btn--outline:hover {
-        background: var(--bg-3);
-      }
-
-      /* Borderless text button. */
-      .strct-btn--flat {
-        border-color: transparent;
+        background: transparent;
+        border-color: var(--b2);
         color: var(--t2);
       }
-      .strct-btn--flat:hover {
+      .strct-btn--outline:not(:disabled):not([aria-disabled='true']):hover {
         background: var(--bg-3);
         color: var(--t1);
+      }
+
+      /* The bottom rank is a word, not a box. */
+      .strct-btn--flat {
+        background: transparent;
+        border-color: transparent;
+        color: var(--acc);
+        padding-inline: var(--space-2);
+      }
+      .strct-btn--flat:not(:disabled):not([aria-disabled='true']):hover {
+        background: var(--acc-s);
+        color: var(--acc);
       }
 
       /* An action inside running text: looks like a link, behaves like a
@@ -188,24 +203,22 @@ export type StrctButtonSize = StrctControlSize | 'mini';
         border-color: transparent;
         color: var(--t1);
       }
-      .strct-btn--solid:hover {
+      .strct-btn--solid:not(:disabled):not([aria-disabled='true']):hover {
         background: var(--bg-h);
       }
-      .strct-btn--solid.strct-btn--primary {
-        background: var(--acc);
-        color: var(--inv);
-      }
-      .strct-btn--solid.strct-btn--primary:hover {
-        background: var(--acc);
-        filter: brightness(1.08);
-      }
-      .strct-btn--solid.strct-btn--critical {
-        background: var(--critical);
-        color: var(--inv);
-      }
-      .strct-btn--solid.strct-btn--critical:hover {
-        background: var(--critical);
-        filter: brightness(1.08);
+      /* solid on a primary or a critical is now what those variants already
+         are; it is kept so templates written before 7.0 still compile, and it
+         still fills a neutral. */
+
+      /* A disabled action is never the heaviest thing in the row. It comes
+         last so it wins over every variant and state above it. */
+      .strct-btn:disabled,
+      .strct-btn[aria-disabled='true'] {
+        background: transparent;
+        border-color: var(--b1);
+        font-weight: 400;
+        opacity: var(--disabled-opacity);
+        cursor: not-allowed;
       }
 
       .strct-btn--sm {

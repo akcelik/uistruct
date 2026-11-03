@@ -214,6 +214,14 @@ re-checked by `scripts/a11y-smoke.mjs`, which already runs axe on the showcase.
 > which single boundary per region earns it is answered by the drawer, the
 > alert and the card, so it moves to stage 3 where those components are
 > already being opened. Nothing in 7.0.0 depends on it.
+>
+> **Examined in stage 3 and not shipped.** With the components open, it has no
+> honest user: stage 2 made a surface carry the grouping and stage 3 made
+> severity carry the weight, so the one boundary that wanted a heavier line
+> turned out to be the alert's rail — which is a rail, and belongs to the alert
+> as 3 / 4 / 5px rather than to the token layer. A global token with one
+> contrived call site is the `--text-xs` == `--text-sm` mistake this report was
+> written about.
 
 **Today:** 175 of 176 bordered elements draw 1px, and `--radius-sm/md/lg/xl` are
 `2 / 3 / 4 / 6` — a four-step scale spanning 4px, which at a 32px control height
@@ -239,6 +247,13 @@ regression re-baselined.
 **Files:** `_tokens.scss` (six blocks), plus whatever FR-67-00 converts.
 
 ### FR-67-04 — weight carries rank in a row of actions
+
+> **SHIPPED in 7.0.0.** `primary` and `critical` are filled and set in 600,
+> the default `neutral` is a `--bg-1` solid on a `--b3` edge, `outline` is
+> transparent on the lighter `--b2`, `flat` is a word in the accent, and a
+> disabled action is transparent on `--b1` at weight 400 — the lightest thing
+> in the row rather than the heaviest. `solid` is kept and still fills a
+> neutral. Covered by 10 of the 28 checks in `scripts/weight-ladder.mjs`.
 
 **Today:** `primary`, `neutral`, `outline`, `flat` and `critical` are the same
 32px box with a 3px radius and a 1px border; only the text colour differs. The
@@ -271,6 +286,12 @@ consumers who relied on primary being an outline see a filled button. Named in
 
 ### FR-67-05 — a field is a recess, a control is a solid
 
+> **SHIPPED in 7.0.0.** `--bg-3` fill, transparent border, a 1px inset shadow,
+> and a full `--acc` edge on focus. The measured starting point was worse than
+> the report said: on the showcase stage the field's `--bg-2` fill was
+> **1.000:1** from the surface behind it, not 1.083:1 — the stage is `--bg-2`
+> too, so the fill was doing literally nothing. Now 1.104:1.
+
 **Today:** `.strct-control` and `.strct-btn` both resolve to 13px type, a 3px
 radius, a 1px border and a 32px height. Only the fill differs, and the fill that
 differs (`--bg-2`) is 1.083:1 from the surface behind it.
@@ -288,6 +309,14 @@ already covered by `scripts/a11y-smoke.mjs` and must stay passing.
 **Files:** `projects/strct/src/styles/_forms.scss`.
 
 ### FR-67-06 — severity rides on surface and weight, not hue alone
+
+> **SHIPPED in 7.0.0** for the alert, using the `--warning-bg` and
+> `--critical-bg` the palettes already carried. Rails step 3 / 4 / 5px and a
+> critical body is set in 500. **Not done for `hero` and `card`:** the item
+> asked for them to follow "in the same change for consistency", and they
+> should, but their status language is a rail on a surface that may itself be
+> tinted by the app, and getting that wrong is louder than leaving it. It is
+> the first thing to pick up after the list grid.
 
 **Today:** `info`, `success`, `warning` and `critical` alerts are the same
 `--bg-1` surface behind the same 3px rail; only the rail's hue changes. The
@@ -330,6 +359,12 @@ and 17px measured above, so it fails on 6.4.1.
 
 ### FR-67-08 — a card groups by tone, not by a second fence
 
+> **SHIPPED in 7.0.0.** The header's rule and the footer's rule are gone and
+> the footer's `--bg-2` fill does the separating. Measured on the showcase's
+> composed card: **6 drawn border edges before, 4 after** — the report's
+> figure of 8 was for the richer composite in the before/after sheet, which
+> also held a description list.
+
 **Today:** `.strct-card__header` draws a `--b1` bottom edge, `.strct-card__footer`
 draws a `--b1` top edge and fills with `--bg-2`, and a description list inside
 draws a `--b1` rule between every pair. A 360×260px card ends up with eight
@@ -354,7 +389,7 @@ Each stage is a release that stands on its own and passes every gate.
 | ----- | ------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1     | 6.5.0   | FR-67-00 and `scripts/token-scale.mjs`                                        | No visual change at all: literals become the tokens that hold their current values. The gate lands first so every later stage is enforced. |
 | 2 ✓   | 7.0.0   | FR-67-01, -02, -03 (the radius half; the second line weight moved to stage 3) | The token layer. One release, because type, surface and radius read as one change and splitting them means three rounds of re-baselining.  |
-| 3     | 7.0.0   | FR-67-04, -05, -06, -08                                                       | The component weights. They depend on stage 2's surfaces and are meaningless before it, so they ship in the same major.                    |
+| 3 ✓   | 7.0.0   | FR-67-04, -05, -08 and -06 for the alert (hero and card follow later)         | The component weights. They depend on stage 2's surfaces and are meaningless before it, so they ship in the same major.                    |
 | 4     | 7.1.0   | FR-67-07                                                                      | The list grid is the one item that changes layout rather than appearance; it gets its own release so a regression is attributable.         |
 
 Stage 1 is genuinely behaviour-free and should be verifiable by

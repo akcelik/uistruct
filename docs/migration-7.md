@@ -102,6 +102,49 @@ Deepening `--bg-3` would have pushed muted text to 4.44–4.51:1 on it, under th
 Muted text now clears **4.6:1 on all six light surfaces**, better than before on
 every one of them.
 
+## The component weights
+
+Four components changed what they look like. None of them changed an input, an
+output or a class name, so there is nothing in your templates to edit — but
+these are the changes a screenshot test or a hand-written override will notice.
+
+### A row of actions now has a primary
+
+| variant             | was                             | now                                                     |
+| ------------------- | ------------------------------- | ------------------------------------------------------- |
+| `primary`           | accent border + accent text     | **filled `--acc`, `--inv` text, weight 600**            |
+| `critical`          | critical border + critical text | **filled `--critical`, weight 600**                     |
+| `neutral` (default) | transparent on `--b3`           | **`--bg-1` on `--b3`**                                  |
+| `outline`           | `--b3` border, `--t1` text      | transparent on **`--b2`**, `--t2` text                  |
+| `flat`              | transparent, `--t2` text        | transparent, **accent text**, tighter inline padding    |
+| disabled            | `opacity: 0.45`                 | transparent on `--b1`, weight 400, `--disabled-opacity` |
+
+`solid` still fills a neutral. On a primary or a critical it is now what the
+variant already is, and is kept so templates written before 7.0 still compile.
+
+**If you relied on a primary being an outline**, that is the change to look at.
+The nearest thing to the old primary is `variant="outline"`.
+
+### A field reads as a recess
+
+`.strct-control` takes `--bg-3` with a transparent border and a 1px inset
+shadow; focus gives it a full `--acc` edge (it was `--acc50`). Disabled
+flattens to `--bg-2`. Nothing about its size or spacing moved.
+
+### Severity is not only a hue
+
+A warning alert takes `--warning-bg` and a 4px rail; a critical takes
+`--critical-bg`, a 5px rail and a 500-weight body. Info and success are
+unchanged. The `--*-bg` tokens were already in every palette; the alert simply
+never used them.
+
+### A card groups by tone
+
+`strct-card-header` no longer draws a bottom rule and `strct-card-footer` no
+longer draws a top one. The footer keeps its `--bg-2` fill, which now reads on
+its own. **If you had added your own divider inside a card to compensate for
+these, remove it.**
+
 ## The 6.x flag
 
 Set `data-visual="6"` on the same element that carries `data-palette` and
