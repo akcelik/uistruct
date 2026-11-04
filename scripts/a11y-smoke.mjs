@@ -14,8 +14,11 @@ import {
   readFileSync,
   statSync,
   writeFileSync,
+  mkdtempSync,
+  rmSync,
 } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
+import { tmpdir } from 'node:os';
 import { execSync, spawn } from 'node:child_process';
 
 const ROOT = resolve(process.argv[2] ?? 'dist/showcase/browser');
@@ -34,6 +37,12 @@ const ROUTES = [
   // FR-49-08 puts real heading elements inside cards and FR-49-01 makes list
   // rows wrap; both pages carry demos those changes touch.
   '/components/card',
+  // FR-67-06 tints a warning and a critical surface on all three of these.
+  // The card was already here; the alert's tint shipped in 7.0.0 with no axe
+  // run over it at all, and the hero's arrives in 7.4.0. A tone is only worth
+  // having if the words on it are still readable.
+  '/components/alert',
+  '/components/hero',
   '/components/list',
   '/components/time-range',
   '/scenarios/dashboard',
@@ -91,10 +100,37 @@ if (!chromeBin) {
   process.exit(2);
 }
 
+// Chrome writes its profile into a scoped_dir under the user config directory
+// and clears it only when it exits by itself. These scripts kill it, so every
+// run used to leak a ~185MB profile. Hand it a directory we own, and wait for
+// the process to be gone before removing it: a SIGTERMed Chrome keeps flushing
+// for a moment and re-creates whatever is deleted underneath it.
+const profileDir = mkdtempSync(join(tmpdir(), 'strct-gate-'));
+const dropProfile = () => {
+  try {
+    rmSync(profileDir, { recursive: true, force: true });
+  } catch {
+    /* best effort — a stray temp directory must not fail a gate */
+  }
+};
+async function closeChrome() {
+  const gone = new Promise((r) => chrome.once('exit', r));
+  chrome.kill('SIGTERM');
+  await Promise.race([gone, sleep(5000)]);
+  dropProfile();
+}
+// A throw on the way to closeChrome must not leave the profile behind either.
+// SIGKILL skips the flush, so nothing is left running to re-create it.
+process.on('exit', () => {
+  chrome.kill('SIGKILL');
+  dropProfile();
+});
+
 const chrome = spawn(
   chromeBin,
   [
     '--headless=new',
+    `--user-data-dir=${profileDir}`,
     '--disable-gpu',
     '--no-sandbox',
     '--remote-debugging-port=9222',
@@ -380,7 +416,7 @@ if (!contrasts.length) {
 }
 writeFileSync(join(OUT, '_contrast.json'), JSON.stringify(contrasts, null, 2));
 
-chrome.kill();
+await closeChrome();
 server.close();
 if (failures > 0) {
   console.error(

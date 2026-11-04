@@ -170,8 +170,18 @@ const DEFAULT_ICON: Record<StrctStatus, string> = {
         background: var(--success);
         color: var(--inv);
       }
+      /* The same severity language as the alert and the card (FR-67-06): the
+         rail widens and the surface takes the tone. A hero is a banner, so it
+         takes the fill whole, as the alert does — but the tone goes on top of
+         the hero's own surface rather than instead of it. A 12% tint that
+         replaces --bg-1 composites over the page, and in the dark palettes
+         that lands 1.045:1 from the page itself: the banner would read as a
+         hole rather than as a warning. Layered, it is 1.17:1 from a quiet
+         hero. */
       .strct-hero--warning {
         border-inline-start-color: var(--warning);
+        border-inline-start-width: 4px;
+        background-image: linear-gradient(var(--warning-bg), var(--warning-bg));
       }
       .strct-hero--warning .strct-hero__chip {
         background: var(--warning);
@@ -179,6 +189,8 @@ const DEFAULT_ICON: Record<StrctStatus, string> = {
       }
       .strct-hero--critical {
         border-inline-start-color: var(--critical);
+        border-inline-start-width: 5px;
+        background-image: linear-gradient(var(--critical-bg), var(--critical-bg));
       }
       .strct-hero--critical .strct-hero__chip {
         background: var(--critical);

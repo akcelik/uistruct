@@ -12,8 +12,9 @@
  * Usage: node scripts/dev-warnings.mjs [distDir]
  */
 import { createServer } from 'node:http';
-import { createReadStream, existsSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, statSync, mkdtempSync, rmSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
+import { tmpdir } from 'node:os';
 import { execSync, spawn } from 'node:child_process';
 
 const ROOT = resolve(process.argv[2] ?? 'dist/showcase/browser');
@@ -82,10 +83,37 @@ const chromeBin =
       }
     })
     .find(Boolean);
+// Chrome writes its profile into a scoped_dir under the user config directory
+// and clears it only when it exits by itself. These scripts kill it, so every
+// run used to leak a ~185MB profile. Hand it a directory we own, and wait for
+// the process to be gone before removing it: a SIGTERMed Chrome keeps flushing
+// for a moment and re-creates whatever is deleted underneath it.
+const profileDir = mkdtempSync(join(tmpdir(), 'strct-gate-'));
+const dropProfile = () => {
+  try {
+    rmSync(profileDir, { recursive: true, force: true });
+  } catch {
+    /* best effort — a stray temp directory must not fail a gate */
+  }
+};
+async function closeChrome() {
+  const gone = new Promise((r) => chrome.once('exit', r));
+  chrome.kill('SIGTERM');
+  await Promise.race([gone, sleep(5000)]);
+  dropProfile();
+}
+// A throw on the way to closeChrome must not leave the profile behind either.
+// SIGKILL skips the flush, so nothing is left running to re-create it.
+process.on('exit', () => {
+  chrome.kill('SIGKILL');
+  dropProfile();
+});
+
 const chrome = spawn(
   chromeBin,
   [
     '--headless=new',
+    `--user-data-dir=${profileDir}`,
     '--disable-gpu',
     '--no-sandbox',
     `--remote-debugging-port=${CDP}`,
@@ -162,7 +190,7 @@ for (const route of ROUTES) {
   await sleep(2200);
   console.log(`· ${route}`);
 }
-chrome.kill();
+await closeChrome();
 server.close();
 
 if (found.length) {
@@ -172,9 +200,7 @@ if (found.length) {
 }
 console.log('\nNo [strct] diagnostics. The showcase uses the library as documented.');
 if (deprecated.size) {
-  console.log(
-    `\n⚠ ${deprecated.size} input(s) the showcase still passes flat; 6.0 removes them:`,
-  );
+  console.log(`\n⚠ ${deprecated.size} input(s) the showcase still passes flat; 6.0 removes them:`);
   for (const line of [...deprecated].sort()) console.log(`   ${line}`);
   console.log('   (see docs/migration-6.md — this list must be empty before 6.0)');
 } else {

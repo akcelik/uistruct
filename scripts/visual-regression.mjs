@@ -18,8 +18,11 @@ import {
   mkdirSync,
   readFileSync,
   writeFileSync,
+  mkdtempSync,
+  rmSync,
 } from 'node:fs';
 import { join, extname, resolve, sep } from 'node:path';
+import { tmpdir } from 'node:os';
 import { spawn, execSync } from 'node:child_process';
 import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
@@ -192,6 +195,14 @@ const ROUTES = [
      })()`,
     '.strct-dd__menu',
   ],
+  // FR-67-06: severity on a surface, not on a rail's hue. Nothing in this
+  // suite held an alert, a card or a hero, so the 7.0 half of this item
+  // shipped unseen by it and the other half could have too. Each crop is the
+  // page's whole example section, so every tone is in one picture and a
+  // regression in the quiet ones shows as well as in the loud ones.
+  ['alert-severity', '/components/alert', '#examples', undefined, '.doc__examples'],
+  ['card-severity', '/components/card', '#examples', undefined, '.doc__examples'],
+  ['hero-severity', '/components/hero', '#examples', undefined, '.doc__examples'],
 ];
 const SCHEMES = [
   ['arctic-dark', 'arctic', 'dark'],
@@ -249,10 +260,37 @@ if (!chromeBin) {
   console.error('No Chrome/Chromium binary found (set CHROME_BIN).');
   process.exit(1);
 }
+// Chrome writes its profile into a scoped_dir under the user config directory
+// and clears it only when it exits by itself. These scripts kill it, so every
+// run used to leak a ~185MB profile. Hand it a directory we own, and wait for
+// the process to be gone before removing it: a SIGTERMed Chrome keeps flushing
+// for a moment and re-creates whatever is deleted underneath it.
+const profileDir = mkdtempSync(join(tmpdir(), 'strct-gate-'));
+const dropProfile = () => {
+  try {
+    rmSync(profileDir, { recursive: true, force: true });
+  } catch {
+    /* best effort — a stray temp directory must not fail a gate */
+  }
+};
+async function closeChrome() {
+  const gone = new Promise((r) => chrome.once('exit', r));
+  chrome.kill('SIGTERM');
+  await Promise.race([gone, sleep(5000)]);
+  dropProfile();
+}
+// A throw on the way to closeChrome must not leave the profile behind either.
+// SIGKILL skips the flush, so nothing is left running to re-create it.
+process.on('exit', () => {
+  chrome.kill('SIGKILL');
+  dropProfile();
+});
+
 const chrome = spawn(
   chromeBin,
   [
     '--headless=new',
+    `--user-data-dir=${profileDir}`,
     `--remote-debugging-port=${CDP}`,
     '--no-sandbox',
     '--disable-gpu',
@@ -455,6 +493,6 @@ try {
     console.log(UPDATE ? 'Baselines written.' : 'All pages match the baselines.');
   }
 } finally {
-  chrome.kill();
+  await closeChrome();
   server.close();
 }

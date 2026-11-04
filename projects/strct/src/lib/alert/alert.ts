@@ -80,12 +80,17 @@ export class StrctAlertActions {}
          same 3px rail, so at arm's length a critical note and an
          informational one were the same object. The tone fills the palettes
          already carried — --warning-bg, --critical-bg — were never used. */
+      /* 7.4: the tone is a layer on top of the alert's own --bg-1, not a
+         replacement for it. Replacing it let a 12% tint composite over the
+         page instead, and in the dark palettes a critical alert then painted
+         1.047:1 from the page — the loudest thing on the screen read as a
+         hole in it. Layered, the same tone is 1.17:1 from a quiet alert. */
       .strct-alert--warning {
-        background: var(--warning-bg);
+        background-image: linear-gradient(var(--warning-bg), var(--warning-bg));
         border-inline-start-width: 4px;
       }
       .strct-alert--critical {
-        background: var(--critical-bg);
+        background-image: linear-gradient(var(--critical-bg), var(--critical-bg));
         border-inline-start-width: 5px;
         box-shadow: 0 1px 0 var(--b1);
       }

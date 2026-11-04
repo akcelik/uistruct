@@ -310,13 +310,32 @@ already covered by `scripts/a11y-smoke.mjs` and must stay passing.
 
 ### FR-67-06 — severity rides on surface and weight, not hue alone
 
-> **SHIPPED in 7.0.0** for the alert, using the `--warning-bg` and
-> `--critical-bg` the palettes already carried. Rails step 3 / 4 / 5px and a
-> critical body is set in 500. **Not done for `hero` and `card`:** the item
-> asked for them to follow "in the same change for consistency", and they
-> should, but their status language is a rail on a surface that may itself be
-> tinted by the app, and getting that wrong is louder than leaving it. It is
-> the first thing to pick up after the list grid.
+> **SHIPPED in 7.0.0** for the alert and **CLOSED in 7.4.0** for the hero and
+> the card. Rails step 3 / 4 / 5px on all three, and the weight step sits where
+> each component has room for it: the alert's and the card's body go to 500,
+> while the card's header is already 600 and does not move.
+>
+> The caution in this note — "their status language is a rail on a surface that
+> may itself be tinted by the app, and getting that wrong is louder than
+> leaving it" — turned out to be the right thing to be careful about, and the
+> first version of 7.4.0 got it wrong anyway. A tone that _replaces_ a
+> component's own `--bg-1` composites over the page instead of over the
+> component, and in the three dark palettes a 12% tint then lands **1.045:1**
+> from the page: the loudest thing on the screen reads as a hole in it. The
+> tone has to be a layer on top of the component's surface
+> (`background-image: linear-gradient(var(--critical-bg), var(--critical-bg))`
+> over the `--bg-1` that is already there), which paints **1.17:1** from a
+> quiet one.
+>
+> **The alert shipped in 7.0.0 with that defect and nobody saw it for four
+> minor versions,** because the check this item was accepted on asked only that
+> the tones not share one surface — `surfaces.size > 1` passes on a 1.00:1
+> difference as happily as on a 1.17:1 one. 7.4.0 holds all three components to
+> a measured step against the quiet tone beside them, and fixes the alert.
+>
+> A card is not a banner. A hero takes the fill whole; a card's tone is its
+> header's, because a flooded 400px card shouts where the point was to be read
+> first.
 
 **Today:** `info`, `success`, `warning` and `critical` alerts are the same
 `--bg-1` surface behind the same 3px rail; only the rail's hue changes. The
@@ -330,6 +349,16 @@ seen, and it survives being printed or read by someone who does not see the hue.
 
 **Acceptance:** a browser check reading the four tones' backgrounds and rail
 widths; and the axe run must stay clean on the tinted surfaces.
+
+**Acceptance, as it ended up:** `scripts/weight-ladder.mjs` reads what each
+tone actually _paints_ — its own background colour plus any solid layer in
+`background-image`, composited over the surface behind it — and holds the two
+loud tones to 1.07:1 against the quiet one, their text to 4.5:1 on the surface
+they end up with, their rails to a step, and the critical body to a weight
+step. 102 checks across alert, card and hero in six palettes; **45 of them fail
+on 7.3.0**, three of those on the alert that 7.0.0 called done. Three clipped
+baselines (`alert-severity`, `card-severity`, `hero-severity`) join the visual
+suite, which held no alert, card or hero at all.
 
 **Files:** `projects/strct/src/lib/alert/alert.ts`. `hero` and `card` carry the
 same status language (`--card--accent/success/warning/critical`) and follow in
