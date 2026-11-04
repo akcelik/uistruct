@@ -632,7 +632,9 @@ interface SeriesRender {
           @for (l of displayLabels(); track $index) {
             <span
               [class.strct-chart__label--active]="interactive() && dispIdx() === l.i"
-              [style.left.px]="xOf(l.i)"
+              [class.strct-chart__label--band]="isBand()"
+              [style.left.px]="labelX(l.i)"
+              [style.max-width.px]="isBand() ? bandSlot() : null"
               >{{ l.text }}</span
             >
           }
@@ -970,6 +972,15 @@ interface SeriesRender {
         position: absolute;
         transform: translateX(-50%);
         white-space: nowrap;
+      }
+      /* A category label is bounded by its own band, so a long name ends in an
+         ellipsis inside the chart rather than being cut by whatever holds it
+         (BUG-70-01: the fourth of four ran 34px past the chart's right edge).
+         Centred on the band, a slot-wide box cannot leave the plot area. */
+      .strct-chart__labels span.strct-chart__label--band {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
       }
 
       @media (prefers-reduced-motion: no-preference) {
@@ -1442,20 +1453,17 @@ export class StrctChart {
   protected readonly bars = computed(() => {
     const d = this.data();
     const [s, e] = this.domain();
-    const chartW = this.chartW();
     const base = this.height() - PAD.b;
     const last = Math.min(e, d.length - 1);
-    const count = Math.max(1, last - s + 1);
-    const slot = chartW / count;
+    const slot = this.bandSlot();
     const w = slot * 0.6;
-    const pl = this.pl();
     const out: { x: number; y: number; w: number; h: number }[] = [];
     for (let i = s; i <= last; i++) {
       const v = d[i];
       if (!isVal(v)) continue;
       const h = ((Math.max(0, v) - this.yMin()) / (this.yMax() - this.yMin() || 1)) * this.chartH();
       out.push({
-        x: pl + (i - s) * slot + (slot - w) / 2,
+        x: this.bandOf(i) - w / 2,
         y: base - Math.max(0, h),
         w,
         h: Math.max(0, h),
@@ -1760,6 +1768,35 @@ export class StrctChart {
     const value = this.hoverGap() ? this.gapText() : this.hoverValueText();
     return `${meta ? meta + ': ' : ''}${value}`;
   });
+
+  /**
+   * A bar chart puts its categories in bands, not at points: n categories make
+   * n slots, where a line's n points make n−1 intervals. Both the bars and the
+   * labels read the band from here, because computing it in two places is
+   * exactly how BUG-70-01 happened — the bars stepped by `chartW / n` and the
+   * labels by `chartW / (n−1)`, so in a 784px chart they were 183.5px and
+   * 244.7px apart and only a two-category chart could line up.
+   */
+  protected readonly isBand = computed(() => this.type() === 'bar' && !this.isMulti());
+
+  /** One category's slot, in px. */
+  protected bandSlot(): number {
+    const [s, e] = this.domain();
+    const last = Math.min(e, this.data().length - 1);
+    return this.chartW() / Math.max(1, last - s + 1);
+  }
+
+  /** The centre of category `i`'s band — where its bar and its label belong. */
+  protected bandOf(i: number): number {
+    const [s] = this.domain();
+    const slot = this.bandSlot();
+    return this.pl() + (i - s) * slot + slot / 2;
+  }
+
+  /** Where a label sits: a band's centre for bars, the point's own x otherwise. */
+  protected labelX(i: number): number {
+    return this.isBand() ? this.bandOf(i) : this.xOf(i);
+  }
 
   /** Pixel x of a data index (shared by the plot, labels and annotations).
    *  With `times`, positions map to real timestamps — uneven sampling shows. */

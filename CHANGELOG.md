@@ -5,6 +5,61 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.6.1] - 2026-11-04
+
+[BUG-70-01](docs/feature-requests/archive/chart-bar-category-labels.md), filed
+by HyperStruct against 7.6.0: a bar chart's category labels were not under its
+bars, and the last one was cut at the card's edge.
+
+### Fixed
+
+- **A bar chart's category label is centred on its own band.** A bar chart puts
+  _n_ categories in _n_ slots; a line chart's _n_ points make _n−1_ intervals.
+  The bars read one and the labels read the other — `chartW / n` against
+  `chartW / (n−1)` — so they stepped **183.5px and 244.7px apart** in the 784px
+  chart this was filed against and nothing lined up. Measured after: every
+  label is **0.00px** off its band.
+
+  The real defect is that the geometry was computed in two places. There is now
+  one `bandSlot()` / `bandOf()` that both the bars and the labels read, so the
+  two cannot drift apart again.
+
+- **A category with no value still gets its slot and its label.** The fourth
+  volume in the filed case was never read, so it has no bar; its label used to
+  land on nothing.
+- **A label cannot be drawn outside the chart.** Each bar label is bounded by
+  its own band and ends in an ellipsis inside the chart, rather than running
+  past the edge for whatever holds the chart to cut — the fourth label ended
+  **34px** past the chart's right edge and the card showed `CSV-PROD-` for
+  `CSV-PROD-04`.
+
+**Line charts are untouched.** Their labels still sit at each point's own x,
+which is right for points, and a spec now says so.
+
+### One correction to the report
+
+It says _"The label is under its bar only for the first category."_ Measured,
+the first is the **worst**: 92px off, as is the fourth. The middle two are 30px
+off. Nothing lined up — which the report's own table shows.
+
+### Gates
+
+- **`scripts/chart-bands.mjs`**, wired into CI. For every category it asserts
+  |label centre − band centre| < 1px and that no label leaves the chart's box,
+  **at two widths** — a single width cannot tell a measurement from a constant
+  that happens to fit (784px and 738px here). It derives the band from the bars
+  that are actually drawn rather than recomputing the component's arithmetic,
+  because a check that recomputes what it checks agrees with a bug. **6 of its
+  9 checks fail on 7.6.0.**
+- **A new demo, `#bar-categories`** — the filed usage at the filed width, with
+  the null fourth category — so the gate has the case to read. Its box lets the
+  overflow show, because a label leaving the chart is how this reached a
+  release.
+- **A clipped baseline, `bar-categories`** — the visual suite goes to 52. The
+  numeric gate cannot see a label that is centred but wrong.
+- **Three specs**, two of which fail on 7.6.0; the third guards the line
+  chart's own spacing.
+
 ## [7.6.0] - 2026-11-04
 
 [FR-69-02](docs/feature-requests/archive/datagrid-fill-and-utility-ellipsis.md), the

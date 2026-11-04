@@ -14,6 +14,71 @@ describe('StrctChart', () => {
     expect(el.classList).toContain('strct-chart');
   });
 
+  /**
+   * BUG-70-01. A bar chart puts n categories in n slots; a line's n points
+   * make n−1 intervals. The bars read one and the labels read the other, so
+   * they stepped by chartW/n and chartW/(n−1) and only a two-category chart
+   * lined up. The browser half is `scripts/chart-bands.mjs`, which measures
+   * the drift at two widths; this reads the numbers the DOM carries, so the
+   * arithmetic cannot drift back in a unit test's reach.
+   */
+  it("centres a bar chart's labels on the same bands as its bars", () => {
+    // A null fourth category: its band keeps its slot and its label, and it is
+    // the one no bar can anchor.
+    const el = build({
+      type: 'bar',
+      data: [78, 61, 54, null],
+      labels: ['one', 'two', 'three', 'four'],
+      min: 0,
+      max: 100,
+    });
+
+    const bars = [...el.querySelectorAll('.strct-chart__bar')].map(
+      (b) => parseFloat(b.getAttribute('x')!) + parseFloat(b.getAttribute('width')!) / 2,
+    );
+    const labels = [...el.querySelectorAll<HTMLElement>('.strct-chart__labels span')].map((s) =>
+      parseFloat(s.style.left),
+    );
+
+    expect(bars.length, 'three bars for four categories').toBe(3);
+    expect(labels.length, 'four labels, including the null band').toBe(4);
+
+    // The first three labels sit exactly on their bars.
+    for (let i = 0; i < bars.length; i++)
+      expect(Math.abs(labels[i] - bars[i]), `label ${i} against bar ${i}`).toBeLessThan(0.01);
+
+    // And the fourth continues the bars' own pitch.
+    const pitch = (bars[2] - bars[0]) / 2;
+    expect(Math.abs(labels[3] - (bars[0] + 3 * pitch))).toBeLessThan(0.01);
+
+    // Labels step with the bars, not with n−1 intervals, which is the defect.
+    const labelPitch = (labels[3] - labels[0]) / 3;
+    expect(Math.abs(labelPitch - pitch)).toBeLessThan(0.01);
+  });
+
+  it('bounds a bar label to its own band so it cannot leave the chart', () => {
+    const el = build({
+      type: 'bar',
+      data: [1, 2],
+      labels: ['a name far wider than its band', 'b'],
+    });
+    const span = el.querySelector<HTMLElement>('.strct-chart__labels span')!;
+    expect(span.classList).toContain('strct-chart__label--band');
+    expect(parseFloat(span.style.maxWidth)).toBeGreaterThan(0);
+  });
+
+  it("leaves a line chart's labels at their own x", () => {
+    const el = build({ data: [1, 2, 3, 4], labels: ['a', 'b', 'c', 'd'] });
+    const spans = [...el.querySelectorAll<HTMLElement>('.strct-chart__labels span')];
+    // n−1 intervals is right for points, and the first sits at the plot's left
+    // edge rather than half a slot in.
+    expect(spans[0].classList).not.toContain('strct-chart__label--band');
+    const xs = spans.map((s) => parseFloat(s.style.left));
+    const step = (xs[3] - xs[0]) / 3;
+    for (let i = 1; i < xs.length; i++)
+      expect(Math.abs(xs[i] - xs[i - 1] - step)).toBeLessThan(0.01);
+  });
+
   it('renders a smooth (cubic) line path by default', () => {
     const el = build({ data: [4, 8, 2, 9, 5] });
     const d = el.querySelector('.strct-chart__line')?.getAttribute('d') ?? '';

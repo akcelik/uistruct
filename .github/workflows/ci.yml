@@ -89,6 +89,11 @@ jobs:
       # other is the whole item. 15 checks.
       - name: Assert a fill grid ends where its pane ends
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/fill-height.mjs
+      # BUG-70-01: a bar chart's category label under its own band, measured at
+      # two widths because a single one cannot tell a measurement from a
+      # constant that happens to fit. 6 of its 9 checks fail on 7.6.0.
+      - name: Assert a bar label is centred on its band
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/chart-bands.mjs
       # Weight carries rank, a field is a recess, severity rides on surface and
       # a card groups by tone — FR-67-04/05/06/08, read from the rendered page.
       # 19 of its 28 checks fail on 6.5.0.
