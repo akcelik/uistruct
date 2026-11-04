@@ -7,8 +7,20 @@ stays here until it goes quiet.
 
 ## Open
 
-**Nothing.** Both documents that were open closed on 2026-11-04 and moved to
-[`archive/`](archive/):
+[**`backup-glyphs.md`**](backup-glyphs.md) — FR-69-04, filed 2026-11-04 by HyperStruct against 7.4.0:
+ten glyphs a backup product borrows today. Restores uses `undo`, Jobs uses `queue`, Repositories uses
+`rack`, and a recovery point's retention lock is the same `lock` as a locked account. Asks for `backup`,
+`restore`, `lockTimed`, `calendarClock`, `skip`, `dedup`, `compress`, `fingerprint`, `dualControl` and
+`replicate`.
+
+[**`datagrid-fill-and-utility-ellipsis.md`**](datagrid-fill-and-utility-ellipsis.md) — BUG-69-01,
+FR-69-02, BUG-69-03, filed 2026-11-04 by HyperStruct against 7.4.0. The utility cells' `clip` exception
+from 6.4.1 loses on specificity ((0,3,2) against (0,3,3)), so every `singleLine` row draws "..." beside
+its 25px checkbox in an 18px content box. A grid has no way to take the height left in its pane
+(HyperStruct: 365 of 399 grids unbounded; an app directive measures it for now). And the empty row's
+message is cut with an ellipsis at 125% and 150%.
+
+### Closed on 2026-11-04, and moved to [`archive/`](archive/)
 
 - [**`archive/visual-language-2026-11.md`**](archive/visual-language-2026-11.md)
   — FR-67-00 … 08, the internal design review of the visual language, filed

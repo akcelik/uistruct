@@ -5,6 +5,67 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.4.1] - 2026-11-04
+
+Two defects from [BUG-69-01 / BUG-69-03](docs/feature-requests/datagrid-fill-and-utility-ellipsis.md),
+filed by HyperStruct against 7.4.0. Both are the single-line cell rule reaching
+cells it was never meant to reach, and one of them has been shipping since
+**6.4.1**.
+
+### Fixed
+
+- **A single-line row no longer draws an ellipsis beside its checkbox.** The
+  rule that gives every body cell `text-overflow: ellipsis` has a companion
+  exception for the cells that hold an affordance rather than a value — the
+  selection cell, the expand chevron, the row-actions button. 6.4.1 shipped
+  that exception one class short: the rule carries
+  `tr:not(.strct-dg__detailrow)` and the exception did not, which makes it
+  **(0,3,2) against (0,3,3)**, so it lost the cascade and never applied.
+  Measured in Chrome: the selection cell's content box is **18px**, the control
+  in it **25px**, and **9 of 9** utility cells on the datagrid page computed
+  `text-overflow: ellipsis` with inline content running **17px** past the box.
+  The exception now carries the same shape, which makes it (0,4,3).
+
+  HyperStruct had removed its own workaround on adopting 7.1.0, trusting the
+  6.4.1 changelog line, and the dots came back. The rule can go again.
+
+- **An empty row wraps its message instead of being cut.** `td.strct-dg__emptyrow`
+  fell under the same nowrap-and-elide rule as a data cell, so at 125% and 150%
+  a narrow grid's empty-state message ended in "…" — measured by HyperStruct at
+  2 cells on one page, 1 on two others. The empty row now joins the detail row
+  in the rule's exclusion: a message is not a value to be truncated.
+
+### Why neither was caught
+
+Three things had to line up, and all three did.
+
+- **The gate for the related bug measures something else.** BUG-66-01's browser
+  check reads how much of the radio its column _shows_, which is a width
+  question. Nothing anywhere asserted a computed `text-overflow`.
+- **No spec covered the exception**, so the rule could be written, shipped and
+  silently overridden without a failure.
+- **The showcase never rendered the cells.** In single-line mode the datagrid
+  page had a selection cell and nothing else: no expand cell, no action cell,
+  no empty row. Even a correct check would have had nothing to read. This is
+  the same shape as 7.2.0 (the one component template the source gate did not
+  walk) and 7.4.0 (no alert, card or hero in the visual suite).
+
+### Gates
+
+- **`scripts/grid-layout.mjs`: 13 → 17 checks.** It reads the **computed**
+  `text-overflow` of every utility cell and the empty row's computed
+  `white-space`, asserts that no utility or empty cell marks an overflow with
+  an ellipsis, and — first of the four — asserts that the page renders all four
+  cell kinds at all, so a green result cannot mean "read nothing". **3 of the
+  17 fail on 7.4.0.**
+- **A new showcase demo, `#datagrid-utility-cells`** — a single-line grid with
+  multi-selection, an expand column and row actions, plus a second one with no
+  rows — exists so those checks have every case on one page.
+- **Two jsdom specs.** One computes the specificity of both selectors from the
+  stylesheet the component ships and asserts the exception cannot lose; the
+  other asserts the empty row is excluded. Both fail on 7.4.0. Arithmetic, not
+  a string match, because a shortened selector is exactly how this happened.
+
 ## [7.4.0] - 2026-11-04
 
 The second half of FR-67-06, and the defect the first half shipped with.

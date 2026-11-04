@@ -364,8 +364,15 @@
   padding: 5px 11px;
 }
 /* Single-line rows: cells never wrap; long values truncate with an
- * ellipsis (capped per cell) so row height stays uniform. */
-.strct-dg-host--singleline .strct-dg tbody tr:not(.strct-dg__detailrow) > td {
+ * ellipsis (capped per cell) so row height stays uniform. The empty row is
+ * excluded with the detail row: it holds a message, not a value, and a
+ * message that does not fit should wrap rather than be cut (BUG-69-03 —
+ * measured at 2 cells on one HyperStruct page at 150%). */
+.strct-dg-host--singleline
+  .strct-dg
+  tbody
+  tr:not(.strct-dg__detailrow)
+  > td:not(.strct-dg__emptyrow) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -373,11 +380,18 @@
 }
 /* A radio with its browser margin, or the detail button, fits its cell but
    not its content box, so the ellipsis drew a speck of dots beside it. These
-   cells hold an affordance, not text: there is nothing to elide. */
+   cells hold an affordance, not text: there is nothing to elide.
+   BUG-69-01: this shipped in 6.4.1 at (0,3,2) against the (0,3,3) of the rule
+   it is an exception to — the `:not()` above adds a class — so it never
+   applied and every body row drew the dots again. It now carries the same
+   shape, which makes it (0,4,3). Measured: the selection cell's content box
+   is 18px and its control 25px, so 7px of inline content ran past a cell
+   whose computed text-overflow was `ellipsis`. */
 .strct-dg-host--singleline
   .strct-dg
   tbody
-  td:is(.strct-dg__sel, .strct-dg__expandcell, .strct-dg__actioncell) {
+  tr:not(.strct-dg__detailrow)
+  > td:is(.strct-dg__sel, .strct-dg__expandcell, .strct-dg__actioncell) {
   text-overflow: clip;
 }
 /* A `variant="link"` button is `display: inline; white-space: normal` so it

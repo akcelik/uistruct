@@ -30,6 +30,7 @@ import {
   StrctDesc,
   StrctDescriptionList,
   StrctIcon,
+  StrctMenuItem,
   StrctRow,
   StrctRowDetailDef,
   StrctStack,
@@ -794,6 +795,48 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="datagrid-utility-cells"
+      owner="datagrid"
+      heading="Every utility cell a single-line row can hold"
+      description="A single-line row never wraps and its values end in an ellipsis. Its utility cells — the checkbox, the expand chevron, the row-actions button — hold an affordance rather than text, so there is nothing in them to elide, and the empty row holds a message rather than a value. Before 7.4.1 the exception that said so lost on specificity to the rule it was an exception to, and every body row drew two dots beside its checkbox (BUG-69-01); the empty row was cut with an ellipsis at narrow widths (BUG-69-03). This demo exists so a browser check has all four cells and the empty row on one page to read."
+      code='<strct-datagrid singleLine expandable [selection]="&#123; enabled: true, mode: &apos;multiple&apos; &#125;" [rowActions]="menuFor" … />'
+    >
+      <div class="dg-wrap" style="max-width: 560px;">
+        <strct-datagrid
+          id="dg-utility-full"
+          style="width: 100%;"
+          singleLine
+          expandable
+          [selection]="{ enabled: true, mode: 'multiple' }"
+          [rowActions]="utilityActions"
+          [columns]="lateCols"
+          [rows]="utilityRows"
+        >
+          <ng-template strctRowDetail let-row>
+            <strct-stack style="max-width: 340px;">
+              <div strctStackItem label="Cluster">{{ row['cluster'] }}</div>
+              <div strctStackItem label="State">{{ row['state'] }}</div>
+            </strct-stack>
+          </ng-template>
+        </strct-datagrid>
+        <strct-datagrid
+          id="dg-utility-empty"
+          style="width: 300px;"
+          singleLine
+          expandable
+          [selection]="{ enabled: true, mode: 'multiple' }"
+          [rowActions]="utilityActions"
+          [columns]="lateCols"
+          [rows]="[]"
+        >
+          <ng-template strctRowDetail let-row>
+            <div>{{ row['name'] }}</div>
+          </ng-template>
+        </strct-datagrid>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="detailpane"
       heading="Detail pane"
       description="A different pattern from expandable rows: click the » button to collapse the grid to a single column and open a side pane with that row's details (the » keeps row cells free to select/copy). Click it again or the × to return."
@@ -1351,6 +1394,23 @@ mtu = 9000`;
       ]),
     );
   }
+
+  /**
+   * BUG-69-01 / BUG-69-03: a single-line grid holding every utility cell at
+   * once — checkbox, expand chevron, row-actions button — plus a second one
+   * with no rows, so the empty row is on the page too. Nothing on the
+   * datagrid page rendered an expand or action cell in single-line mode, so
+   * there was nothing for a check to read and the exception that never
+   * applied went unnoticed from 6.4.1 to 7.4.0.
+   */
+  protected readonly utilityRows: StrctRow[] = [
+    { name: 'hv-prod-01.dc.internal', cluster: 'prod-a', state: 'Running' },
+    { name: 'hv-edge-02.dc.internal', cluster: 'edge', state: 'Maintenance' },
+  ];
+  protected readonly utilityActions = (row: StrctRow): StrctMenuItem[] => [
+    { label: `Open ${row['name']}`, action: () => undefined },
+    { label: 'Drain', action: () => undefined },
+  ];
 
   /** BUG-65-03: stated widths that come to 1000px in a 520px box. */
   protected readonly wideCols: StrctDatagridColumn[] = [
