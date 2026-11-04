@@ -51,6 +51,10 @@ export const routes: Routes = [
     loadComponent: () => import('./scenarios/host-detail.page').then((m) => m.HostDetailPage),
   },
   {
+    path: 'scenarios/fill-height',
+    loadComponent: () => import('./scenarios/fill-height.page').then((m) => m.FillHeightPage),
+  },
+  {
     path: 'scenarios/vm-settings',
     loadComponent: () => import('./scenarios/vm-settings.page').then((m) => m.VmSettingsPage),
   },

@@ -118,6 +118,13 @@
 .strct-dg-host--bounded .strct-dg__scroll {
   overflow-y: auto;
 }
+/* FR-69-02: the layout is `align-items: flex-start` and the pane stretches,
+   so an open pane taller than a bounded list would make the grid taller than
+   its cap. The pane takes the same number and scrolls inside it. */
+.strct-dg-host--virtual .strct-dg__layout--paned > .strct-dg__pane,
+.strct-dg-host--bounded .strct-dg__layout--paned > .strct-dg__pane {
+  overflow-y: auto;
+}
 .strct-dg-host--virtual .strct-dg thead th,
 .strct-dg-host--bounded .strct-dg thead th {
   position: sticky;

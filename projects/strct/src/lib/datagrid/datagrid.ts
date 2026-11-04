@@ -9,6 +9,8 @@ import {
   contentChild,
   contentChildren,
   DestroyRef,
+  Provider,
+  InjectionToken,
   Directive,
   effect,
   ElementRef,
@@ -170,6 +172,30 @@ export class StrctDatagridActionBarCaption {}
 export class StrctDatagridActionBar {}
 
 /**
+ * Defaults an app can state once instead of on every grid. HyperStruct's sweep
+ * put a fill directive on 266 of its 399 grids (FR-69-02); a policy that broad
+ * belongs at the injector, not at each call site.
+ *
+ *   providers: [provideStrctDatagridDefaults({ maxHeight: 'fill' })]
+ *
+ * A per-instance binding still wins: `[maxHeight]="null"` opts one grid out.
+ */
+export interface StrctDatagridDefaults {
+  /** px, or `'fill'` — the space left in the nearest scrolling ancestor. */
+  maxHeight?: number | 'fill' | null;
+  /** The floor a `'fill'` grid never goes under. Default 280. */
+  fillMin?: number;
+}
+
+export const STRCT_DATAGRID_DEFAULTS = new InjectionToken<StrctDatagridDefaults>(
+  'STRCT_DATAGRID_DEFAULTS',
+);
+
+export function provideStrctDatagridDefaults(defaults: StrctDatagridDefaults): Provider {
+  return { provide: STRCT_DATAGRID_DEFAULTS, useValue: defaults };
+}
+
+/**
  * Interactive data table: sortable columns, row selection (Shift-click a row
  * checkbox to carry its new state across a whole block), expandable detail
  * rows, a batch action bar and built-in paging.
@@ -206,7 +232,7 @@ export class StrctDatagridActionBar {}
     '[class.strct-dg-host--singleline]': 'singleLine()',
     '[class.strct-dg-host--fixedcols]': 'widthsApplied()',
     '[class.strct-dg-host--virtual]': 'virtual()',
-    '[class.strct-dg-host--bounded]': '!virtual() && maxHeight() !== null',
+    '[class.strct-dg-host--bounded]': '!virtual() && maxHeightSetting() !== null',
     '[class.strct-dg-host--sticky]': 'stickyActive()',
     '[class.strct-dg-host--flush]': 'flush()',
   },
@@ -456,7 +482,137 @@ export class StrctDatagrid {
    * object there turns virtual scrolling on: a grouped grid given a height
    * cap silently lost its groups).
    */
-  readonly maxHeight = input<number | null>(null);
+  /**
+   * The default is `undefined`, not `null`, and the difference matters once an
+   * app states a policy with `provideStrctDatagridDefaults`: `undefined` means
+   * "nothing was said here, use the policy", and `[maxHeight]="null"` means
+   * "no cap on this one" — which is how a single grid opts out. Folding both
+   * into `null` made the opt-out unreachable.
+   */
+  readonly maxHeightInput = input<
+    number | 'fill' | null | undefined,
+    number | 'fill' | '' | null | undefined
+  >(undefined, {
+    alias: 'maxHeight',
+    // `maxHeight="fill"` and a bare `maxHeight` both mean fill.
+    transform: (v) => (v === '' ? 'fill' : v),
+  });
+
+  /**
+   * The floor a `'fill'` grid never goes under, in px. Below it the page
+   * scrolls instead, which is the right answer on a short window: a 120px
+   * list of rows is not a list.
+   */
+  readonly fillMinInput = input<number | null>(null, { alias: 'fillMin' });
+
+  private readonly dgDefaults = inject(STRCT_DATAGRID_DEFAULTS, { optional: true }) ?? {};
+
+  /** What was asked for — a number, `'fill'`, or nothing — provider behind it. */
+  protected readonly maxHeightSetting = computed<number | 'fill' | null>(() => {
+    const asked = this.maxHeightInput();
+    if (asked !== undefined) return asked;
+    return this.dgDefaults.maxHeight ?? null;
+  });
+  protected readonly fillMin = computed(
+    () => this.fillMinInput() ?? this.dgDefaults.fillMin ?? 280,
+  );
+  protected readonly fills = computed(() => this.maxHeightSetting() === 'fill');
+  /** The measured cap, written by the observer below. */
+  private readonly fillCap = signal<number | null>(null);
+
+  /**
+   * The cap in px, whatever was asked for. A `'fill'` grid reads `null` until
+   * it has been measured once, which is one frame — the host carries
+   * `--bounded` from the start either way, so the scroller is already a
+   * scroller and nothing jumps.
+   */
+  readonly maxHeight = computed<number | null>(() => {
+    const asked = this.maxHeightSetting();
+    if (asked === 'fill') return this.fillCap();
+    return typeof asked === 'number' ? asked : null;
+  });
+
+  /**
+   * How much height is left for the rows, in the nearest scrolling ancestor.
+   *
+   * Everything is read in viewport coordinates, which `getBoundingClientRect`
+   * already resolves scrolling into. The app-side directive this replaces
+   * worked in the pane's content coordinates and had to subtract `scrollTop`
+   * by hand, and its hardest term was "what the page has after the grid":
+   * `scrollHeight` is never less than the pane, so a short page counted the
+   * empty space under itself — 201px of nothing, measured. Summing the
+   * following siblings instead cannot see space that holds nothing.
+   */
+  private measureFill(): void {
+    const host = this.hostRef.nativeElement;
+    const scroll = host.querySelector<HTMLElement>('.strct-dg__scroll');
+    const layout = host.querySelector<HTMLElement>('.strct-dg__layout');
+    if (!scroll) return;
+
+    // Nothing has a box yet — hidden, `display: none`, mid-hydration, or a
+    // DOM with no layout engine at all. Every rect reads 0, and the fallback
+    // to the viewport would hand back the window height as if it had been
+    // measured. A cap computed from no geometry is worse than no cap: the
+    // host already says bounded, so the scroller is a scroller, and the real
+    // number arrives from the observer the moment the grid has a box.
+    const hostRect = host.getBoundingClientRect();
+    if (hostRect.width === 0 && hostRect.height === 0) return;
+
+    let pane: HTMLElement | null = host.parentElement;
+    while (pane) {
+      const oy = getComputedStyle(pane).overflowY;
+      if (oy === 'auto' || oy === 'scroll') break;
+      pane = pane.parentElement;
+    }
+
+    let top: number;
+    let bottom: number;
+    if (pane) {
+      const cs = getComputedStyle(pane);
+      const r = pane.getBoundingClientRect();
+      // The content box, not the border box: getBoundingClientRect includes
+      // the border, and leaving it in over-counted by 1px at each edge — the
+      // pane then scrolled by 3px, which is exactly the kind of "nearly
+      // right" a reader sees as a scrollbar that should not be there.
+      top = r.top + parseFloat(cs.borderTopWidth || '0') + parseFloat(cs.paddingTop || '0');
+      bottom =
+        r.bottom - parseFloat(cs.borderBottomWidth || '0') - parseFloat(cs.paddingBottom || '0');
+    } else {
+      top = 0;
+      bottom = globalThis.innerHeight ?? 0;
+    }
+
+    // Scrolled past, the rows start above the pane; the pane's own top is the
+    // honest edge then.
+    const rowsTop = Math.max(scroll.getBoundingClientRect().top, top);
+    // Whatever the grid draws under its rows — the pager, the action bar.
+    const footer = layout
+      ? Math.max(0, hostRect.bottom - layout.getBoundingClientRect().bottom)
+      : 0;
+
+    // What the page has after this grid, up to the scrolling ancestor — plus
+    // the gap a flex or grid parent puts between the siblings, which is space
+    // the grid does not get either.
+    let after = 0;
+    for (let el: HTMLElement | null = host; el && el !== pane; el = el.parentElement) {
+      let siblings = 0;
+      for (let s = el.nextElementSibling; s; s = s.nextElementSibling) {
+        after += s.getBoundingClientRect().height;
+        siblings++;
+      }
+      const parent = el.parentElement;
+      if (siblings && parent) {
+        const pcs = getComputedStyle(parent);
+        if (pcs.display.includes('flex') || pcs.display.includes('grid')) {
+          const gap = parseFloat(pcs.rowGap === 'normal' ? '0' : pcs.rowGap || '0');
+          if (gap > 0) after += gap * siblings;
+        }
+      }
+    }
+
+    const room = bottom - rowsTop - footer - after;
+    this.fillCap.set(Math.max(this.fillMin(), Math.round(room)));
+  }
 
   /** How rows are picked — replaces six flat inputs. */
   readonly selectionCfg = input<StrctDatagridSelection>({}, { alias: 'selection' });
@@ -2214,6 +2370,36 @@ export class StrctDatagrid {
       ro.observe(host);
       this.sweepHeaderWidths();
       this.destroyRef.onDestroy(() => ro.disconnect());
+    });
+
+    // FR-69-02. A `'fill'` grid is measured once it exists and again whenever
+    // anything that decides the answer changes size: the grid, what holds it,
+    // and the ancestor it is filling. A fixed pixel count was right for one
+    // window height and wrong for every other, which is why 365 of
+    // HyperStruct's 399 grids had no bound at all.
+    afterNextRender(() => {
+      if (!this.fills()) return;
+      this.measureFill();
+      if (typeof ResizeObserver === 'undefined') return;
+      const host = this.hostRef.nativeElement;
+      const ro = new ResizeObserver(() => this.zone.run(() => this.measureFill()));
+      ro.observe(host);
+      if (host.parentElement) ro.observe(host.parentElement);
+      let pane: HTMLElement | null = host.parentElement;
+      while (pane) {
+        const oy = getComputedStyle(pane).overflowY;
+        if (oy === 'auto' || oy === 'scroll') break;
+        pane = pane.parentElement;
+      }
+      if (pane) ro.observe(pane);
+      // The window has no ResizeObserver, and a pane sized in vh changes with
+      // it without any element in between reporting a resize.
+      const onWindowResize = () => this.zone.run(() => this.measureFill());
+      globalThis.addEventListener?.('resize', onWindowResize);
+      this.destroyRef.onDestroy(() => {
+        ro.disconnect();
+        globalThis.removeEventListener?.('resize', onWindowResize);
+      });
     });
     // The columns' own `hidden` flags, read once they exist — a required input
     // is not available in the constructor.

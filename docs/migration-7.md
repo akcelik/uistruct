@@ -194,6 +194,32 @@ What to look at:
 - **If you were compensating for a dark critical alert being invisible** —
   a border, a heavier shadow, your own tint — you can take it out.
 
+## 7.6: a grid can fill its pane
+
+Additive — nothing changes unless you ask for it.
+
+- **`[maxHeight]="'fill'"`** bounds the grid's scroll frame to the space left
+  in its nearest scrolling ancestor, recomputed as that ancestor or the window
+  changes size. `[fillMin]` (default 280px) is the floor under which the page
+  scrolls instead.
+- **`provideStrctDatagridDefaults({ maxHeight: 'fill' })`** states the policy
+  once for an app. A per-grid `[maxHeight]` still wins, and
+  **`[maxHeight]="null"` opts one grid out** of the policy.
+
+What to look at:
+
+- **`maxHeight`'s default is now `undefined`, not `null`.** It behaves exactly
+  as before — no provider, no cap — and the distinction only matters once you
+  state a policy: `undefined` means "use the policy", `null` means "no cap
+  here". If you were binding `[maxHeight]="someNumber ?? null"`, that still
+  reads as "no cap" and will now override a policy, which is what it says.
+- **If you measured this yourself**, you can stop. A directive that read
+  `.strct-dg__scroll` or `.strct-dg__layout` to find where the rows start and
+  where the footer begins is doing the component's arithmetic from outside it.
+- **An open detail pane is now bound to the same height** and scrolls inside
+  it. Before, a pane taller than a bounded list stretched the grid past its own
+  cap.
+
 ## The 6.x flag
 
 Set `data-visual="6"` on the same element that carries `data-palette` and
