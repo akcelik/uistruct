@@ -20,6 +20,21 @@ do not separate, and no agreed type scale at all.
 This report is the census, then nine items. Every number in it was read from
 Chrome or counted in the source; none is an estimate.
 
+> **CLOSED, 2026-11-04.** All nine items are answered across 6.5.0, 7.0.0,
+> 7.1.0, 7.1.1, 7.2.0, 7.2.1, 7.3.0 and 7.4.0. Seven shipped as asked; FR-67-03
+> shipped its radius half and its second line weight was **examined and
+> deliberately not shipped** (see that item); FR-67-06 took two releases and
+> the second one had to fix the first.
+>
+> Two things are worth carrying out of this. **The gate has to measure what an
+> eye would see, not that two values differ** — FR-67-06 was accepted on
+> `surfaces.size > 1`, which passes on a 1.00:1 difference, and a defect rode
+> four minor versions on that. And **a component the visual suite does not hold
+> is a component nothing contradicts**: the suite had no alert, no card and no
+> hero, so neither the 7.0.0 claim nor the first 7.4.0 draft met a picture that
+> disagreed. The gates that found both were written after the fact, by going
+> back to the census that started the work.
+
 ![Six findings, each shown against the library as it ships](../assets/visual-language-before-after.png)
 
 The sheet above is the proposal rendered against the library's own stylesheet:
