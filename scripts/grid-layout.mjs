@@ -311,6 +311,89 @@ try {
     );
   }
 
+  // ── BUG-69-01 / BUG-69-03: an ellipsis where there is no text ───────────
+  // The single-line rule gives every body cell `text-overflow: ellipsis`, and
+  // 6.4.1 shipped an exception for the cells that hold an affordance instead
+  // of a value. The exception was (0,3,2) against the (0,3,3) of the rule it
+  // excepts — the `:not(.strct-dg__detailrow)` adds a class — so it never
+  // applied, and a 25px control in an 18px content box drew two dots beside
+  // every checkbox for three minor versions. Nothing caught it: BUG-66-01's
+  // own check reads how much of the radio the column *shows*, and no spec
+  // asserts a computed `text-overflow` at all.
+  //
+  // So this reads the computed value, as the FR asks, and it reads it on all
+  // four cells. Until 7.4.1 the datagrid page rendered no expand or action
+  // cell in single-line mode at all, which is the other half of why the rule
+  // went unnoticed; `#datagrid-utility-cells` exists to give this something
+  // to read.
+  const cells = await evaluate(
+    send,
+    `(() => {
+       const out = [];
+       for (const host of document.querySelectorAll('.strct-dg-host--singleline')) {
+         for (const td of host.querySelectorAll('tbody td')) {
+           const kind = ['strct-dg__sel', 'strct-dg__expandcell', 'strct-dg__actioncell', 'strct-dg__emptyrow']
+             .find((c) => td.classList.contains(c));
+           const cs = getComputedStyle(td);
+           out.push({
+             kind: kind ?? 'value',
+             overflow: cs.textOverflow,
+             wrap: cs.whiteSpace,
+             // What runs past the cell's own box — what the ellipsis marks.
+             past: td.scrollWidth - td.clientWidth,
+           });
+         }
+       }
+       return out;
+     })()`,
+  );
+
+  const KINDS = [
+    'strct-dg__sel',
+    'strct-dg__expandcell',
+    'strct-dg__actioncell',
+    'strct-dg__emptyrow',
+  ];
+  const found = KINDS.filter((k) => cells?.some((c) => c.kind === k));
+  check(
+    'the page renders every utility cell a single-line row can hold',
+    found.length === KINDS.length,
+    found.length === KINDS.length
+      ? `${cells.length} single-line body cells, all four kinds among them`
+      : `only ${found.map((k) => k.replace('strct-dg__', '')).join(', ') || 'none'} — the rest of these checks would read nothing`,
+  );
+
+  if (found.length === KINDS.length) {
+    const utility = cells.filter((c) => c.kind !== 'value' && c.kind !== 'strct-dg__emptyrow');
+    const elided = utility.filter((c) => c.overflow !== 'clip');
+    check(
+      'a cell that holds an affordance is not told to elide it',
+      elided.length === 0,
+      elided.length
+        ? `${elided.length} of ${utility.length} compute text-overflow: ${elided[0].overflow}`
+        : `${utility.length} cells, every one clip`,
+    );
+
+    // The FR's own acceptance: no cell marks an overflow it should not have.
+    const marked = cells.filter(
+      (c) => c.overflow === 'ellipsis' && c.past > 0 && c.kind !== 'value',
+    );
+    check(
+      'and no utility or empty cell draws an ellipsis for content past its box',
+      marked.length === 0,
+      marked.length
+        ? `${marked[0].kind} runs ${marked[0].past}px past its box with text-overflow: ellipsis`
+        : 'none does',
+    );
+
+    const empty = cells.filter((c) => c.kind === 'strct-dg__emptyrow');
+    check(
+      'an empty row wraps its message instead of being cut',
+      empty.every((c) => c.wrap !== 'nowrap'),
+      `white-space: ${[...new Set(empty.map((c) => c.wrap))].join(', ')} on ${empty.length} empty row(s)`,
+    );
+  }
+
   // ── BUG-65-01: the toolbar row agrees with itself ────────────────────────
   const toolbar = await evaluate(
     send,

@@ -2552,6 +2552,65 @@ describe('StrctDatagrid — the row tints and the frame', () => {
     );
   });
 
+  /**
+   * BUG-69-01. The single-line rule gives every body cell an ellipsis; 6.4.1
+   * shipped an exception for the cells that hold an affordance. The exception
+   * was written without the `tr:not(.strct-dg__detailrow)` the rule carries,
+   * which costs it a class — (0,3,2) against (0,3,3) — so it lost and never
+   * applied. Three minor versions drew two dots beside every checkbox.
+   *
+   * The browser half is `scripts/grid-layout.mjs`, which reads the computed
+   * value. This is the arithmetic that made it lose, because the exception is
+   * the kind of selector someone shortens.
+   */
+  it('gives the utility-cell exception more specificity than the rule it excepts', () => {
+    const css = sheet();
+
+    /** (ids, classes, elements) for the simple selectors we write here. */
+    const specificity = (sel: string): [number, number, number] => {
+      // :is() and :not() contribute their most specific argument.
+      let flat = sel;
+      for (let i = 0; i < 5; i++)
+        flat = flat.replace(/:(?:is|not)\(([^()]*)\)/g, (_, inner: string) => {
+          const best = inner
+            .split(',')
+            .map((s) => s.trim())
+            .sort((a, b) => b.split('.').length - a.split('.').length)[0];
+          return best ?? '';
+        });
+      return [
+        (flat.match(/#[\w-]+/g) ?? []).length,
+        (flat.match(/\.[\w-]+/g) ?? []).length + (flat.match(/\[[^\]]*\]/g) ?? []).length,
+        (flat.match(/(?:^|[\s>+~])([a-z][\w-]*)/g) ?? []).length,
+      ];
+    };
+
+    const selectorOf = (needle: string): string => {
+      const m = new RegExp(`([^{}]*${needle}[^{}]*)\\{`).exec(css);
+      return (m?.[1] ?? '').trim();
+    };
+
+    const base = selectorOf('tbody tr:not\\(\\.strct-dg__detailrow\\) > td:not');
+    const exception = selectorOf('td:is\\(\\.strct-dg__sel');
+    expect(base, 'the single-line cell rule').not.toBe('');
+    expect(exception, 'the utility-cell exception').not.toBe('');
+
+    const b = specificity(base);
+    const e = specificity(exception);
+    const weight = ([i, c, t]: [number, number, number]) => i * 10000 + c * 100 + t;
+    expect(
+      weight(e) >= weight(b),
+      `exception (${e.join(',')}) must not lose to the rule (${b.join(',')})`,
+    ).toBe(true);
+  });
+
+  /** BUG-69-03: the empty row holds a message, so it is not a cell to elide. */
+  it('leaves the empty row out of the single-line cell rule', () => {
+    const css = sheet();
+    const base = /([^{}]*tbody tr:not\(\.strct-dg__detailrow\) > td[^{}]*)\{/.exec(css)?.[1] ?? '';
+    expect(base).toContain(':not(.strct-dg__emptyrow)');
+  });
+
   it('keeps the table’s clip for singleLine, and drops it only for the scrolling hosts', () => {
     const css = sheet();
     // singleLine needs separate borders (BUG-54-01) but not the visible
