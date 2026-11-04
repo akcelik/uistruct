@@ -200,6 +200,10 @@ const ROUTES = [
   // shipped unseen by it and the other half could have too. Each crop is the
   // page's whole example section, so every tone is in one picture and a
   // regression in the quiet ones shows as well as in the loud ones.
+  // BUG-70-01: four category labels under four bands, the fourth of which has
+  // no bar. chart-bands.mjs measures the drift; this is the picture, because a
+  // label can be centred and still be the wrong label or the wrong size.
+  ['bar-categories', '/components/bar', '#bar-categories', undefined, '#bar-categories-chart'],
   // FR-69-04: eleven glyphs whose job is to be told apart from the one beside
   // them. `glyph-distinct.mjs` measures that numerically at 14px; this is the
   // picture, so a redrawing that still clears the floor cannot go unseen.

@@ -369,6 +369,28 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="bar-categories"
+      owner="bar"
+      heading="Bar — a label under its band"
+      description="BUG-70-01. A category label belongs under its band, and a band keeps its slot even when its value is null. Before 7.6.1 the bars stepped by the plot width over the number of categories and the labels stepped by the plot width over one fewer, so only a two-category chart lined up: in a 784px chart the bars were 183.5px apart and the labels 245px, and the fourth label ended 34px past the chart's right edge and was cut by the card. The box is 784px wide on purpose — the width the bug was filed at."
+      code='<strct-chart type="bar" [data]="[78, 61, 54, null]" [labels]="volumeNames" [min]="0" [max]="100" yAxis grid />'
+    >
+      <div class="chart-box chart-box--filed" id="bar-categories-chart">
+        <strct-chart
+          type="bar"
+          [data]="volumeUse"
+          [labels]="volumeNames"
+          [min]="0"
+          [max]="100"
+          [height]="200"
+          yAxis
+          grid
+          [thresholds]="[{ value: 75, label: 'Placement limit 75%', status: 'warning' }]"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="donut"
       heading="Donut"
       description="Composition of a whole, e.g. VM power states. Hover a slice or a legend row — the others dim and the center reads out that slice's value and share."
@@ -686,6 +708,13 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       .chart-box {
         width: 100%;
         max-width: 520px;
+      }
+      /* The width BUG-70-01 was filed at: two thirds of a 3-column board.
+         The overflow stays visible so a label that leaves the chart's box is
+         seen rather than silently cut, which is how it reached a release. */
+      .chart-box--filed {
+        max-width: 784px;
+        overflow: visible;
       }
       .chart-box--stack {
         display: flex;
@@ -1115,6 +1144,13 @@ export class ChartsPage implements OnDestroy {
   }
 
   protected readonly hostNames = ['hv-01', 'hv-02', 'hv-03', 'hv-04', 'hv-05'];
+  /**
+   * BUG-70-01, as filed: four volumes, the fourth never read, so its band has
+   * a slot and a label but no bar.
+   */
+  protected readonly volumeUse: (number | null)[] = [78, 61, 54, null];
+  protected readonly volumeNames = ['CSV-PROD-01', 'CSV-PROD-02', 'CSV-ARCH-01', 'CSV-PROD-04'];
+
   protected readonly perHost = [18, 24, 12, 30, 21];
 
   // Heatmap demo: host × hour CPU utilisation (%), busier during work hours.
