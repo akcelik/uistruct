@@ -33,12 +33,16 @@ export type StrctDescAlign = 'between' | 'start' | 'grid';
  * slot. The `inline` variant is the horizontal "stat strip" (label-value pairs in
  * a row). Replaces the hand-rolled `<dl>` + flex.
  *
- * Drive it with the `items` input, or project `<strct-desc>` rows so a value can
- * host a badge, icon or any rich content:
+ * Drive it with the `items` input, or project rows so a value can host a badge,
+ * icon or any rich content. Inside a list, write each row as
+ * **`<div strctDesc>`**: a `<dl>` allows only `dt` / `dd` pairs or `<div>`
+ * wrappers as children, so a `<strct-desc>` element between them is invalid
+ * and assistive tech loses the pairing (axe: `definition-list`, `dlitem`).
+ * `<strct-desc>` is for a row rendered outside a list.
  *
  *   <strct-description-list>
- *     <strct-desc label="IPv4" mono>172.16.75.100/24</strct-desc>
- *     <strct-desc label="IPv6"><strct-badge status="success">Enabled</strct-badge></strct-desc>
+ *     <div strctDesc label="IPv4" mono>172.16.75.100/24</div>
+ *     <div strctDesc label="IPv6"><strct-badge status="success">Enabled</strct-badge></div>
  *   </strct-description-list>
  *
  *   <strct-description-list [items]="[{ label: 'Gateway', value: '172.16.75.2', mono: true }]" />

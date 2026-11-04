@@ -216,6 +216,22 @@ const ROUTES = [
     // icon-pen already crops.
     '#data-protection .ig-sizes',
   ],
+  // FR-71-01: a wiring map is geometry measured from the DOM, so the only
+  // thing that can contradict it is a picture — eight cables, four labels
+  // placed from their own rendered size, and one selection isolating.
+  // Scrolled to the map itself, not to the demo block: the block's
+  // description is tall enough that the map's last card would fall past the
+  // 900px the shot rasterises, and the crop would come back with a band of
+  // nothing where HV-PRD-04's ports are.
+  ['wiring', '/components/wiring', '#wiring strct-wiring', undefined, '#wiring strct-wiring'],
+  [
+    'wiring-tiers',
+    '/components/wiring',
+    '#wiring-tiers strct-wiring',
+    undefined,
+    '#wiring-tiers strct-wiring',
+  ],
+  ['fabric', '/scenarios/fabric'],
   ['alert-severity', '/components/alert', '#examples', undefined, '.doc__examples'],
   ['card-severity', '/components/card', '#examples', undefined, '.doc__examples'],
   ['hero-severity', '/components/hero', '#examples', undefined, '.doc__examples'],

@@ -7,7 +7,7 @@ A standalone Angular workspace containing **`@akcelik/strct`** — a reusable UI
 component library — and a showcase application that documents it. Independent of
 any other project. Built for **datacenter / infrastructure-management consoles**.
 
-**102 components · 185 icons · 3 palettes × dark/light · zero runtime dependencies.**
+**103 components · 185 icons · 3 palettes × dark/light · zero runtime dependencies.**
 
 ![UIStruct dashboard scenario — dark, Arctic palette](docs/assets/dashboard-dark.png)
 
@@ -91,7 +91,7 @@ setup and usage examples. The component set, by area:
 - **Forms** — input directive, textarea, select, checkbox, toggle, radio group, slider, combobox, cascade select, date picker, password, file upload, color picker, rating, chips, input OTP, knob, input mask (all CVA-compatible), **transfer** (dual-list picklist)
 - **Data** — table, datagrid (sort / select / expandable rows / detail pane / batch action bar / per-row kebab action menu / compact / paginate / resizable / column chooser / loading / sync), timeline, stack view, **reorder** (drag/keyboard list primitive)
 - **Ops** — time-range picker (Grafana-style quick + absolute), virtualized log viewer (follow mode, ANSI colors), config/YAML diff (unified + split), unit-formatting pipes (bytes / bit-rates / durations / SI)
-- **Charts** — sparkline, line/area/bar chart, donut, gauge (dependency-free SVG)
+- **Charts** — sparkline, line/area/bar chart, donut, gauge, heatmap, flow (dependency-free SVG), **wiring map** (port-level link diagram: the cable is drawn between the two ports, not the two boxes)
 - **Feedback** — alert, tooltip, signpost, toast service + outlet, **tour** (coach marks), **hotkeys** (central registry + ? cheatsheet), **announcer** (SR live regions)
 - **Foundations** — icon (datacenter icon set with status badges + vendor marks), theme service + switcher
 

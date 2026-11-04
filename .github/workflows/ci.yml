@@ -89,6 +89,12 @@ jobs:
       # other is the whole item. 15 checks.
       - name: Assert a fill grid ends where its pane ends
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/fill-height.mjs
+      # FR-71-01: a wiring map's cable lands on its port's centre line, leaves
+      # and arrives level, carries its label inside the clear run it crosses,
+      # and recedes for the one being read without taking any text out of
+      # contrast. Read at two widths and in both palettes.
+      - name: Assert a cable lands on its port
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/wiring-map.mjs
       # BUG-70-01: a bar chart's category label under its own band, measured at
       # two widths because a single one cannot tell a measurement from a
       # constant that happens to fit. 6 of its 9 checks fail on 7.6.0.
