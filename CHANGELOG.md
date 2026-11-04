@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [7.6.0] - 2026-11-04
 
-[FR-69-02](docs/feature-requests/datagrid-fill-and-utility-ellipsis.md), the
+[FR-69-02](docs/feature-requests/archive/datagrid-fill-and-utility-ellipsis.md), the
 last item in that document and the one with the widest reach: **365 of
 HyperStruct's 399 grids had no height bound at all**, because the only tools
 were `[maxHeight]` and `[virtual].viewportHeight` and both are a pixel count
@@ -84,7 +84,7 @@ And the one that matters most: **the cap moves on a live resize** — 551px →
 
 ## [7.5.0] - 2026-11-04
 
-[FR-69-04](docs/feature-requests/backup-glyphs.md): the glyphs a backup product
+[FR-69-04](docs/feature-requests/archive/backup-glyphs.md): the glyphs a backup product
 was borrowing from somewhere else. Filed by HyperStruct while redesigning
 Backup ▸ Jobs and Repositories.
 
@@ -171,7 +171,7 @@ It is: `storage` is an ellipse over a cylinder body. One glyph per meaning.
 
 ## [7.4.1] - 2026-11-04
 
-Two defects from [BUG-69-01 / BUG-69-03](docs/feature-requests/datagrid-fill-and-utility-ellipsis.md),
+Two defects from [BUG-69-01 / BUG-69-03](docs/feature-requests/archive/datagrid-fill-and-utility-ellipsis.md),
 filed by HyperStruct against 7.4.0. Both are the single-line cell rule reaching
 cells it was never meant to reach, and one of them has been shipping since
 **6.4.1**.
