@@ -200,6 +200,18 @@ const ROUTES = [
   // shipped unseen by it and the other half could have too. Each crop is the
   // page's whole example section, so every tone is in one picture and a
   // regression in the quiet ones shows as well as in the loud ones.
+  // FR-69-04: eleven glyphs whose job is to be told apart from the one beside
+  // them. `glyph-distinct.mjs` measures that numerically at 14px; this is the
+  // picture, so a redrawing that still clears the floor cannot go unseen.
+  [
+    'glyph-data-protection',
+    '/foundations/icons',
+    '#data-protection',
+    undefined,
+    // Scoped: a bare .ig-sizes matches the #sizes row first, which is what
+    // icon-pen already crops.
+    '#data-protection .ig-sizes',
+  ],
   ['alert-severity', '/components/alert', '#examples', undefined, '.doc__examples'],
   ['card-severity', '/components/card', '#examples', undefined, '.doc__examples'],
   ['hero-severity', '/components/hero', '#examples', undefined, '.doc__examples'],

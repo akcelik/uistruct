@@ -7,6 +7,41 @@ Recovery's copies. Any consumer that protects data needs most of these.
 **Shape:** new glyphs in the 16-unit set, drawn with the one pen (FR-68-01), each with a name a call site
 can guess.
 
+> **SHIPPED in v7.5.0.** All ten, plus the optional `scrub`. 194 glyphs → 205,
+> each grouped beside its nearest neighbour on the icon page as asked, and
+> gathered again in a 14px row (`#data-protection`) because that is the size
+> the question "can these two be told apart" has to be answered at.
+>
+> **`database` was not added**, and the ask's own condition is why: it offered
+> it "if `storage` is not already one". It is — `storage` is an ellipse over a
+> cylinder body. One glyph per meaning.
+>
+> **The acceptance about telling a pair apart needed a new instrument.** "It
+> looks different" is the `surfaces.size > 1` mistake of 7.4.0 one domain over,
+> so `scripts/glyph-distinct.mjs` renders each glyph alone at 14px at a 4×
+> device scale and compares it with the one it has to differ from.
+>
+> The floor is not invented, and it is not the weakest thing already in the set
+> either. The closest accepted pair is `lock`/`unlock` at **2.28%**, and it is
+> the closest for a reason: those two differ by a rotated shackle and nothing
+> else. A **new** pair is held to twice it, **4.56%**.
+>
+> That rule exists because of what happened first. The first `backup`/`restore`
+> put the arrow inside the box's upper half, so flipping it moved the head 3.5
+> units: **2.32%**. With the floor at the weakest accepted pair the gate
+> _passed_ it, by four hundredths of a percent. Reading the number was what
+> rejected the drawing, not the gate — so the drawing was redone (the arrow now
+> spans the whole body: **5.26%**, the band of `eye`/`eyeOff` at 6.38%) and the
+> floor was doubled, so the gate rejects it too. Verified by putting the first
+> drawing back: it exits 1 and names the number.
+>
+> Two guard pairs were added at the same time, because an arrow-over-a-box could
+> have collapsed into `download`/`upload`; measured, it does not (30.33% and
+> 27.61%).
+>
+> The pen holds: `control-height.mjs` reads **639** rendered glyphs, up from
+> 606, every one at **1.40px**.
+
 ## What a reader sees today
 
 HyperStruct Backup borrows glyphs that mean something else:

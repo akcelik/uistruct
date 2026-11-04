@@ -58,4 +58,5 @@ Thumbs.db
 # Script output — CI uploads these as artifacts; they are never source
 visual-artifacts/
 a11y-artifacts/
+glyph-distinct.json
 *.log
