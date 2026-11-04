@@ -5,6 +5,82 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.4.0] - 2026-11-04
+
+The second half of FR-67-06, and the defect the first half shipped with.
+`hero` and `card` were the last two components still saying severity in the
+hue of a rail. They now say it the way the alert does — except that the way
+the alert did it was wrong in the dark palettes, and had been since 7.0.0.
+
+### Changed
+
+- **A `warning` or `critical` card tints its header, not the whole card**, and
+  its rail steps 3 / 4 / 5px with the tone. A card is a 400px object rather
+  than a banner: a flooded one shouts, where the point of this item is that the
+  worst thing on a screen is the first thing _read_. `accent` and `success`
+  keep the plain 3px rail; they are not severities.
+- **A `critical` card's body is set in 500**, as a critical alert's is. The
+  card's header is already 600, so a weight step cannot live there — the first
+  draft of this change set `font-weight: 600` on the critical header and
+  measured 600 before and after. It said nothing and is gone.
+- **A `warning` or `critical` hero takes the tone fill whole**, as the alert
+  does, with the same 4 / 5px rails.
+
+### Fixed
+
+- **A tone no longer replaces a component's own surface; it layers over it.**
+  `background: var(--critical-bg)` looks right until you notice that
+  `--critical-bg` is a 12% tone: replacing `--bg-1` with it composites the
+  tone over _the page_, not over the component. In the three dark palettes a
+  critical alert then painted **1.045:1 against the page behind it** — the
+  loudest thing on the screen read as a hole in it. Every tone is now
+  `background-image: linear-gradient(var(--x-bg), var(--x-bg))` over the
+  `--bg-1` that is already there, which paints **1.17:1** from a quiet
+  component. This is a fix to the alert as it shipped in **7.0.0**, carried for
+  four minor versions.
+
+  Nothing about a tinted alert's own contrast changes for the better or worse
+  by much; what changes is whether it separates from the page at all. If your
+  app sets its own background behind an alert, a card or a hero, the tone now
+  lands on the component's surface rather than on yours.
+
+### Why it was not caught
+
+The check FR-67-06 was accepted on asked that the four tones not share one
+surface: `surfaces.size > 1`. That passes on a 1.00:1 difference exactly as
+happily as on a 1.17:1 one — it tests that two strings differ, not that an eye
+can tell two surfaces apart. And no baseline in the visual suite held an alert,
+a card or a hero, so there was no picture to contradict it either.
+
+### Gates
+
+- **`scripts/weight-ladder.mjs`: 115 → 217 checks.** The severity section now
+  reads what a tone _paints_ — its own background colour plus any solid layer
+  in `background-image`, composited over the surface behind it — rather than
+  `backgroundColor`, which cannot see a layered tone and reported a tinted hero
+  as identical to a quiet one. Each loud tone is held to 1.07:1 against the
+  quiet one beside it, its text to 4.5:1 on the surface it ends up with, its
+  rail to a step, and a critical body to a weight step. **45 of the 217 fail on
+  7.3.0** — 21 on the card, 21 on the hero, 3 on the alert.
+- **Three clipped baselines — `alert-severity`, `card-severity`,
+  `hero-severity`** — bring the visual suite to 48. Each crop is the page's
+  whole example section, so a regression in the quiet tones shows as well as in
+  the loud ones.
+- **`scripts/a11y-smoke.mjs` now visits `/components/alert` and
+  `/components/hero`.** This item's acceptance asked that axe stay clean on the
+  tinted surfaces, and the alert's tint shipped in 7.0.0 with no axe run over
+  it at all — the route list held the card but neither of the other two. All
+  three report 0 findings.
+- **The gates no longer leak a Chrome profile per run.** Chrome writes its
+  profile to a `scoped_dir` under the user config directory and clears it only
+  when it exits by itself; these seven scripts kill it. Measured: one run of
+  the old `dev-warnings.mjs` leaves **54MB** behind, and a day of gate runs had
+  left 35GB. Each script now hands Chrome a `mkdtemp` directory it owns and
+  removes it after waiting for the process to be gone — a SIGTERMed Chrome
+  keeps flushing for a moment and re-creates whatever is deleted underneath it,
+  which the first version of this fix did not account for. A full
+  `weight-ladder` run now leaves nothing.
+
 ## [7.3.0] - 2026-11-03
 
 The close of the data-component review the icon pen came out of. Most of what

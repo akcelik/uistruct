@@ -30,8 +30,9 @@
  * claims can be checked. Exits non-zero naming each one that failed.
  */
 import { createServer } from 'node:http';
-import { existsSync, statSync, createReadStream } from 'node:fs';
+import { existsSync, statSync, createReadStream, mkdtempSync, rmSync } from 'node:fs';
 import { join, extname, resolve, sep } from 'node:path';
+import { tmpdir } from 'node:os';
 import { spawn, execSync } from 'node:child_process';
 
 const ROOT = resolve('dist/showcase/browser');
@@ -86,10 +87,37 @@ if (!chromeBin) {
   console.error('No Chrome/Chromium binary found (set CHROME_BIN).');
   process.exit(1);
 }
+// Chrome writes its profile into a scoped_dir under the user config directory
+// and clears it only when it exits by itself. These scripts kill it, so every
+// run used to leak a ~185MB profile. Hand it a directory we own, and wait for
+// the process to be gone before removing it: a SIGTERMed Chrome keeps flushing
+// for a moment and re-creates whatever is deleted underneath it.
+const profileDir = mkdtempSync(join(tmpdir(), 'strct-gate-'));
+const dropProfile = () => {
+  try {
+    rmSync(profileDir, { recursive: true, force: true });
+  } catch {
+    /* best effort — a stray temp directory must not fail a gate */
+  }
+};
+async function closeChrome() {
+  const gone = new Promise((r) => chrome.once('exit', r));
+  chrome.kill('SIGTERM');
+  await Promise.race([gone, sleep(5000)]);
+  dropProfile();
+}
+// A throw on the way to closeChrome must not leave the profile behind either.
+// SIGKILL skips the flush, so nothing is left running to re-create it.
+process.on('exit', () => {
+  chrome.kill('SIGKILL');
+  dropProfile();
+});
+
 const chrome = spawn(
   chromeBin,
   [
     '--headless=new',
+    `--user-data-dir=${profileDir}`,
     `--remote-debugging-port=${CDP}`,
     '--no-sandbox',
     '--disable-gpu',
@@ -160,6 +188,12 @@ const over = (css, surface) => {
   const a = f[3] ?? 1;
   return [0, 1, 2].map((i) => f[i] * a + (b[i] ?? 255) * (1 - a));
 };
+/** Same as `over`, but onto a surface already resolved to channels. */
+const onto = (css, rgb) => {
+  const f = parse(css);
+  const a = f[3] ?? 1;
+  return [0, 1, 2].map((i) => f[i] * a + rgb[i] * (1 - a));
+};
 const opaque = (css) => {
   const p = parse(css);
   return p.length >= 3 && (p[3] ?? 1) > 0.02;
@@ -170,6 +204,31 @@ const PAINTED = `((el) => { let n = el.parentElement;
   while (n) { const b = getComputedStyle(n).backgroundColor;
     if (b && !/, ?0\\)$/.test(b) && b !== 'transparent') return b; n = n.parentElement; }
   return getComputedStyle(document.body).backgroundColor; })`;
+
+/**
+ * What an element actually paints: its own background colour, then every solid
+ * colour layer in background-image, composited over the nearest painting
+ * ancestor. A tone laid on top of a component's own surface arrives as a
+ * two-stop gradient, and `backgroundColor` alone cannot see it — reading only
+ * that reports a tinted hero as identical to a quiet one.
+ */
+const SURFACE = `((el) => {
+  const nums = (css) => (String(css).match(/[\\d.]+/g) ?? []).map(Number);
+  const mix = (fg, bg) => {
+    const f = nums(fg);
+    const a = f.length > 3 ? f[3] : 1;
+    return [0, 1, 2].map((i) => (f[i] ?? 0) * a + bg[i] * (1 - a));
+  };
+  const cs = getComputedStyle(el);
+  let rgb = nums(${PAINTED}(el)).slice(0, 3);
+  if (rgb.length < 3) rgb = [255, 255, 255];
+  rgb = mix(cs.backgroundColor, rgb);
+  for (const layer of (cs.backgroundImage || '').split(/,(?![^(]*\\))/)) {
+    const stops = layer.match(/rgba?\\([^)]*\\)/g);
+    if (stops && stops.every((s) => s === stops[0])) rgb = mix(stops[0], rgb);
+  }
+  return 'rgb(' + rgb.map((v) => Math.round(v)).join(', ') + ')';
+})`;
 
 const PALETTES = [
   ['arctic', 'light'],
@@ -329,53 +388,137 @@ try {
   }
 
   // ── severity ───────────────────────────────────────────────────────────
-  await open('/components/alert', '.doc__examples .strct-alert');
-  const READ_ALERTS = `(() => {
-    const read = (sel) => { const el = document.querySelector('.doc__examples ' + sel);
-      return el && { bg: getComputedStyle(el).backgroundColor, rail: getComputedStyle(el).borderInlineStartWidth }; };
-    return { info: read('.strct-alert:not([class*="--"])') ?? read('.strct-alert--info'),
-             success: read('.strct-alert--success'),
-             warning: read('.strct-alert--warning'),
-             critical: read('.strct-alert--critical') };
-  })()`;
-  for (const [palette, theme] of PALETTES) {
-    await wear(palette, theme);
-    const where = `${palette}/${theme}`;
-    const alerts = await evaluate(send, READ_ALERTS);
-    const tones = Object.entries(alerts).filter(([, v]) => v);
-    const surfaces = new Set(tones.map(([, v]) => v.bg));
-    check(
-      surfaces.size > 1,
-      `${where}: all ${tones.length} alert tones share one surface (${[...surfaces][0]}) — severity cannot be hue alone`,
-    );
-    const rail = (n) => parseFloat(alerts[n]?.rail ?? 'NaN');
-    check(
-      rail('warning') > rail('info') && rail('critical') > rail('warning'),
-      `${where}: the rails do not step with severity (info ${alerts.info?.rail}, warning ${alerts.warning?.rail}, critical ${alerts.critical?.rail})`,
-    );
-  }
+  // Severity has to survive a screenshot with the hue taken out, so each tone
+  // is read three ways: the surface it paints, the width of its rail and the
+  // weight of its body. "A different colour" is too weak a yardstick on its
+  // own — a 12% tone that *replaces* a component's own --bg-1 composites over
+  // the page instead of over the component, and in a dark palette that lands
+  // within 1.05:1 of the page, so the loudest thing on the screen reads as a
+  // hole in it. Every tone is therefore held to a real step against the quiet
+  // one beside it, and its text to AA on the surface it ends up with.
+  const STEP = 1.07;
 
-  // ── card ───────────────────────────────────────────────────────────────
-  await open('/components/card', '.doc__examples .strct-card');
-  const READ_CARD = `(() => {
-    const card = document.querySelector('.doc__examples .strct-card');
-    const sides = ['Top', 'Right', 'Bottom', 'Left'];
-    const drawn = (el) => { const s = getComputedStyle(el);
-      return sides.filter((d) => s['border' + d + 'Width'] !== '0px'
-        && s['border' + d + 'Style'] !== 'none'
-        && !/, 0\\)$/.test(s['border' + d + 'Color'])).length; };
-    let total = drawn(card);
-    for (const el of card.querySelectorAll('.strct-card__header, .strct-card__block, .strct-card__footer')) total += drawn(el);
-    return total;
+  const tones = async (label, route, ready, reader, quietKey, loud) => {
+    await open(route, ready);
+    for (const [palette, theme] of PALETTES) {
+      await wear(palette, theme);
+      const where = `${palette}/${theme}`;
+      const read = await evaluate(send, reader);
+      const have = Object.keys(read ?? {}).filter((k) => read[k]);
+      check(
+        have.length === Object.keys(read ?? {}).length && have.includes(quietKey),
+        `${where}: the ${label} page shows ${have.join(', ') || 'nothing'} — these checks would read nothing`,
+      );
+      if (!read?.[quietKey]) continue;
+
+      const quiet = parse(read[quietKey].paint).slice(0, 3);
+      for (const tone of loud) {
+        if (!read[tone]) continue;
+        const paint = parse(read[tone].paint).slice(0, 3);
+        const step = contrast(paint, quiet);
+        check(
+          step >= STEP,
+          `${where}: a ${tone} ${label} paints ${step.toFixed(3)}:1 against a quiet one — its tone is landing on the page, not on the ${label}`,
+        );
+        const ink = contrast(onto(read[tone].ink, paint), paint);
+        check(
+          ink >= 4.5,
+          `${where}: a ${tone} ${label}'s text clears only ${ink.toFixed(2)}:1 on its own tinted surface`,
+        );
+      }
+      const rails = Object.fromEntries(
+        Object.entries(read).map(([k, v]) => [k, v && parseFloat(v.rail)]),
+      );
+      check(
+        rails[quietKey] < rails[loud[0]] && rails[loud[0]] < rails[loud[1]],
+        `${where}: the ${label} rails do not step with severity (${Object.entries(rails)
+          .map(([k, v]) => `${k} ${v}px`)
+          .join(', ')})`,
+      );
+      if (read[loud[1]]?.body != null) {
+        check(
+          read[loud[1]].body > read[quietKey].body,
+          `${where}: a ${loud[1]} ${label}'s body is set in ${read[loud[1]].body}, the same as a quiet one — the weight step is missing`,
+        );
+      }
+    }
+  };
+
+  const READ_ALERTS = `(() => {
+    const read = (sel) => {
+      const el = document.querySelector('.doc__examples ' + sel);
+      if (!el) return null;
+      const body = el.querySelector('.strct-alert__body') ?? el;
+      return {
+        paint: ${SURFACE}(el),
+        ink: getComputedStyle(body).color,
+        rail: getComputedStyle(el).borderInlineStartWidth,
+        body: parseInt(getComputedStyle(body).fontWeight, 10),
+      };
+    };
+    return {
+      info: read('.strct-alert:not([class*="--"])') ?? read('.strct-alert--info'),
+      warning: read('.strct-alert--warning'),
+      critical: read('.strct-alert--critical'),
+    };
   })()`;
-  for (const [palette, theme] of PALETTES) {
-    await wear(palette, theme);
-    const edges = await evaluate(send, READ_CARD);
-    check(
-      edges <= 4,
-      `${palette}/${theme}: a composed card draws ${edges} border edges — a card groups by tone, not by a second fence`,
-    );
-  }
+  await tones('alert', '/components/alert', '.doc__examples .strct-alert', READ_ALERTS, 'info', [
+    'warning',
+    'critical',
+  ]);
+
+  // A card is a 400px object, not a banner: a flooded one shouts where the
+  // point was to be read first, so the tone is its header's and the weight
+  // step is its body's.
+  const READ_CARDS = `(() => {
+    const read = (sel) => {
+      const card = document.querySelector('.doc__examples ' + sel);
+      if (!card) return null;
+      const header = card.querySelector('.strct-card__header');
+      const block = card.querySelector('.strct-card__block');
+      return {
+        paint: ${SURFACE}(header ?? card),
+        ink: getComputedStyle(header ?? card).color,
+        rail: getComputedStyle(card).borderInlineStartWidth,
+        body: block ? parseInt(getComputedStyle(block).fontWeight, 10) : null,
+      };
+    };
+    return {
+      success: read('.strct-card--success'),
+      warning: read('.strct-card--warning'),
+      critical: read('.strct-card--critical'),
+    };
+  })()`;
+  await tones(
+    'card',
+    '/components/card',
+    '.doc__examples .strct-card--critical',
+    READ_CARDS,
+    'success',
+    ['warning', 'critical'],
+  );
+
+  const READ_HEROES = `(() => {
+    const read = (sel) => {
+      const hero = document.querySelector('.doc__examples ' + sel);
+      if (!hero) return null;
+      const cs = getComputedStyle(hero);
+      return { paint: ${SURFACE}(hero), ink: cs.color, rail: cs.borderInlineStartWidth };
+    };
+    return {
+      success: read('.strct-hero--success'),
+      warning: read('.strct-hero--warning'),
+      critical: read('.strct-hero--critical'),
+    };
+  })()`;
+  await tones(
+    'hero',
+    '/components/hero',
+    '.doc__examples .strct-hero--critical',
+    READ_HEROES,
+    'success',
+    ['warning', 'critical'],
+  );
 
   // ── list ───────────────────────────────────────────────────────────────
   await open('/components/list', '.doc__examples .strct-li');
@@ -414,7 +557,7 @@ try {
     }
   }
 } finally {
-  chrome.kill();
+  await closeChrome();
   server.close();
 }
 

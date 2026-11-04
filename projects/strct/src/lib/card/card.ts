@@ -88,11 +88,30 @@ import { StrctStatus } from '../status';
       .strct-card--success {
         border-inline-start: 3px solid var(--success);
       }
+      /* Severity rides on surface and weight, not hue alone — the same
+         language the alert took in 7.0 (FR-67-06). A card is a much bigger
+         object than a banner, so the tone is the header's rather than the
+         whole card's: a flooded 400px card shouts, and the point is that the
+         worst thing on a screen is the first thing seen, not the loudest
+         thing in the room. accent and success keep the plain 3px rail; they
+         are not severities. */
       .strct-card--warning {
-        border-inline-start: 3px solid var(--warning);
+        border-inline-start: 4px solid var(--warning);
+      }
+      .strct-card--warning > strct-card-header {
+        background: var(--warning-bg);
       }
       .strct-card--critical {
-        border-inline-start: 3px solid var(--critical);
+        border-inline-start: 5px solid var(--critical);
+      }
+      .strct-card--critical > strct-card-header {
+        background: var(--critical-bg);
+      }
+      /* The header is already set in 600, so the weight step has to come from
+         the body — which is where the alert puts it too. A critical card then
+         reads heavier than a warning one with the hue taken out. */
+      .strct-card--critical .strct-card__block {
+        font-weight: 500;
       }
 
       /* Clickable affordance (style-only — wrap in <a>/<button> or handle click). */

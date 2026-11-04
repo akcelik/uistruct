@@ -167,6 +167,33 @@ What to look at:
   16, Firefox 71. That is the same baseline as the `container-type` the
   component already relied on, so if the list worked before, it works now.
 
+## 7.4: severity on a card and a hero, and a tone that stays on its own surface
+
+`strct-card [status]` and `strct-hero [status]` now say severity the way
+`strct-alert` does. Nothing in your templates changes.
+
+- **A `warning` or `critical` card tints its header** — not the whole card —
+  and its rail steps to 4px and 5px. `accent` and `success` keep the plain 3px
+  rail. A `critical` card's body is set in 500.
+- **A `warning` or `critical` hero takes the tone fill whole**, with the same
+  4 / 5px rails.
+- **A tone now layers over the component's `--bg-1` instead of replacing it.**
+  This is a fix to the alert as it shipped in 7.0.0: `--warning-bg` and
+  `--critical-bg` are 12% tones, so replacing `--bg-1` with one composited it
+  over whatever is behind the alert. In the dark palettes a critical alert
+  painted 1.045:1 against the page and read as a hole in it rather than as an
+  alert. It is now 1.17:1 from a quiet one.
+
+What to look at:
+
+- **If you set your own background on an alert, a card or a hero**, the tone
+  used to land on yours and now lands on the component's `--bg-1`. Set
+  `--bg-1` on the component instead of `background`, or set `background-color`
+  specifically — `background` resets `background-image`, which is where the
+  tone now lives, and will remove the tint.
+- **If you were compensating for a dark critical alert being invisible** —
+  a border, a heavier shadow, your own tint — you can take it out.
+
 ## The 6.x flag
 
 Set `data-visual="6"` on the same element that carries `data-palette` and

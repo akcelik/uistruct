@@ -36,6 +36,24 @@ function iconOf(hero: StrctHero): string {
 }
 
 describe('StrctHero', () => {
+  // FR-67-06 / 7.4.0. A 12 per cent tone that *replaces* the hero's own --bg-1
+  // composites over the page rather than over the hero, which in the dark
+  // palettes lands 1.045:1 from the page — a banner reading as a hole in it.
+  // The tone is a layer on top of the surface that is already there. This
+  // reads the rule, because that shape is easy to "simplify" back.
+  it('layers a tone over its own surface rather than replacing it', () => {
+    setup({ status: 'critical' });
+    const css = [...document.querySelectorAll('style')].map((s) => s.textContent ?? '').join('\n');
+
+    for (const tone of ['warning', 'critical']) {
+      const rule = new RegExp(`\\.strct-hero--${tone}\\s*\\{[^}]*\\}`).exec(css)?.[0] ?? '';
+      expect(rule).toContain(
+        `background-image: linear-gradient(var(--${tone}-bg), var(--${tone}-bg))`,
+      );
+      expect(rule).not.toMatch(new RegExp(`background:\\s*var\\(--${tone}-bg\\)`));
+    }
+  });
+
   it('applies the base and status host classes', () => {
     const { host } = setup({ status: 'success' });
     expect(host.classList).toContain('strct-hero');

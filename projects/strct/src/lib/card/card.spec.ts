@@ -65,6 +65,27 @@ describe('StrctCard — rich options', () => {
     expect(card.classList).toContain('strct-card--selected');
   });
 
+  // FR-67-06 / 7.4.0. A card is a 400px object, not a banner: a flooded one
+  // shouts where the point of the item is that the worst thing on a screen is
+  // the first thing *read*. So the tone is the header's, and the weight step
+  // is the body's — the header is already set in 600 and has nowhere to go.
+  it('tints a severity header and steps the body weight, not the whole card', () => {
+    setup({ status: 'critical' });
+    const css = [...document.querySelectorAll('style')].map((s) => s.textContent ?? '').join('\n');
+
+    for (const tone of ['warning', 'critical']) {
+      const header =
+        new RegExp(`\\.strct-card--${tone}\\s*>\\s*strct-card-header\\s*\\{[^}]*\\}`).exec(
+          css,
+        )?.[0] ?? '';
+      expect(header).toContain(`background: var(--${tone}-bg)`);
+      const card = new RegExp(`\\.strct-card--${tone}\\s*\\{[^}]*\\}`).exec(css)?.[0] ?? '';
+      expect(card).not.toContain(`background: var(--${tone}-bg)`);
+    }
+    const body = /\.strct-card--critical \.strct-card__block\s*\{[^}]*\}/.exec(css)?.[0] ?? '';
+    expect(body).toContain('font-weight: 500');
+  });
+
   it('marks loading cards busy for assistive tech', () => {
     const { card } = setup({ loading: true });
     expect(card.getAttribute('aria-busy')).toBe('true');

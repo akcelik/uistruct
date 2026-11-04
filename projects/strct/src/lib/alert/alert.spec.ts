@@ -25,6 +25,27 @@ describe('StrctAlert', () => {
     expect((fixture.nativeElement as HTMLElement).classList).toContain('strct-alert--critical');
   });
 
+  // FR-67-06 / 7.4.0. --warning-bg and --critical-bg are 12 per cent tones, so
+  // a rule that *replaces* the component's own --bg-1 with one composites it
+  // over whatever is behind the component rather than over the component. In
+  // the dark palettes that put a critical alert 1.045:1 from the page — the
+  // loudest thing on the screen reading as a hole in it. The tone has to be a
+  // layer on top of the surface that is already there. This reads the rule
+  // itself, because the shape is the thing that is easy to "simplify" back.
+  it('layers a tone over its own surface rather than replacing it', () => {
+    const fixture = TestBed.createComponent(StrctAlert);
+    fixture.detectChanges();
+    const css = [...document.querySelectorAll('style')].map((s) => s.textContent ?? '').join('\n');
+
+    for (const tone of ['warning', 'critical']) {
+      const rule = new RegExp(`\\.strct-alert--${tone}\\s*\\{[^}]*\\}`).exec(css)?.[0] ?? '';
+      expect(rule).toContain(
+        `background-image: linear-gradient(var(--${tone}-bg), var(--${tone}-bg))`,
+      );
+      expect(rule).not.toMatch(new RegExp(`background:\\s*var\\(--${tone}-bg\\)`));
+    }
+  });
+
   it('uses role="status" normally and role="alert" for critical', () => {
     const fixture = TestBed.createComponent(StrctAlert);
     fixture.detectChanges();
