@@ -5,7 +5,7 @@ no output, no exported name, no class name. Every template that compiled
 against 6.5.0 compiles against 7.0.0 unchanged.
 
 What changed is the look. 7.0 is the token layer of
-[FR-67](feature-requests/visual-language-2026-11.md): a type scale whose steps
+[FR-67](feature-requests/archive/visual-language-2026-11.md): a type scale whose steps
 are steps, a surface ramp that separates without a line drawn on it, and a
 radius scale wide enough to tell its own steps apart. Every screen in a
 consuming app will look different, which is why it is a major.
