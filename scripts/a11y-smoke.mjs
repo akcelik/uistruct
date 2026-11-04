@@ -44,8 +44,15 @@ const ROUTES = [
   '/components/alert',
   '/components/hero',
   '/components/list',
+  // FR-71-01: a diagram whose ports are buttons, whose cables are clickable
+  // paths with no tab stop, and whose <svg> is aria-hidden inside a group
+  // that is not — three ways to get ARIA wrong at once.
+  '/components/wiring',
   '/components/time-range',
   '/scenarios/dashboard',
+  // The wiring map inside a real screen: a segmented filter over it, a
+  // two-sided reading table beside it, and a severity rail on both cards.
+  '/scenarios/fabric',
 ];
 const OUT = 'a11y-artifacts';
 mkdirSync(OUT, { recursive: true });

@@ -24,6 +24,9 @@ import {
   StrctSegmented,
   StrctSegmentedOption,
   StrctSparkline,
+  StrctWiring,
+  StrctWiringLink,
+  StrctWiringNode,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
 
@@ -43,6 +46,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctGauge,
     StrctHeatmap,
     StrctIcon,
+    StrctWiring,
     StrctMetricTile,
     StrctProgress,
     StrctLegend,
@@ -683,6 +687,46 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         </strct-flow>
       </div>
     </app-demo>
+
+    <app-demo
+      anchor="wiring"
+      owner="wiring"
+      heading="A wiring map"
+      description="The question a fabric review starts from is never which box talks to which box — it is which port on this lands on which port on that, and whether the two ends agree. strct-wiring draws the cable between the two port rows, not between the two cards: it leaves the device's edge at the port's own centre line and arrives at the other port's, horizontally at both ends, so a cable reads as a cable. A link carries a tone and a label that sits on the line itself; the labels are placed from their own rendered size and pushed along their own cable until they clear one another. Selecting one lifts it and its two ports and lets the rest recede, because a wiring map is read one cable at a time. Tab into it once: ↑ and ↓ walk a column's ports, → and ← follow the cable to the port at its far end, and Enter or Space selects the link it is on. Clicking the line does the same thing."
+      code='<strct-wiring [nodes]="nodes" [links]="links" navigable [(selected)]="link" />'
+    >
+      <div class="wiring-demo">
+        <strct-wiring
+          [nodes]="fabricNodes"
+          [links]="fabricLinks"
+          [columns]="['Nodes · SET team', 'Switches']"
+          navigable
+          [(selected)]="wiringPick"
+          label="node ports → switch ports, as LLDP heard them"
+        />
+        <div class="wiring-foot">
+          <strct-legend [items]="wiringKey" orientation="horizontal" />
+          <span class="echo">{{ pickedLink() }}</span>
+        </div>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="wiring-tiers"
+      owner="wiring"
+      heading="Three tiers, columns derived from the cabling"
+      description="A device that declares no column is placed one past the furthest device that links into it, so hosts → leaf → spine falls out of the links rather than being spelled out. A device in the middle anchors its downlinks on one edge and its uplinks on the other, which is what a leaf switch actually looks like. Without navigable the map keeps no tab stop at all — right for a picture that is only being read."
+      code="<strct-wiring [nodes]=&quot;tierNodes&quot; [links]=&quot;tierLinks&quot; [columns]=&quot;['Hosts', 'Leaf', 'Spine']&quot; />"
+    >
+      <div class="wiring-demo">
+        <strct-wiring
+          [nodes]="tierNodes"
+          [links]="tierLinks"
+          [columns]="['Hosts', 'Leaf', 'Spine']"
+          label="two uplinks per leaf, one to each spine — and one host cabled straight into a spine"
+        />
+      </div>
+    </app-demo>
   `,
   styles: [
     `
@@ -704,6 +748,19 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         font-size: 12px;
         font-family: var(--mono);
         color: var(--t1);
+      }
+      .wiring-demo {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        width: 100%;
+      }
+      .wiring-foot {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
       }
       .chart-box {
         width: 100%;
@@ -780,6 +837,167 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   ],
 })
 export class ChartsPage implements OnDestroy {
+  // A wiring map: the fabric review's own case — four nodes, two ports each,
+  // two top-of-rack switches, and the four readings that disagree.
+  protected readonly fabricNodes: StrctWiringNode[] = [
+    {
+      id: 'hv1',
+      label: 'HV-PRD-01',
+      sublabel: 'SETswitch',
+      column: 0,
+      ports: [
+        { id: 'hv1p1', label: 'SLOT 3 Port 1', meta: '25G · RDMA', status: 'success' },
+        { id: 'hv1p2', label: 'SLOT 3 Port 2', meta: '25G · RDMA', status: 'warning' },
+      ],
+    },
+    {
+      id: 'hv2',
+      label: 'HV-PRD-02',
+      sublabel: 'SETswitch',
+      column: 0,
+      ports: [
+        { id: 'hv2p1', label: 'SLOT 3 Port 1', meta: '25G · 6 flaps', status: 'warning' },
+        { id: 'hv2p2', label: 'SLOT 3 Port 2', meta: '25G · RDMA', status: 'success' },
+      ],
+    },
+    {
+      id: 'hv3',
+      label: 'HV-PRD-03',
+      sublabel: 'SETswitch',
+      column: 0,
+      ports: [
+        { id: 'hv3p1', label: 'SLOT 3 Port 1', meta: '25G · RDMA', status: 'success' },
+        { id: 'hv3p2', label: 'SLOT 3 Port 2', meta: 'PFC 3', status: 'critical' },
+      ],
+    },
+    {
+      id: 'hv4',
+      label: 'HV-PRD-04',
+      sublabel: 'SETswitch',
+      column: 0,
+      ports: [
+        { id: 'hv4p1', label: 'SLOT 3 Port 1', meta: '25G · RDMA', status: 'success' },
+        { id: 'hv4p2', label: 'SLOT 3 Port 2', meta: '25G · RDMA', status: 'warning' },
+      ],
+    },
+    {
+      id: 'tora',
+      label: 'tor-a',
+      sublabel: 'Nexus 93180 · LLDP',
+      column: 1,
+      icon: 'switch',
+      ports: [
+        { id: 'a11', label: 'Eth1/11', meta: 'PFC 3', status: 'success' },
+        { id: 'a12', label: 'Eth1/12', meta: 'PFC 3', status: 'warning' },
+        { id: 'a13', label: 'Eth1/13', meta: 'PFC 3', status: 'success' },
+        { id: 'a16', label: 'Eth1/16', meta: 'PFC 3', status: 'success' },
+      ],
+    },
+    {
+      id: 'torb',
+      label: 'tor-b',
+      sublabel: 'Nexus 93180 · LLDP',
+      column: 1,
+      icon: 'switch',
+      ports: [
+        { id: 'b11', label: 'Eth1/11', meta: 'not heard' },
+        { id: 'b12', label: 'Eth1/12', meta: 'PFC 3', status: 'success' },
+        { id: 'b14', label: 'Eth1/14', meta: 'PFC 4', status: 'critical' },
+        { id: 'b16', label: 'Eth1/16', meta: 'VLAN 711', status: 'warning' },
+      ],
+    },
+  ];
+
+  protected readonly fabricLinks: StrctWiringLink[] = [
+    { id: 'l1', from: 'hv1p1', to: 'a11', status: 'success' },
+    { id: 'l2', from: 'hv1p2', to: 'b11', style: 'dashed', label: 'not heard for 2 d' },
+    { id: 'l3', from: 'hv2p1', to: 'a12', status: 'warning', label: '6 flaps in 1 h' },
+    { id: 'l4', from: 'hv2p2', to: 'b12', status: 'success' },
+    { id: 'l5', from: 'hv3p1', to: 'a13', status: 'success' },
+    { id: 'l6', from: 'hv3p2', to: 'b14', status: 'critical', label: 'PFC 3 ≠ 4' },
+    { id: 'l7', from: 'hv4p1', to: 'a16', status: 'success' },
+    { id: 'l8', from: 'hv4p2', to: 'b16', status: 'warning', label: 'VLAN 712 missing' },
+  ];
+
+  protected readonly wiringKey: StrctLegendItem[] = [
+    { label: 'agrees', status: 'success', shape: 'line' },
+    { label: 'to review', status: 'warning', shape: 'line' },
+    { label: 'critical', status: 'critical', shape: 'line' },
+    { label: 'not in the latest capture', shape: 'dash', muted: true },
+  ];
+
+  protected readonly wiringPick = signal<string | null>('l6');
+  protected readonly pickedLink = computed(() => {
+    const link = this.fabricLinks.find((l) => l.id === this.wiringPick());
+    if (!link) return 'Pick a cable or a port.';
+    const name = (id: string) => {
+      for (const n of this.fabricNodes) {
+        const p = n.ports.find((q) => q.id === id);
+        if (p) return `${n.label} ${p.label}`;
+      }
+      return id;
+    };
+    return `${name(link.from)} ↔ ${name(link.to)}${link.label ? ` · ${link.label}` : ''}`;
+  });
+
+  // Columns nobody declared: the tiers come out of the cabling.
+  protected readonly tierNodes: StrctWiringNode[] = [
+    {
+      id: 'hva',
+      label: 'hv-a',
+      sublabel: 'compute',
+      ports: [{ id: 'hva1', label: 'nic0', meta: '25G', status: 'success' }],
+    },
+    {
+      id: 'hvb',
+      label: 'hv-b',
+      sublabel: 'compute',
+      ports: [
+        { id: 'hvb1', label: 'nic0', meta: '25G', status: 'success' },
+        { id: 'hvb2', label: 'nic1', meta: '25G', status: 'critical' },
+      ],
+    },
+    {
+      id: 'leaf',
+      label: 'leaf-01',
+      sublabel: 'Nexus 93180',
+      icon: 'switch',
+      ports: [
+        { id: 'ld1', label: 'Eth1/1', meta: 'access', status: 'success' },
+        { id: 'ld2', label: 'Eth1/2', meta: 'access', status: 'success' },
+        { id: 'lu1', label: 'Eth1/49', meta: 'uplink', status: 'success' },
+        { id: 'lu2', label: 'Eth1/50', meta: 'uplink', status: 'warning' },
+      ],
+    },
+    {
+      id: 'sp1',
+      label: 'spine-01',
+      sublabel: 'Nexus 9336',
+      icon: 'switch',
+      ports: [
+        { id: 'sp1a', label: 'Eth1/7', meta: '100G', status: 'success' },
+        { id: 'sp1b', label: 'Eth1/8', meta: '100G', status: 'critical' },
+      ],
+    },
+    {
+      id: 'sp2',
+      label: 'spine-02',
+      sublabel: 'Nexus 9336',
+      icon: 'switch',
+      ports: [{ id: 'sp2a', label: 'Eth1/7', meta: '100G', status: 'warning' }],
+    },
+  ];
+
+  protected readonly tierLinks: StrctWiringLink[] = [
+    { id: 't1', from: 'hva1', to: 'ld1', status: 'success' },
+    { id: 't2', from: 'hvb1', to: 'ld2', status: 'success' },
+    { id: 't3', from: 'lu1', to: 'sp1a', status: 'success' },
+    { id: 't4', from: 'lu2', to: 'sp2a', status: 'warning', label: 'CRC errors rising' },
+    // The picture's own finding: a host cabled straight into a spine, two
+    // tiers in one hop. The cable has to cross the leaf to say so.
+    { id: 't5', from: 'hvb2', to: 'sp1b', status: 'critical', label: 'cabled past the leaf' },
+  ];
+
   // FR-48-31 — the blast radius, and a two-level topology.
   protected readonly blastNodes: StrctFlowNode[] = [
     { id: 'src', label: 'hv-01.dc-west', column: 0, status: 'warning', data: '6 VMs running' },

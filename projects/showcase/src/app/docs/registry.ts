@@ -5189,6 +5189,108 @@ export const DOCS: DocCategory[] = [
         ],
       },
       {
+        id: 'wiring',
+        title: 'Wiring map',
+        selector: 'strct-wiring',
+        importNames: [
+          'StrctWiring',
+          'StrctWiringNode',
+          'StrctWiringPort',
+          'StrctWiringLink',
+          'StrctWiringPortEvent',
+        ],
+        summary: 'Port-level link map — the cable, not the box.',
+        lead: 'A port-level wiring map: columns of devices, each device\u2019s ports in order, and one curve per cable drawn **between the two ports** rather than between the two boxes. It answers the question a fabric review starts from \u2014 node port \u2192 switch port as LLDP heard them, initiator \u2192 target, patch panel A \u2192 B, vNIC \u2192 pNIC \u2014 and the second question too, which is whether the two ends agree: a link carries a tone and a label that sits on the line itself. The cable leaves the device\u2019s edge at the port\u2019s own centre line and arrives at the other port\u2019s, horizontally at both ends. Dependency-free; the geometry is measured from the rendered rows, never guessed.',
+        inputs: [
+          {
+            name: 'nodes',
+            type: 'StrctWiringNode[]',
+            default: '[]',
+            description:
+              'The devices: `{ id; label; sublabel?; column?; icon?; ports: StrctWiringPort[] }`. A port is `{ id; label; meta?; status? }` \u2014 the reading beside it ("25G \u00b7 RDMA", "not heard") and the tone of its dot.',
+          },
+          {
+            name: 'links',
+            type: 'StrctWiringLink[]',
+            default: '[]',
+            description:
+              '`{ id; from; to; status?; style?: "solid" | "dashed"; label? }[]`, where `from` / `to` are **port** ids. `label` is drawn as a pill on the line itself. A link naming a port that does not exist is left undrawn rather than drawn to nowhere.',
+          },
+          {
+            name: 'nodes[].column',
+            type: 'number',
+            description:
+              'Which column a device sits in. When no device declares one, the columns are derived from the links \u2014 a device is placed one past the furthest device that links into it \u2014 so hosts \u2192 leaf \u2192 spine falls out of the cabling. A device in a middle column anchors its downlinks on one edge and its uplinks on the other.',
+          },
+          {
+            name: 'columns',
+            type: 'string[] | null',
+            default: 'null',
+            description: 'Column headings, in order \u2014 each column is a labelled group.',
+          },
+          {
+            name: 'navigable',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Makes the map one tab stop with the arrow keys inside it, the ports buttons, and the cables clickable. \u2191 / \u2193 walk a column\u2019s ports, \u2192 and \u2190 **follow the cable** to the port at its far end (falling through to the next column where a port has none), Home / End jump to the column\u2019s ends, and Enter / Space selects the link the port is on. Off by default, so a read-only diagram keeps no tab stop at all.',
+          },
+          {
+            name: 'selected',
+            type: 'string | null',
+            default: 'null',
+            description:
+              'The selected link\u2019s id \u2014 two-way. A click on the cable, or Enter / Space on either of its ports, sets it.',
+          },
+          {
+            name: 'isolate',
+            type: 'boolean',
+            default: 'true',
+            description:
+              'While a link is selected, everything that is not on it recedes \u2014 a wiring map is read one cable at a time, and eight cables at full strength is the reason the selected one is hard to find. Pass `false` for a selection that only marks a link.',
+          },
+          {
+            name: 'label',
+            type: 'string',
+            default: `''`,
+            description: 'Caption under the map.',
+          },
+          {
+            name: 'emptyText',
+            type: 'string',
+            default: `'No wiring to show.'`,
+            description: 'What is said when there is nothing to draw.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'linkActivate',
+            type: 'StrctWiringLink',
+            description: 'The cable a click \u2014 on the line or on a port of it \u2014 acted on.',
+          },
+          {
+            name: 'portActivate',
+            type: 'StrctWiringPortEvent',
+            description:
+              'The port a click or Enter / Space acted on, with its device and the links it carries: `{ node, port, links }`.',
+          },
+        ],
+        do: [
+          'Use it where the endpoint is a port: LLDP neighbours, patch panels, SAN zoning, LAG members, vNIC \u2192 pNIC.',
+          'Put the disagreement on the line \u2014 "PFC 3 \u2260 4" belongs on the cable it is true of, not in a key.',
+          'Let a selection isolate: the map is read one cable at a time.',
+        ],
+        dont: [
+          'Do not use it for a topology whose endpoints are whole devices \u2014 that is `strct-flow`\u2019s fan-out.',
+          'Do not colour every cable. A tone that is on all of them carries nothing; neutral is the resting state.',
+        ],
+        a11y: [
+          'The cables are geometry, so the SVG is aria-hidden and each port carries the sentence it was drawing instead \u2014 "\u2192 tor-b Eth1/14, critical \u2014 PFC 3 \u2260 4", or "not wired".',
+          'Clicking the line is a second way to reach a selection the port buttons already carry, so the paths take a pointer but never a tab stop; everything the pointer can do, the keyboard can.',
+          'Below 560px the columns stack, the cables go away \u2014 a curve between stacked columns says nothing \u2014 and each port\u2019s "\u2192 where it lands" becomes visible text.',
+        ],
+      },
+      {
         id: 'heatmap',
         title: 'Heatmap',
         selector: 'strct-heatmap',
@@ -6040,6 +6142,7 @@ export const SCENARIOS: { id: string; label: string; icon: string; items: GuideL
     { label: 'Dashboard', path: '/scenarios/dashboard' },
     { label: 'Inventory', path: '/scenarios/inventory' },
     { label: 'Host detail', path: '/scenarios/host' },
+    { label: 'Fabric', path: '/scenarios/fabric' },
     { label: 'VM settings', path: '/scenarios/vm-settings' },
     { label: 'New cluster', path: '/scenarios/new-cluster' },
     { label: 'Alerts', path: '/scenarios/alerts' },

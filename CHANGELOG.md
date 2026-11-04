@@ -5,6 +5,102 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.7.0] - 2026-11-04
+
+[FR-71-01](docs/feature-requests/archive/wiring-map.md): the library had no way
+to draw a network diagram whose endpoints are **ports**, which is every
+diagram a fabric review actually starts from.
+
+### Added
+
+- **`strct-wiring` — a port-level wiring map.** Columns of devices, each
+  device's ports in order, and one cubic per cable drawn between the two
+  **port rows** rather than between the two boxes. It leaves the device card's
+  inline edge at the port's own centre line and arrives at the other port's,
+  with both control points on those centre lines, so a cable leaves and
+  arrives level instead of stabbing the card.
+
+  ```html
+  <strct-wiring
+    [nodes]="nodes"
+    [links]="links"
+    [columns]="['Nodes · SET team', 'Switches']"
+    navigable
+    [(selected)]="link"
+  />
+  ```
+
+  Measured in Chrome on the filed case (6 devices, 16 ports, 8 cables), at
+  1600px light and 1240px dark: every cable end is **0.00px** from its port's
+  centre line and **0.00px** from the device's edge, and a cable's rise over
+  its first and last 6px is **0.06px**. Anchoring on the card instead — which
+  is what a box-level diagram does — puts the cable **63.25px** from the port
+  it is meant to land on.
+
+  `strct-flow`'s fan-out is unchanged and is still the right component when
+  the endpoints are whole devices.
+
+- **A label sits on the cable it describes, and nowhere else.** Each label is
+  measured at its rendered size and slid along its own cable until it clears
+  every label already placed — worst severity first, so a critical label keeps
+  the middle of its run. The devices occupy bands of x and a label lives in the
+  widest clear strip its own cable crosses, which is what keeps a cable that
+  _skips_ a column from putting its label on the device in between: at the
+  midpoint that label covers the leaf by **1124px²**, in its strip by 0. Like a
+  bar chart's band label since 7.6.1, it is bounded by that strip and ends in
+  an ellipsis rather than spilling; below 44px of room it is not drawn, and
+  both of its ports still carry the words.
+
+- **Selecting a cable isolates it.** The unselected cables drop to **0.3** and
+  their dots to 0.4 while the selection keeps full strength and a thicker
+  stroke, and both of its ports wear its tone with a rail on the edge the cable
+  itself uses. Isolation acts on the drawing and never on the words: dimming
+  the labels put a warning tone at **3.31:1** against a light surface, so
+  nothing with text in it is dimmed at all. Every label and every port reading
+  measures ≥ 4.5:1 in both palettes while another cable is selected (worst
+  4.62:1). `[isolate]="false"` keeps a selection that only marks a link.
+
+- **The keyboard follows the cable.** `navigable` makes the map one tab stop:
+  ↑ / ↓ walk a column's ports, **→ and ← follow the cable to the port at its
+  far end**, Home / End jump to the column's ends, and Enter or Space selects
+  the link the port is on. Clicking the line does the same thing — a redundant
+  pointer affordance, so the paths take a pointer but never a tab stop and the
+  `<svg>` stays `aria-hidden`; each port carries the sentence the picture was
+  drawing ("→ tor-b Eth1/14, critical — PFC 3 ≠ 4", or "not wired"). A link
+  naming a port that is not on the map is neither drawn nor announced.
+
+- **N columns, derived from the cabling.** A device that declares no `column`
+  is placed one past the furthest device that links into it, so hosts → leaf →
+  spine falls out of the links; a device in a middle column anchors its
+  downlinks on one edge and its uplinks on the other. Below 560px the columns
+  stack, the cables go away — a curve between stacked columns says nothing —
+  and each port's "→ where it lands" becomes visible text.
+
+### Gates
+
+- **`scripts/wiring-map.mjs`**, wired into CI. **49 checks** at two widths in
+  both palettes, every number read back from what Chrome drew: endpoints from
+  `getPointAtLength` on the rendered `<path>`, boxes from
+  `getBoundingClientRect`, dimming from `getComputedStyle`, the keyboard from
+  real key events. Anchoring a cable on the card fails it with **63.25px**;
+  placing a label at the cable's midpoint fails it with **1124px²** over a
+  device.
+- 15 specs, two visual baselines (52 → 54), and `/components/wiring` added to
+  the axe smoke run — a diagram whose ports are buttons, whose cables are
+  clickable paths with no tab stop, and whose `<svg>` is `aria-hidden` inside a
+  group that is not, is three ways to get ARIA wrong at once.
+
+### Two corrections the gate made to its own readings
+
+- "4.0px off its own cable" was the **sampling grid**, not the label: 41
+  samples of a 600px curve sit 15px apart, so a label exactly on the curve
+  reads as up to 7.5px off it. It now measures distance to the segments
+  between samples, and reads **< 1px**.
+- An element's `opacity` composites the whole layer, glyphs included, over
+  what is behind it. Reading the text as composited over its own already-dimmed
+  background folds the backdrop into the ink twice and understated every
+  ratio.
+
 ## [7.6.1] - 2026-11-04
 
 [BUG-70-01](docs/feature-requests/archive/chart-bar-category-labels.md), filed
