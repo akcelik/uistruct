@@ -663,7 +663,10 @@
   </div>
 
   @if (paneOpen()) {
-    <aside class="strct-dg__pane">
+    <aside
+      class="strct-dg__pane"
+      [style.max-height.px]="virtual() ? viewportHeight() : maxHeight()"
+    >
       <div class="strct-dg__pane-head">
         @if (narrowPane()) {
           <!-- The pane has taken the list's place, so there is a way back. -->

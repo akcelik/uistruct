@@ -1,5 +1,10 @@
 # BUG-69-01, FR-69-02, BUG-69-03: the grid's height, and ellipses where there is no text
 
+> **CLOSED, 2026-11-04.** All three shipped: the two defects in **v7.4.1** and
+> the fill height in **v7.6.0**. Both of the app-side workarounds this report
+> lists — the `styles.scss` rule and the `FillHeight` directive — can be
+> deleted.
+
 **Filed by:** HyperStruct (its decision O448), 2026-11-04, on strct **7.4.0**
 **Reach:** every `singleLine` grid with a selection, expand or action column (BUG-69-01); every grid whose
 rows can outgrow the page (FR-69-02, 365 of HyperStruct's 399 grids); a `singleLine` grid's empty row
@@ -90,9 +95,32 @@ HyperStruct's rule, which goes when this ships:
 
 ## FR-69-02 — a grid that takes the space left in its pane
 
-> **OPEN.** This is a feature and goes in its own release; the two defects
-> above shipped first as **v7.4.1** so HyperStruct can drop its `styles.scss`
-> rule now. The `FillHeight` directive stays until it ships.
+> **SHIPPED in v7.6.0**, as asked: `[maxHeight]="'fill'"`, a `fillMin` floor
+> (default 280), `provideStrctDatagridDefaults` for the policy, and the detail
+> pane bound to the same number. **The `FillHeight` directive can go**, and so
+> can the two class names it had to know.
+>
+> The component does the arithmetic in **viewport coordinates** rather than the
+> pane's content coordinates, so there is no `scrollTop` to subtract. The term
+> this report flagged as the hard one — "what the page has after the grid",
+> where `scrollHeight` made a short page count 201px of nothing — is the sum of
+> the following siblings, which cannot see space that holds nothing.
+>
+> Measured by `scripts/fill-height.mjs`, 15 checks at the two window heights
+> this report named: the cap is **551px at 1000px** and **311px at 760px**, the
+> pane does not scroll and the rows do, a short grid is untouched, two stacked
+> grids each fall back to their floor, and an open pane sits exactly at the cap.
+> The one that matters most: the cap moves **on a live resize**, 551 → 311, with
+> no reload.
+>
+> Three things were wrong on the way and all three are now asserted. The first
+> measurement left the pane's **border** in its content box, so the pane
+> scrolled by 3px — reverting that one line still fails two of the 15 checks.
+> `[maxHeight]="null"` **could not opt out** of a provider policy, because `??`
+> folded "nothing said here" into "no cap here"; the input's default is now
+> `undefined`. And a grid with **no box** — hidden, mid-hydration, or in a DOM
+> with no layout — was handed the window height as if it had been measured;
+> it now gets no cap until it has geometry.
 
 ### What a consumer needs
 

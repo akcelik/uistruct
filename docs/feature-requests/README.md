@@ -14,7 +14,8 @@ ten glyphs a backup product borrows today. Restores uses `undo`, Jobs uses `queu
 `restore`, `lockTimed`, `calendarClock`, `skip`, `dedup`, `compress`, `fingerprint`, `dualControl` and
 `replicate`.
 
-[**`datagrid-fill-and-utility-ellipsis.md`**](datagrid-fill-and-utility-ellipsis.md) — BUG-69-01,
+[**`datagrid-fill-and-utility-ellipsis.md`**](datagrid-fill-and-utility-ellipsis.md) — **all three
+shipped**: the two defects in **v7.4.1**, the fill height in **v7.6.0**. BUG-69-01,
 FR-69-02, BUG-69-03, filed 2026-11-04 by HyperStruct against 7.4.0. The utility cells' `clip` exception
 from 6.4.1 loses on specificity ((0,3,2) against (0,3,3)), so every `singleLine` row draws "..." beside
 its 25px checkbox in an 18px content box. A grid has no way to take the height left in its pane

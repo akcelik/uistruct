@@ -8,6 +8,7 @@ import {
   StrctRowDetailDef,
   StrctDetailPaneTitle,
   StrctDetailPaneActions,
+  provideStrctDatagridDefaults,
 } from './datagrid';
 import { StrctCellDef, StrctRow } from '../table/table';
 import { resetStrctDevWarnings } from '../util/dev-warn';
@@ -2514,6 +2515,75 @@ describe('StrctDatagrid — a usable detail pane', () => {
 
 // BUG-57-01 / BUG-57-02 — the row tints and the table's own clip. Both are
 // pure CSS, so they are asserted on the stylesheet the component ships.
+/**
+ * FR-69-02 — `[maxHeight]="'fill'"`. The geometry is measured in a browser by
+ * `scripts/fill-height.mjs`, at two window heights, because a number that is
+ * right for one window height and wrong for every other is the whole item.
+ * These are the decisions around it: what the host says before it has been
+ * measured, what the floor is, and whose setting wins.
+ */
+describe('StrctDatagrid fill height (FR-69-02)', () => {
+  const cols: StrctDatagridColumn[] = [{ key: 'name', label: 'Host' }];
+  const rows: StrctRow[] = [{ name: 'hv-01' }];
+
+  function make(inputs: Record<string, unknown> = {}, providers: unknown[] = []) {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: providers as never[] });
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    fixture.componentRef.setInput('columns', cols);
+    fixture.componentRef.setInput('rows', rows);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('bounds the scroller from the first frame, before it has a number', () => {
+    // jsdom has no layout, so the measurement cannot run — which is exactly
+    // the state a browser is in for one frame. The host must already say
+    // bounded, or the scroller is not a scroller yet and the rows jump.
+    const host = make({ maxHeight: 'fill' }).nativeElement as HTMLElement;
+    expect(host.classList).toContain('strct-dg-host--bounded');
+  });
+
+  it('is not bounded without a cap, and is with a number', () => {
+    expect((make().nativeElement as HTMLElement).classList).not.toContain('strct-dg-host--bounded');
+    expect((make({ maxHeight: 420 }).nativeElement as HTMLElement).classList).toContain(
+      'strct-dg-host--bounded',
+    );
+  });
+
+  it('takes the policy from a provider, and a binding still wins', () => {
+    const provided = make({}, [provideStrctDatagridDefaults({ maxHeight: 'fill' })]);
+    expect((provided.nativeElement as HTMLElement).classList).toContain('strct-dg-host--bounded');
+
+    // `[maxHeight]="null"` is how one grid opts out of an app-wide policy.
+    const optedOut = make({ maxHeight: null }, [
+      provideStrctDatagridDefaults({ maxHeight: 'fill' }),
+    ]);
+    expect((optedOut.nativeElement as HTMLElement).classList).not.toContain(
+      'strct-dg-host--bounded',
+    );
+  });
+
+  it('a number still beats a provider that says fill', () => {
+    const fixture = make({ maxHeight: 320 }, [provideStrctDatagridDefaults({ maxHeight: 'fill' })]);
+    const scroll = (fixture.nativeElement as HTMLElement).querySelector(
+      '.strct-dg__scroll',
+    ) as HTMLElement;
+    expect(scroll.style.maxHeight).toBe('320px');
+  });
+
+  it('leaves the cap unset while the grid has no box', () => {
+    const scroll = (make({ maxHeight: 'fill' }).nativeElement as HTMLElement).querySelector(
+      '.strct-dg__scroll',
+    ) as HTMLElement;
+    // jsdom has no layout, so every rect reads 0 — the same state as a hidden
+    // grid or one mid-hydration. Without the guard the measurement fell back
+    // to the viewport and handed back 768px as if it had measured something.
+    expect(scroll.style.maxHeight).toBe('');
+  });
+});
+
 describe('StrctDatagrid — the row tints and the frame', () => {
   function sheet(): string {
     const fixture = TestBed.createComponent(StrctDatagrid);

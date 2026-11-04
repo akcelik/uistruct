@@ -84,6 +84,11 @@ jobs:
       # 2.32% and was redrawn.
       - name: Assert a new glyph can be told apart at the size it is read at
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/glyph-distinct.mjs
+      # FR-69-02: a grid bounded to the space left in its pane, read at two
+      # window heights because a number right for one and wrong for every
+      # other is the whole item. 15 checks.
+      - name: Assert a fill grid ends where its pane ends
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/fill-height.mjs
       # Weight carries rank, a field is a recess, severity rides on surface and
       # a card groups by tone — FR-67-04/05/06/08, read from the rendered page.
       # 19 of its 28 checks fail on 6.5.0.

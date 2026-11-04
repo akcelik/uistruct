@@ -5,6 +5,83 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.6.0] - 2026-11-04
+
+[FR-69-02](docs/feature-requests/datagrid-fill-and-utility-ellipsis.md), the
+last item in that document and the one with the widest reach: **365 of
+HyperStruct's 399 grids had no height bound at all**, because the only tools
+were `[maxHeight]` and `[virtual].viewportHeight` and both are a pixel count
+the caller has to pick. A fixed number is right for one window height and wrong
+for every other.
+
+### Added
+
+- **`[maxHeight]="'fill'"`** — the grid bounds its scroll frame to the space
+  left in its nearest scrolling ancestor, less where its rows start, its own
+  footer, and whatever the page has after it. Recomputed on a `ResizeObserver`
+  over the grid, its parent and that ancestor, and on window resize.
+- **`[fillMin]`**, default **280px** — the floor under which the page scrolls
+  instead. A 120px list of rows is not a list.
+- **`provideStrctDatagridDefaults({ maxHeight: 'fill' })`** — HyperStruct's
+  sweep put its directive on 266 grids; a policy that broad belongs at the
+  injector. `[maxHeight]="null"` opts a single grid out.
+- **An open detail pane is bound to the same number.** `.strct-dg__layout` is
+  `align-items: flex-start` and the pane stretches, so a pane taller than a
+  bounded list used to make the grid taller than its own cap.
+
+`maxHeight` keeps taking a number, and a number still beats the provider.
+
+### What replaces what
+
+HyperStruct measured this with an app-side directive that read two of the
+library's class names (`.strct-dg__scroll`, `.strct-dg__layout`) to find where
+the rows start and where the footer begins. That is the part an app should not
+have to know, and it can be deleted.
+
+The component does the arithmetic in **viewport coordinates**, which
+`getBoundingClientRect` already resolves scrolling into — the directive worked
+in the pane's content coordinates and had to subtract `scrollTop` by hand. Its
+hardest term was "what the page has after the grid": `scrollHeight` is never
+less than the pane, so a short page counted the empty space under itself (201px
+of nothing, measured). Summing the following siblings instead cannot see space
+that holds nothing.
+
+### Measured
+
+`scripts/fill-height.mjs`, 15 checks over `/scenarios/fill-height` at the two
+window heights the ask named:
+
+|                              | 1000px              | 760px               |
+| ---------------------------- | ------------------- | ------------------- |
+| pane's inner height          | 636px               | 396px               |
+| the grid's cap               | **551px**           | **311px**           |
+| the pane scrolls             | no                  | no                  |
+| the rows scroll              | yes                 | yes                 |
+| a short grid's rows scroll   | no                  | no                  |
+| two stacked grids' caps      | 200 / 200px (floor) | 200 / 200px (floor) |
+| an open pane against the cap | 600 / 600px         | 360 / 360px         |
+
+And the one that matters most: **the cap moves on a live resize** — 551px →
+311px with no reload.
+
+### Two things the gate and the specs found
+
+- **1px of border, 3px of scrollbar.** The first measurement took the pane's
+  content box as `rect.bottom − paddingBottom`, which leaves the border in. The
+  pane then scrolled by 3px — the kind of "nearly right" a reader sees as a
+  scrollbar that should not be there. Reverting that one line still fails two
+  of the 15 checks.
+- **`[maxHeight]="null"` could not opt out of a provider policy.** Resolving
+  with `??` folded "nothing was said here" and "no cap on this one" into the
+  same value, so the opt-out was unreachable. The input's default is now
+  `undefined` and `null` means no cap. A spec says so.
+- **A cap computed from no geometry.** With no layout — hidden, `display: none`,
+  mid-hydration, or jsdom — every rect reads 0 and the viewport fallback handed
+  back the window height as if it had measured something (768px in a test). The
+  measurement now returns without setting a cap until the grid has a box. The
+  host carries `--bounded` from the first frame either way, so the scroller is
+  already a scroller and nothing jumps.
+
 ## [7.5.0] - 2026-11-04
 
 [FR-69-04](docs/feature-requests/backup-glyphs.md): the glyphs a backup product
