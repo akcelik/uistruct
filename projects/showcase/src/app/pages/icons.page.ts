@@ -91,6 +91,21 @@ interface StateExample {
     </app-demo>
 
     <app-demo
+      anchor="data-protection"
+      heading="Data protection — the pairs that have to be told apart"
+      description="FR-69-04. A backup product was borrowing undo for a restore, queue for a backup run and lock for a retention lock that cannot be shortened — the most important fact on the screen, drawn as a login. Each of these sits beside its nearest neighbour in the gallery above; they are gathered here at 14px, the size the sm toolbar reads them at, because that is where a pair either separates or does not. Measured by scripts/glyph-distinct.mjs against the closest pair the set already ships (lock/unlock, 2.28%): the first backup/restore drawing scored 2.32% and was redrawn to 5.26%."
+    >
+      <div class="ig-sizes">
+        @for (name of dataProtection; track name) {
+          <div class="ig-size">
+            <strct-icon [name]="name" [size]="14" />
+            <span class="ig-name">{{ name }}</span>
+          </div>
+        }
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="states"
       heading="Object states"
       description='The same object glyph carries any state. Two families on the badge (bottom end): lifecycle speaks vCenter&apos;s media language (▶ running · ⏸ paused · ■ off) and health is silhouette-coded (circle ✓ · triangle ! · diamond ×) — both read without colour. A mode the operator chose is not either of those, so it has its own corner (top end): mode="maintenance" draws a neutral striped tile, filled when the object is out of service and hollow while it is still draining. The two never displace each other, which is the common case — a host drained for patching that also has a disk warning. badge="maintenance" still works and draws the tile; it is deprecated since 5.29.0, because an amber disc was indistinguishable from paused at 16px.'
@@ -466,6 +481,21 @@ export class IconsPage {
     { badge: 'warning', label: 'Degraded' },
     { badge: 'critical', label: 'Critical' },
   ];
+
+  /** FR-69-04, in the order the ask listed them. */
+  protected readonly dataProtection = [
+    'backup',
+    'restore',
+    'lockTimed',
+    'calendarClock',
+    'skip',
+    'dedup',
+    'compress',
+    'fingerprint',
+    'dualControl',
+    'replicate',
+    'scrub',
+  ] as const satisfies readonly StrctIconName[];
 
   protected readonly groups = STRCT_ICON_GROUPS;
   protected readonly totalIcons = STRCT_ICON_GROUPS.reduce((n, g) => n + g.names.length, 0);

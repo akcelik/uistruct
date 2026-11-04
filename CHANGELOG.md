@@ -5,6 +5,93 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.5.0] - 2026-11-04
+
+[FR-69-04](docs/feature-requests/backup-glyphs.md): the glyphs a backup product
+was borrowing from somewhere else. Filed by HyperStruct while redesigning
+Backup ▸ Jobs and Repositories.
+
+### Added
+
+**Eleven glyphs**, 194 → 205, each grouped beside its nearest neighbour on the
+icon page rather than in a drawer of their own:
+
+| Name            | Drawn as                                       | Replaces the borrowed |
+| --------------- | ---------------------------------------------- | --------------------- |
+| `backup`        | the `archive` box, arrow down the body         | `queue`               |
+| `restore`       | the same box, arrow up the body                | `undo`                |
+| `lockTimed`     | a padlock with a taller body and a clock in it | `lock`                |
+| `calendarClock` | a calendar with a clock in its lower-right     | `calendar`            |
+| `skip`          | a triangle and a bar                           | —                     |
+| `dedup`         | two blocks becoming one                        | —                     |
+| `compress`      | a box with arrows pointing inward              | —                     |
+| `fingerprint`   | five nested whorls                             | —                     |
+| `dualControl`   | two people, the second's shoulders a check     | —                     |
+| `replicate`     | two stores and an arrow                        | —                     |
+| `scrub`         | a store behind a magnifier                     | —                     |
+
+`backup` and `restore` share the `archive` box on purpose: it is the same
+store, and only the arrow says which way the data is going. The retention lock
+was the point of the ask — on a bank's backup screen "30 days, cannot be
+shortened" is the most important fact on the page and it was drawn as a login.
+
+**Not added: `database`.** The ask offered it "if `storage` is not already one".
+It is: `storage` is an ellipse over a cylinder body. One glyph per meaning.
+
+### Measured
+
+- **The pen holds.** `control-height.mjs` reads **639** rendered glyphs across
+  three themes, up from 606, and every one is drawn at **1.40px**.
+- **Every pair separates.** A new gate renders each glyph alone at **14px** —
+  the size the `sm` toolbar uses, which the ask named — at a 4× device scale,
+  and compares it pixel for pixel with the glyph it has to differ from.
+
+  The threshold is not invented, and it is not the weakest thing already in the
+  set either. The closest accepted pair is `lock`/`unlock` at **2.28%**, and it
+  is the closest for a reason: those two differ by a rotated shackle and
+  nothing else. Holding new work to exactly that is holding it to the set's
+  worst case, so a **new** pair is held to twice it — **4.56%**.
+
+  | Pair                          | Apart at 14px       |
+  | ----------------------------- | ------------------- |
+  | `backup` / `restore`          | 5.26% (floor 4.56%) |
+  | `calendarClock` / `calendar`  | 7.71%               |
+  | `lockTimed` / `lock`          | 16.17%              |
+  | `skip` / `chevronDoubleRight` | 20.58%              |
+  | `restore` / `upload`          | 27.61%              |
+  | `replicate` / `dedup`         | 28.75%              |
+  | `backup` / `download`         | 30.33%              |
+  | `scrub` / `search`            | 31.21%              |
+  | `fingerprint` / `wifi`        | 31.72%              |
+  | `dedup` / `copy`              | 39.60%              |
+
+- **Reading the number changed a drawing, and then the number changed the
+  gate.** The first `backup` / `restore` put the arrow inside the box's upper
+  half, where flipping it moved the head 3.5 units: **2.32%**. The gate as
+  first written had its floor at the weakest accepted pair, so it _passed_ that
+  drawing — by four hundredths of a percent, which is not a difference a reader
+  would find. Both things were wrong and both were fixed: the arrow now spans
+  the whole body, 5.2 units, for **5.26%** — the band of `eye`/`eyeOff`
+  (6.38%) — and the floor is twice the weakest pair, so the first drawing is
+  now rejected rather than waved through. Verified by putting it back: the gate
+  exits 1 and names the number.
+
+  The two guard pairs exist because the fix traded one risk for another — an
+  arrow-over-a-box could have collapsed into `download`/`upload`. It did not.
+
+### Gates
+
+- **`scripts/glyph-distinct.mjs`**, wired into CI. It also asserts the harness
+  is stable (a glyph against itself must be 0%) and that no glyph draws under
+  4% ink at 14px, so a drawing cannot pass by being faint.
+- **A clipped baseline, `glyph-data-protection`**, on a new 14px row on the icon
+  page — the visual suite goes to 50. The numeric gate cannot see a redrawing
+  that still clears the floor; the picture can. The selector is scoped to the
+  row (`#data-protection .ig-sizes`) because a bare `.ig-sizes` matches the
+  `#sizes` row that `icon-pen` already crops.
+- **A register spec**, so a name a consumer has shipped against cannot quietly
+  go.
+
 ## [7.4.1] - 2026-11-04
 
 Two defects from [BUG-69-01 / BUG-69-03](docs/feature-requests/datagrid-fill-and-utility-ellipsis.md),

@@ -7,7 +7,8 @@ stays here until it goes quiet.
 
 ## Open
 
-[**`backup-glyphs.md`**](backup-glyphs.md) — FR-69-04, filed 2026-11-04 by HyperStruct against 7.4.0:
+[**`backup-glyphs.md`**](backup-glyphs.md) — FR-69-04, **shipped in v7.5.0** (all ten plus the optional
+`scrub`; `database` was declined because `storage` is already a cylinder). Filed 2026-11-04 by HyperStruct against 7.4.0:
 ten glyphs a backup product borrows today. Restores uses `undo`, Jobs uses `queue`, Repositories uses
 `rack`, and a recovery point's retention lock is the same `lock` as a locked account. Asks for `backup`,
 `restore`, `lockTimed`, `calendarClock`, `skip`, `dedup`, `compress`, `fingerprint`, `dualControl` and

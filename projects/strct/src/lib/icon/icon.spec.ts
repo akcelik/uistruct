@@ -142,6 +142,37 @@ describe('StrctIcon', () => {
     expect(grouped.has('clipboard')).toBe(true);
   });
 
+  /**
+   * FR-69-04. A backup product was borrowing `undo` for a restore and `lock`
+   * for a retention lock that cannot be shortened. Whether the drawings can be
+   * told apart is measured at 14px by `scripts/glyph-distinct.mjs`; this is the
+   * register, so a name a consumer has shipped against cannot quietly go.
+   */
+  it('registers the data-protection glyphs (7.5.0)', () => {
+    const names = [
+      'backup',
+      'restore',
+      'lockTimed',
+      'calendarClock',
+      'skip',
+      'dedup',
+      'compress',
+      'fingerprint',
+      'dualControl',
+      'replicate',
+      'scrub',
+    ];
+    const grouped = new Set<string>(STRCT_ICON_GROUPS.flatMap((g) => g.names));
+    for (const name of names) {
+      expect(STRCT_ICON_NAMES, name).toContain(name);
+      expect(grouped.has(name), `${name} is on the icon page`).toBe(true);
+      const fixture = TestBed.createComponent(StrctIcon);
+      fixture.componentRef.setInput('name', name);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('svg path, svg rect, svg circle')).toBeTruthy();
+    }
+  });
+
   it('registers the time/comms/view/identity additions and repairs (0.21.0)', () => {
     const names = [
       'clock',

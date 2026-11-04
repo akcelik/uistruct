@@ -78,6 +78,12 @@ jobs:
       # token it is supposed to be (FR-63-04).
       - name: Assert every control is the height its size asks for
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/control-height.mjs
+      # FR-69-04: a glyph whose job is to be told apart from the one beside it.
+      # Measured at 14px against a floor the set's own closest accepted pair
+      # (lock/unlock, 2.28%) sets. The first backup/restore drawing scored
+      # 2.32% and was redrawn.
+      - name: Assert a new glyph can be told apart at the size it is read at
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/glyph-distinct.mjs
       # Weight carries rank, a field is a recess, severity rides on surface and
       # a card groups by tone — FR-67-04/05/06/08, read from the rendered page.
       # 19 of its 28 checks fail on 6.5.0.

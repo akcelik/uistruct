@@ -344,6 +344,44 @@ const STRCT_ICON_DEFS = {
   // Printer — paper feed, body, output sheet and an LED.
   printer:
     '<path d="M5 6.4V3.2h6v3.2"/><rect x="2.8" y="6.4" width="10.4" height="4.8" rx="1"/><path d="M5 9.2h6v3.6H5z"/><circle cx="11" cy="8.4" r=".5" fill="currentColor" stroke="none"/>',
+
+  // ── Data protection (FR-69-04) ───────────────────────────────
+  // A backup product was borrowing `undo` for a restore, `queue` for a backup
+  // run and `lock` for a retention lock that cannot be shortened. The last of
+  // those is the most important fact on the screen and looked like a login.
+  // `backup` and `restore` share the `archive` box deliberately: they are the
+  // same store, and only the arrow says which way the data is going.
+  backup:
+    '<rect x="2.4" y="3" width="11.2" height="3.2" rx=".8"/><path d="M3.4 6.2V12a1 1 0 001 1h7.2a1 1 0 001-1V6.2"/><path d="M8 6.8v5.2M6.1 10.1L8 12l1.9-1.9"/>',
+  restore:
+    '<rect x="2.4" y="3" width="11.2" height="3.2" rx=".8"/><path d="M3.4 6.2V12a1 1 0 001 1h7.2a1 1 0 001-1V6.2"/><path d="M8 12V6.8M6.1 8.7L8 6.8l1.9 1.9"/>',
+  // The padlock keeps its shackle but takes a taller body, so the silhouette
+  // differs from `lock` before the clock inside it is even read.
+  lockTimed:
+    '<rect x="3.5" y="6.4" width="9" height="7" rx="1.5"/><path d="M5.6 6.4V5a2.4 2.4 0 014.8 0v1.4"/><circle cx="8" cy="9.9" r="1.9"/><path d="M8 8.7v1.2h1.1"/>',
+  // The clock sits in the calendar's lower-right, where a date's day number
+  // would be: a window, not a date.
+  calendarClock:
+    '<rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/><circle cx="9.7" cy="10.1" r="1.85"/><path d="M9.7 8.9v1.2h1.2"/>',
+  skip: '<path d="M3.8 3.9L10 8l-6.2 4.1V3.9z"/><path d="M12.4 3.9v8.2"/>',
+  // Two blocks become one. Not overlapping squares: that is `copy`.
+  dedup:
+    '<rect x="1.4" y="2.6" width="4.2" height="4.2" rx=".8"/><rect x="1.4" y="9.2" width="4.2" height="4.2" rx=".8"/><path d="M6.6 8h3.2M8.4 6.4L10 8 8.4 9.6"/><rect x="10.8" y="5.9" width="4.2" height="4.2" rx=".8"/>',
+  compress:
+    '<rect x="2.6" y="2.6" width="10.8" height="10.8" rx="1.2"/><path d="M8 4.8v2.4M6.6 6l1.4 1.2L9.4 6M8 11.2V8.8M6.6 10L8 8.8l1.4 1.2"/>',
+  // Nested whorls, each 2.6 units from the next. Not concentric arcs over a
+  // node: that is `wifi`.
+  fingerprint:
+    '<path d="M8 7.4a1.4 1.4 0 00-1.4 1.4c0 1.8.4 3.2 1 4.4"/><path d="M8 4.8a4 4 0 00-4 4c0 1.9.5 3.3 1.2 4.4"/><path d="M8 2.2a6.6 6.6 0 00-6.6 6.6"/><path d="M8 4.8a4 4 0 014 4c0 1.4-.2 2.6-.6 3.6"/><path d="M8 2.2a6.6 6.6 0 016.6 6.6"/>',
+  // Two people, one approval: the second person's shoulders are the check.
+  dualControl:
+    '<circle cx="5.2" cy="4.4" r="1.9"/><circle cx="10.8" cy="4.4" r="1.9"/><path d="M2 10.6c0-1.8 1.4-3.1 3.2-3.1M13.9 9.4c-.5-1.2-1.7-1.9-3.1-1.9"/><path d="M5.6 12.4l1.8 1.8 3.4-3.6"/>',
+  replicate:
+    '<rect x="1.2" y="4.2" width="4.2" height="7.6" rx="1"/><rect x="10.6" y="4.2" width="4.2" height="7.6" rx="1"/><path d="M6.4 8h3.2M8.2 6.4L9.8 8 8.2 9.6"/>',
+  // `scrub` was optional in the ask; `database` was too, and the set already
+  // has one — `storage` is a cylinder.
+  scrub:
+    '<rect x="1.6" y="3.4" width="8.6" height="9.2" rx="1"/><path d="M1.6 6h8.6"/><circle cx="11.4" cy="10.6" r="2.6"/><path d="M13.3 12.5l1.5 1.5"/>',
 };
 
 // Composite "off" variants — re-use base glyph + diagonal slash — and aliases.
@@ -391,6 +429,7 @@ export const STRCT_ICON_GROUPS: { label: string; names: StrctIconName[] }[] = [
       'close',
       'check',
       'calendar',
+      'calendarClock',
       'eye',
       'eyeOff',
       'upload',
@@ -429,6 +468,8 @@ export const STRCT_ICON_GROUPS: { label: string; names: StrctIconName[] }[] = [
       'pin',
       'share',
       'archive',
+      'backup',
+      'restore',
       'mail',
       'chat',
       'globe',
@@ -460,10 +501,12 @@ export const STRCT_ICON_GROUPS: { label: string; names: StrctIconName[] }[] = [
       'logout',
       'login',
       'users',
+      'dualControl',
       'unlock',
       'ban',
       'undo',
       'redo',
+      'skip',
       'arrowUp',
       'arrowDown',
       'arrowLeft',
@@ -473,7 +516,7 @@ export const STRCT_ICON_GROUPS: { label: string; names: StrctIconName[] }[] = [
   },
   {
     label: 'Status',
-    names: ['info', 'success', 'warning', 'critical', 'sync', 'lock', 'snapshot'],
+    names: ['info', 'success', 'warning', 'critical', 'sync', 'lock', 'lockTimed', 'snapshot'],
   },
   {
     label: 'Alert',
@@ -520,6 +563,7 @@ export const STRCT_ICON_GROUPS: { label: string; names: StrctIconName[] }[] = [
       'shield',
       'shieldCheck',
       'certificate',
+      'fingerprint',
       'key',
       'metrics',
       'logs',
@@ -534,7 +578,19 @@ export const STRCT_ICON_GROUPS: { label: string; names: StrctIconName[] }[] = [
   },
   {
     label: 'Storage & media',
-    names: ['disk', 'ssd', 'opticalDisc', 'usb', 'sdCard', 'tape', 'snapshot'],
+    names: [
+      'disk',
+      'ssd',
+      'opticalDisc',
+      'usb',
+      'sdCard',
+      'tape',
+      'dedup',
+      'compress',
+      'replicate',
+      'scrub',
+      'snapshot',
+    ],
   },
   {
     label: 'Hardware',
