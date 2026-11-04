@@ -161,7 +161,7 @@ of one row.
 
 ## [7.2.0] - 2026-11-03
 
-[FR-68-01](docs/feature-requests/icon-pen.md): one pen for the glyph. This is
+[FR-68-01](docs/feature-requests/archive/icon-pen.md): one pen for the glyph. This is
 FR-63 / FR-64 one property over — those made a control's height, and then its
 icon's size, follow a token instead of a number each call site picked, and the
 pen was left behind.
@@ -241,7 +241,7 @@ The visual baselines, every component, and every public name. `npm test`,
 
 ## [7.1.0] - 2026-11-03
 
-The last stage of [FR-67](docs/feature-requests/visual-language-2026-11.md),
+The last stage of [FR-67](docs/feature-requests/archive/visual-language-2026-11.md),
 and the only one that moves layout rather than appearance. No public API
 changed.
 
@@ -299,7 +299,7 @@ the grid does not touch its semantics), `grid-layout`, `control-height`,
 
 ## [7.0.0] - 2026-11-03
 
-Stage 2 of [FR-67](docs/feature-requests/visual-language-2026-11.md): the token
+Stage 2 of [FR-67](docs/feature-requests/archive/visual-language-2026-11.md): the token
 layer. **No public API changed** — no input, no output, no exported name — so
 every template that compiled against 6.5.0 compiles against this unchanged.
 What changed is the look of every screen, which is what makes it a major. See
@@ -439,7 +439,7 @@ that moves them.
 ## [6.5.0] - 2026-11-03
 
 The first of the four stages in
-[FR-67](docs/feature-requests/visual-language-2026-11.md), and the one that
+[FR-67](docs/feature-requests/archive/visual-language-2026-11.md), and the one that
 moves no pixels. The census behind that report found the library had a token
 scale that almost nothing consulted: **190 literal `font-size` declarations
 against 75 that went through a token, and 108 literal `border-radius` against

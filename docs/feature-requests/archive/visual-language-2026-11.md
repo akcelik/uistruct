@@ -35,7 +35,7 @@ Chrome or counted in the source; none is an estimate.
 > disagreed. The gates that found both were written after the fact, by going
 > back to the census that started the work.
 
-![Six findings, each shown against the library as it ships](../assets/visual-language-before-after.png)
+![Six findings, each shown against the library as it ships](../../assets/visual-language-before-after.png)
 
 The sheet above is the proposal rendered against the library's own stylesheet:
 on the left UIStruct 6.4.1 unaltered, on the right the same markup under a token
