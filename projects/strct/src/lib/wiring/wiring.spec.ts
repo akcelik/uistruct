@@ -259,3 +259,42 @@ describe('StrctWiring', () => {
     expect(host.querySelector('.strct-wiring__map')).toBe(null);
   });
 });
+
+// FR-72-02 (HyperStruct, against 7.7.0): a port with no cable says what the
+// consumer knows. On a map read from LLDP "not wired" claims a fact the page
+// does not have — nothing was heard, which is unknown, not absent.
+describe('StrctWiring — a port with no cable', () => {
+  const nodes: StrctWiringNode[] = [
+    {
+      id: 'hv1',
+      label: 'HV-PRD-01',
+      column: 0,
+      ports: [
+        { id: 'p1', label: 'SLOT 3 Port 1' },
+        { id: 'p2', label: 'SLOT 3 Port 2', unlinked: 'not patched' },
+      ],
+    },
+  ];
+
+  function build(patch: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctWiring);
+    fixture.componentRef.setInput('nodes', nodes);
+    fixture.componentRef.setInput('links', []);
+    for (const [k, v] of Object.entries(patch)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return (id: string) =>
+      el.querySelector(`[data-wiring-port="${id}"] .strct-wiring__sr`)!.textContent;
+  }
+
+  it('says "not wired" unless it is told otherwise', () => {
+    expect(build()('p1')).toBe('not wired');
+  });
+
+  it("takes the map's own sentence for every port that sets none", () => {
+    const said = build({ unlinkedText: 'nothing heard from a switch' });
+    expect(said('p1')).toBe('nothing heard from a switch');
+    // A port that knows its own answer keeps it.
+    expect(said('p2')).toBe('not patched');
+  });
+});

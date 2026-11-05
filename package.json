@@ -1,6 +1,6 @@
 {
   "name": "uistruct",
-  "version": "7.7.0",
+  "version": "7.8.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

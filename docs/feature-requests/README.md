@@ -15,10 +15,23 @@ stays here until it goes quiet.
   **1.44:1** in luminance so only hue separates the pair that decides a page-out, and the one row
   whose label wraps has its marks **8.5px** off the row.
 
-- [**`wiring-unlinked-port.md`**](wiring-unlinked-port.md) — FR-72-02, filed by HyperStruct against
-  7.7.0: a `strct-wiring` port with no link is announced — and, below 560px, shown — as **"not
-  wired"**. On a map built from LLDP that port means "nothing heard", which is unknown, not a fact.
-  Asks for `StrctWiringPort.unlinked` and an `unlinkedText` input (default unchanged).
+### Closed on 2026-11-05, and moved to [`archive/`](archive/)
+
+- [**`archive/flow-topology.md`**](archive/flow-topology.md) — FR-72-03, the fan-out's lines could
+  not be told apart: every edge left its node's vertical centre and every trunk between two columns
+  turned on one x, so the topology drew **11.7px** of line twice — one stretch of it a healthy
+  uplink over a dead one — and there was no way to write what a line _is_. Shipped in **v7.8.0** as
+  an anchor and a lane per edge, `StrctFlowEdge.label` placed in the clear strip, and
+  `[(selected)]` + `isolate` for reading one path at a time.
+- [**`archive/wiring-unlinked-port.md`**](archive/wiring-unlinked-port.md) — FR-72-02, filed by
+  HyperStruct against 7.7.0: a `strct-wiring` port with no link was announced, and below 560px
+  shown, as **"not wired"** — a fact the page does not have when the map is read from LLDP. Shipped
+  in **v7.8.0** as `StrctWiringPort.unlinked` and the `unlinkedText` input, default unchanged.
+
+- [**`wiring-node-head-squeeze.md`**](wiring-node-head-squeeze.md) — BUG-72-03, filed by
+  HyperStruct against 7.7.0 from a real cluster: a long device `sublabel` (two SET team names, 294px)
+  stays on one line and squeezes the device's name to **0 × 273px**, one letter a line; the map grows
+  from 528px to 1289px. The label's min-content is one glyph, the sublabel's is its full width.
 
 ### Closed on 2026-11-04, and moved to [`archive/`](archive/)
 

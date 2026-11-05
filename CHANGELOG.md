@@ -5,6 +5,69 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.8.0] - 2026-11-05
+
+[FR-72-03](docs/feature-requests/archive/flow-topology.md): a fan-out's lines
+carry its structure, and on 7.7.0 they could not be told apart — every edge
+left its node's vertical centre, every trunk between two columns turned on one
+x, and the topology drew **11.7px** of line twice, one stretch of it a healthy
+uplink over a dead one. [FR-72-02](docs/feature-requests/archive/wiring-unlinked-port.md),
+from HyperStruct, in the same release.
+
+### Added
+
+- **An anchor and a lane per edge in `strct-flow`'s `fan-out` / `tree`.** A
+  node carrying more than one edge on a side spreads them across it, ordered
+  by the far end so two never cross on the way out, with a tick marking each
+  attachment clear of the card; every trunk in a clear strip gets an x of its
+  own, and the turns are quarter-arcs. Measured in Chrome on the showcase's
+  own topology: **7** distinct lanes for 7 trunks, **0.0px** of line drawn
+  twice (against 2 collinear pairs and 11.7px on 7.7.0), every endpoint
+  **0.00px** from its box's edge and inside that box's own height.
+
+- **`StrctFlowEdge.label` — a word on the line.** "LACP · 25G", "down 2 d",
+  "trunk 200–209". It lives in the clear strip its edge turns in, bounded by
+  that strip on both axes, placed from its own rendered size worst-first so no
+  two labels touch, and repeated in its source node's description so it is
+  heard as well as seen. Only the strip that carries a word is widened — by a
+  margin on the column after it — and only until a column would fall under
+  112px; under that floor the labels ellipsise in place rather than squeeze
+  the boxes. Measured: **0px²** of label over any box, **0** overlapping
+  pairs, and no label clipped at either of the gate's two widths.
+
+  ```html
+  <strct-flow
+    layout="fan-out"
+    navigable
+    [nodes]="nodes"
+    [edges]="[{ from: 'hv-01', to: 'u1', label: 'LACP · 25G' }]"
+    [(selected)]="node"
+  />
+  ```
+
+- **`[(selected)]` and `isolate` on `strct-flow`.** Picking a node lets the
+  edges it is not on recede to 0.22 and draws its own path a pixel heavier;
+  picking it again lets the whole diagram back. Isolation acts on the drawing
+  and never on the words — measured: every label and every box keeps opacity
+  1, and the worst label contrast while another node is picked is **4.74:1**
+  (AA 4.5).
+
+- **`StrctWiring.unlinkedText` and `StrctWiringPort.unlinked`**
+  ([FR-72-02](docs/feature-requests/archive/wiring-unlinked-port.md), filed by
+  HyperStruct). A port with no drawn link said "not wired", which claims a
+  fact a map read from LLDP does not have — nothing was heard, which is
+  unknown, not absent. The sentence is now the consumer's: per map through
+  `unlinkedText`, per port through `unlinked`, with the port's own winning.
+  The default is unchanged.
+
+- **`scripts/flow-topology.mjs`** — 29 checks at two widths × both palettes,
+  every number read back from what Chrome drew. Wired into CI.
+
+### Fixed
+
+- **A node's box no longer spills its own words** when a narrow column leaves
+  it less room than its label needs (`overflow-wrap: anywhere`).
+
 ## [7.7.0] - 2026-11-04
 
 [FR-71-01](docs/feature-requests/archive/wiring-map.md): the library had no way

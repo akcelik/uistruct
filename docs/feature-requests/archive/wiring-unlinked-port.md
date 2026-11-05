@@ -1,5 +1,10 @@
 # FR-72-02 — A port with no cable says what the consumer knows, not "not wired"
 
+> **CLOSED, 2026-11-05.** Shipped in **v7.8.0**, both asks, with the default unchanged:
+> `StrctWiringPort.unlinked` and the `unlinkedText` input, the port's own winning over the map's.
+> Two specs cover it — the default still says "not wired", and a map that sets
+> `unlinkedText="nothing heard from a switch"` keeps a port's own "not patched".
+
 **Filed by:** HyperStruct, 2026-11-05, against **7.7.0**, while adopting `strct-wiring` on Cluster ▸
 Network Health (HyperStruct O458).
 

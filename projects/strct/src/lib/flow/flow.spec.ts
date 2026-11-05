@@ -355,3 +355,99 @@ describe('StrctFlow — a navigable topology', () => {
     expect(box('sw').querySelector('.strct-flow__sr')!.textContent).toContain('uplink-1');
   });
 });
+
+// FR-72-03: the lines carry the structure, so they have to be told apart —
+// each edge its own anchor and lane (geometry, measured by
+// scripts/flow-topology.mjs against a real browser), each its own word, and
+// one path at a time when a node is picked.
+describe('StrctFlow — telling the edges apart', () => {
+  const nodes: StrctFlowNode[] = [
+    { id: 'sw', label: 'mvs-01', column: 0 },
+    { id: 'h1', label: 'hv-01', column: 1 },
+    { id: 'u1', label: 'ToR-A · 1/0/7', column: 2 },
+    { id: 'u2', label: 'ToR-B · 1/0/7', column: 2 },
+  ];
+  const edges: StrctFlowEdge[] = [
+    { from: 'sw', to: 'h1' },
+    { from: 'h1', to: 'u1', label: 'LACP · 25G' },
+    { from: 'h1', to: 'u2', label: 'LACP · 25G', status: 'warning' },
+  ];
+
+  function build(patch: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctFlow);
+    fixture.componentRef.setInput('nodes', nodes);
+    fixture.componentRef.setInput('edges', edges);
+    fixture.componentRef.setInput('layout', 'fan-out');
+    fixture.componentRef.setInput('navigable', true);
+    for (const [k, v] of Object.entries(patch)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const box = (id: string) => el.querySelector<HTMLElement>(`[data-flow-node="${id}"]`)!;
+    return { fixture, el, box };
+  }
+
+  // The label is drawn in the strip and hidden from assistive tech with the
+  // rest of the drawing, so the only place it can be heard is here.
+  it("an edge's label is part of what its source says", () => {
+    const { box } = build();
+    const said = box('h1').querySelector('.strct-flow__sr')!.textContent;
+    expect(said).toContain('ToR-A · 1/0/7 (LACP · 25G)');
+    expect(said).toContain('ToR-B · 1/0/7 (LACP · 25G)');
+    // An edge with no label still reads as it always did.
+    expect(box('sw').querySelector('.strct-flow__sr')!.textContent).toBe('→ hv-01');
+  });
+
+  it('picking a node isolates its path, and picking it again lets the whole diagram back', () => {
+    const { fixture, el, box } = build();
+    expect(el.classList).not.toContain('strct-flow--isolated');
+
+    box('h1').click();
+    fixture.detectChanges();
+    expect(el.classList).toContain('strct-flow--isolated');
+    expect(fixture.componentInstance.selected()).toBe('h1');
+    // The node, and what it is wired to — nothing else.
+    expect(box('h1').classList).toContain('strct-flow__box--on');
+    expect(box('u1').classList).toContain('strct-flow__box--on');
+    expect(box('sw').classList).toContain('strct-flow__box--on');
+    expect(box('u2').classList).toContain('strct-flow__box--on');
+
+    box('h1').click();
+    fixture.detectChanges();
+    expect(el.classList).not.toContain('strct-flow--isolated');
+    expect(fixture.componentInstance.selected()).toBeNull();
+  });
+
+  it('only the picked node and its neighbours are lit', () => {
+    const { fixture, box } = build();
+    box('u1').click();
+    fixture.detectChanges();
+    expect(box('u1').classList).toContain('strct-flow__box--on');
+    expect(box('h1').classList).toContain('strct-flow__box--on');
+    // sw is two edges away: it is not on this path.
+    expect(box('sw').classList).not.toContain('strct-flow__box--on');
+    expect(box('u2').classList).not.toContain('strct-flow__box--on');
+  });
+
+  it('a selection can be driven from outside the diagram', () => {
+    const { el, box } = build({ selected: 'u2' });
+    expect(el.classList).toContain('strct-flow--isolated');
+    expect(box('u2').classList).toContain('strct-flow__box--picked');
+    expect(box('h1').classList).toContain('strct-flow__box--on');
+  });
+
+  it('isolate="false" keeps the whole diagram drawn while a node is picked', () => {
+    const { fixture, el, box } = build({ isolate: false });
+    box('h1').click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selected()).toBe('h1');
+    expect(el.classList).not.toContain('strct-flow--isolated');
+  });
+
+  it('a read-only diagram picks nothing', () => {
+    const { fixture, el, box } = build({ navigable: false });
+    box('h1').click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selected()).toBeNull();
+    expect(el.classList).not.toContain('strct-flow--isolated');
+  });
+});
