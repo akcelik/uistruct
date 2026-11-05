@@ -95,6 +95,12 @@ jobs:
       # contrast. Read at two widths and in both palettes.
       - name: Assert a cable lands on its port
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/wiring-map.mjs
+      # FR-72-03: a fan-out's edges leave their own anchors, turn in their own
+      # lanes, and carry their own words inside the clear strip — no two edges
+      # on one pixel, no stretch of line drawn twice, no label over a box, and
+      # nothing textual dimmed when a node is picked. 7.7.0 drew 11.7px twice.
+      - name: Assert a fan-out's edges can be told apart
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/flow-topology.mjs
       # BUG-70-01: a bar chart's category label under its own band, measured at
       # two widths because a single one cannot tell a measurement from a
       # constant that happens to fit. 6 of its 9 checks fail on 7.6.0.

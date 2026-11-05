@@ -14,6 +14,7 @@ import {
   effect,
   inject,
   input,
+  model,
   output,
   signal,
 } from '@angular/core';
@@ -34,6 +35,13 @@ export interface StrctFlowEdge {
   status?: StrctStatus;
   style?: 'solid' | 'dashed';
   animated?: boolean;
+  /**
+   * A word on the line itself — "LACP · 2 × 10 GbE", "down 2 d", "trunk
+   * 200–209". Drawn in the clear strip the edge turns in, never over a box,
+   * and bounded by that strip with an ellipsis. The column gap grows to make
+   * room for the widest one.
+   */
+  label?: string;
 }
 
 /**
@@ -75,6 +83,84 @@ export interface StrctFlowNode {
 
 /** Direction of travel for the animated flow. */
 export type StrctFlowDirection = 'forward' | 'reverse' | 'both';
+
+/** How far an anchor stays off a box's rounded corner. */
+const ANCHOR_INSET = 9;
+/** The least room between two anchors on one side of one box. */
+const MIN_ANCHOR_PITCH = 7;
+/** Corner radius where a run turns into its trunk. */
+const CORNER = 6;
+/** Breathing room around an edge label inside its strip. */
+const TAG_PAD = 5;
+/** Below this much strip a label is not drawn at all. */
+const MIN_TAG = 44;
+/** The widest gap the labels may ask the columns for. */
+const MAX_LABEL_GAP = 184;
+/** The width a column keeps whatever the labels ask for. */
+const MIN_COL = 112;
+/** Radius of the tick where an edge meets a box it has to share. */
+const ANCHOR_R = 2.5;
+/** Where along its trunk a label may sit, best first. */
+const TAG_SPOTS = [0.5, 0.36, 0.64, 0.26, 0.74];
+/** Worst first: a critical label keeps the middle of its own run. */
+const WEIGHT: Record<string, number> = {
+  neutral: 0,
+  success: 1,
+  accent: 2,
+  warning: 3,
+  critical: 4,
+};
+
+/** A box, an anchor or a label, in the fan's own coordinates. */
+interface FlowBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+interface FlowRect {
+  l: number;
+  t: number;
+  r: number;
+  b: number;
+}
+/** An x range no box occupies: where a trunk and a label may go. */
+interface FlowStrip {
+  l: number;
+  r: number;
+}
+interface FlowEdgePath {
+  key: string;
+  from: string;
+  to: string;
+  d: string;
+  status: string;
+  dashed: boolean;
+  animated: boolean;
+}
+interface FlowEdgeTag {
+  key: string;
+  from: string;
+  to: string;
+  text: string;
+  status: string;
+  x: number;
+  y: number;
+  max: number;
+}
+interface FlowAnchor {
+  key: string;
+  from: string;
+  to: string;
+  x: number;
+  y: number;
+  status: string;
+}
+
+const round = (n: number): number => Math.round(n * 100) / 100;
+const overlapArea = (a: FlowRect, b: FlowRect): number =>
+  Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) *
+  Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
 /** Axis the terminals are laid out along. */
 export type StrctFlowOrientation = 'horizontal' | 'vertical';
 
@@ -110,13 +196,47 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
               class="strct-flow__edge strct-flow__edge--{{ e.status }}"
               [class.strct-flow__edge--dashed]="e.dashed"
               [class.strct-flow__edge--animated]="e.animated"
+              [class.strct-flow__edge--on]="isOn(e)"
               [attr.d]="e.d"
               fill="none"
             />
           }
+          <!-- A tick where an edge meets a box, drawn only where the box has
+               more than one on that side: that is the only place the eye has
+               to be told which line leaves from where. -->
+          @for (a of edgeAnchors(); track a.key) {
+            <circle
+              class="strct-flow__anchor strct-flow__anchor--{{ a.status }}"
+              [class.strct-flow__anchor--on]="isOn(a)"
+              [attr.cx]="a.x"
+              [attr.cy]="a.y"
+              [attr.r]="anchorR"
+            />
+          }
         </svg>
-        @for (col of columnsView(); track col.index) {
-          <div class="strct-flow__col" role="group" [attr.aria-label]="col.heading || null">
+        @if (edgeTags().length) {
+          <div class="strct-flow__tags" aria-hidden="true">
+            @for (t of edgeTags(); track t.key) {
+              <span
+                class="strct-flow__tag strct-flow__tag--{{ t.status }}"
+                [class.strct-flow__tag--on]="isOn(t)"
+                [attr.data-flow-tag]="t.key"
+                [style.left.px]="t.x"
+                [style.top.px]="t.y"
+                [style.max-width.px]="t.max"
+                [title]="t.text"
+                >{{ t.text }}</span
+              >
+            }
+          </div>
+        }
+        @for (col of columnsView(); track col.index; let i = $index) {
+          <div
+            class="strct-flow__col"
+            role="group"
+            [attr.aria-label]="col.heading || null"
+            [style.margin-inline-start.px]="extraGap()[i] || null"
+          >
             @if (col.heading) {
               <div class="strct-flow__colhead">{{ col.heading }}</div>
             }
@@ -135,6 +255,8 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
                       node.status ?? 'neutral'
                     }}"
                     [class.strct-flow__box--surface]="node.emphasis === 'surface'"
+                    [class.strct-flow__box--picked]="node.id === selected()"
+                    [class.strct-flow__box--on]="isLit(node.id)"
                     [attr.data-flow-node]="node.id"
                     role="button"
                     [attr.tabindex]="isCursor(node) ? 0 : -1"
@@ -155,6 +277,8 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
                   <li
                     class="strct-flow__box strct-flow__box--{{ node.status ?? 'neutral' }}"
                     [class.strct-flow__box--surface]="node.emphasis === 'surface'"
+                    [class.strct-flow__box--picked]="node.id === selected()"
+                    [class.strct-flow__box--on]="isLit(node.id)"
                     [attr.data-flow-node]="node.id"
                   >
                     <ng-container
@@ -250,6 +374,8 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
     '[class.strct-flow--warning]': "status() === 'warning'",
     '[class.strct-flow--critical]': "status() === 'critical'",
     '[class.strct-flow--live]': 'animated()',
+    '[class.strct-flow--measured]': 'measured()',
+    '[class.strct-flow--isolated]': "layout() !== 'chain' && isolate() && !!selected()",
     '[attr.aria-label]': "layout() === 'chain' ? ariaLabel() : null",
   },
   styles: [
@@ -293,6 +419,9 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
         position: relative;
         display: flex;
         align-items: flex-start;
+        /* The floor under every strip. A strip that carries labels is widened
+           past it by a margin on the column after it, so a gap with nothing
+           written in it is not made to pay for one that has. */
         gap: var(--strct-flow-col-gap, 48px);
       }
       .strct-flow__edges {
@@ -336,6 +465,106 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
           animation: none;
         }
       }
+      /* Where an edge meets a box it has to share, so the eye can count the
+         attachments instead of guessing at one crowded point. */
+      .strct-flow__anchor {
+        fill: var(--b3);
+      }
+      .strct-flow__anchor--accent {
+        fill: var(--acc);
+      }
+      .strct-flow__anchor--success {
+        fill: var(--success);
+      }
+      .strct-flow__anchor--warning {
+        fill: var(--warning);
+      }
+      .strct-flow__anchor--critical {
+        fill: var(--critical);
+      }
+
+      /* ── A word on the line ────────────────────────────────────
+         The same pill the wiring map puts on a cable, for the same reason: a
+         line's tone says how it is, and only a word says what it is. */
+      .strct-flow__tags {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .strct-flow__tag {
+        position: absolute;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transform: translate(-50%, -50%);
+        padding: 1px var(--space-2);
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-pill);
+        background: var(--bg-1);
+        font-size: var(--text-xs);
+        line-height: 1.5;
+        color: var(--t2);
+        white-space: nowrap;
+        /* Placed from its own rendered size, so it is not drawn until it has
+           been measured. */
+        opacity: 0;
+      }
+      .strct-flow--measured .strct-flow__tag {
+        opacity: 1;
+      }
+      .strct-flow__tag--accent {
+        border-color: var(--acc30);
+        color: var(--acc);
+      }
+      .strct-flow__tag--success {
+        border-color: var(--success);
+        color: var(--success);
+      }
+      .strct-flow__tag--warning {
+        border-color: var(--warning);
+        color: var(--warning);
+      }
+      .strct-flow__tag--critical {
+        border-color: var(--critical);
+        color: var(--critical);
+      }
+      /* The tone layers over the pill's own surface instead of replacing it,
+         so the label keeps a ground to be read against. */
+      .strct-flow__tag--on.strct-flow__tag--accent {
+        background-image: linear-gradient(var(--acc-m), var(--acc-m));
+      }
+      .strct-flow__tag--on.strct-flow__tag--success {
+        background-image: linear-gradient(var(--success-bg), var(--success-bg));
+      }
+      .strct-flow__tag--on.strct-flow__tag--warning {
+        background-image: linear-gradient(var(--warning-bg), var(--warning-bg));
+      }
+      .strct-flow__tag--on.strct-flow__tag--critical {
+        background-image: linear-gradient(var(--critical-bg), var(--critical-bg));
+      }
+      .strct-flow__tag--on {
+        font-weight: 500;
+      }
+
+      /* ── One path at a time ────────────────────────────────────
+         Picking a node lifts what it is wired to and lets the rest recede.
+         Isolation acts on the drawing and never on the words: text taken out
+         of contrast is not de-emphasised, it is unreadable — the wiring map
+         measured a dimmed warning label at 3.31:1 against a light surface,
+         under the 4.5:1 it needs. So the lines and the ticks recede, and
+         every label and every box keeps the contrast it had. */
+      .strct-flow--isolated .strct-flow__edge:not(.strct-flow__edge--on) {
+        opacity: 0.22;
+      }
+      .strct-flow--isolated .strct-flow__anchor:not(.strct-flow__anchor--on) {
+        opacity: 0.22;
+      }
+      .strct-flow__edge--on {
+        stroke-width: calc(var(--data-stroke-sm) + 1);
+      }
+      .strct-flow__box--picked {
+        box-shadow: 0 0 0 2px var(--acc30);
+      }
       .strct-flow__col {
         position: relative;
         flex: 1 1 0;
@@ -359,6 +588,8 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
         display: flex;
         flex-direction: column;
         gap: 3px;
+        /* A column narrowed by the labels' strip still holds its own words. */
+        overflow-wrap: anywhere;
         padding: var(--space-2) var(--space-3);
         border: 1px solid var(--b2);
         border-radius: var(--radius-md);
@@ -438,7 +669,8 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
           flex-direction: column;
           gap: var(--space-3);
         }
-        .strct-flow__edges {
+        .strct-flow__edges,
+        .strct-flow__tags {
           display: none;
         }
         .strct-flow__col {
@@ -772,6 +1004,41 @@ export class StrctFlow {
   readonly navigable = input(false, { transform: booleanAttribute });
   /** Emitted when a node is clicked, or Enter / Space is pressed on it. */
   readonly nodeActivate = output<StrctFlowNode>();
+  /**
+   * The picked node's id. Activating a node sets it; two-way bound so a screen
+   * can drive the diagram from a list beside it, and `null` clears it.
+   */
+  readonly selected = model<string | null>(null);
+  /**
+   * While a node is picked, let the edges it is not on recede. On by default:
+   * a topology is read one path at a time. It acts on the drawing only — no
+   * text is ever dimmed.
+   */
+  readonly isolate = input(true, { transform: booleanAttribute });
+
+  /** The nodes the picked one is wired to, itself included. */
+  private readonly lit = computed<Set<string>>(() => {
+    const id = this.selected();
+    const out = new Set<string>();
+    if (!id) return out;
+    out.add(id);
+    for (const e of this.edges() ?? []) {
+      if (e.from === id) out.add(e.to);
+      if (e.to === id) out.add(e.from);
+    }
+    return out;
+  });
+
+  /** Whether an edge, a tick or a label is on the picked node's path. */
+  protected isOn(e: { from: string; to: string }): boolean {
+    const id = this.selected();
+    return !!id && (e.from === id || e.to === id);
+  }
+
+  /** Whether a box is the picked node or something it is wired to. */
+  protected isLit(id: string): boolean {
+    return this.lit().has(id);
+  }
   /** The node the tab stop is on (its id). */
   protected readonly cursor = signal<string | null>(null);
 
@@ -785,6 +1052,9 @@ export class StrctFlow {
   protected activate(node: StrctFlowNode): void {
     if (!this.navigable()) return;
     this.cursor.set(node.id);
+    // Picking the picked one clears it, so the diagram can always be read
+    // whole again without reaching for a control that is not in the picture.
+    this.selected.set(this.selected() === node.id ? null : node.id);
     this.nodeActivate.emit(node);
   }
 
@@ -849,15 +1119,39 @@ export class StrctFlow {
   protected nodeSummary(node: StrctFlowNode): string {
     const out = (this.edges() ?? [])
       .filter((e) => e.from === node.id)
-      .map((e) => this.nodes().find((n) => n.id === e.to)?.label ?? e.to);
+      .map((e) => {
+        const to = this.nodes().find((n) => n.id === e.to)?.label ?? e.to;
+        // The word on the line is part of the answer and the line is never
+        // read aloud, so it is said here: a label ellipsised inside a narrow
+        // strip, or dropped with the drawing when the columns stack, would
+        // otherwise be lost to everyone who is not looking at the picture.
+        return e.label ? `${to} (${e.label})` : to;
+      });
     return out.length ? `→ ${out.join(', ')}` : '';
   }
 
   /** Measured edge geometry — recomputed whenever the boxes move or resize. */
-  protected readonly edgePaths = signal<
-    { key: string; d: string; status: string; dashed: boolean; animated: boolean }[]
-  >([]);
+  protected readonly edgePaths = signal<FlowEdgePath[]>([]);
+  /** Ticks where an edge meets a box that carries more than one on that side. */
+  protected readonly edgeAnchors = signal<FlowAnchor[]>([]);
+  /** The words on the lines, placed from their own rendered size. */
+  protected readonly edgeTags = signal<FlowEdgeTag[]>([]);
   protected readonly viewBox = signal('0 0 0 0');
+  /** Extra room reserved before each column for the labels in the strip
+   *  ahead of it, in CSS px, in the order the columns are rendered. */
+  protected readonly extraGap = signal<number[]>([]);
+  /** False until the labels have been measured and placed. */
+  protected readonly measured = signal(false);
+  /** Radius of an anchor tick, so the template and the geometry agree. */
+  protected readonly anchorR = ANCHOR_R;
+  /** Each labelled edge's trunk, kept for placing its label a frame later. */
+  private trunks = new Map<
+    string,
+    { x: number; y0: number; y1: number; strip: FlowStrip; at: number }
+  >();
+  /** How many strips and columns the last measure found, so the labels know
+   *  which column stands after the strip they are in. */
+  private stripCount = 0;
 
   constructor() {
     afterNextRender(() => this.observe());
@@ -882,15 +1176,24 @@ export class StrctFlow {
   }
 
   /**
-   * Orthogonal connectors, from the boxes' real positions: out of the source's
-   * inline end, across the gap, then into the target's inline start.
+   * Orthogonal connectors, from the boxes' real positions — and from each
+   * edge's own place on them. An edge leaves its source at its own anchor,
+   * turns in its own lane inside a clear strip, and arrives at its own anchor
+   * on the target, so two edges never leave one pixel and never run down one.
    */
   private measure(): void {
     if (this.layout() === 'chain') return;
     const fan = this.host.nativeElement.querySelector<HTMLElement>('.strct-flow__fan');
     const edges = this.edges();
-    if (!fan || !edges?.length) {
+    const clear = () => {
       this.edgePaths.set([]);
+      this.edgeAnchors.set([]);
+      this.edgeTags.set([]);
+      this.trunks.clear();
+      this.measured.set(true);
+    };
+    if (!fan || !edges?.length) {
+      clear();
       return;
     }
     const base = fan.getBoundingClientRect();
@@ -902,35 +1205,360 @@ export class StrctFlow {
       const id = el.dataset['flowNode'];
       if (id) boxes.set(id, el);
     }
-    const rect = (id: string) => {
+    const rect = (id: string): FlowBox | null => {
       const el = boxes.get(id);
       if (!el) return null;
       const r = el.getBoundingClientRect();
       return { x: r.left - base.left, y: r.top - base.top, w: r.width, h: r.height };
     };
-    const paths = [];
+
+    interface Run {
+      e: StrctFlowEdge;
+      i: number;
+      a: FlowBox;
+      b: FlowBox;
+      y1: number;
+      y2: number;
+      lane: number;
+      strip: FlowStrip | null;
+      stripAt: number;
+    }
+    const runs: Run[] = [];
     for (const [i, e] of edges.entries()) {
       const a = rect(e.from);
       const b = rect(e.to);
       if (!a || !b) continue;
-      const x1 = a.x + a.w;
-      const y1 = a.y + a.h / 2;
-      const x2 = b.x;
-      const y2 = b.y + b.h / 2;
-      const mid = x1 + (x2 - x1) / 2;
-      const d =
-        Math.abs(y1 - y2) < 1
-          ? `M ${x1} ${y1} L ${x2} ${y2}`
-          : `M ${x1} ${y1} H ${mid} V ${y2} H ${x2}`;
-      paths.push({
-        key: `${e.from}-${e.to}-${i}`,
-        d,
-        status: e.status ?? 'neutral',
-        dashed: e.style === 'dashed',
-        animated: !!e.animated,
+      runs.push({
+        e,
+        i,
+        a,
+        b,
+        y1: a.y + a.h / 2,
+        y2: b.y + b.h / 2,
+        lane: 0,
+        strip: null,
+        stripAt: -1,
       });
     }
+    if (!runs.length) {
+      clear();
+      return;
+    }
+
+    // ── The clear strips: the x no box occupies. A trunk turns in one and a
+    //    label lives in one — the rule the wiring map's labels follow, for
+    //    the same reason: a line drawn through a box says nothing, and a word
+    //    written over one says less.
+    const merged: FlowStrip[] = [];
+    const bands = [...boxes.values()]
+      .map((el) => {
+        const r = el.getBoundingClientRect();
+        return { l: r.left - base.left, r: r.right - base.left };
+      })
+      .sort((p, q) => p.l - q.l);
+    for (const band of bands) {
+      const last = merged[merged.length - 1];
+      if (last && band.l <= last.r + 0.5) last.r = Math.max(last.r, band.r);
+      else merged.push({ ...band });
+    }
+    const strips = merged.slice(0, -1).map((m, i) => ({ l: m.r, r: merged[i + 1].l }));
+
+    // ── Anchors. Where a node carries more than one edge on a side they
+    //    spread across it, ordered by the far end so two of them never cross
+    //    on their way out. One edge keeps the centre, as before.
+    const spread = (box: FlowBox, k: number, at: number): number => {
+      if (k <= 1) return box.y + box.h / 2;
+      const inset = Math.min(ANCHOR_INSET, Math.max(2, box.h / 2 - 2));
+      let top = box.y + inset;
+      let bottom = box.y + box.h - inset;
+      if (bottom - top < MIN_ANCHOR_PITCH * (k - 1)) {
+        top = box.y + 2;
+        bottom = box.y + box.h - 2;
+      }
+      return top + ((bottom - top) * at) / (k - 1);
+    };
+    const bySide = (id: string, out: boolean): Run[] =>
+      runs
+        .filter((r) => (out ? r.e.from : r.e.to) === id)
+        .sort((p, q) => {
+          const pf = out ? p.b : p.a;
+          const qf = out ? q.b : q.a;
+          return pf.y + pf.h / 2 - (qf.y + qf.h / 2);
+        });
+    const outCount = new Map<string, number>();
+    const inCount = new Map<string, number>();
+    for (const id of new Set(runs.map((r) => r.e.from))) {
+      const set = bySide(id, true);
+      outCount.set(id, set.length);
+      set.forEach((r, at) => (r.y1 = spread(r.a, set.length, at)));
+    }
+    for (const id of new Set(runs.map((r) => r.e.to))) {
+      const set = bySide(id, false);
+      inCount.set(id, set.length);
+      set.forEach((r, at) => (r.y2 = spread(r.b, set.length, at)));
+    }
+
+    // ── Lanes. Every trunk in a strip gets an x of its own, so no stretch of
+    //    line is ever drawn twice — which is what made a down uplink and a
+    //    healthy one share pixels before.
+    const inStrip = new Map<number, Run[]>();
+    for (const r of runs) {
+      const lo = Math.min(r.a.x + r.a.w, r.b.x);
+      const hi = Math.max(r.a.x + r.a.w, r.b.x);
+      let best = -1;
+      let widest = 0;
+      strips.forEach((st, at) => {
+        const w = Math.min(st.r, hi) - Math.max(st.l, lo);
+        if (w > widest) {
+          widest = w;
+          best = at;
+        }
+      });
+      r.strip =
+        best >= 0 ? { l: Math.max(strips[best].l, lo), r: Math.min(strips[best].r, hi) } : null;
+      r.stripAt = best;
+      inStrip.set(best, [...(inStrip.get(best) ?? []), r]);
+    }
+    for (const list of inStrip.values()) {
+      const order = [...list].sort((p, q) => p.y2 - q.y2 || p.y1 - q.y1);
+      order.forEach((r, at) => {
+        r.lane = r.strip
+          ? r.strip.l + ((r.strip.r - r.strip.l) * (at + 1)) / (order.length + 1)
+          : (r.a.x + r.a.w + r.b.x) / 2;
+      });
+    }
+
+    const paths: FlowEdgePath[] = [];
+    const anchors: FlowAnchor[] = [];
+    const tags: FlowEdgeTag[] = [];
+    const trunks = new Map<
+      string,
+      { x: number; y0: number; y1: number; strip: FlowStrip; at: number }
+    >();
+    this.stripCount = strips.length;
+    for (const r of runs) {
+      const x1 = r.a.x + r.a.w;
+      const x2 = r.b.x;
+      const { y1, y2, lane } = r;
+      const key = `${r.e.from}-${r.e.to}-${r.i}`;
+      const status = r.e.status ?? 'neutral';
+      let d: string;
+      if (Math.abs(y1 - y2) < 0.5) {
+        d = `M ${round(x1)} ${round(y1)} L ${round(x2)} ${round(y2)}`;
+      } else {
+        const dy = y2 > y1 ? 1 : -1;
+        const sx = lane >= x1 ? 1 : -1;
+        const ex = x2 >= lane ? 1 : -1;
+        // A turn the eye can follow where several lanes run side by side.
+        const rad = Math.min(
+          CORNER,
+          Math.abs(y2 - y1) / 2,
+          Math.abs(lane - x1),
+          Math.abs(x2 - lane),
+        );
+        d =
+          rad < 1
+            ? `M ${round(x1)} ${round(y1)} H ${round(lane)} V ${round(y2)} H ${round(x2)}`
+            : `M ${round(x1)} ${round(y1)} H ${round(lane - sx * rad)} ` +
+              `Q ${round(lane)} ${round(y1)} ${round(lane)} ${round(y1 + dy * rad)} ` +
+              `V ${round(y2 - dy * rad)} ` +
+              `Q ${round(lane)} ${round(y2)} ${round(lane + ex * rad)} ${round(y2)} ` +
+              `H ${round(x2)}`;
+      }
+      paths.push({
+        key,
+        from: r.e.from,
+        to: r.e.to,
+        d,
+        status,
+        dashed: r.e.style === 'dashed',
+        animated: !!r.e.animated,
+      });
+      // The tick sits tangent to the box, not on its edge: the boxes paint
+      // over the edge layer, and half a dot under a card is not a mark.
+      const away = Math.sign(x2 - x1) || 1;
+      if ((outCount.get(r.e.from) ?? 0) > 1)
+        anchors.push({
+          key: `${key}-out`,
+          from: r.e.from,
+          to: r.e.to,
+          x: round(x1 + away * ANCHOR_R),
+          y: round(y1),
+          status,
+        });
+      if ((inCount.get(r.e.to) ?? 0) > 1)
+        anchors.push({
+          key: `${key}-in`,
+          from: r.e.from,
+          to: r.e.to,
+          x: round(x2 - away * ANCHOR_R),
+          y: round(y2),
+          status,
+        });
+      if (r.e.label && r.strip && r.strip.r - r.strip.l >= MIN_TAG) {
+        trunks.set(key, {
+          x: lane,
+          y0: Math.min(y1, y2),
+          y1: Math.max(y1, y2),
+          strip: r.strip,
+          at: r.stripAt,
+        });
+        tags.push({
+          key,
+          from: r.e.from,
+          to: r.e.to,
+          text: r.e.label,
+          status,
+          x: round(lane),
+          y: round((y1 + y2) / 2),
+          max: Math.round(r.strip.r - r.strip.l - TAG_PAD * 2),
+        });
+      }
+    }
+    this.trunks = trunks;
     this.edgePaths.set(paths);
+    this.edgeAnchors.set(anchors);
+    const before = this.edgeTags();
+    const same =
+      tags.length === before.length &&
+      tags.every((t, i) => before[i]?.key === t.key && before[i]?.text === t.text);
+    this.edgeTags.set(same ? before.map((t, i) => ({ ...t, max: tags[i].max })) : tags);
+    if (!tags.length) {
+      this.measured.set(true);
+      return;
+    }
+    // A label is placed from its own rendered size, which is only known once
+    // the browser has laid it out with the bound max-width.
+    const place = () => this.placeTags(base.height);
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(place);
+    else queueMicrotask(place);
+  }
+
+  /**
+   * The labels. First the columns are pushed apart until the widest one has a
+   * strip to live in — a word bounded to nothing is not a word — then each
+   * slides along its own trunk, worst first, until it clears every label
+   * already placed. A critical label keeps the middle of its own run and an
+   * agreeing one moves, the order the wiring map settled on.
+   */
+  private placeTags(height: number): void {
+    const fan = this.host.nativeElement.querySelector<HTMLElement>('.strct-flow__fan');
+    if (!fan) return;
+    const sizes = new Map<string, { w: number; h: number; natural: number }>();
+    for (const el of fan.querySelectorAll<HTMLElement>('[data-flow-tag]')) {
+      const key = el.getAttribute('data-flow-tag');
+      if (!key) continue;
+      const r = el.getBoundingClientRect();
+      // scrollWidth is the content's own width while it is being clipped; the
+      // border sits outside it.
+      // scrollWidth is an integer and the border sits outside it, so the
+      // natural width is that plus the two borders plus a pixel of slack —
+      // one subpixel short and the text ellipsises inside a box built to fit.
+      sizes.set(key, { w: r.width, h: r.height, natural: el.scrollWidth + 3 });
+    }
+    if (!sizes.size) {
+      this.measured.set(true);
+      return;
+    }
+    // What each strip's own labels need, against what the columns can spare.
+    // Only a strip that carries a word is widened: making every gap pay for
+    // the busiest one is what starves the boxes. A diagram that hands its
+    // gaps to the words until its boxes cannot hold theirs has moved the
+    // problem, not solved it, so under MIN_COL the labels take the strip they
+    // are given and ellipsise inside it, with the full text in each node's
+    // description either way.
+    const cols = fan.querySelectorAll('.strct-flow__col').length;
+    const base =
+      Number.parseFloat(getComputedStyle(fan).getPropertyValue('--strct-flow-col-gap')) || 48;
+    const want = new Array<number>(cols).fill(0);
+    const aligned = this.stripCount === cols - 1;
+    for (const tag of this.edgeTags()) {
+      const trunk = this.trunks.get(tag.key);
+      const size = sizes.get(tag.key);
+      if (!trunk || !size) continue;
+      // Strip i stands between column i and column i + 1, so the room goes
+      // on the column after it. Where a column holds no box there is no band
+      // for it and the strips no longer line up: then every gap takes the
+      // widest label, which is the old, safe answer.
+      const owner = aligned ? trunk.at + 1 : -1;
+      const need = Math.min(MAX_LABEL_GAP, size.natural + TAG_PAD * 2);
+      if (owner > 0 && owner < cols) want[owner] = Math.max(want[owner], need);
+      else for (let i = 1; i < cols; i++) want[i] = Math.max(want[i], need);
+    }
+    const extra = want.map((w) => Math.max(0, w - base));
+    // The columns keep their floor: anything over it is shared out in
+    // proportion to what each strip asked for.
+    const room = Math.max(
+      0,
+      fan.getBoundingClientRect().width - MIN_COL * cols - base * (cols - 1),
+    );
+    const asked = extra.reduce((a, b) => a + b, 0);
+    const scale = asked > room ? room / asked : 1;
+    const give = extra.map((e) => Math.round(e * scale));
+    const have = this.extraGap();
+    // The text does not change width when the columns move, so this settles
+    // on the second pass and never oscillates.
+    if (give.length !== have.length || give.some((g, i) => Math.abs(g - (have[i] ?? 0)) > 0.5)) {
+      this.extraGap.set(give);
+      const again = () => this.measure();
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(again);
+      else queueMicrotask(again);
+      return;
+    }
+
+    const placed: FlowRect[] = [];
+    const at = new Map<string, { x: number; y: number }>();
+    const order = [...this.edgeTags()].sort(
+      (p, q) => (WEIGHT[q.status] ?? 0) - (WEIGHT[p.status] ?? 0),
+    );
+    for (const tag of order) {
+      const trunk = this.trunks.get(tag.key);
+      const size = sizes.get(tag.key);
+      if (!trunk || !size) continue;
+      const halfW = size.w / 2 + TAG_PAD;
+      const halfH = size.h / 2 + TAG_PAD;
+      const lo = trunk.y0 + halfH;
+      const hi = trunk.y1 - halfH;
+      // Along the trunk where the trunk is tall enough to hold it; across the
+      // strip, on the runs into and out of the turn, where it is not.
+      const tall = hi > lo;
+      let best: { x: number; y: number; r: FlowRect } | null = null;
+      let least = Infinity;
+      // Bounded by its own strip on both axes: a label that leaves the strip
+      // is a label over a box, and the boxes are what the picture is made of.
+      const left = trunk.strip.l + halfW;
+      const right = Math.max(left, trunk.strip.r - halfW);
+      const clamp = (v: number) => Math.min(Math.max(v, left), right);
+      for (const spot of TAG_SPOTS) {
+        const x = clamp(tall ? trunk.x : trunk.strip.l + (trunk.strip.r - trunk.strip.l) * spot);
+        const y = tall
+          ? Math.min(Math.max(trunk.y0 + (trunk.y1 - trunk.y0) * spot, lo), hi)
+          : (trunk.y0 + trunk.y1) / 2;
+        const r = { l: x - halfW, t: y - halfH, r: x + halfW, b: y + halfH };
+        if (r.t < 0 || r.b > height) continue;
+        let ov = 0;
+        for (const q of placed) ov += overlapArea(r, q);
+        if (ov === 0) {
+          best = { x, y, r };
+          break;
+        }
+        if (ov < least) {
+          least = ov;
+          best = { x, y, r };
+        }
+      }
+      if (!best) continue;
+      placed.push(best.r);
+      at.set(tag.key, { x: round(best.x), y: round(best.y) });
+    }
+    // Written only when something moved, so a resize that changes nothing
+    // does not re-render the labels.
+    const moved = this.edgeTags().some((t) => {
+      const p = at.get(t.key);
+      return !!p && (p.x !== t.x || p.y !== t.y);
+    });
+    if (moved) this.edgeTags.set(this.edgeTags().map((t) => ({ ...t, ...(at.get(t.key) ?? {}) })));
+    this.measured.set(true);
   }
 
   /** A flow needs at least two terminals to animate. */

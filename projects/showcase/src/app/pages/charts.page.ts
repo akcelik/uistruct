@@ -621,10 +621,10 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="flow-topology"
       owner="flow"
       heading="A topology you can walk"
-      description="navigable makes the diagram one tab stop with the arrow keys inside it: ← and → follow the edges (and fall back to the next column where a node has none), ↑ and ↓ move within a column, Home and End jump to its ends, and Enter or Space — or a click — emits (nodeActivate) with the node. Each node keeps its structural description (“→ uplink-1, uplink-2”), so a screen reader is given the graph rather than the picture. A node may carry an icon when its kind is part of the answer. Without navigable the diagram keeps no tab stop at all, which is right for a decorative pipeline."
+      description="A fan-out is only as good as its lines, and lines that leave one pixel and run down one lane say nothing. Every edge here leaves its source at its own anchor — ordered by where it is going, so two of them never cross on the way out — turns in a lane of its own inside the clear strip between the columns, and arrives at its own anchor on the target; where a box carries more than one on a side, a tick marks each. An edge can carry a label, a word on the line itself (“LACP · 25G”, “down 2 d”): it lives in that same strip, never over a box, bounded by the strip with an ellipsis, and repeated in its source node’s description so it is heard as well as seen. Only the strip that carries a word widens to hold it, and only until a column would fall under 112px. navigable makes the diagram one tab stop with the arrow keys inside it: ← and → follow the edges (and fall back to the next column where a node has none), ↑ and ↓ move within a column, Home and End jump to its ends, and Enter or Space — or a click — picks the node and emits (nodeActivate). Picking isolates: the edges the node is not on recede and its own path is drawn a pixel heavier, while no word is ever dimmed. Picking it again lets the whole diagram back."
       code='<strct-flow layout="fan-out" navigable [nodes]="nodes" [edges]="edges" (nodeActivate)="open($event)" />'
     >
-      <div class="stack" style="width: 100%;">
+      <div class="topo-demo">
         <strct-flow
           layout="fan-out"
           navigable
@@ -632,9 +632,14 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           [edges]="mvsEdges"
           [columns]="['Port profiles', 'Switch', 'Members', 'Uplinks']"
           label="mvs-01 — Tab into it, then use the arrow keys"
+          [(selected)]="mvsSelected"
           (nodeActivate)="mvsPicked.set($event.label)"
         />
-        <span class="echo">{{ mvsPicked() || 'Enter or Space on a node reports it here.' }}</span>
+        <span class="echo">{{
+          mvsPicked()
+            ? mvsPicked() + ' — pick it again to clear'
+            : 'Enter or Space on a node picks it.'
+        }}</span>
       </div>
     </app-demo>
 
@@ -749,11 +754,17 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         font-family: var(--mono);
         color: var(--t1);
       }
-      .wiring-demo {
+      .wiring-demo,
+      .topo-demo {
         display: flex;
         flex-direction: column;
         gap: var(--space-4);
         width: 100%;
+      }
+      /* The topology demo is the widest thing on the page on purpose: a
+         fan-out with words on its lines needs the strips to put them in. */
+      .topo-demo {
+        gap: var(--space-3);
       }
       .wiring-foot {
         display: flex;
@@ -1087,11 +1098,15 @@ export class ChartsPage implements OnDestroy {
     { from: 'pp-vm', to: 'mvs' },
     { from: 'mvs', to: 'hv-01' },
     { from: 'mvs', to: 'hv-02' },
-    { from: 'hv-01', to: 'u1' },
-    { from: 'hv-01', to: 'u2' },
-    { from: 'hv-02', to: 'u3', status: 'critical', style: 'dashed' },
+    // What the lines are, not only how they are: two members of one team on
+    // two different switches is the answer to "is this host dual-homed", and
+    // the picture cannot give it without the words.
+    { from: 'hv-01', to: 'u1', label: 'LACP · 25G' },
+    { from: 'hv-01', to: 'u2', label: 'LACP · 25G' },
+    { from: 'hv-02', to: 'u3', status: 'critical', style: 'dashed', label: 'down 2 d' },
   ];
   protected readonly mvsPicked = signal('');
+  protected readonly mvsSelected = signal<string | null>(null);
 
   protected readonly topoNodes: StrctFlowNode[] = [
     { id: 'sw', label: 'vSwitch0', status: 'accent' },

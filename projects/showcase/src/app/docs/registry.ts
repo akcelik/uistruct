@@ -5149,7 +5149,21 @@ export const DOCS: DocCategory[] = [
             type: 'StrctFlowEdge[] | null',
             default: 'null',
             description:
-              '`{ from; to; status?; style?: "solid" | "dashed"; animated? }[]`. An animated edge\u2019s dash holds still under `prefers-reduced-motion`.',
+              '`{ from; to; status?; style?: "solid" | "dashed"; animated?; label? }[]`. An animated edge\u2019s dash holds still under `prefers-reduced-motion`. `label` is a word on the line itself — "LACP · 2 × 10 GbE", "down 2 d" — drawn in the clear strip the edge turns in, never over a box, bounded by that strip with an ellipsis, and repeated in the source node\u2019s description so it is heard as well as seen. Only the strip that carries a word is widened, by a margin on the column after it, and only until a column would fall under 112px.',
+          },
+          {
+            name: 'selected',
+            type: 'string | null (model)',
+            default: 'null',
+            description:
+              'The picked node\u2019s id, two-way bound. With `navigable`, activating a node sets it and activating the same node again clears it, so the diagram can always be read whole from inside the picture.',
+          },
+          {
+            name: 'isolate',
+            type: 'boolean',
+            default: 'true',
+            description:
+              'While a node is picked, the edges it is not on recede to 0.22 and the picked path is drawn a pixel heavier. It acts on the drawing only: no label and no box is ever dimmed, because text taken out of contrast is not de-emphasised, it is unreadable.',
           },
           {
             name: 'columns',
@@ -5207,7 +5221,7 @@ export const DOCS: DocCategory[] = [
             type: 'StrctWiringNode[]',
             default: '[]',
             description:
-              'The devices: `{ id; label; sublabel?; column?; icon?; ports: StrctWiringPort[] }`. A port is `{ id; label; meta?; status? }` \u2014 the reading beside it ("25G \u00b7 RDMA", "not heard") and the tone of its dot.',
+              'The devices: `{ id; label; sublabel?; column?; icon?; ports: StrctWiringPort[] }`. A port is `{ id; label; meta?; status?; unlinked? }` \u2014 the reading beside it ("25G \u00b7 RDMA", "not heard"), the tone of its dot, and what it says when no drawn link lands on it (overriding `unlinkedText`).',
           },
           {
             name: 'links',
@@ -5254,6 +5268,13 @@ export const DOCS: DocCategory[] = [
             type: 'string',
             default: `''`,
             description: 'Caption under the map.',
+          },
+          {
+            name: 'unlinkedText',
+            type: 'string',
+            default: "'not wired'",
+            description:
+              'What a port with no drawn link says, unless it sets its own `unlinked`. A port with no cable means different things in different maps — "nothing heard from a switch" on one read from LLDP, "not patched" on one read from a CMDB — so the library never asserts the stronger one (FR-72-02).',
           },
           {
             name: 'emptyText',

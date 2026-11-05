@@ -34,6 +34,14 @@ export interface StrctWiringPort {
   meta?: string;
   /** Tone of the port's dot. */
   status?: StrctStatus;
+  /**
+   * What this port says when no drawn link lands on it, in place of the
+   * component's `unlinkedText`. A port with no cable means different things
+   * in different maps — "nothing heard from a switch" on a map built from
+   * LLDP, "not patched" on one built from a CMDB — and only the consumer
+   * knows which, so the library never asserts the stronger one (FR-72-02).
+   */
+  unlinked?: string;
 }
 
 /** A device in the map: a host, a switch, a patch panel, a fabric. */
@@ -734,6 +742,12 @@ export class StrctWiring {
   /** What is said when there is nothing to draw. */
   readonly emptyText = input('No wiring to show.');
   /**
+   * What a port with no drawn link says, unless it sets its own `unlinked`.
+   * On a map read from a live protocol this is an unknown, not a fact:
+   * `unlinkedText="nothing heard from a switch"` (FR-72-02).
+   */
+  readonly unlinkedText = input('not wired');
+  /**
    * Makes the map one tab stop with the arrow keys inside it, the ports
    * buttons, and the cables clickable. Off by default, so a read-only diagram
    * keeps no tab stop at all.
@@ -1273,7 +1287,7 @@ export class StrctWiring {
         const tone = l.status && l.status !== 'neutral' ? `, ${l.status}` : '';
         return `${where}${tone}${l.label ? ` — ${l.label}` : ''}`;
       });
-    if (!out.length) return 'not wired';
+    if (!out.length) return port.unlinked ?? this.unlinkedText();
     return `→ ${out.join('; ')}`;
   }
 
