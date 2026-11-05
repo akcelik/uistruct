@@ -284,9 +284,11 @@ const round = (n: number): number => Math.round(n * 100) / 100;
                   @if (node.icon) {
                     <strct-icon class="strct-wiring__nodeicon" [name]="node.icon" [size]="14" />
                   }
-                  <span class="strct-wiring__nodelabel">{{ node.label }}</span>
+                  <span class="strct-wiring__nodelabel" [title]="node.label">{{ node.label }}</span>
                   @if (node.sublabel) {
-                    <span class="strct-wiring__nodesub">{{ node.sublabel }}</span>
+                    <span class="strct-wiring__nodesub" [title]="node.sublabel">{{
+                      node.sublabel
+                    }}</span>
                   }
                 </div>
                 <ul class="strct-wiring__ports">
@@ -415,10 +417,16 @@ const round = (n: number): number => Math.round(n * 100) / 100;
         background: var(--bg-1);
         overflow: hidden;
       }
+      /* BUG-72-03: the device's name is its identity and wins over its
+         reading. The head wraps, so a sublabel too long to share the line
+         takes its own instead of squeezing the name — which, with the name
+         breakable at any glyph and the sublabel unable to shrink at all, put
+         a 14-character host name down the card one letter a line. */
       .strct-wiring__nodehead {
         display: flex;
+        flex-wrap: wrap;
         align-items: baseline;
-        gap: var(--space-2);
+        gap: var(--space-1) var(--space-2);
         padding: var(--space-2) var(--space-3);
         border-block-end: 1px solid var(--b1);
       }
@@ -432,12 +440,20 @@ const round = (n: number): number => Math.round(n * 100) / 100;
         font-weight: 600;
         color: var(--t1);
         min-width: 0;
-        overflow-wrap: anywhere;
+        /* Never inside a word: a host name broken between two glyphs is not
+           the host name. An ellipsis is the last resort, and the full name
+           stays in the title and in the map's own summary. */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .strct-wiring__nodesub {
         margin-inline-start: auto;
+        min-width: 0;
         font-size: var(--text-sm);
         color: var(--t3);
+        overflow: hidden;
+        text-overflow: ellipsis;
         white-space: nowrap;
       }
       .strct-wiring__ports {

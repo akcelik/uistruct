@@ -28,10 +28,12 @@ stays here until it goes quiet.
   shown, as **"not wired"** — a fact the page does not have when the map is read from LLDP. Shipped
   in **v7.8.0** as `StrctWiringPort.unlinked` and the `unlinkedText` input, default unchanged.
 
-- [**`wiring-node-head-squeeze.md`**](wiring-node-head-squeeze.md) — BUG-72-03, filed by
-  HyperStruct against 7.7.0 from a real cluster: a long device `sublabel` (two SET team names, 294px)
-  stays on one line and squeezes the device's name to **0 × 273px**, one letter a line; the map grows
-  from 528px to 1289px. The label's min-content is one glyph, the sublabel's is its full width.
+- [**`archive/wiring-node-head-squeeze.md`**](archive/wiring-node-head-squeeze.md) — BUG-72-03,
+  filed by HyperStruct against 7.7.0 from a real cluster: a long device `sublabel` stays on one line
+  and squeezes the device's name to one letter a line — reproduced at **12.09 × 273px**, with the
+  map **712px** against 481px, and at 1240px three more devices lost their names entirely at 0.0px.
+  Fixed in **v7.8.1**: the head wraps so the reading takes its own line, and the name never breaks
+  inside a word.
 
 ### Closed on 2026-11-04, and moved to [`archive/`](archive/)
 

@@ -1,5 +1,15 @@
 # BUG-72-03 — A long device sublabel squeezes the device's name to one letter a line
 
+> **CLOSED, 2026-11-05.** Fixed in **v7.8.1**, both halves of the ask: the head wraps so the reading
+> takes its own line, and the name never breaks inside a word (ellipsis only as a last resort, with
+> the full text of both in a `title`). Reproduced first — **12.09 × 273px**, map **712px** against
+> 481px — then fixed to **116.33 × 19.5px** on one line, head 59px, map 481px.
+>
+> Two things the report did not have: at **1240px** three more devices (`leaf-01`, `spine-01`,
+> `spine-02`) lost their names entirely, at **0.0px** wide, so this was not one card's problem; and
+> the filed case is now on the showcase's second map, where four new checks in `wiring-map.mjs`
+> (53 in all) measure it at two widths in both palettes. All four fail on 7.8.0.
+
 **Filed by:** HyperStruct, 2026-11-05, against **7.7.0**. Seen by the operator on a real cluster on the
 first day (Cluster ▸ Network Health, HyperStruct O458), then reproduced and measured in Chrome.
 

@@ -954,9 +954,12 @@ export class ChartsPage implements OnDestroy {
   // Columns nobody declared: the tiers come out of the cabling.
   protected readonly tierNodes: StrctWiringNode[] = [
     {
+      // BUG-72-03's own case: a 14-character host name beside a sublabel
+      // wider than the column, which used to put the name down the card one
+      // letter a line.
       id: 'hva',
-      label: 'hv-a',
-      sublabel: 'compute',
+      label: 'PDASHPVGENC201',
+      sublabel: 'SET DC2.mVS.Prd.Int.Mng.1, SET DC2.mVS.Prd.Int.Gen.1',
       ports: [{ id: 'hva1', label: 'nic0', meta: '25G', status: 'success' }],
     },
     {

@@ -298,3 +298,31 @@ describe('StrctWiring — a port with no cable', () => {
     expect(said('p2')).toBe('not patched');
   });
 });
+
+// BUG-72-03 (HyperStruct, against 7.7.0): a device's name is its identity.
+// The geometry is gated in scripts/wiring-map.mjs, which measured a
+// 14-character host name at 12.09 x 273px — one glyph a line — beside a
+// sublabel that could not shrink; here only the escape hatch is asserted,
+// since jsdom has no layout to squeeze.
+describe('StrctWiring — a device keeps its name', () => {
+  it('carries the full name and reading in a title, for when either is cut', () => {
+    const fixture = TestBed.createComponent(StrctWiring);
+    fixture.componentRef.setInput('nodes', [
+      {
+        id: 'n1',
+        label: 'PDASHPVGENC201',
+        sublabel: 'SET DC2.mVS.Prd.Int.Mng.1, SET DC2.mVS.Prd.Int.Gen.1',
+        ports: [{ id: 'p1', label: 'nic0' }],
+      },
+    ]);
+    fixture.componentRef.setInput('links', []);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.strct-wiring__nodelabel')!.getAttribute('title')).toBe(
+      'PDASHPVGENC201',
+    );
+    expect(el.querySelector('.strct-wiring__nodesub')!.getAttribute('title')).toBe(
+      'SET DC2.mVS.Prd.Int.Mng.1, SET DC2.mVS.Prd.Int.Gen.1',
+    );
+  });
+});
