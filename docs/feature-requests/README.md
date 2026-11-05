@@ -7,7 +7,13 @@ stays here until it goes quiet.
 
 ## Open
 
-**Nothing.** Everything filed so far has shipped.
+- [**`checks-by-node-matrix.md`**](checks-by-node-matrix.md) — FR-72-01, the lower-left card of the
+  same screenshot FR-71-01 came from: 17 checks × 5 subjects = **85 cells** of categorical state,
+  where the two kinds of blank ("no reading" and "does not apply here") carry as much as the
+  colours. `strct-heatmap` is a numeric ramp and cannot hold either. Measured off the reference: the
+  two absences read at **1.15:1** and **1.52:1** against the card, warning against critical is
+  **1.44:1** in luminance so only hue separates the pair that decides a page-out, and the one row
+  whose label wraps has its marks **8.5px** off the row.
 
 ### Closed on 2026-11-04, and moved to [`archive/`](archive/)
 

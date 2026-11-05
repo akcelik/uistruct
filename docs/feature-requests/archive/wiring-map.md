@@ -123,6 +123,7 @@ recording:
 - **The checks-by-node matrix** in the reference's lower half — a categorical status grid with
   "not judged" and "not on a node" states. `strct-heatmap` is a numeric density ramp and is the wrong
   component for it. It is not a diagram, so it is not part of this ask; if it is wanted it should be
-  filed as its own.
+  filed as its own. **Filed on 2026-11-05 as
+  [FR-72-01](../checks-by-node-matrix.md)**, with the reference's own matrix measured.
 - **Bundling LAG members into one cable.** Four links between the same two devices are four cables
   today. Worth doing when a real screen has enough of them to be unreadable; nothing has yet.
