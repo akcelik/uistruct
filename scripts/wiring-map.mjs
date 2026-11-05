@@ -248,9 +248,27 @@ const READ = (sel) => `(() => {
         : p.classList.contains('strct-wiring__port--on-end') ? 'end' : null,
   }));
 
+  // BUG-72-03: a device's name against its reading, measured on the head.
+  const heads = [...map.querySelectorAll('.strct-wiring__node')].map((node) => {
+    const head = node.querySelector('.strct-wiring__nodehead');
+    const lab = head.querySelector('.strct-wiring__nodelabel');
+    const sub = head.querySelector('.strct-wiring__nodesub');
+    const box = (el) => (el ? { w: el.getBoundingClientRect().width, h: el.getBoundingClientRect().height } : null);
+    return {
+      id: node.getAttribute('data-wiring-node'),
+      text: lab ? lab.textContent.trim() : '',
+      title: lab ? lab.getAttribute('title') : null,
+      line: lab ? Number.parseFloat(getComputedStyle(lab).lineHeight) : 0,
+      label: box(lab),
+      sub: box(sub),
+      head: box(head),
+      clipped: lab ? lab.scrollWidth > lab.clientWidth + 1 : false,
+    };
+  });
+
   return {
     base: { w: base.width, h: base.height },
-    ports, cards, links, tags, surface, selectedPorts, metas, cardBg,
+    ports, cards, links, tags, surface, selectedPorts, metas, cardBg, heads,
     portCount: Object.keys(ports).length,
     deviceCount: cards.length,
     svgHidden: map.querySelector('.strct-wiring__links').getAttribute('aria-hidden') === 'true',
@@ -625,6 +643,34 @@ try {
         leafCard
           ? `${inbound.length} cables arrive at its inline start, ${outbound.length} leave its inline end`
           : 'no leaf card',
+      );
+
+      // BUG-72-03 (HyperStruct, against 7.7.0): the name is the device's
+      // identity. With the name breakable at any glyph and a nowrap sublabel
+      // that could not shrink, flex took the whole head from the name and
+      // ran a 14-character host name down the card one letter a line —
+      // 12.09 x 273px, and the map 712px instead of 481px.
+      const squeezed = t.heads.filter((h) => h.label && h.label.h > h.line * 1.5);
+      check(
+        `${at} tiers: a long reading never breaks the device's name`,
+        squeezed.length === 0,
+        squeezed.length
+          ? squeezed
+              .map((h) => `${h.text}: ${h.label.w.toFixed(1)}x${h.label.h.toFixed(0)}px`)
+              .join(', ')
+          : `${t.heads.length} devices, every name on one line (longest "${
+              t.heads.reduce((m, h) => (h.text.length > m.text.length ? h : m), t.heads[0]).text
+            }" at ${t.heads
+              .reduce((m, h) => (h.text.length > m.text.length ? h : m), t.heads[0])
+              .label.w.toFixed(1)}px)`,
+      );
+      const long = t.heads.find((h) => h.text === 'PDASHPVGENC201');
+      check(
+        `${at} tiers: the filed case is on the page, whole`,
+        !!long && !long.clipped && long.title === 'PDASHPVGENC201' && long.head.h < long.line * 4,
+        long
+          ? `name ${long.label.w.toFixed(1)}x${long.label.h.toFixed(0)}px, head ${long.head.h.toFixed(0)}px, reading ${long.sub ? long.sub.w.toFixed(0) : 0}px on its own line, ${long.clipped ? 'ellipsised' : 'not ellipsised'}`
+          : 'the 14-character host name is not on the page',
       );
 
       // The tiers were never declared: they come out of the links.

@@ -5,6 +5,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.8.1] - 2026-11-05
+
+[BUG-72-03](docs/feature-requests/archive/wiring-node-head-squeeze.md), filed
+by HyperStruct against 7.7.0 after an operator met it on a real cluster.
+
+### Fixed
+
+- **A long sublabel no longer squeezes a device's name to one letter a line.**
+  `.strct-wiring__nodelabel` had `min-width: 0` with `overflow-wrap: anywhere`,
+  so its min-content was a single glyph, while `.strct-wiring__nodesub` was
+  `nowrap` at the default `min-width: auto` and could not shrink at all. Flex
+  therefore took the whole head from the name. Measured in Chrome on the
+  filed case (a 14-character host name beside a 50-character sublabel, at the
+  column's own 340px cap): the name came out **12.09 × 273px** — one glyph a
+  line — and the map **712px** tall against 481px without the sublabel. At
+  1240px three more devices lost their names entirely, at **0.0px** wide.
+
+  The head now wraps, so a reading too long to share the line takes its own;
+  the name never breaks inside a word and ellipsises only as a last resort,
+  with the full text of both in a `title`. After: the name is **116.33 ×
+  19.5px** on one line, the head 59px, and the map 481px.
+
+  Four new checks in `scripts/wiring-map.mjs` (53 now), with the filed case
+  itself on the showcase's second map; all four fail on 7.8.0.
+
 ## [7.8.0] - 2026-11-05
 
 [FR-72-03](docs/feature-requests/archive/flow-topology.md): a fan-out's lines
