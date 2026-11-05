@@ -82,6 +82,10 @@ const ROUTES = [
   // FR-59-08: a topology — columns, edges, icons and a node that can be
   // walked to. The crop is the diagram, so a change to its geometry shows.
   ['flow-topology', '/components/flow', '#flow-topology', undefined, '#flow-topology strct-flow'],
+  // BUG-73-01: an edge that skips a column, routed around it. The crop is
+  // the blast-radius drawing, where 140px of the critical line used to run
+  // behind a member it does not end on.
+  ['flow-blast', '/components/flow', '#flow-fanout', undefined, '#flow-fanout strct-flow'],
   // FR-72-01: six states, each a shape as well as a tone, and the two
   // absences that a numeric ramp cannot hold. The crop is the grid itself,
   // so a change to a mark shows.

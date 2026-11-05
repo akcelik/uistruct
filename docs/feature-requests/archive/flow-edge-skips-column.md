@@ -1,5 +1,24 @@
 # BUG-73-01 — A fan-out edge that skips a column runs behind the boxes of the column it crosses
 
+> **CLOSED, 2026-11-05.** Fixed in **v7.9.1**, by ask 1: the skip is routed around the column.
+> Reproduced first on the showcase's own blast-radius drawing — **232 of 401** sampled points of
+> `hv-01 → sql-vm-02` inside `hv-02`, **140px** of line hidden — then fixed to **0**.
+>
+> The report found one case; sampling found a second. The cluster's-last-member drawing puts two
+> boxes at the **same height** with a column between them that holds only its note, and a level
+> edge was exempt from routing entirely: **141px** of it ran through "no other member". A column
+> that holds only its note now occupies its own band, so it splits the strip the way a box would,
+> and a level edge routes like any other.
+>
+> Headings and empty-column notes are obstacles on both counts — they bound the strips, and no run
+> crosses them. Where no gutter is wide enough, the diagram reserves a **24px** channel under
+> itself rather than drawing through something; the decision is taken from the boxes, not from the
+> room already reserved, so it settles in one pass.
+>
+> `scripts/flow-topology.mjs` (**30 checks**) samples every edge of both diagrams 401 times against
+> every box, heading and note. Ask 2 — warning in dev mode and documenting the limit — was not
+> needed.
+
 **Filed by:** HyperStruct, 2026-11-05, against **7.8.1**, while adopting edge labels on Host ▸ Overview ▸
 "Where they would land" (HyperStruct O459). Measured in Chrome, not seen on a real cluster: the
 drawing was taken out before shipping.

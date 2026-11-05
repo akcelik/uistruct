@@ -5,6 +5,40 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.9.1] - 2026-11-05
+
+[BUG-73-01](docs/feature-requests/archive/flow-edge-skips-column.md), filed by
+HyperStruct against 7.8.1 while adopting edge labels.
+
+### Fixed
+
+- **A `fan-out` edge that skips a column is no longer drawn through the
+  column it crosses.** 7.8.0 gave every trunk a lane of its own but never
+  asked the horizontal runs either side of it to stay out of the columns they
+  pass. Measured on the showcase's own blast-radius drawing: **232 of 401**
+  sampled points of the `hv-01 → sql-vm-02` edge fell inside `hv-02`, **140px
+  of line hidden behind a box it does not end on** — on a failover drawing,
+  the statement "the stranded VMs went via that member", which is the one
+  thing it must never make.
+
+  Such an edge now turns twice: out into the first clear strip, across in a
+  gutter of the column it crosses, and in again at the last strip. The gutter
+  is chosen nearest the line the edge would have taken, preferring the space
+  between two boxes; where none is wide enough the diagram reserves a 24px
+  channel under itself, the same move the edge labels make for their strip.
+
+- **A column's heading and the note an empty column carries are obstacles
+  too.** Both are content: a line through "Lands on" says what a line through
+  the box under it says. They now bound the strips as well, which is what the
+  cluster's-last-member drawing needed — a column holding only its note left
+  one wide strip, and the level edge crossing it drew **141px** through that
+  note. A level edge is no longer exempt from routing around what is in its
+  way.
+
+- Four new checks in `scripts/flow-topology.mjs` (30 now) sample every edge of
+  two diagrams 401 times against every box, heading and note; both failures
+  above are reproduced by them on 7.9.0.
+
 ## [7.9.0] - 2026-11-05
 
 [FR-72-01](docs/feature-requests/archive/checks-by-node-matrix.md): the

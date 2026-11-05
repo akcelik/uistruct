@@ -100,6 +100,10 @@ const MAX_LABEL_GAP = 184;
 const MIN_COL = 112;
 /** Radius of the tick where an edge meets a box it has to share. */
 const ANCHOR_R = 2.5;
+/** The least room a crossing run needs between two boxes to pass between them. */
+const MIN_CLEAR = 16;
+/** The channel the diagram reserves under itself when nothing else will do. */
+const SKIP_LANE = 24;
 /** Where along its trunk a label may sit, best first. */
 const TAG_SPOTS = [0.5, 0.36, 0.64, 0.26, 0.74];
 /** Worst first: a critical label keeps the middle of its own run. */
@@ -158,6 +162,44 @@ interface FlowAnchor {
 }
 
 const round = (n: number): number => Math.round(n * 100) / 100;
+
+/**
+ * An orthogonal polyline with its corners rounded. Zero-length segments are
+ * dropped first, so a route whose turn lands exactly on its own start does
+ * not draw a corner out of nothing.
+ */
+function roundedPath(points: { x: number; y: number }[], radius: number): string {
+  const pts: { x: number; y: number }[] = [];
+  for (const p of points) {
+    const last = pts[pts.length - 1];
+    if (!last || Math.abs(last.x - p.x) > 0.01 || Math.abs(last.y - p.y) > 0.01) pts.push(p);
+  }
+  if (pts.length < 2) return '';
+  const out = [`M ${round(pts[0].x)} ${round(pts[0].y)}`];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const prev = pts[i - 1];
+    const cur = pts[i];
+    const next = pts[i + 1];
+    const inLen = Math.hypot(cur.x - prev.x, cur.y - prev.y);
+    const outLen = Math.hypot(next.x - cur.x, next.y - cur.y);
+    const rad = Math.min(radius, inLen / 2, outLen / 2);
+    if (rad < 1) {
+      out.push(`L ${round(cur.x)} ${round(cur.y)}`);
+      continue;
+    }
+    const ux = (cur.x - prev.x) / inLen;
+    const uy = (cur.y - prev.y) / inLen;
+    const vx = (next.x - cur.x) / outLen;
+    const vy = (next.y - cur.y) / outLen;
+    out.push(`L ${round(cur.x - ux * rad)} ${round(cur.y - uy * rad)}`);
+    out.push(
+      `Q ${round(cur.x)} ${round(cur.y)} ${round(cur.x + vx * rad)} ${round(cur.y + vy * rad)}`,
+    );
+  }
+  const last = pts[pts.length - 1];
+  out.push(`L ${round(last.x)} ${round(last.y)}`);
+  return out.join(' ');
+}
 const overlapArea = (a: FlowRect, b: FlowRect): number =>
   Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) *
   Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
@@ -186,7 +228,7 @@ export type StrctFlowOrientation = 'horizontal' | 'vertical';
   imports: [NgTemplateOutlet, StrctIcon],
   template: `
     @if (layout() !== 'chain') {
-      <div class="strct-flow__fan" #fan>
+      <div class="strct-flow__fan" #fan [style.padding-block-end.px]="skipLane() || null">
         <!-- The edges are geometry, not content: they are measured from the
              boxes after they render, and hidden from assistive tech, which is
              given the structure instead. -->
@@ -1140,6 +1182,12 @@ export class StrctFlow {
   /** Extra room reserved before each column for the labels in the strip
    *  ahead of it, in CSS px, in the order the columns are rendered. */
   protected readonly extraGap = signal<number[]>([]);
+  /**
+   * A channel under the columns for an edge that has a column to get past
+   * and no gutter wide enough to do it in. Reserved only when one is needed,
+   * so a diagram without a skip is exactly as tall as before.
+   */
+  protected readonly skipLane = signal(0);
   /** False until the labels have been measured and placed. */
   protected readonly measured = signal(false);
   /** Radius of an anchor tick, so the template and the geometry agree. */
@@ -1222,6 +1270,13 @@ export class StrctFlow {
       lane: number;
       strip: FlowStrip | null;
       stripAt: number;
+      /** The strip the edge turns in on the way out, and the one on the way in. */
+      atA: number;
+      atB: number;
+      laneA: number;
+      laneB: number;
+      /** The y a crossing run takes between the two, where it needs one. */
+      clear: number | null;
     }
     const runs: Run[] = [];
     for (const [i, e] of edges.entries()) {
@@ -1238,6 +1293,11 @@ export class StrctFlow {
         lane: 0,
         strip: null,
         stripAt: -1,
+        atA: -1,
+        atB: -1,
+        laneA: 0,
+        laneB: 0,
+        clear: null,
       });
     }
     if (!runs.length) {
@@ -1249,13 +1309,25 @@ export class StrctFlow {
     //    label lives in one — the rule the wiring map's labels follow, for
     //    the same reason: a line drawn through a box says nothing, and a word
     //    written over one says less.
+    // Everything a trunk must not be drawn down: the boxes, the words the
+    // columns are labelled with, and the note a column with nothing in it
+    // carries. A column that holds only its note still occupies its band —
+    // without that it left one wide strip, and a level edge crossing it drew
+    // 141px of line through the note (BUG-73-01).
+    const obstacles: FlowBox[] = [
+      ...fan.querySelectorAll<HTMLElement>('.strct-flow__colhead, .strct-flow__colempty'),
+    ].map((el) => {
+      const b = el.getBoundingClientRect();
+      return { x: b.left - base.left, y: b.top - base.top, w: b.width, h: b.height };
+    });
     const merged: FlowStrip[] = [];
-    const bands = [...boxes.values()]
-      .map((el) => {
+    const bands = [
+      ...[...boxes.values()].map((el) => {
         const r = el.getBoundingClientRect();
         return { l: r.left - base.left, r: r.right - base.left };
-      })
-      .sort((p, q) => p.l - q.l);
+      }),
+      ...obstacles.map((o) => ({ l: o.x, r: o.x + o.w })),
+    ].sort((p, q) => p.l - q.l);
     for (const band of bands) {
       const last = merged[merged.length - 1];
       if (last && band.l <= last.r + 0.5) last.r = Math.max(last.r, band.r);
@@ -1301,31 +1373,141 @@ export class StrctFlow {
     // ── Lanes. Every trunk in a strip gets an x of its own, so no stretch of
     //    line is ever drawn twice — which is what made a down uplink and a
     //    healthy one share pixels before.
-    const inStrip = new Map<number, Run[]>();
+    //    An edge between two adjacent columns turns once, in the one strip
+    //    between them. An edge that skips a column turns twice — out into
+    //    the first strip, across in a gutter of the column it crosses, and
+    //    in again at the last strip — because a line drawn through a box it
+    //    does not end on says the traffic went that way (BUG-73-01).
     for (const r of runs) {
       const lo = Math.min(r.a.x + r.a.w, r.b.x);
       const hi = Math.max(r.a.x + r.a.w, r.b.x);
-      let best = -1;
-      let widest = 0;
+      const within: number[] = [];
       strips.forEach((st, at) => {
-        const w = Math.min(st.r, hi) - Math.max(st.l, lo);
-        if (w > widest) {
-          widest = w;
-          best = at;
-        }
+        if (Math.min(st.r, hi) - Math.max(st.l, lo) > 1) within.push(at);
       });
-      r.strip =
-        best >= 0 ? { l: Math.max(strips[best].l, lo), r: Math.min(strips[best].r, hi) } : null;
-      r.stripAt = best;
-      inStrip.set(best, [...(inStrip.get(best) ?? []), r]);
+      if (!within.length) {
+        r.atA = -1;
+        r.atB = -1;
+        r.strip = null;
+        r.stripAt = -1;
+        continue;
+      }
+      const forward = r.b.x >= r.a.x;
+      r.atA = forward ? within[0] : within[within.length - 1];
+      r.atB = forward ? within[within.length - 1] : within[0];
+      // The label lives in whichever of the two has the most room.
+      const span = (at: number) => ({
+        l: Math.max(strips[at].l, lo),
+        r: Math.min(strips[at].r, hi),
+      });
+      const sa = span(r.atA);
+      const sb = span(r.atB);
+      r.stripAt = sb.r - sb.l > sa.r - sa.l ? r.atB : r.atA;
+      r.strip = span(r.stripAt);
+      r.laneA = (sa.l + sa.r) / 2;
+      r.laneB = (sb.l + sb.r) / 2;
     }
-    for (const list of inStrip.values()) {
-      const order = [...list].sort((p, q) => p.y2 - q.y2 || p.y1 - q.y1);
-      order.forEach((r, at) => {
-        r.lane = r.strip
-          ? r.strip.l + ((r.strip.r - r.strip.l) * (at + 1)) / (order.length + 1)
-          : (r.a.x + r.a.w + r.b.x) / 2;
+
+    //    Where a run has to cross a column, it takes the roomiest gutter
+    //    between that column's boxes nearest the line it would have taken.
+    // Where the content ends, which is not where the fan ends once a lane
+    // has been reserved under it.
+    const bottom = Math.max(0, ...runs.flatMap((o) => [o.a.y + o.a.h, o.b.y + o.b.h]));
+    let wantLane = false;
+    for (const r of runs) {
+      if (r.atA === r.atB || r.atA < 0) continue;
+      // A level edge is not exempt: two boxes at the same height with a
+      // third between them is exactly the case that drew a straight line
+      // through that third one.
+      const lo = Math.min(r.laneA, r.laneB);
+      const hi = Math.max(r.laneA, r.laneB);
+      // Everything the run must not cross: the other boxes, and the words
+      // the columns are labelled with — a line through "Lands on" is nearly
+      // as misleading as one through the box under it, and the note a column
+      // with nothing in it carries is the answer, not decoration.
+      const bands = [
+        ...runs.flatMap((o) => [o.a, o.b]).filter((box) => box !== r.a && box !== r.b),
+        ...obstacles,
+      ]
+        .filter((box) => box.x < hi && box.x + box.w > lo)
+        .map((box) => ({ t: box.y, b: box.y + box.h }))
+        .sort((p, q) => p.t - q.t);
+      const merged: { t: number; b: number }[] = [];
+      for (const band of bands) {
+        const last = merged[merged.length - 1];
+        if (last && band.t <= last.b + 0.5) last.b = Math.max(last.b, band.b);
+        else merged.push({ ...band });
+      }
+      if (!merged.length) continue;
+      const want = (r.y1 + r.y2) / 2;
+      // The gutters between boxes first, then over the top and under the
+      // bottom: a line through a column heading is nearly as misleading as
+      // one through a box.
+      const inner = merged.slice(0, -1).map((m, i) => ({ t: m.b, b: merged[i + 1].t }));
+      const outer = [
+        { t: 0, b: merged[0].t },
+        // Under the columns: whatever another, taller column leaves free,
+        // plus the channel the diagram will reserve if this is where the run
+        // has to go. Asked for unconditionally, so the decision below does
+        // not depend on the room already reserved and cannot oscillate.
+        { t: merged[merged.length - 1].b, b: bottom + SKIP_LANE },
+      ];
+      const fits = (g: { t: number; b: number }) => g.b - g.t >= MIN_CLEAR;
+      const nearest = (list: { t: number; b: number }[]) =>
+        list
+          .filter(fits)
+          .sort((p, q) => Math.abs((p.t + p.b) / 2 - want) - Math.abs((q.t + q.b) / 2 - want))[0];
+      const gap = nearest(inner) ?? nearest(outer) ?? null;
+      r.clear = gap ? Math.min(Math.max((gap.t + gap.b) / 2, 2), bottom + SKIP_LANE - 2) : null;
+      // Only a run that ends up under the content needs the channel.
+      if (r.clear !== null && r.clear > bottom) wantLane = true;
+    }
+
+    // A diagram that cannot route around a column asks for the room to, the
+    // same move the labels make for their strip. It settles in one pass: the
+    // decision is taken from the boxes, not from the room already reserved.
+    const lane = wantLane ? SKIP_LANE : 0;
+    if (Math.abs(lane - this.skipLane()) > 0.5) {
+      this.skipLane.set(lane);
+      const again = () => this.measure();
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(again);
+      else queueMicrotask(again);
+      return;
+    }
+
+    //    Every trunk in a strip then gets an x of its own, so no stretch of
+    //    line is ever drawn twice — which is what made a down uplink and a
+    //    healthy one share pixels before 7.8.0.
+    const inStrip = new Map<number, { run: Run; out: boolean }[]>();
+    for (const r of runs) {
+      if (r.atA < 0) continue;
+      inStrip.set(r.atA, [...(inStrip.get(r.atA) ?? []), { run: r, out: true }]);
+      if (r.atB !== r.atA)
+        inStrip.set(r.atB, [...(inStrip.get(r.atB) ?? []), { run: r, out: false }]);
+    }
+    for (const [at, list] of inStrip) {
+      const st = strips[at];
+      // Ordered by where each trunk sits in this strip, so two of them never
+      // have to cross inside it.
+      const mid = (m: { run: Run; out: boolean }) =>
+        m.out
+          ? (m.run.y1 + (m.run.clear ?? m.run.y2)) / 2
+          : ((m.run.clear ?? m.run.y1) + m.run.y2) / 2;
+      const order = [...list].sort((p, q) => mid(p) - mid(q));
+      order.forEach((m, i) => {
+        const lane = st.l + ((st.r - st.l) * (i + 1)) / (order.length + 1);
+        if (m.out) m.run.laneA = lane;
+        else m.run.laneB = lane;
+        if (m.run.atA === m.run.atB) m.run.laneB = lane;
       });
+      for (const m of order)
+        if (m.run.stripAt === at) m.run.lane = m.out ? m.run.laneA : m.run.laneB;
+    }
+    for (const r of runs) {
+      if (r.atA >= 0) continue;
+      r.lane = (r.a.x + r.a.w + r.b.x) / 2;
+      r.laneA = r.lane;
+      r.laneB = r.lane;
     }
 
     const paths: FlowEdgePath[] = [];
@@ -1339,32 +1521,34 @@ export class StrctFlow {
     for (const r of runs) {
       const x1 = r.a.x + r.a.w;
       const x2 = r.b.x;
-      const { y1, y2, lane } = r;
+      const { y1, y2, laneA, laneB, clear } = r;
       const key = `${r.e.from}-${r.e.to}-${r.i}`;
       const status = r.e.status ?? 'neutral';
-      let d: string;
-      if (Math.abs(y1 - y2) < 0.5) {
-        d = `M ${round(x1)} ${round(y1)} L ${round(x2)} ${round(y2)}`;
-      } else {
-        const dy = y2 > y1 ? 1 : -1;
-        const sx = lane >= x1 ? 1 : -1;
-        const ex = x2 >= lane ? 1 : -1;
-        // A turn the eye can follow where several lanes run side by side.
-        const rad = Math.min(
-          CORNER,
-          Math.abs(y2 - y1) / 2,
-          Math.abs(lane - x1),
-          Math.abs(x2 - lane),
-        );
-        d =
-          rad < 1
-            ? `M ${round(x1)} ${round(y1)} H ${round(lane)} V ${round(y2)} H ${round(x2)}`
-            : `M ${round(x1)} ${round(y1)} H ${round(lane - sx * rad)} ` +
-              `Q ${round(lane)} ${round(y1)} ${round(lane)} ${round(y1 + dy * rad)} ` +
-              `V ${round(y2 - dy * rad)} ` +
-              `Q ${round(lane)} ${round(y2)} ${round(lane + ex * rad)} ${round(y2)} ` +
-              `H ${round(x2)}`;
-      }
+      // One turn between adjacent columns; two, with a clear run between
+      // them, where the edge has a column to get past.
+      const route =
+        clear !== null && r.atA !== r.atB
+          ? [
+              { x: x1, y: y1 },
+              { x: laneA, y: y1 },
+              { x: laneA, y: clear },
+              { x: laneB, y: clear },
+              { x: laneB, y: y2 },
+              { x: x2, y: y2 },
+            ]
+          : Math.abs(y1 - y2) < 0.5
+            ? [
+                { x: x1, y: y1 },
+                { x: x2, y: y2 },
+              ]
+            : [
+                { x: x1, y: y1 },
+                { x: r.lane, y: y1 },
+                { x: r.lane, y: y2 },
+                { x: x2, y: y2 },
+              ];
+      // A turn the eye can follow where several lanes run side by side.
+      const d = roundedPath(route, CORNER);
       paths.push({
         key,
         from: r.e.from,
@@ -1396,10 +1580,13 @@ export class StrctFlow {
           status,
         });
       if (r.e.label && r.strip && r.strip.r - r.strip.l >= MIN_TAG) {
+        const tLane = r.stripAt === r.atA ? laneA : laneB;
+        const tFrom = r.stripAt === r.atA ? y1 : (clear ?? y1);
+        const tTo = r.stripAt === r.atA ? (clear ?? y2) : y2;
         trunks.set(key, {
-          x: lane,
-          y0: Math.min(y1, y2),
-          y1: Math.max(y1, y2),
+          x: tLane,
+          y0: Math.min(tFrom, tTo),
+          y1: Math.max(tFrom, tTo),
           strip: r.strip,
           at: r.stripAt,
         });
@@ -1409,8 +1596,8 @@ export class StrctFlow {
           to: r.e.to,
           text: r.e.label,
           status,
-          x: round(lane),
-          y: round((y1 + y2) / 2),
+          x: round(tLane),
+          y: round((tFrom + tTo) / 2),
           max: Math.round(r.strip.r - r.strip.l - TAG_PAD * 2),
         });
       }
