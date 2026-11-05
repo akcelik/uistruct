@@ -183,6 +183,12 @@ const READ = (sel) => `(() => {
     boxes[id] = { ...rel(r), mid: r.top + r.height / 2 - base.top, opacity: Number(cs.opacity), color: cs.color };
   }
   const cols = [...fan.querySelectorAll('.strct-flow__col')].map((c) => Math.round(c.getBoundingClientRect().width));
+  // A column's heading and the note a column with nothing in it carries are
+  // content too: a line through either says what a line through a box says.
+  const notes = [...fan.querySelectorAll('.strct-flow__colhead, .strct-flow__colempty')].map((el) => ({
+    id: el.className.includes('colempty') ? 'the empty-column note' : 'the heading "' + el.textContent.trim() + '"',
+    ...rel(el.getBoundingClientRect()),
+  }));
 
   const edges = [...fan.querySelectorAll('.strct-flow__edge')].map((p, order) => {
     const len = p.getTotalLength();
@@ -192,6 +198,7 @@ const READ = (sel) => `(() => {
     const z = pts[pts.length - 1];
     // The trunk is the vertical run: the x the path holds through its middle.
     const trunkX = pts[200].x;
+    const samples = pts.map((q) => ({ x: q.x, y: q.y }));
     const on = pts.filter((q) => Math.abs(q.x - trunkX) < 0.6).map((q) => q.y);
     const cs = getComputedStyle(p);
     return {
@@ -199,6 +206,7 @@ const READ = (sel) => `(() => {
       a: { x: a.x, y: a.y },
       z: { x: z.x, y: z.y },
       trunkX,
+      samples,
       y0: on.length ? Math.min(...on) : a.y,
       y1: on.length ? Math.max(...on) : a.y,
       tone: (p.getAttribute('class').match(/edge--(neutral|accent|success|warning|critical)/) ?? [])[1] ?? 'neutral',
@@ -233,7 +241,7 @@ const READ = (sel) => `(() => {
     base: { w: base.width, h: base.height },
     isolated: host.classList.contains('strct-flow--isolated'),
     surface: getComputedStyle(fan.closest('.demo__stage') ?? document.body).backgroundColor,
-    boxes, cols, edges, anchors, tags,
+    boxes, cols, notes, edges, anchors, tags,
   };
 })()`;
 
@@ -574,6 +582,62 @@ try {
     walked === 'u1',
     `from hv-01 → ${walked} (expected u1, its first uplink)`,
   );
+
+  // ── BUG-73-01 (HyperStruct, against 7.8.1): an edge that skips a column
+  //    must not be drawn through the boxes of the column it crosses. A
+  //    failover drawing whose line runs behind a member says the stranded
+  //    VMs went via that member, which is the one thing it must never say.
+  const blast = await evaluate(send, READ('#flow-fanout strct-flow'));
+  // Two scenes: the blast radius, whose skip runs between columns of unequal
+  // height, and the cluster's last member, whose two boxes sit at the SAME
+  // height with a column between them that holds only its note — the case a
+  // level edge used to be exempt from routing around.
+  const last = await evaluate(send, READ('#flow-fanout strct-flow:last-of-type'));
+  if (blast && last) {
+    const scenes = [
+      [
+        blast,
+        matchEdges(blast, [
+          ['src', 't1', ''],
+          ['src', 't2', ''],
+          ['src', 'down', ''],
+        ]),
+      ],
+      [last, matchEdges(last, [['src9', 'nowhere', '']])],
+    ];
+    const through = [];
+    let edges = 0;
+    let against = 0;
+    for (const [scene, m] of scenes) {
+      const targets = [...Object.entries(scene.boxes), ...scene.notes.map((n) => [n.id, n])];
+      against += targets.length;
+      for (const [key, e] of m) {
+        if (!e.edge) continue;
+        edges += 1;
+        const [from, to] = key.split('>');
+        for (const [id, box] of targets) {
+          if (id === from || id === to) continue;
+          const inside = e.edge.samples.filter(
+            (q) => q.x >= box.l && q.x <= box.r && q.y >= box.t && q.y <= box.b,
+          );
+          if (!inside.length) continue;
+          const run = Math.max(...inside.map((q) => q.x)) - Math.min(...inside.map((q) => q.x));
+          through.push(
+            `${key} crosses ${id}: ${inside.length} of ${e.edge.samples.length} samples inside it, ${run.toFixed(0)}px of line hidden`,
+          );
+        }
+      }
+    }
+    check(
+      'no edge is drawn through a box it does not end on',
+      through.length === 0,
+      through.length
+        ? through.join('; ')
+        : `${edges} edges over two diagrams, sampled 401 times each against ${against} boxes, headings and notes, 0 points inside one they do not end on`,
+    );
+  } else {
+    check('no edge is drawn through a box it does not end on', false, 'no blast-radius fan found');
+  }
 
   // ── The second diagram on the page: the same geometry, no labels.
   const tree = await evaluate(send, READ('#flow-fanout strct-flow[layout="tree"]'));

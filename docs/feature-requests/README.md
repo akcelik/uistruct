@@ -7,13 +7,16 @@ stays here until it goes quiet.
 
 ## Open
 
-- [**`flow-edge-skips-column.md`**](flow-edge-skips-column.md) — BUG-73-01, from HyperStruct
-  against 7.8.1: a `fan-out` edge from column 0 to column 2 runs **behind the first box of column 1**,
-  about 207px of it inside a box it does not end on, with its label in the wrong strip. On a failover
-  drawing that reads as "the stranded VMs go via that member". The ask is to route around the column,
-  or else warn in dev mode.
+**Nothing.** Everything filed so far has shipped.
 
 ### Closed on 2026-11-05, and moved to [`archive/`](archive/)
+
+- [**`archive/flow-edge-skips-column.md`**](archive/flow-edge-skips-column.md) — BUG-73-01, a
+  `fan-out` edge that skips a column drawn **through the column it crosses**: 232 of 401 sampled
+  points inside a box it does not end on, 140px of line hidden, which on a failover drawing reads
+  as "the stranded VMs went via that member". Fixed in **v7.9.1** by routing the skip around the
+  column — and sampling found a second case the report did not have, a level edge through an empty
+  column's note.
 
 - [**`archive/checks-by-node-matrix.md`**](archive/checks-by-node-matrix.md) — FR-72-01, the
   lower-left card of the screenshot FR-71-01 came from: 17 checks × 5 subjects of categorical
