@@ -7,7 +7,13 @@ stays here until it goes quiet.
 
 ## Open
 
-**Nothing.** Everything filed so far has shipped.
+- [**`matrix-rows-without-printed-id.md`**](matrix-rows-without-printed-id.md) — FR-75-01, from HyperStruct
+  against 7.9.1: `strct-status-matrix` always prints a row's id before its label; rows that are clusters
+  or hosts have a name, not a code. The ask is a way to leave the id out (`rowIds` or an optional `code`).
+
+- [**`matrix-row-id-touches-label.md`**](matrix-row-id-touches-label.md) — BUG-74-01, from HyperStruct
+  against 7.9.1: a `strct-status-matrix` row id longer than `min-width: 2.4em` runs into its label
+  with no gap ("VLAN 711DC2.mVS…"). The ask is a gap whatever the id's width.
 
 ### Closed on 2026-11-05, and moved to [`archive/`](archive/)
 
