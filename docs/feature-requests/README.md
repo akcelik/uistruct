@@ -15,6 +15,11 @@ stays here until it goes quiet.
   **1.44:1** in luminance so only hue separates the pair that decides a page-out, and the one row
   whose label wraps has its marks **8.5px** off the row.
 
+- [**`wiring-unlinked-port.md`**](wiring-unlinked-port.md) — FR-72-02, filed by HyperStruct against
+  7.7.0: a `strct-wiring` port with no link is announced — and, below 560px, shown — as **"not
+  wired"**. On a map built from LLDP that port means "nothing heard", which is unknown, not a fact.
+  Asks for `StrctWiringPort.unlinked` and an `unlinkedText` input (default unchanged).
+
 ### Closed on 2026-11-04, and moved to [`archive/`](archive/)
 
 - [**`archive/wiring-map.md`**](archive/wiring-map.md) — FR-71-01, a network diagram whose endpoints
