@@ -24,6 +24,10 @@ import {
   StrctSegmented,
   StrctSegmentedOption,
   StrctSparkline,
+  StrctMatrixAxis,
+  StrctMatrixCell,
+  StrctMatrixCellEvent,
+  StrctStatusMatrix,
   StrctWiring,
   StrctWiringLink,
   StrctWiringNode,
@@ -46,6 +50,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     StrctGauge,
     StrctHeatmap,
     StrctIcon,
+    StrctStatusMatrix,
     StrctWiring,
     StrctMetricTile,
     StrctProgress,
@@ -732,6 +737,30 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         />
       </div>
     </app-demo>
+
+    <app-demo
+      anchor="status-matrix"
+      owner="status-matrix"
+      heading="Checks by node"
+      description="N checks against M subjects, each cell one of five tones or one of two absences — and the two absences are the point: “not judged” is a gap in the reading, “not on this subject” is the shape of the catalogue, and a monitoring screen that draws them as one shade of nothing has lost the difference. Every state carries a shape as well as a tone, because warning against critical is 1.44:1 in luminance and hue is the one channel a deuteranope does not have. Each cell says the sentence it is drawing (“H9 Priority flow control, HV-PRD-03: critical — PFC 3 ≠ 4”), which is its accessible name and also the line that becomes visible when the columns stop fitting. navigable makes the grid one tab stop: the arrow keys move a cell on both axes, Home and End jump to the ends of a line, Ctrl+Home and Ctrl+End to the corners, and Enter or Space picks it. rollup adds the worst state in each line, and a column declared kind: 'summary' — a Cluster against four nodes — is ruled off from the subjects it summarises."
+      code='<strct-status-matrix [rows]="checks" [cols]="nodes" [cells]="cells" rollup="both" navigable legend />'
+    >
+      <div class="matrix-demo">
+        <strct-status-matrix
+          [rows]="checkRows"
+          [cols]="checkCols"
+          [cells]="checkCells"
+          rowHeading="Check"
+          rollup="both"
+          rollupLabel="Worst"
+          navigable
+          legend
+          label="17 checks · cross-node rows in Cluster"
+          (cellActivate)="matrixPicked.set($event)"
+        />
+        <span class="echo">{{ matrixEcho() }}</span>
+      </div>
+    </app-demo>
   `,
   styles: [
     `
@@ -753,6 +782,12 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         font-size: 12px;
         font-family: var(--mono);
         color: var(--t1);
+      }
+      .matrix-demo {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+        width: 100%;
       }
       .wiring-demo,
       .topo-demo {
@@ -952,6 +987,76 @@ export class ChartsPage implements OnDestroy {
   });
 
   // Columns nobody declared: the tiers come out of the cabling.
+  // FR-72-01's own case: the CHECKS BY NODE card of the Network Health
+  // reference. The codes are the reference's own states — p passed, w warning,
+  // c critical, n note, u not judged, . not on this subject — so the fixture
+  // is the screenshot rather than a paraphrase of it.
+  private static readonly CHECKS: [string, string, string][] = [
+    ['H2', 'Team members alike, same on every node', 'ppppp'],
+    ['H3', 'Driver', 'npppp'],
+    ['H4', 'Link stability', 'pwpp.'],
+    ['H5', 'PCI Express slot', 'ppup.'],
+    ['H6', 'Switch side heard', 'wppp.'],
+    ['H7', 'VLANs on the switch port', 'uppwp'],
+    ['H8', 'Frame size end to end', 'ppppp'],
+    ['H9', 'Priority flow control', 'ppcpp'],
+    ['H10', 'Traffic classes (ETS)', 'ppppp'],
+    ['H11', 'RDMA where SMB runs', 'pppup'],
+    ['H12', 'RDMA vNIC pinning', 'pppw.'],
+    ['H13', 'No aggregation under SET', 'pppp.'],
+    ['H14', 'Two switches per team', 'ppppp'],
+    ['H15', 'Addresses and subnets', 'pppp.'],
+    ['H16', 'Cluster network roles', '....p'],
+    ['H17', 'Live migration path', '....p'],
+    ['H19', 'Other controllers', 'ppppp'],
+  ];
+  private static readonly STATE: Record<string, StrctMatrixCell['state']> = {
+    p: 'success',
+    w: 'warning',
+    c: 'critical',
+    n: 'accent',
+    u: 'unjudged',
+    '.': 'off-subject',
+  };
+  private static readonly DETAIL: Record<string, string> = {
+    'H9|n3': 'PFC 3 · policy and adapter ≠ 4 · LLDP and link peer',
+    'H6|n1': 'nothing heard on the switch side for 2 d',
+    'H4|n2': '6 flaps in 1 h',
+    'H3|n1': 'driver 2.1.4 · newer than the other three',
+    'H12|n4': 'two RDMA vNICs on one pNIC',
+    'H7|n4': 'VLAN 712 missing on the switch port',
+  };
+
+  protected readonly checkRows: StrctMatrixAxis[] = ChartsPage.CHECKS.map(([id, label]) => ({
+    id,
+    label,
+    // One row with a second line, so the grid is always drawn with a head
+    // taller than one line — the case BUG-70-01 was filed about one chart
+    // over, where a label that wrapped dragged its row's marks off the row.
+    ...(id === 'H2' ? { hint: 'members, drivers and firmware alike' } : {}),
+  }));
+  protected readonly checkCols: StrctMatrixAxis[] = [
+    { id: 'n1', label: 'HV-PRD-01' },
+    { id: 'n2', label: 'HV-PRD-02' },
+    { id: 'n3', label: 'HV-PRD-03' },
+    { id: 'n4', label: 'HV-PRD-04' },
+    { id: 'cl', label: 'Cluster', hint: 'cross-node rows', kind: 'summary' },
+  ];
+  protected readonly checkCells: StrctMatrixCell[] = ChartsPage.CHECKS.flatMap(([id, , codes]) =>
+    [...codes].map((code, i) => {
+      const col = ['n1', 'n2', 'n3', 'n4', 'cl'][i];
+      const detail = ChartsPage.DETAIL[`${id}|${col}`];
+      return { row: id, col, state: ChartsPage.STATE[code], ...(detail ? { detail } : {}) };
+    }),
+  );
+  protected readonly matrixPicked = signal<StrctMatrixCellEvent | null>(null);
+  protected readonly matrixEcho = computed(() => {
+    const p = this.matrixPicked();
+    return p
+      ? `${p.row.id} ${p.row.label} · ${p.col.label}: ${p.state}${p.cell?.detail ? ` — ${p.cell.detail}` : ''}`
+      : 'Tab into the grid, then use the arrow keys. Enter picks a cell.';
+  });
+
   protected readonly tierNodes: StrctWiringNode[] = [
     {
       // BUG-72-03's own case: a 14-character host name beside a sublabel

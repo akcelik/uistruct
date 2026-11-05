@@ -101,6 +101,12 @@ jobs:
       # nothing textual dimmed when a node is picked. 7.7.0 drew 11.7px twice.
       - name: Assert a fan-out's edges can be told apart
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/flow-topology.mjs
+      # FR-72-01: a grid of categorical judgements where the two absences are
+      # as informative as the colours. Every state visible against its own
+      # ground, no two told apart by hue alone (measured in greyscale), marks
+      # on their row's centre line, and every cell saying its own sentence.
+      - name: Assert a judgement grid is readable without hue
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/status-matrix.mjs
       # BUG-70-01: a bar chart's category label under its own band, measured at
       # two widths because a single one cannot tell a measurement from a
       # constant that happens to fit. 6 of its 9 checks fail on 7.6.0.

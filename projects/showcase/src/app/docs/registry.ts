@@ -5312,6 +5312,117 @@ export const DOCS: DocCategory[] = [
         ],
       },
       {
+        id: 'status-matrix',
+        title: 'Status matrix',
+        selector: 'strct-status-matrix',
+        importNames: [
+          'StrctStatusMatrix',
+          'StrctMatrixAxis',
+          'StrctMatrixCell',
+          'StrctMatrixCellEvent',
+          'StrctMatrixCellRef',
+          'StrctMatrixState',
+          'StrctMatrixRollup',
+        ],
+        summary: 'Categorical judgements, N checks \u00d7 M subjects.',
+        lead: 'A grid of **judgements**, not of numbers: N checks against M subjects, each cell one of the five canonical tones or one of **two absences**. The absences are the reason this is not a heatmap \u2014 `unjudged` is a gap in the reading (the check applies here and nothing came back) and `off-subject` is the shape of the catalogue (the check has no meaning for this subject), and a monitoring screen that draws them as one shade of nothing has lost the difference. `strct-heatmap`\u2019s cell is a number on a single-hue intensity ramp, which invents an order between "note" and "warning" and has nowhere to put either absence. Every state here carries a **shape** as well as a tone, because warning against critical is 1.44:1 in luminance and hue is the one channel a deuteranope does not have. Every cell says the sentence it is drawing, which is its accessible name and also the line that becomes visible when the columns stop fitting.',
+        inputs: [
+          {
+            name: 'rows / cols',
+            type: 'StrctMatrixAxis[]',
+            default: '[]',
+            description:
+              'The checks and the subjects: `{ id; label; hint?; kind? }`. The `id` is the catalogue\u2019s own \u2014 "H19", gaps and all \u2014 and is never renumbered. `kind: \'summary\'` marks an entry that rolls up the ones beside it, a Cluster column against four nodes; it is ruled off from them and says so in every cell it owns.',
+          },
+          {
+            name: 'cells',
+            type: 'StrctMatrixCell[]',
+            default: '[]',
+            description:
+              '`{ row; col; state; detail? }`. `state` is `neutral | accent | success | warning | critical | unjudged | off-subject`. `detail` is the reading behind the judgement and is spoken after it.',
+          },
+          {
+            name: 'defaultState',
+            type: 'StrctMatrixState',
+            default: `'off-subject'`,
+            description:
+              'What a row \u00d7 column pair with no declared cell means. The default is the weaker claim, and the one an omission usually is; say `unjudged` where a missing cell means the reading never arrived.',
+          },
+          {
+            name: 'rollup',
+            type: `'none' | 'row' | 'col' | 'both'`,
+            default: `'none'`,
+            description:
+              '`row` adds a line along the bottom (the worst state in each column), `col` one at the end (the worst in each row). Worst is severity, with one deliberate placement: `unjudged` outranks `accent` and `success`, because a line with an unread check in it cannot be reported as clean.',
+          },
+          {
+            name: 'rollupLabel',
+            type: 'string',
+            default: `'Worst'`,
+            description: 'What a roll-up line is called.',
+          },
+          {
+            name: 'legend',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'Draw a key under the grid naming every state the data actually uses. Built from the same table the cells are, so the two can never disagree.',
+          },
+          {
+            name: 'stateText',
+            type: 'Partial<Record<StrctMatrixState, string>> | null',
+            default: 'null',
+            description:
+              'Rename a state \u2014 for another language, or another vocabulary. It changes the key, the spoken sentence and the stacked line together.',
+          },
+          {
+            name: 'navigable',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'One tab stop for the whole grid with the arrow keys inside it: \u2190 / \u2192 and \u2191 / \u2193 move a cell, Home / End jump to the ends of the line, Ctrl+Home / Ctrl+End to the corners, and Enter / Space \u2014 or a click \u2014 emits `(cellActivate)`. Off by default, so a grid nobody acts on keeps no tab stop at all.',
+          },
+          {
+            name: 'selected',
+            type: 'StrctMatrixCellRef | null (model)',
+            default: 'null',
+            description:
+              'The picked cell `{ row; col }`, two-way bound. Picking the picked one clears it, so the grid can always be read whole again from inside the picture.',
+          },
+          {
+            name: 'rowHeading / label / emptyText',
+            type: 'string',
+            default: `'' / '' / 'No checks to show.'`,
+            description:
+              'Heading over the row labels, caption under the grid, and what is said when there is nothing to draw.',
+          },
+        ],
+        outputs: [
+          {
+            name: 'cellActivate',
+            type: 'StrctMatrixCellEvent',
+            description:
+              'The cell a click or Enter / Space acted on: `{ row, col, state, cell }`, where `cell` is the declared judgement or `null` where the matrix fell back to its default.',
+          },
+        ],
+        do: [
+          'Use it where the cell is a verdict, not a quantity: compliance checks, per-node validation, a conformance grid.',
+          'Say which absence you mean. `unjudged` and `off-subject` are different facts and the reader cannot recover one from the other.',
+          'Keep the catalogue\u2019s own ids on the rows \u2014 they are what an operator carries between screens.',
+        ],
+        dont: [
+          'Do not use it for density or magnitude \u2014 that is `strct-heatmap`, whose ramp carries a number.',
+          'Do not map a numeric scale onto the tones; it invents an order between note and warning that the data does not have.',
+          'Do not grow it to hundreds of rows. It is built for tens; past that the grid needs virtualisation and is a different component.',
+        ],
+        a11y: [
+          'A real table with role="grid": the column and row heads are `<th scope>`, and each cell is a gridcell whose accessible name is the whole sentence \u2014 "H9 Priority flow control, HV-PRD-03: critical \u2014 PFC 3 \u2260 4".',
+          'Every state carries a glyph as well as a tone, so no two are separable by hue alone; `scripts/status-matrix.mjs` measures the pairs under a deuteranopia and protanopia simulation.',
+          'With `navigable` the grid is one tab stop with a roving tabindex; without it no cell takes focus at all.',
+          'Below 560px of container width the grid stacks by row and each cell\u2019s sentence becomes visible text, so the meaning never scrolls off the side.',
+        ],
+      },
+      {
         id: 'heatmap',
         title: 'Heatmap',
         selector: 'strct-heatmap',

@@ -5,6 +5,62 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.9.0] - 2026-11-05
+
+[FR-72-01](docs/feature-requests/archive/checks-by-node-matrix.md): the
+library had no way to draw a grid of **judgements**. `strct-heatmap`'s cell is
+a number on a single-hue intensity ramp, which invents an order between "note"
+and "warning" and has nowhere to put either of the two absences a monitoring
+grid lives on.
+
+### Added
+
+- **`strct-status-matrix` — N checks × M subjects, each cell a verdict.** Five
+  canonical tones plus **two absences**, which are the point: `unjudged` is a
+  gap in the reading, `off-subject` is the shape of the catalogue, and the
+  screen this was filed from drew both as one shade of nothing (1.52:1 and
+  1.15:1 against its card, under the 3:1 WCAG 1.4.11 asks of a graphic that
+  carries meaning).
+
+  ```html
+  <strct-status-matrix
+    [rows]="checks"
+    [cols]="nodes"
+    [cells]="cells"
+    rollup="both"
+    navigable
+    legend
+  />
+  ```
+
+  Measured in Chrome at 1600px light and 1240px dark, on the filed case
+  (17 checks × 5 subjects, 108 cells with the roll-ups):
+
+  - **every state visible against the ground it is read on** — worst **3.66:1**
+    (floor 3);
+  - **no two states told apart by hue alone**: each mark rendered, reduced to
+    luminance and compared pixel for pixel, closest pair **9.15%** against a
+    **4.56%** floor — twice the icon set's own worst accepted pair. The first
+    drawing failed this at **0.63%**, because `info` and `critical` are both a
+    ring at 12px; `accent` became a flag and `unjudged` an eye-off;
+  - **every mark on its row's centre line** — worst **0.25px**, including the
+    row whose head runs to two lines (3.25px before a stray line box was
+    removed);
+  - **every cell says its own sentence** — "H9 Priority flow control,
+    HV-PRD-03: critical — PFC 3 ≠ 4" — which is its accessible name and the
+    line that becomes visible below 560px;
+  - **every roll-up the worst of its own line**, recomputed independently by
+    the gate, with `unjudged` outranking a note and a pass because a line with
+    an unread check in it cannot be reported as clean.
+
+  One tab stop with `role="grid"`: the arrows move a cell on both axes,
+  Home / End reach the ends of a line, Ctrl+Home / Ctrl+End the corners of the
+  grid, and Enter picks. A column declared `kind: 'summary'` — a Cluster
+  against four nodes — is ruled off from the subjects it summarises.
+
+- **`scripts/status-matrix.mjs`** — 20 checks at two widths × both palettes,
+  every number read back from what Chrome drew. Wired into CI.
+
 ## [7.8.1] - 2026-11-05
 
 [BUG-72-03](docs/feature-requests/archive/wiring-node-head-squeeze.md), filed

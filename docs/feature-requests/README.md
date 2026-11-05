@@ -7,15 +7,20 @@ stays here until it goes quiet.
 
 ## Open
 
-- [**`checks-by-node-matrix.md`**](checks-by-node-matrix.md) — FR-72-01, the lower-left card of the
-  same screenshot FR-71-01 came from: 17 checks × 5 subjects = **85 cells** of categorical state,
-  where the two kinds of blank ("no reading" and "does not apply here") carry as much as the
-  colours. `strct-heatmap` is a numeric ramp and cannot hold either. Measured off the reference: the
-  two absences read at **1.15:1** and **1.52:1** against the card, warning against critical is
-  **1.44:1** in luminance so only hue separates the pair that decides a page-out, and the one row
-  whose label wraps has its marks **8.5px** off the row.
+- [**`flow-edge-skips-column.md`**](flow-edge-skips-column.md) — BUG-73-01, from HyperStruct
+  against 7.8.1: a `fan-out` edge from column 0 to column 2 runs **behind the first box of column 1**,
+  about 207px of it inside a box it does not end on, with its label in the wrong strip. On a failover
+  drawing that reads as "the stranded VMs go via that member". The ask is to route around the column,
+  or else warn in dev mode.
 
 ### Closed on 2026-11-05, and moved to [`archive/`](archive/)
+
+- [**`archive/checks-by-node-matrix.md`**](archive/checks-by-node-matrix.md) — FR-72-01, the
+  lower-left card of the screenshot FR-71-01 came from: 17 checks × 5 subjects of categorical
+  state, where the two kinds of blank ("no reading" and "does not apply here") carry as much as the
+  colours and `strct-heatmap`'s numeric ramp can hold neither. Shipped in **v7.9.0** as
+  `strct-status-matrix`, where every state carries a shape as well as a tone — measured in
+  greyscale, because the first drawing reproduced the very defect it was filed about at **0.63%**.
 
 - [**`archive/flow-topology.md`**](archive/flow-topology.md) — FR-72-03, the fan-out's lines could
   not be told apart: every edge left its node's vertical centre and every trunk between two columns

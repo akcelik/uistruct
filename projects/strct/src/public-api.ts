@@ -93,6 +93,7 @@ export * from './lib/charts/donut';
 export * from './lib/charts/gauge';
 export * from './lib/flow/flow';
 export * from './lib/wiring/wiring';
+export * from './lib/status-matrix/status-matrix';
 export * from './lib/metric-tile/metric-tile';
 
 // Feedback

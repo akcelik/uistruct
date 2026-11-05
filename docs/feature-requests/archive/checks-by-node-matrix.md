@@ -1,6 +1,30 @@
 # FR-72-01 — Checks by node: a matrix of judgements, not numbers
 
-> **OPEN.** Filed 2026-11-05 against **7.7.0**.
+> **CLOSED, 2026-11-05.** Shipped in **v7.9.0** as `strct-status-matrix`, with
+> `scripts/status-matrix.mjs` (**20 checks**, two widths × both palettes) in CI and 15 specs.
+>
+> All seven of the behaviours below are measured rather than asserted, and two of them failed first:
+>
+> - **No two states told apart by hue alone.** Each mark is rendered, reduced to luminance and
+>   compared pixel for pixel — the measurement `scripts/glyph-distinct.mjs` uses, held to the same
+>   floor (4.56%, twice the icon set's own worst accepted pair). The first drawing measured
+>   **0.63%** for note against critical, because `info` and `critical` are both a ring at 12px: the
+>   component had reproduced the defect it was filed about. `accent` became a flag and `unjudged`
+>   an eye-off; the closest pair is now **9.15%**.
+> - **A mark on its row's centre line** measured **3.25px** off, at every width and on every row.
+>   An inline mark sits on the text baseline, so the cell's `vertical-align: middle` was centring a
+>   line box rather than the mark. With the line box removed it is **0.25px**, including the row
+>   whose head runs to two lines.
+>
+> The rest held first time: every state **≥ 3.66:1** against the ground it is read on (floor 3),
+> every cell naming its row, subject, state and reading, every roll-up equal to the worst of its own
+> line as the gate recomputes it, one tab stop over 108 cells with the arrows on both axes, and the
+> grid stacking below 560px with all 108 sentences visible.
+>
+> Two things in the ask were answered differently. `StrctMatrixState` keeps `neutral` from
+> `StrctStatus` rather than dropping it, so the vocabulary stays the library's; and the roll-up
+> order places `unjudged` above a note and a pass, because a line with an unread check in it cannot
+> be reported as clean — the ask did not say, and this is the reading the screen needs.
 
 **Filed by:** the maintainer, from the lower-left card of the same Network Health reference
 screenshot [FR-71-01](archive/wiring-map.md) was filed from. That FR shipped the wiring map and
