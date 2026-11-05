@@ -82,6 +82,16 @@ const ROUTES = [
   // FR-59-08: a topology — columns, edges, icons and a node that can be
   // walked to. The crop is the diagram, so a change to its geometry shows.
   ['flow-topology', '/components/flow', '#flow-topology', undefined, '#flow-topology strct-flow'],
+  // FR-72-01: six states, each a shape as well as a tone, and the two
+  // absences that a numeric ramp cannot hold. The crop is the grid itself,
+  // so a change to a mark shows.
+  [
+    'status-matrix',
+    '/components/status-matrix',
+    '#status-matrix strct-status-matrix',
+    undefined,
+    '#status-matrix strct-status-matrix',
+  ],
   // FR-61-01 / FR-61-02: a mode the operator chose, in its own corner of the
   // icon, beside a health badge — at the tree's 16px, where the amber disc it
   // replaces was indistinguishable from "paused".

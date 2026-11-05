@@ -48,6 +48,9 @@ const ROUTES = [
   // paths with no tab stop, and whose <svg> is aria-hidden inside a group
   // that is not — three ways to get ARIA wrong at once.
   '/components/wiring',
+  // FR-72-01: a table carrying role="grid" with a roving tabindex over 108
+  // gridcells, each named by a visually hidden sentence rather than a label.
+  '/components/status-matrix',
   '/components/time-range',
   '/scenarios/dashboard',
   // The wiring map inside a real screen: a segmented filter over it, a
