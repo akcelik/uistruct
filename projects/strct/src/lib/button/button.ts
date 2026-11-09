@@ -197,27 +197,53 @@ export type StrctButtonSize = StrctControlSize | 'mini';
         padding: 0;
       }
 
-      /* Opt-in filled call to action. */
-      .strct-btn--solid {
+      /* Opt-in filled call to action — for a neutral, which is the only
+         variant that is not already filled.
+
+         BUG-76-03: this rule used to be written unscoped. It sits after
+         --primary and --critical at the same specificity, so it won over
+         both and a primary asked to be solid came out at --bg-3 — pixel for
+         pixel the same grey as a plain solid neutral, the main action on a
+         sign-in page reading as disabled. The comment under it already said
+         solid was a no-op there; only the selector did not. It is excluded
+         rather than reordered so that the order of the variant rules among
+         themselves stays free to change. */
+      .strct-btn--solid:not(.strct-btn--primary):not(.strct-btn--critical) {
         background: var(--bg-3);
         border-color: transparent;
         color: var(--t1);
       }
-      .strct-btn--solid:not(:disabled):not([aria-disabled='true']):hover {
+      .strct-btn--solid:not(.strct-btn--primary):not(.strct-btn--critical):not(:disabled):not(
+          [aria-disabled='true']
+        ):hover {
         background: var(--bg-h);
       }
-      /* solid on a primary or a critical is now what those variants already
-         are; it is kept so templates written before 7.0 still compile, and it
-         still fills a neutral. */
 
       /* A disabled action is never the heaviest thing in the row. It comes
-         last so it wins over every variant and state above it. */
+         last so it wins over every variant and state above it.
+
+         BUG-77-01: it took the fill away and left the variant's ink behind,
+         so a disabled primary kept --inv on no background — white on white,
+         measured at 1.06:1 in the light palette and 1.03:1 in the dark, and
+         every wizard's Next was an unreadable empty box until its step could
+         advance. A disabled link kept the same shape of mistake at 1.17:1.
+         The ink is reset here with the fill, so what is left is the one
+         colour that reads on the surface whatever the variant was.
+
+         And the quietness is in the tokens, not in an opacity. A blanket
+         --disabled-opacity halves the label along with everything else, and
+         near-black ink at 0.5 tops out at 2.63:1 on a light surface — there
+         is no ink dark enough to reach 3:1 through it. It is the rule the
+         wiring map arrived at one component over: text taken out of
+         contrast is not de-emphasised, it is unreadable. No fill, a hairline
+         border, normal weight and muted ink say "not now" without taking the
+         words away. */
       .strct-btn:disabled,
       .strct-btn[aria-disabled='true'] {
         background: transparent;
         border-color: var(--b1);
+        color: var(--t3);
         font-weight: 400;
-        opacity: var(--disabled-opacity);
         cursor: not-allowed;
       }
 
@@ -275,7 +301,11 @@ export class StrctButton implements OnDestroy {
   readonly variant = input<StrctButtonVariant>('neutral');
   /** Size variant. */
   readonly size = input<StrctButtonSize>('md');
-  /** Opt in to a filled surface (use sparingly, for the primary action). */
+  /**
+   * Fill a neutral button's surface, for the one action a row is really for.
+   * A `primary` or a `critical` is filled already, so it is a no-op there —
+   * never a way to turn one of them grey (BUG-76-03).
+   */
   readonly solid = input(false, { transform: booleanAttribute });
   /** Expand to full width. */
   readonly block = input(false, { transform: booleanAttribute });
