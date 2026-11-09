@@ -113,6 +113,13 @@ const LEVEL_COLORS = [
         top: 50%;
         transform: translateY(-50%);
         display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        /* As tall as the field it sits in, so it is a target wherever the
+           control height is set — a 26px eye inside a 44px field is not one
+           on the tablet the sign-in page is opened from (FR-76-01). */
+        min-width: var(--control-h, 36px);
+        min-height: var(--control-h, 36px);
         padding: 5px;
         border: 0;
         border-radius: var(--radius-sm);

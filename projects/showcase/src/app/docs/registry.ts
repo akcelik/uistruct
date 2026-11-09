@@ -6077,8 +6077,8 @@ export const DOCS: DocCategory[] = [
         title: 'Login',
         selector: 'strct-login',
         importNames: ['StrctLogin'],
-        summary: 'Centered or split login scaffold.',
-        lead: 'A login page scaffold in centered or split layouts. In split mode, project a decorative aside via `strctLoginAside` and the form via `strctLoginMain`.',
+        summary: 'Centered, split or full-bleed login scaffold.',
+        lead: 'A login page scaffold in **centered**, **split** or **full** layouts. In split and full, project a decorative aside via `strctLoginAside` and the form via `strctLoginMain`. `full` takes the two panels to the edges of what the component is given — the aside takes what is left of the width and the form is a column of its own on the end — because a sign-in page is the one screen with nothing else on it, and a centred 960px card leaves a 1600px window two thirds empty. Controls inside it are 44px: many people open this page from a tablet.',
         inputs: [
           {
             name: '[strctLoginBrandMeta]',
@@ -6093,10 +6093,50 @@ export const DOCS: DocCategory[] = [
             description: 'Max width of the card in pixels.',
           },
           {
+            name: 'layout',
+            type: `'center' | 'split' | 'full'`,
+            default: `'center'`,
+            description:
+              '`center` is the single column, `split` the two-panel card, `full` the same two panels taken to the edges, each column the full height. Below 720px `full` stacks with the **form first** and the aside cut to brand and a line, so the first field is above the fold on a phone.',
+          },
+          {
             name: 'split',
             type: 'boolean',
             default: 'false',
-            description: 'Two-panel layout with a decorative aside.',
+            description:
+              'Two-panel layout with a decorative aside. Superseded by `layout="split"`.',
+          },
+          {
+            name: 'mainWidth',
+            type: 'number',
+            default: '572',
+            description: 'The width of the form column in `full`. Ignored by the other two.',
+          },
+          {
+            name: '[strctLoginBand]',
+            type: 'slot',
+            description:
+              'Drawn across the whole width above both columns — an environment label, PRODUCTION or TEST. It is a `role="note"` named by `bandLabel`, and draws nothing at all while empty.',
+          },
+          {
+            name: 'bandTone',
+            type: `'critical' | 'warning' | 'success' | 'accent' | 'neutral'`,
+            default: `'neutral'`,
+            description:
+              'The band\u2019s tone, mixed at 23% over `--bg-0` rather than taken from a `-bg` token: the `-bg` tints are built to sit under text quietly, and a band saying PRODUCTION has to be read from across a room. Measured at 11.8:1 for its own words in both palettes.',
+          },
+          {
+            name: 'bandLabel',
+            type: 'string',
+            default: `'Environment'`,
+            description:
+              'What the band is, for a screen reader; its projected content is the value.',
+          },
+          {
+            name: '[strctLoginArt]',
+            type: 'slot',
+            description:
+              'Takes the middle of the aside, between the brand row and the words, so an illustration never sits under them. The built-in `art` is this band\u2019s own background for the same reason — laid over the whole panel, the node diagram\u2019s lines ran through the tagline.',
           },
           {
             name: 'art',
@@ -6119,7 +6159,11 @@ export const DOCS: DocCategory[] = [
               'Projected at the aside\u2019s foot — the "is the appliance reachable" strip.',
           },
         ],
-        do: ['Use `strctLoginMain` for the form content in split mode.'],
+        do: [
+          'Use `strctLoginMain` for the form content in split and full.',
+          'Use `full` where the sign-in page is the whole window. `split` is for a sign-in inside something else.',
+          'Say which environment this is. A band reading PRODUCTION over the form is the cheapest guard against signing into the wrong appliance.',
+        ],
         dont: [
           'Do not place two default ng-content slots in separate branches when extending — Angular routes default content to one slot only.',
         ],

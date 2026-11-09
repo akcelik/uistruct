@@ -51,6 +51,9 @@ const ROUTES = [
   // FR-72-01: a table carrying role="grid" with a roving tabindex over 108
   // gridcells, each named by a visually hidden sentence rather than a label.
   '/components/status-matrix',
+  // FR-76-01: a role="note" band naming the environment, over a two-column
+  // layout whose form is the page's only job.
+  '/scenarios/sign-in',
   '/components/time-range',
   '/scenarios/dashboard',
   // The wiring map inside a real screen: a segmented filter over it, a

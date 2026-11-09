@@ -7,11 +7,15 @@ stays here until it goes quiet.
 
 ## Open
 
-- [**`login-full-bleed.md`**](login-full-bleed.md) — FR-76-01, `strct-login`: a full-bleed layout,
-  an environment band slot, an art slot and 44px controls (HyperStruct O480 lays its sign-in out
-  itself meanwhile).
+**Nothing.** Everything filed so far has shipped.
 
 ### Closed on 2026-11-09, and moved to [`archive/`](archive/)
+
+- [**`archive/login-full-bleed.md`**](archive/login-full-bleed.md) — FR-76-01, `strct-login` could
+  not draw a full-bleed sign-in, so a centred 960px card left a 1600px window two thirds empty and
+  the built-in art's lines ran through the aside's words. Shipped in **v7.12.0** as
+  `layout="full"`, `[strctLoginBand]`, `[strctLoginArt]` and 44px controls — with every one of the
+  acceptance's measurements read back from Chrome.
 
 - [**`archive/password-caps-lock.md`**](archive/password-caps-lock.md) — FR-76-02, `strct-password`
   says when Caps Lock is on. Shipped in **v7.11.0** — and the acceptance's "in the field's
