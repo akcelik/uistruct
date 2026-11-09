@@ -472,6 +472,11 @@ export class StrctField {
       this.addonDescription('[strctFieldPrefix]', this.prefixId),
       this.addonDescription('[strctFieldSuffix]', this.suffixId),
       message,
+      // A control may describe itself — strct-password says when Caps Lock
+      // is on, and only the control can know. This is written whole, so
+      // without this the field's own list would simply replace it and the
+      // control's description would never be read (FR-76-02).
+      el.getAttribute('data-strct-described-by') ?? '',
     ]
       .filter(Boolean)
       .join(' ');

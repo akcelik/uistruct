@@ -597,15 +597,19 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="password"
       heading="Password"
-      description="Reveal toggle and an optional strength meter."
-      code='<strct-password [(ngModel)]="pw" meter />'
+      description="Reveal toggle and an optional strength meter. It also says when Caps Lock is on — a browser cannot be asked for that state, only told it by a key event, so nothing is said until something has been typed into the field. The hint is the control's own description: it is announced politely when it appears, and a surrounding strct-field keeps it beside its own hint rather than replacing it. capsLockText renames it, an empty one draws nothing, and (capsLock) reports the change either way for a consumer putting its own words somewhere else."
+      code='<strct-password [(ngModel)]="pw" meter (capsLock)="caps.set($event)" />'
     >
       <strct-password
         [ngModel]="pw()"
         (ngModelChange)="pw.set($event)"
         placeholder="Enter a password"
         meter
+        (capsLock)="capsOn.set($event)"
       />
+      <span class="echo">{{
+        capsOn() ? 'capsLock → true' : 'Type with Caps Lock on to see the hint.'
+      }}</span>
     </app-demo>
 
     <app-demo
@@ -944,6 +948,7 @@ export class FormsPage {
   protected readonly city = signal<unknown>(null);
   protected readonly date = signal('');
   protected readonly pw = signal('');
+  protected readonly capsOn = signal(false);
   protected readonly files = signal<File[]>([]);
   protected readonly color = signal('#7b9ec8');
   protected readonly portGroup = signal<unknown>(null);

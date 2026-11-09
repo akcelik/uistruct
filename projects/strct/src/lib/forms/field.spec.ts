@@ -171,6 +171,34 @@ describe('StrctField', () => {
     });
   });
 
+  // FR-76-02: a control may describe itself — strct-password says when Caps
+  // Lock is on, and only the control can know. The field writes
+  // aria-describedby whole, so without keeping the control's own declaration
+  // its description would simply be replaced and never read.
+  describe("a control's own description", () => {
+    @Component({
+      imports: [StrctField],
+      template: `
+        <strct-field label="Password" hint="At least 12 characters">
+          <input data-strct-described-by="caps-hint" />
+          <p id="caps-hint">Caps Lock is on</p>
+        </strct-field>
+      `,
+    })
+    class OwnDescHost {}
+
+    it('is kept beside the field’s own hint, not replaced by it', async () => {
+      const fixture = TestBed.createComponent(OwnDescHost);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+      const described = input.getAttribute('aria-describedby')?.split(' ') ?? [];
+      expect(described).toContain('caps-hint');
+      // And the field's own hint is still in there with it.
+      expect(described.length).toBeGreaterThan(1);
+    });
+  });
+
   describe('projected hint (FR-48-07)', () => {
     it('renders the template in the hint slot, with the hint id, over the string', async () => {
       const fixture = TestBed.createComponent(RichHintHost);

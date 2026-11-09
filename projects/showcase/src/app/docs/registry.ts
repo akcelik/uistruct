@@ -1202,7 +1202,7 @@ export const DOCS: DocCategory[] = [
         selector: 'strct-password',
         importNames: ['StrctPassword'],
         summary: 'Reveal toggle and optional strength meter.',
-        lead: 'A password field with a show/hide toggle and an optional strength meter. ControlValueAccessor-compatible.',
+        lead: 'A password field with a show/hide toggle and an optional strength meter. It also says when **Caps Lock** is on — a browser cannot be asked for that state, only told it by a key event, so nothing is said until something has been typed into the field. ControlValueAccessor-compatible.',
         inputs: [
           controlSizeRow,
           model('string', 'Password value.'),
@@ -1213,11 +1213,36 @@ export const DOCS: DocCategory[] = [
             default: 'false',
             description: 'Show a strength meter under the field.',
           },
+          {
+            name: 'capsLockText',
+            type: 'string',
+            default: `'Caps Lock is on'`,
+            description:
+              'What the field says while Caps Lock is on. An empty string draws nothing, for a consumer that puts its own words somewhere else from `(capsLock)`.',
+          },
           disabledRow,
         ],
-        do: ['Enable the meter on sign-up / change-password flows.'],
-        dont: ['Do not block paste — it harms password-manager users.'],
-        a11y: [cvaA11y, 'The reveal toggle is a labelled button.'],
+        outputs: [
+          {
+            name: 'capsLock',
+            type: 'boolean',
+            description:
+              'Caps Lock went on or off — once per change, not once per key. Nothing is emitted before a key is typed into the field, because only a key event carries the state.',
+          },
+        ],
+        do: [
+          'Enable the meter on sign-up / change-password flows.',
+          'Leave the Caps Lock hint on. A sign-in page that does not say it makes the operator guess why the password was refused.',
+        ],
+        dont: [
+          'Do not block paste — it harms password-manager users.',
+          'Do not put the Caps Lock words in the surrounding field’s `hint`. The field has no way to know, and the hint it already carries is about the value, not the keyboard.',
+        ],
+        a11y: [
+          cvaA11y,
+          'The reveal toggle is a labelled button.',
+          'The Caps Lock hint is announced politely when it appears, and is the control’s own `aria-describedby` — a surrounding `strct-field` keeps it beside its own hint rather than replacing it.',
+        ],
       },
       {
         id: 'file',

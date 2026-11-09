@@ -6,11 +6,15 @@ import {
   computed,
   forwardRef,
   input,
+  output,
   signal,
 } from '@angular/core';
 import { StrctControlSize, strctControlHeight, strctIconSize } from '../control-size';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StrctIcon } from '../icon/icon';
+
+/** One id per field on the page, so a hint belongs to the field that owns it. */
+let capsSeq = 0;
 
 const LEVEL_COLORS = [
   'var(--critical)',
@@ -41,7 +45,11 @@ const LEVEL_COLORS = [
         [value]="value()"
         [disabled]="isDisabled()"
         [attr.autocomplete]="autocomplete()"
+        [attr.aria-describedby]="capsId"
+        [attr.data-strct-described-by]="capsId"
         (input)="onInput($event)"
+        (keydown)="onKey($event)"
+        (keyup)="onKey($event)"
         (blur)="onTouched()"
       />
       <button
@@ -54,6 +62,12 @@ const LEVEL_COLORS = [
         <strct-icon [name]="revealed() ? 'eyeOff' : 'eye'" [size]="16" />
       </button>
     </div>
+    @if (capsOn()) {
+      <p class="strct-pw__caps" [id]="capsId" role="status" aria-live="polite">
+        <strct-icon name="lock" [size]="13" aria-hidden="true" />
+        {{ capsLockText() }}
+      </p>
+    }
     @if (meter() && value()) {
       <div class="strct-pw__meter" role="status" aria-live="polite">
         <div class="strct-pw__bars">
@@ -75,6 +89,14 @@ const LEVEL_COLORS = [
   },
   styles: [
     `
+      .strct-pw__caps {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin: var(--space-2) 0 0;
+        font-size: var(--text-sm);
+        color: var(--warning);
+      }
       .strct-pw {
         display: block;
         width: 100%;
@@ -160,10 +182,41 @@ export class StrctPassword implements ControlValueAccessor {
   readonly hideLabel = input('Hide password');
   /** Autocomplete hint; the default lets password managers work. */
   readonly autocomplete = input('current-password');
+  /**
+   * What the field says while Caps Lock is on. Empty draws nothing, for a
+   * consumer putting its own words somewhere else from `(capsLock)`.
+   */
+  readonly capsLockText = input('Caps Lock is on');
+  /**
+   * Caps Lock went on or off. Nothing is emitted before a key is typed into
+   * the field: a browser cannot be asked for the state, only told it by a
+   * key event (FR-76-02).
+   */
+  readonly capsLock = output<boolean>();
 
   readonly value = signal('');
   readonly revealed = signal(false);
   readonly isDisabled = signal(false);
+  /** The hint's id is declared once and for all: a surrounding strct-field
+   *  reads it when it links, which is before anyone has typed, and an id
+   *  pointing at nothing is ignored until the hint is there to point at. */
+  /** Whether the last key event said Caps Lock was on. */
+  protected readonly caps = signal(false);
+  protected readonly capsOn = computed(() => this.caps() && !!this.capsLockText());
+  protected readonly capsId = `strct-pw-caps-${++capsSeq}`;
+
+  /**
+   * Read from the key events the field itself receives. `getModifierState` is
+   * the only way to know, and only a real key event carries it — which is why
+   * nothing is said until the operator has typed something.
+   */
+  protected onKey(event: KeyboardEvent): void {
+    if (typeof event.getModifierState !== 'function') return;
+    const on = event.getModifierState('CapsLock');
+    if (on === this.caps()) return;
+    this.caps.set(on);
+    this.capsLock.emit(on);
+  }
 
   protected readonly score = computed(() => {
     const v = this.value();

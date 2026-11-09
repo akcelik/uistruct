@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.11.0] - 2026-11-09
+
+[FR-76-02](docs/feature-requests/archive/password-caps-lock.md), from
+HyperStruct's sign-in page, which was reading the state itself and putting the
+words into the surrounding field's `hint`.
+
+### Added
+
+- **`strct-password` says when Caps Lock is on.** A browser cannot be asked
+  for that state — only a key event carries it — so the field says nothing
+  until something has been typed into it, and then says it once per change
+  rather than once per key.
+
+  ```html
+  <strct-password [(ngModel)]="pw" capsLockText="Büyük harf kilidi açık" />
+  ```
+
+  `capsLockText` renames it and an empty string draws nothing; `(capsLock)`
+  reports the change either way, for a consumer putting its own words
+  somewhere else. The hint is announced politely when it appears.
+
+### Fixed
+
+- **`strct-field` keeps a control's own description.** It writes
+  `aria-describedby` whole, so a control that describes itself had that
+  description replaced by the field's and never read — which is exactly the
+  case the Caps Lock hint is, since only the control can know. A control now
+  declares its own with `data-strct-described-by`, and the field adds it to
+  the list instead of overwriting it. This was not in the report; it is what
+  the report's own workaround was working around.
+
 ## [7.10.1] - 2026-11-09
 
 Two from HyperStruct against 7.9.1, both on `strct-button`, both the same
