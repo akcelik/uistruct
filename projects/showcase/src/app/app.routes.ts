@@ -63,6 +63,10 @@ export const routes: Routes = [
     loadComponent: () => import('./scenarios/cluster-wizard.page').then((m) => m.ClusterWizardPage),
   },
   {
+    path: 'scenarios/sign-in',
+    loadComponent: () => import('./scenarios/sign-in.page').then((m) => m.SignInPage),
+  },
+  {
     path: 'scenarios/fabric',
     loadComponent: () => import('./scenarios/fabric.page').then((m) => m.FabricPage),
   },

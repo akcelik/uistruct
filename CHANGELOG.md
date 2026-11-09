@@ -5,6 +5,58 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.12.0] - 2026-11-09
+
+[FR-76-01](docs/feature-requests/archive/login-full-bleed.md): the operator
+picked a full-bleed sign-in and `strct-login` could not draw it, so
+HyperStruct laid the page out itself.
+
+### Added
+
+- **`layout="full"`** beside `center` and `split`. The two panels go to the
+  edges of what the component is given: the aside takes what is left of the
+  width, the form is a column of its own on the end (`mainWidth`, 572px), and
+  both run the full height. A centred 960px card leaves a 1600px window two
+  thirds empty, and a sign-in page is the one screen with nothing else on it.
+  Below 720px it stacks with the **form first** and the aside cut to brand and
+  a line.
+
+  ```html
+  <strct-login layout="full" art="network" bandTone="critical">
+    <div strctLoginBand>Production · DC2</div>
+    <div strctLoginAside>…</div>
+    <img strctLoginArt src="…" />
+    <form strctLoginMain>…</form>
+  </strct-login>
+  ```
+
+- **`[strctLoginBand]`** — an environment label across both columns, a
+  `role="note"` named by `bandLabel`, drawing nothing while empty. `bandTone`
+  mixes at **23% over `--bg-0`** rather than taking a `-bg` token: those
+  tints are built to sit under text quietly, and a band saying PRODUCTION has
+  to be read from across a room.
+
+- **`[strctLoginArt]`** — a slot taking the middle of the aside, between the
+  brand row and the words.
+
+- **44px controls inside `strct-login`**, including the password field's
+  reveal toggle, which was a 26px target inside a 44px field.
+
+### Fixed
+
+- **The built-in art no longer runs through the aside's words.** It was laid
+  over the whole panel, so the node diagram's lines crossed the tagline under
+  it. It is now the art band's own background. Measured: **0px²** of art over
+  the brand row or the copy, at both widths.
+
+- **`scripts/login-layout.mjs`** — 22 checks reading the operator's own
+  measurements back from Chrome at 1600×1000, 1280×800 and 390×844: no
+  horizontal scroll, the form column at 572.0px, the aside filling the rest to
+  the edge, both columns full height, 0px² of art over words, 44px controls,
+  the band across both columns and above them, and on the phone the form
+  before the picture with its first field 234px down an 844px screen. The
+  band's own words measure **11.80:1** light and **11.94:1** dark.
+
 ## [7.11.0] - 2026-11-09
 
 [FR-76-02](docs/feature-requests/archive/password-caps-lock.md), from

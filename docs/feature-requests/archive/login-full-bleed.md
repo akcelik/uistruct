@@ -1,5 +1,34 @@
 # FR-76-01 — `strct-login`: a full-bleed layout, an environment band and an art slot
 
+> **CLOSED, 2026-11-09.** Shipped in **v7.12.0**, all four asks, and every acceptance measured by
+> `scripts/login-layout.mjs` (**22 checks**) rather than asserted:
+>
+> |                            | 1600×1000   | 1280×800    | 390×844        |
+> | -------------------------- | ----------- | ----------- | -------------- |
+> | horizontal scroll          | none        | none        | none           |
+> | form column                | **572.0px** | **572.0px** | full width     |
+> | art over the aside's words | **0px²**    | **0px²**    | art not drawn  |
+> | controls                   | **44px**    | 44px        | 44px           |
+> | first field                | —           | —           | **234px** down |
+> | form before the picture    | —           | —           | **yes**        |
+>
+> The band is a `role="note"` named by `bandLabel`, mixed at 23% over `--bg-0`, and its own words
+> measure **11.80:1** light and **11.94:1** dark.
+>
+> Two things beyond the ask. The built-in art was laid over the whole panel, which is why its lines
+> crossed "Command your infrastructure." in your screenshot — it is now the art band's own
+> background, so the fix reaches `split` as well as `full`. And the 44px ask turned out to miss the
+> password field's **reveal toggle**, a 26px target sitting inside a 44px field; it now follows the
+> control height wherever that is set.
+>
+> Two of the gate's own readings had to be corrected before it could be believed: a `color-mix()`
+> resolves to `color(srgb r g b)` with channels out of **one**, and read as if they were out of 255
+> the band's ground came back near-black — its words measured 1.00:1 in the light palette and
+> passed by luck in the dark.
+>
+> The showcase renders it at `/scenarios/sign-in`, inside its own shell; "fills the window" is
+> measured as filling what the component is given.
+
 **Filed by:** HyperStruct, 2026-11-06, against **7.9.1**. The operator picked a full-bleed sign-in
 (HyperStruct O480, mock-up option C) and asked for the sign-in column to be 30% wider than drawn.
 `strct-login` cannot draw it, so HyperStruct lays the page out itself for now (marked workaround in

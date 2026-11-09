@@ -107,6 +107,12 @@ jobs:
       # on their row's centre line, and every cell saying its own sentence.
       - name: Assert a judgement grid is readable without hue
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/status-matrix.mjs
+      # FR-76-01: the sign-in page full-bleed — the form column the width it
+      # was asked for, the aside taking the rest to the edge, the art in a
+      # band of its own rather than across the words, 44px controls, and on a
+      # phone the form before the picture with its first field above the fold.
+      - name: Assert the sign-in page lays out where it was told
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/login-layout.mjs
       # BUG-70-01: a bar chart's category label under its own band, measured at
       # two widths because a single one cannot tell a measurement from a
       # constant that happens to fit. 6 of its 9 checks fail on 7.6.0.

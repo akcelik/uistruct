@@ -87,6 +87,9 @@ const ROUTES = [
   // FR-59-08: a topology — columns, edges, icons and a node that can be
   // walked to. The crop is the diagram, so a change to its geometry shows.
   ['flow-topology', '/components/flow', '#flow-topology', undefined, '#flow-topology strct-flow'],
+  // FR-76-01: the sign-in page taken to the edges, with its environment
+  // band across both columns and the art in a band of its own.
+  ['sign-in', '/scenarios/sign-in', 'strct-login', undefined, 'strct-login'],
   // BUG-73-01: an edge that skips a column, routed around it. The crop is
   // the blast-radius drawing, where 140px of the critical line used to run
   // behind a member it does not end on.
