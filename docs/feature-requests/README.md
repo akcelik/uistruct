@@ -12,10 +12,16 @@ stays here until it goes quiet.
   itself meanwhile).
 - [**`password-caps-lock.md`**](password-caps-lock.md) — FR-76-02, `strct-password` says when Caps
   Lock is on.
-- [**`button-solid-overrides-primary.md`**](button-solid-overrides-primary.md) — BUG-76-03,
-  `variant="primary" solid` draws a grey button.
-- [**`wizard-next-disabled-invisible.md`**](wizard-next-disabled-invisible.md) — BUG-77-01, a
-  disabled primary button keeps `--inv` text and drops its fill: the wizard's Next is an empty box.
+
+### Closed on 2026-11-09, and moved to [`archive/`](archive/)
+
+- [**`archive/button-solid-overrides-primary.md`**](archive/button-solid-overrides-primary.md) —
+  BUG-76-03, `variant="primary" solid` drew **the same grey as a solid neutral**, in 287 of
+  HyperStruct's call sites. Fixed in **v7.10.1**; the gate found `critical` was grey too.
+- [**`archive/wizard-next-disabled-invisible.md`**](archive/wizard-next-disabled-invisible.md) —
+  BUG-77-01, a disabled primary kept `--inv` with no fill: **1.06:1**, every wizard's Next an
+  unreadable empty box. Fixed in **v7.10.1** at 4.97–5.65:1 — which meant dropping the blanket
+  `--disabled-opacity` from the button, because 3:1 cannot be reached through it.
 
 ### Closed on 2026-11-05, and moved to [`archive/`](archive/)
 

@@ -90,7 +90,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="button-solid"
       owner="button"
       heading="Solid (opt-in)"
-      description="solid fills a neutral button. On a primary or a critical it is now what the variant already is, and is kept so templates written before 7.0 still compile."
+      description="solid fills a neutral button — the one action a row is really for. On a primary or a critical it is a no-op, because those are filled already; it is kept so templates written before 7.0 still compile. It used to win on source order and paint them --bg-3 instead, which is the same grey as the solid neutral beside them."
       code='<button strct-button variant="primary" solid>Deploy</button>'
     >
       <button strct-button variant="primary" solid>Deploy</button>

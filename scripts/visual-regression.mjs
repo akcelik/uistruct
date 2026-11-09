@@ -60,6 +60,11 @@ const UPDATE = process.argv.includes('--update');
 const ROUTES = [
   ['home', '/'],
   ['button', '/components/button'],
+  // BUG-76-03 / BUG-77-01: the two demos that carry them are below the fold,
+  // so the page crop above never saw either — a primary painted --bg-3 by
+  // `solid`, and a disabled primary with --inv ink on no fill at 1.06:1.
+  ['button-variants', '/components/button', '#button', undefined, '#button'],
+  ['button-solid', '/components/button', '#button-solid', undefined, '#button-solid'],
   ['datagrid', '/components/datagrid'],
   // FR-47-01: a progress bar inside a datagrid row — the case where the track
   // used to be the exact colour of the row behind it in the dark theme.

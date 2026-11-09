@@ -5,6 +5,52 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.10.1] - 2026-11-09
+
+Two from HyperStruct against 7.9.1, both on `strct-button`, both the same
+shape of mistake: a rule that took something away and left the variant's
+colour behind.
+[BUG-76-03](docs/feature-requests/archive/button-solid-overrides-primary.md)
+and
+[BUG-77-01](docs/feature-requests/archive/wizard-next-disabled-invisible.md).
+
+### Fixed
+
+- **`solid` no longer turns a `primary` or a `critical` grey.**
+  `.strct-btn--solid` was written unscoped, so it sat after both at the same
+  specificity and won: a `variant="primary" solid` came out at `--bg-3` —
+  **pixel for pixel the same grey as a plain solid neutral**, measured at
+  `rgb(229, 231, 234)` light and `rgb(35, 40, 47)` dark. HyperStruct had 287
+  of them, and the sign-in page's only action read as disabled. The rule's
+  own comment already said `solid` was a no-op on those two variants; only
+  the selector did not. Now `--acc` in both, matching a plain primary exactly.
+  The report named `primary`; the gate found `critical` was grey too.
+
+- **A disabled button keeps its label.** The disabled rule took the fill away
+  and left the variant's ink, so a disabled `primary` was `--inv` on nothing
+  — white on white, **1.06:1** in the light palette and **1.03:1** in the
+  dark, and every `strct-wizard`'s Next was an unreadable empty box until its
+  step could advance. A disabled `link` had the same shape of it at 1.17:1.
+
+  The ink is now reset with the fill, and the quietness is carried by tokens
+  rather than by `opacity`: a blanket `--disabled-opacity` halves the label
+  along with everything else, and near-black ink at 0.5 tops out at
+  **2.63:1** on a light surface — there is no ink dark enough to reach the
+  3:1 asked for through it. This is the rule the wiring map arrived at one
+  component over: text taken out of contrast is not de-emphasised, it is
+  unreadable. No fill, a hairline border, normal weight and `--t3` say "not
+  now" without taking the words away. Measured **4.97:1 – 5.65:1** across all
+  six palettes.
+
+  The other four components that use `--disabled-opacity` (`segmented`,
+  `number`, `datetime-picker`, `chat`) are untouched; nothing was filed
+  against them and none of them paints a label over its own fill.
+
+- `scripts/weight-ladder.mjs` is **259 checks**: `solid` changes nothing on a
+  variant that is filled already, a solid primary is never the colour of a
+  solid neutral, and a disabled label reads at 3:1 whatever the variant.
+  24 and 18 of them fail on 7.10.0 respectively.
+
 ## [7.10.0] - 2026-11-05
 
 Two from HyperStruct, both against 7.9.1, both about the same wrong idea in a

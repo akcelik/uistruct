@@ -180,6 +180,10 @@ function contrast(a, b) {
   const [x, y] = [luminance(a) + 0.05, luminance(b) + 0.05];
   return Math.max(x, y) / Math.min(x, y);
 }
+/** What a disabled label must still read at, once its own opacity is in it.
+ *  WCAG exempts an inactive control, but an operator still has to be able to
+ *  tell Next from Finish (BUG-77-01). */
+const DISABLED_LABEL = 3;
 const parse = (css) => (css.match(/[\d.]+/g) ?? []).slice(0, 4).map(Number);
 /** A border token is an rgba over the surface, so compare what is painted. */
 const over = (css, surface) => {
@@ -311,6 +315,9 @@ try {
       bg: getComputedStyle(el).backgroundColor,
       border: getComputedStyle(el).borderTopColor,
       weight: getComputedStyle(el).fontWeight,
+      color: getComputedStyle(el).color,
+      opacity: Number(getComputedStyle(el).opacity),
+      text: el.textContent.trim().slice(0, 16),
     };
     return {
       surface: ${PAINTED}(row.querySelector('.strct-btn')),
@@ -319,7 +326,19 @@ try {
       outline: read(pick('.strct-btn--outline')),
       flat: read(pick('.strct-btn--flat')),
       disabled: read(pick('.strct-btn:disabled')),
+      // BUG-77-01: a disabled button took the fill away and left the
+      // variant's ink behind, so a primary kept --inv on nothing.
+      disabledPrimary: read(pick('.strct-btn--primary:disabled')),
+      disabledLink: read(pick('.strct-btn--link:disabled')),
       neutral: read(pick('.strct-btn:not([class*="strct-btn--"])')),
+      // BUG-76-03: solid is an opt-in fill for a NEUTRAL. On a variant that
+      // is filled already it must change nothing — it used to win on source
+      // order and paint a primary --bg-3, the same grey as a solid neutral.
+      solidPrimary: read(pick('.strct-btn--primary.strct-btn--solid')),
+      solidCritical: read(pick('.strct-btn--critical.strct-btn--solid')),
+      solidNeutral: read(
+        pick('.strct-btn--solid:not(.strct-btn--primary):not(.strct-btn--critical)'),
+      ),
     };
   })()`;
   for (const [palette, theme] of PALETTES) {
@@ -332,6 +351,34 @@ try {
       check(
         v && Number(v.weight) >= 600,
         `${where}: a ${name} action is not heavier than the row (font-weight ${v?.weight})`,
+      );
+    }
+    for (const name of ['primary', 'critical']) {
+      const plain = actions[name];
+      const solid = actions[`solid${name[0].toUpperCase()}${name.slice(1)}`];
+      check(
+        solid && plain && solid.bg === plain.bg && solid.color === plain.color,
+        `${where}: solid turns a ${name} into something else (${solid?.bg} against ${plain?.bg}) — it fills a neutral and is a no-op on a variant that is filled already`,
+      );
+      check(
+        solid && actions.solidNeutral && solid.bg !== actions.solidNeutral.bg,
+        `${where}: a solid ${name} is the same colour as a solid neutral (${solid?.bg}) — the action a page exists for reads as the quiet one`,
+      );
+    }
+    // A disabled action is the quietest thing in the row, but it still has
+    // to say what it is: a wizard whose Next cannot be read is a wizard the
+    // operator cannot tell is waiting on them.
+    for (const name of ['disabled', 'disabledPrimary', 'disabledLink']) {
+      const v = actions[name];
+      if (!v) continue;
+      const surface = parse(actions.surface);
+      const ink = over(v.color, actions.surface).map(
+        (c, i) => c * v.opacity + surface[i] * (1 - v.opacity),
+      );
+      const ratio = contrast(ink, surface);
+      check(
+        ratio >= DISABLED_LABEL,
+        `${where}: a ${name} button's label is ${ratio.toFixed(2)}:1 against its surface (floor ${DISABLED_LABEL}) — "${v.text}" at opacity ${v.opacity}`,
       );
     }
     for (const name of ['outline', 'flat']) {
