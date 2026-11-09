@@ -27,8 +27,19 @@ export type StrctMatrixState = StrctStatus | 'unjudged' | 'off-subject';
 
 /** A row or a column of the matrix. */
 export interface StrctMatrixAxis {
-  /** The catalogue's own id — "H19" — gaps and all. Never renumbered. */
+  /**
+   * The key. Stable, the consumer's own, and never renumbered — a cell names
+   * two of these. It is printed before a row's label only when no `code`
+   * says otherwise, which is the first caller's catalogue id ("H19") and not
+   * much else: an internal key is not content (FR-75-01).
+   */
   id: string;
+  /**
+   * The code to print before a row's label, where the row has one: "H19",
+   * "VLAN 711", "PVLAN 100". Empty string prints nothing for this row,
+   * whatever the matrix's `rowIds` says.
+   */
+  code?: string;
   /** What it is called. */
   label: string;
   /** A second line under the label, or a title on a column head. */
@@ -182,13 +193,15 @@ const ROLLUP_ID = '__strct_rollup__';
               [class.strct-status-matrix__row--summary]="r.kind === 'summary'"
             >
               <th class="strct-status-matrix__rowhead" role="rowheader" scope="row">
-                @if (r.id !== ROLLUP) {
-                  <span class="strct-status-matrix__rowid">{{ r.id }}</span>
+                @if (rowCode(r); as code) {
+                  <span class="strct-status-matrix__rowid">{{ code }}</span>
                 }
-                <span class="strct-status-matrix__rowlabel">{{ r.label }}</span>
-                @if (r.hint) {
-                  <span class="strct-status-matrix__rowhint">{{ r.hint }}</span>
-                }
+                <span class="strct-status-matrix__rowtext"
+                  ><span class="strct-status-matrix__rowlabel">{{ r.label }}</span>
+                  @if (r.hint) {
+                    <span class="strct-status-matrix__rowhint">{{ r.hint }}</span>
+                  }
+                </span>
               </th>
               @for (c of colsView(); track c.id; let ci = $index) {
                 <td
@@ -299,9 +312,22 @@ const ROLLUP_ID = '__strct_rollup__';
       }
       .strct-status-matrix__rowid {
         display: inline-block;
+        /* Wide enough that a catalogue's short ids line up as a column, and
+           always followed by a gap — a code longer than the minimum used to
+           run straight into the label, "VLAN 711DC2.mVS.Prd.Int.Gen.1"
+           (BUG-74-01). */
         min-width: 2.4em;
+        margin-inline-end: var(--space-2);
+        vertical-align: top;
         color: var(--t3);
         font-variant-numeric: tabular-nums;
+      }
+      /* The label and its hint share one block, so the hint starts exactly
+         where the label does however wide the code beside them is — an
+         indent measured in em cannot follow a code it has never seen. */
+      .strct-status-matrix__rowtext {
+        display: inline-block;
+        vertical-align: top;
       }
       .strct-status-matrix__rowhint {
         display: block;
@@ -496,6 +522,14 @@ export class StrctStatusMatrix {
   readonly rollup = input<StrctMatrixRollup>('none');
   /** What a roll-up line is called. */
   readonly rollupLabel = input('Worst');
+  /**
+   * Print each row's code before its label. On by default, and a row with no
+   * `code` falls back to its `id`, which is what a catalogue of checks
+   * wants. Off where the rows are subjects whose only id is an internal key
+   * — clusters, hosts — and the label then starts at the head's own edge
+   * (FR-75-01).
+   */
+  readonly rowIds = input(true, { transform: booleanAttribute });
   /** Rename a state — for another language, or another vocabulary. */
   readonly stateText = input<Partial<Record<StrctMatrixState, string>> | null>(null);
   /**
@@ -527,6 +561,18 @@ export class StrctStatusMatrix {
   });
 
   protected readonly ROLLUP = ROLLUP_ID;
+
+  /**
+   * What is printed before a row's label, if anything: its own `code`, else
+   * its `id`, and nothing at all where the matrix prints no codes, where the
+   * row sets an empty one, or on a roll-up line, which is named by its own
+   * label.
+   */
+  protected rowCode(row: StrctMatrixAxis): string | null {
+    if (row.id === ROLLUP_ID || !this.rowIds()) return null;
+    const code = row.code ?? row.id;
+    return code.length ? code : null;
+  }
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   /** Where the tab stop is, as row and column indices into the drawn grid. */
   protected readonly cursor = signal<{ r: number; c: number }>({ r: 0, c: 0 });
@@ -595,7 +641,10 @@ export class StrctStatusMatrix {
   protected sentence(row: StrctMatrixAxis, col: StrctMatrixAxis): string {
     const state = this.stateAt(row.id, col.id);
     const detail = this.index().get(`${row.id}|${col.id}`)?.detail;
-    const rowName = row.id === ROLLUP_ID ? row.label : `${row.id} ${row.label}`;
+    // What it says is what it shows: a key nobody prints is a key nobody
+    // should have read out either.
+    const code = this.rowCode(row);
+    const rowName = code ? `${code} ${row.label}` : row.label;
     const colName = col.id === ROLLUP_ID ? `${col.label} of the row` : col.label;
     const summary = col.kind === 'summary' && col.id !== ROLLUP_ID ? ' (summary)' : '';
     return `${rowName}, ${colName}${summary}: ${this.word(state)}${detail ? ` — ${detail}` : ''}`;

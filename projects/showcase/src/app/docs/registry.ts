@@ -5332,7 +5332,7 @@ export const DOCS: DocCategory[] = [
             type: 'StrctMatrixAxis[]',
             default: '[]',
             description:
-              'The checks and the subjects: `{ id; label; hint?; kind? }`. The `id` is the catalogue\u2019s own \u2014 "H19", gaps and all \u2014 and is never renumbered. `kind: \'summary\'` marks an entry that rolls up the ones beside it, a Cluster column against four nodes; it is ruled off from them and says so in every cell it owns.',
+              'The checks and the subjects: `{ id; label; code?; hint?; kind? }`. The `id` is the **key** a cell names \u2014 stable, the consumer\u2019s own, never renumbered. `code` is what is printed before a row\u2019s label ("H19", "VLAN 711", "PVLAN 100"), with a gap whatever its length; without one the row falls back to printing its `id`, and `code: \'\'` prints nothing for that row alone. A hint starts where its label starts, not where the code ends. `kind: \'summary\'` marks an entry that rolls up the ones beside it, a Cluster column against four nodes; it is ruled off from them and says so in every cell it owns.',
           },
           {
             name: 'cells',
@@ -5367,6 +5367,13 @@ export const DOCS: DocCategory[] = [
             default: 'false',
             description:
               'Draw a key under the grid naming every state the data actually uses. Built from the same table the cells are, so the two can never disagree.',
+          },
+          {
+            name: 'rowIds',
+            type: 'boolean',
+            default: 'true',
+            description:
+              'Print each row\u2019s code before its label. Off where the rows are subjects whose only id is an internal key \u2014 clusters, hosts, baselines \u2014 which would otherwise read "c:PROD-CL02PROD-CL02": nothing is printed, the label starts at the head\u2019s own edge, and no cell reads the key out loud either (FR-75-01).',
           },
           {
             name: 'stateText',
@@ -5408,7 +5415,8 @@ export const DOCS: DocCategory[] = [
         do: [
           'Use it where the cell is a verdict, not a quantity: compliance checks, per-node validation, a conformance grid.',
           'Say which absence you mean. `unjudged` and `off-subject` are different facts and the reader cannot recover one from the other.',
-          'Keep the catalogue\u2019s own ids on the rows \u2014 they are what an operator carries between screens.',
+          'Keep the catalogue\u2019s own codes on the rows \u2014 they are what an operator carries between screens \u2014 and pass them as `code`, leaving `id` to be the key.',
+          'Turn `rowIds` off where the rows are subjects rather than catalogue entries. An internal key printed beside the name it belongs to is noise twice over.',
         ],
         dont: [
           'Do not use it for density or magnitude \u2014 that is `strct-heatmap`, whose ramp carries a number.',

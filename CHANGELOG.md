@@ -5,6 +5,42 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.10.0] - 2026-11-05
+
+Two from HyperStruct, both against 7.9.1, both about the same wrong idea in a
+component one day old: that a row's `id` is something to print.
+[BUG-74-01](docs/feature-requests/archive/matrix-row-id-touches-label.md) and
+[FR-75-01](docs/feature-requests/archive/matrix-rows-without-printed-id.md).
+
+### Added
+
+- **`StrctMatrixAxis.code`** — what is printed before a row's label, leaving
+  `id` to be the key a cell names. A catalogue of checks passes neither and
+  keeps today's behaviour; a matrix of VLANs passes `code: 'VLAN 711'`; a
+  single row opts out with `code: ''`.
+
+- **`rowIds`** (default `true`) — off where the rows are subjects whose only
+  id is an internal key. Nothing is printed, the label starts at the head's
+  own edge, and no cell reads the key out loud either: HyperStruct's hosts
+  matrix read **"c:PROD-CL02PROD-CL02"** before this.
+
+### Fixed
+
+- **A row code longer than 2.4em no longer runs into its label.**
+  `.strct-status-matrix__rowid` had a `min-width` and no gap, so a code
+  within the minimum looked spaced and anything past it collided:
+  **"VLAN 711DC2.mVS.Prd.Int.Gen.1"**, measured at **0.0px** between them.
+  Now **8.0px** whatever the code's length, with the 2.4em minimum kept so a
+  catalogue's short ids still line up.
+
+- **A hint starts where its label starts.** It was indented by a fixed
+  `2.4em`, which is right only while every code is narrower than that; beside
+  "PVLAN 100" it sat under the code instead. The label and its hint now share
+  one block, so the two line up at **0.00px** whatever the code beside them.
+
+- Four new checks in `scripts/status-matrix.mjs` (28 now). The gap check
+  reproduces all three of HyperStruct's strings at 0.0px on 7.9.1.
+
 ## [7.9.1] - 2026-11-05
 
 [BUG-73-01](docs/feature-requests/archive/flow-edge-skips-column.md), filed by

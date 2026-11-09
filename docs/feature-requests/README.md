@@ -7,15 +7,27 @@ stays here until it goes quiet.
 
 ## Open
 
-- [**`matrix-rows-without-printed-id.md`**](matrix-rows-without-printed-id.md) — FR-75-01, from HyperStruct
-  against 7.9.1: `strct-status-matrix` always prints a row's id before its label; rows that are clusters
-  or hosts have a name, not a code. The ask is a way to leave the id out (`rowIds` or an optional `code`).
-
-- [**`matrix-row-id-touches-label.md`**](matrix-row-id-touches-label.md) — BUG-74-01, from HyperStruct
-  against 7.9.1: a `strct-status-matrix` row id longer than `min-width: 2.4em` runs into its label
-  with no gap ("VLAN 711DC2.mVS…"). The ask is a gap whatever the id's width.
+- [**`login-full-bleed.md`**](login-full-bleed.md) — FR-76-01, `strct-login`: a full-bleed layout,
+  an environment band slot, an art slot and 44px controls (HyperStruct O480 lays its sign-in out
+  itself meanwhile).
+- [**`password-caps-lock.md`**](password-caps-lock.md) — FR-76-02, `strct-password` says when Caps
+  Lock is on.
+- [**`button-solid-overrides-primary.md`**](button-solid-overrides-primary.md) — BUG-76-03,
+  `variant="primary" solid` draws a grey button.
+- [**`wizard-next-disabled-invisible.md`**](wizard-next-disabled-invisible.md) — BUG-77-01, a
+  disabled primary button keeps `--inv` text and drops its fill: the wizard's Next is an empty box.
 
 ### Closed on 2026-11-05, and moved to [`archive/`](archive/)
+
+- [**`archive/matrix-row-id-touches-label.md`**](archive/matrix-row-id-touches-label.md) —
+  BUG-74-01, a `strct-status-matrix` row code longer than the 2.4em minimum ran straight into its
+  label, **"VLAN 711DC2.mVS.Prd.Int.Gen.1"** at **0.0px** between them. Fixed in **v7.10.0** at
+  8.0px — and a second half the report did not have: a hint indented by a fixed em sat under the
+  code rather than under the words.
+- [**`archive/matrix-rows-without-printed-id.md`**](archive/matrix-rows-without-printed-id.md) —
+  FR-75-01, rows whose only id is an internal key, printed as **"c:PROD-CL02PROD-CL02"**. Shipped
+  in **v7.10.0** as `StrctMatrixAxis.code` and `rowIds` — an id is a key, and what gets printed is
+  content, which is the mistake behind both of this week's matrix reports.
 
 - [**`archive/flow-edge-skips-column.md`**](archive/flow-edge-skips-column.md) — BUG-73-01, a
   `fan-out` edge that skips a column drawn **through the column it crosses**: 232 of 401 sampled
