@@ -36,6 +36,8 @@ const RUNS = [
 const AANT = 3;
 /** How far a mark may sit off its row's centre line. */
 const CENTRE = 1;
+/** The least gap between a printed row code and the words after it. */
+const CODE_GAP = 8;
 /**
  * How much of a mark must differ from every other mark once the colour is
  * taken out of it. The house precedent is scripts/glyph-distinct.mjs: the
@@ -165,8 +167,8 @@ async function evaluate(send, expression) {
 }
 
 /** Everything the checks read, from the grid the showcase draws. */
-const READ = `(() => {
-  const host = document.querySelector('#status-matrix strct-status-matrix');
+const READ = (sel = '#status-matrix strct-status-matrix') => `(() => {
+  const host = document.querySelector('${sel}');
   if (!host) return null;
   const grid = host.querySelector('.strct-status-matrix__grid');
   if (!grid) return null;
@@ -209,11 +211,33 @@ const READ = `(() => {
     };
   });
 
+  // BUG-74-01 / FR-75-01: where the printed code ends and the words begin.
+  const heads = [...grid.querySelectorAll('.strct-status-matrix__rowhead')].map((th) => {
+    const id = th.querySelector('.strct-status-matrix__rowid');
+    const text = th.querySelector('.strct-status-matrix__rowtext');
+    const label = th.querySelector('.strct-status-matrix__rowlabel');
+    const hint = th.querySelector('.strct-status-matrix__rowhint');
+    const tb = th.getBoundingClientRect();
+    const box = (el) => (el ? el.getBoundingClientRect() : null);
+    const lb = box(label);
+    const hb = box(hint);
+    const ib = box(id);
+    return {
+      code: id ? id.textContent.trim() : null,
+      label: label ? label.textContent.trim() : '',
+      gap: ib && lb ? lb.left - ib.right : null,
+      indent: lb ? lb.left - tb.left - Number.parseFloat(getComputedStyle(th).paddingLeft || '0') : null,
+      hintOff: hb && lb ? Math.abs(hb.left - lb.left) : null,
+      textLeft: text ? box(text).left : null,
+    };
+  });
+
   const legend = [...host.querySelectorAll('.strct-status-matrix__key')].map((li) => li.textContent.trim());
   return {
     surface,
     cells,
     legend,
+    heads,
     rows: grid.querySelectorAll('tbody tr').length,
     cols: grid.querySelectorAll('thead th').length - 1,
     role: grid.getAttribute('role'),
@@ -418,7 +442,7 @@ try {
     }
     await evaluate(send, `document.documentElement.setAttribute('data-theme', '${theme}')`);
     await sleep(700);
-    const r = await evaluate(send, READ);
+    const r = await evaluate(send, READ());
     const at = `${width}px ${theme}`;
 
     check(
@@ -546,6 +570,53 @@ try {
         : `${CHECKS.length} rows and ${COLS.length} columns rolled up independently and agreed`,
     );
 
+    // 5b. BUG-74-01 / FR-75-01: a row's code is not always two characters,
+    //     and is not always meant to be printed at all. Read from the second
+    //     grid on the page, whose rows are VLANs with codes of their own and
+    //     hosts with none.
+    const vlans = await evaluate(send, READ('#status-matrix-rows strct-status-matrix'));
+    const hosts = await evaluate(
+      send,
+      READ('#status-matrix-rows strct-status-matrix:last-of-type'),
+    );
+    if (vlans && hosts) {
+      const coded = vlans.heads.filter((h) => h.code);
+      const tight = coded.filter((h) => h.gap !== null && h.gap < CODE_GAP - 0.5);
+      const longest = coded.reduce((m, h) => (h.code.length > m.code.length ? h : m), coded[0]);
+      check(
+        `${at}: a row code never runs into the words after it`,
+        coded.length === 3 && tight.length === 0,
+        tight.length
+          ? tight.map((h) => `"${h.code}${h.label}" at ${h.gap.toFixed(1)}px`).join(', ')
+          : `${coded.length} codes, worst gap ${Math.min(...coded.map((h) => h.gap)).toFixed(1)}px (floor ${CODE_GAP}px), longest "${longest.code}" at ${longest.gap.toFixed(1)}px`,
+      );
+      const hinted = vlans.heads.filter((h) => h.hintOff !== null);
+      check(
+        `${at}: a hint starts where its label starts, not where an em guessed`,
+        hinted.length > 0 && hinted.every((h) => h.hintOff <= 0.5),
+        hinted.length
+          ? `${hinted.length} hinted row(s), worst ${Math.max(...hinted.map((h) => h.hintOff)).toFixed(2)}px from its label`
+          : 'no hinted row in the fixture',
+      );
+      const printed = hosts.heads.filter((h) => h.code);
+      const flush = hosts.heads.filter((h) => h.indent !== null && h.indent <= 0.5);
+      check(
+        `${at}: rowIds="false" prints nothing and indents nothing`,
+        printed.length === 0 && flush.length === hosts.heads.length,
+        `${printed.length} codes printed, ${flush.length}/${hosts.heads.length} labels at the head's own edge (worst ${Math.max(...hosts.heads.map((h) => h.indent ?? 0)).toFixed(2)}px in)`,
+      );
+      const saysKey = hosts.cells.filter((c) => c.says.includes('h:'));
+      check(
+        `${at}: a key nobody prints is a key nobody reads out`,
+        saysKey.length === 0,
+        saysKey.length
+          ? `${saysKey.length} cells still say it: "${saysKey[0].says}"`
+          : `${hosts.cells.length} cells, none naming an internal key — e.g. "${hosts.cells[0].says}"`,
+      );
+    } else {
+      check(`${at}: a row code never runs into the words after it`, false, 'no second grid');
+    }
+
     // 6. The summary column is ruled off from the subjects it summarises.
     check(
       `${at}: a summary column reads as a different kind of subject`,
@@ -632,7 +703,7 @@ try {
     mobile: false,
   });
   await sleep(800);
-  const narrow = await evaluate(send, READ);
+  const narrow = await evaluate(send, READ());
   check(
     'narrow: the grid stacks and every cell shows the sentence it was drawing',
     !!narrow && narrow.stacked && narrow.cells.every((c) => c.srVisible),

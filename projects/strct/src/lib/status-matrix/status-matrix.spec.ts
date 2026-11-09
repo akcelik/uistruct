@@ -218,3 +218,71 @@ describe('StrctStatusMatrix', () => {
     );
   });
 });
+
+// BUG-74-01 and FR-75-01 (HyperStruct, against 7.9.1): a matrix's rows are
+// whatever the consumer judges, and their ids are not always a catalogue's
+// two characters — nor always meant to be read at all. The geometry (the gap
+// between a code and its label) is measured in scripts/status-matrix.mjs;
+// what is printed, and what is said, is settled here.
+describe('StrctStatusMatrix — a row that is not a catalogue entry', () => {
+  const NAMED: StrctMatrixAxis[] = [
+    { id: 'v711', code: 'VLAN 711', label: 'DC2.mVS.Prd.Int.Gen.1' },
+    { id: 'h:1', label: 'HV-PRD-01' },
+    { id: 'x9', code: '', label: 'Quietly keyed' },
+  ];
+  const COL: StrctMatrixAxis[] = [{ id: 'a', label: 'tor-a' }];
+
+  function grid(patch: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctStatusMatrix);
+    fixture.componentRef.setInput('rows', NAMED);
+    fixture.componentRef.setInput('cols', COL);
+    fixture.componentRef.setInput('cells', [
+      { row: 'v711', col: 'a', state: 'success' } as StrctMatrixCell,
+    ]);
+    for (const [k, v] of Object.entries(patch)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      el,
+      printed: () =>
+        [...el.querySelectorAll('.strct-status-matrix__rowid')].map((n) => n.textContent!.trim()),
+      says: (row: string) =>
+        el
+          .querySelector(`[data-matrix-cell="${row}/a"] .strct-status-matrix__sr`)!
+          .textContent!.trim(),
+    };
+  }
+
+  it("prints a row's code where it has one, and falls back to the id where it does not", () => {
+    const g = grid();
+    expect(g.printed()).toEqual(['VLAN 711', 'h:1']);
+  });
+
+  it('a row with an empty code prints nothing, whatever the matrix says', () => {
+    const g = grid();
+    // 'x9' set code: '' — it is keyed but not coded.
+    expect(g.printed()).not.toContain('x9');
+    expect(g.says('x9')).toBe('Quietly keyed, tor-a: not on this subject');
+  });
+
+  it('rowIds="false" prints nothing at all, and no cell reads a key out loud', () => {
+    const g = grid({ rowIds: false });
+    expect(g.printed()).toEqual([]);
+    expect(g.says('h:1')).toBe('HV-PRD-01, tor-a: not on this subject');
+    expect(g.says('v711')).toBe('DC2.mVS.Prd.Int.Gen.1, tor-a: passed');
+  });
+
+  // What it shows is what it says: a key nobody prints is a key nobody should
+  // have read out either.
+  it('the spoken sentence carries the code that is printed, not the key behind it', () => {
+    const g = grid();
+    expect(g.says('v711')).toBe('VLAN 711 DC2.mVS.Prd.Int.Gen.1, tor-a: passed');
+    expect(g.says('h:1')).toBe('h:1 HV-PRD-01, tor-a: not on this subject');
+  });
+
+  it('the roll-up line is still named by its label, never by its key', () => {
+    const g = grid({ rollup: 'row' });
+    expect(g.printed()).toEqual(['VLAN 711', 'h:1']);
+    expect(g.says('__strct_rollup__')).toBe('Worst, tor-a: passed');
+  });
+});

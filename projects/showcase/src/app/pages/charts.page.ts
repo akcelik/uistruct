@@ -761,6 +761,35 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         <span class="echo">{{ matrixEcho() }}</span>
       </div>
     </app-demo>
+
+    <app-demo
+      anchor="status-matrix-rows"
+      owner="status-matrix"
+      heading="Rows are whatever you judge"
+      description="A matrix's rows are not always a catalogue of checks. Where they carry a code of their own — a VLAN, a port, a policy — put it in code and it is printed before the label, with a gap whatever its length; id stays the key a cell names, and the hint lines up under the label rather than under the code. Where the rows are subjects whose only id is an internal key — clusters, hosts, baselines — rowIds=&quot;false&quot; prints nothing and the label starts at the head's own edge. A single row can opt out on its own with code: ''."
+      code="<strct-status-matrix [rows]=&quot;[{ id: 'v711', code: 'VLAN 711', label: '…' }]&quot; /> · <strct-status-matrix [rows]=&quot;hosts&quot; [rowIds]=&quot;false&quot; />"
+    >
+      <div class="matrix-demo">
+        <strct-status-matrix
+          [rows]="vlanRows"
+          [cols]="vlanCols"
+          [cells]="vlanCells"
+          rowHeading="VLAN"
+          rollup="col"
+          rollupLabel="Fabric"
+          label="a code longer than a catalogue id, with its gap"
+        />
+        <strct-status-matrix
+          [rows]="baselineRows"
+          [cols]="baselineCols"
+          [cells]="baselineCells"
+          [rowIds]="false"
+          rowHeading="Host"
+          legend
+          label="rows whose only id is a key — nothing printed, nothing indented"
+        />
+      </div>
+    </app-demo>
   `,
   styles: [
     `
@@ -987,6 +1016,49 @@ export class ChartsPage implements OnDestroy {
   });
 
   // Columns nobody declared: the tiers come out of the cabling.
+  // BUG-74-01: a code longer than 2.4em used to run into its label —
+  // "VLAN 711DC2.mVS.Prd.Int.Gen.1". FR-75-01: rows whose only id is an
+  // internal key, printed as "c:PROD-CL02PROD-CL02".
+  protected readonly vlanRows: StrctMatrixAxis[] = [
+    { id: 'v711', code: 'VLAN 711', label: 'DC2.mVS.Prd.Int.Gen.1' },
+    { id: 'v712', code: 'VLAN 712', label: 'DC2.mVS.Prd.Int.Mng.1', hint: 'management, untagged' },
+    { id: 'pv100', code: 'PVLAN 100', label: 'DC2.mVS.Prd.Isolated' },
+  ];
+  protected readonly vlanCols: StrctMatrixAxis[] = [
+    { id: 'a', label: 'tor-a' },
+    { id: 'b', label: 'tor-b' },
+  ];
+  protected readonly vlanCells: StrctMatrixCell[] = [
+    { row: 'v711', col: 'a', state: 'success' },
+    { row: 'v711', col: 'b', state: 'success' },
+    { row: 'v712', col: 'a', state: 'success' },
+    { row: 'v712', col: 'b', state: 'warning', detail: 'tagged on tor-b, untagged on tor-a' },
+    { row: 'pv100', col: 'a', state: 'success' },
+    { row: 'pv100', col: 'b', state: 'critical', detail: 'promiscuous port missing' },
+  ];
+
+  protected readonly baselineRows: StrctMatrixAxis[] = [
+    { id: 'h:1', label: 'HV-PRD-01' },
+    { id: 'h:2', label: 'HV-PRD-02', hint: 'in maintenance' },
+    { id: 'h:3', label: 'HV-PRD-03' },
+  ];
+  protected readonly baselineCols: StrctMatrixAxis[] = [
+    { id: 'sec', label: 'Security' },
+    { id: 'fw', label: 'Firmware' },
+    { id: 'drv', label: 'Drivers' },
+  ];
+  protected readonly baselineCells: StrctMatrixCell[] = [
+    { row: 'h:1', col: 'sec', state: 'success' },
+    { row: 'h:1', col: 'fw', state: 'success' },
+    { row: 'h:1', col: 'drv', state: 'warning', detail: 'NIC driver 2.1.4, baseline wants 2.2.0' },
+    { row: 'h:2', col: 'sec', state: 'unjudged', detail: 'host in maintenance, not scanned' },
+    { row: 'h:2', col: 'fw', state: 'unjudged', detail: 'host in maintenance, not scanned' },
+    { row: 'h:2', col: 'drv', state: 'unjudged', detail: 'host in maintenance, not scanned' },
+    { row: 'h:3', col: 'sec', state: 'critical', detail: '3 patches missing since 2026-09' },
+    { row: 'h:3', col: 'fw', state: 'success' },
+    { row: 'h:3', col: 'drv', state: 'success' },
+  ];
+
   // FR-72-01's own case: the CHECKS BY NODE card of the Network Health
   // reference. The codes are the reference's own states — p passed, w warning,
   // c critical, n note, u not judged, . not on this subject — so the fixture
