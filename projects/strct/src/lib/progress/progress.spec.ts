@@ -212,3 +212,104 @@ describe('StrctProgress — a name, a toned caption, an inline value', () => {
     expect(both.el.querySelector('.strct-progress__row .strct-progress__value')).toBeNull();
   });
 });
+
+// FR-78-01: `thresholds` recolours the fill; a marker draws the line itself.
+// Where it lands is geometry and is gated in scripts/progress-markers.mjs
+// against a real browser — what is drawn, and what is said, is settled here.
+describe('StrctProgress — markers', () => {
+  function build(patch: Record<string, unknown> = {}) {
+    const fixture = TestBed.createComponent(StrctProgress);
+    fixture.componentRef.setInput('value', 74);
+    fixture.componentRef.setInput('label', 'CPU');
+    for (const [k, v] of Object.entries(patch)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return {
+      fixture,
+      el,
+      marks: () => [...el.querySelectorAll<HTMLElement>('.strct-progress__marker')],
+      said: () => el.querySelector('.strct-progress__track')!.getAttribute('aria-valuetext'),
+    };
+  }
+
+  it('draws one line per marker, at its value, and none without them', () => {
+    expect(build().marks().length).toBe(0);
+    const { marks } = build({
+      markers: [
+        { value: 70, label: 'Threshold' },
+        { value: 90, label: 'Limit' },
+      ],
+    });
+    expect(marks().length).toBe(2);
+    expect(marks()[0].style.left).toBe('70%');
+    expect(marks()[1].style.left).toBe('90%');
+  });
+
+  it('clamps a value to the track rather than drawing off the end of it', () => {
+    const { marks } = build({
+      markers: [
+        { value: -20, label: 'Under' },
+        { value: 160, label: 'Over' },
+      ],
+    });
+    expect(marks()[0].style.left).toBe('0%');
+    expect(marks()[1].style.left).toBe('100%');
+  });
+
+  it('a status tints the line; without one it is the text colour', () => {
+    const { marks } = build({
+      markers: [
+        { value: 70, label: 'Threshold', status: 'critical' },
+        { value: 40, label: 'Target' },
+      ],
+    });
+    expect(marks()[0].classList).toContain('strct-progress__marker--critical');
+    expect(marks()[1].classList).toContain('strct-progress__marker--none');
+  });
+
+  // The line is the point of the bar, so it has to be heard as well as seen.
+  it('the bar says its value and then every line it carries', () => {
+    const { said } = build({
+      markers: [
+        { value: 70, label: 'Balancer threshold' },
+        { value: 90, label: 'Hard limit' },
+      ],
+    });
+    expect(said()).toBe('74%, Balancer threshold 70%, Hard limit 90%');
+  });
+
+  it('a stacked bar keeps its segments in what it says, and adds the lines', () => {
+    const { said } = build({
+      segments: [
+        { value: 48, status: 'accent', label: 'Now' },
+        { value: 26, status: 'warning', label: 'Arriving' },
+      ],
+      markers: [{ value: 70, label: 'Threshold' }],
+    });
+    expect(said()).toBe('Now 48%, Arriving 26%, Threshold 70%');
+  });
+
+  it('a valueText the consumer wrote is still what the bar leads with', () => {
+    const { said } = build({
+      valueText: '293 GB of 512 GB',
+      markers: [{ value: 70, label: 'Reservation' }],
+    });
+    expect(said()).toBe('293 GB of 512 GB, Reservation 70%');
+  });
+
+  it('a marker is hidden from assistive tech and is not a tab stop', () => {
+    const { marks } = build({ markers: [{ value: 70, label: 'Threshold' }] });
+    expect(marks()[0].getAttribute('aria-hidden')).toBe('true');
+    expect(marks()[0].hasAttribute('tabindex')).toBe(false);
+  });
+
+  // The fills are clipped to the track's rounded corners; the marker must not
+  // be, or it could not reach past the track to be found against a fill.
+  it('the fills are clipped and the markers are outside that clip', () => {
+    const { el } = build({ markers: [{ value: 70, label: 'Threshold' }] });
+    const fills = el.querySelector('.strct-progress__fills')!;
+    expect(fills.querySelector('.strct-progress__fill')).not.toBeNull();
+    expect(fills.querySelector('.strct-progress__marker')).toBeNull();
+    expect(el.querySelector('.strct-progress__track > .strct-progress__marker')).not.toBeNull();
+  });
+});

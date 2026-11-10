@@ -7,9 +7,15 @@ stays here until it goes quiet.
 
 ## Open
 
-- [**`progress-markers.md`**](progress-markers.md) — FR-78-01, `strct-progress` cannot draw a marker on
-  its track — the threshold a capacity bar is judged against. HyperStruct's Load Balancing page draws
-  the balancer's CPU and memory thresholds over the bar itself for now (marked workaround).
+**Nothing.** Everything filed so far has shipped.
+
+### Closed on 2026-11-10, and moved to [`archive/`](archive/)
+
+- [**`archive/progress-markers.md`**](archive/progress-markers.md) — FR-78-01, `strct-progress`
+  could recolour a bar past a threshold but not draw the threshold, so a bar at 74% said "too much"
+  rather than "four points past the line". Shipped in **v7.13.0** as `markers`, placed in the
+  track's own coordinates — **0.01px** from their value, in a 79px track inside a 120px cell as
+  well as at full width.
 
 ### Closed on 2026-11-09, and moved to [`archive/`](archive/)
 

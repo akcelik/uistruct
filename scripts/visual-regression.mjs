@@ -87,6 +87,9 @@ const ROUTES = [
   // FR-59-08: a topology — columns, edges, icons and a node that can be
   // walked to. The crop is the diagram, so a change to its geometry shows.
   ['flow-topology', '/components/flow', '#flow-topology', undefined, '#flow-topology strct-flow'],
+  // FR-78-01: a threshold line on the track, over bare track and over a
+  // stacked fill, at full width and inside a 120px cell.
+  ['progress-markers', '/components/progress', '#progress-markers', undefined, '#progress-markers'],
   // FR-76-01: the sign-in page taken to the edges, with its environment
   // band across both columns and the art in a band of its own.
   ['sign-in', '/scenarios/sign-in', 'strct-login', undefined, 'strct-login'],

@@ -1,5 +1,32 @@
 # FR-78-01 — `strct-progress`: markers on the track (a threshold, a limit)
 
+> **CLOSED, 2026-11-10.** Shipped in **v7.13.0**, all three asks, with every acceptance measured by
+> `scripts/progress-markers.mjs` (**12 checks**, both palettes):
+>
+> |                                             | measured                                   |
+> | ------------------------------------------- | ------------------------------------------ |
+> | marker on the track's value                 | **0.01px**, over 6 bars and two thresholds |
+> | …in a 120px cell with `valuePosition="end"` | 79px track inside a 120px cell             |
+> | …at full width with the value on top        | 420px track                                |
+> | reach past the track                        | **3.0px** above and below a 6px track      |
+> | told apart from the fill it crosses         | **5.01:1** light · **7.37:1** dark         |
+> | every marker in the accessible name         | 6/6 — "74%, Balancer threshold 70%"        |
+> | new tab stops                               | **0**                                      |
+>
+> The case you avoided rather than measured is now the one the gate holds: a marker is placed in the
+> **track's** coordinates, so `visibleLabel`, `caption` and `valuePosition="end"` cannot move it off
+> its value. The fixture carries a bar in a 120px cell for exactly that reason.
+>
+> **One thing the ask had backwards.** A marker's `status` tints it, as asked — but a `critical`
+> line over a `warning` fill measures **1.06:1** on its tint alone, and 1.59:1 in the dark palette.
+> The tint cannot be what makes it visible. The component draws a surface-coloured hairline either
+> side of the line, and that is what the 5.01:1 above is measuring; the gate reports both numbers
+> so the distinction stays on the record.
+>
+> One structural change came with it: the track carried `overflow: hidden` for the fills' rounded
+> corners, which would have cut a marker off at the track's edge. The fills moved into a clipped
+> layer of their own.
+
 **Filed by:** HyperStruct, 2026-11-10, against **7.12.0**. Cluster ▸ Configuration ▸ Load Balancing (O492 §14,
 the operator's pick A) draws each host's CPU and memory as a bar **against the threshold the balancer
 decides at** (70% CPU, 80% memory). The threshold is the point of the bar: a host over it is relieved

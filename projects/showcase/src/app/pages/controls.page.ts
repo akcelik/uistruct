@@ -6,6 +6,7 @@ import {
   StrctButtonGroup,
   StrctIcon,
   StrctProgress,
+  StrctProgressMarker,
   StrctProgressSegment,
   StrctSpeedDial,
   StrctSpinner,
@@ -344,6 +345,58 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="progress-markers"
+      owner="progress"
+      heading="A line that means something"
+      description="thresholds recolours the fill; markers draws the line itself. A bar at 74% tinted warning says “too much” — a bar with a line at 70% says “four points past it”, which is the thing a capacity bar against a threshold is drawn for: the balancer's trigger, the cluster's N+1 line, a reservation, a quota. Each marker is { value, label, status? }, drawn in the track's own coordinates so it lands on its value whatever visibleLabel, caption or valuePosition do to the component's width — including inside a 120px table cell. It reaches 3px past the track on both sides and carries a hairline either side of it, so it is found against a fill of any tone as readily as on bare track. The label is spoken in the bar's own value text (“CPU 74%, balancer threshold 70%”) and the line is not a second thing for a screen reader to find."
+      code='<strct-progress [value]="74" label="CPU" visibleLabel showValue [markers]="[{ value: 70, label: &apos;Balancer threshold&apos;, status: &apos;critical&apos; }]" />'
+    >
+      <div class="stack" style="max-width: 420px;">
+        <strct-progress
+          [value]="74"
+          label="hv-01 · CPU"
+          visibleLabel
+          showValue
+          status="warning"
+          [markers]="cpuMark"
+        />
+        <strct-progress
+          [value]="62"
+          label="hv-01 · Memory"
+          visibleLabel
+          showValue
+          [markers]="memMark"
+        />
+        <strct-progress
+          label="hv-02 · CPU, with what would arrive"
+          visibleLabel
+          [segments]="loadSegments"
+          [markers]="cpuMark"
+          caption="A marker reads against a stacked fill as well as against bare track."
+        />
+      </div>
+      <table class="marker-table">
+        <tbody>
+          @for (h of loadRows; track h.host) {
+            <tr>
+              <th scope="row">{{ h.host }}</th>
+              <td>
+                <strct-progress
+                  [value]="h.cpu"
+                  [ariaLabel]="h.host + ' CPU'"
+                  showValue
+                  valuePosition="end"
+                  [status]="h.cpu >= 70 ? 'warning' : 'accent'"
+                  [markers]="cpuMark"
+                />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-demo>
+
+    <app-demo
       anchor="progress-meter"
       owner="progress"
       heading="Meter mode"
@@ -450,6 +503,23 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       }
     `,
     `
+      /* A bar in a cell: the acceptance's own case, where the track no
+         longer spans the component. */
+      .marker-table {
+        border-collapse: collapse;
+        margin-block-start: var(--space-4);
+      }
+      .marker-table th {
+        padding: 6px var(--space-3) 6px 0;
+        font-size: var(--text-sm);
+        font-weight: 400;
+        color: var(--t2);
+        text-align: start;
+      }
+      .marker-table td {
+        width: 120px;
+        padding: 6px 0;
+      }
       .stack {
         display: flex;
         flex-direction: column;
@@ -490,6 +560,26 @@ export class ControlsPage {
   protected readonly failoverSegments: StrctProgressSegment[] = [
     { value: 61, status: 'accent', label: 'Used' },
     { value: 22, status: 'warning', label: 'Arriving' },
+  ];
+
+  // FR-78-01's own case: the balancer acts at 70% CPU and 80% memory, so the
+  // bar's point is how far past that line a host is, not its colour.
+  protected readonly cpuMark: StrctProgressMarker[] = [
+    { value: 70, label: 'Balancer threshold', status: 'critical' },
+  ];
+  protected readonly memMark: StrctProgressMarker[] = [
+    { value: 80, label: 'Balancer threshold', status: 'critical' },
+  ];
+  // Arriving load carries it past the line, so the marker crosses a fill
+  // rather than landing on bare track — which is the case worth gating.
+  protected readonly loadSegments: StrctProgressSegment[] = [
+    { value: 48, status: 'accent', label: 'Now' },
+    { value: 26, status: 'warning', label: 'Arriving' },
+  ];
+  protected readonly loadRows = [
+    { host: 'hv-01', cpu: 74 },
+    { host: 'hv-02', cpu: 67 },
+    { host: 'hv-03', cpu: 41 },
   ];
 
   protected readonly lastLink = signal('');
