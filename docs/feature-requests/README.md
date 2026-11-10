@@ -7,7 +7,9 @@ stays here until it goes quiet.
 
 ## Open
 
-**Nothing.** Everything filed so far has shipped.
+- [**`progress-markers.md`**](progress-markers.md) — FR-78-01, `strct-progress` cannot draw a marker on
+  its track — the threshold a capacity bar is judged against. HyperStruct's Load Balancing page draws
+  the balancer's CPU and memory thresholds over the bar itself for now (marked workaround).
 
 ### Closed on 2026-11-09, and moved to [`archive/`](archive/)
 
