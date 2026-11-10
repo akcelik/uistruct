@@ -113,6 +113,11 @@ jobs:
       # phone the form before the picture with its first field above the fold.
       - name: Assert the sign-in page lays out where it was told
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/login-layout.mjs
+      # FR-78-01: a threshold line lands on its value in the TRACK's own
+      # coordinates — the thing a tick placed by the component's width cannot
+      # do once a label, a caption or an end-value takes room from the track.
+      - name: Assert a progress marker lands on its value
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/progress-markers.mjs
       # BUG-70-01: a bar chart's category label under its own band, measured at
       # two widths because a single one cannot tell a measurement from a
       # constant that happens to fit. 6 of its 9 checks fail on 7.6.0.

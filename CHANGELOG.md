@@ -5,6 +5,54 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.13.0] - 2026-11-10
+
+[FR-78-01](docs/feature-requests/archive/progress-markers.md), from
+HyperStruct's load-balancing view, which was laying a 2px tick over the bar
+itself.
+
+### Added
+
+- **`strct-progress` markers — a line on the track that means something.**
+  `thresholds` recolours the fill; a bar at 74% tinted `warning` says "too
+  much", not "four points past the line". The line is the point of a capacity
+  bar drawn against a threshold: the balancer's trigger, an N+1 line, a
+  reservation, a quota.
+
+  ```html
+  <strct-progress
+    [value]="74"
+    label="CPU"
+    visibleLabel
+    showValue
+    [markers]="[{ value: 70, label: 'Balancer threshold', status: 'critical' }]"
+  />
+  ```
+
+  Drawn in the **track's** own coordinates, which is what the workaround
+  could not do — a tick placed by the component's width misses the track once
+  `visibleLabel`, `caption` or `valuePosition="end"` takes room from it, and
+  HyperStruct avoided all three rather than measure it. Measured at
+  **0.01px** from the value the bar says it is at, over six bars and two
+  thresholds, in a 79px track inside a 120px table cell as well as a 420px
+  one. Each label is spoken in the bar's own value text ("CPU 74%, Balancer
+  threshold 70%"), and the line adds no tab stop.
+
+### Fixed
+
+- **The track's fills are clipped, the markers are not.** The track carried
+  `overflow: hidden` for the fills' rounded corners, which would have cut a
+  marker off at the track's edge; the fills moved into a clipped layer of
+  their own so a marker can reach **3.0px** past the track on both sides and
+  be found against a fill rather than only on bare track.
+
+- **`scripts/progress-markers.mjs`** — 12 checks in both palettes, every
+  number read back from what Chrome laid out, including the one that matters
+  most: a `critical` marker over a `warning` fill is **1.06:1** on its tint
+  alone. What separates it is the hairline the component draws either side of
+  it — **5.01:1** light, **7.37:1** dark. A status tints a marker; it does
+  not make it visible.
+
 ## [7.12.0] - 2026-11-09
 
 [FR-76-01](docs/feature-requests/archive/login-full-bleed.md): the operator

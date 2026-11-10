@@ -12,6 +12,20 @@ import { StrctThresholds } from '../status';
 export type StrctProgressStatus = 'neutral' | 'accent' | 'success' | 'warning' | 'critical';
 
 /** One stacked fill of a multi-value bar (used now, plus what would arrive …). */
+/**
+ * A line across the track at a value that means something: the threshold a
+ * balancer acts at, an N+1 line, a reservation, a quota. The bar's own fill
+ * says how much; the marker says how much is allowed (FR-78-01).
+ */
+export interface StrctProgressMarker {
+  /** Where on the track, 0–100. Clamped. */
+  value: number;
+  /** What the line is — spoken after the value, never drawn as text. */
+  label: string;
+  /** Tints the line. Without one it is the text colour, held back. */
+  status?: StrctProgressStatus;
+}
+
 export interface StrctProgressSegment {
   value: number;
   status?: StrctProgressStatus;
@@ -53,17 +67,33 @@ export interface StrctProgressSegment {
       [attr.aria-valuemin]="indeterminate() ? null : 0"
       [attr.aria-valuemax]="indeterminate() ? null : 100"
     >
-      @if (indeterminate()) {
-        <div class="strct-progress__fill strct-progress__fill--indeterminate"></div>
-      } @else if (stacked(); as parts) {
-        @for (part of parts; track $index) {
-          <div
-            class="strct-progress__fill strct-progress__fill--{{ part.status }}"
-            [style.width.%]="part.width"
-          ></div>
+      <!-- The fills are clipped to the track's corners; the markers are not,
+           because a line that has to be seen against a fill needs to reach
+           past it. Two layers, so one can be rounded-and-hidden and the
+           other cannot. -->
+      <div class="strct-progress__fills">
+        @if (indeterminate()) {
+          <div class="strct-progress__fill strct-progress__fill--indeterminate"></div>
+        } @else if (stacked(); as parts) {
+          @for (part of parts; track $index) {
+            <div
+              class="strct-progress__fill strct-progress__fill--{{ part.status }}"
+              [style.width.%]="part.width"
+            ></div>
+          }
+        } @else {
+          <div class="strct-progress__fill" [style.width.%]="clamped()"></div>
         }
-      } @else {
-        <div class="strct-progress__fill" [style.width.%]="clamped()"></div>
+      </div>
+      @for (m of markerList(); track $index) {
+        <!-- Decorative: the line is said in the bar's own value text, so it
+             is not a second thing for a screen reader to find. -->
+        <span
+          class="strct-progress__marker strct-progress__marker--{{ m.status ?? 'none' }}"
+          [style.left.%]="m.value"
+          [attr.data-marker]="m.label"
+          aria-hidden="true"
+        ></span>
       }
     </div>
     @if (showValue() && valuePosition() === 'end') {
@@ -157,7 +187,6 @@ export interface StrctProgressSegment {
       }
       .strct-progress__track {
         position: relative;
-        display: flex;
         height: 6px;
         border-radius: var(--radius-sm);
         /* FR-47-01: a fixed surface token (--bg-3) equals the ground the bar
@@ -169,7 +198,49 @@ export interface StrctProgressSegment {
            pin a specific colour. */
         background: var(--strct-progress-track, color-mix(in srgb, var(--t1) 12%, transparent));
         box-shadow: inset 0 0 0 1px var(--b2);
+      }
+      .strct-progress__fills {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        border-radius: inherit;
         overflow: hidden;
+      }
+
+      /* ── A line that means something ──────────────────────────────
+         Drawn in the track's own coordinates, so it lands on its value
+         whatever the label, the caption or the end-value does to the
+         component's width. It reaches past the track on both sides because
+         it has to be found against a fill, not only on bare track. */
+      .strct-progress__marker {
+        position: absolute;
+        top: -3px;
+        bottom: -3px;
+        width: 2px;
+        margin-inline-start: -1px;
+        border-radius: var(--radius-xs);
+        background: var(--t1);
+        /* A white hairline either side, so the line reads against a fill of
+           any tone and against the bare track alike. */
+        box-shadow:
+          -1px 0 0 var(--bg-1),
+          1px 0 0 var(--bg-1);
+        pointer-events: none;
+      }
+      .strct-progress__marker--accent {
+        background: var(--acc);
+      }
+      .strct-progress__marker--success {
+        background: var(--success);
+      }
+      .strct-progress__marker--warning {
+        background: var(--warning);
+      }
+      .strct-progress__marker--critical {
+        background: var(--critical);
+      }
+      .strct-progress__marker--neutral {
+        background: var(--t2);
       }
       .strct-progress__fill {
         height: 100%;
@@ -276,6 +347,17 @@ export class StrctProgress {
   /** Stack several fills (used now + what would arrive); clamped to 100 total. */
   readonly segments = input<StrctProgressSegment[] | null>(null);
   /**
+   * Lines across the track at values that mean something — a threshold, a
+   * limit, a reservation. The fill says how much; a marker says how much is
+   * allowed, which is the thing a bar against a threshold is drawn for.
+   */
+  readonly markers = input<StrctProgressMarker[] | null>(null);
+
+  /** The markers, clamped to the track and in the order they were given. */
+  protected readonly markerList = computed<StrctProgressMarker[]>(() =>
+    (this.markers() ?? []).map((m) => ({ ...m, value: Math.min(100, Math.max(0, m.value)) })),
+  );
+  /**
    * Optional value-driven thresholds. When set, the component picks its own
    * status from the value instead of the caller computing it: `value >= critical`
    * → critical, `>= warning` → warning, else the healthy base. The healthy base is
@@ -302,10 +384,15 @@ export class StrctProgress {
   protected readonly valueDescription = computed(() => {
     if (this.indeterminate()) return 'In progress';
     const segments = this.segments();
-    if (segments?.length) {
-      return segments.map((s) => `${s.label ? s.label + ' ' : ''}${s.value}%`).join(', ');
-    }
-    return this.valueText() || null;
+    const head = segments?.length
+      ? segments.map((s) => `${s.label ? s.label + ' ' : ''}${s.value}%`).join(', ')
+      : this.valueText();
+    const marks = this.markerList();
+    if (!marks.length) return head || null;
+    // A line nobody can hear is a line half the readers do not have. The
+    // value comes first, because that is what the bar is answering.
+    const said = marks.map((m) => `${m.label} ${m.value}%`).join(', ');
+    return `${head || `${this.clamped()}%`}, ${said}`;
   });
 
   /** Status after applying thresholds (falls back to `status` when none set). */

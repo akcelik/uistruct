@@ -532,14 +532,25 @@ export const DOCS: DocCategory[] = [
             type: '{ warning?: number; critical?: number } | null',
             default: 'null',
             description:
-              'When set, the bar derives its status from the value: ≥ critical → critical, ≥ warning → warning, else the healthy base (success). Explicit status still wins when no thresholds are set.',
+              'When set, the bar derives its status from the value: ≥ critical → critical, ≥ warning → warning, else the healthy base (success). Explicit status still wins when no thresholds are set. It recolours the fill — to draw the line itself, use `markers`.',
+          },
+          {
+            name: 'markers',
+            type: 'StrctProgressMarker[] | null',
+            default: 'null',
+            description:
+              '`{ value; label; status? }[]` — a line across the track at a value that means something: the threshold a balancer acts at, an N+1 line, a reservation, a quota. A bar at 74% tinted `warning` says "too much"; a line at 70% says "four points past it". Drawn in the **track\u2019s** own coordinates, so it lands on its value whatever `visibleLabel`, `caption` or `valuePosition="end"` do to the component\u2019s width — measured at 0.01px in a 79px track inside a 120px table cell as well as at full width. Each `label` is spoken in the bar\u2019s own value text ("CPU 74%, Balancer threshold 70%") and the line adds no tab stop.',
           },
         ],
         do: [
           'Pass thresholds instead of computing status for every meter.',
           'Switch to warning / critical as usage crosses your thresholds.',
+          'Use a marker where the line is the point of the bar. A colour says something is wrong; a line says how far past it you are.',
         ],
-        dont: ['Do not use a determinate bar for unknown-duration work — use the spinner.'],
+        dont: [
+          'Do not use a determinate bar for unknown-duration work — use the spinner.',
+          'Do not lean on a marker\u2019s `status` to make it visible. A critical line over a warning fill is 1.06:1 on its tint alone — what separates it is the hairline the component draws either side of it, measured at 5.01:1 light and 7.37:1 dark.',
+        ],
         a11y: ['Exposes role="progressbar" with aria-valuenow / min / max.'],
       },
       {
