@@ -218,7 +218,7 @@ export interface StrctProgressSegment {
         bottom: -3px;
         width: 2px;
         margin-inline-start: -1px;
-        border-radius: 1px;
+        border-radius: var(--radius-xs);
         background: var(--t1);
         /* A white hairline either side, so the line reads against a fill of
            any tone and against the bare track alike. */
