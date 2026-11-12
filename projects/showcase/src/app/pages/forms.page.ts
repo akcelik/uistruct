@@ -218,6 +218,68 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="field-compact"
+      owner="field"
+      heading="Compact settings rows"
+      description="FR-79-03: a settings window is a column of inline fields, and at 63&ndash;87px a row it holds seven of them. density=&quot;compact&quot; takes a row with a 34px control and a one-line hint to 42px of pitch: the separator between two rows is one --space-2 instead of 24px of margin plus padding, and the label+hint stack in the label column is exactly as tall as the control beside it. A hint too wide for the label column goes under the control instead of wrapping to a second and third line under the label &mdash; the component measures the hint's own width against the column, because CSS cannot ask whether a line wrapped. The hint is still the control's aria-describedby wherever it lands. Set it per row, or once for a whole form with provideStrctFieldDefaults({ density: &#39;compact&#39; })."
+      code='providers: [provideStrctFieldDefaults({ density: &#39;compact&#39; })]&#10;&#10;<strct-field layout="inline" label="Memory" hint="512 MB to 1 TB.">&#10;  <input strctInput type="number" [(ngModel)]="mem" />&#10;</strct-field>'
+    >
+      <div class="fc-demo">
+        <div class="fc-demo__col">
+          <span class="fc-demo__cap">comfortable (default)</span>
+          <div class="fc-demo__form" data-density="comfortable">
+            <strct-field layout="inline" label="vCPUs" hint="Cores for the guest.">
+              <input strctInput type="number" [(ngModel)]="cCpus" />
+            </strct-field>
+            <strct-field layout="inline" label="Memory" hint="512 MB to 1 TB.">
+              <input strctInput type="number" [(ngModel)]="cMem" />
+            </strct-field>
+            <strct-field
+              layout="inline"
+              label="Smart paging"
+              hint="Where the file goes when the guest is given less memory than it asked for."
+            >
+              <input strctInput [(ngModel)]="cPaging" />
+            </strct-field>
+          </div>
+        </div>
+        <div class="fc-demo__col">
+          <span class="fc-demo__cap">compact</span>
+          <div class="fc-demo__form" data-density="compact">
+            <strct-field
+              layout="inline"
+              density="compact"
+              label="vCPUs"
+              hint="Cores for the guest."
+            >
+              <input strctInput type="number" [(ngModel)]="cCpus" />
+            </strct-field>
+            <strct-field layout="inline" density="compact" label="Memory" hint="512 MB to 1 TB.">
+              <input strctInput type="number" [(ngModel)]="cMem" />
+            </strct-field>
+            <strct-field
+              layout="inline"
+              density="compact"
+              label="Smart paging"
+              hint="Where the file goes when the guest is given less memory than it asked for."
+            >
+              <input strctInput [(ngModel)]="cPaging" />
+            </strct-field>
+            <strct-field layout="inline" density="compact" label="Boot order">
+              <select strctInput [(ngModel)]="cBoot">
+                <option value="disk">Disk, network</option>
+                <option value="net">Network, disk</option>
+              </select>
+            </strct-field>
+            <strct-field layout="inline" density="compact" label="Instance id">
+              <span strctFieldValue class="strct-mono">vm-01m3e2e00000000001</span>
+            </strct-field>
+          </div>
+        </div>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="field-addons"
       owner="field"
       heading="Prefix and suffix"
@@ -844,6 +906,27 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      .fc-demo {
+        display: flex;
+        gap: 32px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+      .fc-demo__col {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .fc-demo__cap {
+        font-size: var(--text-sm);
+        color: var(--t3);
+      }
+      /* The width the settings window gives the form, so the label column is
+         the one the hint is measured against. */
+      .fc-demo__form {
+        width: 520px;
+        max-width: 100%;
+      }
       .field {
         display: flex;
         flex-direction: column;
@@ -900,6 +983,13 @@ export class FormsPage {
   protected readonly vmCpus = signal(4);
   protected readonly vmMem = signal(8192);
   protected readonly vmFirmware = signal('uefi');
+  // FR-79-03 — the compact settings rows. "Smart paging" is the hint that is
+  // wider than a 220px label column, which is the case the component has to
+  // measure rather than wrap.
+  protected readonly cCpus = signal(8);
+  protected readonly cMem = signal(65536);
+  protected readonly cPaging = signal('C:\\ProgramData\\Microsoft\\Windows\\Hyper-V');
+  protected readonly cBoot = signal('disk');
   protected readonly vmNotes = signal('');
   protected readonly hostKey = signal('ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL8k2v9h6Q0fJp7T3xW1');
   protected readonly scope = signal('all');

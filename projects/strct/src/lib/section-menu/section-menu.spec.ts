@@ -224,3 +224,59 @@ describe('StrctSectionMenu — activeId is the only source when it is set', () =
     expect(current.map((a) => a.textContent?.trim())).toContain('Policies');
   });
 });
+
+describe('StrctSectionMenu — a line that says what it is set to', () => {
+  // FR-79-01: a line says what its section is set to.
+  it('draws a value on the line, after the label and before every trailing cue', () => {
+    const valued: StrctMenuSection[] = [
+      {
+        label: 'Hardware',
+        items: [
+          { id: 'cpu', label: 'Processor', value: '8 vCPU', dot: true, trailingIcon: 'lock' },
+        ],
+      },
+    ];
+    const f = TestBed.createComponent(StrctSectionMenu);
+    f.componentRef.setInput('sections', valued);
+    f.detectChanges();
+    const item = (f.nativeElement as HTMLElement).querySelector('.strct-sm__item')!;
+    const value = item.querySelector('.strct-sm__value')!;
+    expect(value.textContent?.trim()).toBe('8 vCPU');
+    // All three cues coexist — the point of the FR: a badge used as a value
+    // used to take the dot's place.
+    expect(item.querySelector('.strct-sm__dot')).toBeTruthy();
+    expect(item.querySelector('.strct-sm__trailing')).toBeTruthy();
+    const at = (cls: string) => [...item.children].findIndex((c) => c.classList.contains(cls));
+    expect(at('strct-sm__value')).toBeGreaterThan(at('strct-sm__item-label'));
+    expect(at('strct-sm__value')).toBeLessThan(at('strct-sm__trailing'));
+  });
+
+  it('puts the value in the line’s name, after the label, and leaves a nameless line alone', () => {
+    const valued: StrctMenuSection[] = [
+      {
+        label: 'Hardware',
+        items: [
+          { id: 'cpu', label: 'Processor', value: '8 vCPU' },
+          { id: 'disks', label: 'Hard drives', value: '2 drives', badge: 3 },
+          { id: 'plain', label: 'Firmware' },
+        ],
+      },
+    ];
+    const f = TestBed.createComponent(StrctSectionMenu);
+    f.componentRef.setInput('sections', valued);
+    f.detectChanges();
+    const items = (f.nativeElement as HTMLElement).querySelectorAll('.strct-sm__item');
+    expect(items[0].getAttribute('aria-label')).toBe('Processor, 8 vCPU');
+    // A chip keeps the place in the name it already had.
+    expect(items[1].getAttribute('aria-label')).toBe('Hard drives, 2 drives, 3');
+    // No value, no composed name: the line keeps the one the DOM gives it.
+    expect(items[2].getAttribute('aria-label')).toBeNull();
+  });
+
+  // FR-79-02: the step a settings window needs.
+  it('density="compact" marks the nav, and comfortable is the default', () => {
+    expect((make().nativeElement as HTMLElement).querySelector('.strct-sm--compact')).toBeNull();
+    const compact = make({ density: 'compact' }).nativeElement as HTMLElement;
+    expect(compact.querySelector('.strct-sm--compact')).toBeTruthy();
+  });
+});

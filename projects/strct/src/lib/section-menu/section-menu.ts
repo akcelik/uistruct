@@ -23,6 +23,17 @@ export interface StrctMenuLink {
   /** Optional leading icon name. */
   icon?: string;
   disabled?: boolean;
+  /**
+   * What this section is set to, said on its own line — "8 vCPU", "64 GB
+   * static", "2 · 628 GB". Muted trailing text, so sixteen of them down a
+   * settings menu read as values and not as sixteen alerts, which is what
+   * sixteen `badge` chips read as. It coexists with `trailingIcon` and with
+   * `dot`: a line can say "8 vCPU", carry the lock of "greyed until the VM
+   * is off" and the dot of "unsaved" at once. It is part of the line's
+   * accessible name ("Processor, 8 vCPU"), and it is the part that
+   * ellipsises first — the label keeps 8 characters before either does.
+   */
+  value?: string;
   /** Trailing count/label chip (e.g. a deviation count). */
   badge?: string | number;
   /** Badge tone; defaults to `accent` (shared vocabulary with {@link StrctRailItem}). */
@@ -75,6 +86,9 @@ export interface StrctMenuSection {
         <strct-icon class="strct-sm__item-icon" [name]="item.icon" [size]="16" />
       }
       <span class="strct-sm__item-label">{{ item.label }}</span>
+      @if (item.value) {
+        <span class="strct-sm__value">{{ item.value }}</span>
+      }
       @if (item.trailingIcon) {
         <strct-icon class="strct-sm__trailing" [name]="item.trailingIcon" [size]="14" />
       }
@@ -100,6 +114,7 @@ export interface StrctMenuSection {
              The rail asks the router itself instead, and keeps one element. -->
         <a
           class="strct-sm__item"
+          [attr.aria-label]="itemName(item)"
           [routerLink]="item.routerLink"
           [class.strct-sm__item--active]="isActive(item, isRouterActive(item))"
           [attr.aria-current]="isActive(item, isRouterActive(item)) ? 'page' : null"
@@ -110,6 +125,7 @@ export interface StrctMenuSection {
       } @else if (item.href && !item.disabled) {
         <a
           class="strct-sm__item"
+          [attr.aria-label]="itemName(item)"
           [href]="item.href"
           [class.strct-sm__item--active]="item.id === activeId()"
           [attr.aria-current]="item.id === activeId() ? 'page' : null"
@@ -121,6 +137,7 @@ export interface StrctMenuSection {
         <button
           type="button"
           class="strct-sm__item"
+          [attr.aria-label]="itemName(item)"
           [class.strct-sm__item--active]="item.id === activeId()"
           [disabled]="item.disabled"
           [attr.aria-current]="item.id === activeId() ? 'page' : null"
@@ -131,7 +148,11 @@ export interface StrctMenuSection {
       }
     </ng-template>
 
-    <nav class="strct-sm" [attr.aria-label]="ariaLabel()">
+    <nav
+      class="strct-sm"
+      [class.strct-sm--compact]="density() === 'compact'"
+      [attr.aria-label]="ariaLabel()"
+    >
       @for (sec of sections(); track sec.label) {
         <div class="strct-sm__section" [class.strct-sm__section--collapsible]="collapsible()">
           @if (collapsible()) {
@@ -283,6 +304,49 @@ export interface StrctMenuSection {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        /* The value is what ellipsises when the menu is narrow; the label
+           keeps eight characters before it starts to. Its flex basis is 0,
+           so without this floor the shrink lands entirely on the label and
+           a 236px menu shows "8 vCPU" beside nothing. */
+        min-width: 8ch;
+      }
+      /* What the section is set to. Muted and tabular, so a column of them
+         reads as values rather than as a column of chips. */
+      .strct-sm__value {
+        flex: 0 1 auto;
+        min-width: 0;
+        color: var(--t2);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .strct-sm__item--active .strct-sm__value {
+        color: var(--acc);
+      }
+      .strct-sm__item:disabled .strct-sm__value {
+        color: var(--t3);
+      }
+      /* ── density="compact" ───────────────────────────────────────────────
+         A settings window holds sixteen sections and two category heads: at
+         31px and 31px that is 560px of a 760px window, before a single
+         setting is drawn. The line heights are explicit rather than left to
+         normal, so the step is the same 26px in every palette — and so a
+         badge, which is 18px, fits the line it is on instead of setting it. */
+      .strct-sm--compact .strct-sm__item {
+        padding: 4px 10px;
+        line-height: 18px;
+      }
+      .strct-sm--compact .strct-sm__cat {
+        padding: 2px 9px;
+        line-height: 18px;
+      }
+      .strct-sm--compact .strct-sm__cat-static {
+        padding: 6px 10px 2px;
+        line-height: 14px;
+      }
+      .strct-sm--compact .strct-sm__section--collapsible .strct-sm__item {
+        padding-inline-start: 31px;
       }
       /* Trailing cues: muted icon, count chip, status dot — same vocabulary as
          the rail, so the two nav objects stay consistent. */
@@ -361,6 +425,13 @@ export class StrctSectionMenu {
   readonly collapsible = input(true, { transform: booleanAttribute });
   /** Show category / item icons. */
   readonly showIcons = input(true, { transform: booleanAttribute });
+  /**
+   * `'compact'` puts a 26px item and a 22px category head in place of 31px
+   * and 31px, for a settings window where the menu is one of two columns
+   * and sixteen sections have to fit beside the form. `'comfortable'` is
+   * unchanged and stays the default.
+   */
+  readonly density = input<'comfortable' | 'compact'>('comfortable');
   /** Accessible label for the nav landmark. */
   readonly ariaLabel = input('Sections');
   /** Emitted when an item is chosen. */
@@ -379,6 +450,21 @@ export class StrctSectionMenu {
     const next = new Map(this.overrides());
     next.set(sec.label, !open);
     this.overrides.set(next);
+  }
+
+  /**
+   * The name a line is read out by. Only a line that says a value gets one:
+   * the muted text and the chip are both part of the name that the DOM
+   * gives an item anyway, but concatenated with nothing between them
+   * ("Processor 8 vCPU"), and a value is a second fact about the section,
+   * not more of its label. Built from the parts so the pause is really
+   * there, and so the chip keeps its place in the name it already had.
+   */
+  protected itemName(item: StrctMenuLink): string | null {
+    if (!item.value) return null;
+    const badge =
+      item.badge === undefined || item.badge === null || item.badge === '' ? '' : `${item.badge}`;
+    return [item.label, item.value, badge].filter(Boolean).join(', ');
   }
 
   /** Enabled entry with a router destination → renders as `<a routerLink>`. */

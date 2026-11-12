@@ -90,6 +90,25 @@ const ROUTES = [
   // FR-78-01: a threshold line on the track, over bare track and over a
   // stacked fill, at full width and inside a 120px cell.
   ['progress-markers', '/components/progress', '#progress-markers', undefined, '#progress-markers'],
+  // FR-79-01/02: the two menu densities side by side, every line saying what
+  // its section is set to. The crop is both menus, so the step and the
+  // trailing cues on one line both show.
+  [
+    'settings-menu',
+    '/components/section-menu',
+    '#section-menu-settings .smd-demo',
+    undefined,
+    '#section-menu-settings .smd-demo',
+  ],
+  // FR-79-03: the compact settings rows beside the comfortable ones, with
+  // the wide hint under the control it describes.
+  [
+    'settings-rows',
+    '/components/field',
+    '#field-compact .fc-demo',
+    undefined,
+    '#field-compact .fc-demo',
+  ],
   // FR-76-01: the sign-in page taken to the edges, with its environment
   // band across both columns and the art in a band of its own.
   ['sign-in', '/scenarios/sign-in', 'strct-login', undefined, 'strct-login'],
