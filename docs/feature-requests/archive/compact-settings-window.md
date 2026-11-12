@@ -65,3 +65,48 @@ separator and the label/hint stack set the floor.
 - Inline `strct-field` `compact`: pitch between two fields with a 34px control and a one-line hint ≤ 44px;
   a long hint never wraps under the label; `aria-describedby` still names the hint.
 - No new tab stops.
+
+---
+
+## Shipped in 7.14.0 (2026-11-12)
+
+`StrctMenuLink.value`, `strct-section-menu [density]`, `strct-field [density]`
+and `provideStrctFieldDefaults`. Every number below is read back from what
+Chrome laid out, by `scripts/settings-density.mjs` (29 checks, both palettes,
+and the contrast sweep over all six).
+
+### Against the acceptance
+
+| asked                                                               | measured                                                                                            |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `value` + `dot` + `trailingIcon` on one line, in a 236px menu       | all three drawn on one **26px** line in a **236px** menu ("Processor")                              |
+| the value never cuts the label below 8 characters                   | the value ellipsises, no label with it; shortest label still shows **11.4 characters**              |
+| `value` ≥ 4.5:1 on the menu's surface, both palettes, active tone   | **4.82:1** at its weakest of **180** readings (3 palettes × 2 themes), weakest case the active line |
+| `density="compact"`: 26px items, ±1, both palettes                  | **26px** items and **22px** heads, exactly, in both                                                 |
+| no change for `comfortable`                                         | **31px** items, **34px** heads, **72.8 / 85.8px** pitch — the numbers measured before the change    |
+| inline `compact`: pitch ≤ 44px with a 28–34px control + 1-line hint | **42px** and **43px** (a 32px control, a 35px row) — **72.8px** before                              |
+| a long hint never wraps under the label                             | moved to the control's column (2 lines there); the hints that fit stay under the label              |
+| `aria-describedby` still names the hint                             | 3 compact hints and 3 comfortable ones, the moved one among them                                    |
+| no new tab stops                                                    | **30** for 30 enabled menu lines, **7** for 7 controls — one each and nothing else                  |
+
+Also measured: the accessible name is taken from **Chrome's own accessibility
+tree**, not from the attribute the library writes, and it computes
+**"Processor, 8 vCPU"**. The whole menu goes from **565px to 461px** — the
+104px the window needed.
+
+### What the report did not have
+
+- **The separator is not what makes the row.** Cutting the 24px separator to
+  8px and flattening the label pad got the pitch from **72.8px to 59px** and
+  no further: the row itself was still **50px**, because the hint is a grid
+  **row** of its own, so a row was the control _plus_ the hint _plus_ the
+  gap, and the label column's "stack" was never a stack. Spanning the control
+  across both rows is what takes the row to **34px** and the pitch to
+  **42px**. Two of the ask's three causes were the same cause.
+- **The label cannot be on the control's baseline in a hinted compact row.**
+  A 9px pad makes the label+hint stack 43px and the row 51px, over the 44px
+  the same ask asks for. So a row with a hint top-aligns its label and a row
+  without one keeps the pad. Flagged rather than silently dropped.
+- **`badge` and `dot` still take each other's place.** The report notes it as
+  part of why `badge` could not carry a value; with a real `value` the case is
+  gone, so the `@else if` was left alone rather than changed for its own sake.

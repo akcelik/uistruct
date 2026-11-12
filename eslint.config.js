@@ -62,6 +62,16 @@ module.exports = tseslint.config(
     rules: { '@angular-eslint/no-input-rename': 'off' },
   },
   {
+    // The field's `density` (7.14.0) is the same shape as the datagrid's
+    // `maxHeight`: `densityInput` with `alias: 'density'`, so `[density]`
+    // stays the public name while the class keeps `density()` for the value
+    // actually in force — this row's, else `provideStrctFieldDefaults`, else
+    // comfortable. `undefined` has to stay distinguishable from an explicit
+    // `'comfortable'`, which is how one row opts out of a compact policy.
+    files: ['projects/strct/src/lib/forms/field.ts'],
+    rules: { '@angular-eslint/no-input-rename': 'off' },
+  },
+  {
     files: ['**/*.spec.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',

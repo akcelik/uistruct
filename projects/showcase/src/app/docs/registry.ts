@@ -597,6 +597,7 @@ export const DOCS: DocCategory[] = [
           'StrctFieldSuffix',
           'StrctFieldHint',
           'StrctFieldGroup',
+          'provideStrctFieldDefaults',
         ],
         summary: 'Label / required / hint / error wrapper.',
         lead: 'Wraps any form control with a label (and optional required marker), a hint and an error message. It auto-links the control via `aria-describedby` and toggles `aria-invalid`, so accessibility wiring is automatic.',
@@ -653,6 +654,13 @@ export const DOCS: DocCategory[] = [
               '`inline` puts the label and its hint in a fixed-width column (`--strct-field-label-w`, 220px) and the control beside them — how a long settings form reads — with a hairline between consecutive settings and the error under the control. Below 480px of field width it falls back to stacked; the width is fixed rather than a custom property because a container query cannot read one.',
           },
           {
+            name: 'density',
+            type: `'comfortable' | 'compact'`,
+            default: `'comfortable'`,
+            description:
+              'For `layout="inline"`. `compact` takes a row with a 28–34px control and a one-line hint from 73px of pitch to 42px: the separator between two rows is one `--space-2` instead of 24px of margin plus padding, and the label+hint stack in the label column becomes exactly as tall as the control beside it. A hint too wide for the label column goes under the control instead of wrapping to a second and third line under the label — measured in the component, because CSS cannot ask whether a line wrapped — and stays the control’s `aria-describedby` wherever it lands. Left unset it follows `provideStrctFieldDefaults({ density: \'compact\' })`, so a settings form states it once; an explicit `comfortable` opts one row back out.',
+          },
+          {
             name: '[strctFieldPrefix] / [strctFieldSuffix]',
             type: 'slots',
             description:
@@ -675,6 +683,7 @@ export const DOCS: DocCategory[] = [
           'Wrap each form control in a field for consistent labels and messaging.',
           'Bind `error` to your validation state.',
           'Use `layout="inline"` for long settings forms, and keep the stacked default for short dialogs.',
+          "State `provideStrctFieldDefaults({ density: 'compact' })` once for a settings window rather than repeating `density` on sixteen rows.",
           'Put a unit in `[strctFieldSuffix]` rather than beside the box.',
         ],
         dont: [
@@ -3099,7 +3108,7 @@ export const DOCS: DocCategory[] = [
             name: 'sections',
             type: 'StrctMenuSection[]',
             description:
-              'Categories with items: `{ label, icon?, expanded?, items: StrctMenuLink[] }`. Each item is `{ id, label, icon?, disabled?, badge?, badgeStatus?, dot?, dotStatus?, trailingIcon?, routerLink?, href? }` — `badge` renders a trailing count chip, `dot` a small status dot (e.g. "unsaved changes"), `trailingIcon` a muted glyph (e.g. "restart required"). An item with `routerLink` or `href` is drawn as a real link (middle-click, ⌘-click, "copy link address", `aria-current` from the router) and still emits `(select)` on a plain activation — the rail\u2019s contract; without one it stays a `<button>`. Same status vocabulary as the rail (`StrctRailStatus`). Required.',
+              'Categories with items: `{ label, icon?, expanded?, items: StrctMenuLink[] }`. Each item is `{ id, label, value?, icon?, disabled?, badge?, badgeStatus?, dot?, dotStatus?, trailingIcon?, routerLink?, href? }` — `value` is what the section is **set to**, as muted trailing text ("8 vCPU", "64 GB static"), `badge` renders a trailing count chip, `dot` a small status dot (e.g. "unsaved changes"), `trailingIcon` a muted glyph (e.g. "restart required"). `value` coexists with all of them and joins the line’s accessible name after a comma ("Processor, 8 vCPU"); it is also the part that ellipsises first, so the label keeps eight characters before either does. Use it rather than `badge` for a value: sixteen accent chips down a settings menu read as sixteen alerts. An item with `routerLink` or `href` is drawn as a real link (middle-click, ⌘-click, "copy link address", `aria-current` from the router) and still emits `(select)` on a plain activation — the rail\u2019s contract; without one it stays a `<button>`. Same status vocabulary as the rail (`StrctRailStatus`). Required.',
           },
           {
             name: 'activeId',
@@ -3119,6 +3128,13 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'true',
             description: 'Show category / item icons.',
+          },
+          {
+            name: 'density',
+            type: `'comfortable' | 'compact'`,
+            default: `'comfortable'`,
+            description:
+              '`compact` is a 26px item and a 22px category head in place of 31px and 31px — for a settings window where the menu is one of two columns and sixteen sections have to fit beside the form, which at the comfortable step costs 565px of a 760px window before a single setting is drawn.',
           },
           {
             name: 'ariaLabel',

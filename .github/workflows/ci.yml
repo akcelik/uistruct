@@ -118,6 +118,14 @@ jobs:
       # do once a label, a caption or an end-value takes room from the track.
       - name: Assert a progress marker lands on its value
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/progress-markers.mjs
+      # FR-79-01..03: a settings window's two halves — a menu line that says
+      # what its section is set to, and a form row that costs 42px instead of
+      # 73px. The step of both densities, the accessible name from Chrome's
+      # own AX tree, the value's contrast composited over a translucent
+      # active line in all six palettes, and where a hint too wide for the
+      # label column ends up.
+      - name: Assert a settings window fits
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/settings-density.mjs
       # BUG-70-01: a bar chart's category label under its own band, measured at
       # two widths because a single one cannot tell a measurement from a
       # constant that happens to fit. 6 of its 9 checks fail on 7.6.0.

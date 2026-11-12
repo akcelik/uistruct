@@ -6,6 +6,7 @@ import {
   StrctFieldPrefix,
   StrctFieldSuffix,
   StrctFieldValue,
+  provideStrctFieldDefaults,
 } from './field';
 import { StrctInput } from './input';
 
@@ -279,5 +280,63 @@ describe('StrctField — [strctFieldValue="control"]', () => {
     expect(el.querySelector('.text')!.classList).toContain('strct-field__value');
     expect(el.querySelector('.text')!.classList).not.toContain('strct-field__value--control');
     expect(el.querySelector('.ctrl')!.classList).toContain('strct-field__value--control');
+  });
+});
+
+@Component({
+  standalone: true,
+  imports: [StrctField, StrctInput],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
+    <strct-field layout="inline" label="vCPUs" hint="Cores for the guest.">
+      <input strctInput />
+    </strct-field>
+    <strct-field layout="inline" density="comfortable" label="Memory">
+      <input strctInput />
+    </strct-field>
+  `,
+})
+class DensityHost {}
+
+describe('StrctField — density (FR-79-03)', () => {
+  // The geometry this buys — a 42px pitch, and a wide hint that moves to the
+  // control's column — is measured in Chrome by scripts/settings-density.mjs:
+  // jsdom lays nothing out, so the width the hint is compared against is 0
+  // and the component leaves it where it is. What is testable here is which
+  // density is in force, and that the hint keeps describing its control.
+  it('comfortable is the default, and compact marks the host', () => {
+    const f = TestBed.createComponent(DensityHost);
+    f.detectChanges();
+    const host = f.nativeElement as HTMLElement;
+    expect(host.querySelectorAll('.strct-field--compact').length).toBe(0);
+
+    const one = TestBed.createComponent(StrctField);
+    one.componentRef.setInput('layout', 'inline');
+    one.componentRef.setInput('density', 'compact');
+    one.detectChanges();
+    expect((one.nativeElement as HTMLElement).classList).toContain('strct-field--compact');
+  });
+
+  it('provideStrctFieldDefaults sets it for a whole form, and a row can opt back out', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [provideStrctFieldDefaults({ density: 'compact' })],
+    });
+    const f = TestBed.createComponent(DensityHost);
+    f.detectChanges();
+    const rows = (f.nativeElement as HTMLElement).querySelectorAll('.strct-field');
+    // No binding on the first row: the policy applies.
+    expect(rows[0].classList).toContain('strct-field--compact');
+    // An explicit comfortable on the second wins over the policy.
+    expect(rows[1].classList).not.toContain('strct-field--compact');
+  });
+
+  it('the hint is still the control’s description in a compact row', () => {
+    TestBed.resetTestingModule();
+    const f = TestBed.createComponent(DensityHost);
+    f.detectChanges();
+    const input = (f.nativeElement as HTMLElement).querySelector('input')!;
+    const hint = (f.nativeElement as HTMLElement).querySelector('.strct-field__msg--hint')!;
+    expect((input.getAttribute('aria-describedby') ?? '').split(' ')).toContain(hint.id);
   });
 });

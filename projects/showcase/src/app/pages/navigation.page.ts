@@ -305,6 +305,42 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="section-menu-settings"
+      owner="section-menu"
+      heading="Section menu — values and density"
+      description='FR-79-01/02: a settings menu says what each section is set to. value is muted trailing text that coexists with the status dot and the trailing icon — Processor carries its value, the lock of &ldquo;greyed until the VM is off&rdquo; and the dot of &ldquo;unsaved&rdquo; at once — and it joins the line&apos;s accessible name after a comma (&ldquo;Processor, 8 vCPU&rdquo;). It is also what ellipsises when the menu is narrow: the label keeps eight characters before either does. density="compact" is the second half: 26px items and 22px category heads, because sixteen sections and two heads at the comfortable step take 560px of a 760px settings window before a single setting is drawn. Both menus below hold the same sixteen sections.'
+      code='<strct-section-menu density="compact" [sections]="[{label:&#39;Hardware&#39;,items:[{id:&#39;cpu&#39;,label:&#39;Processor&#39;,value:&#39;8 vCPU&#39;,dot:true,trailingIcon:&#39;lock&#39;}]}]" [(activeId)]="active" />'
+    >
+      <div class="smd-demo">
+        <div class="smd-demo__col">
+          <span class="smd-demo__cap">comfortable (default)</span>
+          <div class="smd-demo__panel" data-density="comfortable">
+            <strct-section-menu
+              [sections]="settingsSections"
+              [(activeId)]="settingsActive"
+              [collapsible]="false"
+              [showIcons]="false"
+              ariaLabel="VM settings (comfortable)"
+            />
+          </div>
+        </div>
+        <div class="smd-demo__col">
+          <span class="smd-demo__cap">compact</span>
+          <div class="smd-demo__panel" data-density="compact">
+            <strct-section-menu
+              density="compact"
+              [sections]="settingsSections"
+              [(activeId)]="settingsActive"
+              [collapsible]="false"
+              [showIcons]="false"
+              ariaLabel="VM settings (compact)"
+            />
+          </div>
+        </div>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="menubar"
       heading="Menubar"
       description="The application-menu strip for dense tool consoles. Click or Enter/Down opens; Left/Right move across the bar and switch the open menu (APG menubar); Escape and outside click close."
@@ -433,6 +469,30 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         display: flex;
         gap: 20px;
         flex-wrap: wrap;
+      }
+      .smd-demo {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+      .smd-demo__col {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .smd-demo__cap {
+        font-size: var(--text-sm);
+        color: var(--t3);
+      }
+      /* 252px of panel, 8px of padding each side: a 236px menu, the width the
+         settings window gives it. */
+      .smd-demo__panel {
+        width: 254px;
+        padding: 8px;
+        border: 1px solid var(--b2);
+        border-radius: 5px;
+        background: var(--bg-1);
       }
       .sm-demo__panel {
         width: 244px;
@@ -657,6 +717,40 @@ export class NavigationPage {
     { id: 'docs', label: 'Rail docs (link)', icon: 'link', routerLink: '/components/rail' },
     // Pinned to the foot of the rail, under a divider.
     { id: 'admin', label: 'Administration', icon: 'settings', placement: 'bottom' },
+  ];
+
+  // FR-79-01/02 — the settings window's own menu: sixteen sections, each
+  // saying what it is set to. Processor carries all three trailing cues at
+  // once (value, "greyed until the VM is off", "unsaved"), and "Hard drives"
+  // is the value long enough to ellipsise in a 236px menu.
+  protected readonly settingsActive = signal('cpu');
+  protected readonly settingsSections: StrctMenuSection[] = [
+    {
+      label: 'Hardware',
+      items: [
+        { id: 'cpu', label: 'Processor', value: '8 vCPU', dot: true, trailingIcon: 'lock' },
+        { id: 'mem', label: 'Memory', value: '64 GB static' },
+        { id: 'disks', label: 'Hard drives', value: '2 · 628 GB, thin provisioned' },
+        { id: 'nics', label: 'Network adapters', value: '2 · vSwitch0' },
+        { id: 'scsi', label: 'SCSI controllers', value: 'Paravirtual' },
+        { id: 'dvd', label: 'DVD drive', value: 'No media' },
+        { id: 'floppy', label: 'Floppy drive', value: 'None', disabled: true },
+        { id: 'video', label: 'Video', value: '16 MB' },
+        { id: 'tpm', label: 'Trusted platform', value: 'Enabled', trailingIcon: 'lock' },
+      ],
+    },
+    {
+      label: 'Management',
+      items: [
+        { id: 'name', label: 'Name', value: 'db-prod-01' },
+        { id: 'boot', label: 'Boot order', value: 'Disk, network' },
+        { id: 'integration', label: 'Integration services', value: '4 of 5' },
+        { id: 'checkpoints', label: 'Checkpoints', value: 'Production', dot: true },
+        { id: 'smartpaging', label: 'Smart paging file', value: 'C:\\ProgramData' },
+        { id: 'autostart', label: 'Automatic start', value: 'Always' },
+        { id: 'autostop', label: 'Automatic stop', value: 'Save state' },
+      ],
+    },
   ];
 
   protected readonly menuActive = signal('hosts');

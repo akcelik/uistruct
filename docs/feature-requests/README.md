@@ -9,6 +9,17 @@ stays here until it goes quiet.
 
 **Nothing.** Everything filed so far has shipped.
 
+### Closed on 2026-11-12, and moved to [`archive/`](archive/)
+
+- [**`archive/compact-settings-window.md`**](archive/compact-settings-window.md) — FR-79-01…03, a
+  settings window could not be drawn with the components it is made of: a menu line said a
+  section's name with no way to say what it is set to (`badge` was the only trailing text and it is
+  a coloured chip, so sixteen values read as sixteen alerts), sixteen sections and two heads took
+  **565px** of a 760px window, and an inline field row cost 63–87px. Shipped in **v7.14.0** as
+  `StrctMenuLink.value`, `density` on both components and `provideStrctFieldDefaults` — the menu at
+  **461px**, a row's pitch at **42px** instead of 72.8px, and the value at **4.82:1** at its
+  weakest over 180 readings in six palettes.
+
 ### Closed on 2026-11-10, and moved to [`archive/`](archive/)
 
 - [**`archive/progress-markers.md`**](archive/progress-markers.md) — FR-78-01, `strct-progress`

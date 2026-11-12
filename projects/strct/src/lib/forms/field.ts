@@ -2,8 +2,11 @@ import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   Directive,
   ElementRef,
+  InjectionToken,
+  Provider,
   TemplateRef,
   ViewEncapsulation,
   afterNextRender,
@@ -20,6 +23,26 @@ import { StrctSpinner } from '../spinner/spinner';
 import { StrctValidationState, strctValidationIcon } from '../validation/validation';
 
 let fieldCounter = 0;
+
+/**
+ * Field defaults an app states once, the way the datagrid's do:
+ *
+ *   providers: [provideStrctFieldDefaults({ density: 'compact' })]
+ *
+ * A settings window is sixteen rows of one form; repeating `density` on each
+ * of them is how the sixteenth comes out wrong. A per-instance binding still
+ * wins, and `[density]="'comfortable'"` opts one row back out.
+ */
+export interface StrctFieldDefaults {
+  /** Applies to `layout="inline"` rows; `'comfortable'` is the default. */
+  density?: 'comfortable' | 'compact';
+}
+
+export const STRCT_FIELD_DEFAULTS = new InjectionToken<StrctFieldDefaults>('STRCT_FIELD_DEFAULTS');
+
+export function provideStrctFieldDefaults(defaults: StrctFieldDefaults): Provider {
+  return { provide: STRCT_FIELD_DEFAULTS, useValue: defaults };
+}
 
 /** Text or a control rendered inside the field's box, before the input. */
 @Directive({ selector: '[strctFieldPrefix]' })
@@ -138,6 +161,8 @@ export class StrctFieldGroup {}
     '[class.strct-field--invalid]': 'isInvalid()',
     '[class.strct-field--validating]': 'stateActive()',
     '[class.strct-field--inline]': "layout() === 'inline'",
+    '[class.strct-field--compact]': "density() === 'compact'",
+    '[class.strct-field--hintwide]': 'hintWide()',
     '[class.strct-field--prefix]': 'hasPrefix()',
     '[class.strct-field--suffix]': 'hasSuffix()',
   },
@@ -339,6 +364,67 @@ export class StrctFieldGroup {}
         border-block-start: 0;
         padding-block-start: 0;
       }
+      /* ── density="compact" ───────────────────────────────────────────────
+         A settings window is a column of these, and at 63-87px a row it
+         holds seven of them. Three things set that floor: the 24px of
+         margin+padding between two rows, the 9px that puts the label on a
+         34px control's line, and a hint that wraps to a second and a third
+         line when it is wider than the label column.
+
+         Compact answers all three. The separator is one space-2 in total.
+         The label+hint stack in the label column is exactly as tall as the
+         control beside it, which is what a one-line hint at 44px needs: a
+         9px label pad would make the stack 43px and the row 51px, so a
+         hinted row aligns the label to the top of the column instead, and
+         only a row with no hint keeps the pad that puts it on the control's
+         line. A hint too wide for the label column goes under the control —
+         measured in the component, because CSS cannot ask whether text
+         wrapped. */
+      .strct-field--compact.strct-field--inline {
+        row-gap: 2px;
+      }
+      .strct-field--compact.strct-field--inline > .strct-field__label {
+        padding-block-start: 9px;
+      }
+      .strct-field--compact.strct-field--inline:has(> .strct-field__msg--hint)
+        > .strct-field__label {
+        padding-block-start: 0;
+        line-height: 16px;
+      }
+      /* The hint is a grid ROW of its own, which is why a hinted row is as
+         tall as the control plus the hint plus the gap: 50px, not 34px. So
+         the control spans both rows, and the label+hint stack beside it
+         becomes what it looks like — two lines in the label column, next to
+         one control. A hint that has moved to the control's column needs
+         that row back, hence the :not(). */
+      .strct-field--compact.strct-field--inline:has(> .strct-field__msg--hint):not(
+          .strct-field--hintwide
+        )
+        > .strct-field__control {
+        grid-row: 1 / span 2;
+        align-self: start;
+      }
+      .strct-field--compact.strct-field--inline > .strct-field__msg--hint {
+        padding-block-end: 0;
+        line-height: 16px;
+      }
+      /* Measured too wide for the label column: under the control, where
+         there is room for it, rather than three lines under the label. */
+      .strct-field--compact.strct-field--inline.strct-field--hintwide > .strct-field__msg--hint {
+        grid-column: 2;
+        grid-row: 2;
+      }
+      .strct-field--compact.strct-field--inline .strct-field__value {
+        padding-block-start: 9px;
+      }
+      .strct-field--compact.strct-field--inline:has(> .strct-field__msg--hint) .strct-field__value {
+        padding-block-start: 0;
+      }
+      .strct-field--compact.strct-field--inline + .strct-field--compact.strct-field--inline {
+        margin-block-start: var(--space-2);
+        padding-block-start: 0;
+      }
+
       /* Narrow: the column would leave nothing for the control, so it stacks.
          The width is fixed rather than a custom property because a container
          query cannot read one. */
@@ -379,12 +465,27 @@ export class StrctField {
    */
   readonly layout = input<'stacked' | 'inline'>('stacked');
   /**
+   * Row density for `layout="inline"`. `'compact'` is for a settings window
+   * — an 8px separator instead of 24px, and a one-line hint that costs the
+   * row nothing, which takes a row with a 34px control from 73px to 42px.
+   * Left unset it follows `provideStrctFieldDefaults`, so a form states it
+   * once; `undefined` means "nothing was said here" and an explicit
+   * `'comfortable'` opts one row back out of a compact policy.
+   */
+  readonly densityInput = input<'comfortable' | 'compact' | undefined>(undefined, {
+    alias: 'density',
+  });
+  /** The density in force: this row's, else the app's policy, else comfortable. */
+  readonly density = computed(() => this.densityInput() ?? this.defaults?.density ?? 'comfortable');
+  /**
    * Async-validation state rendered as a trailing adornment (spinner / check /
    * warning) plus its message in the hint/error slot — so apps stop composing a
    * spinner + badge by hand for live "checking… → ok / warning / error" checks.
    */
   readonly validationState = input<StrctValidationState | null>(null);
 
+  private readonly defaults = inject(STRCT_FIELD_DEFAULTS, { optional: true });
+  private readonly destroyRef = inject(DestroyRef);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
   private readonly n = ++fieldCounter;
   protected readonly hintId = `strct-field-hint-${this.n}`;
@@ -392,6 +493,12 @@ export class StrctField {
   protected readonly prefixId = `strct-field-pre-${this.n}`;
   protected readonly suffixId = `strct-field-suf-${this.n}`;
   protected readonly controlId = signal('');
+  /**
+   * Whether the hint is wider than the label column — so in a compact row it
+   * belongs under the control. Read from what Chrome would lay out, because
+   * CSS has no way to ask whether a line wrapped.
+   */
+  protected readonly hintWide = signal(false);
 
   protected readonly hintTpl = contentChild(StrctFieldHint, { read: TemplateRef });
   protected readonly hasPrefix = contentChild(StrctFieldPrefix);
@@ -419,7 +526,24 @@ export class StrctField {
   );
 
   constructor() {
-    afterNextRender(() => this.link());
+    afterNextRender(() => {
+      this.link();
+      this.measureHint();
+      // The label column is a fixed width, but the field's own width decides
+      // whether the grid is two columns at all, and an app can change
+      // --strct-field-label-w on a breakpoint. Width is the only thing that
+      // moves the verdict: moving the hint changes the host's HEIGHT, so
+      // reacting to that is the loop this guard exists to avoid.
+      let seen = this.host.nativeElement.getBoundingClientRect().width;
+      const ro = new ResizeObserver(() => {
+        const w = this.host.nativeElement.getBoundingClientRect().width;
+        if (Math.abs(w - seen) < 0.5) return;
+        seen = w;
+        this.measureHint();
+      });
+      ro.observe(this.host.nativeElement);
+      this.destroyRef.onDestroy(() => ro.disconnect());
+    });
     // Keep aria in sync as the error / hint / validation state change.
     effect(() => {
       this.errorText();
@@ -431,6 +555,54 @@ export class StrctField {
       this.stateMessage();
       this.applyAria();
     });
+    effect(() => {
+      this.hint();
+      this.hintTpl();
+      this.stateMessage();
+      this.errorText();
+      this.density();
+      this.layout();
+      this.label();
+      queueMicrotask(() => this.measureHint());
+    });
+  }
+
+  /**
+   * Is the hint wider than the label column? Measured on the hint's own
+   * intrinsic width (nowrap at max-content), not on the box it currently
+   * sits in: read from the box, a hint that has already moved to the wider
+   * control column measures wide forever and never comes back.
+   */
+  private measureHint(): void {
+    if (this.layout() !== 'inline' || this.density() !== 'compact') {
+      this.hintWide.set(false);
+      return;
+    }
+    const host = this.host.nativeElement;
+    const hint = host.querySelector<HTMLElement>('.strct-field__msg--hint');
+    if (!hint) {
+      this.hintWide.set(false);
+      return;
+    }
+    const label = host.querySelector<HTMLElement>('.strct-field__label');
+    const column =
+      label?.getBoundingClientRect().width ||
+      parseFloat(getComputedStyle(host).gridTemplateColumns) ||
+      0;
+    // Stacked (the container query below 480px) puts the hint on a full-width
+    // row of its own, where there is nothing to be too wide for.
+    if (!column || column >= host.getBoundingClientRect().width - 1) {
+      this.hintWide.set(false);
+      return;
+    }
+    const ws = hint.style.whiteSpace;
+    const width = hint.style.width;
+    hint.style.whiteSpace = 'nowrap';
+    hint.style.width = 'max-content';
+    const text = hint.getBoundingClientRect().width;
+    hint.style.whiteSpace = ws;
+    hint.style.width = width;
+    this.hintWide.set(text > column + 0.5);
   }
 
   private control(): HTMLElement | null {

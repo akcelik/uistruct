@@ -5,6 +5,72 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.14.0] - 2026-11-12
+
+[FR-79-01..03](docs/feature-requests/archive/compact-settings-window.md), from
+HyperStruct's VM ▸ Edit Settings window, which shipped without values on its
+menu because there was no way to put them there.
+
+### Added
+
+- **`StrctMenuLink.value` — a menu line that says what it is set to.** A
+  settings tree says "Processor — 8 vCPU", not "Processor"; before this,
+  `badge` was the only trailing text a line could carry and it is a coloured
+  chip, so sixteen values read as sixteen alerts. `value` is muted trailing
+  text that coexists with `trailingIcon` and `dot` — a line can say "8 vCPU",
+  carry the lock of "greyed until the VM is off" and the dot of "unsaved" at
+  once, which `badge` could not: `badge` and `dot` take each other's place.
+
+  ```html
+  <strct-section-menu
+    density="compact"
+    [sections]="[
+      { label: 'Hardware', items: [
+        { id: 'cpu', label: 'Processor', value: '8 vCPU', dot: true, trailingIcon: 'lock' },
+        { id: 'mem', label: 'Memory', value: '64 GB static' },
+      ] },
+    ]"
+    [(activeId)]="active"
+  />
+  ```
+
+  Measured, in a 236px menu: the value, the dot and the trailing icon all
+  drawn on one 26px line; Chrome's own accessibility tree computes the name
+  **"Processor, 8 vCPU"**; the value is what ellipsises when the menu is
+  narrow and the shortest label still shows **11.4 characters** (the floor is
+  8); and the value measures **4.82:1** at its weakest over six palettes —
+  180 readings, the active line's own translucent `--acc-m` composited rather
+  than guessed.
+
+- **`strct-section-menu [density]`.** `compact` is a **26px** item and a
+  **22px** category head in place of 31px and 31px. Sixteen sections and two
+  heads go from **565px to 461px** — 104px of a 760px settings window handed
+  back to the settings. `comfortable` is the default and did not move.
+
+- **`strct-field [density]` and `provideStrctFieldDefaults`.** An inline row
+  cost 63–87px, and three things set that floor: 24px of margin plus padding
+  between two rows, the 9px that puts the label on a 34px control's line, and
+  a hint that wrapped to a second and third line under the label whenever it
+  was wider than the label column. `compact` answers all three and takes the
+  pitch between two rows with a 32px control and a one-line hint from
+  **72.8px to 42px** — measured, in both palettes.
+
+  ```ts
+  providers: [provideStrctFieldDefaults({ density: 'compact' })];
+  ```
+
+  The separator becomes one `--space-2`; the control spans both grid rows so
+  the label+hint stack beside it is what it looks like — two lines in the
+  label column next to one control — rather than a row of its own under it;
+  and a hint too wide for the label column goes **under the control**, which
+  the component measures from the hint's own intrinsic width, because CSS has
+  no way to ask whether a line wrapped. The hint stays the control's
+  `aria-describedby` wherever it lands, and neither half adds a tab stop.
+
+  A row with a hint top-aligns its label rather than sitting it on the
+  control's line: a 9px pad would make the stack 43px and the row 51px, which
+  is over the 44px the ask is about. A row with no hint keeps the pad.
+
 ## [7.13.0] - 2026-11-10
 
 [FR-78-01](docs/feature-requests/archive/progress-markers.md), from
