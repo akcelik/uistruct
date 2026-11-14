@@ -735,7 +735,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="otp"
       heading="Input OTP"
-      description="One-time-password boxes with auto-advance, backspace and paste. fill spreads them across the row, so the code lines up with a full-width button under it instead of huddling at the start."
+      description="One-time-password boxes with auto-advance, backspace and paste. fill spans the row, so the code lines up with a full-width button under it instead of huddling at the start — the cells grow with it and keep their shape."
       code='<strct-input-otp [length]="6" [(ngModel)]="code" fill />'
     >
       <strct-input-otp [length]="6" [ngModel]="code()" (ngModelChange)="code.set($event)" />
@@ -748,6 +748,117 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           (ngModelChange)="code2.set($event)"
         />
         <button strct-button variant="primary" style="width: 100%; margin-top: 10px">Verify</button>
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="otp-row"
+      owner="otp"
+      heading="The row's shape, and where it sits"
+      description='BUG-80-03 / FR-80-06: fill spans the field so the code lines up with the button under it, and it used to do that by widening the boxes alone &mdash; 59&times;46 in a 420px form, a landscape tile that read as pressed flat. Now the cells grow with the row and keep their 40&times;46 ratio up to a cap of 48px, and the width past the cap goes into the gaps, so the first and the last cell still sit on the row&apos;s edges. A row that is not filled is one control in the middle of a centred card: align places it (start, the default, moves nothing). size="lg" draws a 48&times;56 cell with the larger glyph &mdash; a bigger code row without a stretched one.'
+      code='<strct-input-otp fill [length]="6" [groupSize]="3" [(ngModel)]="code" />&#10;<strct-input-otp align="center" size="lg" [length]="6" [(ngModel)]="code" />'
+    >
+      <div class="otpr-demo">
+        <div class="otpr-demo__group" data-otp-group="fill">
+          <div class="otpr-demo__case otpr-demo__case--300" data-otp="fill-300">
+            <span class="otpr-demo__cap">fill &mdash; 300px, the row the code just fits</span>
+            <strct-input-otp
+              fill
+              [length]="6"
+              [groupSize]="3"
+              [ngModel]="codeFill()"
+              (ngModelChange)="codeFill.set($event)"
+            />
+            <button strct-button variant="primary" class="otpr-demo__btn">Verify</button>
+          </div>
+          <div class="otpr-demo__case otpr-demo__case--420" data-otp="fill-420">
+            <span class="otpr-demo__cap">fill &mdash; 420px, the cells grow to the cap</span>
+            <strct-input-otp
+              fill
+              [length]="6"
+              [groupSize]="3"
+              [ngModel]="codeFill()"
+              (ngModelChange)="codeFill.set($event)"
+            />
+            <button strct-button variant="primary" class="otpr-demo__btn">Verify</button>
+          </div>
+          <div class="otpr-demo__case otpr-demo__case--560" data-otp="fill-560">
+            <span class="otpr-demo__cap">fill &mdash; 560px, the rest goes into the gaps</span>
+            <strct-input-otp
+              fill
+              [length]="6"
+              [groupSize]="3"
+              [ngModel]="codeFill()"
+              (ngModelChange)="codeFill.set($event)"
+            />
+            <button strct-button variant="primary" class="otpr-demo__btn">Verify</button>
+          </div>
+        </div>
+        <div class="otpr-demo__group" data-otp-group="place">
+          <div class="otpr-demo__case otpr-demo__case--420" data-otp="start-420">
+            <span class="otpr-demo__cap">align="start" (default)</span>
+            <strct-field label="Verification code">
+              <strct-input-otp
+                [length]="6"
+                [groupSize]="3"
+                [ngModel]="codeAlign()"
+                (ngModelChange)="codeAlign.set($event)"
+              />
+            </strct-field>
+          </div>
+          <div class="otpr-demo__case otpr-demo__case--420" data-otp="center-420">
+            <span class="otpr-demo__cap">align="center"</span>
+            <strct-field label="Verification code">
+              <strct-input-otp
+                align="center"
+                [length]="6"
+                [groupSize]="3"
+                [ngModel]="codeAlign()"
+                (ngModelChange)="codeAlign.set($event)"
+              />
+            </strct-field>
+          </div>
+          <div class="otpr-demo__case otpr-demo__case--420" data-otp="end-420">
+            <span class="otpr-demo__cap">align="end"</span>
+            <strct-field label="Verification code">
+              <strct-input-otp
+                align="end"
+                [length]="6"
+                [groupSize]="3"
+                [ngModel]="codeAlign()"
+                (ngModelChange)="codeAlign.set($event)"
+              />
+            </strct-field>
+          </div>
+          <div class="otpr-demo__case otpr-demo__case--420" data-otp="fill-center-420">
+            <span class="otpr-demo__cap"
+              >fill with align="center" &mdash; the row already spans it</span
+            >
+            <strct-field label="Verification code">
+              <strct-input-otp
+                fill
+                align="center"
+                [length]="6"
+                [groupSize]="3"
+                [ngModel]="codeAlign()"
+                (ngModelChange)="codeAlign.set($event)"
+              />
+            </strct-field>
+          </div>
+          <div class="otpr-demo__case otpr-demo__case--420" data-otp="lg-420">
+            <span class="otpr-demo__cap">size="lg" with align="center"</span>
+            <strct-field label="Verification code">
+              <strct-input-otp
+                size="lg"
+                align="center"
+                [length]="6"
+                [groupSize]="3"
+                [ngModel]="codeLg()"
+                (ngModelChange)="codeLg.set($event)"
+              />
+            </strct-field>
+          </div>
+        </div>
       </div>
     </app-demo>
 
@@ -927,6 +1038,40 @@ import { DemoBlock, PageHeader } from '../ui/demo';
         width: 520px;
         max-width: 100%;
       }
+      /* The widths BUG-80-03 and FR-80-06 were measured at: the row the code
+         just fits, a sign-in card, and a wide one. */
+      .otpr-demo {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+      .otpr-demo__group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 28px 32px;
+        align-items: flex-start;
+      }
+      .otpr-demo__case {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .otpr-demo__case--300 {
+        width: 300px;
+      }
+      .otpr-demo__case--420 {
+        width: 420px;
+      }
+      .otpr-demo__case--560 {
+        width: 560px;
+      }
+      .otpr-demo__cap {
+        font-size: var(--text-sm);
+        color: var(--t3);
+      }
+      .otpr-demo__btn {
+        width: 100%;
+      }
       .field {
         display: flex;
         flex-direction: column;
@@ -1046,6 +1191,11 @@ export class FormsPage {
   protected readonly labels = signal<string[]>(['production', 'eu-west']);
   protected readonly code = signal('');
   protected readonly code2 = signal('');
+  // BUG-80-03 / FR-80-06 — the filled rows share one code, the placed rows
+  // another, so typing in a case shows the row it is about, not eight rows.
+  protected readonly codeFill = signal('4719');
+  protected readonly codeAlign = signal('82');
+  protected readonly codeLg = signal('503');
   protected readonly fan = signal(45);
   protected readonly temp = signal(60);
   protected readonly phone = signal('');

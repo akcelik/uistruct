@@ -5,6 +5,60 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.15.0] - 2026-11-14
+
+[BUG-80-03](docs/feature-requests/archive/otp-fill-flattens-boxes.md) and
+[FR-80-06](docs/feature-requests/archive/otp-row-alignment.md), from
+HyperStruct's sign-in page, whose two-factor step had dropped `fill` and was
+centring its code row with a global rule of its own.
+
+### Fixed
+
+- **`strct-input-otp fill` spreads the row, not the cells.** `fill` grew the
+  boxes' width and left their 46px height alone, so the designed 40×46
+  portrait cell became **49×46** in a 360px card, **59×46** in a 420px one and
+  **79×46** in a 560px one — a landscape tile whose 10px radius read as
+  pressed flat, and the wider the card the worse it got, which is the case
+  `fill` exists for. Now a cell grows with the row **to a cap of 48px and no
+  further**, keeping its ratio the whole way, and the width past the cap goes
+  into the gaps — so the first and the last cell still sit on the row's edges,
+  which is what `fill` is for.
+
+  Measured in Chrome, at the three widths it was filed at: **0.87** width ÷
+  height at 300px, 420px and 560px (the window is 0.8–1.0; it was 0.85, 1.28
+  and 1.72), both edges flush to **0.00px**, the gaps even at **8.0 / 20.0 /
+  43.3px**, and the same ratio at 1.25× and 2×. A row that is not filled did
+  not move: **40×46** at 18px, starting **0.00px** into its field.
+
+### Added
+
+- **`strct-input-otp [align]` — `start` | `center` | `end`.** The host is an
+  inline element, so its row sat at the field's left edge however wide the
+  field was: **114px** of air to its right in a 420px sign-in card whose
+  title, button and recovery link are all centred or full-width. `align`
+  places it — **56.97px / 56.98px** centred in that same field, measured.
+  `start` is the default and leaves the host inline, so nothing that exists
+  moves, and with `fill` the row already spans its field, so `align` has
+  nothing left to place.
+
+  ```html
+  <strct-field label="Verification code">
+    <strct-input-otp align="center" [length]="6" [groupSize]="3" [(ngModel)]="code" />
+  </strct-field>
+  ```
+
+- **`strct-input-otp [size]` — `md` | `lg`.** A sign-in page that wants a
+  larger code row can have one without a stretched one: `lg` is a **48×56**
+  cell with the 22px glyph, against `md`'s 40×46 at 18px. `fill` grows either
+  one to a cap of its own (48px, 58px), keeping the ratio.
+
+- **`scripts/otp-row.mjs`** in CI — 13 checks: the cell's ratio at the three
+  filed widths and at 1.25× and 2×, both edges of a filled row against its
+  field, the cap and the even gaps past it, each alignment's two gaps, the
+  bigger cell, how much of a cell the glyph still covers (**23%**, floor 20%),
+  and that the row is still six `one-time-code` boxes with a separator nobody
+  hears.
+
 ## [7.14.0] - 2026-11-12
 
 [FR-79-01..03](docs/feature-requests/archive/compact-settings-window.md), from

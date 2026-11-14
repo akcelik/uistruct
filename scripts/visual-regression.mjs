@@ -109,6 +109,25 @@ const ROUTES = [
     undefined,
     '#field-compact .fc-demo',
   ],
+  // BUG-80-03: three filled rows at the widths the bug was filed at, each
+  // over the button its edges are supposed to meet, so a cell that stretches
+  // shows. Two crops because one shot is 900px tall and the fixture is not.
+  [
+    'otp-fill',
+    '/components/otp',
+    '#otp-row [data-otp-group="fill"]',
+    undefined,
+    '#otp-row [data-otp-group="fill"]',
+  ],
+  // FR-80-06: the same row placed four ways in the same 420px field, and the
+  // larger cell beside them.
+  [
+    'otp-place',
+    '/components/otp',
+    '#otp-row [data-otp-group="place"]',
+    undefined,
+    '#otp-row [data-otp-group="place"]',
+  ],
   // FR-76-01: the sign-in page taken to the edges, with its environment
   // band across both columns and the art in a band of its own.
   ['sign-in', '/scenarios/sign-in', 'strct-login', undefined, 'strct-login'],

@@ -124,6 +124,12 @@ jobs:
       # own AX tree, the value's contrast composited over a translucent
       # active line in all six palettes, and where a hint too wide for the
       # label column ends up.
+      # BUG-80-03 / FR-80-06: a code row's cells stay upright however wide the
+      # card is (fill used to widen them alone: 59x46 in a 420px form), the
+      # filled row still reaches both edges, and align puts an unfilled row
+      # where the rest of a centred card is. 13 checks, re-read at 1.25x/2x.
+      - name: Assert a code row keeps its shape and its place
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/otp-row.mjs
       - name: Assert a settings window fits
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/settings-density.mjs
       # BUG-70-01: a bar chart's category label under its own band, measured at

@@ -1483,7 +1483,21 @@ export const DOCS: DocCategory[] = [
             type: 'boolean',
             default: 'false',
             description:
-              'Spread the boxes across the full width, so the code lines up with a full-width button under it rather than huddling at the start of the row.',
+              'Span the full width, so the code lines up with a full-width button under it rather than huddling at the start of the row. The cells grow with the row up to a cap (48px, 58px at size="lg") and keep their portrait ratio the whole way; the width past the cap goes into the gaps, so the first and the last cell still sit on the row\u2019s edges.',
+          },
+          {
+            name: 'align',
+            type: `'start' | 'center' | 'end'`,
+            default: `'start'`,
+            description:
+              'Where the row sits in the width the host is given. A code entry is one control, and on a card whose title, button and recovery link are centred, a row at the left edge reads as misplaced. The default leaves the host inline, so nothing that exists moves; with fill the row already spans its field, so align has nothing left to place.',
+          },
+          {
+            name: 'size',
+            type: `'md' | 'lg'`,
+            default: `'md'`,
+            description:
+              'The cell: 40\u00d746 with an 18px glyph, or 48\u00d756 with a 22px one \u2014 a larger code row without a stretched one.',
           },
           {
             name: 'autofocus',
@@ -1516,8 +1530,15 @@ export const DOCS: DocCategory[] = [
               'Move the caret programmatically — e.g. back to box 0 after a rejected code.',
           },
         ],
-        do: ['Match length to the code your backend issues.', 'Allow pasting a full code.'],
-        dont: ['Do not use for secrets longer than a short code — use a password field.'],
+        do: [
+          'Match length to the code your backend issues.',
+          'Allow pasting a full code.',
+          'On a centred card, centre the row with align="center", or fill it to the width of the button under it.',
+        ],
+        dont: [
+          'Do not use for secrets longer than a short code — use a password field.',
+          'Do not stretch the cells to fill a wide card by hand: fill keeps them upright for you.',
+        ],
         a11y: [cvaA11y, 'Backspace moves to the previous box; paste fills all boxes.'],
       },
       {
