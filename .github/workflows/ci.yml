@@ -124,6 +124,19 @@ jobs:
       # own AX tree, the value's contrast composited over a translucent
       # active line in all six palettes, and where a hint too wide for the
       # label column ends up.
+      # BUG-80-01 / FR-80-02: the active step's emphasis stays inside the step
+      # it belongs to (the ring used to reach 4.66px past a 120px pill into a
+      # 4px gap), and a run of hosts reads down a column of equal segments
+      # with the names once above. The ring's painted pixels are found by
+      # diffing the same shot with and without it, at three scales and three
+      # points of the pulse. 8 checks.
+      - name: Assert a step's emphasis stays inside the step
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/steps-rail.mjs
+      # FR-80-05: a step the path left out is not drawn done and is not a
+      # destination, and focus lands on the new step's title when the app
+      # changes the step from inside the content. 7 checks.
+      - name: Assert a skipped step says so, and focus follows the step
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/wizard-skipped.mjs
       # BUG-80-03 / FR-80-06: a code row's cells stay upright however wide the
       # card is (fill used to widen them alone: 59x46 in a 420px form), the
       # filled row still reaches both edges, and align puts an unfilled row

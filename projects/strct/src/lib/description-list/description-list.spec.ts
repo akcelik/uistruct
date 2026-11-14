@@ -213,3 +213,20 @@ describe('StrctDesc — a value that is a link', () => {
     expect(link.getAttribute('href')).toBe('/updates/1.4.2');
   });
 });
+
+// FR-80-07 — a value's destination can be handed over whole.
+describe('StrctDesc — a value that opens an address with a query', () => {
+  it('takes a UrlTree as its routerLink', () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: '**', children: [] }])] });
+    const router = TestBed.inject(Router);
+    const fixture = TestBed.createComponent(StrctDesc);
+    fixture.componentRef.setInput('label', 'Host');
+    fixture.componentRef.setInput(
+      'routerLink',
+      router.parseUrl('/objects/host-3?tab=configure#nic'),
+    );
+    fixture.detectChanges();
+    const link = (fixture.nativeElement as HTMLElement).querySelector('a.strct-desc__link')!;
+    expect(link.getAttribute('href')).toBe('/objects/host-3?tab=configure#nic');
+  });
+});

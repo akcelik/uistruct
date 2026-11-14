@@ -5,6 +5,93 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.16.0] - 2026-11-14
+
+The rest of the FR-80 arrival from HyperStruct: the update run card
+([BUG-80-01](docs/feature-requests/archive/steps-active-ring-overruns-gap.md),
+[FR-80-02](docs/feature-requests/archive/steps-rail-appearance.md)), the
+cluster validation monitor
+([FR-80-04](docs/feature-requests/archive/progress-marker-spoken-value.md)),
+the Add Node wizard
+([FR-80-05](docs/feature-requests/archive/wizard-skipped-steps-and-focus.md))
+and the product switcher
+([FR-80-07](docs/feature-requests/archive/product-switcher-urltree.md)).
+
+### Fixed
+
+- **`strct-steps`: the active step's ring stays inside the step.** The ring
+  was the step's box grown by 1px and scaled to 1.06 about its centre, which
+  reaches `1 + 0.03 × (w + 2)` px past the border on each side — **2.92px**
+  for a 62px pill, **4.66px** for a 120px one, into a **4px** gap that also
+  held a **5px** connector. Past about 98px it drew over the neighbour's
+  border, moving, beside a still neighbour, which is why a photograph of the
+  run card read as objects sitting on top of each other. Nothing scales now:
+  the ring breathes by opacity inside the box that owns it, the gap is 6px,
+  and the connector is a 2px line with **2.0px** of daylight on each side.
+
+  Measured by diffing the same shot with and without the ring, over **18**
+  captures — 1×, 1.25× and 2×, dense and default, at three points of the
+  pulse: the ring paints 352–1514 pixels, reaches **0.00px** past its own
+  border and puts **0** of them inside a neighbour. The connector paints 6
+  pixels, **0** on a pill. `prefers-reduced-motion` keeps the still ring it
+  had, inside the step as well.
+
+### Added
+
+- **`strct-steps appearance="rail"` and `[names]`.** A run of several hosts
+  could not be read down a column: five pills of five widths in five colours
+  line up with nothing, and `dots` lines up but drops the names. The rail is
+  one flat segment per step, equal widths, the state in the fill, and `names`
+  puts the names under it (`under`), leaves them out for a rail beneath a
+  shared row (`none`), or draws that row alone (`only`) on the same grid.
+
+  ```html
+  <strct-steps [steps]="stages" appearance="rail" names="only" label="Update stages" />
+  @for (host of hosts; track host.id) {
+  <strct-steps [steps]="host.steps" appearance="rail" names="none" [label]="host.id" />
+  }
+  ```
+
+  Measured in a 600px cell: **15** segments of **117.59–117.61px** with
+  **3.00px** gaps and none inside its neighbour; every name in the shared row
+  over its own column to **0.00px** across 30 edges and three rails. The
+  running step is the accent **striped**, so greyscale tells it from done —
+  done reads 109.4 ± 3.9 and active 144.6 ± **44.4**, which is 40.5 of spread
+  a flat fill has not. Chrome's own accessibility tree reads the running step
+  as "Install" then "in progress" — the same two runs the pills hand a reader.
+
+- **`StrctProgressMarker.valueText`.** A marker was always said as
+  `label value%`, so a bar whose axis is time — a running validation against
+  the minutes such a run usually takes — was heard to have percentages it does
+  not have. With `valueText` the bar reads **"6 min 12 s, usually at least 5
+  minutes, usually at most 14 minutes"**, with no `%` anywhere in it, while
+  the markers stay in the track's coordinates: **0.01px** and **0.00px** from
+  28% and 80% of a 420px track. A marker without one reads exactly as before.
+
+- **`StrctStep.skipped` and `StrctWizard.focusCurrentTitle()`.** A wizard with
+  branches reached its last step with every step below it marked done — a
+  check on Validate and on Decide for a join that validated nothing. A skipped
+  step is now drawn neither done nor current (a dashed ring, a struck label),
+  is refused by `goTo` and by its own rail button, and Chrome computes its
+  name as **"Validate, skipped"** (the word is `skippedLabel`). And when the
+  app changes `current` from inside a step's content — a "Back to the scope"
+  button that goes with the content it sits in — focus lands on the new step's
+  title instead of falling to `<body>`; a move the wizard makes itself leaves
+  focus on the control that was pressed.
+
+- **`routerLink` takes a `UrlTree`** on `StrctProductItem`, `StrctMenuLink`,
+  `StrctRailItem` and `strct-desc`. A switcher that reopens each product where
+  it was left holds `/migrate/runs?run=9&view=log#last`; a string's `?` is
+  encoded into the path and commands have no query slot, so the row had to
+  take a cast. The rendered `href` is the whole address, a plain click
+  navigates there, a modified click is still the browser's, and the menu's own
+  active check (which built a tree out of the value) now accepts one — the
+  spec for it fails on 7.15.0.
+
+- **`scripts/steps-rail.mjs`** (8 checks) and **`scripts/wizard-skipped.mjs`**
+  (7 checks) in CI, and six more in `scripts/progress-markers.mjs` for the
+  time axis.
+
 ## [7.15.0] - 2026-11-14
 
 [BUG-80-03](docs/feature-requests/archive/otp-fill-flattens-boxes.md) and

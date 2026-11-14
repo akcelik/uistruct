@@ -22,6 +22,14 @@ export interface StrctProgressMarker {
   value: number;
   /** What the line is — spoken after the value, never drawn as text. */
   label: string;
+  /**
+   * What the marker is said as, in place of `${value}%`: a bar whose axis is
+   * time ("6 min 12 s" against the minutes a run usually takes) has markers
+   * at 28% and 80% of the track, and neither number is a quantity anyone
+   * asked for. `{ value: 28, label: 'usually at least', valueText: '5 minutes' }`
+   * reads "usually at least 5 minutes" (FR-80-04).
+   */
+  valueText?: string;
   /** Tints the line. Without one it is the text colour, held back. */
   status?: StrctProgressStatus;
 }
@@ -391,7 +399,9 @@ export class StrctProgress {
     if (!marks.length) return head || null;
     // A line nobody can hear is a line half the readers do not have. The
     // value comes first, because that is what the bar is answering.
-    const said = marks.map((m) => `${m.label} ${m.value}%`).join(', ');
+    const said = marks
+      .map((m) => [m.label, m.valueText || `${m.value}%`].filter(Boolean).join(' '))
+      .join(', ');
     return `${head || `${this.clamped()}%`}, ${said}`;
   });
 

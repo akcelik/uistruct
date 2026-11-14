@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, UrlTree } from '@angular/router';
 import { StrctIcon } from '../icon/icon';
 import { StrctStatus } from '../status';
 import { StrctStatusDot } from '../status-dot/status-dot';
@@ -61,7 +61,13 @@ export interface StrctProductItem {
    */
   headerTone?: string;
   /** Render the row as a real router link (middle-click, a new tab). */
-  routerLink?: string | unknown[];
+  /**
+   * Takes what `[routerLink]` takes: a path, a command array, or a `UrlTree`
+   * — `router.parseUrl('/objects/host-3?tab=configure')` — for a destination
+   * whose tab or filters live in its query. A `?` inside a plain string is
+   * part of the path and is encoded as one (FR-80-07).
+   */
+  routerLink?: string | readonly unknown[] | UrlTree;
   /** Render the row as a plain link. */
   href?: string;
   disabled?: boolean;

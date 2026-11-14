@@ -7,31 +7,35 @@ stays here until it goes quiet.
 
 ## Open
 
-- [**`steps-active-ring-overruns-gap.md`**](steps-active-ring-overruns-gap.md) — BUG-80-01, the
-  active step's pulse ring in `strct-steps` reaches up to **4.66px** past a 120px step into a **4px**
-  gap, and the 5px connector crosses the step's own border: in HyperStruct's update run card the
-  pills read as overlapping. Filed against **7.14.0**.
-- [**`steps-rail-appearance.md`**](steps-rail-appearance.md) — FR-80-02, `strct-steps` has no
-  look that lines a run of hosts up step by step with the names once above: a flat segmented rail
-  (`appearance="rail"`), names under it or in one shared row. HyperStruct's update run card draws it
-  by hand until then. Filed against **7.14.0**.
-- [**`progress-marker-spoken-value.md`**](progress-marker-spoken-value.md) — FR-80-04, a
-  `strct-progress` marker is always said as `label value%`, so a bar on a time axis (a running
-  validation against its usual minutes) is heard to have percentages it does not have. Asks for
-  `StrctProgressMarker.valueText`. HyperStruct draws the bar without markers until then. Filed
-  against **7.14.0**.
-- [**`wizard-skipped-steps-and-focus.md`**](wizard-skipped-steps-and-focus.md) — FR-80-05,
-  `strct-wizard` marks a step it skipped as done (a check on Validate and Decide for a join that
-  validated nothing), and a step changed by the app from inside the content drops focus to `<body>`.
-  Asks for `StrctStep.skipped` and focus on the new step's title. HyperStruct focuses the title itself
-  until then. Filed against **7.14.0**.
-- [**`product-switcher-urltree.md`**](product-switcher-urltree.md) — FR-80-07,
-  `StrctProductItem.routerLink` is a string or commands, so a row cannot open a page with its query
-  (`?tab=`, `?run=`): a string's `?` is encoded, and commands have no query. HyperStruct's switcher
-  opens the page left in each product and passes a `UrlTree` through a cast until then. Filed against
-  **7.14.0**.
+**Nothing.** Everything filed so far has shipped.
 
 ### Closed on 2026-11-14, and moved to [`archive/`](archive/)
+
+- [**`archive/steps-active-ring-overruns-gap.md`**](archive/steps-active-ring-overruns-gap.md) —
+  BUG-80-01, the active step's pulse ring was its box grown 1px and scaled to 1.06, reaching
+  **4.66px** past a 120px pill into a **4px** gap that also held a 5px connector: the pills read as
+  overlapping. Fixed in **v7.16.0** — nothing scales, the ring reaches **0.00px** past its own
+  border over **18** captures at three scales and three points of the pulse, and the connector is a
+  2px line with **2.0px** of daylight on each side.
+- [**`archive/steps-rail-appearance.md`**](archive/steps-rail-appearance.md) — FR-80-02, a run of
+  several hosts could not be read down a column. Shipped in **v7.16.0** as
+  `appearance="rail"` with `names` — **15** segments of **117.59–117.61px** in a 600px cell with
+  **3.00px** gaps, every name in the shared row over its own column to **0.00px**, and the running
+  step told from done in greyscale by **40.5** of spread the flat fill has not.
+- [**`archive/progress-marker-spoken-value.md`**](archive/progress-marker-spoken-value.md) —
+  FR-80-04, a marker was always said as `label value%`, so a bar on a time axis was heard to have
+  percentages it does not have. Shipped in **v7.16.0** as `StrctProgressMarker.valueText`: the bar
+  reads "6 min 12 s, usually at least 5 minutes, usually at most 14 minutes" with no `%` in it, and
+  the markers still land **0.01px** from their values.
+- [**`archive/wizard-skipped-steps-and-focus.md`**](archive/wizard-skipped-steps-and-focus.md) —
+  FR-80-05, the rail marked skipped steps done and a step changed by the app dropped focus to
+  `<body>`. Shipped in **v7.16.0** as `StrctStep.skipped` and `focusCurrentTitle()` — Chrome
+  computes "Validate, skipped", and after a "Back to the scope" inside the content
+  `document.activeElement` is the new step's title.
+- [**`archive/product-switcher-urltree.md`**](archive/product-switcher-urltree.md) — FR-80-07,
+  a row could not open a page with its query. Shipped in **v7.16.0**: `routerLink` takes a
+  `UrlTree` on the switcher, the menu, the rail and `strct-desc`, and the menu's active check
+  accepts one — the spec for it fails on 7.15.0.
 
 - [**`archive/otp-fill-flattens-boxes.md`**](archive/otp-fill-flattens-boxes.md) — BUG-80-03,
   `strct-input-otp fill` grew the boxes' width and left their 46px height alone, so the designed

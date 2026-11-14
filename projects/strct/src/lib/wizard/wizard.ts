@@ -4,6 +4,7 @@ import {
   Directive,
   ElementRef,
   InjectionToken,
+  Injector,
   Provider,
   ViewEncapsulation,
   afterNextRender,
@@ -38,6 +39,14 @@ export class StrctStep {
   readonly description = input('');
   /** When false, the wizard's Next / Finish is disabled on this step. */
   readonly canAdvance = input(true, { transform: booleanAttribute });
+  /**
+   * This step was left out of the path taken: it is drawn neither done nor
+   * current, it is not a `goTo` target, and a screen reader is told
+   * "Validate, skipped". A wizard with branches reaches its last step with
+   * every step below it marked done, which says a validation was made that
+   * was not (FR-80-05).
+   */
+  readonly skipped = input(false, { transform: booleanAttribute });
   private readonly _active = signal(false);
   readonly active = this._active.asReadonly();
 
@@ -123,10 +132,14 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
               <button
                 type="button"
                 class="strct-wiz__vstep"
-                [class.strct-wiz__vstep--done]="i < maxVisited() && i !== current()"
+                [class.strct-wiz__vstep--done]="
+                  i < maxVisited() && i !== current() && !step.skipped()
+                "
                 [class.strct-wiz__vstep--active]="i === current()"
-                [disabled]="i > maxVisited() || null"
+                [class.strct-wiz__vstep--skipped]="step.skipped()"
+                [disabled]="i > maxVisited() || step.skipped() || null"
                 [attr.aria-current]="i === current() ? 'step' : null"
+                [attr.aria-label]="step.skipped() ? step.label() + ', ' + skippedLabel() : null"
                 [attr.title]="step.label()"
                 (click)="goTo(i)"
               >
@@ -147,10 +160,14 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
             <div
               class="strct-wiz__step"
               [class.strct-wiz__step--active]="i === current()"
-              [class.strct-wiz__step--done]="i < current()"
+              [class.strct-wiz__step--done]="i < current() && !step.skipped()"
+              [class.strct-wiz__step--skipped]="step.skipped()"
             >
               <span class="strct-wiz__dot">{{ i + 1 }}</span>
               <span class="strct-wiz__label">{{ step.label() }}</span>
+              @if (step.skipped()) {
+                <span class="strct-wiz__sr">, {{ skippedLabel() }}</span>
+              }
             </div>
             @if (!last) {
               <span class="strct-wiz__sep"></span>
@@ -162,13 +179,13 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       <div class="strct-wiz__main">
         @if (vertical() && contentHeader() && activeStep(); as step) {
           <div class="strct-wiz__chead">
-            <h2 class="strct-wiz__ctitle">{{ step.label() }}</h2>
+            <h2 class="strct-wiz__ctitle" tabindex="-1">{{ step.label() }}</h2>
             @if (step.description()) {
               <p class="strct-wiz__clede">{{ step.description() }}</p>
             }
           </div>
         }
-        <div class="strct-wiz__content"><ng-content /></div>
+        <div class="strct-wiz__content" tabindex="-1"><ng-content /></div>
 
         <div class="strct-wiz__foot">
           @if (cancelable()) {
@@ -250,6 +267,26 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       .strct-wiz__step--active .strct-wiz__label {
         color: var(--t1);
         font-weight: 600;
+      }
+      /* A step the path left out is neither done nor waiting: a plain ring,
+         a struck label, and nothing that reads as a result (FR-80-05). */
+      .strct-wiz__sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      .strct-wiz__step--skipped .strct-wiz__dot {
+        background: none;
+        color: var(--t3);
+        border-color: var(--b2);
+        border-style: dashed;
+      }
+      .strct-wiz__step--skipped .strct-wiz__label {
+        color: var(--t3);
+        text-decoration: line-through;
       }
       .strct-wiz__step--done .strct-wiz__dot {
         background: var(--acc-m);
@@ -492,6 +529,18 @@ export function provideStrctWizardDefaults(defaults: StrctWizardDefaults): Provi
       .strct-wiz__vstep--done .strct-wiz__vlabel {
         color: var(--t1);
       }
+      .strct-wiz__vstep--skipped .strct-wiz__ring {
+        border-style: dashed;
+        border-color: var(--b2);
+        background: none;
+      }
+      .strct-wiz__vstep--skipped .strct-wiz__ring::after {
+        content: none;
+      }
+      .strct-wiz__vstep--skipped .strct-wiz__vlabel {
+        color: var(--t3);
+        text-decoration: line-through;
+      }
       .strct-wiz__vstep--active .strct-wiz__ring {
         border-style: solid;
         border-color: var(--acc);
@@ -670,6 +719,8 @@ export class StrctWizard {
   readonly progressLabel = input('completed');
   /** Accessible name of the vertical step rail. */
   readonly stepsLabel = input('Steps');
+  /** The word a skipped step is said with — "Validate, skipped". */
+  readonly skippedLabel = input('skipped');
   /** Disable Finish and show a busy label while an async submit is in flight. */
   readonly submitting = input(false, { transform: booleanAttribute });
   /** Show a Cancel button on the left. */
@@ -694,15 +745,54 @@ export class StrctWizard {
     () => this.steps()[this.current()]?.canAdvance() ?? true,
   );
 
+  /** The wizard's own host, for the focus move below. */
+  private readonly hostEl = inject(ElementRef<HTMLElement>);
+  private readonly injector = inject(Injector);
+  /** True while a move this component made is being applied. */
+  private selfMove = false;
+
   constructor() {
     if (typeof ngDevMode !== 'undefined' && ngDevMode) this.diagnose();
     effect(() => {
       const idx = this.current();
+      // Read this BEFORE the step is swapped: the button that was pressed is
+      // inside the content that is about to be removed.
+      const cameFromContent = this.focusIsInContent();
       this.steps().forEach((step, i) => step.setActive(i === idx));
       untracked(() => {
         if (idx > this.maxVisited()) this.maxVisited.set(idx);
+        const theirs = !this.selfMove;
+        this.selfMove = false;
+        // Next / Back / the rail keep focus on the control that was pressed,
+        // because it is still there. A step changed by the app — "Back to the
+        // scope", "Validate again…" inside the content — takes its own button
+        // with it, and focus falls to <body> (FR-80-05).
+        if (theirs && cameFromContent) {
+          afterNextRender(() => this.focusCurrentTitle(), { injector: this.injector });
+        }
       });
     });
+  }
+
+  private focusIsInContent(): boolean {
+    if (typeof document === 'undefined') return false;
+    const active = document.activeElement;
+    const content = (this.hostEl.nativeElement as HTMLElement).querySelector('.strct-wiz__content');
+    return !!(active && content && content.contains(active) && active !== content);
+  }
+
+  /**
+   * Put focus on the step's own title — the heading of the content pane, or
+   * the pane itself when the header is off. Called for you when the app
+   * changes `current` from inside a step's content; call it yourself after
+   * any other move that takes the focused element away.
+   */
+  focusCurrentTitle(): void {
+    const host = this.hostEl.nativeElement as HTMLElement;
+    const target =
+      host.querySelector<HTMLElement>('.strct-wiz__ctitle') ??
+      host.querySelector<HTMLElement>('.strct-wiz__content');
+    target?.focus();
   }
 
   /** Dev-mode warnings for inputs the current layout silently ignores. */
@@ -743,6 +833,7 @@ export class StrctWizard {
 
   next(): void {
     if (!this.isLast() && this.canAdvance()) {
+      this.selfMove = true;
       this.current.update((i) => i + 1);
       this.stepChange.emit(this.current());
     }
@@ -750,6 +841,7 @@ export class StrctWizard {
 
   back(): void {
     if (this.current() > 0) {
+      this.selfMove = true;
       this.current.update((i) => i - 1);
       this.stepChange.emit(this.current());
     }
@@ -758,6 +850,10 @@ export class StrctWizard {
   /** Jump to a visited step (rail click). Forward moves still go through Next. */
   goTo(index: number): void {
     if (index === this.current() || index < 0 || index > this.maxVisited()) return;
+    // A step the path left out is not a destination: its rail button is
+    // disabled, and a programmatic goTo does not get in either.
+    if (this.steps()[index]?.skipped()) return;
+    this.selfMove = true;
     this.current.set(index);
     this.stepChange.emit(index);
   }

@@ -941,6 +941,74 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="wizard-skipped"
+      owner="wizard"
+      heading="A path that leaves steps out"
+      description="FR-80-05: a wizard with branches reaches its last step with every step below it marked done &mdash; a check on Validate and Decide for a join that validated nothing, which says a validation was made that was not. [skipped] draws a step neither done nor current: a dashed ring, a struck label, a rail button that is not a destination, and &ldquo;Validate, skipped&rdquo; for a screen reader (the word is skippedLabel). And when the app changes current from inside a step &mdash; a &ldquo;Back to the scope&rdquo; button that goes with the content it sits in &mdash; focus used to fall to &lt;body&gt;; it now lands on the new step's title. A move the wizard makes itself (Next, Back, the rail) leaves focus where it was, because the control pressed is still there. focusCurrentTitle() is there for any other move."
+      code='&lt;strct-step label="Validate" [skipped]="joinWithoutValidation()"&gt;…&lt;/strct-step&gt;'
+    >
+      <div class="ws-demo" data-wiz="skip">
+        <label class="ws-demo__toggle">
+          <input
+            type="checkbox"
+            [checked]="wsSkip()"
+            (change)="wsSkip.set($any($event.target).checked)"
+          />
+          <span
+            >These servers are already nodes &mdash; validation and the decision are skipped</span
+          >
+        </label>
+        <strct-wizard
+          vertical
+          style="width: 100%;"
+          title="Add node"
+          [contentHeader]="true"
+          [(current)]="wsStep"
+        >
+          <strct-step label="Servers" description="Which servers to add">
+            <div class="vw-fields">
+              <label class="vw-f"
+                ><span>Servers</span><input strctInput value="hv-07, hv-08"
+              /></label>
+            </div>
+          </strct-step>
+          <strct-step label="Prerequisites" description="What each server needs">
+            Every server meets the prerequisites.
+          </strct-step>
+          <strct-step label="Scope" description="What the join touches">
+            <div class="vw-fields">
+              <label class="vw-f"
+                ><span>Cluster</span><input strctInput value="PROD-IST-01"
+              /></label>
+            </div>
+          </strct-step>
+          <strct-step label="Validate" description="Run the checks" [skipped]="wsSkip()">
+            The validation report goes here.
+          </strct-step>
+          <strct-step
+            label="Decide"
+            description="What to do about the findings"
+            [skipped]="wsSkip()"
+          >
+            The findings go here.
+          </strct-step>
+          <strct-step label="Ready to add" description="Apply on finish">
+            <p>Two servers join PROD-IST-01.</p>
+            <button
+              strct-button
+              variant="flat"
+              class="ws-demo__back"
+              type="button"
+              (click)="wsStep.set(2)"
+            >
+              Back to the scope
+            </button>
+          </strct-step>
+        </strct-wizard>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="wizard-dialog"
       owner="wizard"
       heading="Wizard as the dialog"
@@ -1126,6 +1194,24 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       }
       .demo-wiz-dialog {
         height: min(520px, calc(100vh - 96px));
+      }
+      /* FR-80-05: the skipped path and the button that changes the step from
+         inside the content it sits in. */
+      .ws-demo {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+      }
+      .ws-demo__toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: var(--text-sm);
+        color: var(--t2);
+      }
+      .ws-demo__back {
+        margin-top: 10px;
       }
       .vw-fields {
         display: grid;
@@ -1328,6 +1414,8 @@ export class SurfacesPage {
   protected readonly ddSortOptions = ['Name', 'CPU usage', 'Memory', 'Uptime'];
 
   protected readonly vwStep = signal(0);
+  protected readonly wsStep = signal(5);
+  protected readonly wsSkip = signal(true);
   protected readonly wdOpen = signal(false);
   protected readonly wdAside = signal(true);
   protected readonly vwDone = signal(false);

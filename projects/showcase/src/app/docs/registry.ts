@@ -539,7 +539,7 @@ export const DOCS: DocCategory[] = [
             type: 'StrctProgressMarker[] | null',
             default: 'null',
             description:
-              '`{ value; label; status? }[]` — a line across the track at a value that means something: the threshold a balancer acts at, an N+1 line, a reservation, a quota. A bar at 74% tinted `warning` says "too much"; a line at 70% says "four points past it". Drawn in the **track\u2019s** own coordinates, so it lands on its value whatever `visibleLabel`, `caption` or `valuePosition="end"` do to the component\u2019s width — measured at 0.01px in a 79px track inside a 120px table cell as well as at full width. Each `label` is spoken in the bar\u2019s own value text ("CPU 74%, Balancer threshold 70%") and the line adds no tab stop.',
+              '`{ value; label; status?; valueText? }[]` — a line across the track at a value that means something: the threshold a balancer acts at, an N+1 line, a reservation, a quota. A bar at 74% tinted `warning` says "too much"; a line at 70% says "four points past it". Drawn in the **track\u2019s** own coordinates, so it lands on its value whatever `visibleLabel`, `caption` or `valuePosition="end"` do to the component\u2019s width — measured at 0.01px in a 79px track inside a 120px table cell as well as at full width. Each `label` is spoken in the bar\u2019s own value text ("CPU 74%, Balancer threshold 70%") and the line adds no tab stop. `valueText` says the marker in the axis\u2019s own units instead of `${value}%`: a bar whose fill is time reads "6 min 12 s, usually at least 5 minutes, usually at most 14 minutes", with no percentage anywhere in it — the 28% and 80% the markers sit at are positions on the track, not quantities anyone asked for.',
           },
         ],
         do: [
@@ -2609,6 +2609,19 @@ export const DOCS: DocCategory[] = [
               'Rail sublabel revealed while the step is active, and the content header lede (vertical mode).',
           },
           {
+            name: 'strct-step [skipped]',
+            type: 'boolean',
+            default: 'false',
+            description:
+              'The path taken left this step out: it is drawn neither done nor current (a dashed ring, a struck label), it is not a `goTo` target by click or by call, and a screen reader is told "Validate, skipped". A wizard with branches otherwise reaches its last step with every step below it checked, which says a validation was made that was not.',
+          },
+          {
+            name: 'skippedLabel',
+            type: 'string',
+            default: `'skipped'`,
+            description: 'The word a skipped step is said with, for localisation.',
+          },
+          {
             name: 'contentHeader',
             type: 'boolean',
             default: 'true',
@@ -2696,7 +2709,13 @@ export const DOCS: DocCategory[] = [
             name: 'goTo(index)',
             type: 'void',
             description:
-              'Jump to a visited step (what rail clicks call). Forward moves still go through Next, so canAdvance gating holds.',
+              'Jump to a visited step (what rail clicks call). Forward moves still go through Next, so canAdvance gating holds; a step marked `[skipped]` is refused.',
+          },
+          {
+            name: 'focusCurrentTitle()',
+            type: 'void',
+            description:
+              'Put focus on the step\u2019s title (the content header, or the pane itself when the header is off). Called for you when the app changes `current` from inside a step\u2019s content \u2014 the pressed button goes with the content it sits in, so focus would otherwise fall to `<body>`. Call it yourself after any other move that takes the focused element away.',
           },
         ],
         do: [
@@ -3063,7 +3082,7 @@ export const DOCS: DocCategory[] = [
             type: 'StrctProductItem[]',
             default: '[]',
             description:
-              '`{ id, name, label?, shortLabel?, icon?, description?, status?, tone?, routerLink?, href?, disabled? }[]`. `name` is the row\u2019s label and what a reader hears; `label` is what the chip shows; `description` + `status` are the health line and its dot; `tone` colours the icons (see the product accent example).',
+              '`{ id, name, label?, shortLabel?, icon?, description?, status?, tone?, routerLink?, href?, disabled? }[]`. `routerLink` takes a path, a command array, or a `UrlTree` — which is what a switcher that reopens each product where it was left holds (`/migrate/runs?run=9`). `name` is the row\u2019s label and what a reader hears; `label` is what the chip shows; `description` + `status` are the health line and its dot; `tone` colours the icons (see the product accent example).',
           },
           {
             name: 'footerItems',
@@ -4264,10 +4283,17 @@ export const DOCS: DocCategory[] = [
           },
           {
             name: 'appearance',
-            type: `'pills' | 'dots' | 'cards'`,
+            type: `'pills' | 'dots' | 'cards' | 'rail'`,
             default: `'pills'`,
             description:
-              '`pills` joins the steps with a hairline and wraps when narrow; `dots` fits a long run in a dense row; `cards` is the numbered method \u2014 number, label, description and a per-step action.',
+              '`pills` joins the steps with a hairline and wraps when narrow; `dots` fits a long run in a dense row; `cards` is the numbered method \u2014 number, label, description and a per-step action; `rail` is one flat segment per step, equal widths, so a run of hosts can be read down a column. The active segment is the accent, striped, so done and active are told apart without the hue.',
+          },
+          {
+            name: 'names',
+            type: `'under' | 'none' | 'only'`,
+            default: `'under'`,
+            description:
+              'Where a `rail`\u2019s names go: under each segment, left out (`none`) for a rail that sits beneath a shared row of names, or that row on its own (`only`) \u2014 the same grid with the segments omitted, so every name stands exactly over its column. A names-only row is a heading: it says no state, because the rails under it do.',
           },
           {
             name: 'orientation / numbered / dense',

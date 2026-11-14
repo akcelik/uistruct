@@ -109,6 +109,18 @@ const ROUTES = [
     undefined,
     '#field-compact .fc-demo',
   ],
+  // FR-80-02 / BUG-80-01: one row of names over three hosts' rails, a rail
+  // with its own names, and the pills whose active ring used to reach into
+  // the neighbour beside it.
+  ['steps-rail', '/components/steps', '#steps-rail .rail-demo', undefined, '#steps-rail .rail-demo'],
+  // FR-80-05: a rail whose skipped steps are neither done nor waiting.
+  [
+    'wizard-skipped',
+    '/components/wizard',
+    '#wizard-skipped .ws-demo',
+    undefined,
+    '#wizard-skipped .ws-demo',
+  ],
   // BUG-80-03: three filled rows at the widths the bug was filed at, each
   // over the button its edges are supposed to meet, so a cell that stretches
   // shows. Two crops because one shot is 900px tall and the fixture is not.

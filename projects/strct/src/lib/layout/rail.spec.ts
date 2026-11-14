@@ -211,3 +211,23 @@ describe('StrctRail — activeId is the only source when it is set', () => {
     expect(current[0].textContent).toContain('Protected VMs');
   });
 });
+
+// FR-80-07 — and in the rail, so one rule holds across the library.
+describe('StrctRail — an item with a query', () => {
+  it('renders the whole address', () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: '**', children: [] }])] });
+    const router = TestBed.inject(Router);
+    const f = TestBed.createComponent(StrctRail);
+    f.componentRef.setInput('items', [
+      {
+        id: 'runs',
+        label: 'Runs',
+        icon: 'refresh',
+        routerLink: router.parseUrl('/migrate/runs?run=9'),
+      },
+    ]);
+    f.detectChanges();
+    const a = (f.nativeElement as HTMLElement).querySelector('a.strct-rail__item')!;
+    expect(a.getAttribute('href')).toBe('/migrate/runs?run=9');
+  });
+});

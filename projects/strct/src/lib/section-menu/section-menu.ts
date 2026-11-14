@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, UrlTree } from '@angular/router';
 import { StrctIcon } from '../icon/icon';
 import { StrctRailStatus } from '../layout/rail';
 
@@ -50,7 +50,13 @@ export interface StrctMenuLink {
    * with an address of its own needs. `(select)` still fires on plain
    * activation. Without `routerLink` or `href` the entry stays a `<button>`.
    */
-  routerLink?: string | unknown[];
+  /**
+   * Takes what `[routerLink]` takes: a path, a command array, or a `UrlTree`
+   * — `router.parseUrl('/objects/host-3?tab=configure')` — for a destination
+   * whose tab or filters live in its query. A `?` inside a plain string is
+   * part of the path and is encoded as one (FR-80-07).
+   */
+  routerLink?: string | readonly unknown[] | UrlTree;
   /** Render as a plain `<a href>` (external or non-router destinations). */
   href?: string;
 }
@@ -487,7 +493,13 @@ export class StrctSectionMenu {
     this.navTick();
     const link = item.routerLink;
     if (link == null || !this.router) return false;
-    return this.router.isActive(this.router.createUrlTree(Array.isArray(link) ? link : [link]), {
+    // A UrlTree is already the thing isActive wants; a path or a command
+    // array becomes one (FR-80-07).
+    const tree =
+      link instanceof UrlTree
+        ? link
+        : this.router.createUrlTree(Array.isArray(link) ? [...link] : [link]);
+    return this.router.isActive(tree, {
       paths: 'subset',
       queryParams: 'subset',
       fragment: 'ignored',
