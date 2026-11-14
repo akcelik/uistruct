@@ -38,3 +38,34 @@ boxes (BUG-80-03).
   the first box equals the gap from the last box to the field's right edge (±1px).
 - With `fill`, `align` has no effect: the row already spans the field.
 - Without `align`, nothing changes.
+
+## Shipped in 7.15.0 (2026-11-14)
+
+`strct-input-otp [align]` — `start` (the default) | `center` | `end`. Measured
+by `scripts/otp-row.mjs` in the 420px field the FR was filed against.
+
+### Against the acceptance
+
+| asked                                                        | measured                                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `align="center"` in a 420px field: the two gaps equal (±1px) | **56.97px** to its left and **56.98px** to its right (was 0px / 113.95px) |
+| with `fill`, `align` has no effect                           | **0.00px / 0.00px** — the row spans its 420px field either way            |
+| without `align`, nothing changes                             | the row starts **0.00px** into the field, cells **40×46** at 18px         |
+
+Also measured: `align="end"` is **113.95px / 0.00px**; the natural row is
+**306.05px** wide, as the report had it (≈306px).
+
+### What the report did not have
+
+- **The library did not take the second option, and the reason is the host.**
+  Centring by default means making an inline host a block-level flex row for
+  every consumer: a code row inside a line of text, or beside a label in a
+  grid, would change the flow it sits in, and every row that exists would
+  move. `align` is opt-in and `start` leaves the host inline, so nothing that
+  exists moves; the docs say to centre the row on a centred card, and the
+  showcase shows all four placements side by side.
+- **`align` lives on the host, not on the row.** The row is what `fill`
+  stretches, so putting `justify-content` there would have made the two inputs
+  fight over one property. On the host they compose: `fill` + `align` is a
+  spanning row, which is why the acceptance's "no effect" case is true by
+  construction rather than by a special case in the code.
