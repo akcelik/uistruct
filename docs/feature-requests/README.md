@@ -7,7 +7,38 @@ stays here until it goes quiet.
 
 ## Open
 
-**Nothing.** Everything filed so far has shipped.
+- [**`steps-active-ring-overruns-gap.md`**](steps-active-ring-overruns-gap.md) — BUG-80-01, the
+  active step's pulse ring in `strct-steps` reaches up to **4.66px** past a 120px step into a **4px**
+  gap, and the 5px connector crosses the step's own border: in HyperStruct's update run card the
+  pills read as overlapping. Filed against **7.14.0**.
+- [**`steps-rail-appearance.md`**](steps-rail-appearance.md) — FR-80-02, `strct-steps` has no
+  look that lines a run of hosts up step by step with the names once above: a flat segmented rail
+  (`appearance="rail"`), names under it or in one shared row. HyperStruct's update run card draws it
+  by hand until then. Filed against **7.14.0**.
+- [**`otp-fill-flattens-boxes.md`**](otp-fill-flattens-boxes.md) — BUG-80-03,
+  `strct-input-otp fill` widens the boxes but not their 46px height: **59×46** in a 420px sign-in
+  form, a landscape tile with a large radius that reads as squashed. HyperStruct has dropped `fill`
+  until it spreads the boxes instead. Filed against **7.14.0**.
+- [**`progress-marker-spoken-value.md`**](progress-marker-spoken-value.md) — FR-80-04, a
+  `strct-progress` marker is always said as `label value%`, so a bar on a time axis (a running
+  validation against its usual minutes) is heard to have percentages it does not have. Asks for
+  `StrctProgressMarker.valueText`. HyperStruct draws the bar without markers until then. Filed
+  against **7.14.0**.
+- [**`wizard-skipped-steps-and-focus.md`**](wizard-skipped-steps-and-focus.md) — FR-80-05,
+  `strct-wizard` marks a step it skipped as done (a check on Validate and Decide for a join that
+  validated nothing), and a step changed by the app from inside the content drops focus to `<body>`.
+  Asks for `StrctStep.skipped` and focus on the new step's title. HyperStruct focuses the title itself
+  until then. Filed against **7.14.0**.
+- [**`otp-row-alignment.md`**](otp-row-alignment.md) — FR-80-06, `strct-input-otp` has no
+  alignment: its inline row sits at the start of the field, ~114px off-centre in a 420px sign-in
+  form, while the title, the button and the recovery link are centred or full-width. Asks for
+  `align="center"`. HyperStruct centres every row with one global rule until then. Filed against
+  **7.14.0**.
+- [**`product-switcher-urltree.md`**](product-switcher-urltree.md) — FR-80-07,
+  `StrctProductItem.routerLink` is a string or commands, so a row cannot open a page with its query
+  (`?tab=`, `?run=`): a string's `?` is encoded, and commands have no query. HyperStruct's switcher
+  opens the page left in each product and passes a `UrlTree` through a cast until then. Filed against
+  **7.14.0**.
 
 ### Closed on 2026-11-12, and moved to [`archive/`](archive/)
 
