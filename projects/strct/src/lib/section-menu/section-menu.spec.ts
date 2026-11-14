@@ -280,3 +280,26 @@ describe('StrctSectionMenu — a line that says what it is set to', () => {
     expect(compact.querySelector('.strct-sm--compact')).toBeTruthy();
   });
 });
+
+// FR-80-07 — the same rule across the library: a menu entry's destination can
+// carry its query.
+describe('StrctSectionMenu — an entry with a query', () => {
+  it('renders the whole address and knows it is the active one', async () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: '**', children: [] }])] });
+    const router = TestBed.inject(Router);
+    const f = TestBed.createComponent(StrctSectionMenu);
+    const link: StrctMenuLink = {
+      id: 'configure',
+      label: 'Configuration',
+      routerLink: router.parseUrl('/objects/host-3?tab=configure'),
+    };
+    f.componentRef.setInput('sections', [{ label: 'Host', items: [link] }]);
+    f.detectChanges();
+    const a = (f.nativeElement as HTMLElement).querySelector('a.strct-sm__item')!;
+    expect(a.getAttribute('href')).toBe('/objects/host-3?tab=configure');
+
+    await router.navigateByUrl('/objects/host-3?tab=configure');
+    f.detectChanges();
+    expect(a.classList).toContain('strct-sm__item--active');
+  });
+});

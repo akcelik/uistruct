@@ -152,3 +152,74 @@ describe('StrctSteps — planned, a name and wrapping pills', () => {
     expect(el.querySelector('.strct-steps__sr')!.textContent!.trim()).toBe('planlandı');
   });
 });
+
+// FR-80-02 — the rail. The geometry (equal segments, the names standing over
+// their own column, active told from done in greyscale) is measured in Chrome
+// by scripts/steps-rail.mjs; what a unit test holds is the DOM contract.
+describe('StrctSteps — rail', () => {
+  const run: StrctStepState[] = [
+    { id: 'check', label: 'Check', state: 'done' },
+    { id: 'down', label: 'Download', state: 'done' },
+    { id: 'inst', label: 'Install', state: 'active', description: 'Applying 6 updates' },
+    { id: 'rest', label: 'Restart', state: 'pending' },
+    { id: 'ver', label: 'Verify', state: 'planned' },
+  ];
+  const make = (extra: Record<string, unknown> = {}) => {
+    const f = TestBed.createComponent(StrctSteps);
+    f.componentRef.setInput('steps', run);
+    f.componentRef.setInput('appearance', 'rail');
+    for (const [k, v] of Object.entries(extra)) f.componentRef.setInput(k, v);
+    f.detectChanges();
+    return f.nativeElement as HTMLElement;
+  };
+
+  it('is one segment per step, and the host says which look it is', () => {
+    const host = make();
+    expect(host.classList).toContain('strct-steps--rail');
+    expect(host.querySelectorAll('.strct-steps__bar').length).toBe(5);
+    expect(host.querySelectorAll('.strct-steps__step').length).toBe(5);
+    expect(host.querySelectorAll('.strct-steps__step[data-state="active"]').length).toBe(1);
+  });
+
+  it('says name and state for every step, as pills do, and keeps the tooltip', () => {
+    const host = make();
+    const steps = [...host.querySelectorAll('.strct-steps__step')];
+    expect(steps.map((el) => el.querySelector('.strct-steps__label')!.textContent!.trim())).toEqual(
+      ['Check', 'Download', 'Install', 'Restart', 'Verify'],
+    );
+    expect(steps.map((el) => el.querySelector('.strct-steps__sr')!.textContent!.trim())).toEqual([
+      'done',
+      'done',
+      'in progress',
+      'pending',
+      'planned',
+    ]);
+    expect(steps[2].getAttribute('title')).toBe('Applying 6 updates');
+    expect(steps[2].getAttribute('aria-current')).toBe('step');
+  });
+
+  it('names="none" keeps the name for a reader and hides it from the eye', () => {
+    const host = make({ names: 'none' });
+    expect(host.classList).toContain('strct-steps--rail-quiet');
+    expect(host.querySelectorAll('.strct-steps__bar').length).toBe(5);
+    expect(host.querySelector('.strct-steps__label')!.textContent!.trim()).toBe('Check');
+  });
+
+  it('names="only" is a heading row: names, no segments, no state said twice', () => {
+    const host = make({ names: 'only' });
+    expect(host.classList).toContain('strct-steps--rail-names');
+    expect(host.querySelectorAll('.strct-steps__bar').length).toBe(0);
+    expect(host.querySelectorAll('.strct-steps__sr').length).toBe(0);
+    expect(host.querySelectorAll('[aria-current]').length).toBe(0);
+    expect(host.querySelectorAll('.strct-steps__label').length).toBe(5);
+  });
+
+  it('leaves the other looks alone', () => {
+    const f = TestBed.createComponent(StrctSteps);
+    f.componentRef.setInput('steps', run);
+    f.detectChanges();
+    const host = f.nativeElement as HTMLElement;
+    expect(host.classList).not.toContain('strct-steps--rail');
+    expect(host.querySelectorAll('.strct-steps__bar').length).toBe(0);
+  });
+});

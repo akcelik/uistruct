@@ -200,6 +200,9 @@ const READ = `(() => {
 })()`;
 
 /** Where the demo says each bar's marker belongs, as a share of the track. */
+/** FR-80-04: where the time-axis bar's two markers belong, as a share of the track. */
+const TIME_AT = [28, 80];
+
 const saidAt = (valueText, label) => {
   const safe = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const m = new RegExp(safe + '\\s+([0-9.]+)%').exec(valueText ?? '');
@@ -241,6 +244,8 @@ try {
   const { send } = await connect(target.webSocketDebuggerUrl);
   await send('Page.enable');
   await send('Runtime.enable');
+  await send('DOM.enable');
+  await send('Accessibility.enable');
   up = true;
 
   for (const theme of ['light', 'dark']) {
@@ -268,7 +273,12 @@ try {
       check(`${theme}: the demo is on the page`, false, 'no #progress-markers');
       break;
     }
-    const marked = r.bars.filter((b) => b.marks.length);
+    const all = r.bars.filter((b) => b.marks.length);
+    // FR-80-04: a marker said in the axis's own units ("usually at least 5
+    // minutes") has no percentage in the spoken text for the checks below to
+    // recover a position from, so a time-axis bar is measured on its own.
+    const timed = all.filter((b) => b.marks.every((m) => saidAt(b.valueText, m.label) === null));
+    const marked = all.filter((b) => !timed.includes(b));
 
     check(
       `${theme}: the case is on the page`,
@@ -345,7 +355,42 @@ try {
       marked.every((b) => b.marks.every((m) => m.hidden && !m.tabbable)),
       `${marked.flatMap((b) => b.marks).length} markers, all aria-hidden and none in the tab order`,
     );
+
+    // 5. FR-80-04: the bar whose axis is time. Its markers sit at 28% and 80%
+    // of the track because that is where five and fourteen minutes fall, and
+    // neither number is a quantity anyone asked for: a validation with no
+    // percentage of completion must not be heard to have one. The attribute
+    // is the honest source here — CDP's accessibility snapshot reports
+    // `valuetext` as "" for every progressbar, including a hand-made control
+    // div with the attribute set, so what it serialises is not what a reader
+    // is handed.
+    const time = timed[0];
+    check(
+      `${theme}: a bar on a time axis is said in minutes, not percentages`,
+      timed.length === 1 &&
+        time.valueText === '6 min 12 s, usually at least 5 minutes, usually at most 14 minutes' &&
+        !time.valueText.includes('%'),
+      `"${time?.valueText}" — the markers behind it are at ${time?.marks.map((m) => ((m.at / time.track.w) * 100).toFixed(1) + '%').join(' and ')} of the track, and neither number is in it`,
+    );
+    check(
+      `${theme}: a marker said in minutes still lands on its value`,
+      !!time &&
+        time.marks.length === TIME_AT.length &&
+        time.marks.every(
+          (m, i) => Math.abs(m.at - (time.track.w * TIME_AT[i]) / 100) <= LAND,
+        ),
+      time
+        ? `${time.marks.map((m, i) => Math.abs(m.at - (time.track.w * TIME_AT[i]) / 100).toFixed(2) + 'px').join(' and ')} from ${TIME_AT.join('% and ')}% of a ${time.track.w.toFixed(1)}px track (floor ${LAND}px)`
+        : 'no time-axis bar in the fixture',
+    );
+    check(
+      `${theme}: a marker without one reads as it always did`,
+      marked.length > 0 &&
+        marked.every((b) => b.marks.every((m) => saidAt(b.valueText, m.label) !== null)),
+      `${marked.length} bars still say "label value%" — e.g. "${marked[0]?.valueText}"`,
+    );
   }
+
 } catch (err) {
   check('the gate ran', false, String(err));
 } finally {

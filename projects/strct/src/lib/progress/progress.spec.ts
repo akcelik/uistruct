@@ -313,3 +313,53 @@ describe('StrctProgress — markers', () => {
     expect(el.querySelector('.strct-progress__track > .strct-progress__marker')).not.toBeNull();
   });
 });
+
+// FR-80-04 — a bar whose axis is not a percentage.
+describe('StrctProgress — a marker on a time axis', () => {
+  const read = (fixture: ReturnType<typeof TestBed.createComponent<StrctProgress>>) =>
+    (fixture.nativeElement.querySelector('[role="progressbar"]') as HTMLElement).getAttribute(
+      'aria-valuetext',
+    );
+
+  function bar(inputs: Record<string, unknown>) {
+    const fixture = TestBed.createComponent(StrctProgress);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('says the marker as its valueText, and nothing is a percentage', () => {
+    const fixture = bar({
+      value: 44,
+      valueText: '6 min 12 s',
+      markers: [
+        { value: 28, label: 'usually at least', valueText: '5 minutes' },
+        { value: 80, label: 'usually at most', valueText: '14 minutes' },
+      ],
+    });
+    expect(read(fixture)).toBe(
+      '6 min 12 s, usually at least 5 minutes, usually at most 14 minutes',
+    );
+    expect(read(fixture)).not.toContain('%');
+  });
+
+  it('a marker without one reads as it always did', () => {
+    const fixture = bar({
+      value: 74,
+      markers: [{ value: 80, label: 'quota' }],
+    });
+    expect(read(fixture)).toBe('74%, quota 80%');
+  });
+
+  it('mixes the two without inventing a number', () => {
+    const fixture = bar({
+      value: 44,
+      valueText: '6 min 12 s',
+      markers: [
+        { value: 28, label: 'usually at least', valueText: '5 minutes' },
+        { value: 80, label: 'quota' },
+      ],
+    });
+    expect(read(fixture)).toBe('6 min 12 s, usually at least 5 minutes, quota 80%');
+  });
+});

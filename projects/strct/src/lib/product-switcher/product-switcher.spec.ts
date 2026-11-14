@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { StrctProductItem, StrctProductSwitcher } from './product-switcher';
 
 const PRODUCTS: StrctProductItem[] = [
@@ -291,5 +291,39 @@ describe('StrctProductSwitcher — a hook and an accent per row', () => {
       document.querySelector('[data-item="backup"]')!.querySelector('.strct-dd__itemlabel')!
         .textContent,
     ).toContain('HyperStruct Backup');
+  });
+});
+
+// FR-80-07 — a row that opens the page left in a product, as it was left:
+// /objects/host-3?tab=configure. A string's `?` is encoded into the path and
+// the route does not match; commands have no query slot. A UrlTree has both.
+describe('StrctProductSwitcher — a row with a query', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('renders the whole address, and a plain click goes there', async () => {
+    media(false);
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: '**', children: [] }])] });
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    fixture.componentInstance.items.set([
+      { id: 'manager', name: 'Manager', icon: 'cluster', routerLink: '/manager' },
+      {
+        id: 'migrate',
+        name: 'Migrate',
+        icon: 'refresh',
+        routerLink: router.parseUrl('/migrate/runs?run=9&view=log#last'),
+      },
+    ]);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    await openMenu(fixture, el);
+    // The menu is portalled, so the row is in the document, not in the host.
+    const migrate = document.querySelector<HTMLAnchorElement>('a[data-item="migrate"]')!;
+    expect(migrate.getAttribute('href')).toBe('/migrate/runs?run=9&view=log#last');
+
+    migrate.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 }));
+    await fixture.whenStable();
+    expect(router.url).toBe('/migrate/runs?run=9&view=log#last');
   });
 });

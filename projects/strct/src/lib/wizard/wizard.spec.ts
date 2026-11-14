@@ -362,3 +362,104 @@ describe('StrctWizard — the footer is never clipped (BUG-41-01)', () => {
     expect(content ? getComputedStyle(content).overflowY : '').not.toBe('auto');
   });
 });
+
+// FR-80-05 — a path that leaves steps out, and focus after a move the wizard
+// did not make.
+describe('StrctWizard — skipped steps and focus', () => {
+  @Component({
+    imports: [StrctWizard, StrctStep],
+    template: `
+      <strct-wizard vertical title="Add node" [(current)]="current">
+        <strct-step label="Servers">se</strct-step>
+        <strct-step label="Prerequisites">pr</strct-step>
+        <strct-step label="Scope">sc</strct-step>
+        <strct-step label="Validate" [skipped]="skipped()">va</strct-step>
+        <strct-step label="Decide" [skipped]="skipped()">de</strct-step>
+        <strct-step label="Ready to add">
+          <button type="button" class="back-to-scope" (click)="current.set(2)">
+            Back to the scope
+          </button>
+        </strct-step>
+      </strct-wizard>
+    `,
+  })
+  class SkipHost {
+    current = signal(0);
+    skipped = signal(true);
+  }
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [StrctWizard, StrctStep] });
+  });
+
+  function setup(at = 5) {
+    const fixture = TestBed.createComponent(SkipHost);
+    fixture.detectChanges();
+    fixture.componentInstance.current.set(at);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  }
+  const rail = (el: HTMLElement) => [
+    ...el.querySelectorAll<HTMLButtonElement>('.strct-wiz__vstep'),
+  ];
+
+  it('a skipped step is not done, is not a target, and says so', () => {
+    const { el } = setup();
+    const steps = rail(el);
+    for (const i of [3, 4]) {
+      expect(steps[i].classList).not.toContain('strct-wiz__vstep--done');
+      expect(steps[i].classList).toContain('strct-wiz__vstep--skipped');
+      expect(steps[i].disabled).toBe(true);
+      expect(steps[i].getAttribute('aria-label')).toBe(
+        `${['Servers', 'Prerequisites', 'Scope', 'Validate', 'Decide'][i]}, skipped`,
+      );
+    }
+    // The steps actually walked still read as done.
+    expect(steps[1].classList).toContain('strct-wiz__vstep--done');
+    expect(steps[1].getAttribute('aria-label')).toBeNull();
+  });
+
+  it('goTo refuses a skipped step and takes a walked one', () => {
+    const { fixture, el } = setup();
+    const wizard = fixture.debugElement.children[0].componentInstance as StrctWizard;
+    wizard.goTo(3);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.current()).toBe(5);
+    wizard.goTo(2);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.current()).toBe(2);
+    expect(el.querySelectorAll('.strct-wiz__vstep--active').length).toBe(1);
+  });
+
+  it('focus follows a step the app changed from inside the content', async () => {
+    const { fixture, el } = setup();
+    const button = el.querySelector<HTMLButtonElement>('.back-to-scope')!;
+    button.focus();
+    expect(document.activeElement).toBe(button);
+    button.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const title = el.querySelector('.strct-wiz__ctitle')!;
+    expect(title.textContent?.trim()).toBe('Scope');
+    expect(document.activeElement).toBe(title);
+  });
+
+  it('a move the wizard makes itself leaves focus on the control pressed', async () => {
+    const { fixture, el } = setup(0);
+    const next = [...el.querySelectorAll<HTMLButtonElement>('.strct-wiz__foot button')].at(-1)!;
+    next.focus();
+    next.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.current()).toBe(1);
+    expect(document.activeElement).toBe(next);
+  });
+
+  it('focusCurrentTitle() is there for any other move', async () => {
+    const { fixture, el } = setup(2);
+    (document.activeElement as HTMLElement | null)?.blur();
+    const wizard = fixture.debugElement.children[0].componentInstance as StrctWizard;
+    wizard.focusCurrentTitle();
+    expect(document.activeElement).toBe(el.querySelector('.strct-wiz__ctitle'));
+  });
+});

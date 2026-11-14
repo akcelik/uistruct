@@ -46,3 +46,35 @@ The active step's emphasis stays inside the space the step owns:
 - `prefers-reduced-motion` keeps the static ring it has today.
 - The connector touches neither pill's border, or the gap is wide enough that it reads as a line
   between two separate objects.
+
+## Fixed in 7.16.0 (2026-11-14)
+
+Nothing scales any more: the ring is the step's own box (`inset: 0`), it
+breathes by opacity alone, the list's gap is 6px, and the connector is a 2px
+line in the middle of it. Measured by `scripts/steps-rail.mjs`, which finds
+the ring's painted pixels by taking the same shot twice — once as it renders,
+once with the ring suppressed — and diffing them.
+
+### Against the acceptance
+
+| asked                                                                          | measured                                                                                                                                  |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| at 1×, 1.25× and 2×, dense and default, no ring pixel inside a neighbour's box | **0** of them, over **18** captures (three scales × two densities × three points of the pulse)                                            |
+| at any point of the animation, for labels up to 160px                          | the fixture's active label is **"Wait for drain and reboot"**; the ring paints 352–1514 pixels and reaches **0.00px** past its own border |
+| `prefers-reduced-motion` keeps the static ring it has today                    | `animation: none`, `opacity: 0.5`, **400** pixels of ring, none past the border                                                           |
+| the connector touches neither pill's border                                    | a **2px** line in a **6px** gap: **2.0px** of daylight before it and **2.0px** after, **6** painted pixels, **0** on a pill               |
+
+### What the report did not have
+
+- **The gap alone would not have been enough.** The report offers widening the
+  list's gap to the ring's furthest reach as an alternative. For the 120px
+  step it measures, that is a 4.66px ring in a gap that would have to be about
+  10px to clear it on both sides — and the reach grows with the label, so any
+  number chosen would be wrong for the next longer one. Holding the ring
+  inside the box is the only version that does not depend on how wide a step
+  happens to be.
+- **The ring was not the only thing crossing the gap.** The 5px connector in a
+  4px gap spanned it edge to edge and lapped 1px onto the previous pill's
+  border, which is half of why the pills read as links of one chain whose ends
+  collide. It is now 2px with 2.0px of daylight on each side, measured the
+  same way as the ring.

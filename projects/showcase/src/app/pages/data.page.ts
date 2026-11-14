@@ -908,6 +908,40 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="steps-rail"
+      owner="steps"
+      heading="A run of hosts, read down a column"
+      description='FR-80-02: five pills of five widths in five colours line up with nothing, so in a run of several hosts &ldquo;which host is at which step&rdquo; cannot be read down a column, and dots line up but drop the names. appearance="rail" is one flat segment per step, equal widths, the state in the fill; names puts the names under it (the default), leaves them out for a rail that sits under a shared row (names="none"), or draws that row alone (names="only") on the same grid, so every name stands over its own column. The step running now is the accent, striped &mdash; two states that differ only in hue are one state to a reader who cannot see the hue. Every step is still a list item saying its name and its state, and a description is still its tooltip. BUG-80-01: the active pill&apos;s ring used to be its box grown 1px and scaled to 1.06, which reaches 4.66px past a 120px pill into a 4px gap &mdash; over the neighbour&apos;s border for anything wider than 98px, moving, beside a still neighbour. Nothing scales now: the ring breathes inside the box that owns it, and the connector sits in the middle of a 6px gap instead of spanning a 4px one.'
+      code='&lt;strct-steps [steps]="stages" appearance="rail" names="only" /&gt;&#10;&lt;strct-steps [steps]="run" appearance="rail" names="none" /&gt;'
+    >
+      <div class="rail-demo">
+        <div class="rail-demo__grid" data-rail="column">
+          <span class="rail-demo__cap"></span>
+          <strct-steps [steps]="railStages" appearance="rail" names="only" label="Update stages" />
+          @for (host of railHosts; track host.id) {
+            <span class="rail-demo__host">{{ host.id }}</span>
+            <strct-steps
+              [steps]="host.steps"
+              appearance="rail"
+              names="none"
+              [label]="host.id + ' update'"
+              [attr.data-rail-row]="host.id"
+            />
+          }
+        </div>
+        <div class="rail-demo__single" data-rail="under">
+          <strct-steps [steps]="railRun" appearance="rail" label="hv-04 update" />
+        </div>
+        <div class="rail-demo__pills" data-rail="pills">
+          <strct-steps [steps]="ringRun" label="hv-05 update" />
+        </div>
+        <div class="rail-demo__pills" data-rail="pills-dense">
+          <strct-steps [steps]="ringRun" dense label="hv-06 update" />
+        </div>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="change"
       heading="Change"
       description="An upgrade or an edit states what changes as “from → to”: the old value muted, the arrow the library's, the new one emphasised. Assistive tech hears a sentence — “from v10.27 to v10.28” — rather than an arrow glyph, and label makes that sentence localisable."
@@ -1007,6 +1041,31 @@ import { DemoBlock, PageHeader } from '../ui/demo';
   `,
   styles: [
     `
+      /* FR-80-02: the cell a run is drawn in is 600px, and the rails of
+         three hosts stand under one row of names. */
+      .rail-demo {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+        align-items: flex-start;
+      }
+      .rail-demo__grid {
+        display: grid;
+        grid-template-columns: 64px 600px;
+        gap: 10px 12px;
+        align-items: center;
+        max-width: 100%;
+      }
+      .rail-demo__host {
+        font-size: var(--text-sm);
+        color: var(--t2);
+        font-family: var(--mono);
+      }
+      .rail-demo__single,
+      .rail-demo__pills {
+        width: 600px;
+        max-width: 100%;
+      }
       .board {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1158,6 +1217,61 @@ export class DataPage {
     { id: 'p3', label: 'Back in service', state: 'planned' },
   ];
 
+  // FR-80-02 / BUG-80-01 — one row of names over three hosts' rails, a rail
+  // with its own names, and the pills whose active ring used to reach into
+  // its neighbour.
+  protected readonly railStages: StrctStepState[] = [
+    { id: 'check', label: 'Check', state: 'planned' },
+    { id: 'download', label: 'Download', state: 'planned' },
+    { id: 'install', label: 'Install', state: 'planned' },
+    { id: 'restart', label: 'Restart', state: 'planned' },
+    { id: 'verify', label: 'Verify', state: 'planned' },
+  ];
+  protected readonly railHosts: { id: string; steps: StrctStepState[] }[] = [
+    {
+      id: 'hv-01',
+      steps: [
+        { id: 'check', label: 'Check', state: 'done' },
+        { id: 'download', label: 'Download', state: 'done' },
+        { id: 'install', label: 'Install', state: 'done' },
+        { id: 'restart', label: 'Restart', state: 'done' },
+        { id: 'verify', label: 'Verify', state: 'done' },
+      ],
+    },
+    {
+      id: 'hv-02',
+      steps: [
+        { id: 'check', label: 'Check', state: 'done' },
+        { id: 'download', label: 'Download', state: 'done' },
+        { id: 'install', label: 'Install', state: 'active', description: 'Applying 6 updates' },
+        { id: 'restart', label: 'Restart', state: 'pending' },
+        { id: 'verify', label: 'Verify', state: 'pending' },
+      ],
+    },
+    {
+      id: 'hv-03',
+      steps: [
+        { id: 'check', label: 'Check', state: 'done' },
+        { id: 'download', label: 'Download', state: 'failed', description: 'Mirror unreachable' },
+        { id: 'install', label: 'Install', state: 'skipped' },
+        { id: 'restart', label: 'Restart', state: 'skipped' },
+        { id: 'verify', label: 'Verify', state: 'blocked' },
+      ],
+    },
+  ];
+  protected readonly railRun: StrctStepState[] = [
+    { id: 'check', label: 'Check', state: 'done' },
+    { id: 'download', label: 'Download', state: 'done' },
+    { id: 'install', label: 'Install', state: 'active', description: 'Applying 6 updates' },
+    { id: 'restart', label: 'Restart', state: 'pending' },
+    { id: 'verify', label: 'Verify', state: 'planned' },
+  ];
+  protected readonly ringRun: StrctStepState[] = [
+    { id: 'check', label: 'Check', state: 'done' },
+    { id: 'drain', label: 'Wait for drain and reboot', state: 'active' },
+    { id: 'install', label: 'Install', state: 'pending' },
+    { id: 'verify', label: 'Verify', state: 'planned' },
+  ];
   protected readonly runSteps: StrctStepState[] = [
     { id: 'check', label: 'Check', state: 'done' },
     { id: 'download', label: 'Download', state: 'done' },

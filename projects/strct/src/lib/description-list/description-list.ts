@@ -6,7 +6,7 @@ import {
   input,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, UrlTree } from '@angular/router';
 import { StrctIcon } from '../icon/icon';
 import { StrctStatus } from '../status';
 import { StrctStatusDot } from '../status-dot/status-dot';
@@ -304,7 +304,7 @@ export class StrctDesc {
    */
   readonly href = input('');
   /** The same, routed — takes what `[routerLink]` takes. */
-  readonly routerLink = input<string | unknown[] | null>(null);
+  readonly routerLink = input<string | readonly unknown[] | UrlTree | null>(null);
   /**
    * Query parameters for the routed destination: `/vms/vm-1?action=updates`
    * is `routerLink="/vms/vm-1"` with `[queryParams]="{ action: 'updates' }"`.
