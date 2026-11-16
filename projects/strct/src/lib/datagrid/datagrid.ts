@@ -2574,8 +2574,6 @@ export class StrctDatagrid {
     );
   }
 
-  /** Toggle the detail pane for a row (triggered by its »  button, not the row,
-   *  so row cells remain selectable for copy). */
   /** One tab stop for the list while a pane can be opened from it. */
   protected paneRowTabindex(row: StrctRow): number {
     const rows = this.renderRows();
@@ -2624,7 +2622,26 @@ export class StrctDatagrid {
     }
   }
 
-  openDetail(row: StrctRow): void {
+  /** Whether this row's pane is the open one — the » button's whole state. */
+  protected detailOpen(row: StrctRow): boolean {
+    return row === this.activeRow();
+  }
+
+  /**
+   * The » button, both ways: it opens this row's pane, and closes it again
+   * when it is already the open one. It is a button rather than the row
+   * itself so that the row's cells stay selectable for copy — except in grid
+   * mode, where a console opens the pane by clicking the row as well.
+   *
+   * The click must stop where it was aimed. In grid mode a click on the row
+   * opens that row's pane (`onRowPick`), and this button sits inside the row,
+   * so without this the close and the row's own re-open happened in the same
+   * event and the pane could never be shut from the button it was opened
+   * with. `event` is optional because the method is public API and was called
+   * without one before.
+   */
+  openDetail(row: StrctRow, event?: Event): void {
+    event?.stopPropagation();
     const id = this.idOf(row);
     this.activeRowId.set(this.activeRowId() === id ? null : id);
   }

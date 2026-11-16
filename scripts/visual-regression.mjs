@@ -122,7 +122,13 @@ const ROUTES = [
   // FR-80-02 / BUG-80-01: one row of names over three hosts' rails, a rail
   // with its own names, and the pills whose active ring used to reach into
   // the neighbour beside it.
-  ['steps-rail', '/components/steps', '#steps-rail .rail-demo', undefined, '#steps-rail .rail-demo'],
+  [
+    'steps-rail',
+    '/components/steps',
+    '#steps-rail .rail-demo',
+    undefined,
+    '#steps-rail .rail-demo',
+  ],
   // FR-80-05: a rail whose skipped steps are neither done nor waiting.
   [
     'wizard-skipped',
@@ -192,6 +198,18 @@ const ROUTES = [
   // What a node says after its label: the quiet meta and the status tag, which
   // have to sit on the row without pushing the label out of it.
   ['tree-trailing', '/components/tree', '#tree-trailing', undefined, '.strct-tree'],
+  // The detail pane's » button, which used to draw the same right-pointing
+  // chevron whether the pane was shut or open. Two crops of the one grid: at
+  // rest, and with the second row's pane open — the open shot holds both
+  // states at once, the active row's « and every other row's ».
+  ['detailpane-shut', '/components/detailpane', '#detailpane', undefined, '[data-dp="table"]'],
+  [
+    'detailpane-open',
+    '/components/detailpane',
+    '#detailpane',
+    `document.querySelectorAll('[data-dp="table"] .strct-dg__detailbtn')[1].click()`,
+    '[data-dp="table"]',
+  ],
   // The select-all checkbox in its three states. The indeterminate one is the
   // reason this gate learned to prepare a state: its dash was squeezed to 3px
   // and pushed 5px off centre, and no screenshot of a page at rest showed it.

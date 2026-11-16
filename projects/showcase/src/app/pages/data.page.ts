@@ -839,15 +839,46 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     <app-demo
       anchor="detailpane"
       heading="Detail pane"
-      description="A different pattern from expandable rows: click the » button to collapse the grid to a single column and open a side pane with that row's details (the » keeps row cells free to select/copy). Click it again or the × to return."
+      description="A different pattern from expandable rows: click the » button to collapse the grid to a single column and open a side pane with that row's details (the » keeps row cells free to select/copy). The button is the same control both ways — once the pane is open it reads « and closes it, so the arrow always points where the click will send the pane. The × in the pane head does the same thing from the other end."
       code='<strct-datagrid [columns]="cols" [rows]="rows" pane>…</strct-datagrid>'
     >
       <strct-datagrid
+        id="dg-pane-table"
+        data-dp="table"
         style="width: 100%;"
         [columns]="dgCols"
         [rows]="dgRows"
-        [pane]="{ enabled: true }"
+        [pane]="{ enabled: true, takeoverWidth: 560 }"
         [paging]="{ pageSize: 6 }"
+      >
+        <ng-template strctRowDetail let-row>
+          <strct-stack style="max-width: 340px;">
+            <div strctStackItem label="Cluster">{{ row['name'] }}</div>
+            <div strctStackItem label="Type">{{ row['type'] }}</div>
+            <div strctStackItem label="Hosts">{{ row['hosts'] }}</div>
+            <div strctStackItem label="Status">{{ row['status'] }}</div>
+          </strct-stack>
+        </ng-template>
+      </strct-datagrid>
+    </app-demo>
+
+    <app-demo
+      anchor="detailpane-console"
+      owner="detailpane"
+      heading="The same pane in a console"
+      description="A console opens the row's pane by clicking the row itself, which is what interactionMode=&quot;grid&quot; adds here. The » button still has to work as a toggle on top of that: its click closes the pane without the row underneath re-opening it, and the arrow turns back the other way. Before 7.20.0 the button's click reached the row as well, so in this mode the pane could be opened but never closed from it."
+      code='<strct-datagrid interactionMode="grid" [pane]="&#123; enabled: true &#125;">…</strct-datagrid>'
+    >
+      <strct-datagrid
+        id="dg-pane-console"
+        data-dp="console"
+        style="width: 100%;"
+        rowId="name"
+        interactionMode="grid"
+        [columns]="dgCols"
+        [rows]="dgRows"
+        [pane]="{ enabled: true, takeoverWidth: 560 }"
+        [paging]="{ pageSize: 4 }"
       >
         <ng-template strctRowDetail let-row>
           <strct-stack style="max-width: 340px;">

@@ -138,6 +138,15 @@ jobs:
       # pointer and key events, 16 checks.
       - name: Assert a port can show its card without taking the click
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/wiring-detail.mjs
+      # The detail pane's » button, both ways: the glyph it actually draws and
+      # which way that glyph points once the stylesheet has had its say, the
+      # label and aria-expanded that go with each state, a second click that
+      # closes without the row underneath re-opening it in a console, Enter
+      # and Escape from the row, and the same round trip with the page in RTL
+      # where the pane opens on the other side. Real mouse and key events,
+      # 13 checks.
+      - name: Assert the pane's own button says which way it goes
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/pane-toggle.mjs
       # BUG-80-01 / FR-80-02: the active step's emphasis stays inside the step
       # it belongs to (the ring used to reach 4.66px past a 120px pill into a
       # 4px gap), and a run of hosts reads down a column of equal segments

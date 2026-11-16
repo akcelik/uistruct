@@ -11,6 +11,14 @@ stays here until it goes quiet.
 
 ### Closed on 2026-11-16, and moved to [`archive/`](archive/)
 
+- [**`archive/datagrid-pane-toggle.md`**](archive/datagrid-pane-toggle.md) — not a filed FR, asked
+  for directly against 7.19.0: the detail pane's » button drew `chevronDoubleRight` whether the
+  pane was shut or open and said "Open detail" either way, and in a console
+  (`interactionMode="grid"`) the button's click reached the row underneath, which re-opened the
+  pane it had just closed. Shipped in **v7.20.0** — one control both ways, the arrow measured
+  pointing where the click sends the pane (converging to **2.56px** at that end against **7.31px**
+  at the other, and mirrored under `[dir='rtl']`, where the pane opens on the other side).
+
 - [**`archive/tree-rollup-beside-own-state.md`**](archive/tree-rollup-beside-own-state.md) —
   FR-82-01, filed against 7.18.0 while adopting the state axes: `strct-icon` draws a `count`
   _instead of_ the badge and the mode tile, so a closed host drained for patching lost its barrier

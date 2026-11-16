@@ -4,6 +4,7 @@ import {
   StrctDatagrid,
   StrctDatagridColumn,
   StrctDatagridColumnState,
+  StrctDatagridLabels,
   StrctDatagridLazyState,
   StrctRowDetailDef,
   StrctDetailPaneTitle,
@@ -11,6 +12,7 @@ import {
   provideStrctDatagridDefaults,
 } from './datagrid';
 import { StrctCellDef, StrctRow } from '../table/table';
+import { STRCT_ICONS } from '../icon/icon';
 import { resetStrctDevWarnings } from '../util/dev-warn';
 
 /**
@@ -972,6 +974,129 @@ describe('StrctDatagrid detail pane (focus lifecycle)', () => {
 
     expect(fixture.nativeElement.querySelector('.strct-dg__pane')).toBeNull();
     expect(document.activeElement).toBe(btn);
+  });
+});
+
+describe('StrctDatagrid detail pane (the » button, both ways)', () => {
+  /**
+   * The glyph is identified by the path the icon set actually holds, not by a
+   * literal copied here, so renaming or redrawing either chevron fails this
+   * spec rather than passing it by accident.
+   */
+  const glyph = (name: string) => {
+    const d = STRCT_ICONS[name].match(/\sd="([^"]+)"/);
+    if (!d) throw new Error(`${name} is not a single path`);
+    return d[1];
+  };
+  const RIGHT = glyph('chevronDoubleRight');
+  const LEFT = glyph('chevronDoubleLeft');
+
+  @Component({
+    imports: [StrctDatagrid, StrctRowDetailDef],
+    template: `
+      <strct-datagrid
+        [columns]="cols"
+        [rows]="rows"
+        rowId="n"
+        [interactionMode]="mode"
+        [labels]="labels"
+        [pane]="{ enabled: true }"
+      >
+        <ng-template strctRowDetail let-row>{{ row['n'] }} detail</ng-template>
+      </strct-datagrid>
+    `,
+  })
+  class ToggleHost {
+    mode: 'table' | 'grid' = 'table';
+    labels: Partial<StrctDatagridLabels> = {};
+    cols: StrctDatagridColumn[] = [{ key: 'n', label: 'N' }];
+    rows: StrctRow[] = [{ n: 'a' }, { n: 'b' }];
+  }
+
+  function make(mode: 'table' | 'grid' = 'table', labels: Partial<StrctDatagridLabels> = {}) {
+    const fixture = TestBed.createComponent(ToggleHost);
+    fixture.componentInstance.mode = mode;
+    fixture.componentInstance.labels = labels;
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const btn = () => el.querySelector<HTMLButtonElement>('.strct-dg__detailbtn')!;
+    const state = () => {
+      const b = btn();
+      return {
+        d: b.querySelector('svg path')!.getAttribute('d'),
+        label: b.getAttribute('aria-label'),
+        expanded: b.getAttribute('aria-expanded'),
+        pane: !!el.querySelector('.strct-dg__pane'),
+      };
+    };
+    return { fixture, el, btn, state };
+  }
+
+  const SHUT = { d: RIGHT, label: 'Open detail', expanded: 'false', pane: false };
+  const OPEN = { d: LEFT, label: 'Close detail', expanded: 'true', pane: true };
+
+  it('shut, it draws the right-pointing chevron and offers to open', () => {
+    expect(make().state()).toEqual(SHUT);
+  });
+
+  it('open, the same button turns around and offers to close', () => {
+    const { fixture, btn, state } = make();
+    btn().click();
+    fixture.detectChanges();
+
+    expect(state()).toEqual(OPEN);
+  });
+
+  it('a second click closes the pane and turns the arrow back', () => {
+    const { fixture, btn, state } = make();
+    btn().click();
+    fixture.detectChanges();
+    btn().click();
+    fixture.detectChanges();
+
+    expect(state()).toEqual(SHUT);
+  });
+
+  /**
+   * The case the toggle used to lose. In grid mode a click on the row opens
+   * that row's pane, and the button sits inside the row, so its click closed
+   * the pane and the row re-opened it in the same event.
+   */
+  it('in grid mode the button’s click does not reach the row underneath', () => {
+    const { fixture, btn, state } = make('grid');
+    btn().click();
+    fixture.detectChanges();
+    expect(state()).toEqual(OPEN);
+
+    btn().click();
+    fixture.detectChanges();
+    expect(state()).toEqual(SHUT);
+  });
+
+  it('a row click still opens the pane in grid mode', () => {
+    const { fixture, el, state } = make('grid');
+    (el.querySelector('tbody tr') as HTMLElement).click();
+    fixture.detectChanges();
+
+    expect(state()).toEqual(OPEN);
+  });
+
+  /**
+   * `closeDetail` has been in the label set since the pane shipped, but only
+   * the × in the pane head ever used it. Both halves of this button have to
+   * reach it, or a translated grid says "Open detail" on the control that
+   * closes.
+   */
+  it('both halves of the label come from the grid’s own label set', () => {
+    const { fixture, btn } = make('table', {
+      openDetail: 'Detayı aç',
+      closeDetail: 'Detayı kapat',
+    });
+    expect(btn().getAttribute('aria-label')).toBe('Detayı aç');
+
+    btn().click();
+    fixture.detectChanges();
+    expect(btn().getAttribute('aria-label')).toBe('Detayı kapat');
   });
 });
 
