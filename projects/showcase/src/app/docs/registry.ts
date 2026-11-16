@@ -1904,6 +1904,10 @@ export const DOCS: DocCategory[] = [
           'StrctTreeDropEvent',
           'StrctTreeDropRefusal',
           'StrctTreeStateWords',
+          'StrctTreeReach',
+          'StrctTreePower',
+          'StrctTreeHealth',
+          'StrctTreeRollup',
         ],
         summary: 'Nested, expandable nodes with icons.',
         lead: 'Nested, expandable nodes with optional icons, status badges and active state. Compose `strct-tree-node` manually, or pass `[nodes]` for a fully data-driven, self-recursing tree of any depth. Add `[nodeMenu]` for a per-node right-click menu.',
@@ -1913,7 +1917,14 @@ export const DOCS: DocCategory[] = [
             type: 'StrctTreeNodeData[]',
             default: 'null',
             description:
-              'On `strct-tree`: data-driven node list (`{ id?; label; icon?; badge?; mode?; stateLabel?; active?; expanded?; children?; meta?; tag?; hasChildren?; loading?; data? }`). When set, projected content is ignored and the tree recurses itself. An `id` gives each node a stable key (trackBy + expansion state + a `data-node-id` attribute); it falls back to `label`. `meta` is a quiet trailing word and `tag: { label; status? }` a trailing badge — what `[strctTreeTrailing]` is for a projected node. `hasChildren: true` gives the row its chevron and `aria-expanded` before `children` arrives, so a listing can be read on expand (`(nodeToggled)`); `loading: true` puts one captioned row under it and `aria-busy` on it, and a node that turns out to be empty (`hasChildren: false`, `children: []`) loses its chevron again.',
+              'On `strct-tree`: data-driven node list (`{ id?; label; icon?; reach?; power?; health?; rollup?; mode?; badge?; stateLabel?; active?; expanded?; children?; meta?; tag?; hasChildren?; loading?; data? }`). When set, projected content is ignored and the tree recurses itself. An `id` gives each node a stable key (trackBy + expansion state + a `data-node-id` attribute); it falls back to `label`. `meta` is a quiet trailing word and `tag: { label; status? }` a trailing badge — what `[strctTreeTrailing]` is for a projected node. `hasChildren: true` gives the row its chevron and `aria-expanded` before `children` arrives, so a listing can be read on expand (`(nodeToggled)`); `loading: true` puts one captioned row under it and `aria-busy` on it, and a node that turns out to be empty (`hasChildren: false`, `children: []`) loses its chevron again.',
+          },
+          {
+            name: 'nodes[].reach / power / health / rollup',
+            type: `'ok' | 'unreachable' | 'orphaned' \u00b7 'on' | 'off' | 'suspended' \u00b7 'ok' | 'warning' | 'critical' \u00b7 { warning?; critical? }`,
+            default: `'ok' \u00b7 'on' \u00b7 'ok' \u00b7 null`,
+            description:
+              'An inventory object is in four states at once, and they are four different questions \u2014 so each has its own place and none takes another\u2019s turn. **reach** is drawn on the ROW: `unreachable` and `orphaned` draw the label back to `--t3`, dim the glyph (not the marks on it) and cut it, because whether the object can be reached is what decides whether the rest of the row can be trusted. **health** takes the glyph\u2019s TOP corner \u2014 where vCenter puts an object\u2019s alarm \u2014 and tones the glyph itself with it. **power** takes the BOTTOM corner (`off`, `suspended`; `on` draws nothing, because a tree where every normal row carries a mark is a tree with no marks), which **mode** shares: a host has a mode, a machine has a power state, and a mode wins when both are set. **rollup** brings the worst of what is under a closed node up to its own glyph as a toned count (an open node stops repeating its children). Every mark is at least 11px on an 18px glyph, because an 8px dot is a smudge on a 1920\u00d71080 screen. `aria-description` says the same, in the same order \u2014 "Not reachable, Off, Critical" \u2014 and the label stays the label, so the type-ahead is never asked to match a state. A tree written against the single `badge` slot keeps working: an explicit `badge` still wins.',
           },
           {
             name: 'canDrag',

@@ -14,13 +14,35 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { StrctIcon, StrctIconBadge, StrctIconMode } from '../icon/icon';
+import { StrctIcon, StrctIconBadge, StrctIconMode, StrctIconStatus } from '../icon/icon';
+import { StrctStatus } from '../status';
 import { StrctBadge, StrctBadgeStatus } from '../badge/badge';
 import { StrctSpinner } from '../spinner/spinner';
 import { StrctContextMenuTrigger, StrctMenuItem } from '../context-menu/menu';
 import { StrctAnnouncer } from '../a11y/announcer';
 
 /** A node in the data-driven tree (`<strct-tree [nodes]="...">`). */
+/**
+ * Whether the object can be reached at all. It is the axis that decides
+ * whether the rest of the row can be trusted, so it is drawn on the ROW —
+ * the label recedes and the kind icon is cut — rather than in a corner of the
+ * icon, where it used to take the power badge's slot and make "switched off"
+ * and "not answering" the same mark.
+ */
+export type StrctTreeReach = 'ok' | 'unreachable' | 'orphaned';
+
+/** The object's own power, where it has one. `on` draws nothing. */
+export type StrctTreePower = 'on' | 'off' | 'suspended';
+
+/** What the alarms say about this object. `ok` draws nothing. */
+export type StrctTreeHealth = 'ok' | 'warning' | 'critical';
+
+/** What the alarms say about everything under a node that is collapsed. */
+export interface StrctTreeRollup {
+  warning?: number;
+  critical?: number;
+}
+
 export interface StrctTreeNodeData {
   /**
    * Stable unique key — used for `trackBy`, controlled expansion state
@@ -45,6 +67,22 @@ export interface StrctTreeNodeData {
    * tree that already puts the words in the label.
    */
   stateLabel?: string;
+  /**
+   * Can the object be reached? `unreachable` (not answering, disconnected)
+   * and `orphaned` (its parent no longer knows it) draw the row back and cut
+   * the icon, and leave the other three axes to say what was last known.
+   */
+  reach?: StrctTreeReach;
+  /**
+   * Its power: `off` and `suspended` are drawn in the icon's bottom corner,
+   * `on` draws nothing — a running machine is the normal case, and a tree
+   * where every normal row carries a mark is a tree with no marks.
+   */
+  power?: StrctTreePower;
+  /** What its alarms say — drawn at the row's end, where the eye can run down them. */
+  health?: StrctTreeHealth;
+  /** What the alarms under it say, for a node whose children are not visible. */
+  rollup?: StrctTreeRollup;
   /** Highlight as the selected node. */
   active?: boolean;
   /** Initial expanded state. */
@@ -101,7 +139,9 @@ export interface StrctTreeMenuEvent {
  * What a node's state is called, after its label. One object, so a tree is
  * translated in one place (FR-61-02).
  */
-export type StrctTreeStateWords = Partial<Record<StrctIconBadge | StrctIconMode, string>>;
+export type StrctTreeStateWords = Partial<
+  Record<StrctIconBadge | StrctIconMode | StrctTreeReach | StrctTreePower | StrctTreeHealth, string>
+>;
 
 /** The library's words for the badge and mode states. */
 export const defaultStateWords: StrctTreeStateWords = {
@@ -114,6 +154,9 @@ export const defaultStateWords: StrctTreeStateWords = {
   running: 'Running',
   paused: 'Paused',
   off: 'Off',
+  unreachable: 'Not reachable',
+  orphaned: 'Orphaned',
+  suspended: 'Suspended',
 };
 
 /** Default chevron aria-label factory — mirrors the `chevronAriaLabel` input default. */
@@ -141,6 +184,8 @@ let treeNodeCounter = 0;
     <div
       class="strct-tnode__row"
       [class.strct-tnode__row--active]="displayActive()"
+      [class.strct-tnode__row--unreachable]="displayReach() !== 'ok'"
+      [class.strct-tnode__row--orphaned]="displayReach() === 'orphaned'"
       role="treeitem"
       [attr.tabindex]="rowTabindex()"
       [attr.aria-level]="level"
@@ -187,10 +232,18 @@ let treeNodeCounter = 0;
       @if (displayIcon()) {
         <strct-icon
           class="strct-tnode__icon"
+          [class.strct-tnode__icon--moded]="displayMode() !== 'none'"
+          [class.strct-tnode__icon--marked]="
+            iconBadge() !== 'none' || iconLifecycle() !== 'none' || !!rollupCount()
+          "
+          [status]="iconStatus()"
           [name]="displayIcon()!"
           [size]="iconSize()"
-          [badge]="displayBadge()"
+          [badge]="iconBadge()"
+          [lifecycle]="iconLifecycle()"
           [mode]="displayMode()"
+          [count]="rollupCount()"
+          [countStatus]="rollupTone()"
         />
       }
       <span class="strct-tnode__label">{{ displayLabel() }}</span>
@@ -313,14 +366,55 @@ let treeNodeCounter = 0;
         }
       }
       .strct-tnode__icon {
-        color: var(--t2);
+        /* --t2 unless the glyph has been given a tone of its own (the
+           icon's own status), which is how an alarmed object reads as
+           alarmed. */
+        color: var(--strct-icon-color, var(--t2));
         flex-shrink: 0;
+      }
+      /* The corner marks overhang the glyph by 3-4px; without this the label
+         starts against them and the two read as one smudge. */
+      .strct-tnode__icon--moded,
+      .strct-tnode__icon--marked {
+        margin-inline-end: 5px;
       }
       .strct-tnode__label {
         flex: 1;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+      /* An object that cannot be reached: the row recedes and its kind icon
+         is cut, so a reader can see at a glance which part of the tree is
+         still being heard from. What was last known about it — its power,
+         the mode it was put in, its alarms — stays drawn, quietly: the point
+         is that it cannot be reached, not that it is gone. */
+      .strct-tnode__row--unreachable .strct-tnode__label {
+        color: var(--t3);
+      }
+      .strct-tnode__row--unreachable .strct-tnode__icon {
+        position: relative;
+      }
+      /* The GLYPH recedes, not the marks on it: an alarm on an object nobody
+         can reach is the loudest thing on the row, and dimming the badge
+         with the drawing underneath it would bury the news with the box. */
+      .strct-tnode__row--unreachable .strct-tnode__icon > svg {
+        opacity: 0.5;
+      }
+      .strct-tnode__row--unreachable .strct-tnode__icon::after {
+        content: '';
+        position: absolute;
+        inset-inline: -2px;
+        top: 50%;
+        height: 1.5px;
+        border-radius: var(--radius-xs);
+        background: var(--t2);
+        transform: rotate(-38deg);
+      }
+      /* Orphaned: the same recession, and the cut is dashed — nobody is
+         saying it is down, only that its parent no longer knows it. */
+      .strct-tnode__row--orphaned .strct-tnode__icon::after {
+        background: repeating-linear-gradient(90deg, var(--t2) 0 2px, transparent 2px 4px);
       }
       /* Trailing marks: they follow the label, never push it out of the row. */
       .strct-tnode__tag,
@@ -365,6 +459,14 @@ export class StrctTreeNode {
   readonly mode = input<StrctIconMode>('none');
   /** What a reader hears after the label (content mode); '' says nothing. */
   readonly stateLabel = input<string | undefined>(undefined);
+  /** Can it be reached (content mode)? */
+  readonly reach = input<StrctTreeReach>('ok');
+  /** Its power (content mode); `on` draws nothing. */
+  readonly power = input<StrctTreePower>('on');
+  /** What its alarms say (content mode); `ok` draws nothing. */
+  readonly health = input<StrctTreeHealth>('ok');
+  /** What the alarms under it say, while it is collapsed (content mode). */
+  readonly rollup = input<StrctTreeRollup | null>(null);
   /** Whether the item is active / selected. */
   readonly active = input(false, { transform: booleanAttribute });
   /** Whether the panel is open (two-way). */
@@ -448,7 +550,12 @@ export class StrctTreeNode {
     { optional: true },
   );
   /** Node icon scales with the owning tree's density (16 native → 18 comfortable). */
-  protected readonly iconSize = computed(() => (this.tree?.density() === 'comfortable' ? 18 : 16));
+  /**
+   * The glyph carries the object's state in its two corners, so it has to be
+   * big enough to hold them: an 8px badge on a 16px glyph is a smudge at
+   * arm's length on a 1920x1080 screen. 18px compact, 22px comfortable.
+   */
+  protected readonly iconSize = computed(() => (this.tree?.density() === 'comfortable' ? 22 : 18));
   /** Parent tree node (element-injector ancestor); drives aria-level + ArrowLeft. */
   readonly parent = inject(StrctTreeNode, { optional: true, skipSelf: true });
   /** 1-based depth, exposed as aria-level. */
@@ -470,6 +577,90 @@ export class StrctTreeNode {
     () => this.node()?.badge ?? this.badge(),
   );
   protected readonly displayMode = computed<StrctIconMode>(() => this.node()?.mode ?? this.mode());
+  protected readonly displayReach = computed<StrctTreeReach>(
+    () => this.node()?.reach ?? this.reach(),
+  );
+  protected readonly displayPower = computed<StrctTreePower>(
+    () => this.node()?.power ?? this.power(),
+  );
+  protected readonly displayHealth = computed<StrctTreeHealth>(
+    () => this.node()?.health ?? this.health(),
+  );
+  protected readonly displayRollup = computed<StrctTreeRollup | null>(
+    () => this.node()?.rollup ?? this.rollup(),
+  );
+
+  /**
+   * The badge the icon carries: an explicit `badge` still wins, so every map
+   * written against the single-slot model keeps working. Otherwise it is the
+   * power axis and nothing else — `on` is the normal case and draws nothing,
+   * because a tree where every normal row carries a mark is a tree with no
+   * marks.
+   */
+  protected readonly iconBadge = computed<StrctIconBadge>(() => {
+    const own = this.displayBadge();
+    if (own !== 'none') return own;
+    const health = this.displayHealth();
+    return health === 'ok' ? 'none' : health;
+  });
+
+  /** The bottom corner: what the object's own power is doing. */
+  protected readonly iconLifecycle = computed<'none' | 'running' | 'paused' | 'off'>(() => {
+    // A tree still written against the single slot said everything through
+    // `badge`; it keeps that drawing and gets no second mark.
+    if (this.displayBadge() !== 'none') return 'none';
+    switch (this.displayPower()) {
+      case 'off':
+        return 'off';
+      case 'suspended':
+        return 'paused';
+      default:
+        return 'none';
+    }
+  });
+
+  /** A closed node wears what is under it as a number on its own glyph. */
+  protected readonly rollupCount = computed<number | null>(() => {
+    const mark = this.stateMark();
+    return mark?.count ?? null;
+  });
+  protected readonly rollupTone = computed<StrctStatus>(() => this.stateMark()?.tone ?? 'critical');
+
+  /**
+   * The glyph's own tone. An object whose alarm is critical IS red in an
+   * inventory an operator knows — Clarity's `status`, which colours the icon
+   * rather than decorating a corner of it. The row's end carries the same
+   * state as a SHAPE, because colour alone is not enough (Clarity says so
+   * too), and an object nobody can reach keeps the neutral glyph: what its
+   * alarms said is last known, not current.
+   */
+  protected readonly iconStatus = computed<StrctIconStatus>(() => {
+    if (this.displayReach() !== 'ok') return 'neutral';
+    const health = this.displayHealth();
+    return health === 'ok' ? 'neutral' : health;
+  });
+
+  /**
+   * The mark at the row's end: this node's own alarm, or — while it is
+   * collapsed — the worst alarm under it with how many there are. A node
+   * whose children are open says only its own: the children are saying
+   * theirs on their own rows.
+   */
+  protected readonly stateMark = computed<{
+    shape: 'warning' | 'critical';
+    tone: 'warning' | 'critical';
+    count: number | null;
+  } | null>(() => {
+    // The node's own alarm is the badge on its glyph; this is only what is
+    // under it while it is closed, which it wears as a number on that glyph.
+    const rollup = this.displayRollup();
+    if (!rollup || this.isOpen()) return null;
+    const critical = rollup.critical ?? 0;
+    const warning = rollup.warning ?? 0;
+    if (!critical && !warning) return null;
+    const shape = critical ? 'critical' : 'warning';
+    return { shape, tone: shape, count: critical + warning };
+  });
 
   /**
    * FR-61-02: a treeitem's name is its label, so a running VM, an alarmed host
@@ -482,10 +673,23 @@ export class StrctTreeNode {
     if (own === '') return '';
     const words = this.tree?.stateWords() ?? defaultStateWords;
     const parts: string[] = [];
+    // The order a reader needs it in: can it be reached, what was it put in,
+    // is it on, and what are its alarms saying — the axes, each said once.
+    const reach = this.displayReach();
     const mode = this.displayMode();
+    const power = this.displayPower();
+    const health = this.displayHealth();
     const badge = this.displayBadge();
+    if (reach !== 'ok') parts.push(words[reach] ?? '');
     if (mode !== 'none') parts.push(words[mode] ?? '');
-    if (badge !== 'none') parts.push(words[badge] ?? '');
+    if (power !== 'on') parts.push(words[power] ?? '');
+    if (health !== 'ok') parts.push(words[health] ?? '');
+    // The single-slot model, for a tree that has not moved to the axes.
+    if (badge !== 'none' && power === 'on' && health === 'ok') parts.push(words[badge] ?? '');
+    const mark = this.stateMark();
+    if (mark?.count) {
+      parts.push(`${mark.count} ${words[mark.tone] ?? mark.tone}`.toLowerCase());
+    }
     return parts.filter(Boolean).join(', ');
   });
   protected readonly displayActive = computed(() => this.node()?.active ?? this.active());

@@ -7,6 +7,8 @@ import {
   StrctIconBadge,
   StrctIconMode,
   StrctIconName,
+  StrctIconSizeName,
+  StrctIconStatus,
   registerStrctIcon,
 } from 'strct';
 import { DemoBlock, PageHeader } from '../ui/demo';
@@ -108,7 +110,7 @@ interface StateExample {
     <app-demo
       anchor="states"
       heading="Object states"
-      description='The same object glyph carries any state. Two families on the badge (bottom end): lifecycle speaks vCenter&apos;s media language (▶ running · ⏸ paused · ■ off) and health is silhouette-coded (circle ✓ · triangle ! · diamond ×) — both read without colour. A mode the operator chose is not either of those, so it has its own corner (top end): mode="maintenance" draws a neutral striped tile, filled when the object is out of service and hollow while it is still draining. The two never displace each other, which is the common case — a host drained for patching that also has a disk warning. badge="maintenance" still works and draws the tile; it is deprecated since 5.29.0, because an amber disc was indistinguishable from paused at 16px.'
+      description="The same object glyph carries every state it is in, in its own two corners — the way an inventory tree an operator already knows draws them. Health takes the TOP corner (circle success · triangle warning · diamond critical · circle info), where vCenter puts an object's alarm and where Clarity puts its badge; lifecycle takes the BOTTOM one (▶ running · ⏸ paused · ■ off), beside the mode tile that shares it — an object kind has one or the other, a host has a mode and a machine has a power state, and when both are set the mode wins because &ldquo;out of service&rdquo; is the louder fact. The marks are 58–76% of the glyph and never below 11px, ringed in 2px of the surface: an 8px disc carrying a 6px tick is a smudge at arm's length on a 1920×1080 screen, so the silhouette carries the state and nothing is written inside it. status tones the glyph itself, so an alarmed object reads as alarmed before any corner is looked at. badge=&quot;maintenance&quot; still works and draws the tile; it is deprecated since 5.29.0."
       code='<strct-icon name="host" mode="maintenance" badge="warning" />'
     >
       <div class="ig-states">
@@ -116,6 +118,33 @@ interface StateExample {
           <div class="ig-state">
             <strct-icon [name]="s.object" [size]="28" [badge]="s.badge" [mode]="s.mode ?? 'none'" />
             <span class="ig-state__label">{{ s.label }}</span>
+          </div>
+        }
+      </div>
+    </app-demo>
+
+    <app-demo
+      anchor="icon-status"
+      heading="The glyph's own tone"
+      description="status colours the glyph itself rather than decorating a corner of it &mdash; an object whose alarm is critical IS red in an inventory an operator knows. It takes neutral (the default, which keeps whatever colour it inherits), info, success, warning and critical, and writes --strct-icon-color, so a call site can set any tone on the same property. Colour is never the whole sentence: pair it with a shape that says the same thing &mdash; the badge silhouettes, or the tree's row-end mark. badge=&quot;inherit&quot; is the other half of that pairing: the dot takes the glyph's own colour instead of introducing a second tone. size also takes the t-shirt names (xs 12 &middot; sm 14 &middot; md 16 &middot; lg 18 &middot; xl 24) beside a number."
+      code='&lt;strct-icon name="host" status="critical" badge="inherit" size="lg" /&gt;'
+    >
+      <div class="ig-states" data-icon-status>
+        @for (t of statusTones; track t.status) {
+          <div class="ig-state">
+            <strct-icon
+              [name]="'host'"
+              [size]="28"
+              [status]="t.status"
+              [badge]="t.status === 'neutral' ? 'none' : 'inherit'"
+            />
+            <span class="ig-state__label">{{ t.label }}</span>
+          </div>
+        }
+        @for (n of sizeNames; track n) {
+          <div class="ig-state">
+            <strct-icon name="vm" [size]="n" />
+            <span class="ig-state__label">size="{{ n }}"</span>
           </div>
         }
       </div>
@@ -472,6 +501,15 @@ export class IconsPage {
   protected readonly activeStateLabel = computed(
     () => this.stateOptions.find((s) => s.badge === this.activeState())?.label ?? '',
   );
+
+  protected readonly statusTones: { status: StrctIconStatus; label: string }[] = [
+    { status: 'neutral', label: 'neutral' },
+    { status: 'info', label: 'info' },
+    { status: 'success', label: 'success' },
+    { status: 'warning', label: 'warning' },
+    { status: 'critical', label: 'critical' },
+  ];
+  protected readonly sizeNames: StrctIconSizeName[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 
   protected readonly stateOptions: { badge: StrctIconBadge; label: string }[] = [
     { badge: 'running', label: 'Running' },

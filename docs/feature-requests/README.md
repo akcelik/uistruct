@@ -11,6 +11,16 @@ stays here until it goes quiet.
 
 ### Closed on 2026-11-16, and moved to [`archive/`](archive/)
 
+- [**`archive/tree-state-axes.md`**](archive/tree-state-axes.md) — the internal inventory-state
+  review (not a consumer FR). `strct-tree` had **one** badge slot, so the signals took turns: an
+  alarmed VM lost its power state and an unreachable host was drawn with the power-off mark, while
+  the maintenance tile measured **12.43:1** against a **4.42:1** critical alarm. Shipped in
+  **v7.18.0** as four axes drawn on the glyph itself, the way the vCenter tree does it — `reach` on
+  the row, `health` in the glyph's top corner, `power` and `mode` in its bottom one, `rollup` as a
+  count on a closed node's own glyph — with every mark at least **11px** on an **18px** glyph and
+  nothing written inside it, plus the structure Clarity's `cds-icon` has and this library lacked
+  (`status`, `lifecycle`, `badge="inherit"`, the t-shirt sizes).
+
 - [**`archive/wiring-port-detail-card.md`**](archive/wiring-port-detail-card.md) — FR-81-01, a
   `strct-wiring` port said its name and one reading, and the card behind it — the adapter's model,
   MAC, driver and the switch port heard on it — was a click and a page away, with the click already

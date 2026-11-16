@@ -124,6 +124,13 @@ jobs:
       # own AX tree, the value's contrast composited over a translucent
       # active line in all six palettes, and where a hint too wide for the
       # label column ends up.
+      # The tree's state axes: an object that is off, alarmed and out of reach
+      # says all three; a reachable, running, quiet one says nothing at all; a
+      # mode an operator chose no longer outweighs a fault the system
+      # reported; and warning is told from critical with the hue taken away.
+      # 13 checks, six palettes.
+      - name: Assert a tree node can be in four states at once
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/tree-state.mjs
       # FR-81-01: the card behind a port opens on a rest of the pointer and on
       # focus, the pointer can travel into it, Escape dismisses it, it stays
       # while hovered, it lands inside the viewport and off the cable it

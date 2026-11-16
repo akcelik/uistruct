@@ -5,6 +5,80 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.18.0] - 2026-11-16
+
+An inventory-state review of `strct-tree`
+([`docs/feature-requests/archive/tree-state-axes.md`](docs/feature-requests/archive/tree-state-axes.md)),
+read from four seats — the creative direction, a vSphere engineer, a system
+administrator and an operations administrator — measured before anything was
+drawn, and drawn against two references an operator already knows: VMware
+Clarity's icon structure and the vCenter inventory tree.
+
+### Added
+
+- **Four state axes on a tree node: `reach`, `power`, `health`, `rollup`.**
+  The tree had one badge slot, so the signals took turns. HyperStruct's own
+  mapping says it out loud — _"the signals take turns (health outranks
+  lifecycle)"_ — which meant an alarmed VM lost its power state, and a host
+  nobody could reach was drawn with the **power-off** mark: "switched off" and
+  "not answering" were the same picture. Everything that did not fit went into
+  the label text (`esx01 (Maintenance Mode)`), the one string the type-ahead
+  matches.
+
+  Each axis now has its own place, and all of them are **on the glyph**, the
+  way an inventory tree draws them:
+
+  | axis     | question                | where it is drawn                                                                                     |
+  | -------- | ----------------------- | ----------------------------------------------------------------------------------------------------- |
+  | `reach`  | can it be reached?      | the **row**: label to `--t3`, the glyph dimmed to **0.5** and cut — the marks on it keep their weight |
+  | `health` | what do its alarms say? | the glyph's **top** corner (vCenter's alarm corner, Clarity's badge corner), and the glyph's own tone |
+  | `power`  | is it on?               | the glyph's **bottom** corner — `on` draws nothing                                                    |
+  | `mode`   | what was it put in?     | the same bottom corner: a host has a mode, a machine has a power state                                |
+  | `rollup` | what is wrong under it? | a toned count on its own glyph, while it is closed                                                    |
+
+  ```ts
+  { label: 'vm-07', icon: 'vm', reach: 'unreachable', power: 'off', health: 'critical' }
+  ```
+
+  Measured in Chrome by `scripts/tree-state.mjs` (13 checks, six palettes): a
+  VM that is off, alarmed and on a host nobody can reach draws **all three**;
+  a reachable, running, quiet object draws **nothing at all**; the receded
+  rows measure **5.13:1** against **17.49:1** for a row that is answering; no
+  mark is smaller than **11px** on an **18px** glyph (they were 8–11px on a
+  16px one), and none of them stands off the glyph; warning and critical are
+  told apart with the hue taken away — the triangle's ink sits at **61.0%** of
+  its box and the diamond's at **52.3%**; the row is still **27.5px**, so an
+  inventory shows the same number of objects; and `aria-description` reads
+  "Not reachable, Off, Critical" while the label stays the label.
+
+- **`strct-icon`: `status`, `lifecycle`, `badge="inherit"` and named sizes**
+  — the structure VMware Clarity's `cds-icon` has and this library did not.
+  `status` (`neutral | info | success | warning | critical`) colours the glyph
+  itself rather than decorating a corner of it, through `--strct-icon-color`
+  (Clarity's `--color`); `badge="inherit"` takes the glyph's own colour
+  (Clarity's `inherit`); `lifecycle` is a second corner mark, so an alarmed
+  machine no longer has to choose between saying it is alarmed and saying it
+  is off; and `size` takes the t-shirt names beside a number (`xs` 12 · `sm`
+  14 · `md` 16 · `lg` 18 · `xl` 24).
+
+### Changed
+
+- **The state marks are bigger, and the silhouette carries them.** A tick, a
+  "!" or a "×" inside an 8px disc is three strokes in six pixels — unreadable
+  at arm's length on a 1920×1080 screen. The health badges are now **58–76%**
+  of the glyph (never below **11px**), ringed in **2px** of the surface, and
+  nothing is written inside them: a circle, a triangle and a diamond, which is
+  the alarm language a vSphere operator already reads.
+
+- **The maintenance tile is drawn in the muted ink, not near-black**, and has
+  moved to the glyph's bottom corner beside the power mark. It measured
+  **12.43:1** against the page beside a critical alarm at **4.42:1** — a mode
+  an operator _chose_ outweighed a fault the system _reported_ by nearly three
+  to one. The alarm now carries **93%** of the tile's ink-weight.
+
+- **The tree's glyph is 18px compact / 22px comfortable** (was 16/18), inside
+  the same 27.5px row.
+
 ## [7.17.0] - 2026-11-16
 
 [FR-81-01](docs/feature-requests/archive/wiring-port-detail-card.md), from

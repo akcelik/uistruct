@@ -81,7 +81,7 @@ describe('StrctTree — density', () => {
     density: 'compact' | 'comfortable' = 'compact';
   }
 
-  it('defaults to compact — no modifier class, 16px icons', () => {
+  it('defaults to compact — no modifier class, 18px icons', () => {
     const fixture = TestBed.createComponent(DensityHost);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
@@ -90,10 +90,10 @@ describe('StrctTree — density', () => {
     // its svg, so a control can answer for an icon that states none.
     expect(
       (el.querySelector('.strct-tnode__icon') as HTMLElement).style.getPropertyValue('--icon-size'),
-    ).toBe('16px');
+    ).toBe('18px');
   });
 
-  it('comfortable adds the modifier class and scales icons to 18px', () => {
+  it('comfortable adds the modifier class and scales icons to 22px', () => {
     const fixture = TestBed.createComponent(DensityHost);
     fixture.componentInstance.density = 'comfortable';
     fixture.detectChanges();
@@ -101,7 +101,7 @@ describe('StrctTree — density', () => {
     expect(el.querySelector('.strct-tree')!.classList).toContain('strct-tree--comfortable');
     expect(
       (el.querySelector('.strct-tnode__icon') as HTMLElement).style.getPropertyValue('--icon-size'),
-    ).toBe('18px');
+    ).toBe('22px');
   });
 });
 
@@ -825,5 +825,136 @@ describe('StrctTree — a node says its state in words', () => {
       stateWords: { maintenance: 'Bakımda', critical: 'Kritik' },
     });
     expect(row('a').getAttribute('aria-description')).toBe('Bakımda, Kritik');
+  });
+});
+
+// The state axes. A port of the inventory review: whether an object can be
+// reached, what it was put in, whether it is on and what its alarms say are
+// four separate questions, and the single badge slot made them take turns —
+// an alarmed VM lost its power state, and "switched off" and "not answering"
+// were the same mark. The pixels are measured in Chrome by
+// scripts/tree-state.mjs; this holds the contract.
+describe('StrctTree — the four state axes', () => {
+  const build = (nodes: StrctTreeNodeData[]) => {
+    const fixture = TestBed.createComponent(StrctTree);
+    fixture.componentRef.setInput('nodes', nodes);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  };
+  const row = (host: HTMLElement, i = 0) =>
+    [...host.querySelectorAll('.strct-tnode__row')][i] as HTMLElement;
+
+  it('a nominal node draws nothing: no badge, no tile, no mark', () => {
+    const host = build([
+      { id: 'a', label: 'hv-01', icon: 'host', reach: 'ok', power: 'on', health: 'ok' },
+    ]);
+    expect(host.querySelector('.strct-icon__badge')).toBeNull();
+    expect(host.querySelector('.strct-icon__mode')).toBeNull();
+    expect(host.querySelector('.strct-icon__count')).toBeNull();
+    expect(row(host).classList).not.toContain('strct-tnode__row--unreachable');
+    expect(row(host).getAttribute('aria-description')).toBeNull();
+  });
+
+  it('a machine that is off, alarmed and out of reach says all three', () => {
+    const host = build([
+      {
+        id: 'vm',
+        label: 'vm-07',
+        icon: 'vm',
+        reach: 'unreachable',
+        power: 'off',
+        health: 'critical',
+      },
+    ]);
+    // reach → the row; health → the glyph's top corner; power → its bottom one.
+    expect(row(host).classList).toContain('strct-tnode__row--unreachable');
+    expect(host.querySelector('.strct-icon__badge--critical')).toBeTruthy();
+    expect(host.querySelector('.strct-icon__badge--off')).toBeTruthy();
+    expect(host.querySelectorAll('.strct-icon__badge').length).toBe(2);
+    expect(row(host).getAttribute('aria-description')).toBe('Not reachable, Off, Critical');
+    // The name is still the name: the type-ahead is not asked to match a state.
+    expect(host.querySelector('.strct-tnode__label')!.textContent!.trim()).toBe('vm-07');
+  });
+
+  it('a host in maintenance with an alarm wears both corners', () => {
+    const host = build([
+      { id: 'h', label: 'HV-NODE-02', icon: 'host', mode: 'maintenance', health: 'warning' },
+    ]);
+    expect(host.querySelector('.strct-icon__badge--warning')).toBeTruthy();
+    expect(host.querySelector('.strct-icon__mode--maintenance')).toBeTruthy();
+    expect(row(host).getAttribute('aria-description')).toBe('In maintenance, Warning');
+  });
+
+  it('a mode takes the bottom corner from a power state, and says both', () => {
+    const host = build([
+      { id: 'h', label: 'Volume1', icon: 'storage', mode: 'maintenance', power: 'off' },
+    ]);
+    expect(host.querySelector('.strct-icon__mode--maintenance')).toBeTruthy();
+    expect(host.querySelector('.strct-icon__badge--off')).toBeNull();
+    expect(row(host).getAttribute('aria-description')).toBe('In maintenance, Off');
+  });
+
+  it('power maps onto the icon, and an explicit badge still wins', () => {
+    const host = build([
+      { id: 'a', label: 'on', icon: 'vm', power: 'on' },
+      { id: 'b', label: 'off', icon: 'vm', power: 'off' },
+      { id: 'c', label: 'susp', icon: 'vm', power: 'suspended' },
+      { id: 'd', label: 'legacy', icon: 'vm', badge: 'running', power: 'off' },
+    ]);
+    const badges = [...host.querySelectorAll('.strct-icon__badge')].map(
+      (el) => el.className.split('--')[1],
+    );
+    // on → nothing; off → the stop mark; suspended → the pause bars; and a
+    // tree still written against `badge` keeps its own drawing, with no
+    // second mark beside it.
+    expect(badges).toEqual(['off', 'paused', 'running']);
+  });
+
+  it('orphaned recedes like unreachable, and says its own word', () => {
+    const host = build([{ id: 'a', label: 'vm-99', icon: 'vm', reach: 'orphaned' }]);
+    expect(row(host).classList).toContain('strct-tnode__row--unreachable');
+    expect(row(host).classList).toContain('strct-tnode__row--orphaned');
+    expect(row(host).getAttribute('aria-description')).toBe('Orphaned');
+  });
+
+  it('a collapsed node carries what is wrong under it, and gives it back on expand', () => {
+    const nodes: StrctTreeNodeData[] = [
+      {
+        id: 'cl',
+        label: 'cluster-01',
+        icon: 'cluster',
+        expanded: false,
+        rollup: { critical: 1, warning: 1 },
+        children: [
+          { id: 'h1', label: 'hv-01', icon: 'host', health: 'critical' },
+          { id: 'h2', label: 'hv-02', icon: 'host', health: 'warning' },
+        ],
+      },
+    ];
+    const host = build(nodes);
+    const mark = host.querySelector('.strct-icon__count')!;
+    expect(mark.classList).toContain('strct-icon__count--critical');
+    expect(mark.textContent!.trim()).toBe('2');
+    expect(row(host).getAttribute('aria-description')).toBe('2 critical');
+
+    // Opened, the children say it themselves — the parent stops repeating them.
+    const fixture = TestBed.createComponent(StrctTree);
+    fixture.componentRef.setInput('nodes', [{ ...nodes[0], expanded: true }]);
+    fixture.detectChanges();
+    const opened = fixture.nativeElement as HTMLElement;
+    expect(opened.querySelectorAll('.strct-icon__count').length).toBe(0);
+    expect(opened.querySelectorAll('.strct-icon__badge').length).toBe(2);
+    expect(
+      (opened.querySelector('.strct-tnode__row') as HTMLElement).getAttribute('aria-description'),
+    ).toBeNull();
+  });
+
+  it('a tree written against the old single slot still reads as it did', () => {
+    const host = build([
+      { id: 'a', label: 'hv-02', icon: 'host', badge: 'warning', mode: 'maintenance' },
+    ]);
+    expect(host.querySelector('.strct-icon__badge--warning')).toBeTruthy();
+    expect(host.querySelector('.strct-icon__mode--maintenance')).toBeTruthy();
+    expect(row(host).getAttribute('aria-description')).toBe('In maintenance, Warning');
   });
 });
