@@ -15,7 +15,6 @@ import {
   signal,
 } from '@angular/core';
 import { StrctIcon, StrctIconBadge, StrctIconMode, StrctIconStatus } from '../icon/icon';
-import { StrctStatus } from '../status';
 import { StrctBadge, StrctBadgeStatus } from '../badge/badge';
 import { StrctSpinner } from '../spinner/spinner';
 import { StrctContextMenuTrigger, StrctMenuItem } from '../context-menu/menu';
@@ -233,20 +232,33 @@ let treeNodeCounter = 0;
         <strct-icon
           class="strct-tnode__icon"
           [class.strct-tnode__icon--moded]="displayMode() !== 'none'"
-          [class.strct-tnode__icon--marked]="
-            iconBadge() !== 'none' || iconLifecycle() !== 'none' || !!rollupCount()
-          "
+          [class.strct-tnode__icon--marked]="iconBadge() !== 'none' || iconLifecycle() !== 'none'"
           [status]="iconStatus()"
           [name]="displayIcon()!"
           [size]="iconSize()"
           [badge]="iconBadge()"
           [lifecycle]="iconLifecycle()"
           [mode]="displayMode()"
-          [count]="rollupCount()"
-          [countStatus]="rollupTone()"
         />
       }
       <span class="strct-tnode__label">{{ displayLabel() }}</span>
+      <!-- What is wrong UNDER a closed node is not the node's own state, so
+           it does not take one of the glyph's corners: at 18px a third mark
+           would overlap the alarm in the opposite one. It sits against the
+           name instead, in the same shape and tone language, so the glyph
+           keeps saying what the object itself is (FR-82-01). -->
+      @if (stateMark(); as mark) {
+        <span class="strct-tnode__rollup strct-tnode__rollup--{{ mark.tone }}" aria-hidden="true">
+          <svg viewBox="0 0 10 10" aria-hidden="true">
+            @if (mark.shape === 'critical') {
+              <path d="M5 0.6L9.4 5L5 9.4L0.6 5Z" />
+            } @else {
+              <path d="M5 0.8L9.5 9.1H0.5Z" />
+            }
+          </svg>
+          {{ mark.count }}
+        </span>
+      }
       @if (node()?.tag; as tag) {
         <strct-badge class="strct-tnode__tag" [status]="tag.status ?? 'neutral'">{{
           tag.label
@@ -379,7 +391,7 @@ let treeNodeCounter = 0;
         margin-inline-end: 5px;
       }
       .strct-tnode__label {
-        flex: 1;
+        flex: 0 1 auto;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -416,9 +428,35 @@ let treeNodeCounter = 0;
       .strct-tnode__row--orphaned .strct-tnode__icon::after {
         background: repeating-linear-gradient(90deg, var(--t2) 0 2px, transparent 2px 4px);
       }
+      /* The rollup: a count against the name, in the alarm's own silhouette
+         and tone. It is not a trailing mark — it belongs to the node it is
+         beside, and a reader should never have to cross the row to find it. */
+      .strct-tnode__rollup {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        flex-shrink: 0;
+        margin-inline-start: var(--space-2);
+        font-size: var(--text-xs);
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+      }
+      .strct-tnode__rollup > svg {
+        width: 11px;
+        height: 11px;
+        fill: currentColor;
+        flex: none;
+      }
+      .strct-tnode__rollup--warning {
+        color: var(--warning);
+      }
+      .strct-tnode__rollup--critical {
+        color: var(--critical);
+      }
       /* Trailing marks: they follow the label, never push it out of the row. */
       .strct-tnode__tag,
-      .strct-tnode__meta {
+      .strct-tnode__meta,
+      .strct-tnode__rollup {
         flex-shrink: 0;
       }
       .strct-tnode__meta {
@@ -618,13 +656,6 @@ export class StrctTreeNode {
         return 'none';
     }
   });
-
-  /** A closed node wears what is under it as a number on its own glyph. */
-  protected readonly rollupCount = computed<number | null>(() => {
-    const mark = this.stateMark();
-    return mark?.count ?? null;
-  });
-  protected readonly rollupTone = computed<StrctStatus>(() => this.stateMark()?.tone ?? 'critical');
 
   /**
    * The glyph's own tone. An object whose alarm is critical IS red in an

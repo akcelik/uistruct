@@ -183,7 +183,7 @@ const ROWS = `(() => {
       const life = badges.find((el) => /--(running|paused|off)/.test(el.className));
       const badge = health ?? life ?? null;
       const mode = row.querySelector('.strct-icon__mode');
-      const mark = row.querySelector('.strct-icon__count');
+      const mark = row.querySelector('.strct-tnode__rollup');
       const page = (() => {
         for (let p = row; p; p = p.parentElement) {
           const bg = getComputedStyle(p).backgroundColor;
@@ -217,11 +217,12 @@ const ROWS = `(() => {
         mark: mark
           ? {
               tone: mark.className.includes('critical') ? 'critical' : 'warning',
-              ink: getComputedStyle(mark).backgroundColor,
+              ink: getComputedStyle(mark).color,
               count: mark.textContent.trim(),
               box: box(mark),
             }
           : null,
+        labelBox: box(label),
         icon: box(icon),
         modeBoxOuter: box(mode),
         marks: [health, life, mode, mark].filter(Boolean).length,
@@ -320,8 +321,8 @@ try {
   const by = (label) => rows.find((r) => r.label === label);
   check(
     'the case is on the page',
-    rows.length >= 10 && t.closed.length === 3 && !!by('vm-07') && !!by('HV-NODE-02'),
-    `${rows.length} rows open and ${t.closed.length} closed clusters beside them`,
+    rows.length >= 10 && t.closed.length === 5 && !!by('vm-07') && !!by('HV-NODE-02'),
+    `${rows.length} rows open and ${t.closed.length} closed nodes beside them`,
   );
 
   // ── Nothing for the normal case ────────────────────────────────────────
@@ -413,6 +414,44 @@ try {
       closed[2].mark === null,
     `"${closed[0].label}" ${closed[0].mark?.tone} ${closed[0].mark?.count}, "${closed[1].label}" ${closed[1].mark?.tone} ${closed[1].mark?.count}, "${closed[2].label}" nothing`,
   );
+  // FR-82-01: a host is a container too, and a closed host is the normal case.
+  const hv7 = closed.find((r) => r.label === 'HV-NODE-07');
+  const hv8 = closed.find((r) => r.label === 'HV-NODE-08');
+  check(
+    'a closed node keeps its own marks and still says what is under it',
+    hv7?.mode === 'maintenance' &&
+      hv7.mark?.tone === 'critical' &&
+      hv7.mark.count === '2' &&
+      hv8?.health?.tone === 'warning' &&
+      hv8.mark?.tone === 'warning' &&
+      hv8.mark.count === '1',
+    `"HV-NODE-07" keeps its barrier tile and carries ${hv7?.mark?.count} critical under it; "HV-NODE-08" keeps its own ${hv8?.health?.tone} badge and carries ${hv8?.mark?.count} — the count used to take the glyph and erase both`,
+  );
+  const gaps = closed
+    .filter((r) => r.mark)
+    .map((r) => ({
+      label: r.label,
+      toName: r.mark.box.left - r.labelBox.right,
+      toEdge: r.box.right - r.mark.box.right,
+    }));
+  check(
+    'the rollup stays with the name, and never crosses the row to find it',
+    gaps.length >= 4 && gaps.every((g) => g.toName <= 16 && g.toEdge > 40),
+    `${gaps.length} closed nodes: the count sits ${Math.min(...gaps.map((g) => g.toName)).toFixed(1)}–${Math.max(...gaps.map((g) => g.toName)).toFixed(1)}px after the name and ${Math.min(...gaps.map((g) => g.toEdge)).toFixed(0)}px short of the row's end`,
+  );
+  // And why it is not a third corner of the glyph: mirror the alarm into the
+  // opposite top corner, with the overhang it actually uses, and see where it
+  // lands. Measured, not assumed.
+  const own = hv8.health.box.w;
+  const overhang = hv8.health.box.right - hv8.icon.right;
+  const mirrorRight = hv8.icon.left - overhang + own;
+  const overlap = mirrorRight - hv8.health.box.left;
+  check(
+    'a third corner was measured, not assumed — and it does not fit',
+    overlap > 0,
+    `a ${own.toFixed(1)}px alarm overhanging an ${hv8.icon.w}px glyph by ${overhang.toFixed(1)}px leaves its opposite top corner ${(own - overlap).toFixed(1)}px of room: the same mark there would overlap it by ${overlap.toFixed(1)}px, so the rollup goes beside the name instead`,
+  );
+
   check(
     'an open node stops repeating its children',
     by('cluster-01').mark === null,

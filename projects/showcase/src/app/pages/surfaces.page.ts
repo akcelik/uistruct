@@ -529,7 +529,7 @@ import { DemoBlock, PageHeader } from '../ui/demo';
           </div>
         </div>
         <div class="ts-demo__col">
-          <span class="ts-demo__cap">closed — what is wrong under it comes up</span>
+          <span class="ts-demo__cap">closed — its own state, and what is under it</span>
           <div class="ts-demo__pane">
             <strct-tree style="width: 100%; max-width: 340px" [nodes]="rollupTree" />
           </div>
@@ -1642,6 +1642,29 @@ export class SurfacesPage {
       expanded: false,
       hasChildren: true,
       children: [{ id: 'r-hv3', label: 'HV-NODE-21', icon: 'host' }],
+    },
+    // FR-82-01: a host is a container too, and a closed one is the normal
+    // case — it keeps its own mode and its own alarm, and still says what is
+    // wrong under it.
+    {
+      id: 'r-hv7',
+      label: 'HV-NODE-07',
+      icon: 'host',
+      expanded: false,
+      hasChildren: true,
+      mode: 'maintenance',
+      rollup: { critical: 2 },
+      children: [{ id: 'r-vm7', label: 'vm-21', icon: 'vm', health: 'critical' }],
+    },
+    {
+      id: 'r-hv8',
+      label: 'HV-NODE-08',
+      icon: 'host',
+      expanded: false,
+      hasChildren: true,
+      health: 'warning',
+      rollup: { warning: 1 },
+      children: [{ id: 'r-vm8', label: 'vm-31', icon: 'vm', health: 'warning' }],
     },
   ];
 

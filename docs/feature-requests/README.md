@@ -11,6 +11,13 @@ stays here until it goes quiet.
 
 ### Closed on 2026-11-16, and moved to [`archive/`](archive/)
 
+- [**`archive/tree-rollup-beside-own-state.md`**](archive/tree-rollup-beside-own-state.md) —
+  FR-82-01, filed against 7.18.0 while adopting the state axes: `strct-icon` draws a `count`
+  _instead of_ the badge and the mode tile, so a closed host drained for patching lost its barrier
+  tile as soon as it carried a rollup. Shipped in **v7.19.0** — the rollup sits **beside the name**
+  (**14.0px** after it, **117px** short of the row's end) and the glyph keeps the object's own
+  state. A third corner was measured and rejected: at 18px the mirrored mark **overlaps by 2.0px**.
+
 - [**`archive/tree-state-axes.md`**](archive/tree-state-axes.md) — the internal inventory-state
   review (not a consumer FR). `strct-tree` had **one** badge slot, so the signals took turns: an
   alarmed VM lost its power state and an unreachable host was drawn with the power-off mark, while

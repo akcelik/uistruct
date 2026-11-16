@@ -850,7 +850,7 @@ describe('StrctTree — the four state axes', () => {
     ]);
     expect(host.querySelector('.strct-icon__badge')).toBeNull();
     expect(host.querySelector('.strct-icon__mode')).toBeNull();
-    expect(host.querySelector('.strct-icon__count')).toBeNull();
+    expect(host.querySelector('.strct-tnode__rollup')).toBeNull();
     expect(row(host).classList).not.toContain('strct-tnode__row--unreachable');
     expect(row(host).getAttribute('aria-description')).toBeNull();
   });
@@ -932,8 +932,8 @@ describe('StrctTree — the four state axes', () => {
       },
     ];
     const host = build(nodes);
-    const mark = host.querySelector('.strct-icon__count')!;
-    expect(mark.classList).toContain('strct-icon__count--critical');
+    const mark = host.querySelector('.strct-tnode__rollup')!;
+    expect(mark.classList).toContain('strct-tnode__rollup--critical');
     expect(mark.textContent!.trim()).toBe('2');
     expect(row(host).getAttribute('aria-description')).toBe('2 critical');
 
@@ -942,7 +942,7 @@ describe('StrctTree — the four state axes', () => {
     fixture.componentRef.setInput('nodes', [{ ...nodes[0], expanded: true }]);
     fixture.detectChanges();
     const opened = fixture.nativeElement as HTMLElement;
-    expect(opened.querySelectorAll('.strct-icon__count').length).toBe(0);
+    expect(opened.querySelectorAll('.strct-tnode__rollup').length).toBe(0);
     expect(opened.querySelectorAll('.strct-icon__badge').length).toBe(2);
     expect(
       (opened.querySelector('.strct-tnode__row') as HTMLElement).getAttribute('aria-description'),
@@ -956,5 +956,60 @@ describe('StrctTree — the four state axes', () => {
     expect(host.querySelector('.strct-icon__badge--warning')).toBeTruthy();
     expect(host.querySelector('.strct-icon__mode--maintenance')).toBeTruthy();
     expect(row(host).getAttribute('aria-description')).toBe('In maintenance, Warning');
+  });
+});
+
+// FR-82-01 — a closed node is a container AND an object: a host drained for
+// patching with alarms under it has to say both.
+describe('StrctTree — a closed node keeps its own state', () => {
+  const build = (nodes: StrctTreeNodeData[]) => {
+    const fixture = TestBed.createComponent(StrctTree);
+    fixture.componentRef.setInput('nodes', nodes);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  };
+
+  it('keeps the mode tile and the rollup at the same time', () => {
+    const host = build([
+      {
+        id: 'h',
+        label: 'HV-NODE-07',
+        icon: 'host',
+        expanded: false,
+        hasChildren: true,
+        mode: 'maintenance',
+        rollup: { critical: 2 },
+        children: [{ id: 'vm', label: 'vm-21', icon: 'vm', health: 'critical' }],
+      },
+    ]);
+    // The glyph keeps saying what the host itself is…
+    expect(host.querySelector('.strct-icon__mode--maintenance')).toBeTruthy();
+    // …and the count beside the name says what is under it.
+    const rollup = host.querySelector('.strct-tnode__rollup')!;
+    expect(rollup.classList).toContain('strct-tnode__rollup--critical');
+    expect(rollup.textContent!.trim()).toBe('2');
+    expect(
+      (host.querySelector('.strct-tnode__row') as HTMLElement).getAttribute('aria-description'),
+    ).toBe('In maintenance, 2 critical');
+  });
+
+  it('keeps its own alarm badge beside a rollup of another tone', () => {
+    const host = build([
+      {
+        id: 'h',
+        label: 'HV-NODE-08',
+        icon: 'host',
+        expanded: false,
+        hasChildren: true,
+        health: 'warning',
+        rollup: { critical: 1 },
+        children: [{ id: 'vm', label: 'vm-31', icon: 'vm', health: 'critical' }],
+      },
+    ]);
+    expect(host.querySelector('.strct-icon__badge--warning')).toBeTruthy();
+    expect(host.querySelector('.strct-tnode__rollup--critical')).toBeTruthy();
+    expect(
+      (host.querySelector('.strct-tnode__row') as HTMLElement).getAttribute('aria-description'),
+    ).toBe('Warning, 1 critical');
   });
 });

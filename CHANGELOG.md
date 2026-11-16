@@ -5,6 +5,41 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.19.0] - 2026-11-16
+
+[FR-82-01](docs/feature-requests/archive/tree-rollup-beside-own-state.md),
+filed by HyperStruct while adopting 7.18.0's state axes.
+
+### Fixed
+
+- **A closed node keeps its own marks and still says what is under it.** In a
+  Hosts & Clusters tree a host is a container too, and a closed host is the
+  normal case — the one whose own state matters most. `strct-icon` draws a
+  `count` _instead of_ the badge, the lifecycle mark and the mode tile, so as
+  soon as a host carried a `rollup` it lost its maintenance tile and its own
+  alarm: on a patch night the eye lost "this host is out of service", which is
+  the one mark it scans for.
+
+  The rollup now sits **against the name**, in the alarm's own silhouette and
+  tone, and the glyph goes on saying what the object itself is.
+
+  Measured in Chrome by `scripts/tree-state.mjs` (16 checks): a closed host in
+  maintenance keeps its tile and carries **2 critical**; one with its own
+  warning keeps that badge and carries **1**; the count sits **14.0px** after
+  the name and **117px** short of the row's end, so nobody crosses the row to
+  find it.
+
+  **A third corner of the glyph was measured rather than assumed, and it does
+  not fit:** a **13.0px** alarm overhanging an **18px** glyph by 3.0px leaves
+  its opposite top corner **11.0px**, so the same mark there would **overlap
+  by 2.0px**.
+
+  One deviation from the request, stated plainly: it asked that a node with no
+  state of its own keep 7.18's drawing, which would leave a cluster's rollup
+  on the glyph and a host's beside the name. One fact drawn in two places,
+  depending on what else the row happens to carry, is worse than the churn —
+  so every rollup moved, containers included.
+
 ## [7.18.0] - 2026-11-16
 
 An inventory-state review of `strct-tree`
