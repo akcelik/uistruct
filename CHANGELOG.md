@@ -5,6 +5,59 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.17.0] - 2026-11-16
+
+[FR-81-01](docs/feature-requests/archive/wiring-port-detail-card.md), from
+HyperStruct's host network map, whose operator asked whether the map could
+show a port's adapter card when the pointer is over it.
+
+### Added
+
+- **`StrctWiringPort.detail` and `StrctWiringNode.detail` — the card behind a
+  port.** A port says its name and one reading ("SLOT 3 Port 1 · 25 GbE ·
+  up"); what an operator asks next is the adapter's model, its MAC, its
+  driver, the switch port heard on it. That was a click and a page away, and
+  the click is already taken — `portActivate` opens the port's own page — so
+  the card is hover and focus.
+
+  ```ts
+  { id: 'slot3p1', label: 'SLOT 3 Port 1', meta: '25 GbE · up',
+    detail: {
+      title: 'SLOT 3 Port 1 · ConnectX-4 Lx',
+      rows: [
+        { label: 'MAC', value: '0c:42:a1:3b:77:04', mono: true },
+        { label: 'Heard', value: 'tor-a Eth1/11, 2 min ago' },
+      ],
+      note: 'Click to open it in Physical adapters.',
+    } }
+  ```
+
+  It answers WCAG 2.1 1.4.13 on all three counts, measured in Chrome with
+  real pointer and key events: **hoverable** — the card is still open 600ms
+  after the pointer leaves the port for it; **dismissible** — Escape closes it
+  from a keyboard that never touched it; **persistent** — it survives a
+  further 2s of hovering, and the pointer leaving a port the keyboard is still
+  on does not take it away. It waits **300ms** for the pointer to rest
+  (nothing at 150ms, drawn at 450ms) and opens at once on focus, where the
+  map's own arrow keys bring it along.
+
+  It is placed on the side the port's cables do not leave by when there is one
+  — **0 of 41** sampled points of a host adapter's or a switch port's cable
+  fall under it — and inside the viewport either way.
+
+  Every row is also always-present text: the port's `aria-describedby` points
+  at it, so Chrome describes the port as "Model: …, MAC: 0c:42:a1:3b:77:04,
+  Driver: mlx5_core 23.10.1020, …" without anything being hovered, and the
+  stacked layout under 560px — where there is no hover at all — writes the
+  same rows under the port.
+
+  A map that sets no `detail` renders exactly as it did: no card, no
+  description, no change to `portActivate`, `linkActivate`, `selected` or
+  `isolate`.
+
+- **`scripts/wiring-detail.mjs`** in CI — 16 checks, including the card's own
+  text at **12.01:1** at its weakest over six palettes.
+
 ## [7.16.0] - 2026-11-14
 
 The rest of the FR-80 arrival from HyperStruct: the update run card

@@ -9,6 +9,17 @@ stays here until it goes quiet.
 
 **Nothing.** Everything filed so far has shipped.
 
+### Closed on 2026-11-16, and moved to [`archive/`](archive/)
+
+- [**`archive/wiring-port-detail-card.md`**](archive/wiring-port-detail-card.md) — FR-81-01, a
+  `strct-wiring` port said its name and one reading, and the card behind it — the adapter's model,
+  MAC, driver and the switch port heard on it — was a click and a page away, with the click already
+  taken. Shipped in **v7.17.0** as `StrctWiringPort.detail` / `StrctWiringNode.detail`: a card after
+  a **300ms** rest of the pointer and at once on focus, **hoverable** (open 600ms after the pointer
+  left the port for it), **dismissible** by Escape and **persistent** (WCAG 1.4.13), placed off the
+  cable it describes (**0 of 41** sampled points under it) and inside the viewport, with every row
+  also the port's `aria-describedby` text — **213 characters** Chrome reads without a pointer.
+
 ### Closed on 2026-11-14, and moved to [`archive/`](archive/)
 
 - [**`archive/steps-active-ring-overruns-gap.md`**](archive/steps-active-ring-overruns-gap.md) —

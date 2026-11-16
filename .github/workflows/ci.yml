@@ -124,6 +124,13 @@ jobs:
       # own AX tree, the value's contrast composited over a translucent
       # active line in all six palettes, and where a hint too wide for the
       # label column ends up.
+      # FR-81-01: the card behind a port opens on a rest of the pointer and on
+      # focus, the pointer can travel into it, Escape dismisses it, it stays
+      # while hovered, it lands inside the viewport and off the cable it
+      # describes, and every row is text the port is described by. Real
+      # pointer and key events, 16 checks.
+      - name: Assert a port can show its card without taking the click
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/wiring-detail.mjs
       # BUG-80-01 / FR-80-02: the active step's emphasis stays inside the step
       # it belongs to (the ring used to reach 4.66px past a 120px pill into a
       # 4px gap), and a run of hosts reads down a column of equal segments
