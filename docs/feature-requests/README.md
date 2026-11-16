@@ -7,11 +7,18 @@ stays here until it goes quiet.
 
 ## Open
 
-- [**`wiring-port-detail-card.md`**](wiring-port-detail-card.md) — FR-81-01, filed 2026-11-15 by
-  HyperStruct against **7.16.0**: a `strct-wiring` port (and device head) cannot show the card behind
-  it — an adapter's model, MAC, driver, speed and the switch port heard on it — without a click that
-  leaves the map. Asks for `StrctWiringPort.detail` / `StrctWiringNode.detail`, shown on hover and on
-  focus (hoverable, dismissible, persistent — WCAG 1.4.13), exposed to assistive tech, clicks unchanged.
+**Nothing.** Everything filed so far has shipped.
+
+### Closed on 2026-11-16, and moved to [`archive/`](archive/)
+
+- [**`archive/wiring-port-detail-card.md`**](archive/wiring-port-detail-card.md) — FR-81-01, a
+  `strct-wiring` port said its name and one reading, and the card behind it — the adapter's model,
+  MAC, driver and the switch port heard on it — was a click and a page away, with the click already
+  taken. Shipped in **v7.17.0** as `StrctWiringPort.detail` / `StrctWiringNode.detail`: a card after
+  a **300ms** rest of the pointer and at once on focus, **hoverable** (open 600ms after the pointer
+  left the port for it), **dismissible** by Escape and **persistent** (WCAG 1.4.13), placed off the
+  cable it describes (**0 of 41** sampled points under it) and inside the viewport, with every row
+  also the port's `aria-describedby` text — **213 characters** Chrome reads without a pointer.
 
 ### Closed on 2026-11-14, and moved to [`archive/`](archive/)
 

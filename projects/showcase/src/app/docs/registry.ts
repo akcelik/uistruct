@@ -5311,6 +5311,8 @@ export const DOCS: DocCategory[] = [
           'StrctWiringPort',
           'StrctWiringLink',
           'StrctWiringPortEvent',
+          'StrctWiringDetail',
+          'StrctWiringDetailRow',
         ],
         summary: 'Port-level link map — the cable, not the box.',
         lead: 'A port-level wiring map: columns of devices, each device\u2019s ports in order, and one curve per cable drawn **between the two ports** rather than between the two boxes. It answers the question a fabric review starts from \u2014 node port \u2192 switch port as LLDP heard them, initiator \u2192 target, patch panel A \u2192 B, vNIC \u2192 pNIC \u2014 and the second question too, which is whether the two ends agree: a link carries a tone and a label that sits on the line itself. The cable leaves the device\u2019s edge at the port\u2019s own centre line and arrives at the other port\u2019s, horizontally at both ends. Dependency-free; the geometry is measured from the rendered rows, never guessed.',
@@ -5320,7 +5322,13 @@ export const DOCS: DocCategory[] = [
             type: 'StrctWiringNode[]',
             default: '[]',
             description:
-              'The devices: `{ id; label; sublabel?; column?; icon?; ports: StrctWiringPort[] }`. A port is `{ id; label; meta?; status?; unlinked? }` \u2014 the reading beside it ("25G \u00b7 RDMA", "not heard"), the tone of its dot, and what it says when no drawn link lands on it (overriding `unlinkedText`).',
+              'The devices: `{ id; label; sublabel?; column?; icon?; ports: StrctWiringPort[] }`. A port is `{ id; label; meta?; status?; unlinked?; detail? }` \u2014 the reading beside it ("25G \u00b7 RDMA", "not heard"), the tone of its dot, and what it says when no drawn link lands on it (overriding `unlinkedText`).',
+          },
+          {
+            name: 'nodes[].detail / nodes[].ports[].detail',
+            type: 'StrctWiringDetail',
+            description:
+              'The card behind a port or a device head: `{ title?; rows: { label; value; mono? }[]; note? }`. A port says its name and one reading; what an operator asks next \u2014 the adapter\u2019s model, its MAC, its driver, the switch port heard on it \u2014 is a card, and squeezing it into `meta` makes every port two lines of noise. It opens after the pointer rests on the port for 300ms, and at once on keyboard focus; the pointer can travel into it, Escape dismisses it, and it stays while hovered or focused (WCAG 1.4.13). It is placed on the side the port\u2019s cables do not leave by when there is room there, and inside the viewport either way. Every row is also always-present text that the port\u2019s `aria-describedby` points at, so a screen reader hears it on focus \u2014 and the stacked layout, where there is no hover, writes it under the port. Clicks are untouched: `portActivate` still means what it meant.',
           },
           {
             name: 'links',

@@ -109,6 +109,16 @@ const ROUTES = [
     undefined,
     '#field-compact .fc-demo',
   ],
+  // FR-81-01: the card behind a port, opened by resting on it. `prepare`
+  // hovers the port the way the pointer would; the shot is taken after the
+  // 300ms rest the card waits for.
+  [
+    'wiring-detail',
+    '/components/wiring',
+    '#wiring-detail .wiring-demo',
+    `document.querySelector('[data-wd="map"] [data-wiring-port="slot3p1"]').dispatchEvent(new Event('pointerenter'))`,
+    '#wiring-detail .wiring-demo',
+  ],
   // FR-80-02 / BUG-80-01: one row of names over three hosts' rails, a rail
   // with its own names, and the pills whose active ring used to reach into
   // the neighbour beside it.

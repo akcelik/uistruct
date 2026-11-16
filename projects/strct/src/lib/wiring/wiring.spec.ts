@@ -326,3 +326,145 @@ describe('StrctWiring — a device keeps its name', () => {
     );
   });
 });
+
+// FR-81-01 — the card behind a port. Where it lands and what it covers is
+// measured in Chrome by scripts/wiring-detail.mjs; what a unit test holds is
+// the contract: what is in the DOM, what points at what, and when the card
+// comes and goes.
+describe('StrctWiring — the card behind a port', () => {
+  const DETAILED: StrctWiringNode[] = [
+    {
+      id: 'hv1',
+      label: 'HV-PRD-01',
+      column: 0,
+      detail: {
+        rows: [
+          { label: 'Type', value: 'SETswitch' },
+          { label: 'Teaming', value: 'Switch independent' },
+        ],
+      },
+      ports: [
+        {
+          id: 'p1',
+          label: 'SLOT 3 Port 1',
+          meta: '25 GbE · up',
+          detail: {
+            title: 'SLOT 3 Port 1 · ConnectX-4 Lx',
+            rows: [
+              { label: 'MAC', value: '0c:42:a1:3b:77:04', mono: true },
+              { label: 'Driver', value: 'mlx5_core 23.10' },
+            ],
+            note: 'Click to open it in Physical Adapters.',
+          },
+        },
+        { id: 'p2', label: 'SLOT 3 Port 2' },
+      ],
+    },
+    { id: 'tora', label: 'tor-a', column: 1, ports: [{ id: 'a11', label: 'Eth1/11' }] },
+  ];
+  const DLINKS: StrctWiringLink[] = [{ id: 'l1', from: 'p1', to: 'a11' }];
+  const card = (host: HTMLElement) => host.querySelector('.strct-wiring__card');
+
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  function open(patch: Partial<HostComponent> = {}) {
+    const s = setup({ nodes: DETAILED, links: DLINKS, navigable: true, ...patch });
+    return s;
+  }
+
+  it('is not there until a pointer rests on the port', () => {
+    const { host, fixture } = open();
+    expect(card(host)).toBeNull();
+    port(host, 'p1').dispatchEvent(new Event('pointerenter'));
+    fixture.detectChanges();
+    expect(card(host)).toBeNull(); // still inside the delay
+    vi.advanceTimersByTime(350);
+    fixture.detectChanges();
+    expect(card(host)).toBeTruthy();
+    expect(card(host)!.querySelector('.strct-wiring__cardhead')!.textContent!.trim()).toBe(
+      'SLOT 3 Port 1 · ConnectX-4 Lx',
+    );
+    const rows = [...card(host)!.querySelectorAll('.strct-wiring__cardvalue')].map((el) =>
+      el.textContent!.trim(),
+    );
+    expect(rows).toEqual(['0c:42:a1:3b:77:04', 'mlx5_core 23.10']);
+    expect(card(host)!.querySelector('.strct-wiring__cardnote')!.textContent!.trim()).toBe(
+      'Click to open it in Physical Adapters.',
+    );
+  });
+
+  it('focus opens it without the delay, and Escape dismisses it', () => {
+    const { host, fixture } = open();
+    port(host, 'p1').dispatchEvent(new FocusEvent('focus'));
+    fixture.detectChanges();
+    expect(card(host)).toBeTruthy();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect(card(host)).toBeNull();
+  });
+
+  it('the pointer can travel into the card without it closing', () => {
+    const { host, fixture } = open();
+    port(host, 'p1').dispatchEvent(new Event('pointerenter'));
+    vi.advanceTimersByTime(350);
+    fixture.detectChanges();
+    const el = card(host)!;
+    // Leaving the port starts a grace; entering the card cancels it.
+    port(host, 'p1').dispatchEvent(new Event('pointerleave'));
+    el.dispatchEvent(new Event('pointerenter'));
+    vi.advanceTimersByTime(600);
+    fixture.detectChanges();
+    expect(card(host)).toBeTruthy();
+    // Leaving the card itself does close it.
+    el.dispatchEvent(new Event('pointerleave'));
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+    expect(card(host)).toBeNull();
+  });
+
+  it('one card at a time, the device head has one too', () => {
+    const { host, fixture } = open();
+    port(host, 'p1').dispatchEvent(new Event('pointerenter'));
+    vi.advanceTimersByTime(350);
+    fixture.detectChanges();
+    host.querySelector('.strct-wiring__nodehead')!.dispatchEvent(new Event('pointerenter'));
+    vi.advanceTimersByTime(350);
+    fixture.detectChanges();
+    expect(host.querySelectorAll('.strct-wiring__card').length).toBe(1);
+    expect(card(host)!.querySelector('.strct-wiring__cardhead')!.textContent!.trim()).toBe(
+      'HV-PRD-01',
+    );
+  });
+
+  it('every detail is text a reader has without hovering anything', () => {
+    const { host } = open();
+    // The device head carries one too, so ask for the port's own.
+    const copy = host.querySelector<HTMLElement>('.strct-wiring__portrow .strct-wiring__detailsr')!;
+    expect(copy.id).toMatch(/^strct-wd-\d+-p1$/);
+    expect(copy.textContent!.trim()).toBe(
+      'MAC: 0c:42:a1:3b:77:04, Driver: mlx5_core 23.10. Click to open it in Physical Adapters.',
+    );
+    expect(port(host, 'p1').getAttribute('aria-describedby')).toBe(copy.id);
+    // A port without a detail says nothing new.
+    expect(port(host, 'p2').getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('a map that sets no detail is the map it was', () => {
+    const { host, fixture } = setup({ navigable: true });
+    expect(host.querySelectorAll('.strct-wiring__detailsr').length).toBe(0);
+    expect(port(host, 'p1').getAttribute('aria-describedby')).toBeNull();
+    port(host, 'p1').dispatchEvent(new Event('pointerenter'));
+    vi.advanceTimersByTime(600);
+    fixture.detectChanges();
+    expect(card(host)).toBeNull();
+  });
+
+  it('a click still means what it meant', () => {
+    const { host, fixture, vm } = open();
+    port(host, 'p1').click();
+    fixture.detectChanges();
+    expect(vm.lastPort?.port.id).toBe('p1');
+    expect(vm.selected()).toBe('l1');
+  });
+});

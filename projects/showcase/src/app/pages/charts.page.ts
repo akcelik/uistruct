@@ -739,6 +739,29 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="wiring-detail"
+      owner="wiring"
+      heading="What is behind a port"
+      description="FR-81-01: a port says its name and one reading &mdash; &ldquo;SLOT 3 Port 1 · 25 GbE · up&rdquo;. What an operator asks next is the card behind it: the adapter's model, its MAC, its driver, the switch port heard on it. Squeezing that into meta makes every port two lines of noise, and the click is already taken (portActivate opens the port's page). detail on a port, or on a device head, draws a card beside it &mdash; after a 300ms rest of the pointer, and at once on keyboard focus. The pointer can travel into the card without it closing, Escape dismisses it, and it stays while hovered or focused (WCAG 1.4.13). It is placed on the side the cables do not leave by when there is room there, and never outside the viewport. Every row is also always-present text the port's aria-describedby points at, so a screen reader hears it on focus and the stacked layout &mdash; where there is no hover &mdash; writes it under the port."
+      code="{ id: 'p1', label: 'SLOT 3 Port 1', meta: '25 GbE · up', detail: { rows: [{ label: 'MAC', value: '0c:42:…', mono: true }] } }"
+    >
+      <div class="wiring-demo" data-wd="map">
+        <strct-wiring
+          [nodes]="detailNodes"
+          [links]="detailLinks"
+          [columns]="['Host adapters', 'Virtual switch', 'Switch ports heard']"
+          navigable
+          [(selected)]="detailPick"
+          (portActivate)="detailPort.set($event.port.label)"
+          label="hover a port, or tab in and use the arrow keys"
+        />
+        <div class="wiring-foot">
+          <span class="echo">{{ detailPort() || 'no port opened yet' }}</span>
+        </div>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="status-matrix"
       owner="status-matrix"
       heading="Checks by node"
@@ -914,6 +937,157 @@ import { DemoBlock, PageHeader } from '../ui/demo';
 export class ChartsPage implements OnDestroy {
   // A wiring map: the fabric review's own case — four nodes, two ports each,
   // two top-of-rack switches, and the four readings that disagree.
+  // FR-81-01 — the card behind a port: HyperStruct's Host ▸ Networking ▸
+  // Overview, where a host adapter, the switch it is on and the port heard
+  // on the cable each carry what the operator asks next.
+  protected readonly detailNodes: StrctWiringNode[] = [
+    {
+      id: 'hv',
+      label: 'HV-PRD-01',
+      sublabel: 'Host adapters',
+      column: 0,
+      ports: [
+        {
+          id: 'vmgmt',
+          label: 'vEthernet (Management)',
+          meta: '10.20.4.11/24',
+          status: 'success',
+          detail: {
+            title: 'vEthernet (Management)',
+            rows: [
+              { label: 'Connection', value: 'Management' },
+              { label: 'IPv4', value: '10.20.4.11/24', mono: true },
+              { label: 'VLAN', value: '104 (access)' },
+              { label: 'MTU', value: '1500' },
+              { label: 'Gateway', value: '10.20.4.1', mono: true },
+              { label: 'DNS', value: '10.20.4.5, 10.20.4.6', mono: true },
+            ],
+            note: 'Click to open it in Host adapters.',
+          },
+        },
+        {
+          id: 'vstor',
+          label: 'vEthernet (Storage)',
+          meta: '10.20.9.11/24 · jumbo',
+          status: 'success',
+          detail: {
+            title: 'vEthernet (Storage)',
+            rows: [
+              { label: 'Connection', value: 'Storage' },
+              { label: 'IPv4', value: '10.20.9.11/24', mono: true },
+              { label: 'VLAN', value: '709 (access)' },
+              { label: 'MTU', value: '9014' },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      id: 'set',
+      label: 'SETswitch',
+      sublabel: 'Switch embedded teaming',
+      column: 1,
+      icon: 'switch',
+      detail: {
+        title: 'SETswitch',
+        rows: [
+          { label: 'Type', value: 'External, embedded teaming' },
+          { label: 'Managed by', value: 'HV-PRD-01' },
+          { label: 'Teaming', value: 'Switch independent' },
+          { label: 'Load balancing', value: 'Hyper-V port' },
+        ],
+      },
+      ports: [
+        {
+          id: 'slot3p1',
+          label: 'SLOT 3 Port 1',
+          meta: '25 GbE · up',
+          status: 'success',
+          detail: {
+            title: 'SLOT 3 Port 1 · ConnectX-4 Lx',
+            rows: [
+              { label: 'Model', value: 'Mellanox ConnectX-4 Lx 25GbE' },
+              { label: 'MAC', value: '0c:42:a1:3b:77:04', mono: true },
+              { label: 'Driver', value: 'mlx5_core 23.10.1020', mono: true },
+              { label: 'Speed', value: '25 Gbps, full duplex' },
+              { label: 'Link', value: 'Up for 41 days' },
+              { label: 'Heard', value: 'tor-a Eth1/11, 2 min ago' },
+            ],
+            note: 'Click to open it in Physical adapters.',
+          },
+        },
+        {
+          id: 'slot3p2',
+          label: 'SLOT 3 Port 2',
+          meta: '25 GbE · 6 flaps',
+          status: 'warning',
+          detail: {
+            title: 'SLOT 3 Port 2 · ConnectX-4 Lx',
+            rows: [
+              { label: 'Model', value: 'Mellanox ConnectX-4 Lx 25GbE' },
+              { label: 'MAC', value: '0c:42:a1:3b:77:05', mono: true },
+              { label: 'Driver', value: 'mlx5_core 23.10.1020', mono: true },
+              { label: 'Speed', value: '25 Gbps, full duplex' },
+              { label: 'Link', value: '6 flaps in the last hour' },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      id: 'tora',
+      label: 'tor-a',
+      sublabel: 'Nexus 93180 · LLDP',
+      column: 2,
+      icon: 'switch',
+      ports: [
+        {
+          id: 'a11',
+          label: 'Eth1/11',
+          meta: 'PFC 3',
+          status: 'success',
+          detail: {
+            title: 'tor-a Eth1/11',
+            rows: [
+              { label: 'Switch', value: 'tor-a.dc-east' },
+              { label: 'Port', value: 'Ethernet1/11', mono: true },
+              { label: 'Description', value: 'HV-PRD-01 SLOT 3 P1' },
+              { label: 'Native VLAN', value: '104' },
+              { label: 'Tagged', value: '709, 711' },
+              { label: 'MTU', value: '9216' },
+              { label: 'Platform', value: 'N9K-C93180YC-EX, 10.3(4a)' },
+              { label: 'Management', value: '10.20.0.21', mono: true },
+            ],
+          },
+        },
+        {
+          id: 'a12',
+          label: 'Eth1/12',
+          meta: 'PFC 4',
+          status: 'warning',
+          detail: {
+            title: 'tor-a Eth1/12',
+            rows: [
+              { label: 'Switch', value: 'tor-a.dc-east' },
+              { label: 'Port', value: 'Ethernet1/12', mono: true },
+              { label: 'Description', value: 'HV-PRD-01 SLOT 3 P2' },
+              { label: 'Native VLAN', value: '104' },
+              { label: 'MTU', value: '9216' },
+            ],
+          },
+        },
+      ],
+    },
+  ];
+  protected readonly detailLinks: StrctWiringLink[] = [
+    { id: 'd1', from: 'vmgmt', to: 'slot3p1', status: 'success' },
+    { id: 'd2', from: 'vstor', to: 'slot3p2', status: 'success' },
+    { id: 'd3', from: 'slot3p1', to: 'a11', status: 'success' },
+    { id: 'd4', from: 'slot3p2', to: 'a12', status: 'warning', label: 'PFC 3 ≠ 4' },
+  ];
+  protected readonly detailPick = signal<string | null>(null);
+  protected readonly detailPort = signal('');
+
   protected readonly fabricNodes: StrctWiringNode[] = [
     {
       id: 'hv1',

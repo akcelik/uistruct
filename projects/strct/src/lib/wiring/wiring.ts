@@ -9,6 +9,7 @@ import {
   booleanAttribute,
   computed,
   effect,
+  Injector,
   inject,
   input,
   model,
@@ -35,6 +36,12 @@ export interface StrctWiringPort {
   /** Tone of the port's dot. */
   status?: StrctStatus;
   /**
+   * The card behind this port: its model, address, driver, speed, the switch
+   * port heard on it — shown on hover and on focus, and always readable as
+   * text (FR-81-01). A port without one behaves exactly as before.
+   */
+  detail?: StrctWiringDetail;
+  /**
    * What this port says when no drawn link lands on it, in place of the
    * component's `unlinkedText`. A port with no cable means different things
    * in different maps — "nothing heard from a switch" on a map built from
@@ -42,6 +49,30 @@ export interface StrctWiringPort {
    * knows which, so the library never asserts the stronger one (FR-72-02).
    */
   unlinked?: string;
+}
+
+/** One property row of a detail card, as a description list reads it. */
+export interface StrctWiringDetailRow {
+  /** What the property is called — "MAC", "Driver", "Switch port". */
+  label: string;
+  /** Its reading. */
+  value: string;
+  /** Set the value in the monospace face — an address, an id, a version. */
+  mono?: boolean;
+}
+
+/**
+ * The card behind a port or a device: what the operator asks next, without a
+ * click that leaves the map (FR-81-01). Shown on hover and on focus, and
+ * always present as text for a screen reader.
+ */
+export interface StrctWiringDetail {
+  /** The card's title. Defaults to the port's or the device's own label. */
+  title?: string;
+  /** The rows, in the order they should be read. */
+  rows: StrctWiringDetailRow[];
+  /** A line under the rows — "Click to open it in Physical Adapters." */
+  note?: string;
 }
 
 /** A device in the map: a host, a switch, a patch panel, a fabric. */
@@ -62,6 +93,8 @@ export interface StrctWiringNode {
   icon?: string;
   /** Its ports, in the order they are read on the device. */
   ports: StrctWiringPort[];
+  /** The card behind the device head — its type, who manages it, teaming. */
+  detail?: StrctWiringDetail;
 }
 
 /** One cable between two ports. */
@@ -112,6 +145,16 @@ const MIN_REACH = 18;
  * cable keeps its tone, and both of its ports still carry the words.
  */
 const MIN_TAG = 44;
+/** How long the pointer rests on a port before its card appears (FR-81-01). */
+const DETAIL_DELAY = 300;
+/** The grace the pointer has to travel from the port into the card. */
+const DETAIL_GRACE = 160;
+/** Clear space between the card and the thing it describes. */
+const DETAIL_GAP = 10;
+/** How far inside the viewport the card is kept. */
+const DETAIL_EDGE = 8;
+/** One id per component instance, so two maps on a page do not share one. */
+let wiringSeq = 0;
 
 interface Rect {
   l: number;
@@ -280,7 +323,11 @@ const round = (n: number): number => Math.round(n * 100) / 100;
             }
             @for (node of col.nodes; track node.id) {
               <div class="strct-wiring__node" [attr.data-wiring-node]="node.id">
-                <div class="strct-wiring__nodehead">
+                <div
+                  class="strct-wiring__nodehead"
+                  (pointerenter)="hoverDetail('node', node.id, $event)"
+                  (pointerleave)="leaveDetail()"
+                >
                   @if (node.icon) {
                     <strct-icon class="strct-wiring__nodeicon" [name]="node.icon" [size]="14" />
                   }
@@ -288,6 +335,11 @@ const round = (n: number): number => Math.round(n * 100) / 100;
                   @if (node.sublabel) {
                     <span class="strct-wiring__nodesub" [title]="node.sublabel">{{
                       node.sublabel
+                    }}</span>
+                  }
+                  @if (node.detail) {
+                    <span class="strct-wiring__sr strct-wiring__detailsr">{{
+                      detailText(node.detail)
                     }}</span>
                   }
                 </div>
@@ -303,8 +355,12 @@ const round = (n: number): number => Math.round(n * 100) / 100;
                           [class.strct-wiring__port--on-end]="sideOf(p.id) === 'end'"
                           [attr.data-wiring-port]="p.id"
                           [attr.tabindex]="isCursor(p.id) ? 0 : -1"
+                          [attr.aria-describedby]="p.detail ? detailId(p.id) : null"
                           (click)="activatePort(node, p)"
-                          (focus)="cursor.set(p.id)"
+                          (focus)="onPortFocus(p.id, $event)"
+                          (blur)="leaveDetail()"
+                          (pointerenter)="hoverDetail('port', p.id, $event)"
+                          (pointerleave)="leaveDetail()"
                           (keydown)="onPortKeydown($event, node, p)"
                         >
                           <ng-container
@@ -319,12 +375,21 @@ const round = (n: number): number => Math.round(n * 100) / 100;
                           [class.strct-wiring__port--on-start]="sideOf(p.id) === 'start'"
                           [class.strct-wiring__port--on-end]="sideOf(p.id) === 'end'"
                           [attr.data-wiring-port]="p.id"
+                          (pointerenter)="hoverDetail('port', p.id, $event)"
+                          (pointerleave)="leaveDetail()"
                         >
                           <ng-container
                             [ngTemplateOutlet]="portBody"
                             [ngTemplateOutletContext]="{ $implicit: p, node }"
                           />
                         </span>
+                      }
+                      @if (p.detail) {
+                        <span
+                          class="strct-wiring__sr strct-wiring__detailsr"
+                          [attr.id]="detailId(p.id)"
+                          >{{ detailText(p.detail) }}</span
+                        >
                       }
                     </li>
                   }
@@ -351,6 +416,35 @@ const round = (n: number): number => Math.round(n * 100) / 100;
           }
         </div>
       </div>
+
+      <!-- One card at a time, fixed to the viewport so no scroller clips it,
+           hidden from assistive tech because every port already carries the
+           same rows as text (WCAG 1.4.13: hoverable, dismissible with
+           Escape, and persistent while hovered or focused). -->
+      @if (detailView(); as card) {
+        <div
+          class="strct-wiring__card"
+          [class.strct-wiring__card--placed]="detailPlaced()"
+          aria-hidden="true"
+          [style.left.px]="detailPos().x"
+          [style.top.px]="detailPos().y"
+          (pointerenter)="holdDetail()"
+          (pointerleave)="leaveDetail(true)"
+        >
+          <div class="strct-wiring__cardhead">{{ card.title }}</div>
+          <dl class="strct-wiring__cardrows">
+            @for (row of card.rows; track $index) {
+              <dt class="strct-wiring__cardlabel">{{ row.label }}</dt>
+              <dd class="strct-wiring__cardvalue" [class.strct-mono]="row.mono">
+                {{ row.value }}
+              </dd>
+            }
+          </dl>
+          @if (card.note) {
+            <p class="strct-wiring__cardnote">{{ card.note }}</p>
+          }
+        </div>
+      }
 
       @if (label()) {
         <div class="strct-wiring__caption">{{ label() }}</div>
@@ -697,6 +791,58 @@ const round = (n: number): number => Math.round(n * 100) / 100;
         color: var(--t3);
       }
 
+      /* FR-81-01: the card behind a port. Fixed, so no scrolling ancestor
+         clips it; placed away from the cable it describes when there is room
+         either side; and it keeps pointer events, because a card the pointer
+         cannot enter is not hoverable (WCAG 1.4.13). */
+      .strct-wiring__card {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 40;
+        min-width: 190px;
+        max-width: 320px;
+        padding: var(--space-3);
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-floating);
+        /* Hidden until it has been measured and placed, so it never appears
+           in a corner first and jumps to its port after. */
+        visibility: hidden;
+      }
+      .strct-wiring__card--placed {
+        visibility: visible;
+      }
+      .strct-wiring__cardhead {
+        font-size: var(--text-sm);
+        font-weight: 600;
+        color: var(--t1);
+        margin-block-end: var(--space-2);
+      }
+      .strct-wiring__cardrows {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 3px var(--space-3);
+        margin: 0;
+      }
+      .strct-wiring__cardlabel {
+        font-size: var(--text-xs);
+        color: var(--t3);
+        white-space: nowrap;
+      }
+      .strct-wiring__cardvalue {
+        margin: 0;
+        font-size: var(--text-xs);
+        color: var(--t1);
+        overflow-wrap: anywhere;
+      }
+      .strct-wiring__cardnote {
+        margin: var(--space-2) 0 0;
+        font-size: var(--text-xs);
+        color: var(--t3);
+      }
+
       /* Narrow: the columns stack and the cables go away, because a curve
          between stacked columns says nothing. Each port keeps its own
          "→ where it lands", which is the sentence the picture was drawing. */
@@ -734,6 +880,14 @@ const round = (n: number): number => Math.round(n * 100) / 100;
           color: var(--t3);
         }
         .strct-wiring__sr:empty {
+          display: none;
+        }
+        /* No pointer, no hover: the card's rows are written under the port
+           instead, which is where its own sentence already goes. */
+        .strct-wiring__detailsr {
+          padding-inline-start: calc(7px + var(--space-2));
+        }
+        .strct-wiring__card {
           display: none;
         }
       }
@@ -930,6 +1084,12 @@ export class StrctWiring {
   });
 
   constructor() {
+    // The card's timers and its document listeners outlive a render, so they
+    // are cleaned up with the component rather than with the observer.
+    this.destroyRef.onDestroy(() => {
+      this.clearTimers();
+      this.unlisten();
+    });
     afterNextRender(() => this.observe());
     effect(() => {
       // Re-measure when the data changes; the observer covers size changes.
@@ -1285,6 +1445,197 @@ export class StrctWiring {
       ...this.host.nativeElement.querySelectorAll<HTMLElement>('[data-wiring-port]'),
     ].find((n) => n.getAttribute('data-wiring-port') === id);
     el?.focus();
+  }
+
+  // ── The card behind a port, and behind a device (FR-81-01) ─────
+  //
+  // A port carries a label and a reading; what the operator asks next is the
+  // card behind it — model, address, driver, the switch port heard on it —
+  // and that was one click and a page away. The click is already taken
+  // (`portActivate` opens the port's page), so the card is hover and focus,
+  // and it answers WCAG 1.4.13 on all three counts: the pointer can travel
+  // into it, Escape dismisses it, and it stays while hovered or focused.
+
+  private readonly uid = ++wiringSeq;
+  private readonly injector = inject(Injector);
+  protected readonly detailAt = signal<{ kind: 'port' | 'node'; id: string } | null>(null);
+  protected readonly detailPos = signal<{ x: number; y: number }>({ x: 0, y: 0 });
+  /** Placed, and therefore drawable: it is measured before it is shown. */
+  protected readonly detailPlaced = signal(false);
+  private detailAnchor: HTMLElement | null = null;
+  private openTimer: ReturnType<typeof setTimeout> | null = null;
+  private closeTimer: ReturnType<typeof setTimeout> | null = null;
+  private inCard = false;
+  private listening = false;
+
+  /** The id of a port's always-present copy, unique per component instance. */
+  protected detailId(portId: string): string {
+    return `strct-wd-${this.uid}-${portId}`;
+  }
+
+  /** The card as a sentence — what a screen reader is handed, and what the
+   *  stacked layout writes under the port, where there is no hover. */
+  protected detailText(detail: StrctWiringDetail): string {
+    const rows = (detail.rows ?? []).map((r) => `${r.label}: ${r.value}`).join(', ');
+    return [rows, detail.note].filter(Boolean).join('. ');
+  }
+
+  private detailOf(kind: 'port' | 'node', id: string): StrctWiringDetail | null {
+    if (kind === 'port') return this.portIndex().get(id)?.port.detail ?? null;
+    return this.nodes().find((n) => n.id === id)?.detail ?? null;
+  }
+
+  /** The open card's title, rows and note — null when nothing is open. */
+  protected readonly detailView = computed(() => {
+    const at = this.detailAt();
+    if (!at) return null;
+    const detail = this.detailOf(at.kind, at.id);
+    if (!detail) return null;
+    const label =
+      at.kind === 'port'
+        ? (this.portIndex().get(at.id)?.port.label ?? '')
+        : (this.nodes().find((n) => n.id === at.id)?.label ?? '');
+    return { title: detail.title || label, rows: detail.rows ?? [], note: detail.note ?? '' };
+  });
+
+  protected hoverDetail(kind: 'port' | 'node', id: string, event: Event): void {
+    if (!this.detailOf(kind, id)) return;
+    const anchor = event.currentTarget as HTMLElement | null;
+    this.clearTimers();
+    const at = this.detailAt();
+    if (at && at.kind === kind && at.id === id) return;
+    this.openTimer = setTimeout(() => this.openDetail(kind, id, anchor), DETAIL_DELAY);
+  }
+
+  /** Focus is an intent, not a graze: the card appears without the delay. */
+  protected onPortFocus(id: string, event: FocusEvent): void {
+    this.cursor.set(id);
+    if (!this.detailOf('port', id)) return;
+    this.clearTimers();
+    this.openDetail('port', id, event.currentTarget as HTMLElement | null);
+  }
+
+  protected holdDetail(): void {
+    this.inCard = true;
+    this.clearTimers();
+  }
+
+  protected leaveDetail(fromCard = false): void {
+    if (fromCard) this.inCard = false;
+    if (this.inCard) return;
+    // Persistent while focused: the pointer leaving a port the keyboard is
+    // still on does not take the card away.
+    if (
+      this.detailAnchor &&
+      typeof document !== 'undefined' &&
+      document.activeElement === this.detailAnchor
+    ) {
+      return;
+    }
+    this.clearOpenTimer();
+    this.closeTimer = setTimeout(() => this.closeDetail(), DETAIL_GRACE);
+  }
+
+  /** Dismissible, and closed by anything that moves the map under it. */
+  protected closeDetail(): void {
+    this.clearTimers();
+    this.inCard = false;
+    this.detailAnchor = null;
+    this.detailPlaced.set(false);
+    this.detailAt.set(null);
+    this.unlisten();
+  }
+
+  private openDetail(kind: 'port' | 'node', id: string, anchor: HTMLElement | null): void {
+    this.detailAnchor = anchor;
+    this.detailPlaced.set(false);
+    this.detailAt.set({ kind, id });
+    this.listen();
+    afterNextRender(() => this.placeDetail(), { injector: this.injector });
+  }
+
+  /**
+   * Where the card goes: beside the port, on the side its cables do not
+   * leave by when there is room there, and inside the viewport either way.
+   */
+  private placeDetail(): void {
+    const anchor = this.detailAnchor;
+    const card = this.host.nativeElement.querySelector<HTMLElement>('.strct-wiring__card');
+    if (!anchor || !card) return;
+    const a = anchor.getBoundingClientRect();
+    const c = card.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const left = a.left - DETAIL_GAP - c.width;
+    const right = a.right + DETAIL_GAP;
+    const roomLeft = left >= DETAIL_EDGE;
+    const roomRight = right + c.width <= vw - DETAIL_EDGE;
+    const away = this.cableDirection(); // where this port's cables go
+    const prefersLeft = away === 'right';
+    let x: number;
+    if (prefersLeft && roomLeft) x = left;
+    else if (!prefersLeft && roomRight) x = right;
+    else if (roomRight) x = right;
+    else if (roomLeft) x = left;
+    else x = Math.max(DETAIL_EDGE, Math.min(a.left, vw - DETAIL_EDGE - c.width));
+    const y = Math.max(
+      DETAIL_EDGE,
+      Math.min(a.top + a.height / 2 - c.height / 2, vh - DETAIL_EDGE - c.height),
+    );
+    this.detailPos.set({ x: Math.round(x), y: Math.round(y) });
+    this.detailPlaced.set(true);
+  }
+
+  /** Which way the open port's cables leave it, so the card goes the other. */
+  private cableDirection(): 'left' | 'right' | null {
+    const at = this.detailAt();
+    if (!at || at.kind !== 'port') return null;
+    const ports = this.portIndex();
+    const here = ports.get(at.id);
+    if (!here) return null;
+    const columnOf = this.columnOf();
+    const col = columnOf.get(here.node.id) ?? 0;
+    for (const l of this.linksOf(at.id)) {
+      const far = l.from === at.id ? l.to : l.from;
+      const farCol = columnOf.get(ports.get(far)?.node.id ?? '') ?? col;
+      if (farCol > col) return 'right';
+      if (farCol < col) return 'left';
+    }
+    return null;
+  }
+
+  private readonly onKey = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape') this.closeDetail();
+  };
+  private readonly onMoved = (): void => this.closeDetail();
+
+  private listen(): void {
+    if (this.listening || typeof document === 'undefined') return;
+    this.listening = true;
+    // On the document, because Escape has to dismiss a card the pointer
+    // opened while focus is somewhere else entirely.
+    document.addEventListener('keydown', this.onKey, true);
+    window.addEventListener('scroll', this.onMoved, { capture: true, passive: true });
+    window.addEventListener('resize', this.onMoved);
+  }
+
+  private unlisten(): void {
+    if (!this.listening || typeof document === 'undefined') return;
+    this.listening = false;
+    document.removeEventListener('keydown', this.onKey, true);
+    window.removeEventListener('scroll', this.onMoved, true);
+    window.removeEventListener('resize', this.onMoved);
+  }
+
+  private clearOpenTimer(): void {
+    if (this.openTimer) clearTimeout(this.openTimer);
+    this.openTimer = null;
+  }
+
+  private clearTimers(): void {
+    this.clearOpenTimer();
+    if (this.closeTimer) clearTimeout(this.closeTimer);
+    this.closeTimer = null;
   }
 
   // ── What it says ───────────────────────────────────────────────
