@@ -518,10 +518,23 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       anchor="tree-state"
       owner="tree"
       heading="A node's state, seen and heard"
-      description="A mode the operator chose — drained for patching — is not a health state, so it has its own corner of the icon: mode=&quot;maintenance&quot; draws a neutral striped tile at the top end (hollow while the object is still draining) and the badge keeps the bottom one. A host in maintenance with an open alarm shows both, which the single slot could never do. The row also says it: aria-description carries the words (&quot;In maintenance, Warning&quot;) without touching the node's name or the tree's type-ahead — stateWords translates them once per tree, and a node's own stateLabel overrides it (or '' says nothing, for a tree that already puts the words in its label)."
-      code='{ label: "HV-NODE-02", icon: "host", mode: "maintenance", badge: "warning" }'
+      description="An inventory object is in four states at once, and they are four different questions. Can it be reached? reach=&quot;unreachable&quot; (or &quot;orphaned&quot;) draws the ROW back and cuts its icon, because it is the answer that decides whether the rest can be trusted. What was it put in? mode keeps the icon's top corner — the barrier tile, now drawn in the body tone rather than near-black, which used to make a mode an operator chose outweigh a fault the system reported by nearly three to one. Is it on? power takes the icon's bottom corner (off, suspended) and draws nothing when it is on, because a tree where every normal row carries a mark is a tree with no marks. What do its alarms say? health is a shape at the ROW's end — a column the eye can run down — and rollup brings the worst of what is under a closed node up to it, with how many. Each axis has its own place, so none of them takes another's turn: a VM that is off, alarmed and on a host nobody can reach says all four. aria-description says the same sentence in the same order, and the label stays the label."
+      code='{ label: "vm-07", icon: "vm", reach: "unreachable", power: "off", health: "critical" }'
     >
-      <strct-tree style="width: 100%; max-width: 360px;" [nodes]="stateTree" />
+      <div class="ts-demo">
+        <div class="ts-demo__col">
+          <span class="ts-demo__cap">open — every axis on its own row</span>
+          <div class="ts-demo__pane">
+            <strct-tree style="width: 100%; max-width: 340px" [nodes]="stateTree" />
+          </div>
+        </div>
+        <div class="ts-demo__col">
+          <span class="ts-demo__cap">closed — what is wrong under it comes up</span>
+          <div class="ts-demo__pane">
+            <strct-tree style="width: 100%; max-width: 340px" [nodes]="rollupTree" />
+          </div>
+        </div>
+      </div>
     </app-demo>
 
     <app-demo
@@ -1213,6 +1226,29 @@ import { DemoBlock, PageHeader } from '../ui/demo';
       .ws-demo__back {
         margin-top: 10px;
       }
+      .ts-demo {
+        display: flex;
+        gap: 40px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+      .ts-demo__col {
+        min-width: 300px;
+      }
+      /* A tree lives in a pane: the surface the marks are drawn against is
+         --bg-1, not the page. */
+      .ts-demo__pane {
+        background: var(--bg-1);
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-lg);
+        padding: 6px;
+      }
+      .ts-demo__cap {
+        display: block;
+        font-size: var(--text-sm);
+        color: var(--t3);
+        margin-bottom: 8px;
+      }
       .vw-fields {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 260px));
@@ -1521,33 +1557,91 @@ export class SurfacesPage {
   // Trailing marks: what the row says after the label.
   // A mode and a health badge on the same object — the case the one slot
   // could never show (FR-61-01), and the words a reader hears (FR-61-02).
+  // The four state axes: reach (the row), mode (the icon's top corner),
+  // power (its bottom corner) and health (the row's end). A nominal object
+  // draws nothing at all.
   protected readonly stateTree: StrctTreeNodeData[] = [
     {
       id: 's-cluster',
       label: 'cluster-01',
       icon: 'cluster',
       expanded: true,
+      rollup: { critical: 1, warning: 1 },
       children: [
-        { id: 's-hv1', label: 'HV-NODE-01', icon: 'host', badge: 'running' },
+        { id: 's-hv1', label: 'HV-NODE-01', icon: 'host' },
         {
           id: 's-hv2',
           label: 'HV-NODE-02',
           icon: 'host',
           mode: 'maintenance',
-          badge: 'warning',
-          meta: 'drained',
+          health: 'warning',
         },
         {
           id: 's-hv3',
           label: 'HV-NODE-03',
           icon: 'host',
           mode: 'maintenanceEntering',
-          badge: 'running',
-          meta: 'evacuating',
         },
-        { id: 's-hv4', label: 'HV-NODE-04', icon: 'host', badge: 'critical' },
-        { id: 's-csv', label: 'Volume1', icon: 'storage', mode: 'maintenance' },
+        {
+          id: 's-hv4',
+          label: 'HV-NODE-04',
+          icon: 'host',
+          reach: 'unreachable',
+          expanded: true,
+          children: [
+            {
+              id: 's-vm7',
+              label: 'vm-07',
+              icon: 'vm',
+              reach: 'unreachable',
+              power: 'off',
+              health: 'critical',
+            },
+          ],
+        },
+        {
+          id: 's-hv5',
+          label: 'HV-NODE-05',
+          icon: 'host',
+          expanded: true,
+          children: [
+            { id: 's-vm11', label: 'vm-11', icon: 'vm', power: 'on' },
+            { id: 's-vm12', label: 'vm-12', icon: 'vm', power: 'suspended' },
+            { id: 's-vm99', label: 'vm-99', icon: 'vm', reach: 'orphaned', power: 'off' },
+          ],
+        },
+        { id: 's-csv', label: 'Volume1', icon: 'storage', reach: 'unreachable' },
       ],
+    },
+  ];
+
+  /** The same cluster, closed: what is wrong under it comes up to the row. */
+  protected readonly rollupTree: StrctTreeNodeData[] = [
+    {
+      id: 'r-cluster',
+      label: 'cluster-01',
+      icon: 'cluster',
+      expanded: false,
+      hasChildren: true,
+      rollup: { critical: 1, warning: 1 },
+      children: [{ id: 'r-hv', label: 'HV-NODE-04', icon: 'host', health: 'critical' }],
+    },
+    {
+      id: 'r-cluster2',
+      label: 'cluster-02',
+      icon: 'cluster',
+      expanded: false,
+      hasChildren: true,
+      rollup: { warning: 3 },
+      children: [{ id: 'r-hv2', label: 'HV-NODE-11', icon: 'host', health: 'warning' }],
+    },
+    {
+      id: 'r-cluster3',
+      label: 'cluster-03',
+      icon: 'cluster',
+      expanded: false,
+      hasChildren: true,
+      children: [{ id: 'r-hv3', label: 'HV-NODE-21', icon: 'host' }],
     },
   ];
 

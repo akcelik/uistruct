@@ -665,7 +665,43 @@ export function registerStrctIcon(
  * green disc ▶ running · amber disc ⏸ paused · grey disc ■ off.
  */
 export type StrctIconBadge =
-  'none' | 'success' | 'warning' | 'critical' | 'running' | 'paused' | 'off' | 'info';
+  | 'none'
+  | 'success'
+  | 'warning'
+  | 'critical'
+  | 'running'
+  | 'paused'
+  | 'off'
+  | 'info'
+  /**
+   * The dot takes the glyph's own colour — Clarity's `badge="inherit"`. For a
+   * glyph already toned by `status`, it says "and there is something here"
+   * without introducing a second tone.
+   */
+  | 'inherit';
+
+/**
+ * The glyph's own tone — Clarity's `status`, which changes the colour of the
+ * icon's fills and outlines rather than decorating a corner of it. An object
+ * whose alarm is critical IS red in a vSphere inventory; a corner dot is the
+ * second half of that sentence, not the whole of it. `critical` is this
+ * library's word for what Clarity calls `danger`.
+ *
+ * Clarity's own guidance applies: colour alone is not enough, so a status
+ * tone is paired with a shape that carries the same meaning (the badge
+ * silhouettes, or the tree's row-end mark).
+ */
+export type StrctIconStatus = 'neutral' | 'info' | 'success' | 'warning' | 'critical';
+
+/** The t-shirt sizes, as Clarity names them, against this library's scale. */
+export type StrctIconSizeName = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+const ICON_SIZES: Record<StrctIconSizeName, number> = {
+  xs: 12,
+  sm: 14,
+  md: 16,
+  lg: 18,
+  xl: 24,
+};
 
 /**
  * A mode the operator put the object in, as opposed to its health: it takes no
@@ -714,6 +750,17 @@ let warnedCountOverMode = false;
     } @else if (shownBadge() !== 'none') {
       <span class="strct-icon__badge strct-icon__badge--{{ shownBadge() }}"></span>
     }
+    @if (!countText() && shownMode() === 'none' && lifecycle() !== 'none') {
+      <!-- The object's own power, in the bottom corner, so an alarmed machine
+           does not have to choose between saying it is alarmed and saying it
+           is off. The mode tile shares this corner: a host has a mode, a
+           machine has a power state, and when a call site sets both the mode
+           wins, because "out of service" is the louder fact. -->
+      <span
+        class="strct-icon__badge strct-icon__badge--{{ lifecycle() }}"
+        aria-hidden="true"
+      ></span>
+    }
     @if (!countText() && shownMode() !== 'none') {
       <!-- The mode's own corner (top end), so health keeps the bottom one and
            neither hides the other: a host drained for patching with a disk
@@ -733,7 +780,11 @@ let warnedCountOverMode = false;
         </svg>
       </span>
     }`,
-  host: { class: 'strct-icon', '[style.--icon-size.px]': 'size()' },
+  host: {
+    class: 'strct-icon',
+    '[style.--icon-size.px]': 'sizePx()',
+    '[style.--strct-icon-color]': 'statusColor()',
+  },
   styles: [
     `
       .strct-icon {
@@ -742,6 +793,14 @@ let warnedCountOverMode = false;
         align-items: center;
         justify-content: center;
         line-height: 0;
+        /* The glyph's tone, as a property a call site can set directly —
+           Clarity's own --color, under this library's prefix. */
+        color: var(--strct-icon-color, inherit);
+      }
+      /* The dot takes the glyph's colour (Clarity's badge of inherit), so a
+         toned glyph says one thing in one tone. */
+      .strct-icon__badge--inherit {
+        background: var(--strct-icon-badge-color, currentColor);
       }
       /* The size comes from a property, not from a binding, so a control can
          answer for an icon that was given no size of its own: a button sets
@@ -814,115 +873,127 @@ let warnedCountOverMode = false;
       .strct-icon__mode {
         position: absolute;
         inset-inline-end: -3px;
-        top: -3px;
+        bottom: -3px;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 56%;
-        height: 56%;
-        min-width: 9px;
-        min-height: 9px;
-        max-width: 12px;
-        max-height: 12px;
+        width: 62%;
+        height: 62%;
+        min-width: 12px;
+        min-height: 12px;
+        max-width: 16px;
+        max-height: 16px;
         box-sizing: border-box;
         border-radius: 22%;
-        box-shadow: 0 0 0 1.5px var(--bg-1);
+        box-shadow: 0 0 0 2px var(--bg-1);
       }
       .strct-icon__mode > svg {
         width: 100%;
         height: 100%;
         display: block;
       }
-      /* Filled: it is in maintenance. */
+      /* In maintenance: the barrier, drawn in the body tone on the surface.
+         It used to be a near-black tile — 12.43:1 against the page where the
+         critical badge beside it measures 4.42:1, so a mode an operator CHOSE
+         outweighed a fault the system REPORTED by nearly three to one. The
+         mark is now the same ink as the label it sits beside: still the one
+         silhouette no badge uses, no longer the heaviest thing on the row. */
       .strct-icon__mode--maintenance {
-        background: color-mix(in srgb, var(--t1), var(--bg-1) 10%);
-        color: var(--inv);
+        background: var(--bg-1);
+        border: 1.25px solid var(--t3);
+        color: var(--t3);
       }
-      /* Hollow: it is on its way in (draining, evacuating). */
+      /* On its way in (draining, evacuating): the same tile, dashed, because
+         "it is going there" is not "it is there". The old hollow tile was
+         white on a near-white page — 1.07:1, readable only by its ring. */
       .strct-icon__mode--maintenanceEntering {
         background: var(--bg-1);
-        border: 1.5px solid color-mix(in srgb, var(--t1), var(--bg-1) 10%);
-        color: color-mix(in srgb, var(--t1), var(--bg-1) 10%);
+        border: 1.25px dashed var(--t3);
+        color: var(--t4);
       }
+      /* The badge is read at arm's length on a 1920x1080 screen, where an
+         8px disc carrying a 6px glyph is a smudge. It is 58% of the glyph,
+         never below 11px, and it is ringed in 2px of the surface so it
+         separates from the drawing under it at any size. */
       .strct-icon__badge {
         position: absolute;
         inset-inline-end: -3px;
         bottom: -3px;
-        width: 50%;
-        height: 50%;
-        min-width: 8px;
-        min-height: 8px;
-        max-width: 12px;
-        max-height: 12px;
+        width: 58%;
+        height: 58%;
+        min-width: 11px;
+        min-height: 11px;
+        max-width: 16px;
+        max-height: 16px;
         border-radius: 50%;
-        box-shadow: 0 0 0 1.5px var(--bg-1);
+        box-shadow: 0 0 0 2px var(--bg-1);
+      }
+      /* Health goes in the TOP corner — where vCenter puts an object's alarm
+         and where Clarity puts its badge — and lifecycle keeps the bottom
+         one, beside the mode tile. An object kind has one or the other: a
+         host has a mode, a machine has a power state. */
+      .strct-icon__badge--success,
+      .strct-icon__badge--warning,
+      .strct-icon__badge--critical,
+      .strct-icon__badge--info,
+      .strct-icon__badge--inherit {
+        top: -3px;
+        bottom: auto;
       }
       /* Health states are silhouette-coded (circle ✓ · triangle ! · diamond ×
          · circle i); lifecycle states speak vCenter's media language inside a
          badge disc (▶ running · ⏸ paused · ■ off). Both read without color. */
-      .strct-icon__badge--success,
-      .strct-icon__badge--critical,
-      .strct-icon__badge--info,
       .strct-icon__badge--off,
       .strct-icon__badge--paused,
       .strct-icon__badge--running {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: clamp(6px, 68%, 10px);
-        font-weight: 800;
         line-height: 1;
         color: var(--inv);
       }
+      /* A tick inside an 11px disc is three strokes in six pixels. The
+         silhouette carries the state on its own — a circle, a triangle, a
+         diamond — which is the vSphere alarm language and survives both a
+         greyscale render and a 1x screen. */
       .strct-icon__badge--success {
         background: var(--success);
-      }
-      .strct-icon__badge--success::before {
-        content: '✓';
       }
       .strct-icon__badge--warning {
         background: var(--warning);
         border-radius: var(--radius-xs);
-        clip-path: polygon(50% 10%, 92% 90%, 8% 90%);
+        clip-path: polygon(50% 6%, 96% 94%, 4% 94%);
         box-shadow: none;
-        filter: drop-shadow(0 0 1.5px var(--bg-1));
-        inset-inline-end: -2px;
-        bottom: -2px;
-        width: 60%;
-        height: 60%;
-        min-width: 11px;
-        min-height: 11px;
-        max-width: 18px;
-        max-height: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: clamp(6px, 70%, 10px);
-        font-weight: 800;
-        color: var(--inv);
-        line-height: 1;
+        filter: drop-shadow(0 0 2px var(--bg-1)) drop-shadow(0 0 1px var(--bg-1));
+        inset-inline-end: -3px;
+        top: -3px;
+        bottom: auto;
+        width: 72%;
+        height: 72%;
+        min-width: 13px;
+        min-height: 13px;
+        max-width: 20px;
+        max-height: 20px;
       }
-      .strct-icon__badge--warning::before {
-        content: '!';
-      }
+
       /* Critical: diamond silhouette (vSphere-style alarm language). */
       .strct-icon__badge--critical {
         background: var(--critical);
         border-radius: var(--radius-xs);
         clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
         box-shadow: none;
-        filter: drop-shadow(0 0 1.5px var(--bg-1));
-        width: 58%;
-        height: 58%;
-        min-width: 10px;
-        min-height: 10px;
-        max-width: 15px;
-        max-height: 15px;
-        font-size: clamp(6px, 56%, 9px);
+        filter: drop-shadow(0 0 2px var(--bg-1)) drop-shadow(0 0 1px var(--bg-1));
+        top: -4px;
+        bottom: auto;
+        inset-inline-end: -4px;
+        width: 76%;
+        height: 76%;
+        min-width: 14px;
+        min-height: 14px;
+        max-width: 21px;
+        max-height: 21px;
       }
-      .strct-icon__badge--critical::before {
-        content: '×';
-      }
+
       /* Running: green disc with a play triangle. */
       .strct-icon__badge--running {
         background: var(--success);
@@ -998,7 +1069,14 @@ export class StrctIcon {
    * always was. Setting this still wins — it writes the same property on the
    * icon itself, which is nearer than anything enclosing it (FR-64-01).
    */
-  readonly size = input<number | undefined>(undefined);
+  readonly size = input<number | StrctIconSizeName | undefined>(undefined);
+  /**
+   * The glyph's own tone (Clarity's `status`): `neutral` (the default, which
+   * takes the colour it inherits), `info`, `success`, `warning`, `critical`.
+   * It writes `--strct-icon-color`, so a call site can set any tone it likes
+   * on the same property — the equivalent of Clarity's `--color`.
+   */
+  readonly status = input<StrctIconStatus>('neutral');
   /**
    * The pen the glyph is drawn with, in rendered pixels.
    *
@@ -1018,10 +1096,18 @@ export class StrctIcon {
   /** Optional status dot overlaid on the glyph (object state). */
   readonly badge = input<StrctIconBadge>('none');
   /**
-   * A mode the operator chose, drawn in its own (top-end) corner so it never
-   * displaces the health badge.
+   * A mode the operator chose, drawn in its own (bottom-end) corner so it
+   * never displaces the health badge, which keeps the top one.
    */
   readonly mode = input<StrctIconMode>('none');
+  /**
+   * The object's own power, drawn in the bottom-end corner beside the glyph:
+   * `running` (a play disc), `paused` (two bars), `off` (a stop square). It
+   * is a second mark, not the badge's: an alarmed machine can say both that
+   * it is alarmed and that it is off. A `mode` takes the same corner and
+   * wins when both are set.
+   */
+  readonly lifecycle = input<'none' | 'running' | 'paused' | 'off'>('none');
   /** The mode's words, joined to the icon's name when it has one (i18n). */
   readonly modeLabel = input<(mode: StrctIconMode) => string>((mode) =>
     mode === 'maintenance'
@@ -1062,6 +1148,19 @@ export class StrctIcon {
 
   /** The badge as drawn. */
   readonly shownBadge = computed<StrctIconBadge>(() => this.badge());
+
+  /** The size in pixels, whether it was given as a number or as a name. */
+  protected readonly sizePx = computed<number | undefined>(() => {
+    const given = this.size();
+    if (given === undefined) return undefined;
+    return typeof given === 'number' ? given : ICON_SIZES[given];
+  });
+
+  /** The tone the glyph is drawn in, or null for whatever it inherits. */
+  protected readonly statusColor = computed<string | null>(() => {
+    const status = this.status();
+    return status === 'neutral' ? null : `var(--${status})`;
+  });
 
   /** The label the glyph carries: its own, plus the count and the mode. */
   protected readonly accessibleLabel = computed(() => {
