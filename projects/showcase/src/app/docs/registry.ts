@@ -4244,16 +4244,30 @@ export const DOCS: DocCategory[] = [
       {
         id: 'detailpane',
         title: 'Detail pane',
-        selector: 'strct-datagrid[detailPane]',
-        importNames: ['StrctDatagrid', 'StrctRowDetailDef'],
+        selector: 'strct-datagrid[pane]',
+        importNames: ['StrctDatagrid', 'StrctRowDetailDef', 'StrctDatagridPane'],
         summary: 'Collapse the grid to a master / detail view.',
-        lead: 'A datagrid mode (`detailPane`) that collapses the table to its first column and opens a side pane for the active row. Distinct from expandable rows: this is a master/detail layout, not an inline expansion.',
+        lead: 'A datagrid mode (`[pane]`) that collapses the table to its first column and opens a side pane for the active row. Distinct from expandable rows: this is a master/detail layout, not an inline expansion.\n\n**The \u00bb button in each row is one control, both ways (7.20.0).** It opens that row\u2019s pane; once the pane is open the same button reads \u00ab, is labelled `closeDetail`, carries `aria-expanded="true"` and closes it \u2014 so the arrow always points where the click will send the pane, instead of pointing at a pane that is already there. Under `[dir="rtl"]` both arrows are mirrored, because the pane opens on the other side of the list.',
         inputs: [
           {
-            name: 'detailPane',
-            type: 'boolean',
-            default: 'false',
-            description: 'Enable master/detail mode.',
+            name: 'pane',
+            type: 'StrctDatagridPane',
+            default: '{}',
+            description:
+              '`{ enabled, listWidth, takeoverWidth }`. `enabled` draws the pane, `listWidth` is the width the list keeps beside it (default `260px`), and under `takeoverWidth` (default `900`, measured on the grid, not the viewport) the pane replaces the list instead of squeezing both \u2014 where there is no \u00bb button to close it, so the pane carries its own way back.',
+          },
+          {
+            name: 'activeRowId',
+            type: 'unknown',
+            default: 'null',
+            description:
+              'Two-way: which row\u2019s pane is open, or `null`. Setting it opens the pane from outside the grid; the \u00bb button, a row click in `interactionMode="grid"`, Enter on the row and Escape all go through it.',
+          },
+          {
+            name: 'labels',
+            type: 'Partial<StrctDatagridLabels>',
+            description:
+              '`openDetail` and `closeDetail` are the two halves of the \u00bb button\u2019s accessible name; `closeDetail` also names the \u00d7 in the pane head and `backToList` the way back when the pane has taken the list over.',
           },
           {
             name: 'columns / rows',
@@ -4261,9 +4275,19 @@ export const DOCS: DocCategory[] = [
             description: 'Same as the datagrid.',
           },
         ],
-        do: ['Render the pane body via `<ng-template strctRowDetail let-row>`.'],
-        dont: ['Do not combine with inline expandable rows.'],
-        a11y: ['The active row is marked with an accent caret tying it to the open pane.'],
+        do: [
+          'Render the pane body via `<ng-template strctRowDetail let-row>`.',
+          'Lower `takeoverWidth` for a grid in a narrow column that should still show list and pane side by side.',
+        ],
+        dont: [
+          'Do not combine with inline expandable rows.',
+          'Do not add a separate close control beside the \u00bb button \u2014 it is already the toggle.',
+        ],
+        a11y: [
+          'The active row is marked with an accent caret tying it to the open pane.',
+          'The \u00bb button carries `aria-expanded`, and its name changes with its state (`openDetail` / `closeDetail`), so the control is not announced as \u201cOpen detail\u201d while it closes.',
+          'Enter or Space on the row opens the pane and Escape closes it, returning focus to that row\u2019s \u00bb button.',
+        ],
       },
       {
         id: 'steps',

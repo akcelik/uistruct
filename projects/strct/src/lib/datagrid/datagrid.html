@@ -416,12 +416,20 @@
                       type="button"
                       [attr.tabindex]="ctlTabindex()"
                       class="strct-dg__detailbtn"
-                      [class.strct-dg__detailbtn--active]="row === activeRow()"
-                      [attr.aria-expanded]="row === activeRow()"
-                      [attr.aria-label]="L().openDetail"
-                      (click)="openDetail(row)"
+                      [class.strct-dg__detailbtn--active]="detailOpen(row)"
+                      [attr.aria-expanded]="detailOpen(row)"
+                      [attr.aria-label]="detailOpen(row) ? L().closeDetail : L().openDetail"
+                      (click)="openDetail(row, $event)"
                     >
-                      <strct-icon name="chevronDoubleRight" [size]="13" />
+                      <!-- One control both ways. The arrow points where this
+                           click will send the pane, so once the pane is open
+                           it turns around rather than pointing at a pane that
+                           is already there; the stylesheet mirrors it where
+                           the pane opens on the other side. -->
+                      <strct-icon
+                        [name]="detailOpen(row) ? 'chevronDoubleLeft' : 'chevronDoubleRight'"
+                        [size]="13"
+                      />
                     </button>
                   </td>
                 }

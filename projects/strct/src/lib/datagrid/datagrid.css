@@ -655,6 +655,11 @@
   color: var(--acc);
   background: var(--acc-m);
 }
+/* RTL: the pane opens on the other side of the list, so both arrows are
+   mirrored and each still points where the click will send the pane. */
+[dir='rtl'] .strct-dg__detailbtn strct-icon {
+  transform: rotate(180deg);
+}
 .strct-dg__detailrow td {
   background: var(--bg-2);
   padding: 0;

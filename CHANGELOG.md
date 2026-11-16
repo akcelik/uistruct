@@ -5,6 +5,64 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.20.0] - 2026-11-16
+
+Asked for directly against 7.19.0
+([`docs/feature-requests/archive/datagrid-pane-toggle.md`](docs/feature-requests/archive/datagrid-pane-toggle.md)).
+
+### Changed
+
+- **The detail pane's » button is one control, both ways.** It drew
+  `chevronDoubleRight` whether the pane was shut or open, and told assistive
+  technology "Open detail" either way while `aria-expanded` quietly flipped to
+  `true`. The one control that both opens and closes the pane looked like it
+  only opened it, and its arrow pointed at a pane that was already there.
+
+  Open, it now draws `chevronDoubleLeft`, is labelled `closeDetail` and
+  carries `aria-expanded="true"` — so the arrow always points where the click
+  will send the pane. `closeDetail` has been in the label set since the pane
+  shipped; until now only the × in the pane head reached it, so a translated
+  grid said "Open detail" on the control that closes.
+
+  Under `[dir='rtl']` both arrows are mirrored, because the pane opens on the
+  other side of the list there.
+
+### Fixed
+
+- **In a console the button could open the pane but never close it.** With
+  `interactionMode="grid"` a click on the row opens that row's pane, and the
+  button sits inside the row, so the button's click closed the pane and the
+  row re-opened it in the same event. `openDetail(row, event?)` now stops the
+  click at the button; `event` is optional, so the public method keeps its old
+  signature.
+
+### Measured
+
+`scripts/pane-toggle.mjs` — 13 checks in Chrome with real mouse and key
+events, new in CI. **5 of the 13, and 4 of the 6 new specs, fail on 7.19.0**
+with the same fixtures.
+
+Which way the arrow points is measured, not read off the name: the drawn
+glyph is sampled along its own path, every point mapped through
+`getScreenCTM` so a CSS mirror counts, and the tip is the end that
+converges. Shut it converges to **2.56px** at its right end against
+**7.31px** at its left; open, the same two readings swap sides. In RTL the
+list starts at **1026** and the pane ends at **1026**, and the shut arrow
+measures as pointing left. The open button's own contrast was read over 3
+palettes × 2 themes: weakest **4.45:1** against a 3:1 floor.
+
+### Also
+
+- The showcase's detail-pane demo never showed the layout it describes: the
+  column is **840px** and `takeoverWidth` defaults to **900**, so the pane was
+  replacing the list instead of opening beside it — and in that mode the »
+  button is not on screen at all. Both fixtures now set `takeoverWidth: 560`,
+  and a second demo shows the same pane in a console. Two visual baselines
+  (`detailpane-shut`, `detailpane-open`) now cover the demo, which had none.
+- The `detailpane` docs page was still documenting the pre-6.0 flat
+  `detailPane` input; it now documents `[pane]`, `[(activeRowId)]` and the two
+  labels.
+
 ## [7.19.0] - 2026-11-16
 
 [FR-82-01](docs/feature-requests/archive/tree-rollup-beside-own-state.md),
