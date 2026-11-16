@@ -7,7 +7,11 @@ stays here until it goes quiet.
 
 ## Open
 
-**Nothing.** Everything filed so far has shipped.
+- [**`wiring-port-detail-card.md`**](wiring-port-detail-card.md) — FR-81-01, filed 2026-11-15 by
+  HyperStruct against **7.16.0**: a `strct-wiring` port (and device head) cannot show the card behind
+  it — an adapter's model, MAC, driver, speed and the switch port heard on it — without a click that
+  leaves the map. Asks for `StrctWiringPort.detail` / `StrctWiringNode.detail`, shown on hover and on
+  focus (hoverable, dismissible, persistent — WCAG 1.4.13), exposed to assistive tech, clicks unchanged.
 
 ### Closed on 2026-11-14, and moved to [`archive/`](archive/)
 
