@@ -170,7 +170,11 @@ const ROUTES = [
   // FR-61-01 / FR-61-02: a mode the operator chose, in its own corner of the
   // icon, beside a health badge — at the tree's 16px, where the amber disc it
   // replaces was indistinguishable from "paused".
-  ['tree-state', '/components/tree', '#tree-state', undefined, '#tree-state strct-tree'],
+  // Both columns: the open tree is where the axes are drawn, and the closed
+  // one is where a node's own marks sit beside its rollup (FR-82-01). The
+  // crop used to be the first tree only, so the closed column was in no
+  // baseline at all.
+  ['tree-state', '/components/tree', '#tree-state', undefined, '#tree-state .ts-demo'],
   // FR-67-07: three alarm rows whose leading badges are 'Critical', 'Warning'
   // and 'Info'. Before 7.1 their titles started at x 395, 401 and 375 and
   // their times at 698, 697 and 714, and no baseline in this suite could see
