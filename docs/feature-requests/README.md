@@ -7,15 +7,20 @@ stays here until it goes quiet.
 
 ## Open
 
-- [**`tree-unknown-and-stale.md`**](tree-unknown-and-stale.md) — FR-83, filed 2026-11-17 against
-  7.20.0 from HyperStruct's avionics-grade review: the tree cannot say "not known" or "not
-  current", so a host whose alarms were never read is drawn exactly like a healthy one.
 - [**`datagrid-error-and-unread-progress.md`**](datagrid-error-and-unread-progress.md) — FR-84,
   filed 2026-11-17 against 7.20.0 from the same review: a read that failed is drawn as a read that
   found nothing ("This VM has no recovery point."), and a fullness that was not read is drawn as
   an empty bar.
 
 ### Closed on 2026-11-18, and moved to [`archive/`](archive/)
+
+- [**`archive/tree-unknown-and-stale.md`**](archive/tree-unknown-and-stale.md) — FR-83: the tree
+  could not say "not known" or "not current", so a host whose alarms were never read was drawn
+  exactly like a healthy one and a twenty-minute-old reading was drawn as live. Shipped in
+  **v7.22.0** — `health: 'unknown'` draws the only health mark with a hole in it (**16.3%** of its
+  box is enclosed background, against **0.0%** for both alarm shapes), `reach: 'stale'` recedes the
+  row to **6.20:1** between live (**17.49:1**) and unreachable (**5.13:1**) without cutting the
+  glyph, and `[stale]` says it once for a whole tree.
 
 - [**`archive/inventory-glyphs.md`**](archive/inventory-glyphs.md) — not a filed FR, asked for
   directly against 7.20.0: `datacenter` was a rounded box with three rules and a dot, the same

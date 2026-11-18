@@ -30,8 +30,8 @@ import { tmpdir } from 'node:os';
 import { spawn, execSync } from 'node:child_process';
 
 const ROOT = resolve('dist/showcase/browser');
-const PORT = 4719;
-const CDP = 9419;
+const PORT = 4720;
+const CDP = 9420;
 /** WCAG 2.1 1.4.11 for a graphic that carries meaning. */
 const AA_GRAPHIC = 3;
 

@@ -683,6 +683,13 @@ export type StrctIconBadge =
   | 'off'
   | 'info'
   /**
+   * The health corner with nothing in it: a ring in the neutral tone, for an
+   * object whose state could not be judged. It is the only health mark with a
+   * hole in it, which is what "not known" looks like beside a filled alarm —
+   * and it can be mistaken neither for no mark at all nor for an alarm.
+   */
+  | 'unknown'
+  /**
    * The dot takes the glyph's own colour — Clarity's `badge="inherit"`. For a
    * glyph already toned by `status`, it says "and there is something here"
    * without introducing a second tone.
@@ -945,6 +952,7 @@ let warnedCountOverMode = false;
       .strct-icon__badge--warning,
       .strct-icon__badge--critical,
       .strct-icon__badge--info,
+      .strct-icon__badge--unknown,
       .strct-icon__badge--inherit {
         top: -3px;
         bottom: auto;
@@ -967,6 +975,15 @@ let warnedCountOverMode = false;
          greyscale render and a 1x screen. */
       .strct-icon__badge--success {
         background: var(--success);
+      }
+      /* Unknown: a ring, in the neutral tone. Every other health mark is
+         solid, so the hole is the whole signal — "there is a slot here and
+         nothing in it" — and it survives greyscale and a 1x screen, where a
+         second hue would not. It is never an alarm's colour: an object whose
+         health could not be read is not thereby a fault. */
+      .strct-icon__badge--unknown {
+        background: var(--bg-1);
+        border: 2px solid var(--t3);
       }
       .strct-icon__badge--warning {
         background: var(--warning);

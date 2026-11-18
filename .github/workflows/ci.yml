@@ -128,7 +128,11 @@ jobs:
       # says all three; a reachable, running, quiet one says nothing at all; a
       # mode an operator chose no longer outweighs a fault the system
       # reported; and warning is told from critical with the hue taken away.
-      # 13 checks, six palettes.
+      # 25 checks, six palettes — including FR-83's two: a mark with a hole in
+      # it for a health nobody has read (16.3% of its box is enclosed
+      # background, against 0.0% for both alarm shapes), and a row whose
+      # reading has gone old sitting between a live one and an unreachable one
+      # without being cut.
       - name: Assert a tree node can be in four states at once
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/tree-state.mjs
       # FR-81-01: the card behind a port opens on a rest of the pointer and on

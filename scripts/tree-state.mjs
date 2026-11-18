@@ -31,6 +31,8 @@ const PORT = 4719;
 const CDP = 9419;
 /** WCAG 1.4.3 for text. */
 const AA = 4.5;
+/** WCAG 1.4.11 for a graphic that carries meaning. */
+const GRAPHIC = 3;
 /** The row the tree has always had — the glyph grew inside it, not past it. */
 const ROW = 27.5;
 /** No state mark may be smaller than this: an 8px dot on a 1920x1080 screen
@@ -178,7 +180,7 @@ const ROWS = `(() => {
       const icon = row.querySelector('.strct-tnode__icon');
       const badges = [...row.querySelectorAll('.strct-icon__badge')];
       const health = badges.find((el) =>
-        /--(success|warning|critical|info|inherit)/.test(el.className),
+        /--(success|warning|critical|info|inherit|unknown)/.test(el.className),
       );
       const life = badges.find((el) => /--(running|paused|off)/.test(el.className));
       const badge = health ?? life ?? null;
@@ -196,6 +198,7 @@ const ROWS = `(() => {
         h: +row.getBoundingClientRect().height.toFixed(2),
         unreachable: row.classList.contains('strct-tnode__row--unreachable'),
         orphaned: row.classList.contains('strct-tnode__row--orphaned'),
+        stale: row.classList.contains('strct-tnode__row--stale'),
         labelInk: getComputedStyle(label).color,
         iconOpacity: icon?.querySelector('svg')
           ? +getComputedStyle(icon.querySelector('svg')).opacity
@@ -208,6 +211,9 @@ const ROWS = `(() => {
         modeBorder: mode ? getComputedStyle(mode).borderTopColor : null,
         health: health
           ? {
+              kind: health.className.split('--')[1],
+              border: getComputedStyle(health).borderTopColor,
+              borderWidth: getComputedStyle(health).borderTopWidth,
               tone: health.className.includes('critical') ? 'critical' : health.className.includes('warning') ? 'warning' : 'other',
               ink: getComputedStyle(health).backgroundColor,
               box: box(health),
@@ -232,7 +238,20 @@ const ROWS = `(() => {
         box: box(row),
       };
     });
-  return { open: read('#tree-state .ts-demo__col:first-child'), closed: read('#tree-state .ts-demo__col:last-child') };
+  const tree = document.querySelector('[data-ti="stale"] .strct-tree');
+  const caption = document.querySelector('[data-ti="stale"] .strct-tree__stale');
+  return {
+    open: read('#tree-state .ts-demo__col:first-child'),
+    closed: read('#tree-state .ts-demo__col:last-child'),
+    live: read('[data-ti="live"]'),
+    staleTree: read('[data-ti="stale"]'),
+    captions: document.querySelectorAll('[data-ti="stale"] .strct-tree__stale').length,
+    caption: caption
+      ? { text: caption.textContent.trim(), hidden: caption.getAttribute('aria-hidden'), box: box(caption) }
+      : null,
+    treeDescribed: tree ? tree.getAttribute('aria-description') : null,
+    liveDescribed: document.querySelector('[data-ti="live"] .strct-tree')?.getAttribute('aria-description') ?? null,
+  };
 })()`;
 
 const checks = [];
@@ -267,17 +286,85 @@ let up = false;
  * mass is how much ink is actually painted, times how far that ink is from
  * the surface it sits on.
  */
+/**
+ * Does the mark have a hole in it?
+ *
+ * Every health mark the set already draws is solid — a disc, a triangle, a
+ * diamond — so "there is a slot here and nothing in it" can only be said by
+ * an outline. That is a shape fact, not a colour one, so it is counted as
+ * shape: the mark's box is captured, ink is everything that differs from the
+ * surface, and a hole is background the flood from the box's own edge cannot
+ * reach. It survives greyscale, which is the whole point of using it.
+ */
+async function hole(send, box) {
+  const pad = 2;
+  const clip = {
+    x: Math.round(box.left) - pad,
+    y: Math.round(box.top) - pad,
+    width: Math.round(box.w) + pad * 2,
+    height: Math.round(box.h) + pad * 2,
+    scale: 6,
+  };
+  const { data } = await send('Page.captureScreenshot', { format: 'png', clip });
+  const png = PNG.sync.read(Buffer.from(data, 'base64'));
+  const bg = [png.data[0], png.data[1], png.data[2]];
+  const w = png.width,
+    h = png.height;
+  const open = new Uint8Array(w * h);
+  for (let i = 0, q = 0; i < png.data.length; i += 4, q++) {
+    const d =
+      Math.abs(png.data[i] - bg[0]) +
+      Math.abs(png.data[i + 1] - bg[1]) +
+      Math.abs(png.data[i + 2] - bg[2]);
+    if (d <= 40) open[q] = 1;
+  }
+  const outside = new Uint8Array(w * h);
+  const stack = [];
+  const push = (x, y) => {
+    const q = y * w + x;
+    if (x < 0 || y < 0 || x >= w || y >= h || !open[q] || outside[q]) return;
+    outside[q] = 1;
+    stack.push(q);
+  };
+  for (let x = 0; x < w; x++) {
+    push(x, 0);
+    push(x, h - 1);
+  }
+  for (let y = 0; y < h; y++) {
+    push(0, y);
+    push(w - 1, y);
+  }
+  while (stack.length) {
+    const q = stack.pop();
+    const x = q % w,
+      y = (q / w) | 0;
+    push(x - 1, y);
+    push(x + 1, y);
+    push(x, y - 1);
+    push(x, y + 1);
+  }
+  let enclosed = 0;
+  for (let q = 0; q < open.length; q++) if (open[q] && !outside[q]) enclosed++;
+  // As a share of the mark's own box, so a 6x render and a 1x one agree.
+  return (enclosed / (w * h)) * 100;
+}
+
 async function centroid(send, box) {
   const pad = 1;
   const clip = {
-    x: Math.round(box.left) - pad, y: Math.round(box.top) - pad,
-    width: Math.round(box.w) + pad * 2, height: Math.round(box.h) + pad * 2, scale: 6,
+    x: Math.round(box.left) - pad,
+    y: Math.round(box.top) - pad,
+    width: Math.round(box.w) + pad * 2,
+    height: Math.round(box.h) + pad * 2,
+    scale: 6,
   };
   const { data } = await send('Page.captureScreenshot', { format: 'png', clip });
   const png = PNG.sync.read(Buffer.from(data, 'base64'));
   // The corner pixel is the page; ink is everything that differs from it.
   const bg = [png.data[0], png.data[1], png.data[2]];
-  let sum = 0, weight = 0, ink = 0;
+  let sum = 0,
+    weight = 0,
+    ink = 0;
   for (let y = 0; y < png.height; y++) {
     for (let x = 0; x < png.width; x++) {
       const i = (y * png.width + x) * 4;
@@ -302,7 +389,12 @@ try {
   await send('Runtime.enable');
   await send('DOM.enable');
   await send('Accessibility.enable');
-  await send('Emulation.setDeviceMetricsOverride', { width: 1500, height: 1200, deviceScaleFactor: 1, mobile: false });
+  await send('Emulation.setDeviceMetricsOverride', {
+    width: 1500,
+    height: 1200,
+    deviceScaleFactor: 1,
+    mobile: false,
+  });
   up = true;
 
   const load = async () => {
@@ -311,7 +403,10 @@ try {
       if (await evaluate(send, `!!document.querySelector('#tree-state .strct-tnode__row')`)) break;
       await sleep(200);
     }
-    await evaluate(send, `document.querySelector('#tree-state .ts-demo').scrollIntoView({ block: 'center' })`);
+    await evaluate(
+      send,
+      `document.querySelector('#tree-state .ts-demo').scrollIntoView({ block: 'center' })`,
+    );
     await sleep(600);
     return evaluate(send, ROWS);
   };
@@ -486,6 +581,119 @@ try {
     `an ${rows[1].icon.w}px glyph (16px before) in a ${heights.join(', ')}px row — the ${ROW}px the tree has always had, so an inventory shows the same number of objects`,
   );
 
+  // ══ FR-83: what is not known, and what is not current ═════════════════
+  // The shots below are clipped in page coordinates, and a clip outside the
+  // viewport comes back blank — which reads as "no hole" for every mark at
+  // once. Bring the case into view first.
+  await evaluate(
+    send,
+    `document.querySelector('#tree-integrity .ts-demo').scrollIntoView({ block: 'center' })`,
+  );
+  await sleep(500);
+  t = await evaluate(send, ROWS);
+  const live = t.live;
+  const byLive = (label) => live.find((r) => r.label === label);
+  const quietRow = byLive('HV-NODE-11');
+  const unread = byLive('HV-NODE-12');
+  const old = byLive('HV-NODE-13');
+  const alarmed = byLive('HV-NODE-14');
+  const oldAlarm = byLive('HV-NODE-15');
+  const goneUnread = byLive('HV-NODE-16');
+  const closedUnread = live.find((r) => r.label === 'cluster-05');
+  check(
+    'the FR-83 case is on the page',
+    live.length >= 7 &&
+      !!unread &&
+      !!old &&
+      !!alarmed &&
+      !!oldAlarm &&
+      !!goneUnread &&
+      !!closedUnread,
+    `${live.length} rows: one silent, one unread, one not current, one alarmed, one alarmed and not current, one unreachable and unread, and a closed node holding both`,
+  );
+
+  // A ring is the only health mark with a hole in it.
+  const holes = {};
+  for (const r of [unread, alarmed, oldAlarm, goneUnread]) {
+    if (r?.health) holes[r.label] = await hole(send, r.health.box);
+  }
+  check(
+    'not known is drawn, and is the only health mark with a hole in it',
+    quietRow.marks === 0 &&
+      unread.health?.kind === 'unknown' &&
+      holes['HV-NODE-12'] > 3 &&
+      holes['HV-NODE-14'] < 0.5 &&
+      holes['HV-NODE-15'] < 0.5,
+    `"HV-NODE-11" carries nothing; "HV-NODE-12" carries a ring whose enclosed background is ${holes['HV-NODE-12'].toFixed(1)}% of its own box, against ${holes['HV-NODE-14'].toFixed(1)}% for the warning triangle and ${holes['HV-NODE-15'].toFixed(1)}% for the critical diamond — a shape fact, so it survives greyscale`,
+  );
+  check(
+    'not read is never drawn as a fault',
+    unread.health.ink !== alarmed.health.ink &&
+      on(unread.health.border, unread.page) >= GRAPHIC &&
+      unread.described === 'Health unknown',
+    `the ring takes the neutral tone at ${on(unread.health.border, unread.page).toFixed(2)}:1 against the row (floor ${GRAPHIC}) — not the alarm's hue — and the row is described "${unread.described}"`,
+  );
+
+  // Stale: receded, but nothing cut.
+  const normalLabel = on(quietRow.labelInk, quietRow.page);
+  const staleLabel = on(old.labelInk, old.page);
+  const goneLabel = on(goneUnread.labelInk, goneUnread.page);
+  check(
+    'a reading that is not current recedes, below unreachable, and nothing cuts it',
+    old.stale &&
+      !old.unreachable &&
+      !old.cut &&
+      goneUnread.cut &&
+      staleLabel < normalLabel &&
+      staleLabel > goneLabel &&
+      staleLabel >= AA,
+    `"HV-NODE-13" at ${staleLabel.toFixed(2)}:1 sits between a live row (${normalLabel.toFixed(2)}:1) and one nobody can reach (${goneLabel.toFixed(2)}:1), floor ${AA} — and its glyph is not cut, because nobody is saying it is down`,
+  );
+  check(
+    'an alarm that is not current is still an alarm',
+    oldAlarm.stale &&
+      oldAlarm.health.tone === 'critical' &&
+      oldAlarm.health.ink === by('vm-07').health.ink &&
+      on(oldAlarm.health.ink, oldAlarm.page) >= GRAPHIC &&
+      on(oldAlarm.labelInk, oldAlarm.page) < normalLabel,
+    `"HV-NODE-15" keeps the critical diamond at ${on(oldAlarm.health.ink, oldAlarm.page).toFixed(2)}:1 while its label recedes to ${on(oldAlarm.labelInk, oldAlarm.page).toFixed(2)}:1 — twenty minutes old is still an alarm, and the row is what says how old`,
+  );
+  check(
+    'unreachable still wins over not current',
+    goneUnread.unreachable && goneUnread.cut && goneUnread.health?.kind === 'unknown',
+    `"HV-NODE-16" is drawn as unreachable (cut glyph, ${goneLabel.toFixed(2)}:1) and still carries the ring — the axes do not take each other's turn`,
+  );
+
+  // A closed node counts the unread in words, never as a chip.
+  check(
+    'what is unread under a closed node is said, not counted beside the name',
+    closedUnread.mark?.count === '1' &&
+      closedUnread.mark.tone === 'critical' &&
+      /3 health unknown/i.test(closedUnread.described ?? ''),
+    `"cluster-05" wears ${closedUnread.mark?.count} critical beside its name and says "${closedUnread.described}" — the 3 nobody has read are words, because a number there would read as three more alarms`,
+  );
+
+  // The whole tree, said once.
+  const st = t.staleTree;
+  check(
+    'a tree that is out of date says so once, not once per row',
+    t.captions === 1 &&
+      t.caption?.hidden === 'true' &&
+      t.treeDescribed === 'Not current since 14:02' &&
+      t.liveDescribed === null &&
+      st.length === live.length &&
+      st.every((r) => r.stale) &&
+      st.every((r) => r.described !== 'Not current since 14:02'),
+    `${t.captions} caption ("${t.caption?.text}") out of the a11y tree, the sentence on the tree itself as aria-description, and all ${st.length} rows receded without one of them repeating it — a reader walking 2000 rows hears it once`,
+  );
+  check(
+    'the axes keep their last value under a stale tree',
+    st.find((r) => r.label === 'HV-NODE-14')?.health?.tone === 'warning' &&
+      st.find((r) => r.label === 'HV-NODE-12')?.health?.kind === 'unknown' &&
+      st.find((r) => r.label === 'cluster-05')?.mark?.count === '1',
+    `the warning, the ring and the rollup are all still drawn — the tree is old, not empty`,
+  );
+
   // ── Every palette ──────────────────────────────────────────────────────
   const sweep = [];
   for (const palette of ['arctic', 'ember', 'sage']) {
@@ -499,8 +707,20 @@ try {
       const p = await evaluate(send, ROWS);
       for (const r of p.open) {
         if (r.health)
-          sweep.push({ where: `${palette} ${theme} ${r.health.tone}`, ratio: on(r.health.ink, r.page) });
-        if (r.unreachable) sweep.push({ where: `${palette} ${theme} receded`, ratio: on(r.labelInk, r.page) });
+          sweep.push({
+            where: `${palette} ${theme} ${r.health.tone}`,
+            ratio: on(r.health.ink, r.page),
+          });
+        if (r.unreachable)
+          sweep.push({ where: `${palette} ${theme} receded`, ratio: on(r.labelInk, r.page) });
+      }
+      // FR-83's two new readings: a row that is only out of date still has to
+      // be legible, and the ring has to be visible as a graphic.
+      for (const r of [...p.live, ...p.staleTree]) {
+        if (r.stale)
+          sweep.push({ where: `${palette} ${theme} not current`, ratio: on(r.labelInk, r.page) });
+        if (r.health?.kind === 'unknown')
+          sweep.push({ where: `${palette} ${theme} ring`, ratio: on(r.health.border, r.page) });
       }
     }
   }

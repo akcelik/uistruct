@@ -1013,3 +1013,155 @@ describe('StrctTree — a closed node keeps its own state', () => {
     ).toBe('Warning, 1 critical');
   });
 });
+
+describe('StrctTree — what is not known, and what is not current (FR-83)', () => {
+  const build = (nodes: StrctTreeNodeData[], stale: string | null = null) => {
+    const fixture = TestBed.createComponent(StrctTree);
+    fixture.componentRef.setInput('nodes', nodes);
+    fixture.componentRef.setInput('stale', stale);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  };
+  const rows = (host: HTMLElement) => [...host.querySelectorAll<HTMLElement>('.strct-tnode__row')];
+  const row = (host: HTMLElement, i = 0) => rows(host)[i];
+
+  it('health "unknown" draws a mark of its own, and is not an alarm', () => {
+    const host = build([{ id: 'a', label: 'hv-12', icon: 'host', health: 'unknown' }]);
+
+    const badge = host.querySelector('.strct-icon__badge');
+    expect(badge?.classList).toContain('strct-icon__badge--unknown');
+    // Not a fault: the glyph keeps the neutral tone, which `status` carries.
+    expect(host.querySelector('strct-icon')?.getAttribute('style') ?? '').not.toContain('critical');
+    expect(row(host).getAttribute('aria-description')).toBe('Health unknown');
+  });
+
+  it('health "ok" still draws nothing — only the unread case is marked', () => {
+    const host = build([{ id: 'a', label: 'hv-11', icon: 'host', health: 'ok' }]);
+
+    expect(host.querySelector('.strct-icon__badge')).toBeNull();
+    expect(row(host).getAttribute('aria-description')).toBeNull();
+  });
+
+  it('reach "stale" recedes the row and leaves the glyph uncut', () => {
+    const host = build([{ id: 'a', label: 'hv-13', icon: 'host', reach: 'stale' }]);
+
+    expect(row(host).classList).toContain('strct-tnode__row--stale');
+    // The cut belongs to "nobody can hear it", which is not what stale says.
+    expect(row(host).classList).not.toContain('strct-tnode__row--unreachable');
+    expect(row(host).classList).not.toContain('strct-tnode__row--orphaned');
+    expect(row(host).getAttribute('aria-description')).toBe('Not current');
+  });
+
+  it('unreachable still wins over stale, and both keep the other axes', () => {
+    const host = build([
+      { id: 'a', label: 'hv-16', icon: 'host', reach: 'unreachable', health: 'unknown' },
+    ]);
+
+    expect(row(host).classList).toContain('strct-tnode__row--unreachable');
+    expect(row(host).classList).not.toContain('strct-tnode__row--stale');
+    expect(host.querySelector('.strct-icon__badge')?.classList).toContain(
+      'strct-icon__badge--unknown',
+    );
+    expect(row(host).getAttribute('aria-description')).toBe('Not reachable, Health unknown');
+  });
+
+  it('a stale alarm is still an alarm: the mark keeps its own shape', () => {
+    const host = build([
+      { id: 'a', label: 'hv-15', icon: 'host', reach: 'stale', health: 'critical' },
+    ]);
+
+    expect(host.querySelector('.strct-icon__badge')?.classList).toContain(
+      'strct-icon__badge--critical',
+    );
+    expect(row(host).getAttribute('aria-description')).toBe('Not current, Critical');
+  });
+
+  it('a closed node says how many children are unread, and wears no chip for them', () => {
+    const host = build([
+      {
+        id: 'c',
+        label: 'cluster-05',
+        icon: 'cluster',
+        rollup: { critical: 1, unknown: 3 },
+        children: [{ id: 'h', label: 'hv-17', icon: 'host' }],
+      },
+    ]);
+
+    // The chip counts alarms only — three unread children are not three alarms.
+    expect(host.querySelector('.strct-tnode__rollup')?.textContent?.trim()).toBe('1');
+    expect(row(host).getAttribute('aria-description')).toBe('1 critical, 3 health unknown');
+  });
+
+  it('an open node stops counting what is under it, unread included', () => {
+    const host = build([
+      {
+        id: 'c',
+        label: 'cluster-05',
+        icon: 'cluster',
+        expanded: true,
+        rollup: { critical: 1, unknown: 3 },
+        children: [{ id: 'h', label: 'hv-17', icon: 'host' }],
+      },
+    ]);
+
+    expect(host.querySelector('.strct-tnode__rollup')).toBeNull();
+    expect(row(host).getAttribute('aria-description')).toBeNull();
+  });
+
+  it('[stale] recedes every row and says it once, on the tree itself', () => {
+    const host = build(
+      [
+        { id: 'a', label: 'hv-11', icon: 'host' },
+        { id: 'b', label: 'hv-14', icon: 'host', health: 'warning' },
+      ],
+      'Not current since 14:02',
+    );
+
+    expect(host.getAttribute('aria-description')).toBe('Not current since 14:02');
+    expect(host.classList).toContain('strct-tree--stale');
+    expect(rows(host).length).toBe(2);
+    for (const r of rows(host)) expect(r.classList).toContain('strct-tnode__row--stale');
+    // Once: a reader walking two thousand rows must not hear it two thousand
+    // times, so no row repeats the sentence.
+    for (const r of rows(host))
+      expect(r.getAttribute('aria-description')).not.toBe('Not current since 14:02');
+    // The axes keep their last value — the tree is old, not empty.
+    expect(host.querySelector('.strct-icon__badge')?.classList).toContain(
+      'strct-icon__badge--warning',
+    );
+  });
+
+  it('the caption is drawn once and kept out of the a11y tree', () => {
+    const host = build([{ id: 'a', label: 'hv-11', icon: 'host' }], 'Not current since 14:02');
+
+    const caps = host.querySelectorAll('.strct-tree__stale');
+    expect(caps.length).toBe(1);
+    // role="tree" admits treeitems; the visible caption is not one of them.
+    expect(caps[0].getAttribute('aria-hidden')).toBe('true');
+    expect(caps[0].textContent?.trim()).toBe('Not current since 14:02');
+  });
+
+  it('a live tree is untouched: no caption, no description, no receding', () => {
+    const host = build([{ id: 'a', label: 'hv-11', icon: 'host' }]);
+
+    expect(host.querySelector('.strct-tree__stale')).toBeNull();
+    expect(host.getAttribute('aria-description')).toBeNull();
+    expect(host.classList).not.toContain('strct-tree--stale');
+    expect(row(host).classList).not.toContain('strct-tnode__row--stale');
+  });
+
+  it('the new words go through stateWords like the others', () => {
+    const fixture = TestBed.createComponent(StrctTree);
+    fixture.componentRef.setInput('nodes', [
+      { id: 'a', label: 'hv-13', icon: 'host', reach: 'stale', health: 'unknown' },
+    ] satisfies StrctTreeNodeData[]);
+    fixture.componentRef.setInput('stateWords', {
+      stale: 'Güncel değil',
+      unknown: 'Durumu bilinmiyor',
+    });
+    fixture.detectChanges();
+
+    const r = (fixture.nativeElement as HTMLElement).querySelector('.strct-tnode__row');
+    expect(r?.getAttribute('aria-description')).toBe('Güncel değil, Durumu bilinmiyor');
+  });
+});
