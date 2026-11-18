@@ -198,6 +198,11 @@ const ROUTES = [
   // What a node says after its label: the quiet meta and the status tag, which
   // have to sit on the row without pushing the label out of it.
   ['tree-trailing', '/components/tree', '#tree-trailing', undefined, '.strct-tree'],
+  // FR-83: a row nobody has read beside a healthy one, a reading that has
+  // gone old beside a live alarm, and the same tree with every row out of
+  // date. The ring, the receding and the caption are all a few pixels each,
+  // so they get their own crop rather than a page shot.
+  ['tree-integrity', '/components/tree', '#tree-integrity', undefined, '#tree-integrity .ts-demo'],
   // The detail pane's » button, which used to draw the same right-pointing
   // chevron whether the pane was shut or open. Two crops of the one grid: at
   // rest, and with the second row's pane open — the open shot holds both

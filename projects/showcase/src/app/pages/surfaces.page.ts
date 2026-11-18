@@ -538,6 +538,33 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="tree-integrity"
+      owner="tree"
+      heading="What the tree does not know, and what it read a while ago"
+      description='FR-83, from an avionics-grade review. A display may not let a value that is not known, or not current, look normal. health="unknown" is the case where the alarms were never read or the read failed: a tree that can only say "no mark" reports it as healthy, which is the one answer it does not have. It draws a ring in the health corner — the only health mark with a hole in it, so it can be mistaken neither for no mark nor for an alarm, and it never takes an alarm&apos;s hue, because not read is not a fault. reach="stale" is the rung below unreachable: the object answered, but the reading is older than the consumer&apos;s threshold, so the row recedes and the glyph is NOT cut — nobody is saying it is down. An alarm that is stale keeps its tone: twenty minutes old is still an alarm. A closed node counts what is unread under it in words only; a number beside the name would make it look like one more alarm. And [stale] says it for a whole tree at once, drawn once at the top and described once on the tree, not two thousand times.'
+      code='{ label: "HV-NODE-12", icon: "host", health: "unknown" } · [stale]="&apos;Not current since 14:02&apos;"'
+    >
+      <div class="ts-demo">
+        <div class="ts-demo__col">
+          <span class="ts-demo__cap">live — the rows say what is known</span>
+          <div class="ts-demo__pane" data-ti="live">
+            <strct-tree style="width: 100%; max-width: 340px" [nodes]="integrityTree" />
+          </div>
+        </div>
+        <div class="ts-demo__col">
+          <span class="ts-demo__cap">the whole tree is out of date</span>
+          <div class="ts-demo__pane" data-ti="stale">
+            <strct-tree
+              style="width: 100%; max-width: 340px"
+              [nodes]="integrityTree"
+              [stale]="staleSince"
+            />
+          </div>
+        </div>
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="tree-lazy"
       owner="tree"
       heading="Read the children on expand"
@@ -1560,6 +1587,49 @@ export class SurfacesPage {
   // The four state axes: reach (the row), mode (the icon's top corner),
   // power (its bottom corner) and health (the row's end). A nominal object
   // draws nothing at all.
+  /**
+   * FR-83: the three things the tree could not say. A normal row beside a row
+   * nobody has read, a reading that has gone old, a live alarm beside a stale
+   * one, and a closed node holding both a real alarm and three unread
+   * children.
+   */
+  protected readonly staleSince = 'Not current since 14:02';
+  protected readonly integrityTree: StrctTreeNodeData[] = [
+    {
+      id: 'i-cluster',
+      label: 'cluster-04',
+      icon: 'cluster',
+      expanded: true,
+      children: [
+        { id: 'i-hv1', label: 'HV-NODE-11', icon: 'host' },
+        { id: 'i-hv2', label: 'HV-NODE-12', icon: 'host', health: 'unknown' },
+        { id: 'i-hv3', label: 'HV-NODE-13', icon: 'host', reach: 'stale' },
+        { id: 'i-hv4', label: 'HV-NODE-14', icon: 'host', health: 'warning' },
+        {
+          id: 'i-hv5',
+          label: 'HV-NODE-15',
+          icon: 'host',
+          reach: 'stale',
+          health: 'critical',
+        },
+        {
+          id: 'i-hv6',
+          label: 'HV-NODE-16',
+          icon: 'host',
+          reach: 'unreachable',
+          health: 'unknown',
+        },
+      ],
+    },
+    {
+      id: 'i-closed',
+      label: 'cluster-05',
+      icon: 'cluster',
+      rollup: { critical: 1, unknown: 3 },
+      children: [{ id: 'i-hv7', label: 'HV-NODE-17', icon: 'host' }],
+    },
+  ];
+
   protected readonly stateTree: StrctTreeNodeData[] = [
     {
       id: 's-cluster',

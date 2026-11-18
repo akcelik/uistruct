@@ -28,18 +28,29 @@ import { StrctAnnouncer } from '../a11y/announcer';
  * icon, where it used to take the power badge's slot and make "switched off"
  * and "not answering" the same mark.
  */
-export type StrctTreeReach = 'ok' | 'unreachable' | 'orphaned';
+export type StrctTreeReach = 'ok' | 'stale' | 'unreachable' | 'orphaned';
 
 /** The object's own power, where it has one. `on` draws nothing. */
 export type StrctTreePower = 'on' | 'off' | 'suspended';
 
-/** What the alarms say about this object. `ok` draws nothing. */
-export type StrctTreeHealth = 'ok' | 'warning' | 'critical';
+/**
+ * What the alarms say about this object. `ok` draws nothing — and `unknown`
+ * is not `ok`: it is the case where the alarms were never read, or the read
+ * failed, which a tree that can only say "no mark" reports as healthy.
+ */
+export type StrctTreeHealth = 'ok' | 'unknown' | 'warning' | 'critical';
 
 /** What the alarms say about everything under a node that is collapsed. */
 export interface StrctTreeRollup {
   warning?: number;
   critical?: number;
+  /**
+   * How many children could not be judged. It is NOT counted as a warning
+   * and draws no chip — "we have not read these" is not an alarm, and a
+   * number beside the name would make it look like one. It is said in the
+   * node's description, where a reader who asks gets the answer.
+   */
+  unknown?: number;
 }
 
 export interface StrctTreeNodeData {
@@ -67,9 +78,12 @@ export interface StrctTreeNodeData {
    */
   stateLabel?: string;
   /**
-   * Can the object be reached? `unreachable` (not answering, disconnected)
-   * and `orphaned` (its parent no longer knows it) draw the row back and cut
-   * the icon, and leave the other three axes to say what was last known.
+   * Can the object be reached, and how recently? `unreachable` (not
+   * answering, disconnected) and `orphaned` (its parent no longer knows it)
+   * draw the row back and cut the icon, and leave the other three axes to say
+   * what was last known. `stale` is the rung below them — it answered, but
+   * the reading is older than the consumer's threshold — so the row recedes
+   * and the icon is NOT cut: nobody is saying it is down.
    */
   reach?: StrctTreeReach;
   /**
@@ -78,7 +92,11 @@ export interface StrctTreeNodeData {
    * where every normal row carries a mark is a tree with no marks.
    */
   power?: StrctTreePower;
-  /** What its alarms say — drawn at the row's end, where the eye can run down them. */
+  /**
+   * What its alarms say. `unknown` draws a ring in the health corner — a
+   * slot with nothing in it — so an object nobody has read is never drawn as
+   * a healthy one.
+   */
   health?: StrctTreeHealth;
   /** What the alarms under it say, for a node whose children are not visible. */
   rollup?: StrctTreeRollup;
@@ -155,6 +173,8 @@ export const defaultStateWords: StrctTreeStateWords = {
   off: 'Off',
   unreachable: 'Not reachable',
   orphaned: 'Orphaned',
+  stale: 'Not current',
+  unknown: 'Health unknown',
   suspended: 'Suspended',
 };
 
@@ -183,7 +203,10 @@ let treeNodeCounter = 0;
     <div
       class="strct-tnode__row"
       [class.strct-tnode__row--active]="displayActive()"
-      [class.strct-tnode__row--unreachable]="displayReach() !== 'ok'"
+      [class.strct-tnode__row--stale]="displayReach() === 'stale' || treeStale()"
+      [class.strct-tnode__row--unreachable]="
+        displayReach() === 'unreachable' || displayReach() === 'orphaned'
+      "
       [class.strct-tnode__row--orphaned]="displayReach() === 'orphaned'"
       role="treeitem"
       [attr.tabindex]="rowTabindex()"
@@ -395,6 +418,19 @@ let treeNodeCounter = 0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+      /* A reading that is no longer current: the row recedes, and that is
+         all. It is the rung below unreachable on purpose — the object
+         answered, so nothing cuts its glyph; what is in doubt is the age of
+         what the row says, not whether anyone can hear it. The same muting
+         covers a whole tree under the stale input, where the appliance itself
+         has gone quiet and every row is as old as the last read. */
+      .strct-tnode__row--stale .strct-tnode__label,
+      .strct-tnode__row--stale .strct-tnode__meta {
+        color: var(--t2);
+      }
+      .strct-tnode__row--stale .strct-tnode__icon > svg {
+        opacity: 0.75;
       }
       /* An object that cannot be reached: the row recedes and its kind icon
          is cut, so a reader can see at a glance which part of the tree is
@@ -642,6 +678,9 @@ export class StrctTreeNode {
     return health === 'ok' ? 'none' : health;
   });
 
+  /** Is the whole tree out of date, whatever this row's own reach says? */
+  protected readonly treeStale = computed(() => !!this.tree?.stale());
+
   /** The bottom corner: what the object's own power is doing. */
   protected readonly iconLifecycle = computed<'none' | 'running' | 'paused' | 'off'>(() => {
     // A tree still written against the single slot said everything through
@@ -666,9 +705,16 @@ export class StrctTreeNode {
    * alarms said is last known, not current.
    */
   protected readonly iconStatus = computed<StrctIconStatus>(() => {
-    if (this.displayReach() !== 'ok') return 'neutral';
+    const reach = this.displayReach();
+    // Out of reach: what its alarms said is last known, not current, so the
+    // glyph keeps the neutral tone. `stale` does NOT neutralise it — an
+    // alarm twenty minutes old is still an alarm, and the receded row is
+    // what says how old it is.
+    if (reach === 'unreachable' || reach === 'orphaned') return 'neutral';
     const health = this.displayHealth();
-    return health === 'ok' ? 'neutral' : health;
+    // Not read is not a fault: the ring says so without taking a hue.
+    if (health === 'ok' || health === 'unknown') return 'neutral';
+    return health;
   });
 
   /**
@@ -721,6 +767,11 @@ export class StrctTreeNode {
     if (mark?.count) {
       parts.push(`${mark.count} ${words[mark.tone] ?? mark.tone}`.toLowerCase());
     }
+    // What is under it that nobody has read. It draws no chip — it is not an
+    // alarm — but a reader who asks the row what it holds gets the number.
+    const rollup = this.displayRollup();
+    const unread = !this.isOpen() ? (rollup?.unknown ?? 0) : 0;
+    if (unread) parts.push(`${unread} ${words.unknown ?? 'unknown'}`.toLowerCase());
     return parts.filter(Boolean).join(', ');
   });
   protected readonly displayActive = computed(() => this.node()?.active ?? this.active());
@@ -863,6 +914,14 @@ export class StrctTreeNode {
   encapsulation: ViewEncapsulation.None,
   imports: [StrctTreeNode],
   template: `
+    @if (stale(); as text) {
+      <!-- Drawn once at the top. A screen reader hears it through the tree's
+           own aria-description instead, so this one is out of the a11y tree:
+           inside role="tree", only treeitems may be read. -->
+      <div class="strct-tree__stale" aria-hidden="true">
+        <span class="strct-tree__stalemark"></span>{{ text }}
+      </div>
+    }
     @if (nodes(); as ns) {
       @for (n of ns; track n.id ?? n.label) {
         <strct-tree-node
@@ -891,6 +950,8 @@ export class StrctTreeNode {
   host: {
     class: 'strct-tree',
     role: 'tree',
+    '[attr.aria-description]': 'stale() || null',
+    '[class.strct-tree--stale]': 'stale()',
     '[class.strct-tree--comfortable]': "density() === 'comfortable'",
     '[class.strct-tree--framed]': 'framed()',
     '[style.max-height.px]': 'maxHeight()',
@@ -899,6 +960,28 @@ export class StrctTreeNode {
     `
       .strct-tree {
         display: block;
+      }
+      /* The caption for a tree whose readings have all stopped. It takes the
+         ring the unknown health mark uses, because it is saying the same kind
+         of thing one level up: what is below is not known to be current. It
+         is a caption, not an alarm — nothing here is red. */
+      .strct-tree__stale {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin-block-end: var(--space-1);
+        padding: 4px var(--space-2);
+        font-size: var(--text-xs);
+        color: var(--t2);
+        background: var(--bg-2);
+        border-radius: var(--radius-sm);
+      }
+      .strct-tree__stalemark {
+        flex-shrink: 0;
+        width: 9px;
+        height: 9px;
+        border: 2px solid var(--t3);
+        border-radius: 50%;
       }
       /* The refusal beside the pointer: fixed, so no ancestor's overflow can
          clip it, and never under the pointer itself. */
@@ -997,6 +1080,16 @@ export class StrctTree {
   readonly loadingLabel = input('Loading…');
   /** What each state is called after a node's label — translate once per tree. */
   readonly stateWords = input<StrctTreeStateWords>(defaultStateWords);
+  /**
+   * The whole tree is out of date, and why — "Not current since 14:02", or
+   * `null` while it is live. Set it when the consumer has had no successful
+   * read for longer than its own threshold: every row recedes the way one
+   * `reach: 'stale'` row does, the axes keep their last value, and the
+   * sentence is drawn once at the top and described once on the tree itself.
+   * Once, not per node: a screen reader walking two thousand rows must not
+   * hear it two thousand times.
+   */
+  readonly stale = input<string | null>(null);
   /** Accessible label of each node's chevron toggle; receives the expanded state and the node label. */
   readonly chevronAriaLabel =
     input<(expanded: boolean, label: string) => string>(defaultChevronAriaLabel);

@@ -5,6 +5,69 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.22.0] - 2026-11-18
+
+[FR-83](docs/feature-requests/archive/tree-unknown-and-stale.md), from
+HyperStruct's avionics-grade review (O519).
+
+### Added
+
+- **The tree can say "not known".** `StrctTreeHealth` gains `'unknown'`: the
+  alarms were never read, or the read failed. A tree that can only say "no
+  mark" reports that as healthy, which is the one answer it does not have.
+
+  It draws a **ring** in the health corner — the only health mark with a hole
+  in it, so it can be mistaken neither for no mark nor for an alarm — and it
+  never takes an alarm's hue, because not read is not a fault.
+  `StrctTreeRollup` gains `unknown`, counted in the node's description only:
+  a number beside the name would read as that many more alarms.
+
+- **The tree can say "not current".** `StrctTreeReach` gains `'stale'`: the
+  object answered, but the reading is older than the consumer's threshold.
+  The row recedes and the glyph is **not** cut — nobody is saying it is down.
+  `unreachable` and `orphaned` still win over it.
+
+  One decision the request left open, made and stated: **a stale alarm keeps
+  its tone.** `unreachable` neutralises the glyph because nobody can confirm
+  what its alarms said; `stale` does not, since an alarm twenty minutes old
+  is still an alarm, and the receded row is what says how old.
+
+- **`strct-tree [stale]`** — a string or null. Every row recedes the way one
+  `reach: 'stale'` row does, the axes keep their last value (the tree is old,
+  not empty), and the sentence is drawn **once** at the top, out of the
+  accessibility tree, and carried **once** on the tree itself as
+  `aria-description`. A reader walking two thousand rows must not hear it two
+  thousand times.
+
+- `stateWords` gains `stale` and `unknown`, so both translate with the rest.
+
+### Measured
+
+`scripts/tree-state.mjs` grew from 16 to **25** checks; **11** new specs.
+The nine new checks cannot run on 7.21.0 at all — the values they set do
+not exist there.
+
+The ring's enclosed background is **16.3%** of its own box, against
+**0.0%** for the warning triangle and **0.0%** for the critical diamond.
+That is measured as shape, not read off the CSS: the mark is captured at
+6×, ink is everything that differs from the surface, and the hole is
+background the flood from the box's edge cannot reach — so it survives
+greyscale, which is the whole reason a ring was chosen over a second hue.
+Against the row it reads **5.13:1** (floor 3:1 for a graphic).
+
+A stale row sits at **6.20:1**, between a live row (**17.49:1**) and one
+nobody can reach (**5.13:1**), floor 4.5. A stale critical keeps its
+diamond at **4.74:1** while its label recedes. 120 readings over three
+palettes × two themes, weakest **4.59:1**.
+
+### Also
+
+- A new demo, `#tree-integrity` on the tree page, with a visual baseline
+  (`tree-integrity`): a row nobody has read beside a healthy one, a reading
+  that has gone old beside a live alarm, and the same tree with every row out
+  of date.
+- `strct-icon` gains `badge="unknown"` — the ring, in the health corner.
+
 ## [7.21.0] - 2026-11-18
 
 Asked for directly against 7.20.0

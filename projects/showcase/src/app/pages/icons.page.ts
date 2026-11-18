@@ -541,6 +541,7 @@ export class IconsPage {
     { badge: 'success', label: 'Healthy' },
     { badge: 'warning', label: 'Degraded' },
     { badge: 'critical', label: 'Critical' },
+    { badge: 'unknown', label: 'Not known' },
   ];
 
   /**
