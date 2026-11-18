@@ -114,11 +114,20 @@ const STRCT_ICON_DEFS = {
     '<path d="M9 2.5h4.5V7M13.5 2.5L8.5 7.5M11.5 9v3.5a1 1 0 01-1 1h-7a1 1 0 01-1-1v-7a1 1 0 011-1H7"/>',
 
   // ── Datacenter / infrastructure ─────────────────────────────
+  // A datacenter is a site, not a card. It used to be a rounded box with
+  // three rules and a dot, which is the construction `node` uses — the same
+  // mark one row of the inventory apart. A building says "a place that holds
+  // the rest of this tree" with no detail to read at 14px.
   datacenter:
-    '<rect x="2.5" y="2.5" width="11" height="11" rx="1"/><path d="M5 5h6M5 7.3h6M5 9.6h3.5"/><circle cx="11" cy="9.7" r=".5" fill="currentColor" stroke="none"/>',
+    '<path d="M1.8 13.7h12.4"/><path d="M3.4 13.7V3.4a1 1 0 011-1h7.2a1 1 0 011 1v10.3"/><path d="M5.3 5.4h2M9 5.4h2M5.3 8h2M9 8h2"/><path d="M6.9 13.7v-3h2.2v3"/>',
   rack: '<rect x="3.5" y="2" width="9" height="12" rx="1"/><path d="M3.5 5.2h9M3.5 8.4h9M3.5 11.6h9"/><circle cx="5.4" cy="3.6" r=".4" fill="currentColor" stroke="none"/><circle cx="5.4" cy="6.8" r=".4" fill="currentColor" stroke="none"/><circle cx="5.4" cy="10" r=".4" fill="currentColor" stroke="none"/>',
+  // A cluster is several machines acting as one, so it is drawn from the same
+  // unit `host` is: three chassis, stepped, each with its own lamp. The old
+  // mark was three tall bars whose strokes met — at 14px it showed none of
+  // the three lanes that make three machines three, so it read as one striped
+  // block, and at the level above `host` that is the wrong object.
   cluster:
-    '<rect x="3" y="3.5" width="3" height="9" rx="1"/><rect x="6.5" y="2.5" width="3" height="11" rx="1"/><rect x="10" y="3.5" width="3" height="9" rx="1"/><circle cx="4.5" cy="6" r=".5" fill="currentColor" stroke="none"/><circle cx="4.5" cy="8" r=".5" fill="currentColor" stroke="none"/><circle cx="4.5" cy="10" r=".5" fill="currentColor" stroke="none"/><circle cx="8" cy="5" r=".5" fill="currentColor" stroke="none"/><circle cx="8" cy="7" r=".5" fill="currentColor" stroke="none"/><circle cx="8" cy="9" r=".5" fill="currentColor" stroke="none"/><circle cx="8" cy="11" r=".5" fill="currentColor" stroke="none"/><circle cx="11.5" cy="6" r=".5" fill="currentColor" stroke="none"/><circle cx="11.5" cy="8" r=".5" fill="currentColor" stroke="none"/><circle cx="11.5" cy="10" r=".5" fill="currentColor" stroke="none"/>',
+    '<rect x="1.9" y="2" width="7.8" height="2.8" rx="1"/><rect x="4.1" y="6.6" width="7.8" height="2.8" rx="1"/><rect x="6.3" y="11.2" width="7.8" height="2.8" rx="1"/><circle cx="3.4" cy="3.4" r=".5" fill="currentColor" stroke="none"/><circle cx="5.6" cy="8" r=".5" fill="currentColor" stroke="none"/><circle cx="7.8" cy="12.6" r=".5" fill="currentColor" stroke="none"/>',
   host: '<rect x="2.5" y="3" width="11" height="4.2" rx="1"/><rect x="2.5" y="8.8" width="11" height="4.2" rx="1"/><circle cx="4.7" cy="5.1" r=".55" fill="currentColor" stroke="none"/><circle cx="4.7" cy="10.9" r=".55" fill="currentColor" stroke="none"/><path d="M7 5.1h4M7 10.9h4"/>',
   vm: '<rect x="2" y="3" width="12" height="8" rx="1"/><path d="M6 14h4M8 11v3"/>',
   // Network switch — front-panel view: chassis + status LEDs + a row of RJ45 ports.

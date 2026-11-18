@@ -108,6 +108,29 @@ interface StateExample {
     </app-demo>
 
     <app-demo
+      anchor="inventory-ladder"
+      heading="The inventory ladder — a site, a group, a machine, a cabinet"
+      description="The rungs of one tree, which means each is read beside the one above and below it. datacenter was a rounded box with three rules and a dot, which is exactly how node is built one rung away: 31.54% apart stroke for stroke, and the same card at a glance. cluster was three tall bars whose strokes met — at 14px it showed none of the two lanes that make three machines three, so it read as one striped block. Both were redrawn in 7.21.0: a site is a building, and a cluster is three of the chassis host is drawn from. Measured by scripts/glyph-distinct.mjs, which now also counts the clear lanes a glyph must keep."
+    >
+      <div class="ig-sizes">
+        @for (name of inventoryLadder; track name) {
+          <div class="ig-size">
+            <strct-icon [name]="name" [size]="14" />
+            <span class="ig-name">{{ name }}</span>
+          </div>
+        }
+      </div>
+      <div class="ig-sizes">
+        @for (name of inventoryLadder; track name) {
+          <div class="ig-size">
+            <strct-icon [name]="name" [size]="24" />
+            <span class="ig-name">{{ name }}</span>
+          </div>
+        }
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="states"
       heading="Object states"
       description="The same object glyph carries every state it is in, in its own two corners — the way an inventory tree an operator already knows draws them. Health takes the TOP corner (circle success · triangle warning · diamond critical · circle info), where vCenter puts an object's alarm and where Clarity puts its badge; lifecycle takes the BOTTOM one (▶ running · ⏸ paused · ■ off), beside the mode tile that shares it — an object kind has one or the other, a host has a mode and a machine has a power state, and when both are set the mode wins because &ldquo;out of service&rdquo; is the louder fact. The marks are 58–76% of the glyph and never below 11px, ringed in 2px of the surface: an 8px disc carrying a 6px tick is a smudge at arm's length on a 1920×1080 screen, so the silhouette carries the state and nothing is written inside it. status tones the glyph itself, so an alarmed object reads as alarmed before any corner is looked at. badge=&quot;maintenance&quot; still works and draws the tile; it is deprecated since 5.29.0."
@@ -519,6 +542,12 @@ export class IconsPage {
     { badge: 'warning', label: 'Degraded' },
     { badge: 'critical', label: 'Critical' },
   ];
+
+  /**
+   * The rungs of the inventory tree, in the order an operator walks down
+   * them. Gathered so a redrawing of one is read against the others.
+   */
+  protected readonly inventoryLadder = ['datacenter', 'cluster', 'host', 'rack', 'vm', 'node'];
 
   /** FR-69-04, in the order the ask listed them. */
   protected readonly dataProtection = [

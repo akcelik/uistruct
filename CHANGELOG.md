@@ -5,6 +5,68 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.21.0] - 2026-11-18
+
+Asked for directly against 7.20.0
+([`docs/feature-requests/archive/inventory-glyphs.md`](docs/feature-requests/archive/inventory-glyphs.md)).
+
+### Changed
+
+- **`datacenter` is a building, and `cluster` is several machines.** The two
+  sit on rungs of one tree, which means each is read beside the one above and
+  below it.
+
+  `datacenter` was a rounded box with three rules and a dot — the same
+  construction `node` uses, one rung away in the same product. It is now a
+  facade on a ground line, with four windows and a door: nothing to lose at
+  14px, and nothing else in the set is a building.
+
+  `cluster` was three tall bars whose gaps (0.5 user units) were narrower
+  than the stroke that drew them (1.4), so every pair of bodies **overlapped
+  by 0.9 user units**. They were never three bodies, at any size. It is now
+  three of the chassis `host` is drawn from, stepped, each with its own lamp
+  — built from the rung below it, which is what a cluster is.
+
+### Measured
+
+`scripts/glyph-distinct.mjs` gained two measurements, because the one it
+had could not see either complaint.
+
+**Clear lanes** — along the axis a glyph lays its units out, the runs of
+rows or columns carrying no ink at all, strictly inside the glyph's extent.
+A mark whose content is "three machines" only shows three if background
+runs between them. `cluster`: **0 lanes of the 2 it needs on 7.20.0**,
+widest 0.00px → **2 lanes, widest 1.25px**.
+
+**Outline** — ink flood-filled from the frame, and whatever the fill cannot
+reach compared on its own, so a new glyph cannot borrow another's
+silhouette. `datacenter`/`node`: 14.56% → **20.59%**.
+
+Stroke distances, against a **4.56%** floor (twice `lock`/`unlock`, the
+weakest pair the set already accepts): `datacenter`/`node` 31.54% →
+**45.81%**, `cluster`/`host` 29.79% → **39.00%**, `cluster`/`layers`
+26.10% → **34.68%**. Two fell and are stated rather than hidden:
+`datacenter`/`rack` 40.11% → 20.46% and `cluster`/`rack` 35.44% → 33.97%
+— a building and a cabinet are both tall now, and a stack of chassis and a
+cabinet of shelves are both stacks. Both clear the floor many times over.
+
+**The `datacenter` complaint itself is not measurable, and is not claimed
+to be.** Neither metric flagged it on 7.20.0 and both would have passed it
+forever; a rounded box with lines sits far from another rounded box with
+lines. What was wrong is what the mark depicted. The hard fact on that side
+is structural, from the source and not a gate: `datacenter` and `node` were
+the same construction, a rect plus horizontal rules plus one dot.
+
+### Also
+
+- A new demo on the icons page, `#inventory-ladder`, gathers the six rungs
+  (`datacenter`, `cluster`, `host`, `rack`, `vm`, `node`) at 14px and 24px,
+  with a visual baseline (`glyph-inventory`) — a 14px glyph inside a page
+  shot is far under that gate's threshold, so the pages carrying these glyphs
+  moved only 0.10–0.15%, inside the band run-to-run antialiasing noise
+  already occupies. Those baselines were left alone rather than refreshed
+  with noise.
+
 ## [7.20.0] - 2026-11-16
 
 Asked for directly against 7.19.0

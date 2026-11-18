@@ -311,6 +311,16 @@ const ROUTES = [
   // no bar. chart-bands.mjs measures the drift; this is the picture, because a
   // label can be centred and still be the wrong label or the wrong size.
   ['bar-categories', '/components/bar', '#bar-categories', undefined, '#bar-categories-chart'],
+  // The inventory ladder, at the two sizes a tree row and a toolbar read it
+  // at. `glyph-distinct.mjs` measures the distances and the lanes; this is
+  // the picture, so a redrawing that still clears both cannot go unseen.
+  [
+    'glyph-inventory',
+    '/foundations/icons',
+    '#inventory-ladder',
+    undefined,
+    '#inventory-ladder .demo__stage',
+  ],
   // FR-69-04: eleven glyphs whose job is to be told apart from the one beside
   // them. `glyph-distinct.mjs` measures that numerically at 14px; this is the
   // picture, so a redrawing that still clears the floor cannot go unseen.
