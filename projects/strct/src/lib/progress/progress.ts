@@ -62,7 +62,9 @@ export interface StrctProgressSegment {
           <span class="strct-progress__label">{{ label() }}</span>
         }
         @if (showValue() && valuePosition() === 'top') {
-          <span class="strct-progress__value">{{ valueText() || clamped() + '%' }}</span>
+          <span class="strct-progress__value">{{
+            valueText() || (unread() ? unreadText() : clamped() + '%')
+          }}</span>
         }
       </div>
     }
@@ -70,10 +72,10 @@ export interface StrctProgressSegment {
       class="strct-progress__track"
       role="progressbar"
       [attr.aria-label]="ariaLabel() || label() || 'Progress'"
-      [attr.aria-valuenow]="indeterminate() ? null : clamped()"
+      [attr.aria-valuenow]="indeterminate() || unread() ? null : clamped()"
       [attr.aria-valuetext]="valueDescription()"
-      [attr.aria-valuemin]="indeterminate() ? null : 0"
-      [attr.aria-valuemax]="indeterminate() ? null : 100"
+      [attr.aria-valuemin]="indeterminate() || unread() ? null : 0"
+      [attr.aria-valuemax]="indeterminate() || unread() ? null : 100"
     >
       <!-- The fills are clipped to the track's corners; the markers are not,
            because a line that has to be seen against a fill needs to reach
@@ -89,7 +91,7 @@ export interface StrctProgressSegment {
               [style.width.%]="part.width"
             ></div>
           }
-        } @else {
+        } @else if (!unread()) {
           <div class="strct-progress__fill" [style.width.%]="clamped()"></div>
         }
       </div>
@@ -107,7 +109,7 @@ export interface StrctProgressSegment {
     @if (showValue() && valuePosition() === 'end') {
       <!-- A bar in a cell wants its number beside the track, not above it. -->
       <span class="strct-progress__value strct-progress__value--end">{{
-        valueText() || clamped() + '%'
+        valueText() || (unread() ? unreadText() : clamped() + '%')
       }}</span>
     }
     @if (caption()) {
@@ -123,6 +125,7 @@ export interface StrctProgressSegment {
     '[class.strct-progress--warning]': "resolvedStatus() === 'warning'",
     '[class.strct-progress--critical]': "resolvedStatus() === 'critical'",
     '[class.strct-progress--endvalue]': "showValue() && valuePosition() === 'end'",
+    '[class.strct-progress--unread]': 'unread()',
   },
   styles: [
     `
@@ -206,6 +209,23 @@ export interface StrctProgressSegment {
            pin a specific colour. */
         background: var(--strct-progress-track, color-mix(in srgb, var(--t1) 12%, transparent));
         box-shadow: inset 0 0 0 1px var(--b2);
+      }
+      /* No reading: the track is empty AND says so. An empty track alone is
+         what 0% looks like, so an unread bar is hatched — a texture, not a
+         hue, because a reader who cannot see the colour difference still has
+         to tell "nothing measured" from "nothing used". The value beside it
+         carries the word. */
+      .strct-progress--unread .strct-progress__track {
+        background:
+          repeating-linear-gradient(
+            -45deg,
+            color-mix(in srgb, var(--t1) 16%, transparent) 0 2px,
+            transparent 2px 5px
+          ),
+          var(--strct-progress-track, color-mix(in srgb, var(--t1) 7%, transparent));
+      }
+      .strct-progress--unread .strct-progress__value {
+        color: var(--t3);
       }
       .strct-progress__fills {
         position: absolute;
@@ -320,8 +340,18 @@ export interface StrctProgressSegment {
   ],
 })
 export class StrctProgress {
-  /** Current value. */
-  readonly value = input(0);
+  /**
+   * Current value, or `null` — the reading is not known.
+   *
+   * `null` is not zero. A fullness that was never read used to arrive as
+   * `value ?? 0` and be drawn as an empty bar: "0% used" on a volume nobody
+   * has measured. With `null` the track draws no fill and takes no status
+   * colour, `valueText` falls back to `unreadText`, and `aria-valuenow` is
+   * left off so assistive tech reads the text instead of "0 percent".
+   */
+  readonly value = input<number | null>(0);
+  /** What an unread bar prints and says. */
+  readonly unreadText = input('Not read');
   /** Accessible name of the bar (e.g. "CPU usage"). Falls back to "Progress". */
   readonly label = input('');
   /** Visual status color. */
@@ -374,7 +404,9 @@ export class StrctProgress {
    */
   readonly thresholds = input<StrctThresholds | null>(null);
 
-  protected readonly clamped = computed(() => Math.max(0, Math.min(100, this.value())));
+  /** Is the reading missing — as opposed to zero? */
+  protected readonly unread = computed(() => this.value() === null && !this.segments()?.length);
+  protected readonly clamped = computed(() => Math.max(0, Math.min(100, this.value() ?? 0)));
 
   /** Segments as widths that together never exceed the track. */
   protected readonly stacked = computed(() => {
@@ -391,6 +423,7 @@ export class StrctProgress {
   /** What a screen reader reads instead of the bare number. */
   protected readonly valueDescription = computed(() => {
     if (this.indeterminate()) return 'In progress';
+    if (this.unread()) return this.valueText() || this.unreadText();
     const segments = this.segments();
     const head = segments?.length
       ? segments.map((s) => `${s.label ? s.label + ' ' : ''}${s.value}%`).join(', ')
@@ -407,9 +440,12 @@ export class StrctProgress {
 
   /** Status after applying thresholds (falls back to `status` when none set). */
   protected readonly resolvedStatus = computed<StrctProgressStatus>(() => {
+    // A bar with no reading takes no tone: "we have not measured this" must
+    // not be drawn in the colour of "this is fine" or of "this is full".
+    if (this.unread()) return 'neutral';
     const t = this.thresholds();
     if (!t) return this.status();
-    const v = this.value();
+    const v = this.value() ?? 0;
     if (t.critical != null && v >= t.critical) return 'critical';
     if (t.warning != null && v >= t.warning) return 'warning';
     const base = this.status();

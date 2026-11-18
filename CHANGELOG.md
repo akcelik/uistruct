@@ -5,6 +5,70 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.23.0] - 2026-11-18
+
+[FR-84](docs/feature-requests/archive/datagrid-error-and-unread-progress.md),
+from HyperStruct's avionics-grade review (O519).
+
+### Added
+
+- **`strct-datagrid [error]` — a read that failed is not a read that found
+  nothing.** On an error a consumer hands the grid an empty array, the grid
+  draws its `emptyText`, and the operator is told "This VM has no recovery
+  point" when the question was never answered. Of 429 datagrids in
+  HyperStruct, 26 switched `emptyText` by hand; the rest could not tell the
+  two apart.
+
+  With **no rows** the error replaces `emptyText`, under a different icon and
+  the critical tone. With **rows** it keeps them, under a one-line band — a
+  consumer holding its last good read should go on showing it and say only
+  that this attempt failed. Either way the footer's refresh stays reachable,
+  and the sentence is announced once as a `role="status"`, never once per
+  row. `labels.readFailed` names the band.
+
+- **`strct-progress [value]="null"` — a reading that was not taken is not a
+  reading of zero.** `value` was a number, so a fullness that failed to read
+  arrived as `value ?? 0` and was drawn as an empty bar: "0% used" on a
+  volume nobody has measured, in the status colour of a healthy one.
+
+  `null` draws no fill and takes **no status colour**, the track is
+  **hatched** so the difference is a texture rather than a hue, `valueText`
+  falls back to `unreadText` ("Not read"), and `aria-valuenow`, `valuemin`
+  and `valuemax` are left off so assistive tech reads the words instead of
+  "0 percent". A real zero still draws its fill and still says `0%`.
+
+### Measured
+
+`scripts/read-integrity.mjs` — **12** checks in Chrome, both themes, new in
+CI; **11** new specs.
+
+The errored empty state reads **4.74:1** against the surface under a
+different glyph from the neutral one. The band over kept rows is **1** line
+(30px) with its text at **14.21:1** on its own fill, and **2** rows stay
+drawn under it. "Refresh data" is present and enabled in all three cases.
+Exactly **1** speaking `role="status"` in each error case, **0** in a grid
+that simply found nothing.
+
+The unread track draws **0** fills and is textured on **4.9%** of its own
+width against **0.2%** for a measured zero — **24×**, against a rule of
+10× with a 2% floor. The rule is the ratio because that is the claim; the
+floor only so a hatch too faint to see could not pass on the ratio alone.
+
+**Two things had to be measured differently than first tried, and both are
+stated:** counting ink against the page gave **99.7% for both** tracks — a
+track differs from the page everywhere, whatever is in it — so the texture
+is counted as pixel-to-pixel transitions instead. And every tint is
+composited before its contrast is read: the band's fill is a
+`color-mix(…, transparent)`, and reading it as opaque gave 4.43:1 for a
+band that actually measures 14.21:1.
+
+### Also
+
+- Two demos with visual baselines: `#datagrid-error` (nothing found, the read
+  failed, and the last good read kept) and `#progress-unread` (an unread bar,
+  a measured zero and a measured 91% in one shot — the hatch is 6px tall,
+  which no page crop can see).
+
 ## [7.22.0] - 2026-11-18
 
 [FR-83](docs/feature-requests/archive/tree-unknown-and-stale.md), from

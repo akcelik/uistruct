@@ -47,6 +47,15 @@
     </button>
   </div>
 }
+@if (errorOverRows()) {
+  <!-- The last good read stays on screen; this says only that THIS attempt
+       failed. It is a status, read once, not a thing on every row. -->
+  <div class="strct-dg__errorband" role="status">
+    <strct-icon name="warning" [size]="14" status="critical" />
+    <span class="strct-sr-only">{{ L().readFailed }}:</span>
+    <span class="strct-dg__errortext">{{ error() }}</span>
+  </div>
+}
 <div
   class="strct-dg__layout"
   [class.strct-dg__layout--paned]="paneOpen()"
@@ -652,6 +661,22 @@
                       {{ L().clearFilters }}
                     </button>
                   </strct-empty-state>
+                } @else if (error(); as failure) {
+                  <!-- A read that failed is not a read that found nothing.
+                       Different icon, different tone, and the sentence the
+                       consumer wrote instead of "No data". role="status" so
+                       it is heard once when it arrives, like the band over
+                       kept rows — and not once per row, because there are
+                       none. -->
+                  <div role="status">
+                    <span class="strct-sr-only">{{ L().readFailed }}:</span>
+                    <strct-empty-state
+                      variant="error"
+                      size="sm"
+                      [titleLevel]="null"
+                      [title]="failure"
+                    />
+                  </div>
                 } @else {
                   <!-- Not a heading: a grid is a region of a page, and an
                        empty one used to put an <h3> in its outline. -->

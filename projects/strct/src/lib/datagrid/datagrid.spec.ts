@@ -3812,3 +3812,89 @@ describe('StrctDatagrid utility columns (BUG-66-01)', () => {
     expect(width()).toBe('45px');
   });
 });
+
+describe('StrctDatagrid — a read that failed (FR-84)', () => {
+  const make = (inputs: Record<string, unknown>) => {
+    const fixture = TestBed.createComponent(StrctDatagrid);
+    applyInputs(fixture, {
+      columns: [{ key: 'point', label: 'Recovery point' }] satisfies StrctDatagridColumn[],
+      ...inputs,
+    });
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement };
+  };
+  const spoken = (el: HTMLElement) =>
+    [...el.querySelectorAll('[role="status"]')].filter(
+      (n) => (n.textContent ?? '').trim().length > 0,
+    );
+
+  it('no rows and no error still says what the read found', () => {
+    const { el } = make({ rows: [], emptyText: 'This VM has no recovery point.' });
+
+    expect(el.querySelector('.strct-dg__emptyrow')?.textContent).toContain(
+      'This VM has no recovery point.',
+    );
+    expect(el.querySelector('.strct-dg__errorband')).toBeNull();
+    expect(spoken(el).length).toBe(0);
+  });
+
+  it('no rows and an error replaces the empty text, in the error variant', () => {
+    const { el } = make({
+      rows: [],
+      emptyText: 'This VM has no recovery point.',
+      error: 'The recovery points could not be read.',
+    });
+
+    const empty = el.querySelector('.strct-dg__emptyrow');
+    expect(empty?.textContent).toContain('The recovery points could not be read.');
+    // The sentence the consumer wrote for "none" must not survive the failure.
+    expect(empty?.textContent).not.toContain('This VM has no recovery point.');
+    // The error preset's tone, which is what makes it look unlike "none".
+    expect(el.querySelector('.strct-empty__icon')?.className).toContain(
+      'strct-empty__icon--critical',
+    );
+    expect(spoken(el).length).toBe(1);
+  });
+
+  it('rows passed alongside an error are kept, under a band', () => {
+    const { el } = make({
+      rows: [{ point: 'rp-1' }, { point: 'rp-2' }],
+      error: 'The recovery points could not be read.',
+    });
+
+    const band = el.querySelector('.strct-dg__errorband');
+    expect(band).not.toBeNull();
+    expect(band?.getAttribute('role')).toBe('status');
+    expect(band?.textContent).toContain('The recovery points could not be read.');
+    // The last good read is the whole point of keeping it.
+    expect(el.querySelectorAll('tbody tr').length).toBe(2);
+    expect(el.querySelector('.strct-dg__emptyrow')).toBeNull();
+    expect(spoken(el).length).toBe(1);
+  });
+
+  it('the band carries a named region for a screen reader', () => {
+    const { el } = make({
+      rows: [{ point: 'rp-1' }],
+      error: 'Down.',
+      labels: { readFailed: 'Okuma başarısız' },
+    });
+
+    expect(el.querySelector('.strct-dg__errorband')?.textContent).toContain('Okuma başarısız');
+  });
+
+  it('clearing the error puts the grid back exactly as it was', () => {
+    const { fixture, el } = make({
+      rows: [],
+      emptyText: 'This VM has no recovery point.',
+      error: 'The recovery points could not be read.',
+    });
+    fixture.componentRef.setInput('error', null);
+    fixture.detectChanges();
+
+    expect(el.querySelector('.strct-dg__errorband')).toBeNull();
+    expect(el.querySelector('.strct-dg__emptyrow')?.textContent).toContain(
+      'This VM has no recovery point.',
+    );
+    expect(spoken(el).length).toBe(0);
+  });
+});

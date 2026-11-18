@@ -270,6 +270,26 @@ export class StrctDatagrid {
   readonly singleLine = input(false, { transform: booleanAttribute });
   /** Message shown when there are no rows. */
   readonly emptyText = input('No data');
+  /**
+   * The read failed, and what to say — "The recovery points could not be
+   * read." A read that fails must never look like a read that found nothing:
+   * handing the grid an empty array on an error draws `emptyText`, so "This
+   * VM has no recovery point" is what an operator is told when the question
+   * was never answered.
+   *
+   * With no rows it replaces `emptyText`, in the critical tone and under a
+   * different icon. **With rows it keeps them**, under a one-line band — a
+   * consumer that holds on to its last good read should go on showing it,
+   * saying only that this attempt failed. Either way the footer's refresh
+   * stays reachable, and the sentence is announced once as a status.
+   */
+  readonly error = input<string | null>(null);
+  /** Is there something to say about a failed read? */
+  protected readonly hasError = computed(() => !!this.error());
+  /** The band above kept rows — an error with a last good read behind it. */
+  protected readonly errorOverRows = computed(
+    () => this.hasError() && this.renderRows().length > 0,
+  );
   /** Show skeleton rows while data is loading. */
   readonly loading = input(false, { transform: booleanAttribute });
   /**

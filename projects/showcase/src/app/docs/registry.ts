@@ -521,10 +521,11 @@ export const DOCS: DocCategory[] = [
               'Running, with no percentage to report: a sweeping fill, no aria-valuenow, and aria-valuetext "In progress". Under prefers-reduced-motion it is a static striped fill rather than a moving one.',
           },
           {
-            name: 'value',
-            type: 'number',
-            default: '0',
-            description: 'Percentage 0–100 (clamped).',
+            name: 'value / unreadText',
+            type: 'number | null \u00b7 string',
+            default: "0 \u00b7 'Not read'",
+            description:
+              'Percentage 0–100 (clamped) — or `null`.\n\n`null` is **not zero** (7.23.0): the reading is not known. `value` used to be a number, so a fullness that failed to read arrived as `value ?? 0` and was drawn as an empty bar \u2014 "0% used" on a volume nobody has measured, in the status colour of a healthy one. With `null` the track draws no fill and takes **no status colour**, it is **hatched** so the difference is a texture rather than a hue (measured: textured on 4.9% of its own width against 0.2% for a measured-zero track, which a greyscale render and a colour-blind reader both keep), `valueText` falls back to `unreadText`, and `aria-valuenow` / `valuemin` / `valuemax` are left off so assistive tech reads the words instead of "0 percent". A real zero still draws its fill and still says `0%`.',
           },
           { name: 'status', type: CHART_STATUS, default: `'accent'`, description: 'Fill color.' },
           {
@@ -1128,6 +1129,13 @@ export const DOCS: DocCategory[] = [
             default: `'No matches'`,
             description:
               'Text when the filter matches nothing (localizable; `clearLabel` / `removeLabel` label the × buttons, `customText` is the verb of the free-form row).',
+          },
+          {
+            name: 'error',
+            type: 'string | null',
+            default: 'null',
+            description:
+              'The read failed, and what to say (7.23.0). A read that fails must never look like a read that found nothing: on an error a consumer hands the grid an empty array, the grid draws `emptyText`, and the operator is told "This VM has no recovery point" when the question was never answered. With **no rows** it replaces `emptyText` under a different icon and the critical tone (measured 4.74:1 against the surface). With **rows** it keeps them, under a one-line band \u2014 a consumer holding its last good read should go on showing it and say only that this attempt failed. Either way the footer\u2019s refresh stays reachable, and the sentence is announced once as a `role="status"`, never once per row. `labels.readFailed` names the band for a screen reader.',
           },
         ],
         do: [
