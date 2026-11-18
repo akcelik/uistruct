@@ -300,7 +300,12 @@ const ROUTES = [
        set.call(input, 'zzzz');
        input.dispatchEvent(new Event('input', { bubbles: true }));
      })()`,
-    'strct-datagrid:has(strct-empty-state)',
+    // Scoped to its own demo. A bare `strct-datagrid:has(strct-empty-state)`
+    // matches the FIRST such grid on the page, and 7.23.0 put two of them
+    // above this one (#datagrid-error draws an empty state for "nothing
+    // found" and another for "the read failed"), so the crop quietly moved
+    // to a grid this case is not about.
+    '#datagrid-filters strct-datagrid:has(strct-empty-state)',
   ],
   [
     'datagrid-bulk',
