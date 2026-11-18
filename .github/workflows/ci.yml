@@ -151,6 +151,14 @@ jobs:
       # 13 checks.
       - name: Assert the pane's own button says which way it goes
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/pane-toggle.mjs
+      # FR-84: a read that failed must not look like a read that found
+      # nothing, and a reading that was never taken must not be drawn as a
+      # measured zero. The glyph and the tone of each empty state, the band
+      # over kept rows, the refresh that must stay reachable, and the hatch
+      # on an unread track measured as a texture (4.9% of the track's width
+      # against 0.2% for a flat one) rather than as a colour. 12 checks.
+      - name: Assert a failed read never looks like an empty one
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/read-integrity.mjs
       # BUG-80-01 / FR-80-02: the active step's emphasis stays inside the step
       # it belongs to (the ring used to reach 4.66px past a 120px pill into a
       # 4px gap), and a run of hosts reads down a column of equal segments

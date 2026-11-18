@@ -363,3 +363,62 @@ describe('StrctProgress — a marker on a time axis', () => {
     expect(read(fixture)).toBe('6 min 12 s, usually at least 5 minutes, quota 80%');
   });
 });
+
+describe('StrctProgress — a reading that was not taken (FR-84)', () => {
+  const make = (inputs: Record<string, unknown>) => {
+    const fixture = TestBed.createComponent(StrctProgress);
+    for (const [k, v] of Object.entries(inputs)) fixture.componentRef.setInput(k, v);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return { fixture, el, track: el.querySelector('.strct-progress__track')! };
+  };
+
+  it('null draws no fill and takes no status colour', () => {
+    const { el } = make({ value: null, status: 'critical' });
+
+    expect(el.querySelectorAll('.strct-progress__fill').length).toBe(0);
+    expect(el.classList).toContain('strct-progress--unread');
+    // "We have not measured this" must never be drawn as "this is full".
+    expect(el.classList).not.toContain('strct-progress--critical');
+  });
+
+  it('a real zero is still a real zero', () => {
+    const { el, track } = make({ value: 0, showValue: true });
+
+    expect(el.querySelectorAll('.strct-progress__fill').length).toBe(1);
+    expect(el.classList).not.toContain('strct-progress--unread');
+    expect(track.getAttribute('aria-valuenow')).toBe('0');
+    expect(el.querySelector('.strct-progress__value')?.textContent?.trim()).toBe('0%');
+  });
+
+  it('null omits aria-valuenow and carries the words instead', () => {
+    const { track } = make({ value: null, label: 'Datastore' });
+
+    expect(track.getAttribute('aria-valuenow')).toBeNull();
+    expect(track.getAttribute('aria-valuemin')).toBeNull();
+    expect(track.getAttribute('aria-valuemax')).toBeNull();
+    expect(track.getAttribute('aria-valuetext')).toBe('Not read');
+  });
+
+  it('prints unreadText, which the consumer can translate', () => {
+    const { el } = make({ value: null, showValue: true, unreadText: 'Okunamadı' });
+
+    expect(el.querySelector('.strct-progress__value')?.textContent?.trim()).toBe('Okunamadı');
+    expect(el.querySelector('.strct-progress__track')?.getAttribute('aria-valuetext')).toBe(
+      'Okunamadı',
+    );
+  });
+
+  it('an explicit valueText still wins over the unread wording', () => {
+    const { el } = make({ value: null, showValue: true, valueText: 'Last read 14:02' });
+
+    expect(el.querySelector('.strct-progress__value')?.textContent?.trim()).toBe('Last read 14:02');
+  });
+
+  it('segments still draw when the single value is null', () => {
+    const { el } = make({ value: null, segments: [{ value: 40, status: 'accent' }] });
+
+    expect(el.querySelectorAll('.strct-progress__fill').length).toBe(1);
+    expect(el.classList).not.toContain('strct-progress--unread');
+  });
+});

@@ -645,6 +645,45 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="datagrid-error"
+      owner="datagrid"
+      heading="A read that failed, and a read that found nothing"
+      description='FR-84. These are different answers and they used to look the same: on an error a consumer hands the grid an empty array, the grid draws emptyText, and the operator is told "This VM has no recovery point" when the question was never answered. [error] takes the sentence. With no rows it replaces emptyText under a different icon and the critical tone. With rows it KEEPS them, under a one-line band — a consumer holding its last good read should go on showing it and say only that this attempt failed. Either way the footer&apos;s refresh stays reachable, and the sentence is announced once as a status, not once per row.'
+      code='<strct-datagrid [rows]="rows" [error]="failure()" [state]="&#123; sync: true &#125;" />'
+    >
+      <div class="dg-wrap" data-dge="demo">
+        <span class="echo">no rows, no error — the question was answered</span>
+        <strct-datagrid
+          data-dge="empty"
+          style="width: 100%;"
+          [columns]="errCols"
+          [rows]="[]"
+          emptyText="This VM has no recovery point."
+          [state]="{ sync: true }"
+        />
+        <span class="echo">no rows, and the read failed</span>
+        <strct-datagrid
+          data-dge="failed"
+          style="width: 100%;"
+          [columns]="errCols"
+          [rows]="[]"
+          emptyText="This VM has no recovery point."
+          error="The recovery points could not be read."
+          [state]="{ sync: true }"
+        />
+        <span class="echo">the last good read, kept, under a band</span>
+        <strct-datagrid
+          data-dge="kept"
+          style="width: 100%;"
+          [columns]="errCols"
+          [rows]="errRows"
+          error="The recovery points could not be read."
+          [state]="{ sync: true }"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="datagrid-filters"
       owner="datagrid"
       heading="Filters — quick + per-column"
@@ -1739,6 +1778,17 @@ mtu = 9000`;
   /** A host with an old agent cannot receive a deployment — and says so. */
   protected readonly canDeploy = (row: StrctRow): boolean | string =>
     String(row['agent']).startsWith('4.') ? true : 'Agent too old to deploy';
+
+  /** FR-84: a read that failed beside a read that found nothing. */
+  protected readonly errCols: StrctDatagridColumn[] = [
+    { key: 'point', label: 'Recovery point', sortable: true },
+    { key: 'taken', label: 'Taken' },
+    { key: 'size', label: 'Size', align: 'end' },
+  ];
+  protected readonly errRows: StrctRow[] = [
+    { point: 'rp-2026-11-18-0300', taken: '03:00', size: '41 GB' },
+    { point: 'rp-2026-11-17-0300', taken: 'yesterday 03:00', size: '39 GB' },
+  ];
 
   protected readonly dgCols: StrctDatagridColumn[] = [
     { key: 'name', label: 'Cluster', sortable: true },

@@ -7,12 +7,17 @@ stays here until it goes quiet.
 
 ## Open
 
-- [**`datagrid-error-and-unread-progress.md`**](datagrid-error-and-unread-progress.md) — FR-84,
-  filed 2026-11-17 against 7.20.0 from the same review: a read that failed is drawn as a read that
-  found nothing ("This VM has no recovery point."), and a fullness that was not read is drawn as
-  an empty bar.
+**Nothing.** Everything filed so far has shipped.
 
 ### Closed on 2026-11-18, and moved to [`archive/`](archive/)
+
+- [**`archive/datagrid-error-and-unread-progress.md`**](archive/datagrid-error-and-unread-progress.md)
+  — FR-84: a read that failed was drawn as a read that found nothing ("This VM has no recovery
+  point."), because the consumer hands the grid an empty array either way, and a fullness that was
+  never read was drawn as an empty bar. Shipped in **v7.23.0** — `strct-datagrid [error]` (a
+  different glyph and tone at **4.74:1**, or a **1**-line band over rows the consumer chose to
+  keep, with the refresh still enabled) and `strct-progress [value]="null"` (no fill, no status
+  colour, hatched: textured on **4.9%** of its width against **0.2%** for a measured zero).
 
 - [**`archive/tree-unknown-and-stale.md`**](archive/tree-unknown-and-stale.md) — FR-83: the tree
   could not say "not known" or "not current", so a host whose alarms were never read was drawn

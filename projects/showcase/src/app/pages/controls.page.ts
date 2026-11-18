@@ -408,6 +408,39 @@ import { DemoBlock, PageHeader } from '../ui/demo';
     </app-demo>
 
     <app-demo
+      anchor="progress-unread"
+      owner="progress"
+      heading="A reading that was not taken"
+      description='FR-84. [value] accepts null: the reading is not known. value was a number, so a fullness that failed to read arrived as value ?? 0 and was drawn as an empty bar — "0% used" on a volume nobody has measured, in the status colour of a healthy one. With null the track takes no fill and no tone, it is hatched so the difference survives a greyscale render and a colour-blind reader, unreadText (default "Not read") is what it prints and says, and aria-valuenow is left off so assistive tech reads the words instead of "0 percent". A real zero is still a real zero, and still says 0%.'
+      code='<strct-progress [value]="null" label="Datastore" visibleLabel showValue />'
+    >
+      <div class="stack" style="max-width: 420px;" data-pu="demo">
+        <strct-progress
+          [value]="null"
+          label="ds-04 — the read failed"
+          visibleLabel
+          showValue
+          data-pu="unread"
+        />
+        <strct-progress
+          [value]="0"
+          label="ds-05 — measured, and empty"
+          visibleLabel
+          showValue
+          data-pu="zero"
+        />
+        <strct-progress
+          [value]="91"
+          label="ds-06 — measured, and nearly full"
+          status="critical"
+          visibleLabel
+          showValue
+          data-pu="full"
+        />
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="progress-meter"
       owner="progress"
       heading="Meter mode"

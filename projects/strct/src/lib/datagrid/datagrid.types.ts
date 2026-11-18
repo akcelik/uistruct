@@ -62,6 +62,8 @@ export interface StrctDatagridLabels {
   resizeColumn: (column: string) => string;
   /** The two empty states, and the way out of the filtered one. */
   noMatches: string;
+  /** Named region of the band that says a read failed. */
+  readFailed: string;
   noMatchesFor: (query: string) => string;
   clearFilters: string;
   /** The bulk-selection escape: the page is selected, everything is not. */
@@ -108,6 +110,7 @@ export const DG_LABELS: StrctDatagridLabels = {
   quickFilter: 'Quick filter',
   resizeColumn: (column) => `Resize ${column}`,
   noMatches: 'No rows match the filter',
+  readFailed: 'Read failed',
   noMatchesFor: (query) => `Nothing matches “${query}”.`,
   clearFilters: 'Clear filters',
   pageSelected: (shown) => `All ${shown} rows on this page are selected.`,

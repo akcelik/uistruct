@@ -69,6 +69,25 @@ const ROUTES = [
   // FR-47-01: a progress bar inside a datagrid row — the case where the track
   // used to be the exact colour of the row behind it in the dark theme.
   ['datagrid-progress', '/components/datagrid', '#datagrid'],
+  // FR-84: "nothing was found" beside "the read failed" beside "the last good
+  // read, kept". Three states that used to be one, so the picture of all
+  // three is what a redrawing has to survive.
+  [
+    'datagrid-error',
+    '/components/datagrid',
+    '#datagrid-error',
+    undefined,
+    '#datagrid-error .dg-wrap',
+  ],
+  // FR-84: an unread bar, a measured zero and a measured 91% in one shot —
+  // the hatch is 6px tall, which no page crop can see.
+  [
+    'progress-unread',
+    '/components/progress',
+    '#progress-unread',
+    undefined,
+    '#progress-unread [data-pu="demo"]',
+  ],
   ['line', '/components/line'],
   // BUG-59-04: a header row with a sortable and a plain column side by side.
   // The sortable ones draw their text inside a button, which resets the
@@ -281,7 +300,12 @@ const ROUTES = [
        set.call(input, 'zzzz');
        input.dispatchEvent(new Event('input', { bubbles: true }));
      })()`,
-    'strct-datagrid:has(strct-empty-state)',
+    // Scoped to its own demo. A bare `strct-datagrid:has(strct-empty-state)`
+    // matches the FIRST such grid on the page, and 7.23.0 put two of them
+    // above this one (#datagrid-error draws an empty state for "nothing
+    // found" and another for "the read failed"), so the crop quietly moved
+    // to a grid this case is not about.
+    '#datagrid-filters strct-datagrid:has(strct-empty-state)',
   ],
   [
     'datagrid-bulk',
