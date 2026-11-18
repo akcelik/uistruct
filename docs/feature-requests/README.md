@@ -7,7 +7,22 @@ stays here until it goes quiet.
 
 ## Open
 
-**Nothing.** Everything filed so far has shipped.
+- [**`tree-unknown-and-stale.md`**](tree-unknown-and-stale.md) — FR-83, filed 2026-11-17 against
+  7.20.0 from HyperStruct's avionics-grade review: the tree cannot say "not known" or "not
+  current", so a host whose alarms were never read is drawn exactly like a healthy one.
+- [**`datagrid-error-and-unread-progress.md`**](datagrid-error-and-unread-progress.md) — FR-84,
+  filed 2026-11-17 against 7.20.0 from the same review: a read that failed is drawn as a read that
+  found nothing ("This VM has no recovery point."), and a fullness that was not read is drawn as
+  an empty bar.
+
+### Closed on 2026-11-18, and moved to [`archive/`](archive/)
+
+- [**`archive/inventory-glyphs.md`**](archive/inventory-glyphs.md) — not a filed FR, asked for
+  directly against 7.20.0: `datacenter` was a rounded box with three rules and a dot, the same
+  construction as `node` one rung away, and `cluster` was three tall bars whose strokes met —
+  **0 of the 2 clear lanes** three machines need at 14px. Shipped in **v7.21.0**: a site is a
+  building, a cluster is three of the chassis `host` is drawn from (**2** lanes, widest
+  **1.25px**).
 
 ### Closed on 2026-11-16, and moved to [`archive/`](archive/)
 

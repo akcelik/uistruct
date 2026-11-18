@@ -36,6 +36,14 @@ import { PNG } from 'pngjs';
 const ROOT = resolve('dist/showcase/browser');
 const PORT = 4706;
 const CDP = 9406;
+/**
+ * How far two outlines must stand apart, as a share of the frame. It is the
+ * ask's own size that sets the scale: a 14px glyph is 196px², so 6% is about
+ * 12 pixels of outline that belong to one mark and not the other — the least
+ * that changes what a reader takes the mark to be.
+ */
+const SILHOUETTE_FLOOR = 6;
+
 /** The size the `sm` toolbar renders a glyph at, which is the ask's own size. */
 const SIZE = 14;
 const SCALE = 4;
@@ -54,6 +62,51 @@ const MUST_DIFFER = [
   // one the set already has.
   ['backup', 'download', 'a store, not a baseline'],
   ['restore', 'upload', 'a store, not a baseline'],
+  // The inventory ladder: a site, a group of machines, one machine, a
+  // cabinet. Each is the row above or below the other in the same tree, so
+  // each has to be read on its own. `datacenter` used to be a rounded box
+  // with three lines and a dot, which is what `node` is.
+  ['datacenter', 'node', 'a building, not a box of lines'],
+  ['datacenter', 'rack', 'a site, not a cabinet'],
+  ['cluster', 'host', 'a stack of several machines, not one of two units'],
+  ['cluster', 'rack', 'machines stacked, not shelves in a cabinet'],
+  ['cluster', 'layers', 'server units, not sheets'],
+];
+
+/**
+ * Pairs that must not share an outline.
+ *
+ * Two marks can sit far apart on the stroke-level distance above and still be
+ * the same kind of object: `datacenter` was a rounded box with lines and a
+ * dot, and so is `node` — 31% apart stroke for stroke, and the same card at a
+ * glance. What tells a reader what a mark *is* before they read its detail is
+ * its silhouette, so that is measured on its own: the ink is flood-filled
+ * from the frame, and whatever the fill cannot reach is the glyph's outline.
+ */
+const SILHOUETTE = [
+  ['datacenter', 'node', 'a site is not a box of lines'],
+  ['cluster', 'rack', 'a stack of machines is not one cabinet'],
+  ['host', 'rack', 'a chassis is not a cabinet'],
+];
+
+/**
+ * Glyphs whose whole content is "several of the same thing", and how many
+ * clear lanes of background must cross them for the count to be readable.
+ *
+ * Distance measures how far two glyphs are apart. This measures whether one
+ * glyph still says what it depicts: a mark whose content is "three machines"
+ * has to show three machines at 14px, and it only does that if background
+ * actually runs between them. When the strokes meet, the reader gets one
+ * striped block — and no pixel-distance check can see that, because a striped
+ * block is still very far from everything else in the set.
+ *
+ * `axis` is the direction the units are laid out in: 'y' for units stacked up
+ * the glyph (the lanes are rows), 'x' for units side by side (columns).
+ */
+const SEPARATED = [
+  ['cluster', 'y', 2, 'three machines, stacked'],
+  ['host', 'y', 1, 'two units in one chassis'],
+  ['grid', 'x', 1, 'two columns of tiles'],
 ];
 
 /**
@@ -244,6 +297,100 @@ function distance(a, b) {
   return (differ / (a.width * a.height)) * 100;
 }
 
+/**
+ * The glyph's outline: every pixel the background cannot reach from the frame
+ * without crossing ink. A rounded card and a rounded card with other lines in
+ * it have the same one; a building and a card do not.
+ */
+function silhouette(png) {
+  const { width: w, height: h, data } = png;
+  const open = new Uint8Array(w * h);
+  for (let i = 0, p = 0; i < data.length; i += 4, p++) if (data[i] >= 232) open[p] = 1;
+  const outside = new Uint8Array(w * h);
+  const stack = [];
+  const push = (x, y) => {
+    const p = y * w + x;
+    if (open[p] && !outside[p]) {
+      outside[p] = 1;
+      stack.push(p);
+    }
+  };
+  for (let x = 0; x < w; x++) {
+    push(x, 0);
+    push(x, h - 1);
+  }
+  for (let y = 0; y < h; y++) {
+    push(0, y);
+    push(w - 1, y);
+  }
+  while (stack.length) {
+    const q = stack.pop();
+    const x = q % w;
+    const y = (q / w) | 0;
+    if (x > 0) push(x - 1, y);
+    if (x < w - 1) push(x + 1, y);
+    if (y > 0) push(x, y - 1);
+    if (y < h - 1) push(x, y + 1);
+  }
+  const sil = new Uint8Array(w * h);
+  for (let p = 0; p < sil.length; p++) sil[p] = outside[p] ? 0 : 1;
+  return { w, h, sil };
+}
+
+/** How much of the two outlines does not overlap, as a share of the frame. */
+function silhouetteDistance(a, b) {
+  const A = silhouette(a);
+  const B = silhouette(b);
+  if (A.w !== B.w || A.h !== B.h) return 100;
+  let differ = 0;
+  for (let p = 0; p < A.sil.length; p++) if (A.sil[p] !== B.sil[p]) differ++;
+  return (differ / (A.w * A.h)) * 100;
+}
+
+/**
+ * Clear lanes of background crossing a glyph, along one axis, strictly inside
+ * its own ink: the number of maximal runs of rows (or columns) that carry no
+ * ink at all. One lane between two units is what makes them two units.
+ *
+ * Ink is thresholded at the same level `distance` uses. A lane is counted at
+ * one line or wider, which is the least that can read as a gap.
+ */
+function lanes(png, axis) {
+  const { width: w, height: h, data } = png;
+  const n = axis === 'y' ? h : w;
+  const m = axis === 'y' ? w : h;
+  const inked = [];
+  for (let i = 0; i < n; i++) {
+    let any = false;
+    for (let j = 0; j < m && !any; j++) {
+      const x = axis === 'y' ? j : i;
+      const y = axis === 'y' ? i : j;
+      if (data[(y * w + x) * 4] < 232) any = true;
+    }
+    inked.push(any);
+  }
+  const first = inked.indexOf(true);
+  const last = inked.lastIndexOf(true);
+  if (first < 0) return { lanes: 0, widest: 0 };
+  let count = 0;
+  let run = 0;
+  let widest = 0;
+  for (let i = first; i <= last; i++) {
+    if (inked[i]) {
+      if (run) {
+        count++;
+        widest = Math.max(widest, run);
+      }
+      run = 0;
+    } else run++;
+  }
+  if (run) {
+    count++;
+    widest = Math.max(widest, run);
+  }
+  return { lanes: count, widest };
+}
+
 const problems = [];
 let chrome_ok = false;
 
@@ -261,7 +408,14 @@ try {
   chrome_ok = true;
 
   const shots = new Map();
-  const want = [...new Set([...MUST_DIFFER.flatMap(([a, b]) => [a, b]), ...CALIBRATION.flat()])];
+  const want = [
+    ...new Set([
+      ...MUST_DIFFER.flatMap(([a, b]) => [a, b]),
+      ...CALIBRATION.flat(),
+      ...SEPARATED.map(([n]) => n),
+      ...SILHOUETTE.flatMap(([a, b]) => [a, b]),
+    ]),
+  ];
   for (const name of want) {
     const png = await shoot(send, name);
     if (!png) {
@@ -301,6 +455,35 @@ try {
     if (!pass)
       problems.push(
         `${a} and ${b} are ${d.toFixed(2)}% apart at ${SIZE}px, under the ${floor.toFixed(2)}% floor (twice ${weakest.pair}) — ${how} is not enough`,
+      );
+  }
+
+  console.log('\nPairs that must not share an outline:');
+  for (const [a, b, how] of SILHOUETTE) {
+    if (!shots.has(a) || !shots.has(b)) continue;
+    const d = silhouetteDistance(shots.get(a), shots.get(b));
+    const stroke = distance(shots.get(a), shots.get(b));
+    const pass = d >= SILHOUETTE_FLOOR;
+    console.log(
+      `  ${pass ? '\u2713' : '\u2717'} ${`${a}/${b}`.padEnd(26)} ${d.toFixed(2)}% outline (${stroke.toFixed(2)}% stroke)   ${how}`,
+    );
+    if (!pass)
+      problems.push(
+        `${a} and ${b} share ${(100 - d).toFixed(2)}% of their outline at ${SIZE}px (only ${d.toFixed(2)}% apart, against a ${SILHOUETTE_FLOOR}% floor) \u2014 ${how}, and the two read as the same object however their strokes differ`,
+      );
+  }
+
+  console.log('\nGlyphs that have to stay countable at 14px:');
+  for (const [name, axis, want, what] of SEPARATED) {
+    if (!shots.has(name)) continue;
+    const { lanes: got, widest } = lanes(shots.get(name), axis);
+    const pass = got >= want;
+    console.log(
+      `  ${pass ? '\u2713' : '\u2717'} ${name.padEnd(26)} ${got} of ${want} lane(s), widest ${(widest / SCALE).toFixed(2)}px   ${what}`,
+    );
+    if (!pass)
+      problems.push(
+        `${name} shows ${got} clear lane(s) at ${SIZE}px where ${what} needs ${want} \u2014 the units' strokes meet, so the count cannot be read`,
       );
   }
 
