@@ -31,6 +31,8 @@ export interface Dict {
   groups: Record<string, string>;
   /** The reference-is-English note. */
   refNote: string;
+  /** The measured-facts section. */
+  measured: { heading: string; lede: string };
   /** Landing page. */
   landing: {
     kicker: string;
@@ -93,6 +95,10 @@ const EN: Dict = {
   },
   refNote:
     'The component reference is written in English, like the API it describes. The rest of the site follows the language you choose here.',
+  measured: {
+    heading: 'Measured',
+    lede: 'What a browser read off this component, and when. Each line is a dated fact from the release it shipped in, taken by the gate named beside it \u2014 not a counter claiming to be today.',
+  },
   landing: {
     kicker: 'Angular · infrastructure UI',
     title: '104 components for the screens that run a datacenter.',
@@ -177,6 +183,10 @@ const TR: Dict = {
   },
   refNote:
     'Bileşen referansı, anlattığı API gibi İngilizce yazıldı. Sitenin geri kalanı burada seçtiğiniz dili izler.',
+  measured: {
+    heading: 'Ölçülenler',
+    lede: 'Bir tarayıcının bu bileşenden okuduğu değerler ve ne zaman okunduğu. Her satır, yayınlandığı sürümden kalma tarihli bir olgudur ve yanında adı yazan kapı tarafından alınmıştır \u2014 bugünü iddia eden bir sayaç değil.',
+  },
   landing: {
     kicker: 'Angular · altyapı arayüzü',
     title: 'Bir veri merkezini yöneten ekranlar için 104 bileşen.',
