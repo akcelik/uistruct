@@ -1,0 +1,13 @@
+// Component token katmanı — strct-icon.
+// Sağ taraftaki semantic token adlarını UIStruct'taki gerçek adlarla eşleyin;
+// fallback değerler yalnızca eşleme yapılmadan önce bileşenin çalışması için var.
+:root {
+  --strct-icon-color: var(--strct-color-text-primary, currentColor);
+  --strct-icon-color-muted: var(--strct-color-text-muted, #8a8f98);
+
+  --strct-icon-state-running: var(--strct-color-status-success, #24a148);
+  --strct-icon-state-suspended: var(--strct-color-status-warning, #d2a106);
+  --strct-icon-state-error: var(--strct-color-status-danger, #da1e28);
+  --strct-icon-state-off: var(--strct-color-text-muted, #8a8f98);
+  --strct-icon-state-on-color: var(--strct-color-text-on-status, #ffffff);
+}

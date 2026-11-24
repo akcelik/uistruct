@@ -350,6 +350,10 @@ const ROUTES = [
     undefined,
     '#inventory-ladder .demo__stage',
   ],
+  // The VM family at 14px and 24px, and again carrying state, so the kind
+  // mark and the two badge corners are seen together. Six glyphs of a few
+  // hundred pixels each: no page shot can see them move.
+  ['glyph-vm-family', '/foundations/icons', '#vm-family', undefined, '#vm-family .demo__stage'],
   // FR-69-04: eleven glyphs whose job is to be told apart from the one beside
   // them. `glyph-distinct.mjs` measures that numerically at 14px; this is the
   // picture, so a redrawing that still clears the floor cannot go unseen.

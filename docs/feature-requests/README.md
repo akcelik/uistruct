@@ -9,6 +9,18 @@ stays here until it goes quiet.
 
 **Nothing.** Everything filed so far has shipped.
 
+### Closed on 2026-11-24, and moved to [`archive/`](archive/)
+
+- [**`archive/strct-icons-review.md`**](archive/strct-icons-review.md) — a host / VM icon family
+  that arrived as a folder (component + tokens + 36 SVGs), asking to be copied into the library.
+  **The idea was adopted, the package was not:** it collides on the `strct-icon` selector, on
+  `StrctIconName` and on `--strct-icon-color`, it introduces a third state model that merges power
+  with health, it reuses the hollow ring that 7.22.0 gave to `health: 'unknown'`, and its state
+  disc measures 4.8–8.8px against this library's 11px floor. Shipped in **v7.24.0** as the rule
+  worth keeping — identity in the frame: `vm` is now `host`'s chassis inside a dashed one
+  (**44.08%** apart), with `vmTemplate` / `vmSnapshot` / `vmClone` / `vmMigration` marking the
+  glyph's bottom-start corner so both badge corners stay free for state.
+
 ### Closed on 2026-11-18, and moved to [`archive/`](archive/)
 
 - [**`archive/datagrid-error-and-unread-progress.md`**](archive/datagrid-error-and-unread-progress.md)

@@ -129,7 +129,25 @@ const STRCT_ICON_DEFS = {
   cluster:
     '<rect x="1.9" y="2" width="7.8" height="2.8" rx="1"/><rect x="4.1" y="6.6" width="7.8" height="2.8" rx="1"/><rect x="6.3" y="11.2" width="7.8" height="2.8" rx="1"/><circle cx="3.4" cy="3.4" r=".5" fill="currentColor" stroke="none"/><circle cx="5.6" cy="8" r=".5" fill="currentColor" stroke="none"/><circle cx="7.8" cy="12.6" r=".5" fill="currentColor" stroke="none"/>',
   host: '<rect x="2.5" y="3" width="11" height="4.2" rx="1"/><rect x="2.5" y="8.8" width="11" height="4.2" rx="1"/><circle cx="4.7" cy="5.1" r=".55" fill="currentColor" stroke="none"/><circle cx="4.7" cy="10.9" r=".55" fill="currentColor" stroke="none"/><path d="M7 5.1h4M7 10.9h4"/>',
-  vm: '<rect x="2" y="3" width="12" height="8" rx="1"/><path d="M6 14h4M8 11v3"/>',
+  // Identity in the frame: a host is a chassis, and a VM is that same chassis
+  // inside a dashed one. The rule comes from the strct-icons proposal and is
+  // drawn here in this set's own grid, so `host` is untouched and `cluster`
+  // goes on being three of it. The old `vm` was a monitor, which said
+  // "a screen", not "a machine that is not physical".
+  vm: '<rect x="1.9" y="1.9" width="12.2" height="12.2" rx="2.6" stroke-dasharray="3.1 2.2" pathLength="53"/><rect x="4.4" y="6.2" width="7.2" height="3.6" rx=".9"/><circle cx="6.1" cy="8" r=".5" fill="currentColor" stroke="none"/><path d="M7.5 8h2.6"/>',
+  // The derived objects. Their mark goes in the glyph's bottom-START corner,
+  // which no badge uses — health has the top end and power/mode the bottom
+  // one — so a VM template can still be alarmed and still be off. The dashed
+  // frame opens to make room rather than being masked: a mask's soft edge
+  // leaves the dash ends half translucent and Chrome draws ghosts.
+  vmTemplate:
+    '<path d="M6.6 14.1h4.9a2.6 2.6 0 0 0 2.6-2.6V4.5a2.6 2.6 0 0 0-2.6-2.6h-7A2.6 2.6 0 0 0 1.9 4.5v5" stroke-dasharray="3.1 2.2" pathLength="42"/><rect x="4.4" y="6.2" width="7.2" height="3.6" rx=".9"/><circle cx="6.1" cy="8" r=".5" fill="currentColor" stroke="none"/><path d="M7.5 8h2.6"/><path d="M1.9 15.2V10.2a.7.7 0 0 1 .7-.7h1.9l1.5 1.5v4.2a.7.7 0 0 1-.7.7H2.6a.7.7 0 0 1-.7-.7z"/><path d="M4.1 9.5v1.6h1.6"/>',
+  vmSnapshot:
+    '<path d="M6.6 14.1h4.9a2.6 2.6 0 0 0 2.6-2.6V4.5a2.6 2.6 0 0 0-2.6-2.6h-7A2.6 2.6 0 0 0 1.9 4.5v5" stroke-dasharray="3.1 2.2" pathLength="42"/><rect x="4.4" y="6.2" width="7.2" height="3.6" rx=".9"/><circle cx="6.1" cy="8" r=".5" fill="currentColor" stroke="none"/><path d="M7.5 8h2.6"/><circle cx="3.8" cy="12.9" r="2.5"/><path d="M3.8 11.4v1.5l1.1.8"/>',
+  vmClone:
+    '<path d="M6.6 14.1h4.9a2.6 2.6 0 0 0 2.6-2.6V4.5a2.6 2.6 0 0 0-2.6-2.6h-7A2.6 2.6 0 0 0 1.9 4.5v5" stroke-dasharray="3.1 2.2" pathLength="42"/><rect x="4.4" y="6.2" width="7.2" height="3.6" rx=".9"/><circle cx="6.1" cy="8" r=".5" fill="currentColor" stroke="none"/><path d="M7.5 8h2.6"/><rect x="1.3" y="11.2" width="3.8" height="3.8" rx=".8"/><path d="M3.4 11.2V10a.8.8 0 0 1 .8-.8h2.2a.8.8 0 0 1 .8.8v2.2a.8.8 0 0 1-.8.8H6"/>',
+  vmMigration:
+    '<path d="M6.6 14.1h4.9a2.6 2.6 0 0 0 2.6-2.6V4.5a2.6 2.6 0 0 0-2.6-2.6h-7A2.6 2.6 0 0 0 1.9 4.5v5" stroke-dasharray="3.1 2.2" pathLength="42"/><rect x="4.4" y="6.2" width="7.2" height="3.6" rx=".9"/><circle cx="6.1" cy="8" r=".5" fill="currentColor" stroke="none"/><path d="M7.5 8h2.6"/><path d="M1.5 12.9h4.8M4.4 11l1.9 1.9-1.9 1.9"/>',
   // Network switch — front-panel view: chassis + status LEDs + a row of RJ45 ports.
   switch:
     '<rect x="2.2" y="4.8" width="11.6" height="6.4" rx="1"/><circle cx="4.4" cy="7" r=".55" fill="currentColor" stroke="none"/><circle cx="6.2" cy="7" r=".55" fill="currentColor" stroke="none"/><path d="M4 9.4h1.8M7.1 9.4h1.8M10.2 9.4h1.8"/>',
@@ -543,6 +561,10 @@ export const STRCT_ICON_GROUPS: { label: string; names: StrctIconName[] }[] = [
       'cluster',
       'host',
       'vm',
+      'vmTemplate',
+      'vmSnapshot',
+      'vmClone',
+      'vmMigration',
       'switch',
       'storage',
       'network',

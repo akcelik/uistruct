@@ -473,3 +473,50 @@ describe('StrctIcon size', () => {
       expect((icon as HTMLElement).style.getPropertyValue('--icon-size')).toBe('');
   });
 });
+
+describe('StrctIcon — the VM family (strct-icons proposal, 7.24.0)', () => {
+  const draw = (name: string) => {
+    const fixture = TestBed.createComponent(StrctIcon);
+    fixture.componentRef.setInput('name', name);
+    fixture.detectChanges();
+    return (fixture.nativeElement as HTMLElement).querySelector('svg')!;
+  };
+
+  it('a VM is a dashed frame; a host is not', () => {
+    const vm = draw('vm');
+    const host = draw('host');
+
+    // Identity is in the frame — that is the whole rule.
+    expect(vm.querySelector('[stroke-dasharray]')).not.toBeNull();
+    expect(host.querySelector('[stroke-dasharray]')).toBeNull();
+  });
+
+  it('every derived object exists and carries the dashed frame', () => {
+    for (const name of ['vmTemplate', 'vmSnapshot', 'vmClone', 'vmMigration']) {
+      const svg = draw(name);
+      expect(svg.innerHTML.length).toBeGreaterThan(0);
+      expect(svg.querySelector('[stroke-dasharray]')).not.toBeNull();
+    }
+  });
+
+  it('the derived glyphs are in the icon set and its gallery', () => {
+    const names = ['vm', 'vmTemplate', 'vmSnapshot', 'vmClone', 'vmMigration'];
+    for (const n of names) expect(STRCT_ICONS[n]).toBeDefined();
+    const listed = STRCT_ICON_GROUPS.flatMap((g) => g.names);
+    for (const n of names) expect(listed).toContain(n);
+  });
+
+  it('a derived object can still be alarmed and still be off', () => {
+    const fixture = TestBed.createComponent(StrctIcon);
+    fixture.componentRef.setInput('name', 'vmTemplate');
+    fixture.componentRef.setInput('badge', 'warning');
+    fixture.componentRef.setInput('lifecycle', 'off');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    // The kind mark lives in the glyph's bottom-start corner, so neither
+    // badge corner is taken by it.
+    expect(el.querySelector('.strct-icon__badge--warning')).not.toBeNull();
+    expect(el.querySelector('.strct-icon__badge--off')).not.toBeNull();
+  });
+});

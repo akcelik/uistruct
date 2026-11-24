@@ -71,6 +71,19 @@ const MUST_DIFFER = [
   ['cluster', 'host', 'a stack of several machines, not one of two units'],
   ['cluster', 'rack', 'machines stacked, not shelves in a cabinet'],
   ['cluster', 'layers', 'server units, not sheets'],
+  // The VM family. Identity is in the frame — a host is a chassis, a VM is
+  // that chassis inside a dashed one — and the four derived objects each put
+  // a mark in the glyph's bottom-start corner, which no badge uses. They are
+  // read in one column of an inventory, so each has to separate from the
+  // other three and not only from `vm`.
+  ['vm', 'host', 'a dashed frame around the same chassis'],
+  ['vm', 'vmTemplate', 'the frame opens for a kind mark'],
+  ['vmTemplate', 'vmSnapshot', 'a sheet standing up, not a clock'],
+  ['vmTemplate', 'vmClone', 'one sheet, not two squares'],
+  ['vmTemplate', 'vmMigration', 'a sheet, not an arrow'],
+  ['vmSnapshot', 'vmClone', 'a clock, not two squares'],
+  ['vmSnapshot', 'vmMigration', 'a clock, not an arrow'],
+  ['vmClone', 'vmMigration', 'two squares, not an arrow'],
 ];
 
 /**
@@ -87,6 +100,7 @@ const SILHOUETTE = [
   ['datacenter', 'node', 'a site is not a box of lines'],
   ['cluster', 'rack', 'a stack of machines is not one cabinet'],
   ['host', 'rack', 'a chassis is not a cabinet'],
+  ['vm', 'host', 'virtual is not physical, and the frame is what says so'],
 ];
 
 /**
