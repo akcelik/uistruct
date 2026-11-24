@@ -27,6 +27,8 @@ import {
 } from 'strct';
 import { COMPONENT_COUNT, DOCS, GUIDES, SCENARIOS } from './docs/registry';
 import { CommandPalette, CommandPaletteService } from './ui/command-palette';
+import { LangService } from './i18n/lang';
+import { LangSwitcher } from './i18n/lang-switcher';
 // Single source of truth for the footer version — the published library version.
 import strctPkg from '../../../strct/package.json';
 
@@ -60,6 +62,7 @@ interface NavGroup {
     StrctSearchbox,
     CommandPalette,
     StrctHotkeysHelp,
+    LangSwitcher,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -88,6 +91,14 @@ export class App {
   protected readonly panelTitleId = 'app-nav-panel-title';
 
   /** Icon strip + secondary panel source. Foundations first, then component categories. */
+  private readonly langService = inject(LangService);
+  /** The dictionary for the chrome; the reference pages stay in English. */
+  protected readonly t = this.langService.t;
+  /** A group's name in the current language, falling back to its own. */
+  protected groupLabel(group: NavGroup): string {
+    return this.t().groups[group.id] ?? group.label;
+  }
+
   protected readonly groups: NavGroup[] = [
     { id: GUIDES.id, label: GUIDES.label, icon: GUIDES.icon, items: GUIDES.items },
     { id: SCENARIOS.id, label: SCENARIOS.label, icon: SCENARIOS.icon, items: SCENARIOS.items },

@@ -26,6 +26,7 @@ import {
   UsageGuide,
 } from './doc-ui';
 import { ALL_COMPONENTS, DocCategory, PACKAGE_NAME, findComponent } from './registry';
+import { LangService } from '../i18n/lang';
 
 interface CategoryHost {
   filter: DemoFilter;
@@ -45,6 +46,12 @@ interface CategoryHost {
         <article class="doc__main">
           <app-breadcrumb [items]="crumbs()" />
           <h1 class="doc__title">{{ c.title }}</h1>
+          <!-- Said once, where a reader crosses from the translated site into
+               the reference, rather than leaving an untranslated page with no
+               explanation. -->
+          @if (lang.lang() !== 'en') {
+            <p class="doc__refnote">{{ lang.t().refNote }}</p>
+          }
           <p class="doc__lead">{{ c.lead }}</p>
 
           <div class="doc__import">
@@ -128,6 +135,16 @@ interface CategoryHost {
       .doc__main {
         min-width: 0;
         max-width: 880px;
+      }
+      .doc__refnote {
+        margin: 10px 0 0;
+        padding: 8px 12px;
+        font-size: var(--text-sm);
+        line-height: 1.5;
+        color: var(--t2);
+        background: var(--bg-2);
+        border-inline-start: 2px solid var(--b2);
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
       }
       .doc__title {
         margin: 0;
@@ -239,6 +256,7 @@ interface CategoryHost {
   ],
 })
 export class ComponentPage {
+  protected readonly lang = inject(LangService);
   private readonly route = inject(ActivatedRoute);
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
   private readonly injector = inject(Injector);
