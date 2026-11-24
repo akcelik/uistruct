@@ -16,7 +16,7 @@
  * Usage: node scripts/check-docs.mjs
  */
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 const PUBLIC_API = resolve('projects/strct/src/public-api.ts');
 const REGISTRY = resolve('projects/showcase/src/app/docs/registry.ts');
@@ -60,6 +60,17 @@ for (const c of ALL_COMPONENTS) {
   for (const name of c.importNames) {
     if (!api.has(name))
       problems.push(`${c.id}: importNames lists "${name}", which the package does not export`);
+  }
+  // A measured fact cites the gate that took it. A citation to a gate that
+  // no longer exists is worse than no citation: the page still shows the
+  // number, and nothing says where to go and re-run it.
+  for (const m of c.measured ?? []) {
+    if (!existsSync(join('scripts', `${m.gate}.mjs`)))
+      problems.push(
+        `${c.id}: a measured fact cites scripts/${m.gate}.mjs, which does not exist`,
+      );
+    if (!/^\d+\.\d+\.\d+$/.test(m.since))
+      problems.push(`${c.id}: a measured fact has no release ("${m.since}")`);
   }
 }
 

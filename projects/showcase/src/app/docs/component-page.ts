@@ -104,6 +104,28 @@ interface CategoryHost {
             </section>
           }
 
+          @if (c.measured?.length) {
+            <!-- What a browser actually read off this component, and when.
+                 Dated facts, not live counters: a count that claims to be
+                 today's goes stale in silence. -->
+            <section id="measured" data-toc data-toc-label="Measured" class="doc__section">
+              <h2 class="doc__h2">{{ lang.t().measured.heading }}</h2>
+              <p class="doc__measured-lede">{{ lang.t().measured.lede }}</p>
+              <ul class="mz">
+                @for (m of c.measured!; track m.claim) {
+                  <li class="mz__row">
+                    <span class="mz__claim">{{ m.claim }}</span>
+                    <span class="mz__value">{{ m.value }}</span>
+                    <span class="mz__from">
+                      <code>scripts/{{ m.gate }}.mjs</code>
+                      <span class="mz__since">v{{ m.since }}</span>
+                    </span>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+
           @if (hasUsage()) {
             <section id="usage" data-toc data-toc-label="Usage" class="doc__section">
               <h2 class="doc__h2">Usage</h2>
@@ -247,6 +269,69 @@ interface CategoryHost {
       .doc__a11y ul {
         margin: 0;
         padding-left: 18px;
+      }
+      .doc__measured-lede {
+        margin: 0 0 14px;
+        font-size: var(--text-sm);
+        color: var(--t3);
+        max-width: 68ch;
+      }
+      /* A reading per row: what was asked, what came back, who took it. */
+      .mz {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 1px;
+        background: var(--b2);
+        border: 1px solid var(--b2);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+      }
+      .mz__row {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.25fr) minmax(0, 0.7fr);
+        gap: var(--space-3);
+        align-items: baseline;
+        padding: 11px var(--space-3);
+        background: var(--bg-1);
+      }
+      .mz__claim {
+        font-size: var(--text-sm);
+        color: var(--t1);
+        min-width: 0;
+      }
+      .mz__value {
+        font-family: var(--mono);
+        font-size: var(--text-xs);
+        line-height: 1.6;
+        color: var(--t2);
+        font-variant-numeric: tabular-nums;
+        min-width: 0;
+      }
+      .mz__from {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 6px;
+        min-width: 0;
+      }
+      .mz__from code {
+        font-family: var(--mono);
+        font-size: var(--text-xs);
+        color: var(--t3);
+        word-break: break-all;
+      }
+      .mz__since {
+        font-size: var(--text-xs);
+        color: var(--t3);
+        white-space: nowrap;
+      }
+      @media (max-width: 820px) {
+        .mz__row {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
       }
       .doc__a11y li .strct-md__p {
         margin: 0;

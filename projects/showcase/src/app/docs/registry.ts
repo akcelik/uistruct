@@ -30,6 +30,30 @@ export interface DocComponent {
   do?: string[];
   dont?: string[];
   a11y?: string[];
+  /**
+   * What a browser measured about this component, and when.
+   *
+   * These are **dated facts, not live counters**: each was read off a real
+   * render by the named gate, in the release it shipped in. A live count
+   * goes stale in silence — the lesson 7.23.0 learned with visual baselines
+   * — while "4.74:1, measured in 7.23.0" stays true.
+   *
+   * `gate` names a file in `scripts/`, and `check-docs.mjs` fails if it does
+   * not exist, so a renamed or deleted gate cannot leave a dead citation.
+   */
+  measured?: MeasuredFact[];
+}
+
+/** One reading, with the gate that took it and the release it shipped in. */
+export interface MeasuredFact {
+  /** The gate script's name, without `scripts/` or `.mjs`. */
+  gate: string;
+  /** What was asked of the component. */
+  claim: string;
+  /** What came back — keep the unit. */
+  value: string;
+  /** The version whose gate run produced it. */
+  since: string;
 }
 
 /** A category groups components and knows how to lazy-load its live examples. */
@@ -81,6 +105,20 @@ export const DOCS: DocCategory[] = [
     components: [
       {
         id: 'button',
+        measured: [
+          {
+            gate: 'weight-ladder',
+            claim: 'Weight carries rank, and a field reads as a recess',
+            value: '259 checks over 6 palettes',
+            since: '7.8.0',
+          },
+          {
+            gate: 'control-height',
+            claim: 'Every control, and every icon in one, is the size it should be',
+            value: 'measured in a browser rather than asserted in CSS',
+            since: '7.5.0',
+          },
+        ],
         title: 'Button',
         selector: 'button[strct-button], a[strct-button]',
         importNames: ['StrctButton'],
@@ -465,6 +503,26 @@ export const DOCS: DocCategory[] = [
       },
       {
         id: 'progress',
+        measured: [
+          {
+            gate: 'read-integrity',
+            claim: 'A reading that was never taken is not a reading of zero',
+            value: 'textured on 4.9% of the track’s width, against 0.2% for a measured zero',
+            since: '7.23.0',
+          },
+          {
+            gate: 'read-integrity',
+            claim: 'An unread bar exposes no value',
+            value: 'aria-valuenow, valuemin and valuemax all absent',
+            since: '7.23.0',
+          },
+          {
+            gate: 'progress-markers',
+            claim: 'A threshold line is heard as well as seen',
+            value: '18 checks',
+            since: '7.16.0',
+          },
+        ],
         title: 'Progress',
         selector: 'strct-progress',
         importNames: ['StrctProgress'],
@@ -1902,6 +1960,38 @@ export const DOCS: DocCategory[] = [
       },
       {
         id: 'tree',
+        measured: [
+          {
+            gate: 'tree-state',
+            claim: 'An object with nothing wrong draws nothing at all',
+            value: '0 marks, and no description',
+            since: '7.18.0',
+          },
+          {
+            gate: 'tree-state',
+            claim: 'A health nobody has read is told from an alarm by shape, not hue',
+            value: 'the ring encloses 16.3% of its box; the triangle and the diamond 0.0%',
+            since: '7.22.0',
+          },
+          {
+            gate: 'tree-state',
+            claim: 'A reading that is not current recedes, but less than one nobody can reach',
+            value: '6.20:1, between a live row at 17.49:1 and an unreachable one at 5.13:1',
+            since: '7.22.0',
+          },
+          {
+            gate: 'tree-state',
+            claim: 'No state mark is too small to read on the tree’s 18px glyph',
+            value: 'smallest 11.0px, against a floor of 11px',
+            since: '7.18.0',
+          },
+          {
+            gate: 'tree-state',
+            claim: 'A closed node’s rollup stays with the name',
+            value: '14.0px after it, and 117px short of the row’s end',
+            since: '7.19.0',
+          },
+        ],
         title: 'Tree',
         selector: 'strct-tree',
         importNames: [
@@ -2601,6 +2691,14 @@ export const DOCS: DocCategory[] = [
       },
       {
         id: 'wizard',
+        measured: [
+          {
+            gate: 'wizard-skipped',
+            claim: 'A skipped step says so, and focus follows the step the user moved to',
+            value: '7 checks, with real clicks and key events',
+            since: '7.16.0',
+          },
+        ],
         title: 'Wizard',
         selector: 'strct-wizard',
         importNames: ['StrctWizard', 'StrctStep'],
@@ -3164,6 +3262,14 @@ export const DOCS: DocCategory[] = [
       },
       {
         id: 'section-menu',
+        measured: [
+          {
+            gate: 'settings-density',
+            claim: 'Two densities, each line saying what its section is set to',
+            value: '29 checks',
+            since: '7.19.0',
+          },
+        ],
         title: 'Section menu',
         selector: 'strct-section-menu',
         importNames: ['StrctSectionMenu', 'StrctMenuSection', 'StrctMenuLink'],
@@ -3805,6 +3911,32 @@ export const DOCS: DocCategory[] = [
       },
       {
         id: 'datagrid',
+        measured: [
+          {
+            gate: 'read-integrity',
+            claim: 'A read that failed does not look like a read that found nothing',
+            value: 'a different glyph and a different tone, 4.74:1 against the surface',
+            since: '7.23.0',
+          },
+          {
+            gate: 'read-integrity',
+            claim: 'Rows kept beside an error stay, under one line',
+            value: '2 rows still drawn, the band 1 line, its text 14.21:1 on its own fill',
+            since: '7.23.0',
+          },
+          {
+            gate: 'read-integrity',
+            claim: 'The refresh stays reachable while the read is failing',
+            value: 'present and enabled in all three cases',
+            since: '7.23.0',
+          },
+          {
+            gate: 'grid-layout',
+            claim: 'The grid’s own layout',
+            value: '17 checks',
+            since: '7.9.0',
+          },
+        ],
         title: 'Datagrid',
         selector: 'strct-datagrid',
         importNames: ['StrctDatagrid', 'StrctDatagridColumn', 'StrctCellDef'],
@@ -4258,6 +4390,26 @@ export const DOCS: DocCategory[] = [
       },
       {
         id: 'detailpane',
+        measured: [
+          {
+            gate: 'pane-toggle',
+            claim: 'The button points where the click will send the pane',
+            value: 'converges to 2.56px at that end, against 7.31px at the other',
+            since: '7.20.0',
+          },
+          {
+            gate: 'pane-toggle',
+            claim: 'The pane opens beside the list, not over it',
+            value: 'the pane at x=574 with the list ending at 574',
+            since: '7.20.0',
+          },
+          {
+            gate: 'pane-toggle',
+            claim: 'Right to left, both arrows are mirrored with the pane',
+            value: 'the list starts at 1026 and the pane ends at 1026',
+            since: '7.20.0',
+          },
+        ],
         title: 'Detail pane',
         selector: 'strct-datagrid[pane]',
         importNames: ['StrctDatagrid', 'StrctRowDetailDef', 'StrctDatagridPane'],
@@ -4306,6 +4458,14 @@ export const DOCS: DocCategory[] = [
       },
       {
         id: 'steps',
+        measured: [
+          {
+            gate: 'steps-rail',
+            claim: 'The active step’s emphasis stays inside the step it belongs to',
+            value: '8 checks; the ring used to reach 4.66px past a 120px pill into a 4px gap',
+            since: '7.16.0',
+          },
+        ],
         title: 'Steps',
         selector: 'strct-steps',
         importNames: ['StrctSteps', 'StrctStepState', 'StrctStepAction'],
@@ -5223,6 +5383,14 @@ export const DOCS: DocCategory[] = [
       },
       {
         id: 'flow',
+        measured: [
+          {
+            gate: 'flow-topology',
+            claim: 'Columns, edges, and a node that can be walked to',
+            value: '30 checks',
+            since: '7.11.0',
+          },
+        ],
         title: 'Flow',
         selector: 'strct-flow',
         importNames: ['StrctFlow', 'StrctFlowNode', 'StrctFlowEdge', 'StrctFlowColumn'],
@@ -5353,6 +5521,26 @@ export const DOCS: DocCategory[] = [
       },
       {
         id: 'wiring',
+        measured: [
+          {
+            gate: 'wiring-detail',
+            claim: 'The card lands off the cable it describes',
+            value: '0 of 41 sampled cable points under it',
+            since: '7.17.0',
+          },
+          {
+            gate: 'wiring-detail',
+            claim: 'Every row of the card is text the port is described by',
+            value: '213 characters Chrome reads without a pointer',
+            since: '7.17.0',
+          },
+          {
+            gate: 'wiring-map',
+            claim: 'The map’s geometry',
+            value: '53 checks',
+            since: '7.12.0',
+          },
+        ],
         title: 'Wiring map',
         selector: 'strct-wiring',
         importNames: [
@@ -5470,6 +5658,14 @@ export const DOCS: DocCategory[] = [
       },
       {
         id: 'status-matrix',
+        measured: [
+          {
+            gate: 'status-matrix',
+            claim: 'Every state carries a shape as well as a tone',
+            value: '28 checks',
+            since: '7.14.0',
+          },
+        ],
         title: 'Status matrix',
         selector: 'strct-status-matrix',
         importNames: [
