@@ -6,6 +6,19 @@ export type Lang = 'tr' | 'en';
 const KEY = 'uistruct-lang';
 
 /**
+ * The languages the site actually offers.
+ *
+ * Turkish is written and kept here, but it is **not offered yet**: the 104
+ * component reference pages are still English, so a visitor who picked
+ * Turkish would get a half-translated site. The switcher is hidden while
+ * this list has one entry, and Turkish comes back by adding `'tr'` to it —
+ * nothing else needs changing.
+ */
+export const ENABLED_LANGS: readonly Lang[] = ['en'];
+
+const isEnabled = (l: unknown): l is Lang => ENABLED_LANGS.includes(l as Lang);
+
+/**
  * What the site says in each language.
  *
  * This covers the **chrome and the pages a visitor lands on**: the header,
@@ -251,11 +264,13 @@ const DICTS: Record<Lang, Dict> = { tr: TR, en: EN };
 function initial(): Lang {
   try {
     const saved = localStorage.getItem(KEY);
-    if (saved === 'tr' || saved === 'en') return saved;
+    // A choice made while a language was offered does not strand the reader
+    // on it after it is withdrawn.
+    if (isEnabled(saved)) return saved;
   } catch {
     /* a private window or blocked storage is not a reason to fail */
   }
-  return 'tr';
+  return ENABLED_LANGS[0];
 }
 
 /**
@@ -275,7 +290,13 @@ export class LangService {
     this.apply(this.current());
   }
 
+  /** Offered languages, in the order the switcher shows them. */
+  readonly offered = ENABLED_LANGS;
+  /** Is there a choice to make at all? */
+  readonly multilingual = ENABLED_LANGS.length > 1;
+
   set(lang: Lang): void {
+    if (!isEnabled(lang)) return;
     this.current.set(lang);
     this.apply(lang);
     try {

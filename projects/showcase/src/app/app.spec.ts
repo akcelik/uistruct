@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
-import { LangService } from './i18n/lang';
+import { ENABLED_LANGS, LangService } from './i18n/lang';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -21,41 +21,50 @@ describe('App', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('opens in Turkish, with no choice stored', async () => {
+  it('opens in the first offered language, and says so on the root element', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
 
-    expect(TestBed.inject(LangService).lang()).toBe('tr');
+    expect(TestBed.inject(LangService).lang()).toBe(ENABLED_LANGS[0]);
     expect(el.textContent).toContain('UIStruct');
-    expect(el.textContent).toContain('Bileşen Kütüphanesi');
-    expect(el.textContent).toContain('bileşen');
-    // The browser and assistive tech have to agree with the page.
-    expect(document.documentElement.getAttribute('lang')).toBe('tr');
+    expect(document.documentElement.getAttribute('lang')).toBe(ENABLED_LANGS[0]);
   });
 
-  it('switches to English without a reload, and says so on the root element', async () => {
+  /**
+   * Turkish is written and kept, but not offered while the reference pages
+   * are still English. These two say what that means in practice, so turning
+   * it back on is a visible change rather than a silent one.
+   */
+  it('offers only English for now, and hides the switcher', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     await fixture.whenStable();
-
-    TestBed.inject(LangService).set('en');
-    fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
 
+    expect([...ENABLED_LANGS]).toEqual(['en']);
     expect(el.textContent).toContain('Component Library');
-    expect(el.textContent).toContain('components');
-    expect(el.textContent).not.toContain('Bileşen Kütüphanesi');
-    expect(document.documentElement.getAttribute('lang')).toBe('en');
+    expect(el.querySelector('.lang__btn')).toBeNull();
   });
 
-  it('keeps the choice for the next visit', async () => {
+  it('does not strand a reader who chose a language that is no longer offered', async () => {
+    localStorage.setItem('uistruct-lang', 'tr');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     await fixture.whenStable();
 
-    TestBed.inject(LangService).set('en');
-    expect(localStorage.getItem('uistruct-lang')).toBe('en');
+    expect(TestBed.inject(LangService).lang()).toBe('en');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Bileşen Kütüphanesi');
+  });
+
+  it('refuses a language it does not offer', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const lang = TestBed.inject(LangService);
+    lang.set('tr');
+    expect(lang.lang()).toBe('en');
   });
 });
