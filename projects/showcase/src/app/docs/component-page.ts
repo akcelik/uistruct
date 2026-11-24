@@ -26,6 +26,7 @@ import {
   UsageGuide,
 } from './doc-ui';
 import { ALL_COMPONENTS, DocCategory, PACKAGE_NAME, findComponent } from './registry';
+import { StrctMarkdown } from 'strct';
 import { LangService } from '../i18n/lang';
 
 interface CategoryHost {
@@ -38,7 +39,15 @@ interface CategoryHost {
 @Component({
   selector: 'app-component-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgComponentOutlet, ApiTable, UsageGuide, Breadcrumb, PrevNext, OnThisPage],
+  imports: [
+    NgComponentOutlet,
+    ApiTable,
+    UsageGuide,
+    Breadcrumb,
+    PrevNext,
+    OnThisPage,
+    StrctMarkdown,
+  ],
   template: `
     @let c = component();
     @if (c) {
@@ -52,7 +61,10 @@ interface CategoryHost {
           @if (lang.lang() !== 'en') {
             <p class="doc__refnote">{{ lang.t().refNote }}</p>
           }
-          <p class="doc__lead">{{ c.lead }}</p>
+          <!-- The lead is written in markdown: 76 of the 107 leads carry a code
+               span, and they used to print their backticks. The library's own
+               renderer draws them. -->
+          <strct-markdown class="doc__lead" [source]="c.lead" />
 
           <div class="doc__import">
             <div class="doc__import-head">
@@ -101,7 +113,7 @@ interface CategoryHost {
                   <div class="doc__a11y-cap">Accessibility</div>
                   <ul>
                     @for (a of c.a11y!; track a) {
-                      <li>{{ a }}</li>
+                      <li><strct-markdown [source]="a" /></li>
                     }
                   </ul>
                 </div>
@@ -152,6 +164,12 @@ interface CategoryHost {
         font-weight: 650;
         color: var(--t1);
         letter-spacing: -0.01em;
+      }
+      .doc__lead .strct-md__p {
+        margin: 0;
+      }
+      .doc__lead .strct-md__p + .strct-md__p {
+        margin-top: 10px;
       }
       .doc__lead {
         margin: 10px 0 0;
@@ -229,6 +247,9 @@ interface CategoryHost {
       .doc__a11y ul {
         margin: 0;
         padding-left: 18px;
+      }
+      .doc__a11y li .strct-md__p {
+        margin: 0;
       }
       .doc__a11y li {
         font-size: 13px;
