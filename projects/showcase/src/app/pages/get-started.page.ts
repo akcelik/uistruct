@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { StrctButton } from 'strct';
 import { PACKAGE_NAME } from '../docs/registry';
+import { LangService } from '../i18n/lang';
 
 @Component({
   selector: 'app-get-started-page',
@@ -9,63 +10,54 @@ import { PACKAGE_NAME } from '../docs/registry';
   imports: [RouterLink, StrctButton],
   template: `
     <article class="gs">
-      <h1 class="gs__title">Get started</h1>
-      <p class="gs__lead">
-        UIStruct is a standalone Angular component library. Add the package, import the theme once,
-        and start dropping components in. No runtime CSS framework, no global module to register.
-      </p>
+      <h1 class="gs__title">{{ t().started.title }}</h1>
+      <p class="gs__lead">{{ t().started.lead }}</p>
 
       <section class="gs__sec">
-        <h2>Requirements</h2>
+        <h2>{{ t().started.requirements }}</h2>
         <ul class="gs__list">
-          <li>Angular <code>21.2</code> or newer (standalone APIs &amp; signals).</li>
+          <li>Angular <code>21.2</code> {{ t().started.reqAngular }}</li>
           <li>
             <code>&#64;angular/common</code>, <code>core</code>, <code>forms</code> and
-            <code>platform-browser</code> are peer dependencies.
+            <code>platform-browser</code> {{ t().started.reqPeers }}
           </li>
         </ul>
       </section>
 
       <section class="gs__sec">
-        <h2>1 · Install</h2>
+        <h2>{{ t().started.install }}</h2>
         <pre class="gs__code"><code>npm install {{ pkg }}</code></pre>
       </section>
 
       <section class="gs__sec">
-        <h2>2 · Import the theme</h2>
-        <p>
-          Add the theme stylesheet once in your global styles. It ships the design tokens, a base
-          reset and the form-control styles.
-        </p>
+        <h2>{{ t().started.importTheme }}</h2>
+        <p>{{ t().started.importThemeBody }}</p>
         <pre class="gs__code"><code>{{ themeImport }}</code></pre>
       </section>
 
       <section class="gs__sec">
-        <h2>3 · Choose a scheme</h2>
-        <p>
-          Set the palette and mode on the document root — or let
-          <code>StrctThemeService</code> manage and persist it.
-        </p>
+        <h2>{{ t().started.scheme }}</h2>
+        <p>{{ t().started.schemeBody }} <code>StrctThemeService</code>.</p>
         <pre class="gs__code"><code>{{ htmlAttr }}</code></pre>
         <pre class="gs__code"><code>{{ serviceUse }}</code></pre>
-        <p>Or drop in the ready-made switcher anywhere:</p>
+        <p>{{ t().started.schemeOr }}</p>
         <pre class="gs__code"><code>&lt;strct-theme-switcher /&gt;</code></pre>
       </section>
 
       <section class="gs__sec">
-        <h2>4 · Use your first component</h2>
-        <p>Every component is standalone — import just what you use.</p>
+        <h2>{{ t().started.first }}</h2>
+        <p>{{ t().started.firstBody }}</p>
         <pre class="gs__code"><code>{{ firstComponent }}</code></pre>
       </section>
 
       <section class="gs__sec">
-        <h2>Next steps</h2>
+        <h2>{{ t().started.next }}</h2>
         <div class="gs__next">
           <button strct-button variant="primary" routerLink="/components/button">
-            Browse components
+            {{ t().started.browse }}
           </button>
-          <button strct-button routerLink="/foundations/theming">Explore theming</button>
-          <button strct-button routerLink="/foundations/icons">See the icon set</button>
+          <button strct-button routerLink="/foundations/theming">{{ t().started.theming }}</button>
+          <button strct-button routerLink="/foundations/icons">{{ t().started.icons }}</button>
         </div>
       </section>
     </article>
@@ -142,6 +134,8 @@ import { PACKAGE_NAME } from '../docs/registry';
   ],
 })
 export class GetStartedPage {
+  private readonly langService = inject(LangService);
+  protected readonly t = this.langService.t;
   protected readonly pkg = PACKAGE_NAME;
   protected readonly themeImport = `// styles.scss\n@use '${PACKAGE_NAME}/styles/theme';`;
   protected readonly htmlAttr = `<html data-palette="arctic" data-theme="dark">`;

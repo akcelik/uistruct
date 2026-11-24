@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   STRCT_ICON_GROUPS,
@@ -15,6 +15,7 @@ import {
   StrctTreeNodeData,
 } from 'strct';
 import { COMPONENT_COUNT, DOCS, PACKAGE_NAME } from '../docs/registry';
+import { LangService } from '../i18n/lang';
 
 const ICON_COUNT = STRCT_ICON_GROUPS.reduce((n, g) => n + g.names.length, 0);
 
@@ -41,12 +42,9 @@ interface Feature {
   template: `
     <section class="hero">
       <div class="hero__say">
-        <p class="hero__kicker">Angular · infrastructure UI</p>
-        <h1 class="hero__title">104 components for the screens that run a datacenter.</h1>
-        <p class="hero__tagline">
-          Host and VM trees, grids of two thousand rows, wiring maps, alarm axes. The console on the
-          right is not a picture — it is this library, running on this page.
-        </p>
+        <p class="hero__kicker">{{ t().landing.kicker }}</p>
+        <h1 class="hero__title">{{ t().landing.title }}</h1>
+        <p class="hero__tagline">{{ t().landing.tagline }}</p>
 
         <div class="hero__install">
           <code>npm install {{ pkg }}</code>
@@ -63,11 +61,9 @@ interface Feature {
 
         <div class="hero__cta">
           <button strct-button variant="primary" solid routerLink="/get-started">
-            Get started
+            {{ t().getStarted }}
           </button>
-          <button strct-button routerLink="/components/button">
-            Browse {{ count }} components
-          </button>
+          <button strct-button routerLink="/components/button">{{ t().landing.browse }}</button>
           <a
             strct-button
             variant="flat"
@@ -81,13 +77,13 @@ interface Feature {
 
         <div class="hero__switch">
           <strct-theme-switcher />
-          <span class="hero__hint">Change the palette — the console changes with it.</span>
+          <span class="hero__hint">{{ t().landing.hint }}</span>
         </div>
       </div>
 
       <!-- The claim's own proof. Built from the library's tokens, so the
            palette switcher beside it re-skins the thing it is pointing at. -->
-      <div class="console" aria-label="A live inventory console built from this library">
+      <div class="console" [attr.aria-label]="t().landing.consoleLabel">
         <div class="console__bar">
           <span class="console__pulse" aria-hidden="true"></span>
           <span class="console__what">strct-tree · strct-datagrid · strct-progress</span>
@@ -120,25 +116,27 @@ interface Feature {
       </div>
     </section>
 
-    <section class="facts" aria-label="What is in the library">
+    <section class="facts" [attr.aria-label]="t().landing.featuresHeading">
       <div class="fact">
         <strong>{{ count }}</strong
-        ><span>components</span>
+        ><span>{{ t().landing.facts.components }}</span>
       </div>
       <div class="fact">
         <strong>{{ iconCount }}</strong
-        ><span>icons</span>
+        ><span>{{ t().landing.facts.icons }}</span>
       </div>
-      <div class="fact"><strong>6</strong><span>schemes — 3 palettes × 2 themes</span></div>
+      <div class="fact">
+        <strong>6</strong><span>{{ t().landing.facts.schemes }}</span>
+      </div>
       <div class="fact fact--lead">
-        <strong>1452</strong><span>specs and 19 measurement gates, every release</span>
+        <strong>1452</strong><span>{{ t().landing.facts.measured }}</span>
       </div>
     </section>
 
     <section class="features" aria-labelledby="landing-features">
       <!-- The cards are h3s under this h2 — the outline went h1 → h3 before. -->
-      <h2 id="landing-features" class="strct-sr-only">Why UIStruct</h2>
-      @for (f of features; track f.title) {
+      <h2 id="landing-features" class="strct-sr-only">{{ t().landing.featuresHeading }}</h2>
+      @for (f of featureList(); track f.title) {
         <div class="feat">
           <span class="feat__icon"><strct-icon [name]="f.icon" [size]="20" /></span>
           <h3 class="feat__title">{{ f.title }}</h3>
@@ -149,18 +147,18 @@ interface Feature {
 
     <section class="cats">
       <div class="cats__head">
-        <h2>{{ count }} components, organised</h2>
-        <p>
-          {{ cats.length }} categories — from buttons to datagrids, charts and full page patterns.
-        </p>
+        <h2>{{ t().landing.catsTitle }}</h2>
+        <p>{{ cats.length }} {{ t().landing.catsBody }}</p>
       </div>
       <div class="cats__grid">
         @for (cat of cats; track cat.id) {
           <a class="cat" [routerLink]="['/components', cat.components[0].id]">
             <span class="cat__icon"><strct-icon [name]="cat.icon" [size]="18" /></span>
             <span class="cat__text">
-              <span class="cat__label">{{ cat.label }}</span>
-              <span class="cat__count">{{ cat.components.length }} components</span>
+              <span class="cat__label">{{ catLabel(cat) }}</span>
+              <span class="cat__count"
+                >{{ cat.components.length }} {{ t().landing.catComponents }}</span
+              >
             </span>
             <strct-icon name="chevronRight" [size]="15" class="cat__go" />
           </a>
@@ -514,41 +512,20 @@ export class LandingPage {
 
   protected readonly count = COMPONENT_COUNT;
   protected readonly cats = DOCS;
+  private readonly langService = inject(LangService);
+  protected readonly t = this.langService.t;
+  /** A category's name in the current language, falling back to its own. */
+  protected catLabel(cat: { id: string; label: string }): string {
+    return this.t().groups[cat.id] ?? cat.label;
+  }
   protected readonly iconCount = ICON_COUNT;
   protected readonly copied = signal(false);
 
-  protected readonly features: Feature[] = [
-    {
-      icon: 'palette',
-      title: 'One token system',
-      body: 'Every color comes from CSS custom properties — three palettes (Arctic, Ember, Sage) × light & dark, no hard-coded hex anywhere.',
-    },
-    {
-      icon: 'layers',
-      title: 'Standalone & signal-based',
-      body: 'Standalone components with signal inputs and OnPush change detection throughout. Drop in only what you use.',
-    },
-    {
-      icon: 'form',
-      title: 'Form-ready',
-      body: 'Every control implements ControlValueAccessor, so it works with ngModel and reactive forms out of the box.',
-    },
-    {
-      icon: 'universalAccess',
-      title: 'Accessible, measured',
-      body: 'WCAG AA contrast in all six schemes, keyboard-complete trees/charts/grids, shape-coded status for color-vision safety, reduced-motion everywhere.',
-    },
-    {
-      icon: 'chart',
-      title: 'Datacenter-flavoured',
-      body: 'A stroke icon set with object-state badges, plus datagrids, timelines and charts built for infrastructure dashboards.',
-    },
-    {
-      icon: 'code',
-      title: 'No framework lock-in',
-      body: 'No runtime CSS framework dependency. Just Angular, the token stylesheet, and the components you import.',
-    },
-  ];
+  /** The four icons are the design; the words come from the dictionary. */
+  private readonly featureIcons = ['palette', 'layers', 'form', 'universalAccess'];
+  protected readonly featureList = computed<Feature[]>(() =>
+    this.t().landing.features.map((f, i) => ({ ...f, icon: this.featureIcons[i] })),
+  );
 
   protected copy(): void {
     void navigator.clipboard?.writeText(`npm install ${this.pkg}`);

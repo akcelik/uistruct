@@ -4,7 +4,7 @@
       <strct-icon name="hexagon" [size]="22" />
       <div class="brand__text">
         <strong>UIStruct</strong>
-        <span>Component Library</span>
+        <span>{{ t().brandSub }}</span>
       </div>
     </a>
 
@@ -13,17 +13,20 @@
     <!-- Below 600px these move into the header's own "More" menu; the
          searchbox and the theme switcher stay, because each opens a surface
          of its own. -->
-    <ng-container *strctHeaderAction="{ label: 'Get started', icon: 'rocket', run: goStarted }">
-      <a strct-button variant="flat" size="sm" routerLink="/get-started">Get started</a>
+    <ng-container *strctHeaderAction="{ label: t().getStarted, icon: 'rocket', run: goStarted }">
+      <a strct-button variant="flat" size="sm" routerLink="/get-started">{{ t().getStarted }}</a>
     </ng-container>
-    <ng-container *strctHeaderAction="{ label: 'Components', icon: 'grid', run: goComponents }">
-      <a strct-button variant="flat" size="sm" routerLink="/components/button">Components</a>
+    <ng-container *strctHeaderAction="{ label: t().components, icon: 'grid', run: goComponents }">
+      <a strct-button variant="flat" size="sm" routerLink="/components/button">{{
+        t().components
+      }}</a>
     </ng-container>
 
-    <ng-container *strctHeaderAction="{ label: 'Search', overflow: 'never' }">
+    <ng-container *strctHeaderAction="{ label: t().search, overflow: 'never' }">
       <strct-searchbox
         class="hdr-search"
         trigger
+        [placeholder]="t().search"
         hint="⌘K"
         ariaLabel="Ctrl or Cmd K"
         (activated)="openPalette()"
@@ -32,8 +35,12 @@
 
     <!-- The widest trigger in this header (a segmented control): on a phone
          it is drawn inside the More menu instead, template and all. -->
-    <ng-container *strctHeaderAction="{ label: 'Theme' }">
+    <ng-container *strctHeaderAction="{ label: t().theme }">
       <strct-theme-switcher />
+    </ng-container>
+
+    <ng-container *strctHeaderAction="{ label: t().language }">
+      <app-lang-switcher />
     </ng-container>
 
     <ng-container *strctHeaderAction="{ label: 'GitHub', icon: 'code', run: goGithub }">
@@ -50,13 +57,13 @@
   </strct-header>
 
   @if (showSidebar()) {
-    <strct-vertical-nav closeButton closeLabel="Close navigation">
+    <strct-vertical-nav closeButton [closeLabel]="t().closeNav">
       <div class="side">
         <div class="rail">
           @for (group of groups; track group.id) {
             <strct-nav-item
               [active]="isActiveGroup(group.id)"
-              [label]="group.label"
+              [label]="groupLabel(group)"
               [routerLink]="group.items[0].path"
             >
               <strct-icon [name]="group.icon" [size]="17" />
@@ -68,7 +75,7 @@
              group title: the title is inside a landmark, and a screen reader's
              landmark list tells it from the breadcrumb and prev / next navs. -->
         <nav class="panel" [attr.aria-labelledby]="panelTitleId">
-          <div class="panel__title" [id]="panelTitleId">{{ activeGroup().label }}</div>
+          <div class="panel__title" [id]="panelTitleId">{{ groupLabel(activeGroup()) }}</div>
           <div class="panel__list">
             @for (item of activeGroup().items; track item.path) {
               <a
@@ -93,7 +100,7 @@
   <strct-footer>
     <span>UIStruct v{{ version }}</span>
     <span class="dot-sep"></span>
-    <span>{{ count }} components</span>
+    <span>{{ count }} {{ t().componentsCount }}</span>
     <span class="grow"></span>
     <span>{{ themeLabel() }}</span>
   </strct-footer>
