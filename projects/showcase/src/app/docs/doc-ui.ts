@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { StrctMarkdown } from 'strct';
 import { ApiRow } from './registry';
 
 /** A single Inputs / Outputs / Methods reference table. */
 @Component({
   selector: 'app-api-table',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [StrctMarkdown],
   template: `
     @if (rows().length) {
       <div class="api">
@@ -40,7 +42,7 @@ import { ApiRow } from './registry';
                       }
                     </td>
                   }
-                  <td class="api__desc">{{ r.description }}</td>
+                  <td class="api__desc"><strct-markdown [source]="r.description" /></td>
                 </tr>
               }
             </tbody>
@@ -113,6 +115,12 @@ import { ApiRow } from './registry';
       .api__dash {
         color: var(--t3);
       }
+      .api__desc .strct-md__p {
+        margin: 0;
+      }
+      .api__desc .strct-md__p + .strct-md__p {
+        margin-top: 8px;
+      }
       .api__desc {
         min-width: 220px;
       }
@@ -129,6 +137,7 @@ export class ApiTable {
 @Component({
   selector: 'app-usage',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [StrctMarkdown],
   template: `
     <div class="ug">
       @if (do().length) {
@@ -136,7 +145,7 @@ export class ApiTable {
           <div class="ug__head"><span class="ug__mark">✓</span> Do</div>
           <ul>
             @for (item of do(); track item) {
-              <li>{{ item }}</li>
+              <li><strct-markdown [source]="item" /></li>
             }
           </ul>
         </div>
@@ -146,7 +155,7 @@ export class ApiTable {
           <div class="ug__head"><span class="ug__mark">✕</span> Don't</div>
           <ul>
             @for (item of dont(); track item) {
-              <li>{{ item }}</li>
+              <li><strct-markdown [source]="item" /></li>
             }
           </ul>
         </div>
@@ -203,6 +212,9 @@ export class ApiTable {
       .ug ul {
         margin: 0;
         padding-left: 18px;
+      }
+      .ug li .strct-md__p {
+        margin: 0;
       }
       .ug li {
         font-size: 13px;

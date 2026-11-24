@@ -2244,7 +2244,7 @@ export const DOCS: DocCategory[] = [
           {
             name: 'closeOnEscape / closeOnBackdrop',
             type: 'boolean | null',
-            default: 'null (follows `dismissible`)',
+            default: 'null (follows dismissible)',
             description:
               'Apart, so a window can close on Escape — nothing is lost — without closing on a stray click outside it. An Escape a focused control already handled (`defaultPrevented`: an IME composition, a searchbox that clears) is left alone.',
           },
