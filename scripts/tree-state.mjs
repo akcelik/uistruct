@@ -33,6 +33,8 @@ const CDP = 9419;
 const AA = 4.5;
 /** WCAG 1.4.11 for a graphic that carries meaning. */
 const GRAPHIC = 3;
+/** How far from a disc an alarm's outline must stay: the shape it must not become. */
+const NOT_A_DISC = 20;
 /** The row the tree has always had — the glyph grew inside it, not past it. */
 const ROW = 27.5;
 /** No state mark may be smaller than this: an 8px dot on a 1920x1080 screen
@@ -349,6 +351,43 @@ async function hole(send, box) {
   return (enclosed / (w * h)) * 100;
 }
 
+/**
+ * How much a mark's outline disagrees with a disc drawn in the same box, as
+ * a share of that box. A real disc is 0; the further from 0, the more the
+ * mark is its own shape. It is the measure that matches the claim, where
+ * "how much of its box it fills" does not: a fillet takes area away inside a
+ * fixed box, so a rounder shape fills LESS and would pass a fill test while
+ * looking rounder.
+ */
+async function discDiff(send, box) {
+  const clip = {
+    x: Math.round(box.left),
+    y: Math.round(box.top),
+    width: Math.max(1, Math.round(box.w)),
+    height: Math.max(1, Math.round(box.h)),
+    scale: 6,
+  };
+  const { data } = await send('Page.captureScreenshot', { format: 'png', clip });
+  const png = PNG.sync.read(Buffer.from(data, 'base64'));
+  const { width: w, height: h } = png;
+  const bg = [png.data[0], png.data[1], png.data[2]];
+  let differ = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      const d =
+        Math.abs(png.data[i] - bg[0]) +
+        Math.abs(png.data[i + 1] - bg[1]) +
+        Math.abs(png.data[i + 2] - bg[2]);
+      const ink = d > 40;
+      const nx = ((x + 0.5) / w) * 2 - 1;
+      const ny = ((y + 0.5) / h) * 2 - 1;
+      if (ink !== nx * nx + ny * ny <= 1) differ++;
+    }
+  }
+  return (differ / (w * h)) * 100;
+}
+
 async function centroid(send, box) {
   const pad = 1;
   const clip = {
@@ -496,6 +535,27 @@ try {
     'warning and critical are two shapes, not two hues',
     Math.abs(warnShape.y - critShape.y) >= 0.06 && warnShape.px > 20 && critShape.px > 20,
     `in a 6x render the triangle's ink sits at ${(warnShape.y * 100).toFixed(1)}% of its box and the diamond's at ${(critShape.y * 100).toFixed(1)}% — ${(Math.abs(warnShape.y - critShape.y) * 100).toFixed(1)} points apart with no colour involved`,
+  );
+
+  // ── A fillet must not turn a shape into another shape ──────────────────
+  // The centroid check above says where a mark's ink sits; it cannot see an
+  // alarm bulging into the disc that success and info use, which is what
+  // softening corners risks. So the outline is compared against a disc drawn
+  // in the mark's own box.
+  //
+  // Filleting as it is done here does NOT drift that way, and the first
+  // version of this check assumed it did: clipping a corner takes area away
+  // inside a fixed box, so a rounder diamond moves AWAY from a disc
+  // (measured: sharp 28.4%, the shipped r16 30.6%, r26 34.0%, r40 41.2%).
+  // What looked disc-like while this was being drawn was a variant that grew
+  // the shape to fill the box, not one that rounded it. The check is kept
+  // pointed at that: anything that bulges toward a disc fails it.
+  const warnDisc = await discDiff(send, hv2.health.box);
+  const critDisc = await discDiff(send, vm7.health.box);
+  check(
+    'the alarms keep their own outline, and no corner is rounded into a disc',
+    critDisc >= NOT_A_DISC && warnDisc >= NOT_A_DISC,
+    `against a disc drawn in its own box the triangle differs by ${warnDisc.toFixed(1)}% and the diamond by ${critDisc.toFixed(1)}%, floor ${NOT_A_DISC}% — a real disc is 0%`,
   );
 
   // ── What a closed node carries ─────────────────────────────────────────

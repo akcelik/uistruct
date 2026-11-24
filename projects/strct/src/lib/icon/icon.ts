@@ -1010,7 +1010,27 @@ let warnedCountOverMode = false;
       .strct-icon__badge--warning {
         background: var(--warning);
         border-radius: var(--radius-xs);
-        clip-path: polygon(50% 6%, 96% 94%, 4% 94%);
+        /* The corners are filleted, not mitred. Every other mark in this set
+           is drawn with round caps and joins, so a knife-edged triangle was
+           the one hard shape on the glyph. The fillet is approximated in the
+           polygon itself (clip-path cannot round a corner), which keeps it in
+           percentage space and scaling with the badge. The radius is held at
+           14: past about 22 the diamond beside it rounds into a disc, and the
+           set's whole health language is circle / triangle / diamond. */
+        clip-path: polygon(
+          43.5% 18.4%,
+          47.8% 12.9%,
+          52.2% 12.9%,
+          56.5% 18.4%,
+          89.5% 81.6%,
+          91.6% 88.5%,
+          89.1% 92.6%,
+          82% 94%,
+          18% 94%,
+          10.9% 92.6%,
+          8.4% 88.5%,
+          10.5% 81.6%
+        );
         box-shadow: none;
         filter: drop-shadow(0 0 2px var(--bg-1)) drop-shadow(0 0 1px var(--bg-1));
         inset-inline-end: -3px;
@@ -1028,7 +1048,27 @@ let warnedCountOverMode = false;
       .strct-icon__badge--critical {
         background: var(--critical);
         border-radius: var(--radius-xs);
-        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        /* Filleted to match the triangle; radius 16, which softens the four
+           points while the diamond is still a diamond and not the disc that
+           success and info use. */
+        clip-path: polygon(
+          38.7% 11.3%,
+          46.2% 6.3%,
+          53.8% 6.3%,
+          61.3% 11.3%,
+          88.7% 38.7%,
+          93.7% 46.2%,
+          93.7% 53.8%,
+          88.7% 61.3%,
+          61.3% 88.7%,
+          53.8% 93.7%,
+          46.2% 93.7%,
+          38.7% 88.7%,
+          11.3% 61.3%,
+          6.3% 53.8%,
+          6.3% 46.2%,
+          11.3% 38.7%
+        );
         box-shadow: none;
         filter: drop-shadow(0 0 2px var(--bg-1)) drop-shadow(0 0 1px var(--bg-1));
         top: -4px;

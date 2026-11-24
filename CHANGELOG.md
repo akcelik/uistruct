@@ -5,6 +5,55 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.25.0] - 2026-11-24
+
+### Changed
+
+- **The two alarm marks have filleted corners.** Every other mark in the
+  set is drawn with round caps and joins; the warning triangle and the
+  critical diamond were the only knife-edged shapes on a glyph, and it
+  showed wherever an icon is drawn large.
+
+  `clip-path` cannot round a corner, so the fillet is approximated in the
+  polygon itself — which keeps it in percentage space and scaling with the
+  badge, exactly as the sharp shape did. Radius 14 on the triangle, 16 on
+  the diamond. The play triangle inside the running disc is left sharp:
+  it is 4–5px across, where a fillet is invisible.
+
+### Measured
+
+`scripts/tree-state.mjs`, 25 → **26** checks.
+
+**The fillet costs shape separation, and the number is down:** the
+triangle's ink sits at **61.3%** of its box against the diamond's
+**54.2%** — **7.1** points apart, where the sharp pair measured 8.7,
+against a floor of 6. Still clear, with less room than before.
+
+The marks stay **11.0px** at the tree's 18px glyph (floor 11), and the
+alarm's ink-weight against the maintenance tile went from 93% to
+**97%** of it.
+
+**A new check, after the first version of it measured the wrong thing.**
+The risk in softening a corner is an alarm bulging into the disc that
+success and info use, and the centroid check cannot see that. The first
+attempt asked how much of its box a mark fills — which a fillet makes
+go _down_, not up, because clipping a corner takes area away inside a
+fixed box. It would have passed anything. The check now compares the
+mark's outline against a disc drawn in its own box: the triangle differs
+by **48.3%** and the diamond by **29.6%**, floor 20%, and a real disc is
+0%.
+
+That measurement also corrected the premise: **filleting does not drift
+toward a disc at all.** Sharp measures 28.4% from a disc, the shipped
+r16 30.6%, r26 34.0%, r40 41.2% — rounder is _further_. What looked
+disc-like while this was being drawn was a variant that grew the shape
+to fill its box, not one that rounded it.
+
+### Also
+
+- 20 page baselines refreshed, 18 of them by 0.004–0.006% — the marks are
+  a few pixels of a page shot.
+
 ## [7.24.0] - 2026-11-24
 
 A host / VM icon family arrived as a folder rather than a request
