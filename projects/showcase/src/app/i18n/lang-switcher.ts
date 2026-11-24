@@ -9,20 +9,22 @@ import { Lang, LangService } from './lang';
   selector: 'app-lang-switcher',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="lang" role="group" [attr.aria-label]="lang.t().language">
-      @for (opt of options; track opt.code) {
-        <button
-          type="button"
-          class="lang__btn"
-          [class.is-on]="lang.lang() === opt.code"
-          [attr.aria-pressed]="lang.lang() === opt.code"
-          [attr.lang]="opt.code"
-          (click)="lang.set(opt.code)"
-        >
-          {{ opt.label }}
-        </button>
-      }
-    </div>
+    @if (lang.multilingual) {
+      <div class="lang" role="group" [attr.aria-label]="lang.t().language">
+        @for (opt of shown; track opt.code) {
+          <button
+            type="button"
+            class="lang__btn"
+            [class.is-on]="lang.lang() === opt.code"
+            [attr.aria-pressed]="lang.lang() === opt.code"
+            [attr.lang]="opt.code"
+            (click)="lang.set(opt.code)"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    }
   `,
   styles: [
     `
@@ -65,8 +67,10 @@ import { Lang, LangService } from './lang';
 })
 export class LangSwitcher {
   protected readonly lang = inject(LangService);
-  protected readonly options: { code: Lang; label: string }[] = [
+  private readonly all: { code: Lang; label: string }[] = [
     { code: 'tr', label: 'TR' },
     { code: 'en', label: 'EN' },
   ];
+  /** Only the languages the site offers today. */
+  protected readonly shown = this.all.filter((o) => this.lang.offered.includes(o.code));
 }
