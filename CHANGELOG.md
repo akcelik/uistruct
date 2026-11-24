@@ -49,10 +49,35 @@ r16 30.6%, r26 34.0%, r40 41.2% — rounder is _further_. What looked
 disc-like while this was being drawn was a variant that grew the shape
 to fill its box, not one that rounded it.
 
+- **Every corner inside a badge is round too.** Three marks were left
+  mitred when the alarms were filleted: the play triangle in the running
+  disc (7.4px across at a 16px badge, big enough for three sharp points
+  to read as sharp), the two pause bars, and the barrier stripes in the
+  maintenance tile, which were drawn with butt caps.
+
+  The stop square inside the `off` disc was **left alone, after
+  measuring**: its radius is a fixed 2px on a square that is 4.4–6.4px,
+  so it stays 31–45% rounded at every size the badge can reach — the
+  badge itself caps at 16px.
+
+### Fixed
+
+- **A count outgrew its own chip.** `.strct-icon__count` had a flat
+  **14px** height while its font scaled with the icon
+  (`0.58 × --icon-size`), so from a 24px icon up the digit was clipped:
+  13.9px of text in a 14px pill at 24px, and 37px of text at 64px. Both
+  are clamped now — the pill grows to a 22px cap and the font to 14px —
+  with the floor left at the old 14px, so every size the library already
+  drew is unchanged. Measured in the browser at 16, 18, 24, 28, 32, 48
+  and 64px: the text box fits inside the chip at all seven, where four
+  of them overflowed before.
+
+  Found while measuring the corners, not reported.
+
 ### Also
 
-- 20 page baselines refreshed, 18 of them by 0.004–0.006% — the marks are
-  a few pixels of a page shot.
+- 18 page baselines refreshed, most by 0.044–0.045% — the marks are a
+  few pixels of a page shot.
 
 ## [7.24.0] - 2026-11-24
 
