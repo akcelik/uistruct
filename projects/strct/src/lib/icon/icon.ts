@@ -812,7 +812,7 @@ let warnedCountOverMode = false;
           fill="none"
           stroke="currentColor"
           stroke-width="1.25"
-          stroke-linecap="butt"
+          stroke-linecap="round"
         >
           <path d="M1.2 7.4L7.4 1.2M4.6 10.8L10.8 4.6" />
         </svg>
@@ -876,15 +876,22 @@ let warnedCountOverMode = false;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-width: 14px;
-        height: 14px;
+        /* The pill grows with its number. The height used to be a flat 14px
+           while the font scaled with the icon, so from a 24px icon up the
+           digit outgrew its own chip and was clipped — 13.9px of text in a
+           14px pill at 24, 37px at 64. Both are clamped now, and the floor
+           is the old 14px, so every size the library already drew is
+           unchanged. */
+        min-width: clamp(14px, calc(var(--icon-size, 16px) * 0.84), 22px);
+        height: clamp(14px, calc(var(--icon-size, 16px) * 0.84), 22px);
         padding-inline: 4px;
         box-sizing: border-box;
         border-radius: var(--radius-pill);
         font-family: var(--font);
-        /* 58% of the icon, never under 9px — in CSS rather than in a computed,
-           because the icon's size can now come from the control around it. */
-        font-size: max(9px, calc(var(--icon-size, 16px) * 0.58));
+        /* 58% of the icon, never under 9px and never over 14 — in CSS rather
+           than in a computed, because the icon's size can now come from the
+           control around it. */
+        font-size: clamp(9px, calc(var(--icon-size, 16px) * 0.58), 14px);
         font-weight: 600;
         line-height: 1;
         color: var(--inv);
@@ -1010,7 +1017,27 @@ let warnedCountOverMode = false;
       .strct-icon__badge--warning {
         background: var(--warning);
         border-radius: var(--radius-xs);
-        clip-path: polygon(50% 6%, 96% 94%, 4% 94%);
+        /* The corners are filleted, not mitred. Every other mark in this set
+           is drawn with round caps and joins, so a knife-edged triangle was
+           the one hard shape on the glyph. The fillet is approximated in the
+           polygon itself (clip-path cannot round a corner), which keeps it in
+           percentage space and scaling with the badge. The radius is held at
+           14: past about 22 the diamond beside it rounds into a disc, and the
+           set's whole health language is circle / triangle / diamond. */
+        clip-path: polygon(
+          43.5% 18.4%,
+          47.8% 12.9%,
+          52.2% 12.9%,
+          56.5% 18.4%,
+          89.5% 81.6%,
+          91.6% 88.5%,
+          89.1% 92.6%,
+          82% 94%,
+          18% 94%,
+          10.9% 92.6%,
+          8.4% 88.5%,
+          10.5% 81.6%
+        );
         box-shadow: none;
         filter: drop-shadow(0 0 2px var(--bg-1)) drop-shadow(0 0 1px var(--bg-1));
         inset-inline-end: -3px;
@@ -1028,7 +1055,27 @@ let warnedCountOverMode = false;
       .strct-icon__badge--critical {
         background: var(--critical);
         border-radius: var(--radius-xs);
-        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        /* Filleted to match the triangle; radius 16, which softens the four
+           points while the diamond is still a diamond and not the disc that
+           success and info use. */
+        clip-path: polygon(
+          38.7% 11.3%,
+          46.2% 6.3%,
+          53.8% 6.3%,
+          61.3% 11.3%,
+          88.7% 38.7%,
+          93.7% 46.2%,
+          93.7% 53.8%,
+          88.7% 61.3%,
+          61.3% 88.7%,
+          53.8% 93.7%,
+          46.2% 93.7%,
+          38.7% 88.7%,
+          11.3% 61.3%,
+          6.3% 53.8%,
+          6.3% 46.2%,
+          11.3% 38.7%
+        );
         box-shadow: none;
         filter: drop-shadow(0 0 2px var(--bg-1)) drop-shadow(0 0 1px var(--bg-1));
         top: -4px;
@@ -1053,7 +1100,23 @@ let warnedCountOverMode = false;
         min-width: 4px;
         min-height: 4px;
         background: var(--inv);
-        clip-path: polygon(15% 2%, 100% 50%, 15% 98%);
+        /* Filleted like the two alarm shapes: at a 16px disc this triangle
+           is 7.4px across, which is big enough for three sharp points to
+           read as sharp. */
+        clip-path: polygon(
+          15% 20%,
+          16.7% 11%,
+          22% 7.9%,
+          30.7% 10.9%,
+          84.3% 41.1%,
+          91.3% 47%,
+          91.3% 53%,
+          84.3% 58.9%,
+          30.7% 89.1%,
+          22% 92.1%,
+          16.7% 89%,
+          15% 80%
+        );
         transform: translateX(9%);
       }
       /* Paused: amber disc with two pause bars. */
@@ -1066,6 +1129,10 @@ let warnedCountOverMode = false;
         height: 42%;
         min-height: 4px;
         background: var(--inv);
+        /* Capsule ends, so the two bars are not the one pair of square
+           corners left inside a badge. The shadow that draws the second bar
+           inherits the radius. */
+        border-radius: var(--radius-pill);
         box-shadow: 2.6px 0 0 var(--inv);
         transform: translateX(-1.3px);
       }
