@@ -1,0 +1,53 @@
+// Component tier: yalnızca semantic token'lara bağlanır, primitive renk kullanmaz.
+:host {
+  display: inline-flex;
+  flex: none;
+  color: var(--strct-icon-color, currentColor);
+  line-height: 0;
+  vertical-align: middle;
+}
+
+svg {
+  display: block;
+  overflow: visible;
+}
+
+:host(.strct-icon--off) .strct-icon__body {
+  color: var(--strct-icon-color-muted);
+}
+
+.strct-icon__state--running {
+  fill: var(--strct-icon-state-running);
+}
+.strct-icon__state--suspended {
+  fill: var(--strct-icon-state-suspended);
+}
+.strct-icon__state--error {
+  fill: var(--strct-icon-state-error);
+}
+.strct-icon__state--off {
+  stroke: var(--strct-icon-state-off);
+  fill: none;
+}
+
+// Dolu rozetin içindeki işaret (pause çubukları, ünlem): rozet renginin üstünde okunur kontrast.
+.strct-icon__state-mark {
+  stroke: var(--strct-icon-state-on-color);
+}
+
+@media (forced-colors: active) {
+  :host {
+    color: CanvasText;
+  }
+  .strct-icon__state--running,
+  .strct-icon__state--suspended,
+  .strct-icon__state--error {
+    fill: CanvasText;
+  }
+  .strct-icon__state--off {
+    stroke: CanvasText;
+  }
+  .strct-icon__state-mark {
+    stroke: Canvas;
+  }
+}

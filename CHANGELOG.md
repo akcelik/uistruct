@@ -5,6 +5,70 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.24.0] - 2026-11-24
+
+A host / VM icon family arrived as a folder rather than a request
+([`docs/feature-requests/archive/strct-icons-review.md`](docs/feature-requests/archive/strct-icons-review.md)).
+Its central rule was adopted; its package could not be.
+
+### Changed
+
+- **A VM is a host's chassis inside a dashed frame.** `vm` was a monitor,
+  which says "a screen", not "a machine that is not physical". Identity now
+  lives in the frame: solid is physical, dashed is virtual. `host` is
+  untouched, so `cluster` goes on being three of it (7.21.0).
+
+### Added
+
+- **`vmTemplate`, `vmSnapshot`, `vmClone`, `vmMigration`** — the objects an
+  inventory holds beside a VM. Each marks the glyph's **bottom-start**
+  corner, and the dashed frame opens to make room rather than being masked
+  (a mask's soft edge leaves the dash ends half translucent and browsers
+  draw ghosts — the proposal's own finding).
+
+  That corner is chosen, not merely free: health owns the glyph's top end and
+  power/mode its bottom one, so a VM template can still be alarmed and still
+  be off. The proposal made these a _state_ instead, which would have cost
+  exactly that.
+
+### Measured
+
+`scripts/glyph-distinct.mjs`, eight new pairs at 14px against a **4.56%**
+floor: `vm`/`host` **44.08%** stroke and **42.86%** outline,
+`vm`/`vmTemplate` 19.75%, and the four derived objects between **6.64%**
+and 9.45% of each other — they are read in one column of a tree, so each
+has to separate from the other three and not only from `vm`.
+
+**The measurement overruled the drawing twice.** The derived marks looked
+like mush at 14px, so they were simplified — and measuring then showed
+five of the six pairs had already cleared the floor. The sixth,
+`vmTemplate`/`vmSnapshot`, measured 3.57–4.27% at _every_ size: a square
+and a disc of similar mass in the same corner is a shape problem, not a
+resolution one. Interior strokes only moved it onto the line (7.37% ✓,
+6.76% ✗, 6.52% ✓, 5.88% ✗ across sizes), which this gate's own notes
+reject. Changing **aspect ratio** settled it — a sheet standing up against
+a round clock.
+
+### Not taken, and why
+
+The proposal's component, type names, `--strct-icon-color` redefinition,
+`state` input, 36-unit grid and size-dependent stroke. It collides on the
+`strct-icon` selector and on `StrctIconName`; it redefines
+`--strct-icon-color` on `:root`, which would kill the tree's alarm tone;
+its `state` merges power with health, the single-slot problem 7.18.0 was
+filed to fix; its `off` mark is the hollow ring 7.22.0 gave to
+`health: 'unknown'`; and its state disc measures **4.8px** at 16px and
+**8.8px** at 24px against this library's **11px** floor, with no size that
+fits the tree's 18px glyph.
+
+### Also
+
+- A `#vm-family` demo on the icons page with a visual baseline
+  (`glyph-vm-family`): the six glyphs at 14px and 24px, and again carrying
+  state, so the kind mark and both badge corners are seen together.
+- Eight page baselines refreshed in the same release — `glyph-inventory`,
+  `tree-state`, `home` and `command-palette-sections` all draw `vm`.
+
 ## [7.23.0] - 2026-11-18
 
 [FR-84](docs/feature-requests/archive/datagrid-error-and-unread-progress.md),

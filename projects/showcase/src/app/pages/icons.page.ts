@@ -131,6 +131,38 @@ interface StateExample {
     </app-demo>
 
     <app-demo
+      anchor="vm-family"
+      heading="Physical, virtual, and the objects derived from a VM"
+      description='Identity is in the frame: a host is a chassis, and a VM is that same chassis inside a dashed one — so the two are one form apart and cluster goes on being three hosts. Before 7.24.0 vm was a monitor, which says "a screen", not "a machine that is not physical". The four derived objects put a mark in the glyph&apos;s bottom-START corner, and the dashed frame opens to make room for it rather than being masked. That corner is chosen, not free: health takes the glyph&apos;s top end and power/mode its bottom one, so a VM template can still be alarmed and still be off. Measured by scripts/glyph-distinct.mjs — every pair of the six separates at 14px, the weakest at 6.64% against a 4.56% floor.'
+      code='<strct-icon name="vmSnapshot" [size]="24" /> · <strct-icon name="vmTemplate" badge="warning" lifecycle="off" />'
+    >
+      <div class="ig-sizes">
+        @for (name of vmFamily; track name) {
+          <div class="ig-size">
+            <strct-icon [name]="name" [size]="14" />
+            <span class="ig-name">{{ name }}</span>
+          </div>
+        }
+      </div>
+      <div class="ig-sizes">
+        @for (name of vmFamily; track name) {
+          <div class="ig-size">
+            <strct-icon [name]="name" [size]="24" />
+            <span class="ig-name">{{ name }}</span>
+          </div>
+        }
+      </div>
+      <div class="ig-sizes">
+        @for (name of vmFamily; track name) {
+          <div class="ig-size">
+            <strct-icon [name]="name" [size]="24" badge="warning" lifecycle="off" />
+            <span class="ig-name">+ state</span>
+          </div>
+        }
+      </div>
+    </app-demo>
+
+    <app-demo
       anchor="states"
       heading="Object states"
       description="The same object glyph carries every state it is in, in its own two corners — the way an inventory tree an operator already knows draws them. Health takes the TOP corner (circle success · triangle warning · diamond critical · circle info), where vCenter puts an object's alarm and where Clarity puts its badge; lifecycle takes the BOTTOM one (▶ running · ⏸ paused · ■ off), beside the mode tile that shares it — an object kind has one or the other, a host has a mode and a machine has a power state, and when both are set the mode wins because &ldquo;out of service&rdquo; is the louder fact. The marks are 58–76% of the glyph and never below 11px, ringed in 2px of the surface: an 8px disc carrying a 6px tick is a smudge at arm's length on a 1920×1080 screen, so the silhouette carries the state and nothing is written inside it. status tones the glyph itself, so an alarmed object reads as alarmed before any corner is looked at. badge=&quot;maintenance&quot; still works and draws the tile; it is deprecated since 5.29.0."
@@ -549,6 +581,20 @@ export class IconsPage {
    * them. Gathered so a redrawing of one is read against the others.
    */
   protected readonly inventoryLadder = ['datacenter', 'cluster', 'host', 'rack', 'vm', 'node'];
+
+  /**
+   * The VM family: one machine and the four derived objects an inventory
+   * holds beside it. Gathered so each is read against the other three, which
+   * is how they appear in a tree.
+   */
+  protected readonly vmFamily = [
+    'host',
+    'vm',
+    'vmTemplate',
+    'vmSnapshot',
+    'vmClone',
+    'vmMigration',
+  ];
 
   /** FR-69-04, in the order the ask listed them. */
   protected readonly dataProtection = [
